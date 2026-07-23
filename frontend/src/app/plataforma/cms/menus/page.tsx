@@ -682,7 +682,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.label}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, label: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all font-bold"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-[hsl(var(--primary))]/30 transition-all font-bold"
                                 />
                             </div>
                             
@@ -695,7 +695,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.href}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, href: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-[hsl(var(--primary))]/30 transition-all"
                                 />
                             </div>
 
@@ -710,7 +710,7 @@ export default function CmsMenusManagement() {
                                         parent_id: e.target.value || null,
                                     })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-blue-500/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-[hsl(var(--primary))]/30 transition-all"
                                 >
                                     <option value="">Sin padre (nivel raíz)</option>
                                     {navConfig.items

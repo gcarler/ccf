@@ -151,7 +151,7 @@ export default function SupportPage() {
     useRegisterCommands('support-hub', supportCommands);
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in">
             <WorkspaceToolbar 
                 breadcrumbs={[
                     { label: 'CCF', icon: Layout },
@@ -387,7 +387,7 @@ export default function SupportPage() {
                             value={newTicket.subject}
                             onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
                             placeholder="Ej: No puedo ver mi certificado"
-                            className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white font-medium"
+                            className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white font-medium"
                         />
                     </div>
                     <div className="space-y-2">
@@ -395,7 +395,7 @@ export default function SupportPage() {
                         <select
                             value={newTicket.category}
                             onChange={(e) => setNewTicket({ ...newTicket, category: e.target.value })}
-                            className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white font-medium appearance-none"
+                            className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white font-medium appearance-none"
                         >
                             <option>General</option>
                             <option>Técnico</option>
@@ -410,7 +410,7 @@ export default function SupportPage() {
                             value={newTicket.description}
                             onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
                             placeholder="Describe tu problema con detalle..."
-                            className="w-full h-36 px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-none dark:text-white font-medium"
+                            className="w-full h-36 px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] resize-none dark:text-white font-medium"
                         />
                     </div>
                 </form>

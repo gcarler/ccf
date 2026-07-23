@@ -101,7 +101,7 @@ export default function AgendaEventDetailPage() {
         >
             <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[#141517]">
                 <div className="mx-auto max-w-4xl space-y-3 p-3 p-4">
-                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <button
@@ -159,7 +159,7 @@ export default function AgendaEventDetailPage() {
                         </div>
                     </section>
 
-                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[#1e1f21]">
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
                         {loading || !event ? (
                             <div className="h-48 animate-pulse rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                         ) : (

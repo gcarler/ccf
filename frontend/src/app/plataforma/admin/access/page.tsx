@@ -39,14 +39,14 @@ const ACCESS_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'c
 
 const MODULES = [
     { id: 'crm', label: 'CRM Pastoral', icon: Users, color: 'text-[hsl(var(--primary))]' },
-    { id: 'academy', label: 'Academia CCF', icon: BookOpen, color: 'text-emerald-500' },
+    { id: 'academy', label: 'Academia CCF', icon: BookOpen, color: 'text-[hsl(var(--success))]' },
     { id: 'projects', label: 'Proyectos', icon: ClipboardList, color: 'text-[hsl(var(--primary))]' },
-    { id: 'finance', label: 'Finanzas', icon: Lock, color: 'text-amber-500' },
+    { id: 'finance', label: 'Finanzas', icon: Lock, color: 'text-[hsl(var(--warning))]' },
     { id: 'cms', label: 'Sitio Web', icon: Layout, color: 'text-[hsl(var(--primary))]' },
     { id: 'messaging', label: 'Mensajería', icon: Edit3, color: 'text-cyan-500' },
-    { id: 'evangelism', label: 'Evangelismo', icon: Users, color: 'text-orange-500' },
+    { id: 'evangelism', label: 'Evangelismo', icon: Users, color: 'text-[hsl(var(--warning))]' },
     { id: 'community', label: 'Comunidad', icon: Users, color: 'text-teal-500' },
-    { id: 'spiritual_life', label: 'Vida Espiritual', icon: BookOpen, color: 'text-rose-500' },
+    { id: 'spiritual_life', label: 'Vida Espiritual', icon: BookOpen, color: 'text-[hsl(var(--destructive))]' },
 ];
 
 // Maps UI level names → backend level names and vice versa
@@ -327,7 +327,7 @@ export default function AccessManagementPage() {
             header: 'Estado', 
             cell: info => (
                 <div className="flex items-center gap-2">
-                    <div className={clsx("size-2 rounded-full", info.getValue() ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-[hsl(var(--surface-2))]")} />
+                    <div className={clsx("size-2 rounded-full", info.getValue() ? "bg-[hsl(var(--success))] shadow-[0_0_8px_var(--success)]" : "bg-[hsl(var(--surface-2))]")} />
                     <span className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide">{info.getValue() ? 'Activo' : 'Inactivo'}</span>
                 </div>
             ) 
@@ -460,7 +460,7 @@ export default function AccessManagementPage() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
             <style jsx global>{`
                 .permission-card {
                     transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
@@ -486,7 +486,7 @@ export default function AccessManagementPage() {
 
             {/* Cinematic Tab Navigation */}
             <div className="flex px-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f005_0%,_transparent_50%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--primary)/0.05)_0%,_transparent_50%)] pointer-events-none" />
                 <button onClick={() => setActiveTab('roles')} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10", activeTab === 'roles' ? "text-[hsl(var(--primary))] border-blue-600" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50")}>Roles Ministeriales</button>
                 <button onClick={() => setActiveTab('users')} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10", activeTab === 'users' ? "text-[hsl(var(--primary))] border-blue-600" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50")}>Auditoría de Usuarios</button>
             </div>

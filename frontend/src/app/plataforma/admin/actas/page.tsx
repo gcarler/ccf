@@ -155,7 +155,7 @@ export default function ActaManagementPage() {
                         <tr key={course.id} onClick={() => setSelectedCourse(course)} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] cursor-pointer">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{course.title}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{course.code}</td>
-                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", course.id === selectedCourse?.id ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-[hsl(var(--primary))]")}>{course.id === selectedCourse?.id ? 'Seleccionado' : 'Disponible'}</span></td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", course.id === selectedCourse?.id ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-blue-50 text-[hsl(var(--primary))]")}>{course.id === selectedCourse?.id ? 'Seleccionado' : 'Disponible'}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -186,7 +186,7 @@ export default function ActaManagementPage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Academia / Gobernanza">
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
                 <WorkspaceToolbar
                     breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Actas y Certificación', icon: CheckSquare }]}
                     viewType={viewType}
@@ -262,8 +262,8 @@ export default function ActaManagementPage() {
                         </div>
                     </aside>
 
-                    <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f003_0%,_transparent_50%)] pointer-events-none" />
+                    <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--primary)/0.03)_0%,_transparent_50%)] pointer-events-none" />
  <div className="w-full space-y-3 relative z-10">
                             <AnimatePresence mode="wait">
                                 {selectedCourse ? (
@@ -287,7 +287,7 @@ export default function ActaManagementPage() {
                                                 </div>
                                             </div>
                                             {lastActa && (
-                                                <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-md text-[10px] font-semibold uppercase tracking-wide border border-emerald-100 dark:border-emerald-900/30 flex items-center gap-2 shadow-sm">
+                                                <div className="px-4 py-2 bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] rounded-md text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--success)/0.3)] flex items-center gap-2 shadow-sm">
                                                     <ShieldCheck size={14} /> Acta Vigente
                                                 </div>
                                             )}
@@ -300,14 +300,14 @@ export default function ActaManagementPage() {
                                                     <div className="space-y-2">
                                                         <label className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] ml-2">Nota Mínima</label>
                                                         <div className="relative">
-                                                            <input type="number" value={minGrade} onChange={(e) => setMinGrade(Number(e.target.value))} className="w-full bg-[hsl(var(--bg-primary))] dark:bg-black/40 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 font-semibold focus:ring-4 focus:ring-blue-500/10 transition-all outline-none" />
+                                                            <input type="number" value={minGrade} onChange={(e) => setMinGrade(Number(e.target.value))} className="w-full bg-[hsl(var(--bg-primary))] dark:bg-black/40 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 font-semibold focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all outline-none" />
                                                             <span className="font-semibold">%</span>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
                                                         <label className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] ml-2">Asistencia Mínima</label>
                                                         <div className="relative">
-                                                            <input type="number" value={minAttendance} onChange={(e) => setMinAttendance(Number(e.target.value))} className="w-full bg-[hsl(var(--bg-primary))] dark:bg-black/40 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 font-semibold focus:ring-4 focus:ring-blue-500/10 transition-all outline-none" />
+                                                            <input type="number" value={minAttendance} onChange={(e) => setMinAttendance(Number(e.target.value))} className="w-full bg-[hsl(var(--bg-primary))] dark:bg-black/40 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 font-semibold focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all outline-none" />
                                                             <span className="font-semibold">%</span>
                                                         </div>
                                                     </div>
@@ -330,13 +330,13 @@ export default function ActaManagementPage() {
                                         </section>
 
                                         <section className="space-y-3">
-                                            <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-900/30 flex items-start gap-3">
-                                                <div className="size-7 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 flex items-center justify-center text-amber-500 shadow-sm shrink-0">
+                                            <div className="p-4 bg-[hsl(var(--warning)/0.08)] rounded-lg border border-[hsl(var(--warning)/0.3)] flex items-start gap-3">
+                                                <div className="size-7 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--warning))] shadow-sm shrink-0">
                                                     <AlertTriangle size={24} />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <h4 className="font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Acción Crítica</h4>
-                                                    <p className="text-sm text-amber-600/80 dark:text-amber-500/60 font-medium leading-relaxed">Al cerrar el acta, se emitirán certificados PDF con firma digital para todos los aprobados. Esta acción no se puede deshacer de forma masiva.</p>
+                                                    <h4 className="font-semibold text-[hsl(var(--warning))] uppercase tracking-wide">Acción Crítica</h4>
+                                                    <p className="text-sm text-[hsl(var(--warning))]/80 font-medium leading-relaxed">Al cerrar el acta, se emitirán certificados PDF con firma digital para todos los aprobados. Esta acción no se puede deshacer de forma masiva.</p>
                                                 </div>
                                             </div>
                                             <button

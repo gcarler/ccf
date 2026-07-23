@@ -66,7 +66,7 @@ export default function NewCoursePage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden relative">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden relative">
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-[500px] h-48 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none" />
             
@@ -144,7 +144,7 @@ export default function NewCoursePage() {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Basic Info */}
-                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-black/10/20 dark:shadow-none space-y-4 group transition-all hover:border-blue-500/20">
+                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-black/10/20 dark:shadow-none space-y-4 group transition-all hover:border-blue-500/20">
                             <div className="flex items-center gap-4 text-[hsl(var(--primary))]">
                                 <div className="size-9 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shadow-inner">
                                     <FileText size={24} strokeWidth={2.5} />
@@ -158,7 +158,7 @@ export default function NewCoursePage() {
                                     <input 
                                         required type="text" placeholder="Ej: CCF-01" value={formData.code}
                                         onChange={(e) => setFormData({...formData, code: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
                                     />
                                 </div>
                                 <div className="space-y-3">
@@ -166,7 +166,7 @@ export default function NewCoursePage() {
                                     <input 
                                         required type="text" placeholder="Ej: Fundamentos de la Fe" value={formData.title}
                                         onChange={(e) => setFormData({...formData, title: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
                                     />
                                 </div>
                                 <div className="md:col-span-2 space-y-3">
@@ -174,14 +174,14 @@ export default function NewCoursePage() {
                                     <textarea 
                                         rows={4} placeholder="Describe el impacto y los objetivos de este programa..." value={formData.description}
                                         onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-md px-4 py-2 text-sm font-medium outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all resize-none leading-relaxed"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-md px-4 py-2 text-sm font-medium outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all resize-none leading-relaxed"
                                     />
                                 </div>
                             </div>
                         </motion.div>
 
                         {/* Configuration */}
-                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-black/10/20 dark:shadow-none space-y-4 group transition-all hover:border-sky-500/20">
+                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-black/10/20 dark:shadow-none space-y-4 group transition-all hover:border-sky-500/20">
                             <div className="flex items-center gap-4 text-sky-600">
                                 <div className="size-9 rounded-lg bg-sky-50 dark:bg-sky-500/10 flex items-center justify-center shadow-inner">
                                     <Clock size={24} strokeWidth={2.5} />

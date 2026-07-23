@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
       return (
           <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden items-center justify-center space-y-3">
               <div className="relative">
-                  <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full animate-pulse" />
+                  <div className="absolute inset-0 bg-[hsl(var(--primary))/0.2] blur-xl rounded-full animate-pulse" />
                   <Shield className="w-8 h-8 animate-pulse text-[hsl(var(--primary))] relative z-10" />
               </div>
               <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Verificando Sistemas...</p>
@@ -147,8 +147,8 @@ export default function AdminDashboardPage() {
         />
 
         {/* Ambient Background */}
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/5 rounded-full blur-[150px] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-sky-600/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[hsl(var(--primary))/0.05] rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[hsl(var(--primary))/0.05] rounded-full blur-[120px] pointer-events-none" />
 
         <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative z-10">
             <motion.div
@@ -160,15 +160,15 @@ export default function AdminDashboardPage() {
 
                 {/* 1. High Impact Financial & Stats Grid */}
                 <motion.section variants={itemVariants} className="grid grid-cols-1 xl:grid-cols-4 gap-3">
-                    <div className="xl:col-span-2 relative overflow-hidden rounded-lg bg-[#001b48] p-4 text-white shadow-lg group border border-blue-500/20 flex flex-col justify-between">
+                    <div className="xl:col-span-2 relative overflow-hidden rounded-lg bg-[#001b48] p-4 text-white shadow-lg group border border-[hsl(var(--primary))/0.2] flex flex-col justify-between">
                         <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.05] mix-blend-overlay" />
-                        <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#018abd]/30 via-[#004581]/10 to-transparent blur-3xl transition-transform duration-1000 group-hover:scale-110 pointer-events-none" />
+                        <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[hsl(var(--primary))/0.3] via-[hsl(var(--primary))/0.1] to-transparent blur-3xl transition-transform duration-1000 group-hover:scale-110 pointer-events-none" />
 
                         <div className="relative z-10 flex items-center justify-between mb-3">
-                            <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-lg text-[9px] font-bold uppercase tracking-wide text-blue-100 border border-white/20">
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-lg text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] border border-white/20">
                                 <Globe size={10} /> Tesorería Consolidada <span className="text-white/20">|</span> {new Date().getFullYear()}
                             </div>
-                            <button className="px-3 py-1 bg-white/10 hover:bg-[hsl(var(--bg-primary))] text-white hover:text-[#001b48] rounded-lg font-bold text-[9px] uppercase tracking-wide transition-all">
+                            <button className="px-3 py-1 bg-white/10 hover:bg-[hsl(var(--bg-primary))] text-white hover:text-[hsl(var(--text-secondary))] rounded-lg font-bold text-[9px] uppercase tracking-wide transition-all">
                                 Desglosar
                             </button>
                         </div>
@@ -176,18 +176,18 @@ export default function AdminDashboardPage() {
                         <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-3">
                             <div className="flex items-end gap-3">
                                 <h3 className="text-xl lg:text-xl font-bold tracking-tighter leading-none">${(stats?.donaciones_mes || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
-                                <div className="mb-1.5 px-2 py-0.5 bg-emerald-500 text-white rounded-md text-[9px] font-bold flex items-center gap-1 shadow-sm">
+                                <div className="px-2 py-0.5 bg-[hsl(var(--success))] text-white rounded-md text-[9px] font-bold flex items-center gap-1 shadow-sm">
                                      <TrendingUp size={10} strokeWidth={3} /> Activo
                                 </div>
                             </div>
                             <div className="flex gap-3 items-center">
-                                <div className="space-y-0.5"><p className="text-[9px] font-bold text-blue-200/60 uppercase tracking-wide">Diezmos</p><p className="text-lg font-bold leading-none">${(stats?.diezmos_mes || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
-                                <div className="space-y-0.5"><p className="text-[9px] font-bold text-blue-200/60 uppercase tracking-wide">Ofrendas</p><p className="text-lg font-bold leading-none">${(stats?.ofrendas_mes || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
+                                <div className="space-y-0.5"><p className="text-[9px] font-bold text-[hsl(var(--primary))/0.6] uppercase tracking-wide">Diezmos</p><p className="text-lg font-bold leading-none">${(stats?.diezmos_mes || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
+                                <div className="space-y-0.5"><p className="text-[9px] font-bold text-[hsl(var(--primary))/0.6] uppercase tracking-wide">Ofrendas</p><p className="text-lg font-bold leading-none">${(stats?.ofrendas_mes || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div>
                             </div>
                         </div>
                     </div>
                     <KpiCard title="Personas" value={(stats?.personas || 0).toLocaleString()} trend={stats?.personas_nuevas_mes ? `+${stats.personas_nuevas_mes} nuevas` : 'Sin cambios'} icon={Users} color="text-[hsl(var(--primary))]" />
-                    <KpiCard title="Asistencia" value={stats?.usuarios_activos ? `${Math.round(stats.usuarios_activos / Math.max(stats.personas ?? 1, 1) * 100)}%` : '—'} trend={stats?.usuarios_activos ? `${stats.usuarios_activos} activos` : 'Sin datos'} icon={Calendar} color="text-emerald-500" />
+                    <KpiCard title="Asistencia" value={stats?.usuarios_activos ? `${Math.round(stats.usuarios_activos / Math.max(stats.personas ?? 1, 1) * 100)}%` : '—'} trend={stats?.usuarios_activos ? `${stats.usuarios_activos} activos` : 'Sin datos'} icon={Calendar} color="text-[hsl(var(--success))]" />
                 </motion.section>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
@@ -196,7 +196,7 @@ export default function AdminDashboardPage() {
                     <div className="lg:col-span-8 space-y-3">
                         <motion.div variants={itemVariants} className="flex items-center justify-between px-2">
                             <h2 className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-2">
-                                <div className="size-1.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_6px_rgba(244,63,94,0.5)]" />
+                                <div className="size-1.5 rounded-full bg-[hsl(var(--destructive))] animate-pulse shadow-[0_0_6px_hsl(var(--destructive)/0.5)]" />
                                 Comandos de Control Interno
                             </h2>
                             <div className="flex items-center gap-3">
@@ -216,7 +216,7 @@ export default function AdminDashboardPage() {
                                     index={100}
                                 />
                             )}
-                            <button className="w-full py-3 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-md flex items-center justify-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-blue-500/30 hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-all font-bold uppercase text-[10px] tracking-wide mt-2 group">
+                            <button className="w-full py-3 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-md flex items-center justify-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary))/0.3] hover:bg-[hsl(var(--info-muted))] dark:hover:bg-[hsl(var(--info)/0.05)] transition-all font-bold uppercase text-[10px] tracking-wide mt-2 group">
                                 <Plus size={10} className="group-hover:scale-125 transition-transform" /> Iniciar Nueva Operación
                             </button>
                         </motion.div>
@@ -228,25 +228,25 @@ export default function AdminDashboardPage() {
                         {/* Optimus Neural Widget */}
                         <motion.div variants={itemVariants} className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 shadow-sm relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
-                                <Bot size={10} className="text-sky-600" />
+                                <Bot size={10} className="text-[hsl(var(--primary))]" />
                             </div>
                             <div className="space-y-3 relative z-10">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-sm font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white flex items-center gap-1.5">
-                                        <Sparkles size={10} className="text-sky-500" /> MESH AI Neural
+                                        <Sparkles size={10} className="text-[hsl(var(--primary))]" /> MESH AI Neural
                                     </h3>
-                                    <div className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[8px] font-bold uppercase tracking-wide rounded flex items-center gap-1">
-                                        <div className="size-1 rounded-full bg-emerald-500 animate-pulse" /> Online
+                                    <div className="px-2 py-0.5 bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] dark:text-[hsl(var(--success))] text-[8px] font-bold uppercase tracking-wide rounded flex items-center gap-1">
+                                        <div className="size-1 rounded-full bg-[hsl(var(--success))] animate-pulse" /> Online
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
                                     {agentInsights.length > 0 ? (
                                         agentInsights.slice(0, 3).map((insight: AgentInsight) => (
-                                            <div key={insight.id} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 space-y-1 group/insight cursor-pointer hover:border-sky-500/30 hover:shadow-sm transition-all">
+                                            <div key={insight.id} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 space-y-1 group/insight cursor-pointer hover:border-[hsl(var(--primary))/0.3] hover:shadow-sm transition-all">
                                                 <div className="flex items-center justify-between">
-                                                    <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-none group-hover/insight:text-sky-600 transition-colors truncate">{insight.title}</p>
-                                                    <span className="text-[7px] font-bold px-1.5 py-0.5 bg-sky-50 dark:bg-sky-500/10 text-sky-600 rounded uppercase tracking-wide shrink-0">{insight.insight_type?.split('_')[0] || insight.insight_type || '—'}</span>
+                                                    <p className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-none group-hover/insight:text-[hsl(var(--primary))] transition-colors truncate">{insight.title}</p>
+                                                    <span className="text-[7px] font-bold px-1.5 py-0.5 bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] text-[hsl(var(--info))] rounded uppercase tracking-wide shrink-0">{insight.insight_type?.split('_')[0] || insight.insight_type || '—'}</span>
                                                 </div>
                                                 <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-tight italic font-medium line-clamp-2">&ldquo;{insight.payload}&rdquo;</p>
                                             </div>
@@ -259,7 +259,7 @@ export default function AdminDashboardPage() {
                                     )}
                                 </div>
 
-                                <button className="w-full py-2.5 bg-sky-600 text-white rounded-lg font-bold text-[10px] uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                                <button className="w-full py-2.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-[10px] uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5">
                                     Intervenir con IA <ArrowRight size={10} />
                                 </button>
                             </div>
@@ -271,9 +271,9 @@ export default function AdminDashboardPage() {
                                 <History size={10} /> Actividad del Staff
                             </h3>
                             <div className="space-y-3 relative before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[hsl(var(--surface-2))] dark:before:bg-white/5">
-                                <LogItem icon={Zap} title="Migración DB completada" user="Alex L." time="10m" color="text-[hsl(var(--primary))]" bg="bg-blue-50 dark:bg-blue-500/10" />
-                                <LogItem icon={CheckCircle2} title="Aprobación Curso Teología" user="Pedro M." time="1h" color="text-emerald-500" bg="bg-emerald-50 dark:bg-emerald-500/10" />
-                                <LogItem icon={AlertTriangle} title="Fallo en Pasarela Resuelto" user="System" time="3h" color="text-rose-500" bg="bg-rose-50 dark:bg-rose-500/10" />
+                                <LogItem icon={Zap} title="Migración DB completada" user="Alex L." time="10m" color="text-[hsl(var(--primary))]" bg="bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)]" />
+                                <LogItem icon={CheckCircle2} title="Aprobación Curso Teología" user="Pedro M." time="1h" color="text-[hsl(var(--success))]" bg="bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)]" />
+                                <LogItem icon={AlertTriangle} title="Fallo en Pasarela Resuelto" user="System" time="3h" color="text-[hsl(var(--destructive))]" bg="bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.1)]" />
                             </div>
                             <button className="w-full mt-2 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider hover:text-[hsl(var(--text-secondary))] transition-colors">Ver bitácora completa</button>
                         </motion.div>
@@ -300,7 +300,7 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
                         <p className="text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Prioridad</p>
-                        <p className="text-[13px] font-bold text-rose-500 uppercase">{selectedTask?.priority}</p>
+                        <p className="text-[13px] font-bold text-[hsl(var(--destructive))] uppercase">{selectedTask?.priority}</p>
                     </div>
                 </section>
                 <section className="space-y-3">
@@ -344,14 +344,14 @@ function AdminTaskRow({ task, onOpen, index }: any) {
             initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.03, type: 'spring', stiffness: 300, damping: 24 }}
             onClick={() => onOpen(task)}
             className={clsx(
-                "p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-blue-500/40 hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
-                task.is_special && "border-l-2 border-l-amber-400"
+                "p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-[hsl(var(--primary))/0.4] hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
+                task.is_special && "border-l-2 border-l-[hsl(var(--warning))]"
             )}
         >
             <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className={clsx(
                     "size-8 rounded-lg flex items-center justify-center shrink-0 shadow-inner transition-transform duration-300 group-hover:scale-105",
-                    task.priority === 'high' ? "bg-rose-50 dark:bg-rose-500/10 text-rose-500" : "bg-[hsl(var(--surface-1))] dark:bg-black/20 text-[hsl(var(--text-secondary))]"
+                    task.priority === 'high' ? "bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]" : "bg-[hsl(var(--surface-1))] dark:bg-black/20 text-[hsl(var(--text-secondary))]"
                 )}>
                     {task.priority === 'high' ? <Shield size={10} strokeWidth={2.5} /> : <CheckSquare size={10} strokeWidth={2.5} />}
                 </div>
@@ -360,11 +360,11 @@ function AdminTaskRow({ task, onOpen, index }: any) {
                     <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate font-medium mt-0.5 leading-tight">{task.description || 'Haz clic para intervenir'}</p>
                 </div>
             </div>
-            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 rounded-lg">
+            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] px-2.5 py-1 rounded-lg">
                 <span className="text-[8px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide hidden sm:inline">Revisar</span>
                 <ChevronRight size={10} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" strokeWidth={3} />
             </div>
-            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-500 to-sky-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[hsl(var(--primary))] to-[hsl(var(--primary))] opacity-0 group-hover:opacity-100 transition-opacity" />
         </motion.div>
     );
 }

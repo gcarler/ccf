@@ -152,7 +152,7 @@ export default function GroupDetailPage() {
  title: 'Grupos en Casa',
  replaceAll: true,
  content: (
- <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
+ <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
  <div className="px-3 pt-4 pb-3 border-b border-[hsl(var(--border-primary))]">
  <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] transition-colors mb-3 text-[10px] font-semibold uppercase tracking-wide">
  <ArrowLeft size={14} /> Volver a Grupos
@@ -671,7 +671,7 @@ setRemoteResults([]);
  <input
  value={reportTopic}
  onChange={(e) => setReportTopic(e.target.value)}
- className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="Unidad familiar, fe, oración..."
  />
  </div>
@@ -681,7 +681,7 @@ setRemoteResults([]);
  type="number"
  value={reportOfferingAmount}
  onChange={(e) => setReportOfferingAmount(e.target.value)}
- className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="0"
  min="0"
  step="0.01"
@@ -698,7 +698,7 @@ setRemoteResults([]);
  : 'Realizada';
  setReportStatus(nextStatus);
  }}
- className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  >
  <option value="Realizada">Realizada</option>
  <option value="No realizada">No realizada</option>
@@ -710,7 +710,7 @@ setRemoteResults([]);
  <select
  value={reportNoveltyType}
  onChange={(e) => setReportNoveltyType(e.target.value)}
- className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  >
  <option value="">Sin novedad</option>
  <option value="weather">Clima</option>
@@ -728,7 +728,7 @@ setRemoteResults([]);
  <textarea
  value={reportNoveltyDetail}
  onChange={(e) => setReportNoveltyDetail(e.target.value)}
- className="w-full min-h-24 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full min-h-24 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="Explica la novedad o la razón del ajuste..."
  />
  </div>
@@ -737,7 +737,7 @@ setRemoteResults([]);
  <textarea
  value={reportCancellationReason}
  onChange={(e) => setReportCancellationReason(e.target.value)}
- className="w-full min-h-24 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full min-h-24 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="Si no se realizó, explica la causa..."
  />
  </div>
@@ -748,7 +748,7 @@ setRemoteResults([]);
  <textarea
  value={reportNotes}
  onChange={(e) => setReportNotes(e.target.value)}
- className="w-full min-h-28 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full min-h-28 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="Resumen pastoral, acuerdos, seguimiento..."
  />
  </div>
@@ -781,7 +781,7 @@ setRemoteResults([]);
  absence_reason_detail: checked ? null : item.absence_reason_detail || '',
  } : item));
  }}
- className="size-4 rounded border-[hsl(var(--border-primary))] text-[hsl(var(--primary))] focus:ring-blue-500"
+ className="size-4 rounded border-[hsl(var(--border-primary))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
  />
  {attended ? 'Presente' : 'Ausente'}
  </label>
@@ -794,7 +794,7 @@ setRemoteResults([]);
  <select
  value={row.absence_reason || 'other'}
  onChange={(e) => setReportPersonas(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason: e.target.value as AttendanceReason } : item))}
- className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  >
  {reasonOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
  </select>
@@ -804,7 +804,7 @@ setRemoteResults([]);
  <input
  value={row.absence_reason_detail || ''}
  onChange={(e) => setReportPersonas(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason_detail: e.target.value } : item))}
- className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="Especifica el motivo"
  />
  </div>
@@ -876,7 +876,7 @@ setRemoteResults([]);
 
  {/* ADD ATTENDEES INLINE SECTION */}
  {showAddAttendee && (
- <div className="mx-8 mb-3 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
+ <div className="mx-8 mb-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
  <div className="flex items-center justify-between mb-4 pb-4 border-b border-[hsl(var(--border-primary))]">
  <div>
  <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))]">Registrar Asistentes</h3>
@@ -919,7 +919,7 @@ setRemoteResults([]);
  setRemoteQuery(e.target.value);
  }}
  placeholder="Buscar por nombre (>=3 letras)..."
- className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 pl-10 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500"
+ className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 pl-10 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  />
  {remoteLoading && (
  <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] animate-spin" size={14} />
@@ -944,19 +944,19 @@ setRemoteResults([]);
  <div className="flex-1 overflow-y-auto pb-6 space-y-4 pt-2">
  <div>
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Nombres *</label>
- <input value={newPersonaForm.first_name} onChange={e => setNewPersonaForm(p => ({ ...p, first_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. Juan" />
+ <input value={newPersonaForm.first_name} onChange={e => setNewPersonaForm(p => ({ ...p, first_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Ej. Juan" />
  </div>
  <div>
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Apellidos *</label>
- <input value={newPersonaForm.last_name} onChange={e => setNewPersonaForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. Pérez" />
+ <input value={newPersonaForm.last_name} onChange={e => setNewPersonaForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Ej. Pérez" />
  </div>
  <div>
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Teléfono</label>
- <input value={newPersonaForm.phone} onChange={e => setNewPersonaForm(p => ({ ...p, phone: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
+ <input value={newPersonaForm.phone} onChange={e => setNewPersonaForm(p => ({ ...p, phone: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Opcional" />
  </div>
  <div>
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Correo Electrónico</label>
- <input type="email" value={newPersonaForm.email} onChange={e => setNewPersonaForm(p => ({ ...p, email: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="Opcional" />
+ <input type="email" value={newPersonaForm.email} onChange={e => setNewPersonaForm(p => ({ ...p, email: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Opcional" />
  </div>
  <div className="flex gap-3 pt-4">
  <button onClick={() => setIsCreatingPersona(false)} className="flex-1 py-1.5 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] rounded-lg text-sm font-bold hover:bg-[hsl(var(--bg-muted))] transition-all">Cancelar</button>

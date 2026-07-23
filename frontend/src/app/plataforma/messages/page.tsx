@@ -287,7 +287,7 @@ export default function MessagesPage() {
                         onChange={(e) => setConversationFilter(e.target.value)}
                         placeholder="Buscar..."
                         aria-label="Buscar conversaciones"
-                        className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-blue-500/20 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
+                        className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
                     />
                 </div>
             </div>
@@ -551,7 +551,7 @@ export default function MessagesPage() {
                             onChange={(e) => handleSearchChange(e.target.value)}
                             placeholder="Buscar por nombre o email..."
                             aria-label="Buscar usuario para nueva conversación"
-                            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
+                            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white"
                             autoComplete="off"
                         />
                     </div>

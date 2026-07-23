@@ -193,7 +193,7 @@ export default function ContactsPage() {
                         <input
                             type="text"
                             placeholder="Buscar por nombre o fuente..."
-                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 outline-none dark:text-white transition-all"
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-sm font-medium focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] outline-none dark:text-white transition-all"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
@@ -251,7 +251,7 @@ export default function ContactsPage() {
                                         <div className="size-8 rounded-lg bg-blue-500/10 dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--primary))] dark:text-white font-bold text-sm uppercase group-hover:border-blue-400 transition-colors">
                                             {lead.nombre_completo?.charAt(0) || ''}{(lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0]) || ''}
                                         </div>
-                                        <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[#1e1f21] ${getStatusDot(stage)}`} />
+                                        <div className={`absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white dark:border-[hsl(var(--surface-1))] ${getStatusDot(stage)}`} />
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-base tracking-tight group-hover:text-[hsl(var(--primary))] transition-colors">
@@ -396,7 +396,7 @@ export default function ContactsPage() {
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
                                 placeholder="Documenta políticas de seguimiento, guiones de llamada y estándares de consolidación..."
-                                className="w-full min-h-[360px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20"
+                                className="w-full min-h-[360px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                             />
                         </div>
                     ) : (
@@ -437,7 +437,7 @@ export default function ContactsPage() {
                                 value={newLead.first_name}
                                 onChange={e => setNewLead({ ...newLead, first_name: e.target.value })}
                                 placeholder="Juan"
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white"
                             />
                         </div>
                         <div className="space-y-2">
@@ -446,7 +446,7 @@ export default function ContactsPage() {
                                 value={newLead.last_name}
                                 onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
                                 placeholder="Pérez"
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white"
                             />
                         </div>
                     </div>
@@ -456,7 +456,7 @@ export default function ContactsPage() {
                             value={newLead.phone}
                             onChange={e => setNewLead({ ...newLead, phone: e.target.value })}
                             placeholder="+57 300 123 4567"
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white"
                         />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -465,7 +465,7 @@ export default function ContactsPage() {
                             <select
                                 value={newLead.source}
                                 onChange={e => setNewLead({ ...newLead, source: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white appearance-none"
                             >
                                 {SOURCE_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
@@ -475,7 +475,7 @@ export default function ContactsPage() {
                             <select
                                 value={newLead.stage}
                                 onChange={e => setNewLead({ ...newLead, stage: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white appearance-none"
                             >
                                 {PIPELINE_STAGES.map(s => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
                             </select>
@@ -488,7 +488,7 @@ export default function ContactsPage() {
                             onChange={e => setNewLead({ ...newLead, notes: e.target.value })}
                             placeholder="Contexto del contacto inicial..."
                             rows={3}
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white resize-none"
                         />
                     </div>
                 </form>

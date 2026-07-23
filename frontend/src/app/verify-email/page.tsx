@@ -42,7 +42,7 @@ function VerifyEmailContent() {
         initial={{ opacity: 0, x: -30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="flex-[1.2] bg-[#001B48] relative flex flex-col justify-between px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen overflow-hidden"
+        className="flex-[1.2] bg-[hsl(var(--primary))] relative flex flex-col justify-between px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen overflow-hidden"
       >
         <div
           className="absolute top-[-20%] right-[-20%] w-[140%] h-[140%] pointer-events-none z-0"
@@ -78,7 +78,7 @@ function VerifyEmailContent() {
           <h1 className="font-bold tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
             EL <br /> CCF
           </h1>
-          <p className="text-[#018ABD] text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
+          <p className="text-[hsl(var(--primary))] text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
             Comunidad <br /> Cristiana
           </p>
           <div className="w-16 h-1.5 bg-[hsl(var(--bg-primary))] mt-3 rounded-full" />
@@ -121,17 +121,17 @@ function VerifyEmailContent() {
           >
             {status === "loading" && (
               <div className="w-20 h-20 rounded-full bg-[hsl(var(--bg-muted))] flex items-center justify-center">
-                <Loader2 className="w-10 h-10 animate-spin text-[#018ABD]" />
+                <Loader2 className="w-10 h-10 animate-spin text-[hsl(var(--primary))]" />
               </div>
             )}
             {status === "success" && (
-              <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
-                <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+              <div className="w-20 h-20 rounded-full bg-[hsl(var(--success-muted))] flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-[hsl(var(--success))]" />
               </div>
             )}
             {status === "error" && (
-              <div className="w-20 h-20 rounded-full bg-rose-50 flex items-center justify-center">
-                <XCircle className="w-10 h-10 text-rose-500" />
+              <div className="w-20 h-20 rounded-full bg-[hsl(var(--destructive)/0.08)] flex items-center justify-center">
+                <XCircle className="w-10 h-10 text-[hsl(var(--destructive))]" />
               </div>
             )}
           </motion.div>
@@ -141,7 +141,7 @@ function VerifyEmailContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <h2 className="text-[clamp(1.5rem,3vw,2rem)] font-extrabold text-[#001B48] tracking-[-0.02em] leading-none m-0 mb-4">
+            <h2 className="text-[clamp(1.5rem,3vw,2rem)] font-extrabold text-[hsl(var(--primary))] tracking-[-0.02em] leading-none m-0 mb-4">
               {status === "loading" && "Verificando..."}
               {status === "success" && "¡Correo verificado!"}
               {status === "error" && "No pudimos verificar"}
@@ -161,7 +161,7 @@ function VerifyEmailContent() {
               <>
                 <button
                   onClick={() => router.push("/login")}
-                  className="w-full py-1.5 bg-[#018ABD] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[#004581] transition-all"
+                  className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[hsl(var(--primary))] transition-all"
                 >
                   {status === "success" ? "Ir al inicio de sesión →" : "Volver al inicio"}
                 </button>
@@ -193,7 +193,7 @@ function VerifyEmailContent() {
 export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
-      <div className="flex w-screen min-h-screen items-center justify-center bg-[#001B48]">
+      <div className="flex w-screen min-h-screen items-center justify-center bg-[hsl(var(--primary))]">
         <Loader2 className="w-8 h-8 animate-spin text-white" />
       </div>
     }>

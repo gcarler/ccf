@@ -126,7 +126,7 @@ export default function AdminContentList() {
                     content: '';
                     position: absolute;
                     inset: -1px;
-                    background: linear-gradient(45deg, var(--aura-color, #3b82f610), transparent 60%);
+                    background: linear-gradient(45deg, var(--aura-color, hsl(var(--info)/0.1)), transparent 60%);
                     z-index: -1;
                     border-radius: inherit;
                     opacity: 0;
@@ -155,7 +155,7 @@ export default function AdminContentList() {
 
             {/* Cinematic Tabs */}
             <div className="flex px-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--info)/0.05)_0%,_transparent_50%)] pointer-events-none" />
                 <TabBtn label="Cursos CCF" active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} icon={BookOpen} />
                 <TabBtn label="Prédicas HD" active={activeTab === 'sermons'} onClick={() => setActiveTab('sermons')} icon={Video} />
                 <TabBtn label="Guías y Material" active={activeTab === 'resources'} onClick={() => setActiveTab('resources')} icon={FileText} />
@@ -170,7 +170,7 @@ export default function AdminContentList() {
                         <input 
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 pl-16 pr-8 text-sm font-bold shadow-sm focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none"
+                            className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 pl-16 pr-8 text-sm font-bold shadow-sm focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-blue-500 transition-all outline-none"
                             placeholder={`Buscar en la biblioteca de ${activeTab === 'courses' ? 'cursos' : 'contenidos'}...`}
                         />
                     </div>
@@ -191,12 +191,12 @@ export default function AdminContentList() {
                                         onClick={() => openItem(item)}
                                         className="text-left content-aura bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-7 rounded-lg shadow-sm hover:shadow-2xl transition-all"
                                     >
-                                        <div className={clsx("size-8 rounded-lg flex items-center justify-center mb-3", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>
+                                        <div className={clsx("size-8 rounded-lg flex items-center justify-center mb-3", item.is_published ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>
                                             <BookOpen size={30} strokeWidth={1.5} />
                                         </div>
                                         <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight line-clamp-2">{item.title}</h3>
                                         <p className="mt-3 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.code || activeTab} · {item.duration_hours || 0} horas</p>
-                                        <span className={clsx("inline-flex mt-3 px-3 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span>
+                                        <span className={clsx("inline-flex mt-3 px-3 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide", item.is_published ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{item.is_published ? 'Publicado' : 'Borrador'}</span>
                                     </motion.button>
                                 ))}
                             </motion.div>
@@ -216,7 +216,7 @@ export default function AdminContentList() {
                                             <tr key={item.id} onClick={() => openItem(item)} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] cursor-pointer">
                                                 <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.title}</td>
                                                 <td className="px-3 py-1.5 hidden md:table-cell text-[11px] font-mono text-[hsl(var(--text-secondary))]">{item.code || '—'}</td>
-                                                <td className="px-3 py-1.5 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", item.is_published ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600")}>{item.is_published ? 'Publicado' : 'Borrador'}</span></td>
+                                                <td className="px-3 py-1.5 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", item.is_published ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{item.is_published ? 'Publicado' : 'Borrador'}</span></td>
                                                 <td className="px-3 py-1.5"><Edit3 size={16} className="text-[hsl(var(--primary))]" /></td>
                                             </tr>
                                         ))}
@@ -279,7 +279,7 @@ export default function AdminContentList() {
                                         <div className="flex items-center gap-3 flex-1">
                                             <div className={clsx(
                                                 "size-8 rounded-lg flex items-center justify-center shadow-inner group-hover:scale-110 transition-all duration-500",
-                                                item.is_published ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600" : "bg-amber-50 dark:bg-amber-900/20 text-amber-600"
+                                                item.is_published ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]"
                                             )}>
                                                 <BookOpen size={36} strokeWidth={1.5} />
                                             </div>
@@ -299,7 +299,7 @@ export default function AdminContentList() {
                                         <div className="flex items-center gap-4 shrink-0">
                                             <div className={clsx(
                                                 "px-4 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wide border",
-                                                item.is_published ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"
+                                                item.is_published ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] border-[hsl(var(--success)/0.3)]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)]"
                                             )}>
                                                 {item.is_published ? 'Publicado' : 'Borrador'}
                                             </div>

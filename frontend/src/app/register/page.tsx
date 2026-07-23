@@ -120,7 +120,7 @@ export default function RegisterPage() {
 
                 .reg-input-pill {
                     width: 100%;
-                    background-color: #f8fafc;
+                    background-color: hsl(var(--bg-primary));
                     border: 2px solid transparent;
                     border-radius: 9999px;
                     padding: 20px 32px;
@@ -136,7 +136,7 @@ export default function RegisterPage() {
                     outline: none;
                     box-shadow: 0 0 0 4px rgba(1, 138, 189, 0.12);
                 }
-                .reg-input-pill::placeholder { color: #cbd5e1; font-weight: 500; }
+                .reg-input-pill::placeholder { color: hsl(var(--text-muted)); font-weight: 500; }
 
                 .reg-btn-pill {
                     background-color: var(--ccf-blue-light);
@@ -297,7 +297,7 @@ export default function RegisterPage() {
                                 href="/login"
                                 style={{
                                     display: 'inline-flex', alignItems: 'center', gap: '8px',
-                                    color: '#9ca3af', fontSize: '10px', fontWeight: 900,
+                                    color: 'hsl(var(--text-muted))', fontSize: '10px', fontWeight: 900,
                                     textTransform: 'uppercase', letterSpacing: '0.15em',
                                     textDecoration: 'none', transition: 'color 0.2s',
                                 }}
@@ -325,7 +325,7 @@ export default function RegisterPage() {
                                 margin: 0,
                                 marginBottom: '16px',
                             }}>Crear cuenta</h2>
-                            <p style={{ color: '#9ca3af', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '10px', margin: 0 }}>
+                            <p style={{ color: 'hsl(var(--text-muted))', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '10px', margin: 0 }}>
                                 Registro ministerial
                             </p>
                         </motion.div>
@@ -335,7 +335,7 @@ export default function RegisterPage() {
 
                             {/* Nombre */}
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                                <label style={{ fontSize: '10px', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '12px', marginLeft: '8px' }}>
+                                <label style={{ fontSize: '10px', fontWeight: 900, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '12px', marginLeft: '8px' }}>
                                     Nombre completo
                                 </label>
                                 <input
@@ -350,7 +350,7 @@ export default function RegisterPage() {
 
                             {/* Email */}
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.48 }}>
-                                <label style={{ fontSize: '10px', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '12px', marginLeft: '8px' }}>
+                                <label style={{ fontSize: '10px', fontWeight: 900, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '12px', marginLeft: '8px' }}>
                                     Correo ministerial
                                 </label>
                                 <input
@@ -365,7 +365,7 @@ export default function RegisterPage() {
 
                             {/* Contraseña */}
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.56 }}>
-                                <label style={{ fontSize: '10px', fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '12px', marginLeft: '8px' }}>
+                                <label style={{ fontSize: '10px', fontWeight: 900, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '12px', marginLeft: '8px' }}>
                                     Contraseña
                                 </label>
                                 <div style={{ position: 'relative' }}>
@@ -382,7 +382,7 @@ export default function RegisterPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', color: '#cbd5e1', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}
+                                        style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--text-muted))', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}
                                     >
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
@@ -404,7 +404,7 @@ export default function RegisterPage() {
                                         <span style={{ fontSize: '10px', fontWeight: 900, color: 'var(--ccf-blue-light)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
                                             Rol: Estudiante
                                         </span>
-                                        <p style={{ margin: 0, fontSize: '10px', color: '#9ca3af', marginTop: '2px' }}>
+                                        <p style={{ margin: 0, fontSize: '10px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
                                             Acceso estándar a academia y recursos.
                                         </p>
                                     </div>
@@ -420,10 +420,10 @@ export default function RegisterPage() {
                                         exit={{ opacity: 0, scale: 0.96 }}
                                         style={{
                                             padding: '14px 24px',
-                                            backgroundColor: '#fff1f2',
-                                            border: '2px solid #fecdd3',
+                                            backgroundColor: 'hsl(var(--destructive)/0.1)',
+                                            border: '2px solid hsl(var(--destructive)/0.2)',
                                             borderRadius: '9999px',
-                                            color: '#e11d48',
+                                            color: 'hsl(var(--destructive))',
                                             fontSize: '11px',
                                             fontWeight: 900,
                                             textAlign: 'center',
@@ -478,7 +478,7 @@ export default function RegisterPage() {
                             transition={{ delay: 0.9 }}
                             style={{ textAlign: 'center', marginTop: '36px' }}
                         >
-                            <p style={{ color: '#9ca3af', fontSize: '10px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                            <p style={{ color: 'hsl(var(--text-muted))', fontSize: '10px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '10px' }}>
                                 ¿Ya tienes una cuenta ministerial?
                             </p>
                             <Link

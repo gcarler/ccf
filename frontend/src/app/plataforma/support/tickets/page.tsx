@@ -135,7 +135,7 @@ export default function SupportTicketsPage() {
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Buscar ticket..."
-                        className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-md text-[12px] focus:ring-2 focus:ring-blue-500/20 w-56 transition-all text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+                        className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-md text-[12px] focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-56 transition-all text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                     />
                 </div>
                 <button
@@ -248,7 +248,7 @@ export default function SupportTicketsPage() {
                             value={draft.subject}
                             onChange={(event) => setDraft((current) => ({ ...current, subject: event.target.value }))}
                             placeholder="Describe brevemente el problema..."
-                            className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500/20 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+                            className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                         />
                     </div>
                     <div className="space-y-1.5">
@@ -258,7 +258,7 @@ export default function SupportTicketsPage() {
                             value={draft.description}
                             onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))}
                             placeholder="Explica el problema en detalle..."
-                            className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-sm outline-none focus:ring-2 focus:ring-blue-500/20 resize-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+                            className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] resize-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                         />
                     </div>
                 </form>

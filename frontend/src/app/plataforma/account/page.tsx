@@ -121,7 +121,7 @@ export default function AccountSettingsPage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Cuenta" sidebarSections={sidebarSections}>
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: SITE_NAME, icon: Layout }, { label: 'Ajustes de Cuenta', icon: SettingsIcon }]}
                 viewType={viewType}
@@ -130,7 +130,7 @@ export default function AccountSettingsPage() {
                 rightActions={
                     <button 
                         onClick={handleSave} disabled={isSaving}
-                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isSaving ? <><Sparkles size={14} className="animate-spin" /> Guardando</> : <><Save size={14} /> Guardar Cambios</>}
                     </button>
@@ -200,15 +200,15 @@ export default function AccountSettingsPage() {
                     ))}
 
                     <div className="pt-10 mt-3 border-t border-[hsl(var(--border))] dark:border-white/5">
-                        <button onClick={logout} className="w-full flex items-center gap-4 px-3 py-1.5 rounded-lg font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all group">
+                        <button onClick={logout} className="w-full flex items-center gap-4 px-3 py-1.5 rounded-lg font-semibold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.1)] transition-all group">
                             <LogOut size={20} className="group-hover:-translate-x-1 transition-transform" /> Cerrar Sesión
                         </button>
                     </div>
                 </aside>
 
                 {/* Content Area 3.0 */}
-                <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] relative">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#1973f003_0%,_transparent_50%)] pointer-events-none" />
+                <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] relative">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--primary)/0.03)_0%,_transparent_50%)] pointer-events-none" />
                     
  <div className="w-full relative z-10">
                         <AnimatePresence mode="wait">
@@ -223,7 +223,7 @@ export default function AccountSettingsPage() {
                                             <div className="size-10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-2 border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-500 group-hover:shadow-2xl group-hover:scale-105 duration-500">
                                                 <OptimizedImage src={`https://ui-avatars.com/api/?name=${user?.username}&background=2563eb&color=fff&size=128`} alt="Avatar" width={128} height={128} />
                                             </div>
-                                            <div className="absolute -bottom-2 -right-2 size-10 bg-[hsl(var(--primary))] text-white rounded-lg flex items-center justify-center shadow-2xl border-4 border-white dark:border-[#1e1f21] group-hover:scale-110 transition-transform">
+                                            <div className="absolute -bottom-2 -right-2 size-10 bg-[hsl(var(--primary))] text-white rounded-lg flex items-center justify-center shadow-2xl border-4 border-white dark:border-[hsl(var(--surface-1))] group-hover:scale-110 transition-transform">
                                                 <Camera size={18} />
                                             </div>
                                         </div>
@@ -231,15 +231,15 @@ export default function AccountSettingsPage() {
                                             <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">Tu Perfil Público</h3>
                                             <p className="text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-sm">Esta es tu identidad dentro de la comunidad CCF.</p>
                                             <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-4">
-                                                <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-blue-100 dark:border-blue-900/50 flex items-center gap-2"><ShieldCheck size={12} /> {user?.role || 'Persona'}</div>
+                    <div className="px-3 py-1 bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--primary))/0.2] dark:border-[hsl(var(--info)/0.4)] flex items-center gap-2"><ShieldCheck size={12} /> {user?.role || 'Persona'}</div>
                                                 <div className="px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10 flex items-center gap-2"><Globe size={12} /> Sede Central</div>
                                             </div>
                                         </div>
                                     </section>
 
                                     {!user?.is_email_verified && (
-                                        <div className="flex items-center justify-between gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-lg">
-                                            <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-300">
+                                        <div className="flex items-center justify-between gap-3 p-3 bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.15)] border border-[hsl(var(--warning))/0.2] dark:border-[hsl(var(--warning))/0.3] rounded-lg">
+                                            <div className="flex items-center gap-2 text-sm font-medium text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
                                                 <Shield size={16} />
                                                 <span>Correo no verificado — algunas funciones pueden estar limitadas</span>
                                             </div>
@@ -255,7 +255,7 @@ export default function AccountSettingsPage() {
                                                         addToast("Error al enviar verificación", "error");
                                                     }
                                                 }}
-                                                className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400 hover:text-amber-900 shrink-0"
+                                                className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))] hover:text-[hsl(var(--warning))] shrink-0"
                                             >
                                                 Reenviar
                                             </button>
@@ -272,8 +272,8 @@ export default function AccountSettingsPage() {
                                         </div>
                                     </section>
 
-                                    <section className="p-4 bg-gradient-to-br from-[hsl(var(--bg-muted))] to-[#1e1f21] rounded-lg border border-white/5 text-white flex items-center justify-between shadow-2xl relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 w-64 h-48 bg-blue-600/10 rounded-full blur-[100px] group-hover:scale-110 transition-transform duration-1000" />
+                                    <section className="p-4 bg-gradient-to-br from-[hsl(var(--bg-muted))] to-[hsl(var(--bg-muted))] rounded-lg border border-white/5 text-white flex items-center justify-between shadow-2xl relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-64 h-48 bg-[hsl(var(--primary))/0.1] rounded-full blur-[100px] group-hover:scale-110 transition-transform duration-1000" />
                                         <div className="relative z-10 flex items-center gap-3">
                                             <div className="size-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-[hsl(var(--primary))] shadow-xl group-hover:rotate-12 transition-transform duration-500"><Smartphone size={32} /></div>
                                             <div>
@@ -293,7 +293,7 @@ export default function AccountSettingsPage() {
                                 >
                                     <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
                                         <div className="flex items-center gap-4">
-                                            <div className="size-7 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-500 flex items-center justify-center shadow-inner"><Lock size={24} /></div>
+                                            <div className="size-7 rounded-lg bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))] flex items-center justify-center shadow-inner"><Lock size={24} /></div>
                                             <h3 className="text-lg font-bold tracking-tighter">Cambiar Contraseña</h3>
                                         </div>
                                         <div className="space-y-3">
@@ -336,14 +336,14 @@ export default function AccountSettingsPage() {
                                                     }
                                                 }}
                                                 disabled={isChangingPassword}
-                                                className="mt-3 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-blue-500/20 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
+                                                className="mt-3 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
                                             >
                                                 {isChangingPassword ? 'Guardando...' : 'Cambiar Contraseña'}
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-blue-50/50 dark:bg-blue-500/5 rounded-lg border border-blue-100 dark:border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-3 group">
+                                    <div className="p-4 bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.05)] rounded-lg border border-[hsl(var(--primary))/0.2] dark:border-[hsl(var(--info))/0.2] flex flex-col md:flex-row items-center justify-between gap-3 group">
                                         <div className="flex items-center gap-3">
                                             <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--primary))] shadow-xl group-hover:scale-110 transition-transform"><Fingerprint size={32} /></div>
                                             <div>
@@ -351,7 +351,7 @@ export default function AccountSettingsPage() {
                                                 <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm font-medium">Recomendado para cuentas administrativas y docentes.</p>
                                             </div>
                                         </div>
-                                        <div className="h-8 w-14 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full relative cursor-pointer group-hover:bg-blue-600/20 transition-all p-1">
+                                        <div className="h-8 w-14 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full relative cursor-pointer group-hover:bg-[hsl(var(--primary))/0.2] transition-all p-1">
                                             <div className="size-6 bg-[hsl(var(--bg-primary))] rounded-full shadow-lg" />
                                         </div>
                                     </div>
@@ -371,7 +371,7 @@ export default function AccountSettingsPage() {
 
                                     <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 space-y-3">
                                         <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Idioma y Localización</h3>
-                                        <div className="flex items-center justify-between p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-sm cursor-pointer hover:border-blue-500/30 transition-all group">
+                                        <div className="flex items-center justify-between p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-sm cursor-pointer hover:border-[hsl(var(--primary))/0.3] transition-all group">
                                             <div className="flex items-center gap-4">
                                                 <Globe size={24} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                                                 <div>
@@ -404,7 +404,7 @@ function InputField({ label, icon: Icon, value, placeholder, type = "text", onCh
                     type={type} value={value} placeholder={placeholder}
                     onChange={(e) => onChange?.(e.target.value)}
                     className={clsx(
-                        "w-full bg-[hsl(var(--surface-1))] dark:bg-black/40 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 pr-6 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/50 focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-black/60 outline-none transition-all",
+                        "w-full bg-[hsl(var(--surface-1))] dark:bg-black/40 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 pr-6 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-blue-500/50 focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-black/60 outline-none transition-all",
                         Icon ? "pl-14" : "pl-6"
                     )}
                 />
@@ -418,7 +418,7 @@ function ThemeCard({ label, icon: Icon, active }: any) {
         <div className={clsx(
             "p-4 rounded-lg border-2 cursor-pointer transition-all flex flex-col items-center gap-3 group relative overflow-hidden",
             active 
-                ? "border-blue-600 bg-blue-50/50 dark:bg-blue-500/10 shadow-2xl shadow-blue-500/10 scale-[1.02]" 
+                ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] shadow-2xl shadow-[hsl(var(--primary))/0.1] scale-[1.02]" 
                 : "border-[hsl(var(--border))] dark:border-white/5 hover:border-blue-200 hover:scale-[1.02]"
         )}>
             {active && <div className="absolute top-4 right-4 size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_rgba(59,130,246,0.8)]" />}

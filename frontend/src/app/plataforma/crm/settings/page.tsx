@@ -217,7 +217,7 @@ export default function CrmSettingsPage() {
                                         <SettingInput disabled={!canEditCrm} label="Email de Respuesta Público" value={config.contactEmail} onChange={(val: string) => setConfig({...config, contactEmail: val})} />
                                         <div className="space-y-1.5">
                                             <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-1">Zona Horaria Base</label>
-                                            <select disabled={!canEditCrm} className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] dark:bg-black/20 dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer disabled:opacity-50" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
+                                            <select disabled={!canEditCrm} className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] dark:bg-black/20 dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all appearance-none cursor-pointer disabled:opacity-50" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
                                                 <option value="America/Bogota">Bogotá (GMT-5)</option>
                                                 <option value="America/New_York">New York (GMT-4)</option>
                                                 <option value="Europe/Madrid">Madrid (GMT+2)</option>
@@ -337,7 +337,7 @@ export default function CrmSettingsPage() {
                                                     value={positionForm.description}
                                                     onChange={(e) => setPositionForm({ ...positionForm, description: e.target.value })}
                                                     rows={4}
-                                                    className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] dark:bg-black/20 dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-[hsl(var(--text-secondary))]"
+                                                    className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] dark:bg-black/20 dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all placeholder:text-[hsl(var(--text-secondary))]"
                                                 />
                                             </div>
                                             <label className="flex items-center gap-3 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
@@ -346,7 +346,7 @@ export default function CrmSettingsPage() {
                                                     type="checkbox"
                                                     checked={positionForm.is_active}
                                                     onChange={(e) => setPositionForm({ ...positionForm, is_active: e.target.checked })}
-                                                    className="size-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-blue-500"
+                                                    className="size-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
                                                 />
                                                 Activo
                                             </label>

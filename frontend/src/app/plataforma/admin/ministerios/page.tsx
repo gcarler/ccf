@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-white/20";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-white/20";
 const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]";
 
 interface Ministry {

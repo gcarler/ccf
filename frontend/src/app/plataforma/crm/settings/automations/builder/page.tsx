@@ -133,7 +133,7 @@ export default function AutomationBuilderPage() {
                     style: {
                         background: aut.is_active ? 'var(--card-bg, #ffffff)' : '#f3f4f6',
                         color: 'var(--text-primary, #111827)',
-                        border: '2px solid ' + (aut.is_active ? '#3b82f6' : '#d1d5db'),
+                        border: '2px solid ' + (aut.is_active ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))'),
                         borderRadius: '8px',
                         padding: '12px',
                         width: 200,
@@ -157,10 +157,10 @@ export default function AutomationBuilderPage() {
                 },
                 markerEnd: {
                     type: MarkerType.ArrowClosed,
-                    color: '#3b82f6'
+                    color: 'hsl(var(--primary))'
                 },
                 style: {
-                    stroke: '#3b82f6',
+                    stroke: 'hsl(var(--primary))',
                     strokeWidth: 2
                 }
             }));
@@ -192,10 +192,10 @@ export default function AutomationBuilderPage() {
             },
             markerEnd: {
                 type: MarkerType.ArrowClosed,
-                color: '#3b82f6'
+                color: 'hsl(var(--primary))'
             },
             style: {
-                stroke: '#3b82f6',
+                stroke: 'hsl(var(--primary))',
                 strokeWidth: 2
             }
         };
@@ -245,9 +245,9 @@ export default function AutomationBuilderPage() {
                     automation: created
                 },
                 style: {
-                    background: '#ffffff',
-                    color: '#111827',
-                    border: '2px solid #3b82f6',
+                    background: 'hsl(var(--bg-primary))',
+                    color: 'hsl(var(--text-primary))',
+                    border: '2px solid hsl(var(--primary))',
                     borderRadius: '8px',
                     padding: '12px',
                     width: 200,
@@ -433,14 +433,14 @@ export default function AutomationBuilderPage() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => router.push('/plataforma/crm/messaging/automations')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-white/10 rounded-md text-[11px] font-bold uppercase hover:bg-slate-50 dark:hover:bg-white/5 transition-all text-slate-700 dark:text-slate-200"
+                        className="flex items-center gap-1.5 px-3 py-1.5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[11px] font-bold uppercase hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                     >
                         <ArrowLeft size={12} /> Volver
                     </button>
                     <button
                         onClick={handleSaveGraph}
                         disabled={saving}
-                        className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-1.5 rounded-md text-[11px] font-bold uppercase hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50"
+                        className="flex items-center gap-1.5 bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-md text-[11px] font-bold uppercase hover:bg-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary)/0.2)] transition-all disabled:opacity-50"
                     >
                         {saving ? 'Guardando...' : <Save size={12} />}
                         Guardar Flujo
@@ -450,7 +450,7 @@ export default function AutomationBuilderPage() {
         >
             <div className="flex-1 flex overflow-hidden h-[calc(100vh-120px)]">
                 {/* Visual Area */}
-                <div className="flex-1 relative h-full bg-slate-50 dark:bg-slate-900">
+                <div className="flex-1 relative h-full bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]">
                     {loading ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                             <Skeleton className="h-10 w-48 rounded-md" />
@@ -475,7 +475,7 @@ export default function AutomationBuilderPage() {
                             <Panel position="top-left">
                                 <button
                                     onClick={handleAddNode}
-                                    className="flex items-center gap-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-3 py-2 border border-slate-200 dark:border-white/10 rounded-md shadow text-xs font-bold uppercase tracking-wide hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                                    className="flex items-center gap-1 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-white px-3 py-2 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-3))] transition-all"
                                 >
                                     <Plus size={14} /> Añadir Paso
                                 </button>
@@ -485,53 +485,53 @@ export default function AutomationBuilderPage() {
                 </div>
 
                 {/* Right Properties Panel */}
-                <div className="w-80 border-l border-slate-200 dark:border-white/10 bg-white dark:bg-slate-950 flex flex-col overflow-y-auto">
-                    <div className="p-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50">
-                        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">Propiedades del Elemento</h3>
+                <div className="w-80 border-l border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] flex flex-col overflow-y-auto">
+                    <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50">
+                        <h3 className="font-bold text-xs uppercase tracking-wider text-[hsl(var(--text-secondary))]">Propiedades del Elemento</h3>
                     </div>
 
                     <div className="p-4 flex-1 space-y-4">
                         {selectedNode ? (
                             <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-slate-800 dark:text-white font-bold text-sm">
-                                    <Settings size={16} className="text-blue-500" />
+                                <div className="flex items-center gap-2 text-[hsl(var(--text-primary))] dark:text-white font-bold text-sm">
+                                    <Settings size={16} className="text-[hsl(var(--primary))]" />
                                     <span>Configurar Paso</span>
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Nombre del paso</label>
+                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre del paso</label>
                                     <input
                                         type="text"
                                         value={selectedNode.data.automation.name}
                                         onChange={e => handleUpdateNodeField('name', e.target.value)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 outline-none text-xs text-slate-800 dark:text-white font-bold"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
                                     />
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Disparador (Trigger)</label>
+                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Disparador (Trigger)</label>
                                     <select
                                         value={selectedNode.data.automation.trigger_event}
                                         onChange={e => handleUpdateNodeField('trigger_event', e.target.value)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 outline-none text-xs text-slate-800 dark:text-white font-bold"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
                                     >
                                         {TRIGGERS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                     </select>
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Acción a realizar</label>
+                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Acción a realizar</label>
                                     <select
                                         value={selectedNode.data.automation.action_type}
                                         onChange={e => handleUpdateNodeField('action_type', e.target.value)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 outline-none text-xs text-slate-800 dark:text-white font-bold"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
                                     >
                                         {ACTIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                                     </select>
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1">
+                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1">
                                         <Clock size={12} />
                                         Retardo de ejecución (minutos)
                                     </label>
@@ -540,50 +540,50 @@ export default function AutomationBuilderPage() {
                                         min="0"
                                         value={selectedNode.data.automation.delay_minutes || 0}
                                         onChange={e => handleUpdateNodeField('delay_minutes', parseInt(e.target.value) || 0)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 outline-none text-xs text-slate-800 dark:text-white font-bold"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
                                     />
                                 </div>
 
                                 {selectedNode.data.automation.action_type === 'create_task' ? (
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Título de Tarea Pastoral</label>
+                                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Título de Tarea Pastoral</label>
                                         <input
                                             type="text"
                                             value={readPayloadText(selectedNode.data.automation.action_payload, 'task_title')}
                                             onChange={e => handleUpdateNodePayload('task_title', e.target.value)}
                                             placeholder="Visitar al nuevo contacto"
-                                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 outline-none text-xs text-slate-800 dark:text-white font-bold"
+                                            className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
                                         />
                                     </div>
                                 ) : (
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Mensaje de Notificación</label>
+                                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Mensaje de Notificación</label>
                                         <textarea
                                             value={readPayloadText(selectedNode.data.automation.action_payload, 'message')}
                                             onChange={e => handleUpdateNodePayload('message', e.target.value)}
                                             placeholder="Hola {nombre}, ¡bienvenido a nuestra comunidad!"
                                             rows={4}
-                                            className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 outline-none text-xs text-slate-800 dark:text-white font-bold resize-none"
+                                            className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold resize-none"
                                         />
                                     </div>
                                 )}
 
                                 <div className="flex items-center gap-3 pt-2">
-                                    <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                                    <label className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={selectedNode.data.automation.is_active}
                                             onChange={e => handleUpdateNodeField('is_active', e.target.checked)}
-                                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 size-4"
+                                            className="rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))] size-4"
                                         />
                                         Activo / En funcionamiento
                                     </label>
                                 </div>
 
-                                <div className="border-t border-slate-200 dark:border-white/10 pt-4 mt-4">
+                                <div className="border-t border-[hsl(var(--border))] dark:border-white/10 pt-4 mt-4">
                                     <button
                                         onClick={handleDeleteNode}
-                                        className="w-full flex items-center justify-center gap-2 py-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 rounded-md text-xs font-bold uppercase transition-all"
+                                        className="w-full flex items-center justify-center gap-2 py-2 bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.2)] border border-[hsl(var(--destructive)/0.2)] dark:border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.15)] rounded-md text-xs font-bold uppercase transition-all"
                                     >
                                         <Trash2 size={14} />
                                         Eliminar Paso
@@ -592,17 +592,17 @@ export default function AutomationBuilderPage() {
                             </div>
                         ) : selectedEdge ? (
                             <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-slate-800 dark:text-white font-bold text-sm">
-                                    <GitBranch size={16} className="text-blue-500" />
+                                <div className="flex items-center gap-2 text-[hsl(var(--text-primary))] dark:text-white font-bold text-sm">
+                                    <GitBranch size={16} className="text-[hsl(var(--primary))]" />
                                     <span>Configurar Conexión</span>
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Tipo de Condición</label>
+                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tipo de Condición</label>
                                     <select
                                         value={selectedEdge.data?.condition_type || 'always'}
                                         onChange={e => handleUpdateEdgeField('condition_type', e.target.value)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 outline-none text-xs text-slate-800 dark:text-white font-bold"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
                                     >
                                         {CONDITION_TYPES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                                     </select>
@@ -611,37 +611,37 @@ export default function AutomationBuilderPage() {
                                 {selectedEdge.data?.condition_type !== 'always' && (
                                     <>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Variable / Campo a evaluar</label>
+                                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Variable / Campo a evaluar</label>
                                             <input
                                                 type="text"
                                                 value={selectedEdge.data?.condition_key || ''}
                                                 onChange={e => handleUpdateEdgeField('condition_key', e.target.value)}
                                                 placeholder="Ej: stage, delivery_status"
-                                                className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 outline-none text-xs text-slate-800 dark:text-white font-bold"
+                                                className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
                                             />
                                         </div>
 
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Valor Esperado</label>
+                                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Valor Esperado</label>
                                             <input
                                                 type="text"
                                                 value={selectedEdge.data?.condition_value || ''}
                                                 onChange={e => handleUpdateEdgeField('condition_value', e.target.value)}
                                                 placeholder="Ej: read, active"
-                                                className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 outline-none text-xs text-slate-800 dark:text-white font-bold"
+                                                className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
                                             />
                                         </div>
                                     </>
                                 )}
 
-                                <div className="border-t border-slate-200 dark:border-white/10 pt-4 mt-4">
+                                <div className="border-t border-[hsl(var(--border))] dark:border-white/10 pt-4 mt-4">
                                     <button
                                         onClick={() => {
                                             setEdges(eds => eds.filter(e => e.id !== selectedEdge.id));
                                             setSelectedEdge(null);
                                             addToast('Conexión eliminada', 'info');
                                         }}
-                                        className="w-full flex items-center justify-center gap-2 py-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 rounded-md text-xs font-bold uppercase transition-all"
+                                        className="w-full flex items-center justify-center gap-2 py-2 bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.2)] border border-[hsl(var(--destructive)/0.2)] dark:border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.15)] rounded-md text-xs font-bold uppercase transition-all"
                                     >
                                         <Trash2 size={14} />
                                         Eliminar Conexión
@@ -649,10 +649,10 @@ export default function AutomationBuilderPage() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center text-center text-slate-400 py-12 px-4">
-                                <AlertTriangle size={32} className="mb-2 opacity-55 text-slate-400" />
+                            <div className="flex flex-col items-center justify-center text-center text-[hsl(var(--text-secondary))] py-12 px-4">
+                                <AlertTriangle size={32} className="mb-2 opacity-55 text-[hsl(var(--text-secondary))]" />
                                 <p className="text-xs font-bold">Ningún elemento seleccionado</p>
-                                <p className="text-[11px] mt-1 text-slate-500">Selecciona un paso o una línea de conexión para editar sus configuraciones específicas.</p>
+                                <p className="text-[11px] mt-1 text-[hsl(var(--text-secondary))]">Selecciona un paso o una línea de conexión para editar sus configuraciones específicas.</p>
                             </div>
                         )}
                     </div>

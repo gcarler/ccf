@@ -33,7 +33,7 @@ export default function OnboardingPage() {
     const prevStep = () => setStep(prev => prev - 1);
 
     return (
-        <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] flex flex-col items-center justify-center p-3 lg:p-4 overflow-hidden relative">
+        <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] flex flex-col items-center justify-center p-3 lg:p-4 overflow-hidden relative">
             {/* Background Orbs */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20 dark:opacity-40">
                 <div className="absolute top-[-10%] left-[-10%] size-96 bg-[hsl(var(--primary))] rounded-full blur-[120px] animate-pulse" />
@@ -60,7 +60,7 @@ export default function OnboardingPage() {
                 </div>
             </div>
 
-            <main className="relative z-10 w-full max-w-2xl bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-lg p-4 lg:p-4 shadow-2xl border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden">
+            <main className="relative z-10 w-full max-w-2xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg p-4 lg:p-4 shadow-2xl border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden">
                 <AnimatePresence mode="wait">
                     {step === 1 && (
                         <motion.div 

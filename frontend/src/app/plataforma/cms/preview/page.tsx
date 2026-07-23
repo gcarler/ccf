@@ -140,7 +140,7 @@ function CmsPreviewInner() {
               onClick={() => setAutoRefresh(!autoRefresh)}
               className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors ${
                 autoRefresh
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  ? "border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:border-[hsl(var(--success)/0.7)] dark:bg-[hsl(var(--success)/0.3)] dark:text-[hsl(var(--success))]"
                   : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] dark:border-white/10"
               }`}
               title={autoRefresh ? "Pausar auto-refresh" : "Activar auto-refresh"}
@@ -162,7 +162,7 @@ function CmsPreviewInner() {
         <div className="mx-auto max-w-6xl overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-xl dark:border-white/10 dark:bg-[hsl(var(--admin-bg-surface))]">
           <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
             <Monitor size={13} /> Draft actual
-            {autoRefresh && <span className="ml-auto text-emerald-600 dark:text-emerald-400">● Auto-refresh activo</span>}
+            {autoRefresh && <span className="ml-auto text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">● Auto-refresh activo</span>}
           </div>
           <div style={previewTokens} className="min-h-[70vh] px-3 py-1.5 md:px-4 lg:px-4 space-y-3">
             {loading ? (

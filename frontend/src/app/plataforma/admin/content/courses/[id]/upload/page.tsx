@@ -70,7 +70,7 @@ export default function UploadMaterials() {
                         </div>
                         <div className="h-2.5 w-full rounded-full bg-[hsl(var(--bg-muted))] border border-white/5 p-0.5">
                             <div
-                                className="h-full rounded-full bg-gradient-to-r from-primary-400 to-primary shadow-[0_0_8px_#259df4] transition-all duration-500"
+                                className="h-full rounded-full bg-gradient-to-r from-primary-400 to-primary shadow-[0_0_8px_hsl(var(--info))] transition-all duration-500"
                                 style={{ width: `${uploadProgress}%` }}
                             ></div>
                         </div>
@@ -105,7 +105,7 @@ export default function UploadMaterials() {
                 <section className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="size-7 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 shadow-lg">
+                            <div className="size-7 rounded-lg bg-[hsl(var(--warning)/0.1)] flex items-center justify-center text-[hsl(var(--warning))] shadow-lg">
                                 <Mic size={28} />
                             </div>
                             <div>
@@ -113,15 +113,15 @@ export default function UploadMaterials() {
                                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">MP3 • Máx. 100MB</p>
                             </div>
                         </div>
-                        <CheckCircle2 size={24} className="text-emerald-500" />
+                        <CheckCircle2 size={24} className="text-[hsl(var(--success))]" />
                     </div>
                     <div className="space-y-3">
                         <div className="flex justify-between items-center text-[10px] font-semibold uppercase tracking-wide">
-                            <span className="text-emerald-500">Carga completada</span>
-                            <span className="text-emerald-500">100%</span>
+                            <span className="text-[hsl(var(--success))]">Carga completada</span>
+                            <span className="text-[hsl(var(--success))]">100%</span>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-emerald-500/20">
-                            <div className="h-full rounded-full bg-emerald-500 w-full shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
+                        <div className="h-2 w-full rounded-full bg-[hsl(var(--success)/0.2)]">
+                            <div className="h-full rounded-full bg-[hsl(var(--success))] w-full shadow-[0_0_8px_hsl(var(--success)/0.4)]"></div>
                         </div>
                         <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] italic">podcast_leccion_01.mp3 • 45.2 MB</p>
                     </div>

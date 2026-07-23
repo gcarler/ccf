@@ -4,7 +4,7 @@ const shimmer = 'bg-gradient-to-r from-transparent via-white/40 to-transparent d
 
 export default function ProjectsLoading() {
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden font-display">
             <div className="h-8 border-b border-white/10 bg-white/60 dark:bg-black/20" />
             <main className="flex-1 overflow-y-auto scrollbar-none p-3 lg:p-4 space-y-3">
                 <header className="space-y-3">

@@ -15,15 +15,15 @@ import clsx from 'clsx';
 import { CrmTask } from '@/types/crm';
 
 const priorityTone: Record<string, string> = {
-    'urgent': 'bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800',
-    'high': 'bg-orange-100 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800',
-    'normal': 'bg-blue-100 text-[hsl(var(--primary))] border-blue-200 dark:bg-blue-900/20 dark:border-blue-800',
+    'urgent': 'bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.2)] dark:bg-[hsl(var(--destructive)/0.2)] dark:border-[hsl(var(--destructive)/0.8)]',
+    'high': 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.2)] dark:border-[hsl(var(--warning)/0.8)]',
+    'normal': 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.2)] dark:bg-[hsl(var(--primary)/0.2)] dark:border-[hsl(var(--primary)/0.8)]',
     'low': 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-2))] dark:border-[hsl(var(--border))]'
 };
 
 const statusTone: Record<string, string> = {
     'todo': 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-2))]',
-    'done': 'bg-emerald-100 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
+    'done': 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] border-[hsl(var(--success)/0.2)] dark:bg-[hsl(var(--success)/0.2)] dark:border-[hsl(var(--success)/0.8)]'
 };
 
 export default function MyTasks() {
@@ -87,14 +87,14 @@ export default function MyTasks() {
             }
         >
         {error && (
-            <div className="mb-4 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+            <div className="mb-4 flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] p-4 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
                 <div>
                     <p className="text-[11px] font-bold uppercase tracking-wide">No se pudieron cargar las tareas</p>
                     <p className="text-xs">{error}</p>
                 </div>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                    className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
                 >
                     Reintentar
                 </button>
@@ -108,7 +108,7 @@ export default function MyTasks() {
                 content: '';
                 position: absolute;
                 inset: -1px;
-                background: linear-gradient(45deg, var(--aura-color, #3b82f620), transparent 60%);
+                background: linear-gradient(45deg, var(--aura-color, hsl(var(--info)/0.2)), transparent 60%);
                 z-index: -1;
                 border-radius: inherit;
                 opacity: 0;
@@ -153,7 +153,7 @@ export default function MyTasks() {
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex-1 min-w-[240px] bg-gradient-to-br from-blue-600 to-sky-700 rounded-md p-4 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
+                    className="flex-1 min-w-[240px] bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary))] rounded-md p-4 text-white shadow-2xl shadow-[hsl(var(--primary)/0.2)] relative overflow-hidden group"
                 >
                     <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
                     <div className="flex items-center gap-3 mb-3 relative z-10">
@@ -172,16 +172,16 @@ export default function MyTasks() {
                     style={{ '--aura-color': 'rgba(244, 63, 94, 0.15)' } as React.CSSProperties}
                 >
                     <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-md text-rose-500 border border-rose-100 dark:border-rose-800"><AlertCircle size={18} /></div>
+                        <div className="p-2 bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.2)] rounded-md text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.1)] dark:border-[hsl(var(--destructive)/0.8)]"><AlertCircle size={18} /></div>
                         <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vencidas</span>
                     </div>
                     <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2 tracking-tighter">{stats.overdue}</h3>
-                    <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wide">Requiere atención</p>
+                    <p className="text-[10px] font-bold text-[hsl(var(--destructive))] uppercase tracking-wide">Requiere atención</p>
                 </motion.div>
             </section>
 
             {/* List View Cinematic */}
-            <section className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] rounded-lg p-4 shadow-2xl shadow-black/10/50 dark:shadow-none border border-[hsl(var(--border))] dark:border-white/5">
+            <section className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] rounded-lg p-4 shadow-2xl shadow-black/10/50 dark:shadow-none border border-[hsl(var(--border))] dark:border-white/5">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex p-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg">
                         {[
@@ -202,7 +202,7 @@ export default function MyTasks() {
                     </div>
                     <div className="relative w-full md:w-64">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
-                        <input className="w-full pl-11 pr-4 py-2.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-xs font-bold" placeholder="Buscar en mi agenda..." />
+                        <input className="w-full pl-11 pr-4 py-2.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] transition-all text-xs font-bold" placeholder="Buscar en mi agenda..." />
                     </div>
                 </div>
 
@@ -242,7 +242,7 @@ export default function MyTasks() {
                                             >
                                                 <td className="px-3 py-2">
                                                     <div className="flex items-center gap-4">
-                                                        <div className="size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                                                        <div className="size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_hsl(var(--primary)/0.5)]"></div>
                                                         <div>
                                                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] tracking-tight uppercase">{task.title}</p>
                                                             <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold line-clamp-1">{task.description || 'Sin descripción adicional'}</p>

@@ -93,7 +93,7 @@ export default function StudentProgressPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden font-sans relative">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden font-sans relative">
             {/* Ambient Background Glows */}
             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-sky-600/5 rounded-full blur-[100px] pointer-events-none" />
@@ -176,7 +176,7 @@ export default function StudentProgressPage() {
  className="w-full space-y-3"
                 >
                     {/* Hero Section Premium */}
-                    <motion.section variants={itemVariants} className="relative rounded-lg bg-[#001b48] overflow-hidden group border border-white/10 shadow-2xl">
+                    <motion.section variants={itemVariants} className="relative rounded-lg bg-[hsl(var(--primary))] overflow-hidden group border border-white/10 shadow-2xl">
                         <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.05] mix-blend-overlay" />
                         <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-400/20 via-blue-900/10 to-transparent blur-3xl pointer-events-none" />
                         
@@ -210,7 +210,7 @@ export default function StudentProgressPage() {
                                 <p className="text-[hsl(var(--text-secondary))] font-medium">Desglose de notas y asistencia de tus inscripciones.</p>
                             </div>
                             <div className="flex gap-2">
-                                <button className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm"><Search size={18} className="text-[hsl(var(--text-secondary))]" /></button>
+                                <button className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm"><Search size={18} className="text-[hsl(var(--text-secondary))]" /></button>
                             </div>
                         </div>
 
@@ -223,13 +223,13 @@ export default function StudentProgressPage() {
                                 progress.map(course => (
                                     <div 
                                         key={course.id} 
-                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
+                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 group hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500"
                                     >
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-center gap-3">
                                                 <span className={clsx(
                                                     "px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide",
-                                                    course.status === 'completed' ? "bg-emerald-500/10 text-emerald-500" : "bg-blue-500/10 text-[hsl(var(--primary))]"
+                                                    course.status === 'completed' ? "bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" : "bg-blue-500/10 text-[hsl(var(--primary))]"
                                                 )}>
                                                     {course.status === 'completed' ? 'Completado' : 'En Curso'}
                                                 </span>
@@ -244,7 +244,7 @@ export default function StudentProgressPage() {
                                                     <span className="text-xs font-bold">Activo: {new Date(course.last_activity).toLocaleDateString()}</span>
                                                 </div>
                                                 {course.certificate_issued && (
-                                                    <div className="flex items-center gap-2 text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)] px-3 py-1 rounded-full">
                                                         <Award size={14} strokeWidth={2.5} />
                                                         <span className="text-[10px] font-semibold uppercase tracking-wide">Certificado Disponible</span>
                                                     </div>
@@ -264,7 +264,7 @@ export default function StudentProgressPage() {
                                                         animate={{ width: `${course.progress_percent}%` }}
                                                         className={clsx(
                                                             "h-full rounded-full transition-all duration-1000 shadow-inner",
-                                                            course.progress_percent === 100 ? "bg-emerald-500 shadow-emerald-500/20" : "bg-gradient-to-r from-blue-600 to-blue-400 shadow-blue-500/20"
+                                                            course.progress_percent === 100 ? "bg-[hsl(var(--success))] shadow-[hsl(var(--success))/0.2]" : "bg-gradient-to-r from-blue-600 to-blue-400 shadow-blue-500/20"
                                                         )}
                                                     />
                                                 </div>
@@ -273,7 +273,7 @@ export default function StudentProgressPage() {
                                             <div className="flex items-center gap-4 md:border-l border-[hsl(var(--border))] dark:border-white/5 md:pl-8 shrink-0">
                                                 <div className="text-center">
                                                     <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nota</p>
-                                                    <p className={clsx("text-xl font-bold tracking-tighter", course.average_grade >= 70 ? "text-emerald-500" : "text-rose-500")}>
+                                                    <p className={clsx("text-xl font-bold tracking-tighter", course.average_grade >= 70 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]")}>
                                                         {course.average_grade.toFixed(1)}
                                                     </p>
                                                 </div>
@@ -288,7 +288,7 @@ export default function StudentProgressPage() {
                                     </div>
                                 ))
                             ) : (
-                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg p-4 text-center space-y-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-inner">
+                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 text-center space-y-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-inner">
                                     <div className="size-10 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-md flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))]">
                                         <BookOpen size={48} />
                                     </div>

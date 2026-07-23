@@ -78,11 +78,11 @@ export default function DashboardOverviewClient() {
                                     <div className="flex items-start gap-3">
                                         <div
                                             className="size-10 rounded-lg flex items-center justify-center shrink-0"
-                                            style={{ backgroundColor: `${cfg?.color || '#6366f1'}15` }}
+                                            style={{ backgroundColor: `${cfg?.color || 'hsl(var(--primary))'}15` }}
                                         >
                                             <Icon
                                                 size={18}
-                                                style={{ color: cfg?.color || '#6366f1' }}
+                                                style={{ color: cfg?.color || 'hsl(var(--primary))' }}
                                             />
                                         </div>
                                         <div className="flex-1 min-w-0">

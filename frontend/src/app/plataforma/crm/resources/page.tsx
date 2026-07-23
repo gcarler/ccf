@@ -18,17 +18,17 @@ import ResourceBankGallery from './ResourceBankGallery';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const CANAL_META: Record<CanalEnvio, { label: string; icon: React.ElementType; color: string; bg: string }> = {
-    WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-    EMAIL:    { label: 'Email',    icon: Mail,          color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',    bg: 'bg-blue-50 dark:bg-blue-900/20' },
-    SMS:      { label: 'SMS',      icon: Send,          color: 'text-amber-600 dark:text-amber-400',  bg: 'bg-amber-50 dark:bg-amber-900/20' },
+    WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: 'text-[hsl(var(--success))] dark:text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)]' },
+    EMAIL:    { label: 'Email',    icon: Mail,          color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',    bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.2)]' },
+    SMS:      { label: 'SMS',      icon: Send,          color: 'text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]',  bg: 'bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.2)]' },
 };
 
 const ESTADO_META: Record<string, { label: string; cls: string }> = {
     PROCESANDO: { label: 'Procesando', cls: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]' },
-    ENVIADO:    { label: 'Enviado',    cls: 'bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-900/20 dark:text-[hsl(var(--primary))]' },
-    ENTREGADO:  { label: 'Entregado', cls: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400' },
-    LEIDO:      { label: 'Leído',     cls: 'bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400' },
-    FALLIDO:    { label: 'Fallido',   cls: 'bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-400' },
+    ENVIADO:    { label: 'Enviado',    cls: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.2)] dark:text-[hsl(var(--primary))]' },
+    ENTREGADO:  { label: 'Entregado', cls: 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.2)] dark:text-[hsl(var(--success))]' },
+    LEIDO:      { label: 'Leído',     cls: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] dark:bg-[hsl(var(--primary)/0.2)] dark:text-[hsl(var(--primary))]' },
+    FALLIDO:    { label: 'Fallido',   cls: 'bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.2)] dark:text-[hsl(var(--destructive))]' },
 };
 
 function fmt(iso: string) {
@@ -130,7 +130,7 @@ function PlantillaCard({
                 </button>
                 <button
                     onClick={e => { e.stopPropagation(); onDelete(); }}
-                    className="size-6 flex items-center justify-center rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-rose-200 dark:border-rose-500/30 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 shadow-sm transition-colors"
+                    className="size-6 flex items-center justify-center rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--destructive)/0.2)] dark:border-[hsl(var(--destructive)/0.3)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.2)] shadow-sm transition-colors"
                 >
                     <Trash2 size={12} />
                 </button>
@@ -320,7 +320,7 @@ function DetailPanel({
                                 onClick={copyText}
                                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10 transition-colors"
                             >
-                                {copied ? <Check size={12} className="text-emerald-500" /> : null}
+                                {copied ? <Check size={12} className="text-[hsl(var(--success))]" /> : null}
                                 {copied ? 'Copiado' : 'Copiar texto'}
                             </button>
                             {plantilla.canal === 'EMAIL' && (
@@ -358,7 +358,7 @@ function DetailPanel({
                                         <Download size={12} />
                                     </a>
                                     <button onClick={() => handleDeleteAdjunto(a.id)}
-                                        className="size-6 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:text-rose-500 transition-colors"
+                                        className="size-6 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-colors"
                                         aria-label="Eliminar">
                                         <Trash2 size={12} />
                                     </button>
@@ -399,7 +399,7 @@ function DetailPanel({
                                         </div>
                                         <p className="text-[10px] text-[hsl(var(--text-secondary))] font-mono">→ {b.destinatario_id.slice(0, 8)}…</p>
                                         {b.log_error && (
-                                            <p className="text-[10px] text-rose-500 mt-1">{b.log_error}</p>
+                                            <p className="text-[10px] text-[hsl(var(--destructive))] mt-1">{b.log_error}</p>
                                         )}
                                     </div>
                                 );
@@ -604,7 +604,7 @@ function PlantillaDrawer({
                                 {form.variables_requeridas.map(v => (
                                     <span key={v} className="inline-flex items-center gap-1 text-xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-2 py-0.5 rounded-md">
                                         {`{{${v}}}`}
-                                        <button onClick={() => removeVar(v)} className="text-[hsl(var(--text-secondary))] hover:text-rose-500 ml-0.5" aria-label="Eliminar variable">
+                                        <button onClick={() => removeVar(v)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] ml-0.5" aria-label="Eliminar variable">
                                             <X size={10} />
                                         </button>
                                     </span>
@@ -869,8 +869,8 @@ function SendDrawer({
                         </button>
                     </div>
                     <div className="flex-1 flex flex-col items-center justify-center px-5 gap-5 text-center">
-                        <div className="size-16 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-                            <Megaphone size={28} className="text-emerald-600 dark:text-emerald-400" />
+                        <div className="size-16 rounded-full bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] flex items-center justify-center">
+                            <Megaphone size={28} className="text-[hsl(var(--success))] dark:text-[hsl(var(--success))]" />
                         </div>
                         <div>
                             <p className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">{campResult.campaign_name}</p>
@@ -882,13 +882,13 @@ function SendDrawer({
                                 <p className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))]">Destinatarios</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-emerald-600">{campResult.delivered_count}</p>
-                                <p className="text-[10px] font-semibold uppercase text-emerald-600">Enviados</p>
+                                <p className="text-2xl font-bold text-[hsl(var(--success))]">{campResult.delivered_count}</p>
+                                <p className="text-[10px] font-semibold uppercase text-[hsl(var(--success))]">Enviados</p>
                             </div>
                             {campResult.failed_count > 0 && (
                                 <div className="text-center">
-                                    <p className="text-2xl font-bold text-rose-600">{campResult.failed_count}</p>
-                                    <p className="text-[10px] font-semibold uppercase text-rose-600">Fallidos</p>
+                                    <p className="text-2xl font-bold text-[hsl(var(--destructive))]">{campResult.failed_count}</p>
+                                    <p className="text-[10px] font-semibold uppercase text-[hsl(var(--destructive))]">Fallidos</p>
                                 </div>
                             )}
                         </div>
@@ -943,9 +943,9 @@ function SendDrawer({
                             <div>
                                 <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Destinatario *</label>
                                 {destinatario ? (
-                                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-500/30">
-                                        <span className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">{destinatario.nombre}</span>
-                                        <button onClick={() => setDestinatario(null)} className="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300">
+                                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)]">
+                                        <span className="text-sm text-[hsl(var(--success))] dark:text-[hsl(var(--success))] font-medium">{destinatario.nombre}</span>
+                                        <button onClick={() => setDestinatario(null)} className="text-[hsl(var(--success))] hover:text-[hsl(var(--success))] dark:hover:text-[hsl(var(--success))]">
                                             <X size={13} />
                                         </button>
                                     </div>
@@ -1255,14 +1255,14 @@ export default function RecursosPage() {
                 {/* Grid */}
                 <div className="flex-1 overflow-y-auto p-5">
                     {!loading && error && (
-                        <div className="mb-4 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+                        <div className="mb-4 flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] p-4 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
                             <div>
                                 <p className="text-[11px] font-bold uppercase tracking-wide">No se pudo cargar el módulo</p>
                                 <p className="text-xs">{error}</p>
                             </div>
                             <button
                                 onClick={() => setReloadKey(key => key + 1)}
-                                className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                                className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
                             >
                                 Reintentar
                             </button>

@@ -151,7 +151,7 @@ export default function FacturacionPage() {
 
   return (
     <WorkspaceLayout sidebarTitle="Facturación" sidebarSections={SECTIONS}>
-      <div className="h-full overflow-y-auto bg-[#f8fafc] dark:bg-[#1E1F21] font-display scrollbar-thin">
+      <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] font-display scrollbar-thin">
         <div className="w-full px-4 py-3 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -179,7 +179,7 @@ export default function FacturacionPage() {
 
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Buscar ${tab}...`} className="pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[12px] w-full focus:ring-2 focus:ring-blue-500/20" />
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Buscar ${tab}...`} className="pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[12px] w-full focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]" />
           </div>
 
           {showCreate && (
@@ -200,7 +200,7 @@ export default function FacturacionPage() {
                     <input type="text" placeholder="Descripción" value={item.description} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, description: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
                     <input type="number" min={0} placeholder="Cantidad" value={item.quantity} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, quantity: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
                     <input type="number" min={0} placeholder="Precio unitario" value={item.unit_price} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, unit_price: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                    <button type="button" onClick={() => { if (window.confirm('Eliminar esta línea?')) { setForm({ ...form, items: form.items.filter((_, i) => i !== idx) }); } }} className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg"><Trash2 size={14} /></button>
+                    <button type="button" onClick={() => { if (window.confirm('Eliminar esta línea?')) { setForm({ ...form, items: form.items.filter((_, i) => i !== idx) }); } }} className="p-2 text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-lg"><Trash2 size={14} /></button>
                   </div>
                 ))}
                 <button type="button" onClick={() => setForm({ ...form, items: [...form.items, { description: "", quantity: 1, unit_price: 0 }] })} className="text-[11px] font-semibold text-[hsl(var(--primary))] hover:underline">+ Agregar línea</button>
@@ -240,17 +240,17 @@ export default function FacturacionPage() {
                     <div className="col-span-2 text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-white">{fmtCOP(Number(total))}</div>
                     <div className="col-span-2">
                       <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide",
-                        itemStatus === "paid" || itemStatus === "completed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400" :
-                        itemStatus === "overdue" || itemStatus === "cancelled" ? "bg-rose-100 text-rose-600 dark:bg-rose-900/10 dark:text-rose-400" :
-                        "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+                        itemStatus === "paid" || itemStatus === "completed" ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" :
+                        itemStatus === "overdue" || itemStatus === "cancelled" ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" :
+                        "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]"
                       )}>{itemStatus}</span>
                     </div>
                     <div className="col-span-2 flex justify-end gap-1">
                       {isInvoice && itemStatus !== "paid" && (
-                        <button onClick={() => setShowPayment(item.id)} className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-100" title="Registrar pago"><DollarSign size={12} /></button>
+                        <button onClick={() => setShowPayment(item.id)} className="p-1.5 rounded-md bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.2)]" title="Registrar pago"><DollarSign size={12} /></button>
                       )}
                       {isInvoice && (item as Invoice).electronic_status === "not_sent" && (
-                        <button onClick={() => handleSendElectronic(item.id)} className="p-1.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100" title="Enviar electrónica"><Send size={12} /></button>
+                        <button onClick={() => handleSendElectronic(item.id)} className="p-1.5 rounded-md bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] hover:bg-[hsl(var(--info)/0.2)]" title="Enviar electrónica"><Send size={12} /></button>
                       )}
                     </div>
                   </div>
@@ -274,7 +274,7 @@ export default function FacturacionPage() {
                 <input type="text" placeholder="Referencia" value={paymentForm.reference} onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })} className="w-full px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
                 <div className="flex gap-2">
                   <button onClick={() => setShowPayment(null)} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-semibold">Cancelar</button>
-                  <button onClick={() => handlePayment(showPayment)} className="flex-1 px-4 py-2 rounded-lg bg-emerald-500 text-white text-[11px] font-semibold">Guardar Pago</button>
+                  <button onClick={() => handlePayment(showPayment)} className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--success))] text-white text-[11px] font-semibold">Guardar Pago</button>
                 </div>
               </div>
             </motion.div>

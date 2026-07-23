@@ -64,7 +64,7 @@ export default function PastorRadarPage() {
                     content: '';
                     position: absolute;
                     inset: -1px;
-                    background: linear-gradient(45deg, var(--aura-color, #3b82f620), transparent 60%);
+                    background: linear-gradient(45deg, var(--aura-color, hsl(var(--info)/0.2)), transparent 60%);
                     z-index: -1;
                     border-radius: inherit;
                     opacity: 0;
@@ -152,7 +152,7 @@ export default function PastorRadarPage() {
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
-                        className="lg:col-span-7 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-xl space-y-3 group"
+                        className="lg:col-span-7 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-xl space-y-3 group"
                     >
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
@@ -197,8 +197,8 @@ export default function PastorRadarPage() {
                         </h2>
                         <div className="space-y-3">
                             <GoalItem label="Bautismos Meta" target={50} current={data?.bautismos_este_anio || 0} color="bg-[hsl(var(--primary))]" />
-                            <GoalItem label="Nuevos Personas" target={200} current={35} color="bg-emerald-500" />
-                            <GoalItem label="Estudiantes Liderazgo" target={80} current={12} color="bg-amber-500" />
+                            <GoalItem label="Nuevos Personas" target={200} current={35} color="bg-[hsl(var(--success))]" />
+                            <GoalItem label="Estudiantes Liderazgo" target={80} current={12} color="bg-[hsl(var(--warning))]" />
                         </div>
 
                         <div className="pt-8 border-t border-white/5 space-y-3">
@@ -222,12 +222,12 @@ function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
     const colorMap: any = {
         blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20 border-blue-100',
         cyan: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/20 border-cyan-100',
-        emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100',
-        amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-100'
+        emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]',
+        amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.3)]'
     };
     return (
         <div 
-            className="radar-aura p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="radar-aura p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as any}
         >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-700"><Icon size={64} /></div>
@@ -236,7 +236,7 @@ function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
                     <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colorMap[color])}>
                         <Icon size={28} />
                     </div>
-                    <span className="px-3 py-1 bg-white/50 dark:bg-white/5 rounded-lg font-semibold text-emerald-500 border border-emerald-100 dark:border-emerald-900/30 uppercase">{trend}</span>
+                    <span className="px-3 py-1 bg-white/50 dark:bg-white/5 rounded-lg font-semibold text-[hsl(var(--success))] border border-[hsl(var(--success)/0.3)] uppercase">{trend}</span>
                 </div>
                 <div>
                     <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">{label}</p>

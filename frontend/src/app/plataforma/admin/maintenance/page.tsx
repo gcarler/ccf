@@ -102,7 +102,7 @@ export default function AdminMaintenancePage() {
             {visibleTasks.map((row, index) => (
                 <div key={row.id || index} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
-                        <div className={clsx("size-7 rounded-lg flex items-center justify-center", row.priority === 'Alta' ? "bg-rose-50 text-rose-500" : "bg-amber-50 text-amber-500")}>
+                        <div className={clsx("size-7 rounded-lg flex items-center justify-center", row.priority === 'Alta' ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>
                             <AlertCircle size={24} />
                         </div>
                         <div>
@@ -133,7 +133,7 @@ export default function AdminMaintenancePage() {
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.item}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{row.task}</td>
                             <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{new Date(row.date || Date.now()).toLocaleDateString('es-ES')}</td>
-                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.priority === 'Alta' ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600")}>{row.priority}</span></td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", row.priority === 'Alta' ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{row.priority}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -163,7 +163,7 @@ export default function AdminMaintenancePage() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
             <style jsx global>{`
                 .aura-tech {
                     position: relative;
@@ -200,7 +200,7 @@ export default function AdminMaintenancePage() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#f59e0b05_0%,_transparent_50%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--warning)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
                     {/* Cinematic Header */}
@@ -213,7 +213,7 @@ export default function AdminMaintenancePage() {
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Salud Activa
                             </motion.div>
                             <h1 className="text-xl lg:text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none italic">
-                                Agenda de <span className="text-amber-500">Mantenimiento</span>
+                                Agenda de <span className="text-[hsl(var(--warning))]">Mantenimiento</span>
                             </h1>
                             <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-lg font-medium max-w-xl leading-relaxed">
                                 Supervisión técnica en tiempo real. Asegura la disponibilidad del 100% de la infraestructura ministerial.
@@ -268,12 +268,12 @@ export default function AdminMaintenancePage() {
                                             <div className="flex items-center gap-3">
                                                 <div className={clsx(
                                                     "size-7 rounded-lg flex items-center justify-center shadow-inner transition-transform group-hover:scale-110 duration-500",
-                                                    row.priority === 'Alta' ? "bg-rose-50 dark:bg-rose-900/20 text-rose-500" : "bg-amber-50 dark:bg-amber-900/20 text-amber-500"
+                                                    row.priority === 'Alta' ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]"
                                                 )}>
                                                     <AlertCircle size={28} />
                                                 </div>
                                                 <div>
-                                                    <div className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight group-hover:text-amber-600 transition-colors leading-none mb-2">{row.item}</div>
+                                                    <div className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight group-hover:text-[hsl(var(--warning))] transition-colors leading-none mb-2">{row.item}</div>
                                                     <div className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{row.task}</div>
                                                 </div>
                                             </div>
@@ -282,9 +282,9 @@ export default function AdminMaintenancePage() {
                                                     <div className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-2 justify-end mb-1">
                                                         <Clock size={12} className="text-[hsl(var(--text-secondary))]" /> {new Date(row.date || Date.now()).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
                                                     </div>
-                                                    <div className={clsx("text-[9px] font-semibold uppercase tracking-wide", row.priority === 'Alta' ? 'text-rose-500' : 'text-[hsl(var(--text-secondary))]')}>Prioridad {row.priority}</div>
+                                                    <div className={clsx("text-[9px] font-semibold uppercase tracking-wide", row.priority === 'Alta' ? 'text-[hsl(var(--destructive))]' : 'text-[hsl(var(--text-secondary))]')}>Prioridad {row.priority}</div>
                                                 </div>
-                                                <button className="size-7 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-500">
+                                                <button className="size-7 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--success))] hover:text-white hover:border-[hsl(var(--success))] hover:shadow-xl hover:shadow-[hsl(var(--success))/0.2] transition-all duration-500">
                                                     <CheckCircle2 size={20} />
                                                 </button>
                                             </div>
@@ -350,9 +350,9 @@ export default function AdminMaintenancePage() {
 
 function HealthRow({ label, value, color }: { label: string, value: number, color: 'emerald' | 'amber' | 'rose' }) {
     const tones = {
-        emerald: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20',
-        amber: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
-        rose: 'text-rose-500 bg-rose-50 dark:bg-rose-900/20'
+        emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))]',
+        amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))]',
+        rose: 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)]'
     };
     return (
         <div className="flex justify-between items-center p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5">

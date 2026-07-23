@@ -169,7 +169,7 @@ export default function UserDetailPage() {
     };
 
     if (loading) return <div className="p-4 text-center animate-pulse font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Consultando base de datos de usuarios...</div>;
-    if (!user) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-rose-500">Usuario no encontrado</div>;
+    if (!user) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">Usuario no encontrado</div>;
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
@@ -187,8 +187,8 @@ export default function UserDetailPage() {
                                 disabled={isSubmitting}
                                 className={`px-3 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all shadow-sm border ${
                                     user.is_active 
-                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-rose-200 dark:border-rose-500/30 text-rose-600 hover:bg-rose-50' 
-                                    : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-600 hover:bg-emerald-100'
+                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-rose-200 dark:border-[hsl(var(--destructive))/0.3] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]' 
+                                    : 'bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)] text-[hsl(var(--success))] hover:bg-[hsl(var(--success))/0.15]'
                                 }`}
                             >
                                 {user.is_active ? 'Suspender Cuenta' : 'Reactivar Cuenta'}
@@ -206,9 +206,9 @@ export default function UserDetailPage() {
                         <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none flex flex-col md:flex-row items-center gap-3 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-48 bg-gradient-to-bl from-blue-500/10 to-transparent pointer-events-none rounded-bl-full" />
                             
-                            <div className="size-10 rounded-full bg-[hsl(var(--surface-1))] dark:bg-black/20 flex items-center justify-center border-4 border-white dark:border-[#15171c] shadow-xl relative z-10">
+                            <div className="size-10 rounded-full bg-[hsl(var(--surface-1))] dark:bg-black/20 flex items-center justify-center border-4 border-white dark:border-[hsl(var(--bg-primary))] shadow-xl relative z-10">
                                 <User size={48} className="text-[hsl(var(--text-secondary))]" strokeWidth={1.5} />
-                                {user.is_active && <div className="absolute bottom-2 right-2 size-4 bg-emerald-500 border-2 border-white dark:border-[#15171c] rounded-full" />}
+                                {user.is_active && <div className="absolute bottom-2 right-2 size-4 bg-emerald-500 border-2 border-white dark:border-[hsl(var(--bg-primary))] rounded-full" />}
                             </div>
                             
                             <div className="space-y-3 text-center md:text-left relative z-10 flex-1">
@@ -238,7 +238,7 @@ export default function UserDetailPage() {
                                                 <select 
                                                     value={editRoleId || ''} 
                                                     onChange={e => setEditRoleId(e.target.value || null)}
-                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 min-w-[200px]"
+                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] min-w-[200px]"
                                                 >
                                                     <option value="">Sin rol asignado</option>
                                                     {roles.map(r => (
@@ -273,7 +273,7 @@ export default function UserDetailPage() {
                                                     type="email" 
                                                     value={editEmail} 
                                                     onChange={e => setEditEmail(e.target.value)}
-                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-blue-500/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                     autoFocus
                                                 />
                                             ) : (
@@ -300,7 +300,7 @@ export default function UserDetailPage() {
                     <div className="lg:col-span-4 space-y-3">
                         <DSCard>
                             <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
-                                <Lock size={14} className="text-amber-500"/> Seguridad
+                                <Lock size={14} className="text-[hsl(var(--warning))]"/> Seguridad
                             </h3>
                             <button 
                                 onClick={() => setPasswordModalOpen(true)}
@@ -341,7 +341,7 @@ export default function UserDetailPage() {
                             type="button" 
                             onClick={handlePasswordReset}
                             disabled={isSubmitting || newPassword.length < 6}
-                            className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-amber-500/20 hover:bg-amber-600 active:scale-95 transition-all disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--warning))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--warning))/0.2] hover:bg-[hsl(var(--warning))/0.85] active:scale-95 transition-all disabled:opacity-50"
                         >
                             <Lock size={16} /> {isSubmitting ? 'Procesando...' : 'Confirmar Cambio'}
                         </button>
@@ -356,7 +356,7 @@ export default function UserDetailPage() {
                             value={newPassword}
                             onChange={e => setNewPassword(e.target.value)}
                             placeholder="Min. 6 caracteres..."
-                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--warning))/0.5]"
                             autoFocus
                         />
                     </div>

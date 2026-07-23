@@ -20,7 +20,7 @@ function ResetPasswordContent() {
 
   if (!token) {
     return (
-      <div className="flex w-screen min-h-screen font-sans bg-[#001B48]">
+      <div className="flex w-screen min-h-screen font-sans bg-[hsl(var(--primary))]">
         <div className="w-full flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -38,7 +38,7 @@ function ResetPasswordContent() {
             </p>
             <button
               onClick={() => router.push("/auth/forgot")}
-              className="px-4 py-1.5 bg-[#018ABD] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[#004581] transition-all"
+              className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[hsl(var(--primary))] transition-all"
             >
               Solicitar nuevo enlace
             </button>
@@ -87,11 +87,11 @@ function ResetPasswordContent() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-            className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-3"
+            className="w-20 h-20 rounded-full bg-[hsl(var(--success-muted))] flex items-center justify-center mb-3"
           >
-            <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+            <CheckCircle2 className="w-10 h-10 text-[hsl(var(--success))]" />
           </motion.div>
-          <h2 className="text-lg font-extrabold text-[#001B48] tracking-[-0.02em] mb-3">
+          <h2 className="text-lg font-extrabold text-[hsl(var(--primary))] tracking-[-0.02em] mb-3">
             Contraseña actualizada
           </h2>
           <p className="text-[hsl(var(--text-primary))] text-sm">Redirigiendo al inicio de sesión...</p>
@@ -107,7 +107,7 @@ function ResetPasswordContent() {
         initial={{ opacity: 0, x: -30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="flex-[1.2] bg-[#001B48] relative flex flex-col justify-between px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen overflow-hidden"
+        className="flex-[1.2] bg-[hsl(var(--primary))] relative flex flex-col justify-between px-[clamp(40px,8%,90px)] py-[clamp(40px,8%,90px)] min-h-screen overflow-hidden"
       >
         <div
           className="absolute top-[-20%] right-[-20%] w-[140%] h-[140%] pointer-events-none z-0"
@@ -140,7 +140,7 @@ function ResetPasswordContent() {
           <h1 className="font-bold tracking-[-0.04em] leading-[0.88] text-white text-[clamp(3rem,6vw,4.5rem)] m-0">
             EL <br /> CCF
           </h1>
-          <p className="text-[#018ABD] text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
+          <p className="text-[hsl(var(--primary))] text-[clamp(1rem,2vw,1.25rem)] font-bold tracking-wide uppercase mt-3 leading-[1.4]">
             Comunidad <br /> Cristiana
           </p>
           <div className="w-16 h-1.5 bg-[hsl(var(--bg-primary))] mt-3 rounded-full" />
@@ -179,7 +179,7 @@ function ResetPasswordContent() {
             transition={{ delay: 0.3 }}
             className="mb-4"
           >
-            <h2 className="text-[clamp(1.8rem,3.5vw,2.5rem)] font-extrabold text-[#001B48] tracking-[-0.02em] leading-none m-0 mb-4">
+            <h2 className="text-[clamp(1.8rem,3.5vw,2.5rem)] font-extrabold text-[hsl(var(--primary))] tracking-[-0.02em] leading-none m-0 mb-4">
               Restablecer contraseña
             </h2>
             <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px] m-0">
@@ -244,7 +244,7 @@ function ResetPasswordContent() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="px-3 py-1.5 bg-rose-50 border-2 border-rose-200 rounded-lg text-rose-600 text-[11px] font-bold text-center uppercase tracking-wider"
+                className="px-3 py-1.5 bg-[hsl(var(--destructive)/0.08)] border-2 border-[hsl(var(--destructive)/0.2)] rounded-lg text-[hsl(var(--destructive))] text-[11px] font-bold text-center uppercase tracking-wider"
               >
                 {error}
               </motion.div>
@@ -257,7 +257,7 @@ function ResetPasswordContent() {
               transition={{ delay: 0.65 }}
               type="submit"
               disabled={loading}
-              className="w-full py-1.5 bg-[#018ABD] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[#004581] transition-all mt-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[hsl(var(--primary))] transition-all mt-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
               {loading ? (
                 <Loader2 className="animate-spin" size={20} />
@@ -281,7 +281,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex w-screen min-h-screen items-center justify-center bg-[#001B48]">
+        <div className="flex w-screen min-h-screen items-center justify-center bg-[hsl(var(--primary))]">
           <Loader2 className="w-8 h-8 animate-spin text-white" />
         </div>
       }

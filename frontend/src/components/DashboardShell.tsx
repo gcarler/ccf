@@ -81,14 +81,14 @@ interface TableRow {
 // ─── Module config ─────────────────────────────────────────────────
 
 const MODULE_CONFIG: Record<string, { label: string; icon: LucideIcon; color: string }> = {
-    crm:        { label: 'CRM Pastoral',       icon: Users,        color: '#6366f1' },
-    academy:    { label: 'Academia',            icon: BookOpen,     color: '#10b981' },
-    evangelism: { label: 'Evangelismo',         icon: Home,         color: '#f59e0b' },
-    finance:    { label: 'Finanzas',            icon: PiggyBank,    color: '#3b82f6' },
-    agenda:     { label: 'Agenda',              icon: Calendar,     color: '#8b5cf6' },
-    cms:        { label: 'CMS',                 icon: FileText,     color: '#06b6d4' },
-    projects:   { label: 'Proyectos',           icon: FolderKanban, color: '#ec4899' },
-    admin:      { label: 'Admin',               icon: Shield,       color: '#64748b' },
+    crm:        { label: 'CRM Pastoral',       icon: Users,        color: 'hsl(var(--primary))' },
+    academy:    { label: 'Academia',            icon: BookOpen,     color: 'hsl(var(--success))' },
+    evangelism: { label: 'Evangelismo',         icon: Home,         color: 'hsl(var(--warning))' },
+    finance:    { label: 'Finanzas',            icon: PiggyBank,    color: 'hsl(var(--info))' },
+    agenda:     { label: 'Agenda',              icon: Calendar,     color: 'hsl(var(--primary))' },
+    cms:        { label: 'CMS',                 icon: FileText,     color: 'hsl(var(--info))' },
+    projects:   { label: 'Proyectos',           icon: FolderKanban, color: 'hsl(var(--accent, 336 80% 58%))' },
+    admin:      { label: 'Admin',               icon: Shield,       color: 'hsl(var(--text-secondary))' },
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────
@@ -128,7 +128,7 @@ function FilterBar({
                     <select
                         value={activeFilters[f.key] ?? f.default ?? ''}
                         onChange={(e) => onFilterChange(f.key, e.target.value)}
-                        className="text-[11px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[#1e2025] border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-2 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
+                        className="text-[11px] font-medium bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md px-2 py-1 text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                     >
                         {(f.options || []).map((opt) => (
                             <option key={opt.value} value={opt.value}>
@@ -152,7 +152,7 @@ function FunnelChart({ stages }: { stages: FunnelStage[] }) {
                 const pct = (s.count / maxVal) * 100;
                 const barColor =
                     i === 0 ? 'bg-[hsl(var(--primary))]' :
-                    i === stages.length - 1 ? 'bg-emerald-500' :
+                    i === stages.length - 1 ? 'bg-[hsl(var(--success))]' :
                     'bg-[hsl(var(--primary)/0.7)]';
                 return (
                     <div key={s.stage} className="space-y-0.5">
@@ -212,7 +212,7 @@ function HeatMap({ data }: { data: HeatmapItem[] }) {
                                             className="h-5 w-full rounded"
                                             style={{
                                                 backgroundColor: item
-                                                    ? `rgba(99, 102, 241, ${0.1 + intensity * 0.006})`
+                                                    ? `hsl(var(--primary) / ${0.1 + intensity * 0.006})`
                                                     : 'transparent',
                                             }}
                                             title={item ? `${item.value} interacciones` : ''}
@@ -244,7 +244,7 @@ function GeoMap({ data }: { data: GeoBucket[] }) {
                     key={g.label}
                     className="flex items-center gap-3 p-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors"
                 >
-                    <div className="size-8 rounded-full bg-blue-100 dark:bg-[hsl(var(--primary))]/20 flex items-center justify-center shrink-0">
+                    <div className="size-8 rounded-full bg-[hsl(var(--primary)/0.15)] flex items-center justify-center shrink-0">
                         <MapPin size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -383,7 +383,7 @@ export default function DashboardShell({
                 <div className="flex items-center gap-3">
                     <div className={clsx(
                         'size-10 rounded-xl flex items-center justify-center',
-                        'bg-blue-50 dark:bg-[hsl(var(--primary))]/10',
+                        'bg-[hsl(var(--primary)/0.08)]',
                     )}>
                         <MetricIcon size={20} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" />
                     </div>
@@ -518,7 +518,7 @@ export default function DashboardShell({
                                             type="area"
                                             data={data.growth_chart}
                                             height={200}
-                                            color="#6366f1"
+                                            color="hsl(var(--primary))"
                                         />
                                     </div>
                                 </DSCard>
@@ -538,7 +538,7 @@ export default function DashboardShell({
                                             type="bar"
                                             data={data.enrollment_trends}
                                             height={200}
-                                            color="#10b981"
+                                            color="hsl(var(--success))"
                                         />
                                     </div>
                                 </DSCard>
@@ -558,7 +558,7 @@ export default function DashboardShell({
                                             type="bar"
                                             data={data.income_by_category}
                                             height={200}
-                                            color="#3b82f6"
+                                            color="hsl(var(--info))"
                                         />
                                     </div>
                                 </DSCard>
@@ -578,7 +578,7 @@ export default function DashboardShell({
                                             type="area"
                                             data={data.monthly_series}
                                             height={200}
-                                            color="#10b981"
+                                            color="hsl(var(--success))"
                                         />
                                     </div>
                                 </DSCard>
@@ -630,7 +630,7 @@ export default function DashboardShell({
                                             type="bar"
                                             data={data.asistencia_por_sesion}
                                             height={200}
-                                            color="#10b981"
+                                            color="hsl(var(--success))"
                                         />
                                     </div>
                                 </DSCard>
@@ -665,7 +665,7 @@ export default function DashboardShell({
                                             type="bar"
                                             data={data.grade_distribution}
                                             height={200}
-                                            color="#8b5cf6"
+                                            color="hsl(var(--primary))"
                                         />
                                     </div>
                                 </DSCard>
@@ -685,7 +685,7 @@ export default function DashboardShell({
                                             type="bar"
                                             data={data.versiones_por_pagina}
                                             height={200}
-                                            color="#06b6d4"
+                                            color="hsl(var(--info))"
                                         />
                                     </div>
                                 </DSCard>
@@ -725,7 +725,7 @@ export default function DashboardShell({
                                             type="bar"
                                             data={data.workload_distribution}
                                             height={200}
-                                            color="#ec4899"
+                                            color="hsl(var(--primary))"
                                         />
                                     </div>
                                 </DSCard>
@@ -745,7 +745,7 @@ export default function DashboardShell({
                                             type="bar"
                                             data={data.status_distribution}
                                             height={200}
-                                            color="#6366f1"
+                                            color="hsl(var(--primary))"
                                         />
                                     </div>
                                 </DSCard>
@@ -765,7 +765,7 @@ export default function DashboardShell({
                                             type="bar"
                                             data={data.usuarios_por_rol}
                                             height={200}
-                                            color="#64748b"
+                                            color="hsl(var(--text-secondary))"
                                         />
                                     </div>
                                 </DSCard>
@@ -785,7 +785,7 @@ export default function DashboardShell({
                                             type="bar"
                                             data={data.participacion_por_evento}
                                             height={200}
-                                            color="#8b5cf6"
+                                            color="hsl(var(--primary))"
                                         />
                                     </div>
                                 </DSCard>
@@ -805,7 +805,7 @@ export default function DashboardShell({
                                             type="bar"
                                             data={data.recursos_ocupados}
                                             height={200}
-                                            color="#f59e0b"
+                                            color="hsl(var(--warning))"
                                         />
                                     </div>
                                 </DSCard>
@@ -893,7 +893,7 @@ export default function DashboardShell({
                                                 </p>
                                                 <p className="text-[10px] text-[hsl(var(--text-secondary))]">{d.type}</p>
                                             </div>
-                                            <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
+                                            <span className="text-[12px] font-bold text-[hsl(var(--success))]">
                                                 ${Number(d.amount).toLocaleString()}
                                             </span>
                                         </div>

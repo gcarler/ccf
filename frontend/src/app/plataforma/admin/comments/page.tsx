@@ -134,7 +134,7 @@ export default function CommentModeration() {
                 rightActions={
                     <button className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--primary))] relative active:scale-95 transition-all">
                         <Bell size={20} />
-                        <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-[#0a0f16]"></span>
+                        <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-[hsl(var(--bg-primary))]"></span>
                     </button>
                 }
             />
@@ -175,7 +175,7 @@ export default function CommentModeration() {
                             <input 
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+                                className="w-full pl-12 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all shadow-sm"
                                 placeholder="Filtrar por autor o contenido..."
                             />
                         </div>
@@ -199,7 +199,7 @@ export default function CommentModeration() {
                                                 <td className="px-3 py-1.5 text-[hsl(var(--text-secondary))]">{comment.context}</td>
                                                 <td className="px-3 py-1.5 text-[hsl(var(--text-secondary))]">{comment.type}</td>
                                                 <td className="px-3 py-1.5 text-[hsl(var(--text-secondary))]">{new Date(comment.created_at).toLocaleDateString()}</td>
-                                                <td className="px-3 py-1.5 text-right"><button onClick={() => handleDelete(comment.id)} className="rounded-md bg-rose-50 p-2 text-rose-500"><Trash2 size={16} /></button></td>
+                                                <td className="px-3 py-1.5 text-right"><button onClick={() => handleDelete(comment.id)} className="rounded-md bg-[hsl(var(--destructive)/0.08)] p-2 text-[hsl(var(--destructive))]"><Trash2 size={16} /></button></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -293,7 +293,7 @@ export default function CommentModeration() {
                                             </button>
                                             <button 
                                                 onClick={() => handleDelete(comment.id)}
-                                                className="size-7 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-lg border border-rose-100 dark:border-rose-900/30 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all duration-500 shadow-sm hover:shadow-rose-500/20 active:scale-90"
+                                                className="size-7 bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] rounded-lg border border-[hsl(var(--destructive)/0.15)] flex items-center justify-center hover:bg-[hsl(var(--destructive))] hover:text-white transition-all duration-500 shadow-sm hover:shadow-[hsl(var(--destructive))/0.2] active:scale-90"
                                             >
                                                 <Trash2 size={20} />
                                             </button>

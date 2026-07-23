@@ -114,13 +114,13 @@ export default function SupportContactPage() {
                                     <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide block mb-1.5">Nombre Completo</label>
                                     <input required value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                                         placeholder="Tu nombre..."
-                                        className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))]/60 dark:border-white/10 rounded-md text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-[hsl(var(--text-secondary))]" />
+                                        className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))]/60 dark:border-white/10 rounded-md text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] transition-all placeholder:text-[hsl(var(--text-secondary))]" />
                                 </div>
                                 <div>
                                     <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide block mb-1.5">Correo Electronico</label>
                                     <input required type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
                                         placeholder="correo@ejemplo.com"
-                                        className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))]/60 dark:border-white/10 rounded-md text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-[hsl(var(--text-secondary))]" />
+                                        className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))]/60 dark:border-white/10 rounded-md text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] transition-all placeholder:text-[hsl(var(--text-secondary))]" />
                                 </div>
                             </div>
 
@@ -129,7 +129,7 @@ export default function SupportContactPage() {
                                 <div className="relative">
                                     <select value={form.topic} onChange={(event) => setForm((current) => ({ ...current, topic: event.target.value }))}
                                         required
-                                        className="w-full appearance-none px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))]/60 dark:border-white/10 rounded-md text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 transition-all pr-10 cursor-pointer">
+                                        className="w-full appearance-none px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))]/60 dark:border-white/10 rounded-md text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] transition-all pr-10 cursor-pointer">
                                         <option value="">Seleccionar categoria...</option>
                                         {TOPICS.map((topic) => <option key={topic} value={topic}>{topic}</option>)}
                                     </select>
@@ -155,7 +155,7 @@ export default function SupportContactPage() {
                                 <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide block mb-1.5">Mensaje</label>
                                 <textarea required rows={5} value={form.message} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))}
                                     placeholder="Describe tu consulta o problema con el mayor detalle posible..."
-                                    className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))]/60 dark:border-white/10 rounded-md text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20 resize-none transition-all placeholder:text-[hsl(var(--text-secondary))]" />
+                                    className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))]/60 dark:border-white/10 rounded-md text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] resize-none transition-all placeholder:text-[hsl(var(--text-secondary))]" />
                             </div>
 
                             <button type="submit" disabled={submitting}

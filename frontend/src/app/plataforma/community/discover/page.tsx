@@ -47,7 +47,7 @@ export default function DiscoverPage() {
     }, [groups, searchTerm]);
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
             <header className="p-3 border-b border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 space-y-4">
                 <div>
                     <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Descubrir Grupos</h1>
@@ -84,7 +84,7 @@ export default function DiscoverPage() {
                                         <div className="flex items-center gap-2 mb-1">
                                             <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{group.name}</h3>
                                             {group.zone && (
-                                                <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-md text-[9px] font-bold uppercase tracking-wide">
+                                                <span className="px-2 py-0.5 bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] rounded-md text-[9px] font-bold uppercase tracking-wide">
                                                     {group.zone}
                                                 </span>
                                             )}

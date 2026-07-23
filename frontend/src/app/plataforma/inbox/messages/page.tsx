@@ -174,7 +174,7 @@ export default function InboxMessagesPage() {
                 value={search}
                 onChange={event => setSearch(event.target.value)}
                 placeholder={isCreatingNew ? "Buscar persona..." : "Buscar chat..."}
-                className="w-full rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] pl-8 pr-3 py-1.5 text-[11px] font-semibold text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-white/5 dark:border-white/10 transition-all shadow-sm"
+                className="w-full rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] pl-8 pr-3 py-1.5 text-[11px] font-semibold text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:bg-white/5 dark:border-white/10 transition-all shadow-sm"
             />
             <Search
                 size={12}

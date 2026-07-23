@@ -486,7 +486,7 @@ export default function WhiteboardSessionPage() {
     const isObjectSelected = selectedObjectProps !== null;
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0b0d11]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "CCF Tools", icon: LayoutDashboard, href: "/plataforma/whiteboard" },
@@ -498,9 +498,9 @@ export default function WhiteboardSessionPage() {
                             {saveStatus === "saving" ? (
                                 <Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" />
                             ) : saveStatus === "error" ? (
-                                <Cloud size={12} className="text-rose-500" />
+                                <Cloud size={12} className="text-[hsl(var(--destructive))]" />
                             ) : (
-                                <Cloud size={12} className="text-emerald-500" />
+                                <Cloud size={12} className="text-[hsl(var(--success))]" />
                             )}
                             {saveStatus === "saving" ? "Guardando" : saveStatus === "saved" ? "Guardado" : saveStatus === "error" ? "Error" : "Local"}
                         </div>
@@ -510,7 +510,7 @@ export default function WhiteboardSessionPage() {
                         <button onClick={exportCanvas} className="p-2 text-[hsl(var(--text-secondary))] transition-all hover:text-[hsl(var(--primary))]" title="Exportar JSON">
                             <Download size={18} />
                         </button>
-                        <button onClick={() => fabricCanvas.current && saveNow(fabricCanvas.current)} className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
+                        <button onClick={() => fabricCanvas.current && saveNow(fabricCanvas.current)} className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--primary)/0.2)] transition-all hover:scale-105">
                             <Save size={14} /> Guardar
                         </button>
                     </div>
@@ -564,7 +564,7 @@ export default function WhiteboardSessionPage() {
                                         className={clsx(
                                             "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-all",
                                             gridStyle === opt.value
-                                                ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10"
+                                                ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.1)]"
                                                 : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
                                         )}
                                     >
@@ -581,7 +581,7 @@ export default function WhiteboardSessionPage() {
                                         className={clsx(
                                             "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-all",
                                             gridSize === opt.value
-                                                ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10"
+                                                ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.1)]"
                                                 : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
                                         )}
                                     >
@@ -604,7 +604,7 @@ export default function WhiteboardSessionPage() {
                         backgroundColor: "hsl(var(--bg-primary))",
                     }}
                 >
-                    <div className="inline-block overflow-hidden rounded-xl border-8 border-white bg-[hsl(var(--bg-primary))] shadow-[0_48px_96px_-32px_rgba(15,23,42,0.4)] dark:border-[#1e1f21]">
+                    <div className="inline-block overflow-hidden rounded-xl border-8 border-white bg-[hsl(var(--bg-primary))] shadow-[0_48px_96px_-32px_rgba(15,23,42,0.4)] dark:border-[hsl(var(--surface-1))]">
                         <canvas ref={canvasRef} className="whiteboard-canvas" />
                     </div>
                 </main>
@@ -642,7 +642,7 @@ export default function WhiteboardSessionPage() {
                                                 onClick={() => { setFillColor(c); applyProperty("fill", c); }}
                                                 className={clsx(
                                                     "size-5 rounded-full border transition-all hover:scale-125",
-                                                    fillColor === c ? "scale-125 ring-2 ring-blue-500 ring-offset-1 ring-offset-[hsl(var(--border))]" : "border-[hsl(var(--border))] dark:border-white/10"
+                                                    fillColor === c ? "scale-125 ring-2 ring-[hsl(var(--primary))] ring-offset-1 ring-offset-[hsl(var(--border))]" : "border-[hsl(var(--border))] dark:border-white/10"
                                                 )}
                                                 style={{ backgroundColor: c }}
                                             />
@@ -668,7 +668,7 @@ export default function WhiteboardSessionPage() {
                                                 onClick={() => { setStrokeColor(c); applyProperty("stroke", c); }}
                                                 className={clsx(
                                                     "size-5 rounded-full border transition-all hover:scale-125",
-                                                    strokeColor === c ? "scale-125 ring-2 ring-blue-500 ring-offset-1 ring-offset-[hsl(var(--border))]" : "border-[hsl(var(--border))] dark:border-white/10"
+                                                    strokeColor === c ? "scale-125 ring-2 ring-[hsl(var(--primary))] ring-offset-1 ring-offset-[hsl(var(--border))]" : "border-[hsl(var(--border))] dark:border-white/10"
                                                 )}
                                                 style={{ backgroundColor: c }}
                                             />
@@ -851,7 +851,7 @@ export default function WhiteboardSessionPage() {
                             {/* Delete button */}
                             <button
                                 onClick={removeSelection}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 py-2 text-[10px] font-bold uppercase tracking-wide text-rose-600 transition-all hover:bg-rose-100 dark:bg-rose-500/10"
+                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[hsl(var(--destructive)/0.08)] py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/0.15)] dark:bg-[hsl(var(--destructive)/0.1)]"
                             >
                                 <Trash2 size={14} /> Eliminar objeto
                             </button>
@@ -868,7 +868,7 @@ export default function WhiteboardSessionPage() {
                                 <button
                                     key={`${layer.type}-${layer.index}`}
                                     onClick={() => focusLayer(layer.index)}
-                                    className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] p-2.5 text-left text-[11px] font-medium text-[hsl(var(--text-secondary))] transition-all hover:border-blue-200 hover:bg-blue-50/40 dark:border-white/5 dark:hover:bg-blue-500/10"
+                                    className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] p-2.5 text-left text-[11px] font-medium text-[hsl(var(--text-secondary))] transition-all hover:border-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--info-muted))] dark:border-white/5 dark:hover:bg-[hsl(var(--primary)/0.1)]"
                                 >
                                     <span className="flex items-center gap-2">
                                         <History size={12} /> {layer.label}
@@ -954,9 +954,9 @@ function ToolbarButton({
             className={clsx(
                 "group relative flex size-10 items-center justify-center rounded-lg transition-all",
                 active
-                    ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-blue-500/20"
+                    ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--primary)/0.2)]"
                     : tone === "danger"
-                        ? "text-rose-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                        ? "text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:hover:bg-[hsl(var(--destructive)/0.1)]"
                         : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5",
                 disabled && "opacity-30 cursor-not-allowed"
             )}

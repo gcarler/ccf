@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
-const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-blue-500 transition-all";
 const LABEL = "block text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 type Fund = {
@@ -154,7 +154,7 @@ export default function FundsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {[
                         { label: "Total de Fondos", value: String(funds.length), color: "text-[hsl(var(--primary))]" },
-                        { label: "Balance Total", value: `$${totalBalance.toLocaleString()}`, color: "text-emerald-600" },
+                        { label: "Balance Total", value: `$${totalBalance.toLocaleString()}`, color: "text-[hsl(var(--success))]" },
                         { label: "Fondos Públicos", value: String(publicCount), color: "text-[hsl(var(--primary))]" },
                     ].map((s) => (
                         <div key={s.label} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
@@ -173,7 +173,7 @@ export default function FundsPage() {
                     </div>
                 ) : funds.length === 0 ? (
                     <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 text-center shadow-sm">
-                        <div className="size-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+                        <div className="size-8 rounded-lg bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] flex items-center justify-center mx-auto mb-4">
                             <Wallet className="text-[hsl(var(--primary))]" size={28} />
                         </div>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin fondos registrados</p>
@@ -189,7 +189,7 @@ export default function FundsPage() {
                             <motion.div key={f.id} layout
                                 className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm group hover:shadow-md hover:border-blue-200 dark:hover:border-blue-500/20 transition-all">
                                 <div className="flex items-start justify-between gap-3 mb-3">
-                                    <div className="size-10 rounded-md bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0">
+                                    <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0">
                                         <Wallet size={18} />
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -198,7 +198,7 @@ export default function FundsPage() {
                                             <PencilLine size={13} />
                                         </button>
                                         <button onClick={() => setDeleteTarget(f)}
-                                            className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-rose-600 hover:text-white transition-all">
+                                            className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive))] hover:text-white transition-all">
                                             <Trash2 size={13} />
                                         </button>
                                     </div>
@@ -212,12 +212,12 @@ export default function FundsPage() {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-[9px] font-semibold uppercase text-[hsl(var(--text-secondary))]">Balance</p>
-                                        <p className="text-lg font-bold text-emerald-600">${f.current_balance.toLocaleString()}</p>
+                                        <p className="text-lg font-bold text-[hsl(var(--success))]">${f.current_balance.toLocaleString()}</p>
                                     </div>
                                     <span className={clsx(
                                         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[9px] font-semibold uppercase tracking-wide",
                                         f.is_public
-                                            ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/50"
+                                            ? "bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] dark:text-[hsl(var(--success))] border-[hsl(var(--success))/0.2]"
                                             : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10"
                                     )}>
                                         {f.is_public ? <Eye size={10} /> : <EyeOff size={10} />}
@@ -279,7 +279,7 @@ export default function FundsPage() {
                                 <div className="flex items-center gap-3 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md">
                                     <button onClick={() => setFPublic(!fPublic)}
                                         className={clsx("size-10 rounded-md flex items-center justify-center transition-all flex-shrink-0",
-                                            fPublic ? "bg-emerald-500 text-white" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))]")}>
+                                            fPublic ? "bg-[hsl(var(--success))] text-white" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))]")}>
                                         {fPublic ? <Eye size={16} /> : <EyeOff size={16} />}
                                     </button>
                                     <div>
@@ -315,7 +315,7 @@ export default function FundsPage() {
                         className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
                             className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg p-4 max-w-sm w-full shadow-2xl border border-[hsl(var(--border))] dark:border-white/10">
-                            <div className="size-7 rounded-lg bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-600 mb-5">
+                            <div className="size-7 rounded-lg bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.1)] flex items-center justify-center text-[hsl(var(--destructive))] mb-5">
                                 <Trash2 size={24} />
                             </div>
                             <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Eliminar fondo?</h3>
@@ -328,7 +328,7 @@ export default function FundsPage() {
                                     Cancelar
                                 </button>
                                 <button onClick={handleDelete} disabled={deleting}
-                                    className="flex-1 py-3 rounded-md bg-rose-600 text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-rose-500/20 hover:bg-rose-700 disabled:opacity-50 transition-all">
+                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--destructive))] text-white text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--destructive))/0.2] hover:bg-[hsl(var(--destructive))] disabled:opacity-50 transition-all">
                                     {deleting ? "Eliminando..." : "Sí, eliminar"}
                                 </button>
                             </div>

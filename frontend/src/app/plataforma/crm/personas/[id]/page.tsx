@@ -1140,14 +1140,14 @@ export default function PersonaDetailPage() {
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Departamento</label>
-                                <select value={editPersona.colombian_department_id ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <select value={editPersona.colombian_department_id ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">Seleccionar departamento</option>
                                     {departments.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ciudad</label>
-                                <select value={editPersona.city ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, city: e.target.value }))} disabled={!editPersona.colombian_department_id || loadingEditCities} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <select value={editPersona.city ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, city: e.target.value }))} disabled={!editPersona.colombian_department_id || loadingEditCities} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">{loadingEditCities ? 'Cargando ciudades...' : 'Seleccionar ciudad'}</option>
                                     {editCities.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                                 </select>

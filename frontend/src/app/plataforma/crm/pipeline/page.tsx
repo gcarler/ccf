@@ -579,7 +579,7 @@ export default function ConsolidationPipelinePage() {
 
                                             {/* Notes Area with Premium Styling */}
                                             <div className="p-1 rounded-md bg-gradient-to-br from-blue-500/10 via-transparent to-sky-500/10">
-                                                <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] border border-white/20 shadow-2xl space-y-4">
+                                                <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-white/20 shadow-2xl space-y-4">
                                                     <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide block pl-1">Notas Dinámicas de Proceso</label>
                                                     <textarea
                                                         value={wikiNotes}
@@ -634,7 +634,7 @@ export default function ConsolidationPipelinePage() {
                                     </div>
                                 </motion.div>
                             ) : viewType === 'table' || viewType === 'list' ? (
-                                <motion.div key="list" className="flex-1 overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21]">
+                                <motion.div key="list" className="flex-1 overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))]">
                                     <DataTable
                                         data={filteredLeads}
                                         columns={columns}
@@ -684,7 +684,7 @@ export default function ConsolidationPipelinePage() {
                                 value={newLeadForm.first_name}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, first_name: e.target.value })}
                                 placeholder="Juan"
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] transition-all"
                             />
                         </div>
                         <div className="space-y-2">
@@ -694,7 +694,7 @@ export default function ConsolidationPipelinePage() {
                                 value={newLeadForm.last_name}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, last_name: e.target.value })}
                                 placeholder="Pérez"
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] transition-all"
                             />
                         </div>
                     </div>
@@ -709,7 +709,7 @@ export default function ConsolidationPipelinePage() {
                                 value={newLeadForm.phone}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, phone: e.target.value })}
                                 placeholder="+57 300 000 0000"
-                                className="w-full pl-10 pr-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] transition-all"
+                                className="w-full pl-10 pr-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] transition-all"
                             />
                         </div>
                     </div>
@@ -721,7 +721,7 @@ export default function ConsolidationPipelinePage() {
                             <select
                                 value={newLeadForm.source}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, source: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white appearance-none transition-all"
                             >
                                 {sourceKeys.map(s => <option key={s} value={s}>{SOURCES[s]} {s}</option>)}
                             </select>
@@ -731,7 +731,7 @@ export default function ConsolidationPipelinePage() {
                             <select
                                 value={newLeadForm.stage}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, stage: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white appearance-none transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white appearance-none transition-all"
                             >
                                 {PIPELINE_STAGES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                             </select>
@@ -746,7 +746,7 @@ export default function ConsolidationPipelinePage() {
                             onChange={e => setNewLeadForm({ ...newLeadForm, notes: e.target.value })}
                             placeholder="¿Cómo llegó? ¿Qué contó? ¿Tiene familia en la iglesia?..."
                             rows={4}
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/30 font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] resize-none transition-all"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] resize-none transition-all"
                         />
                     </div>
 

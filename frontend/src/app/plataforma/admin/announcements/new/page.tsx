@@ -102,7 +102,7 @@ export default function NewAnnouncementPage() {
                                 <input 
                                     value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
                                     placeholder="Ej: Gran Vigilia de Oración - Próximo Viernes"
-                                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-2 px-4 text-lg font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-2 px-4 text-lg font-bold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all"
                                 />
                             </div>
 
@@ -111,7 +111,7 @@ export default function NewAnnouncementPage() {
                                 <textarea 
                                     value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})}
                                     placeholder="Escribe los detalles aquí..."
-                                    className="w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 text-[16px] font-medium leading-relaxed outline-none focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"
+                                    className="w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 text-[16px] font-medium leading-relaxed outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none"
                                 />
                             </div>
                         </div>
@@ -153,7 +153,7 @@ export default function NewAnnouncementPage() {
                                     <Users size={18} className="text-[hsl(var(--text-secondary))]" />
                                     <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase">Alcance Global</span>
                                 </div>
-                                <div className="size-5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+                                <div className="size-5 rounded-full bg-[hsl(var(--success))] shadow-[0_0_8px_hsl(var(--success))]" />
                             </div>
 
                             <button

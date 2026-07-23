@@ -225,7 +225,7 @@ export default function UserTasksPage() {
           onTaskDeleted={handleTaskDeleted}
         />
 
-        <header className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-3 dark:border-white/10 dark:bg-[#18191c]">
+        <header className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-3 dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
               {[
@@ -246,7 +246,7 @@ export default function UserTasksPage() {
                   value={query}
                   onChange={event => setQuery(event.target.value)}
                   placeholder="Buscar tareas..."
-                  className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/5"
+                  className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] py-2 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-white/5"
                 />
               </div>
               <div className="flex flex-wrap gap-2">

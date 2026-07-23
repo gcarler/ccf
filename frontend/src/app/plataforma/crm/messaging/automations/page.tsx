@@ -341,7 +341,7 @@ export default function AutomationsPage() {
                             value={form.name}
                             onChange={e => setForm({ ...form, name: e.target.value })}
                             placeholder="Ej: Bienvenida a nuevos personas"
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white"
                         />
                     </div>
 
@@ -381,7 +381,7 @@ export default function AutomationsPage() {
                         <select
                             value={form.action}
                             onChange={e => setForm({ ...form, action: e.target.value })}
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white appearance-none"
                         >
                             {ACTIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                         </select>
@@ -394,7 +394,7 @@ export default function AutomationsPage() {
                                 value={form.taskTitle}
                                 onChange={e => setForm({ ...form, taskTitle: e.target.value })}
                                 placeholder="Ej: Visitar al nuevo persona"
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white"
                             />
                         </div>
                     ) : (
@@ -407,7 +407,7 @@ export default function AutomationsPage() {
                                 onChange={e => setForm({ ...form, message: e.target.value })}
                                 placeholder="Hola {nombre}, bienvenido a CCF..."
                                 rows={4}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white resize-none"
                             />
                         </div>
                     )}

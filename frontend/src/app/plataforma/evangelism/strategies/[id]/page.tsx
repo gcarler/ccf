@@ -896,7 +896,7 @@ export default function StrategyDetailPage() {
  onClick={() => tab.id === 'metrics' ? router.push(`/plataforma/evangelism/strategies/${id}/analytics`) : setActiveTab(tab.id)}
  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${
  activeTab === tab.id
- ? 'border-blue-600 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] dark:border-blue-400'
+ ? 'border-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] dark:border-[hsl(var(--primary))]'
  : 'border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]'
  }`}>
  <tab.icon size={14} />{tab.label}
@@ -907,7 +907,7 @@ export default function StrategyDetailPage() {
  </div>
 
  {!canManageStrategySurface && (
- <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] font-medium text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-200">
+ <div className="rounded-lg border border-[hsl(var(--info-muted))] bg-[hsl(var(--info-muted))] px-3 py-2 text-[11px] font-medium text-[hsl(var(--info))]">
   Vista en modo lectura. Las acciones de edición y gestión quedan reservadas para usuarios con `evangelism:manage`.
  </div>
  )}
@@ -956,7 +956,7 @@ export default function StrategyDetailPage() {
  {viewType === 'kanban' && (activeTab === 'sessions' || activeTab === 'overview') && (
  <div className="flex gap-3 overflow-x-auto pb-4">
  {['Pendiente', 'Programada', 'Realizada'].map(label => {
- const colors: Record<string, string> = { 'Pendiente': '#F59E0B', 'Programada': '#3B82F6', 'Realizada': '#10B981' };
+ const colors: Record<string, string> = { 'Pendiente': 'hsl(var(--warning))', 'Programada': 'hsl(var(--info))', 'Realizada': 'hsl(var(--success))' };
  const filtered = sessions.filter(s => s.status === label);
  return (
  <div key={label} className="min-w-[280px] w-[280px] shrink-0">
@@ -965,7 +965,7 @@ export default function StrategyDetailPage() {
  </div>
  <div className="space-y-2">
  {filtered.map(s => (
- <div key={s.id} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-3">
+ <div key={s.id} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-3">
  <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{s.topic || `Sesión #${s.id}`}</p>
  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{groupName(s.grupo_id)}</p>
  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{formatDate(s.session_date)}</p>
@@ -1090,20 +1090,20 @@ export default function StrategyDetailPage() {
  <div className="flex items-center gap-1">
  <button
  onClick={(e) => { e.stopPropagation(); openPersonaDrawer(item); }}
- className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors"
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors"
  >
  <Users size={10} /> Personas
  </button>
  <button
  onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/evangelism/groups/${item.id}`); }}
- className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors"
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors"
  >
  <Calendar size={10} /> Detalle
  </button>
  <button
  onClick={(e) => { e.stopPropagation(); shareGroupLink(item.id, item.name, 'whatsapp'); }}
  title="Compartir por WhatsApp"
- className="w-6 h-6 inline-flex items-center justify-center rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 transition-colors"
+ className="w-6 h-6 inline-flex items-center justify-center rounded bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.2)] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))] transition-colors"
  >
  <Share2 size={10} />
  </button>
@@ -1189,7 +1189,7 @@ export default function StrategyDetailPage() {
  <div className="flex items-center gap-1">
  <button
  onClick={(e) => { e.stopPropagation(); openAttendanceDrawer(item); }}
- className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
  >
  <Users size={10} /> Asistencia
  </button>
@@ -1199,8 +1199,8 @@ export default function StrategyDetailPage() {
  title={item.estado_habilitacion === 'HABILITADO' ? 'Cerrar sesión' : 'Abrir sesión'}
  className={`w-6 h-6 inline-flex items-center justify-center rounded font-bold text-[11px] transition-colors ${
  item.estado_habilitacion === 'HABILITADO'
- ? 'bg-emerald-100 text-emerald-700 hover:bg-rose-100 hover:text-rose-600 dark:bg-emerald-900/30 dark:text-emerald-400'
- : 'bg-amber-50 text-amber-600 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-amber-900/20 dark:text-amber-400'
+ ? 'bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]'
+ : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] hover:bg-[hsl(var(--success)/0.2)] hover:text-[hsl(var(--success))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]'
  }`}
  >
  {item.estado_habilitacion === 'HABILITADO' ? '✓' : '○'}
@@ -1208,7 +1208,7 @@ export default function StrategyDetailPage() {
  )}
  <button
  onClick={(e) => { e.stopPropagation(); requestDeleteSession(item.id); }}
- className="w-6 h-6 inline-flex items-center justify-center rounded text-[hsl(var(--text-secondary))] hover:bg-red-50 hover:text-rose-500 dark:hover:bg-red-900/20 transition-colors"
+ className="w-6 h-6 inline-flex items-center justify-center rounded text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-colors"
  title="Eliminar"
  >
  <Trash2 size={11} />
@@ -1228,22 +1228,22 @@ export default function StrategyDetailPage() {
  <div className="space-y-1">
  {(activeTab === 'groups' || activeTab === 'overview') && groups.map(g => (
  <div key={`g-${g.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 transition-all">
- <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Users size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
+ <div className="w-8 h-8 rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] flex items-center justify-center shrink-0"><Users size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
  <div className="flex-1 min-w-0">
  <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{g.name}</p>
  <p className="text-xs text-[hsl(var(--text-secondary))]">{g.personas_count} personas{g.zone ? ` · ${g.zone}` : ''}</p>
  </div>
- <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-green-300">Grupo</span>
+ <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">Grupo</span>
  </div>
  ))}
  {(activeTab === 'sessions' || activeTab === 'overview') && sessions.map(s => (
  <div key={`s-${s.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 transition-all">
- <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0"><Calendar size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
+ <div className="w-8 h-8 rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] flex items-center justify-center shrink-0"><Calendar size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
  <div className="flex-1 min-w-0">
  <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{s.topic || `Sesión #${s.id}`}</p>
  <p className="text-xs text-[hsl(var(--text-secondary))]">{groupName(s.grupo_id)} · {formatDate(s.session_date)}</p>
  </div>
- <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? '#10B98120' : '#3B82F620', color: s.status === 'Realizada' ? '#10B981' : '#3B82F6' }}>{s.status}</span>
+ <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? 'hsl(var(--success)/0.125)' : '#3B82F620', color: s.status === 'Realizada' ? 'hsl(var(--success))' : 'hsl(var(--info))' }}>{s.status}</span>
  </div>
  ))}
  </div>
@@ -1253,9 +1253,9 @@ export default function StrategyDetailPage() {
  {viewType === 'grid' && (
  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
  {(activeTab === 'groups' || activeTab === 'overview') && groups.map(g => (
- <div key={`g-${g.id}`} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
+ <div key={`g-${g.id}`} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-4 hover:shadow-md transition-shadow">
  <div className="flex items-center gap-2 mb-2">
- <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><Users size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
+ <div className="w-6 h-6 rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] flex items-center justify-center"><Users size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
  <span className="text-xs font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">GRUPO</span>
  </div>
  <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">{g.name}</h3>
@@ -1264,16 +1264,16 @@ export default function StrategyDetailPage() {
  </div>
  ))}
  {(activeTab === 'sessions' || activeTab === 'overview') && sessions.map(s => (
- <div key={`s-${s.id}`} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md transition-shadow">
+ <div key={`s-${s.id}`} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-4 hover:shadow-md transition-shadow">
  <div className="flex items-center gap-2 mb-2">
- <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><Calendar size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
+ <div className="w-6 h-6 rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] flex items-center justify-center"><Calendar size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
  <span className="text-xs font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">SESIÓN</span>
  </div>
  <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">{s.topic || `Sesión #${s.id}`}</h3>
  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{groupName(s.grupo_id)}</p>
  <div className="flex items-center justify-between mt-3">
  <span className="text-xs text-[hsl(var(--text-secondary))]">{formatDate(s.session_date)}</span>
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? '#10B98120' : '#3B82F620', color: s.status === 'Realizada' ? '#10B981' : '#3B82F6' }}>{s.status}</span>
+ <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? 'hsl(var(--success)/0.125)' : '#3B82F620', color: s.status === 'Realizada' ? 'hsl(var(--success))' : 'hsl(var(--info))' }}>{s.status}</span>
  </div>
  </div>
  ))}
@@ -1318,7 +1318,7 @@ export default function StrategyDetailPage() {
  ) : null}
  </div>
  {groups.length === 0 ? (
- <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg">
+ <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg">
  <Home size={32} className="text-[hsl(var(--text-secondary))] mb-2" />
  <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">Sin grupos aún</p>
  <p className="text-xs text-[hsl(var(--text-secondary))]">Crea el primer grupo para esta estrategia</p>
@@ -1327,11 +1327,11 @@ export default function StrategyDetailPage() {
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
  {groups.map(g => (
  <div key={g.id}
- className="group bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer relative"
+ className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg p-4 hover:border-[hsl(var(--primary)/0.3)] dark:hover:border-[hsl(var(--primary)/0.5)] transition-all cursor-pointer relative"
  onClick={() => canManageStrategySurface ? openPersonaDrawer(g) : router.push(`/plataforma/evangelism/groups/${g.id}`)}>
  {canManageStrategySurface ? (
  <button onClick={e => { e.stopPropagation(); requestDeleteGroup(g.id, g.name); }}
- className="absolute top-2 right-2 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
+ className="absolute top-2 right-2 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.15)] opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
  <Trash2 size={14} />
  </button>
  ) : null}
@@ -1341,7 +1341,7 @@ export default function StrategyDetailPage() {
  </button>
  {canManageStrategySurface ? (
  <button onClick={e => { e.stopPropagation(); openGroupAttendance(g); }}
- className="absolute top-2 right-[3.25rem] p-1 rounded text-[hsl(var(--text-secondary))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Registrar asistencia">
+ className="absolute top-2 right-[3.25rem] p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success)/0.15)] opacity-0 group-hover:opacity-100 transition-all z-10" title="Registrar asistencia">
  <ClipboardList size={14} />
  </button>
  ) : null}
@@ -1349,7 +1349,7 @@ export default function StrategyDetailPage() {
  <div className="absolute top-2 right-[4.75rem] z-20">
  <button
  onClick={e => { e.stopPropagation(); setShareMenuId(shareMenuId === g.id ? null : g.id); }}
- className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 opacity-0 group-hover:opacity-100 transition-all"
+ className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success)/0.15)] opacity-0 group-hover:opacity-100 transition-all"
  title="Compartir enlace del grupo"
  >
  <Share2 size={14} />
@@ -1366,11 +1366,11 @@ export default function StrategyDetailPage() {
  </button>
  <button onClick={() => shareGroupLink(g.id, g.name, 'whatsapp')}
  className="w-full text-left px-3 py-2 text-xs font-medium text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] flex items-center gap-2">
- <span className="shrink-0 w-3 h-3 rounded-full bg-emerald-500 inline-block" />WhatsApp
+ <span className="shrink-0 w-3 h-3 rounded-full bg-[hsl(var(--success))] inline-block" />WhatsApp
  </button>
  <button onClick={() => shareGroupLink(g.id, g.name, 'telegram')}
  className="w-full text-left px-3 py-2 text-xs font-medium text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] flex items-center gap-2">
- <span className="shrink-0 w-3 h-3 rounded-full bg-sky-500 inline-block" />Telegram
+ <span className="shrink-0 w-3 h-3 rounded-full bg-[hsl(var(--info))] inline-block" />Telegram
  </button>
  </div>
  )}
@@ -1425,13 +1425,13 @@ export default function StrategyDetailPage() {
  fetchSessions();
  } catch { toast.error('Error al habilitar sesiones'); }
  }}
- className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+ className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--success)/0.4)] dark:border-[hsl(var(--success)/0.4)] text-[hsl(var(--success))] text-xs font-semibold hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success)/0.15)] transition-colors">
  <CheckCircle2 size={14} />Habilitar sesiones
  </button>
  ) : null}
  {canManageStrategySurface ? (
  <button onClick={requestBlockAllSessions}
- className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-rose-300 dark:border-rose-700 text-rose-600 dark:text-rose-400 text-xs font-semibold hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors">
+ className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--destructive)/0.3)] dark:border-[hsl(var(--destructive)/0.4)] text-[hsl(var(--destructive))] text-xs font-semibold hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-colors">
  <AlertCircle size={14} />Bloquear sesiones
  </button>
  ) : null}
@@ -1511,7 +1511,7 @@ export default function StrategyDetailPage() {
  {[1, 2, 3].map(i => <div key={i} className="h-14 bg-[hsl(var(--bg-muted))] rounded-lg animate-pulse" />)}
  </div>
  ) : filteredSessions.length === 0 ? (
- <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border-primary))] rounded-lg">
+ <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg">
  <ClipboardList size={32} className="text-[hsl(var(--text-secondary))] mb-2" />
  <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">
  {sessions.length === 0 ? 'Sin sesiones registradas' : 'Sin sesiones con esos filtros'}
@@ -1523,9 +1523,9 @@ export default function StrategyDetailPage() {
  ) : (
  <div className="space-y-2">
  {filteredSessions.map(s => (
- <div key={s.id} className={`flex items-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border rounded-lg px-4 py-3 transition-all ${
+ <div key={s.id} className={`flex items-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border rounded-lg px-4 py-3 transition-all ${
  s.estado_habilitacion === 'HABILITADO'
- ? 'border-emerald-300 dark:border-emerald-700'
+ ? 'border-[hsl(var(--success)/0.5)] dark:border-[hsl(var(--success)/0.4)]'
  : s.estado_habilitacion === 'CERRADO'
  ? 'border-[hsl(var(--border-primary))] opacity-60'
  : 'border-[hsl(var(--border-primary))]'
@@ -1535,18 +1535,18 @@ export default function StrategyDetailPage() {
  <span className="text-xs font-bold text-[hsl(var(--text-primary))]">
  {new Date(s.session_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
  </span>
- <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-[hsl(var(--secondary))]">
+ <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">
  {s.status}
  </span>
  {/* Badge de habilitación */}
  {s.estado_habilitacion === 'HABILITADO' && (
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Abierta</span>
+ <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">Abierta</span>
  )}
  {s.estado_habilitacion === 'CERRADO' && (
  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Cerrada</span>
  )}
  {(!s.estado_habilitacion || s.estado_habilitacion === 'DESHABILITADO') && (
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">Bloqueada</span>
+ <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]">Bloqueada</span>
  )}
  </div>
  <div className="flex items-center gap-3 mt-0.5 text-[11px] text-[hsl(var(--text-secondary))]">
@@ -1563,8 +1563,8 @@ export default function StrategyDetailPage() {
  title={s.estado_habilitacion === 'HABILITADO' ? 'Bloquear sesión' : 'Habilitar sesión'}
  className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-[11px] font-bold ${
  s.estado_habilitacion === 'HABILITADO'
- ? 'bg-emerald-100 text-emerald-700 hover:bg-rose-100 hover:text-rose-600 dark:bg-emerald-900/30 dark:text-emerald-400'
- : 'bg-amber-50 text-amber-600 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-amber-900/20 dark:text-amber-400'
+ ? 'bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]'
+ : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] hover:bg-[hsl(var(--success)/0.2)] hover:text-[hsl(var(--success))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]'
  }`}
  >
  {s.estado_habilitacion === 'HABILITADO' ? '✓' : '○'}
@@ -1572,7 +1572,7 @@ export default function StrategyDetailPage() {
  ) : null}
  {canManageStrategySurface ? (
  <button onClick={() => openAttendanceDrawer(s)}
- className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[11px] font-semibold hover:bg-blue-50 hover:text-[hsl(var(--primary))] dark:hover:bg-blue-900/20 dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+ className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[11px] font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
  <Users size={12} />Asistencia
  </button>
  ) : null}
@@ -1626,12 +1626,12 @@ export default function StrategyDetailPage() {
      {attendanceByGroup.map(({ group: grp, sessions: grpSessions, latest }) => {
       const isHabilitado = latest?.estado_habilitacion === 'HABILITADO';
       return (
-       <div key={grp.id} className={`bg-[hsl(var(--bg-primary))] rounded-xl border overflow-hidden ${isHabilitado ? 'border-emerald-200 dark:border-emerald-800/40' : 'border-[hsl(var(--border-primary))]'}`}>
+       <div key={grp.id} className={`bg-[hsl(var(--bg-primary))] rounded-xl border overflow-hidden ${isHabilitado ? 'border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.2)]' : 'border-[hsl(var(--border-primary))]'}`}>
         {/* Cabecera del grupo */}
-        <div className={`flex items-center justify-between px-4 py-3 ${isHabilitado ? 'bg-emerald-50 dark:bg-emerald-900/10' : 'bg-[hsl(var(--bg-secondary))]'}`}>
+        <div className={`flex items-center justify-between px-4 py-3 ${isHabilitado ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)]' : 'bg-[hsl(var(--bg-secondary))]'}`}>
          <div className="min-w-0">
           <div className="flex items-center gap-2">
-           {isHabilitado && <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />}
+           {isHabilitado && <span className="size-1.5 rounded-full bg-[hsl(var(--success))] animate-pulse shrink-0" />}
            <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{grp.name}</p>
           </div>
           <div className="flex items-center gap-3 mt-0.5 text-[11px] text-[hsl(var(--text-secondary))]">
@@ -1658,12 +1658,12 @@ export default function StrategyDetailPage() {
           });
           const isClosed = s.estado_habilitacion === 'CERRADO' || s.estado_habilitacion === 'CANCELADA';
           const habColor = s.estado_habilitacion === 'HABILITADO'
-           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+           ? 'bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]'
            : s.estado_habilitacion === 'CANCELADA'
-           ? 'bg-red-50 text-[hsl(var(--destructive))] dark:bg-red-900/20'
+           ? 'bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.15)]'
            : s.estado_habilitacion === 'CERRADO'
            ? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]'
-           : 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400';
+           : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]';
           return (
            <div key={s.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[hsl(var(--bg-muted))] transition-colors">
             <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -1679,7 +1679,7 @@ export default function StrategyDetailPage() {
               {canManageStrategySurface && s.estado_habilitacion !== 'HABILITADO' && (
                <button
                 onClick={() => toggleSessionHabilitacion(s)}
-                className="text-[11px] font-semibold text-amber-600 hover:text-emerald-700 transition-colors whitespace-nowrap"
+                className="text-[11px] font-semibold text-[hsl(var(--warning))] hover:text-[hsl(var(--success))] transition-colors whitespace-nowrap"
                >
                 Habilitar
                </button>
@@ -1710,7 +1710,7 @@ export default function StrategyDetailPage() {
  {viewType === 'dashboard' && activeTab === 'metrics' && (
  <div className="space-y-4">
  <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-8 flex flex-col items-center text-center gap-4">
- <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/40">
+ <div className="p-4 rounded-2xl bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)]">
  <BarChart3 size={36} className="text-[hsl(var(--primary))]" />
  </div>
  <div>
@@ -1732,7 +1732,7 @@ export default function StrategyDetailPage() {
  {[
  { label: 'Grupos', value: metrics.summary.total_groups },
  { label: 'Sesiones', value: metrics.summary.total_sessions },
- { label: 'Primera vez', value: metrics.summary.total_first_timers, cls: 'text-emerald-600' },
+ { label: 'Primera vez', value: metrics.summary.total_first_timers, cls: 'text-[hsl(var(--success))]' },
  { label: 'Inasistencias', value: metrics.summary.total_absences, cls: 'text-[hsl(var(--destructive))]' },
  ].map(stat => (
  <div key={stat.label} className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
@@ -1756,7 +1756,7 @@ export default function StrategyDetailPage() {
  <div><p className="text-[hsl(var(--text-secondary))] font-medium">Fin</p><p className="text-[hsl(var(--text-primary))] font-bold">{formatDate(strategy.end_date)}</p></div>
  <div><p className="text-[hsl(var(--text-secondary))] font-medium">Actualización</p><p className="text-[hsl(var(--text-primary))] font-bold">{formatDate(strategy.updated_at)}</p></div>
  <div><p className="text-[hsl(var(--text-secondary))] font-medium">Clase</p><p className="text-[hsl(var(--text-primary))] font-bold capitalize">{strategy.clase_raiz || strategy.typology || '—'}</p></div>
- <div><p className="text-[hsl(var(--text-secondary))] font-medium">Activa</p><p className={`font-bold ${strategy.activa ? 'text-emerald-600' : 'text-[hsl(var(--text-secondary))]'}`}>{strategy.activa ? 'Sí' : 'No'}</p></div>
+ <div><p className="text-[hsl(var(--text-secondary))] font-medium">Activa</p><p className={`font-bold ${strategy.activa ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--text-secondary))]'}`}>{strategy.activa ? 'Sí' : 'No'}</p></div>
  </div>
  </div>
 
@@ -1781,7 +1781,7 @@ export default function StrategyDetailPage() {
  <div className="bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
  <div className="flex items-center justify-between mb-3">
  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Seguimiento Pendiente</h3>
- <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full">
+ <span className="text-[10px] font-bold px-2 py-0.5 bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] rounded-full">
  {followUps.filter(f => !f.estado_completado).length}
  </span>
  </div>
@@ -1794,7 +1794,7 @@ export default function StrategyDetailPage() {
  {followUps.filter(f => !f.estado_completado).slice(0, 10).map(f => (
  <div key={f.id} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))]">
  <div className="flex items-center gap-2">
- <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.tipo === 'llamada' ? 'bg-blue-100 text-[hsl(var(--primary))]' : f.tipo === 'visita' ? 'bg-blue-100 text-[hsl(var(--primary))]' : f.tipo === 'oracion' ? 'bg-green-100 text-[hsl(var(--secondary))]' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
+ <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.tipo === 'llamada' ? 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]' : f.tipo === 'visita' ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
  {f.tipo}
  </span>
  <span className="text-[11px] text-[hsl(var(--text-secondary))]">{f.observaciones || '—'}</span>
@@ -1809,7 +1809,7 @@ export default function StrategyDetailPage() {
  toast.success('Seguimiento completado');
  fetchFollowUps();
  } catch { toast.error('Error al actualizar'); }
- }} className="px-2 py-0.5 text-[10px] font-bold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded transition-colors">
+ }} className="px-2 py-0.5 text-[10px] font-bold text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success)/0.15)] rounded transition-colors">
  Completar
  </button>
  ) : null}
@@ -1878,7 +1878,7 @@ export default function StrategyDetailPage() {
  onChange={v => updateGroupPersonaRole(m.id, v)}
  />
  <button onClick={() => removePersonaFromGroup(m.id)}
- className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
+ className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.15)] rounded transition-colors">
  <UserMinus size={13} />
  </button>
  </div>
@@ -1906,7 +1906,7 @@ export default function StrategyDetailPage() {
  <input value={personaSearch}
  onChange={e => setPersonaSearch(e.target.value)}
  placeholder="Filtrar por nombre..."
- className="w-full pl-9 pr-3 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]" />
+ className="w-full pl-9 pr-3 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div className="flex-1 min-h-0 overflow-y-auto space-y-1">
  {(() => {
@@ -1953,7 +1953,7 @@ export default function StrategyDetailPage() {
  <div>
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Grupo *</label>
  <select value={sessionForm.grupo_id} onChange={e => setSessionForm(f => ({ ...f, grupo_id: e.target.value }))}
- className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]">
+ className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]">
  <option value="">Seleccionar grupo...</option>
  {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
  </select>
@@ -1961,25 +1961,25 @@ export default function StrategyDetailPage() {
  <div>
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Fecha de la sesión *</label>
  <input type="date" value={sessionForm.session_date} onChange={e => setSessionForm(f => ({ ...f, session_date: e.target.value }))}
- className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]" />
+ className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div>
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Tema de la sesión</label>
  <input value={sessionForm.topic} onChange={e => setSessionForm(f => ({ ...f, topic: e.target.value }))}
  placeholder="Ej: La fe que mueve montañas"
- className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]" />
+ className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div>
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Ofrenda recogida</label>
  <input type="number" value={sessionForm.offering_amount} onChange={e => setSessionForm(f => ({ ...f, offering_amount: e.target.value }))}
  placeholder="0.00"
- className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]" />
+ className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div>
  <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Notas de la sesión</label>
  <textarea value={sessionForm.report_notes} onChange={e => setSessionForm(f => ({ ...f, report_notes: e.target.value }))} rows={3}
  placeholder="Observaciones, peticiones de oración, novedades..."
- className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))] resize-none" />
+ className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))] resize-none" />
  </div>
  </div>
  </WorkspaceDrawer>

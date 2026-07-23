@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 
-const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
 const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4";
 
 export default function EditCoursePage() {
@@ -77,7 +77,7 @@ export default function EditCoursePage() {
     const itemVariants = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } };
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#1E1F21] overflow-hidden relative">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden relative">
             <div className="absolute top-0 right-0 w-[500px] h-48 bg-blue-600/5 rounded-full blur-[100px] pointer-events-none" />
 
             <WorkspaceToolbar
@@ -105,7 +105,7 @@ export default function EditCoursePage() {
  <motion.div variants={containerVariants} initial="hidden"animate="show"className="w-full space-y-3">
 
                         <motion.header variants={itemVariants} className="space-y-3">
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--warning)/0.1)] rounded-full text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">
                                 <FileText size={13} strokeWidth={3} /> Edicion de Contenido
                             </div>
                             <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">

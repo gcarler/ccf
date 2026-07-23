@@ -226,7 +226,7 @@ export default function NewsletterLeadsPage() {
                                     type="date"
                                     value={dateFrom}
                                     onChange={e => { setPage(1); setDateFrom(e.target.value); }}
-                                    className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white"
+                                    className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white"
                                 />
                             </div>
                         </div>
@@ -240,7 +240,7 @@ export default function NewsletterLeadsPage() {
                         <input
                             type="text"
                             placeholder="Buscar por nombre, email o notas..."
-                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all"
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
@@ -395,7 +395,7 @@ export default function NewsletterLeadsPage() {
                                 value={wikiNotes}
                                 onChange={e => setWikiNotes(e.target.value)}
                                 placeholder="Documenta el proceso de seguimiento de leads del newsletter, criterios de clasificación, etc..."
-                                className="w-full min-h-[360px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20"
+                                className="w-full min-h-[360px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                             />
                         </div>
                     ) : (

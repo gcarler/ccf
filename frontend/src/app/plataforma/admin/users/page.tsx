@@ -132,12 +132,12 @@ export default function AdminUsersPage() {
                         <button
                             onClick={handleBulkProvision}
                             disabled={provisioning}
-                            className="flex items-center gap-2 px-3 py-2.5 bg-emerald-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-emerald-500/20 hover:bg-emerald-500 active:scale-95 transition-all disabled:opacity-50"
+                            className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--success))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--success))/0.2] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-50"
                         >
                             {provisioning ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
                             {provisioning ? 'Provisionando...' : 'Provisionar Todos'}
                         </button>
-                        <button className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                        <button className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary))/0.2] active:scale-95 transition-all">
                             <UserPlus size={14} /> Nuevo Acceso
                         </button>
                     </div>
@@ -151,7 +151,7 @@ export default function AdminUsersPage() {
                 >
                     {/* Header */}
                     <motion.div variants={itemVariants} className="space-y-2">
-                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">Usuarios <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-600">Ministeriales.</span></h1>
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">Usuarios <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]">Ministeriales.</span></h1>
                         <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">Control total sobre roles, permisos y estados de cuenta del staff y la congregación.</p>
                     </motion.div>
 
@@ -181,7 +181,7 @@ export default function AdminUsersPage() {
                                         >
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="size-10 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-600 flex items-center justify-center text-white font-semibold shadow-lg">
+                                                    <div className="size-10 rounded-lg bg-gradient-to-tr from-[hsl(var(--primary))] to-[hsl(var(--primary))] flex items-center justify-center text-white font-semibold shadow-lg">
                                                         {user.username.substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <div>
@@ -193,8 +193,8 @@ export default function AdminUsersPage() {
                                             <td className="px-4 py-2">
                                                 <span className={clsx(
                                                     "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-wide",
-                                                    user.role === 'admin' ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400" :
-                                                    user.role === 'pastor' ? "bg-blue-50 text-[hsl(var(--primary))] dark:bg-blue-500/10 dark:text-[hsl(var(--primary))]" :
+                                                    user.role === 'admin' ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--info))]" :
+                                                    user.role === 'pastor' ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--primary))]" :
                                                     "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]"
                                                 )}>
                                                     <Shield size={10} /> {user.role}
@@ -202,13 +202,13 @@ export default function AdminUsersPage() {
                                             </td>
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-2">
-                                                    <Star size={14} className="text-amber-400 fill-amber-400" />
+                                                    <Star size={14} className="text-[hsl(var(--warning))] fill-[hsl(var(--warning))]" />
                                                     <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{user.xp || 0} XP</span>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div className={clsx("size-2 rounded-full", user.is_active ? "bg-emerald-500 animate-pulse" : "bg-[hsl(var(--surface-2))]")} />
+                                                    <div className={clsx("size-2 rounded-full", user.is_active ? "bg-[hsl(var(--success))] animate-pulse" : "bg-[hsl(var(--surface-2))]")} />
                                                     <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{user.is_active ? 'Activo' : 'Suspendido'}</span>
                                                 </div>
                                             </td>
@@ -217,7 +217,7 @@ export default function AdminUsersPage() {
                                                     <button onClick={(e) => { e.stopPropagation(); handleUpdateUser(user.id, { is_active: !user.is_active }); }} className="p-2 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]">
                                                         {user.is_active ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
                                                     </button>
-                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md transition-all text-[hsl(var(--text-secondary))] hover:text-rose-500">
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }} className="p-2 hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.1)] rounded-md transition-all text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))]">
                                                         <Trash2 size={18} />
                                                     </button>
                                                 </div>
@@ -265,7 +265,7 @@ export default function AdminUsersPage() {
                                         className={clsx(
                                             "flex items-center justify-between p-3 rounded-lg border-2 transition-all group",
                                             selectedUser.role === role 
-                                                ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-xl shadow-blue-500/20" 
+                                                ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-xl shadow-[hsl(var(--primary))/0.2]" 
                                                 : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-blue-500/30"
                                         )}
                                     >
@@ -279,7 +279,7 @@ export default function AdminUsersPage() {
                         <section className="space-y-4">
                             <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2"><Key size={14} className="text-[hsl(var(--primary))]" /> Seguridad de Cuenta</h4>
                             <button className="w-full p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all flex items-center justify-center gap-3">
-                                <Zap size={16} className="text-amber-500" /> Resetear Contraseña (Forzar)
+                                <Zap size={16} className="text-[hsl(var(--warning))]" /> Resetear Contraseña (Forzar)
                             </button>
                         </section>
                     </div>

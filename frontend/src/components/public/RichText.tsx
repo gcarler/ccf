@@ -67,9 +67,9 @@ const RICH_TEXT_CSS = `
 
     /* ── Links ── */
     .ccf-rich-text a {
-        color: var(--site-primary, #6366f1);
+        color: var(--site-primary);
         text-decoration: underline;
-        text-decoration-color: var(--site-primary, #6366f1);
+        text-decoration-color: var(--site-primary);
         text-decoration-thickness: 2px;
         text-underline-offset: 2px;
         transition: opacity 0.2s;
@@ -101,15 +101,15 @@ const RICH_TEXT_CSS = `
         padding-left: 0.25rem;
     }
     .ccf-rich-text li::marker {
-        color: var(--site-primary, #6366f1);
+        color: var(--site-primary);
     }
 
     /* ── Blockquotes ── */
     .ccf-rich-text blockquote {
         margin: 1.5rem 0;
         padding: 1rem 1.25rem;
-        border-left: 4px solid var(--site-primary, #6366f1);
-        background: rgba(99, 102, 241, 0.05);
+        border-left: 4px solid var(--site-primary);
+        background: hsl(var(--info-muted));
         border-radius: 0 0.5rem 0.5rem 0;
         font-style: italic;
         color: inherit;
@@ -123,19 +123,19 @@ const RICH_TEXT_CSS = `
         font-size: 0.875em;
         padding: 0.15em 0.4em;
         border-radius: 0.375rem;
-        background: rgba(0, 0, 0, 0.06);
-        color: #e11d48;
+        background: hsl(var(--surface-2));
+        color: hsl(var(--destructive));
     }
     .dark .ccf-rich-text code {
         background: rgba(255, 255, 255, 0.08);
-        color: #fb7185;
+        color: hsl(var(--destructive)/0.85);
     }
     .ccf-rich-text pre {
         margin: 1.5rem 0;
         padding: 1rem 1.25rem;
         border-radius: 0.75rem;
-        background: #1e293b;
-        color: #e2e8f0;
+        background: hsl(var(--bg-primary));
+        color: hsl(var(--text-primary));
         overflow-x: auto;
         font-size: 0.875rem;
         line-height: 1.6;
@@ -177,7 +177,7 @@ const RICH_TEXT_CSS = `
     }
     .ccf-rich-text th {
         font-weight: 700;
-        background: rgba(99, 102, 241, 0.05);
+        background: hsl(var(--info-muted));
     }
 
     /* ── First heading flush ── */

@@ -101,7 +101,7 @@ export default function CoordinationConsole() {
             sidebarTitle="Academia"
             allowedPermissions={['academy:manage']}
         >
-            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0f1114]">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
                 <WorkspaceToolbar
                     breadcrumbs={[
                         { label: 'Academia', icon: GraduationCap },
@@ -156,18 +156,18 @@ export default function CoordinationConsole() {
                                     <article key={item.key} className={clsx(
                                         'rounded-lg border p-3 flex items-center gap-4 transition-all group hover:scale-[1.01]',
                                         item.completed 
-                                            ? 'border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/30 dark:bg-emerald-500/5' 
+                                            ? 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success-muted))]' 
                                             : 'border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]'
                                     )}>
                                         <div className={clsx(
                                             'size-10 rounded-md flex items-center justify-center transition-transform group-hover:rotate-12',
-                                            item.completed ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))]'
+                                            item.completed ? 'bg-[hsl(var(--success))] text-white shadow-lg shadow-[hsl(var(--success))/0.2]' : 'bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))]'
                                         )}>
                                             {item.completed ? <ShieldCheck size={20} /> : <AlertTriangle size={20} />}
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{item.label}</p>
-                                            <p className={clsx("text-[10px] font-bold uppercase tracking-wide mt-1", item.completed ? 'text-emerald-600' : 'text-[hsl(var(--text-secondary))]')}>
+                                            <p className={clsx("text-[10px] font-bold uppercase tracking-wide mt-1", item.completed ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--text-secondary))]')}>
                                                 {item.completed ? 'Verificado por IA' : 'Acción Requerida'}
                                             </p>
                                         </div>
@@ -187,7 +187,7 @@ export default function CoordinationConsole() {
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
                                 placeholder="Documenta políticas de cohortes, apertura/cierre de cursos, certificación y actas..."
-                                className="w-full min-h-[400px] bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                className="w-full min-h-[400px] bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
                             />
                         </section>
                     )}
@@ -276,7 +276,7 @@ export default function CoordinationConsole() {
                                                     </td>
                                                     <td className="px-4 py-2">
                                                         <div className="flex items-center gap-2">
-                                                            <div className={clsx("size-2 rounded-full", course.certificate_type ? 'bg-emerald-500' : 'bg-amber-500')} />
+                                                            <div className={clsx("size-2 rounded-full", course.certificate_type ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--warning))]')} />
                                                             <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{course.certificate_type || 'Por definir'}</span>
                                                         </div>
                                                     </td>

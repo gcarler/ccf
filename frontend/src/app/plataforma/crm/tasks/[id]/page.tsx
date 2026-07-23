@@ -180,7 +180,7 @@ export default function CrmTaskDetailPage() {
                                 </div>
                             </DSCard>
 
-                            <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] rounded-md border border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] space-y-4">
+                            <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] space-y-4">
                                 <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--secondary))]">
                                     <AlertCircle size={14} /> Optimus Guard
                                 </div>

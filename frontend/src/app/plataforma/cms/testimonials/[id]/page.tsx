@@ -118,7 +118,7 @@ export default function CmsTestimonialDetailPage() {
     const mediaUrl = getTestimonialMediaUrl(testimonial);
 
     return (
-        <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'CMS', icon: Layout, href: '/plataforma/cms' },
@@ -142,7 +142,7 @@ export default function CmsTestimonialDetailPage() {
                         <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => handleAction(testimonial.status === 'archived' ? 'pending' : 'archived')}
-                                className="px-3 py-2 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all flex items-center gap-2"
+                                className="px-3 py-2 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--destructive))] hover:text-white hover:border-[hsl(var(--destructive))] transition-all flex items-center gap-2"
                             >
                                 {testimonial.status === 'archived' ? <RotateCcw size={14} /> : <Archive size={14} />}
                                 {testimonial.status === 'archived' ? 'Restaurar' : 'Archivar'}
@@ -150,7 +150,7 @@ export default function CmsTestimonialDetailPage() {
                             <button 
                                 onClick={() => handleAction('approved')}
                                 disabled={testimonial.status === 'archived'}
-                                className="px-3 py-2 bg-emerald-600 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all flex items-center gap-2"
+                                className="px-3 py-2 bg-[hsl(var(--success))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/0.2)] hover:scale-105 transition-all flex items-center gap-2"
                             >
                                 <CheckCircle2 size={14} /> Aprobar para Web
                             </button>
@@ -162,7 +162,7 @@ export default function CmsTestimonialDetailPage() {
                             {mediaUrl && (
                                 <DSCard>
                                     <div className="mb-4 flex items-center gap-2">
-                                        {testimonial.media_type === 'video' ? <PlayCircle size={16} className="text-rose-500" /> : testimonial.media_type === 'podcast' ? <Headphones size={16} className="text-amber-500" /> : <ImageIcon size={16} className="text-[hsl(var(--primary))]" />}
+                                        {testimonial.media_type === 'video' ? <PlayCircle size={16} className="text-[hsl(var(--destructive))]" /> : testimonial.media_type === 'podcast' ? <Headphones size={16} className="text-[hsl(var(--warning))]" /> : <ImageIcon size={16} className="text-[hsl(var(--primary))]" />}
                                         <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             Media asociada
                                         </h3>
@@ -186,10 +186,10 @@ export default function CmsTestimonialDetailPage() {
 
                             <DSCard>
                                 <div className="space-y-3 relative">
-                                    <Quote size={48} className="absolute -top-4 -left-4 text-blue-500/10 -z-0" />
+                                    <Quote size={48} className="absolute -top-4 -left-4 text-[hsl(var(--primary)/0.1)] -z-0" />
                                     <div className="flex items-center gap-1 mb-2">
                                         {[1, 2, 3, 4, 5].map(star => (
-                                            <Star key={star} size={16} className={clsx(star <= (testimonial.rating ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-[hsl(var(--text-secondary))]')} />
+                                            <Star key={star} size={16} className={clsx(star <= (testimonial.rating ?? 0) ? 'text-[hsl(var(--warning))] fill-[hsl(var(--warning))]' : 'text-[hsl(var(--text-secondary))]')} />
                                         ))}
                                     </div>
                                     <p className="text-xl font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] italic leading-relaxed relative z-10">

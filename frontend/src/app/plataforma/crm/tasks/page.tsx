@@ -415,7 +415,7 @@ export default function CrmTasksPage() {
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
                                 placeholder="Define criterios de prioridad, protocolos de seguimiento y acuerdos del equipo..."
-                                className="w-full min-h-[360px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-blue-500/20"
+                                className="w-full min-h-[360px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                             />
                         </div>
                     </motion.div>
@@ -522,7 +522,7 @@ export default function CrmTasksPage() {
                             value={newTask.title}
                             onChange={e => setNewTask({ ...newTask, title: e.target.value })}
                             placeholder="Ej: Visitar a hermano Juan"
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
@@ -532,7 +532,7 @@ export default function CrmTasksPage() {
                             onChange={e => setNewTask({ ...newTask, description: e.target.value })}
                             placeholder="Detalles adicionales..."
                             rows={3}
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white resize-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white resize-none"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -541,7 +541,7 @@ export default function CrmTasksPage() {
                             <select
                                 value={newTask.category}
                                 onChange={e => setNewTask({ ...newTask, category: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white appearance-none"
                             >
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -551,7 +551,7 @@ export default function CrmTasksPage() {
                             <select
                                 value={newTask.priority}
                                 onChange={e => setNewTask({ ...newTask, priority: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white appearance-none"
                             >
                                 <option value="low">Baja</option>
                                 <option value="medium">Media</option>
@@ -565,7 +565,7 @@ export default function CrmTasksPage() {
                             <select
                                 value={newTask.status}
                                 onChange={e => setNewTask({ ...newTask, status: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white appearance-none"
                             >
                                 {STATUS_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
                             </select>
@@ -576,7 +576,7 @@ export default function CrmTasksPage() {
                                 type="date"
                                 value={newTask.due_date}
                                 onChange={e => setNewTask({ ...newTask, due_date: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm dark:text-white"
                             />
                         </div>
                     </div>

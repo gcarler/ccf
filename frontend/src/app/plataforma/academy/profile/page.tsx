@@ -157,7 +157,7 @@ export default function StudentProfilePage() {
                                 ))}
                                 {certificates.map((certificate, index) => (
                                     <tr key={`${certificate.course_title}-${index}`} className="border-t border-[hsl(var(--border))] dark:border-white/5">
-                                        <td className="px-4 py-2 font-bold text-emerald-600">Certificado</td>
+                                        <td className="px-4 py-2 font-bold text-[hsl(var(--success))]">Certificado</td>
                                         <td className="px-4 py-2 font-bold text-[hsl(var(--text-primary))] dark:text-white">{certificate.course_title || certificate.certificate_type || 'Certificado'}</td>
                                         <td className="px-4 py-2 text-[hsl(var(--text-secondary))]">100%</td>
                                         <td className="px-4 py-2 text-[hsl(var(--text-secondary))]">{new Date(certificate.issued_at).toLocaleDateString()}</td>
@@ -179,11 +179,11 @@ export default function StudentProfilePage() {
                             <div className="relative z-10 flex flex-col items-center text-center space-y-3">
                                 <div className="relative">
                                     <div className="size-10 rounded-md bg-gradient-to-tr from-blue-600 to-sky-600 p-1 shadow-2xl">
-                                        <div className="size-full rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] flex items-center justify-center text-lg font-bold text-[hsl(var(--primary))] uppercase border-4 border-white dark:border-[#0a0f16]">
+                                        <div className="size-full rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] flex items-center justify-center text-lg font-bold text-[hsl(var(--primary))] uppercase border-4 border-white dark:border-[hsl(var(--bg-primary))]">
                                             {user.username?.charAt(0)}
                                         </div>
                                     </div>
-                                    <div className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shadow-lg border-4 border-white dark:border-[#0a0f16]">
+                                    <div className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center shadow-lg border-4 border-white dark:border-[hsl(var(--bg-primary))]">
                                         <Zap size={18} fill="currentColor" />
                                     </div>
                                 </div>
@@ -280,7 +280,7 @@ export default function StudentProfilePage() {
                                     { label: 'Pastor', done: false },                                    ].map((step, i) => (
                                     <div key={step.label} className="relative z-10 flex flex-col items-center gap-4 group cursor-pointer">
                                         <div className={clsx(
-                                            "size-9 rounded-lg flex items-center justify-center transition-all border-4 border-white dark:border-[#0a0f16]",
+                                            "size-9 rounded-lg flex items-center justify-center transition-all border-4 border-white dark:border-[hsl(var(--bg-primary))]",
                                             step.done ? "bg-[hsl(var(--primary))] text-white shadow-xl shadow-blue-500/20" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] group-hover:bg-blue-100",
                                             step.active && "ring-4 ring-blue-500/20 scale-110"
                                         )}>
@@ -357,8 +357,8 @@ export default function StudentProfilePage() {
 function StatBox({ icon: Icon, label, value, color }: any) {
     const colors: any = {
         blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20',
-        emerald: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20',
-        amber: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20'
+        emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))/0.1]',
+        amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning))/0.08] dark:bg-[hsl(var(--warning))/0.1]'
     };
     return (
         <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-4 shadow-sm hover:shadow-xl transition-all group flex items-center gap-4">
@@ -379,7 +379,7 @@ function ProgressPill({ label, value, tone }: { label: string; value: number; to
         <div className="w-full">
             <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5">
                 <span>{label}</span>
-                <span className={clsx(tone === 'primary' ? "text-[hsl(var(--primary))]" : "text-emerald-600")}>{Math.round(value)}%</span>
+                <span className={clsx(tone === 'primary' ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--success))]")}>{Math.round(value)}%</span>
             </div>
             <div className="h-2 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10 overflow-hidden">
                 <div className={`h-full bg-gradient-to-r ${bg} transition-all duration-1000`} style={{ width: `${Math.min(100, Math.round(value))}%` }} />

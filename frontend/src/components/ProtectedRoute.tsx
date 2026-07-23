@@ -43,18 +43,17 @@ function GateScreen({
     const isWarning = variant !== 'lock';
 
     // Colores del brand CCF
-    const teal = 'rgb(1, 138, 189)';       // ccf-blue-light
-    const navy = 'rgb(0, 27, 72)';          // ccf-blue-dark
-    const warnColor = '#f59e0b';
+    const teal = 'hsl(var(--primary))';
+    const navy = 'hsl(var(--primary))';
+    const warnColor = 'hsl(var(--warning))';
 
     const accentColor = isWarning ? warnColor : teal;
-    const accentRgb = isWarning ? '245,158,11' : '1,138,189';
 
     const LockIcon = () => (
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
             <defs>
                 <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor={isWarning ? '#fbbf24' : '#67e8f9'} />
+                    <stop offset="0%" stopColor={isWarning ? 'hsl(var(--warning))' : 'hsl(var(--info))'} />
                     <stop offset="100%" stopColor={accentColor} />
                 </linearGradient>
             </defs>
@@ -85,20 +84,22 @@ function GateScreen({
     return (
         <div
             className="relative flex h-screen w-full items-center justify-center overflow-hidden"
-            style={{ background: `linear-gradient(160deg, #0a1628 0%, #001b48 50%, #0d1f3c 100%)` }}
+            style={{ background: `linear-gradient(160deg, hsl(var(--bg-muted)) 0%, hsl(var(--primary)) 50%, hsl(var(--bg-muted)) 100%)` }}
         >
             {/* Glow radial — mismo que el login left panel */}
             <div
                 className="absolute top-[-20%] right-[-20%] w-[140%] h-[140%] pointer-events-none"
                 style={{
-                    background: `radial-gradient(circle at 70% 30%, rgba(${accentRgb},0.18) 0%, transparent 60%)`,
+                    background: isWarning
+                        ? `radial-gradient(circle at 70% 30%, hsl(var(--warning)/0.18) 0%, transparent 60%)`
+                        : `radial-gradient(circle at 70% 30%, hsl(var(--primary)/0.18) 0%, transparent 60%)`,
                 }}
             />
             {/* Glow secundario abajo-izquierda */}
             <div
                 className="absolute bottom-[-10%] left-[-10%] w-[80%] h-[80%] pointer-events-none"
                 style={{
-                    background: `radial-gradient(circle at 20% 80%, rgba(0,69,129,0.3) 0%, transparent 60%)`,
+                    background: `radial-gradient(circle at 20% 80%, hsl(var(--primary)/0.3) 0%, transparent 60%)`,
                 }}
             />
 
@@ -120,7 +121,7 @@ function GateScreen({
                         className="absolute rounded-full animate-ping"
                         style={{
                             width: '120px', height: '120px',
-                            border: `1px solid rgba(${accentRgb},0.2)`,
+                            border: isWarning ? `1px solid hsl(var(--warning)/0.2)` : `1px solid hsl(var(--primary)/0.2)`,
                             animationDuration: '2.5s',
                         }}
                     />
@@ -129,7 +130,7 @@ function GateScreen({
                         className="absolute rounded-full"
                         style={{
                             width: '96px', height: '96px',
-                            border: `1px solid rgba(${accentRgb},0.25)`,
+                            border: isWarning ? `1px solid hsl(var(--warning)/0.25)` : `1px solid hsl(var(--primary)/0.25)`,
                         }}
                     />
                     {/* Círculo principal */}
@@ -138,9 +139,13 @@ function GateScreen({
                         style={{
                             width: '72px', height: '72px',
                             borderRadius: '50%',
-                            background: `radial-gradient(circle at 35% 35%, rgba(${accentRgb},0.25) 0%, rgba(${accentRgb},0.08) 100%)`,
-                            border: `1.5px solid rgba(${accentRgb},0.5)`,
-                            boxShadow: `0 0 40px rgba(${accentRgb},0.25), 0 0 80px rgba(${accentRgb},0.1), inset 0 1px 0 rgba(255,255,255,0.08)`,
+                            background: isWarning
+                                ? `radial-gradient(circle at 35% 35%, hsl(var(--warning)/0.25) 0%, hsl(var(--warning)/0.08) 100%)`
+                                : `radial-gradient(circle at 35% 35%, hsl(var(--primary)/0.25) 0%, hsl(var(--primary)/0.08) 100%)`,
+                            border: isWarning ? `1.5px solid hsl(var(--warning)/0.5)` : `1.5px solid hsl(var(--primary)/0.5)`,
+                            boxShadow: isWarning
+                                ? `0 0 40px hsl(var(--warning)/0.25), 0 0 80px hsl(var(--warning)/0.1), inset 0 1px 0 rgba(255,255,255,0.08)`
+                                : `0 0 40px hsl(var(--primary)/0.25), 0 0 80px hsl(var(--primary)/0.1), inset 0 1px 0 rgba(255,255,255,0.08)`,
                         }}
                     >
                         <LockIcon />
@@ -174,7 +179,9 @@ function GateScreen({
                     className="w-full mb-8"
                     style={{
                         height: '1px',
-                        background: `linear-gradient(to right, transparent, rgba(${accentRgb},0.3), transparent)`,
+                        background: isWarning
+                            ? `linear-gradient(to right, transparent, hsl(var(--warning)/0.3), transparent)`
+                            : `linear-gradient(to right, transparent, hsl(var(--primary)/0.3), transparent)`,
                     }}
                 />
 
@@ -184,10 +191,12 @@ function GateScreen({
                     className="group w-full flex items-center justify-center gap-3 py-3.5 px-6 rounded-xl font-bold text-sm text-white no-underline"
                     style={{
                         background: isWarning
-                            ? 'linear-gradient(135deg, #b45309 0%, #d97706 100%)'
-                            : `linear-gradient(135deg, ${navy} 0%, rgb(0,69,129) 50%, ${teal} 100%)`,
-                        border: `1px solid rgba(${accentRgb},0.35)`,
-                        boxShadow: `0 4px 24px rgba(${accentRgb},0.25), inset 0 1px 0 rgba(255,255,255,0.1)`,
+                            ? 'linear-gradient(135deg, hsl(var(--warning)) 0%, hsl(var(--warning)) 100%)'
+                            : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 100%)',
+                        border: isWarning ? '1px solid hsl(var(--warning)/0.35)' : '1px solid hsl(var(--primary)/0.35)',
+                        boxShadow: isWarning
+                            ? '0 4px 24px hsl(var(--warning)/0.25), inset 0 1px 0 rgba(255,255,255,0.1)'
+                            : '0 4px 24px hsl(var(--primary)/0.25), inset 0 1px 0 rgba(255,255,255,0.1)',
                         transition: 'opacity 0.15s, transform 0.1s',
                     }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.88'; }}
@@ -232,11 +241,11 @@ function LoadingScreen() {
     return (
         <div
             className="relative flex h-screen w-full items-center justify-center overflow-hidden"
-            style={{ background: 'linear-gradient(160deg, #0a1628 0%, #001b48 50%, #0d1f3c 100%)' }}
+            style={{ background: 'linear-gradient(160deg, hsl(var(--bg-muted)) 0%, hsl(var(--primary)) 50%, hsl(var(--bg-muted)) 100%)' }}
         >
             <div
                 className="absolute top-[-20%] right-[-20%] w-[140%] h-[140%] pointer-events-none"
-                style={{ background: 'radial-gradient(circle at 70% 30%, rgba(1,138,189,0.12) 0%, transparent 60%)' }}
+                style={{ background: 'radial-gradient(circle at 70% 30%, hsl(var(--primary)/0.12) 0%, transparent 60%)' }}
             />
 
             <div className="relative z-10 flex flex-col items-center gap-5">
@@ -251,7 +260,7 @@ function LoadingScreen() {
                     <div
                         className="absolute inset-0 rounded-full animate-spin"
                         style={{
-                            background: 'conic-gradient(from 0deg, transparent 75%, rgb(1,138,189))',
+                            background: 'conic-gradient(from 0deg, transparent 75%, hsl(var(--primary)))',
                             WebkitMask: 'radial-gradient(circle, transparent 58%, black 59%)',
                             mask: 'radial-gradient(circle, transparent 58%, black 59%)',
                         }}
@@ -259,8 +268,8 @@ function LoadingScreen() {
                     <div
                         className="absolute inset-2 rounded-full"
                         style={{
-                            background: 'radial-gradient(circle at 35% 35%, rgba(1,138,189,0.15) 0%, rgba(0,27,72,0.5) 100%)',
-                            border: '1px solid rgba(1,138,189,0.2)',
+                            background: 'radial-gradient(circle at 35% 35%, hsl(var(--primary)/0.15) 0%, hsl(var(--primary)/0.5) 100%)',
+                            border: '1px solid hsl(var(--primary)/0.2)',
                         }}
                     />
                 </div>

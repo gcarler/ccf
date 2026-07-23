@@ -1310,7 +1310,7 @@ function DocumentUploadSection({ section }: { section: CmsSection }) {
           <div className="mt-3 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
             <span className="font-medium">{selectedFile.name}</span>
             <span className="mx-2 opacity-50">({(selectedFile.size / 1024).toFixed(0)}KB)</span>
-            <button onClick={handleUpload} disabled={uploading} className="ml-3 px-3 py-1 rounded bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 disabled:opacity-50">
+            <button onClick={handleUpload} disabled={uploading} className="ml-3 px-3 py-1 rounded bg-[hsl(var(--success))] text-white text-xs font-semibold hover:bg-[hsl(var(--success)/0.8)] disabled:opacity-50">
               {uploading ? "Subiendo..." : "Enviar"}
             </button>
           </div>
@@ -1404,14 +1404,14 @@ function CivicFileDownloadsSection({ section }: { section: CmsSection }) {
   }>;
 
   const fmtBadge: Record<string, React.ReactNode> = {
-    pdf:  <span className="text-[10px] font-black text-[hsl(var(--destructive))] bg-red-50 border border-red-200 px-1.5 py-0.5 rounded select-none">PDF</span>,
-    xls:  <span className="text-[10px] font-black text-[hsl(var(--secondary))] bg-green-50 border border-green-200 px-1.5 py-0.5 rounded select-none">XLS</span>,
-    xlsx: <span className="text-[10px] font-black text-[hsl(var(--secondary))] bg-green-50 border border-green-200 px-1.5 py-0.5 rounded select-none">XLS</span>,
-    doc:  <span className="text-[10px] font-black text-[hsl(var(--primary))] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded select-none">DOC</span>,
-    docx: <span className="text-[10px] font-black text-[hsl(var(--primary))] bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded select-none">DOC</span>,
-    csv:  <span className="text-[10px] font-black text-teal-700 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded select-none">CSV</span>,
-    ppt:  <span className="text-[10px] font-black text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded select-none">PPT</span>,
-    pptx: <span className="text-[10px] font-black text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded select-none">PPT</span>,
+    pdf:  <span className="text-[10px] font-black text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.2)] px-1.5 py-0.5 rounded select-none">PDF</span>,
+    xls:  <span className="text-[10px] font-black text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.2)] px-1.5 py-0.5 rounded select-none">XLS</span>,
+    xlsx: <span className="text-[10px] font-black text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.2)] px-1.5 py-0.5 rounded select-none">XLS</span>,
+    doc:  <span className="text-[10px] font-black text-[hsl(var(--info))] bg-[hsl(var(--info-muted))] border border-[hsl(var(--info)/0.2)] px-1.5 py-0.5 rounded select-none">DOC</span>,
+    docx: <span className="text-[10px] font-black text-[hsl(var(--info))] bg-[hsl(var(--info-muted))] border border-[hsl(var(--info)/0.2)] px-1.5 py-0.5 rounded select-none">DOC</span>,
+    csv:  <span className="text-[10px] font-black text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.2)] px-1.5 py-0.5 rounded select-none">CSV</span>,
+    ppt:  <span className="text-[10px] font-black text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] border border-[hsl(var(--warning)/0.2)] px-1.5 py-0.5 rounded select-none">PPT</span>,
+    pptx: <span className="text-[10px] font-black text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] border border-[hsl(var(--warning)/0.2)] px-1.5 py-0.5 rounded select-none">PPT</span>,
     zip:  <span className="text-[10px] font-black text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] px-1.5 py-0.5 rounded select-none">ZIP</span>,
   };
 
@@ -1536,9 +1536,9 @@ function CivicAlertBannerSection({ section }: { section: CmsSection }) {
   const [dismissed, setDismissed] = useState(false);
 
   const levels: Record<string, { bg: string; border: string; accent: string; icon: string; text: string }> = {
-    info:    { bg: "#EFF6FF", border: "#BFDBFE", accent: "#1D4ED8", icon: "ℹ️", text: "#1e3a5f" },
-    warning: { bg: "#FFFBEB", border: "#FDE68A", accent: "#D97706", icon: "⚠️", text: "#78350F" },
-    danger:  { bg: "#FEF2F2", border: "#FECACA", accent: "#DC2626", icon: "🚨", text: "#7F1D1D" },
+    info:    { bg: "hsl(var(--info-muted))", border: "hsl(var(--info)/0.3)", accent: "hsl(var(--info))", icon: "ℹ️", text: "hsl(var(--info))" },
+    warning: { bg: "hsl(var(--warning-muted))", border: "hsl(var(--warning)/0.3)", accent: "hsl(var(--warning))", icon: "⚠️", text: "hsl(var(--warning))" },
+    danger:  { bg: "hsl(var(--destructive)/0.08)", border: "hsl(var(--destructive)/0.2)", accent: "hsl(var(--destructive))", icon: "🚨", text: "hsl(var(--destructive))" },
   };
   const s = levels[level] || levels.warning;
 
@@ -1584,10 +1584,10 @@ function CivicConvocatoriaCardsSection({ section }: { section: CmsSection }) {
   }>;
 
   const statusMap: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-    abierta:  { label: "Abierta",      bg: "#ECFDF5", text: "#065F46", dot: "#10B981" },
-    cerrada:  { label: "Cerrada",      bg: "#FEF2F2", text: "#991B1B", dot: "#EF4444" },
-    proxima:  { label: "Próxima",      bg: "#EFF6FF", text: "#1E40AF", dot: "#3B82F6" },
-    revision: { label: "En revisión",  bg: "#FFFBEB", text: "#92400E", dot: "#F59E0B" },
+    abierta:  { label: "Abierta",      bg: "hsl(var(--success-muted))", text: "hsl(var(--success))", dot: "hsl(var(--success))" },
+    cerrada:  { label: "Cerrada",      bg: "hsl(var(--destructive)/0.08)", text: "hsl(var(--destructive))", dot: "hsl(var(--destructive))" },
+    proxima:  { label: "Próxima",      bg: "hsl(var(--info-muted))", text: "hsl(var(--info))", dot: "hsl(var(--info))" },
+    revision: { label: "En revisión",  bg: "hsl(var(--warning-muted))", text: "hsl(var(--warning))", dot: "hsl(var(--warning))" },
   };
 
   return (
@@ -1631,7 +1631,7 @@ function CivicConvocatoriaCardsSection({ section }: { section: CmsSection }) {
                   <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--site-on-surface-variant)" }}>{item.description}</p>
                 )}
                 {item.deadline && (
-                  <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: key === "cerrada" ? "#EF4444" : "var(--site-on-surface-variant)" }}>
+                  <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: key === "cerrada" ? "hsl(var(--destructive))" : "var(--site-on-surface-variant)" }}>
                     <Calendar size={12} /> Cierre: {item.deadline}
                   </div>
                 )}

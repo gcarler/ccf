@@ -170,7 +170,7 @@ export default function RolesSettingsPage() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3 mt-4">
-                            <input type="checkbox" id="is_leadership" checked={isEditing.is_leadership} onChange={e => setIsEditing({...isEditing, is_leadership: e.target.checked})} className="size-5 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-blue-500" />
+                            <input type="checkbox" id="is_leadership" checked={isEditing.is_leadership} onChange={e => setIsEditing({...isEditing, is_leadership: e.target.checked})} className="size-5 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]" />
                             <label htmlFor="is_leadership" className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] cursor-pointer">
                                 Pertenece al Liderazgo <span className="block text-[10px] text-[hsl(var(--text-secondary))] font-medium">Sus asistencias se agruparán en &ldquo;Liderazgo&rdquo;</span>
                             </label>

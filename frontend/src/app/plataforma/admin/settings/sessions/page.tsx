@@ -187,7 +187,7 @@ export default function AdminSettingsSessionsPage() {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.05 }}
-                                className={`bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border rounded-lg p-4 transition-all ${
+                                className={`bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border rounded-lg p-4 transition-all ${
                                     session.is_current
                                         ? 'border-blue-500/30 shadow-lg shadow-blue-500/5'
                                         : 'border-white/10 hover:border-white/20'

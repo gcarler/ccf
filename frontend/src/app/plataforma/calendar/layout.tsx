@@ -82,7 +82,7 @@ export default function CalendarLayout({ children }: { children: React.ReactNode
         sidebarTitle="Calendario"
         sidebarSections={SIDEBAR_SECTIONS}
       >
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] h-full flex overflow-hidden">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] h-full flex overflow-hidden">
           {children}
         </div>
       </WorkspaceLayout>

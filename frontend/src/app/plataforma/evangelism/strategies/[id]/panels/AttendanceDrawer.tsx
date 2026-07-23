@@ -258,7 +258,7 @@ export default function AttendanceDrawer({
     value={visitorSearch}
     onChange={e => setVisitorSearch(e.target.value)}
     placeholder="Buscar persona por nombre..."
-    className="w-full pl-8 pr-3 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[hsl(var(--primary))]"
+    className="w-full pl-8 pr-3 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]"
     />
     </div>
     <button onClick={() => { setShowVisitorSearch(false); setVisitorSearch(''); }}
@@ -267,7 +267,7 @@ export default function AttendanceDrawer({
     </button>
     </div>
     {visitorSearch.trim().length >= 3 && (
-    <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] p-1">
+    <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-1">
     {visitorSearchResults
     .filter(m => !personas.find(a => a.persona_id === m.id))
     .map(m => (

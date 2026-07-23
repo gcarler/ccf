@@ -188,7 +188,7 @@ export default function ProjectsClient({
                     <div className="flex items-center gap-3">
                         <div
                             className="size-8 rounded-lg flex items-center justify-center font-semibold text-white"
-                            style={{ backgroundColor: project.color || '#2563eb' }}
+                            style={{ backgroundColor: project.color || 'hsl(var(--primary))' }}
                         >
                             {project.title.slice(0, 2).toUpperCase()}
                         </div>

@@ -46,7 +46,7 @@ export default function PaletteSelector() {
                             onClick={() => setTheme(id)}
                             className={`text-left p-4 rounded-lg border transition-all duration-300 ${
                                 isActive
-                                    ? 'border-blue-500 shadow-lg shadow-blue-500/10 bg-white/90 dark:bg-[hsl(var(--bg-muted))]'
+                                    ? 'border-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary)/0.1)] bg-white/90 dark:bg-[hsl(var(--bg-muted))]'
                                     : 'border-[hsl(var(--border))] dark:border-white/10 bg-white/60 dark:bg-white/5 hover:border-[hsl(var(--border))] dark:hover:border-white/20'
                             }`}
                         >

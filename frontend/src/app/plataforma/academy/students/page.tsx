@@ -61,7 +61,7 @@ export default function AcademyStudentsPage() {
     }, [query, students]);
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[#f8fafc] dark:bg-[#0f1114]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Academia", icon: GraduationCap, href: "/plataforma/academy" },
@@ -160,7 +160,7 @@ export default function AcademyStudentsPage() {
                                         <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{student.course_count ?? 0}</td>
                                         <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{student.progress ?? 0}%</td>
                                         <td className="px-4 py-1.5">
-                                            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
+                                            <span className="rounded-full bg-[hsl(var(--success-muted))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--success))]">
                                                 {student.status || "Activo"}
                                             </span>
                                         </td>

@@ -137,21 +137,21 @@ export default function TaskAssignment() {
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'Consolidación', icon: Users }, { label: 'Asignación', icon: UserCheck }]}
             rightActions={
-                <button className="flex size-8 items-center justify-center rounded-full bg-blue-50 text-[hsl(var(--primary))] hover:bg-blue-100 transition-all relative" aria-label="Notificaciones">
+                <button className="flex size-8 items-center justify-center rounded-full bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] transition-all relative" aria-label="Notificaciones">
                     <Bell size={20} />
-                    <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+                    <span className="absolute top-2 right-2 size-2 bg-[hsl(var(--destructive))] rounded-full ring-2 ring-white"></span>
                 </button>
             }
         >
         {error && (
-            <div className="mb-4 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200 md:flex-row md:items-center md:justify-between">
+            <div className="mb-4 flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] p-4 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
                 <div>
                     <p className="text-[11px] font-bold uppercase tracking-wide">No se pudo cargar la asignación</p>
                     <p className="text-xs">{error}</p>
                 </div>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                    className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
                 >
                     Reintentar
                 </button>
@@ -168,7 +168,7 @@ export default function TaskAssignment() {
                 border: 1px solid rgba(255, 255, 255, 0.05);
             }
             .shimmer-text {
-                background: linear-gradient(90deg, #3b82f6, #818cf8, #3b82f6);
+                background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--info)), hsl(var(--primary)));
                 background-size: 200% auto;
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
@@ -197,16 +197,16 @@ export default function TaskAssignment() {
                     <input
                         type="text"
                         placeholder="Buscar persona para seguimiento..."
-                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md py-2 pl-14 pr-6 text-sm font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-md py-2 pl-14 pr-6 text-sm font-bold shadow-sm focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all outline-none"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
 
-                <div className="bg-[hsl(var(--surface-1))] dark:bg-[#1e1f21] rounded-lg p-4 shadow-sm border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden">
+                <div className="bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Resultados de Búsqueda</h3>
-                        <span className="px-3 py-1 bg-blue-50 text-[hsl(var(--primary))] rounded-full text-[9px] font-bold uppercase">{filteredPersonas.length} Personas</span>
+                        <span className="px-3 py-1 bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] rounded-full text-[9px] font-bold uppercase">{filteredPersonas.length} Personas</span>
                     </div>
 
                     <div className="space-y-4">
@@ -224,7 +224,7 @@ export default function TaskAssignment() {
                                 onClick={() => setSelectedPersonaId(m.id)}
                                 className={clsx(
                                     "p-3 rounded-md border transition-all cursor-pointer flex items-center justify-between group",
-                                    selectedPersonaId === m.id ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-xl shadow-blue-500/20" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-transparent hover:border-blue-200"
+                                    selectedPersonaId === m.id ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-xl shadow-[hsl(var(--primary)/0.2)]" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-transparent hover:border-[hsl(var(--primary))]"
                                 )}
                             >
                                 <div className="flex items-center gap-3">
@@ -241,7 +241,7 @@ export default function TaskAssignment() {
                                 </div>
                                 <div className={clsx(
                                     "size-8 rounded-md flex items-center justify-center transition-all",
-                                    selectedPersonaId === m.id ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] rotate-90" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))] group-hover:bg-blue-100 group-hover:text-[hsl(var(--primary))]"
+                                    selectedPersonaId === m.id ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] rotate-90" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--info-muted))] group-hover:text-[hsl(var(--primary))]"
                                 )}>
                                     <Plus size={18} />
                                 </div>
@@ -263,7 +263,7 @@ export default function TaskAssignment() {
                             className="glass-panel p-3 rounded-lg shadow-2xl space-y-4 sticky top-5"
                         >
                             <div className="space-y-4">
-                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-blue-600/10 text-[hsl(var(--primary))] border border-blue-600/20 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] rounded-full text-[10px] font-bold uppercase tracking-wide">
                                     <ShieldCheck size={14} /> Asignación Inteligente
                                 </div>
                                 <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
@@ -278,7 +278,7 @@ export default function TaskAssignment() {
                                     <select
                                         value={selectedLeaderId}
                                         onChange={(e) => setSelectedLeaderId(e.target.value)}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-4 focus:ring-blue-500/10 transition-all appearance-none"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all appearance-none"
                                     >
                                         <option value="">Seleccionar responsable...</option>
                                         {leaders.map(l => (
@@ -296,7 +296,7 @@ export default function TaskAssignment() {
                                                 onClick={() => setTaskTitle(`Seguimiento: ${type}`)}
                                                 className={clsx(
                                                     "py-1.5 px-4 rounded-md text-[10px] font-bold uppercase tracking-wide border transition-all",
-                                                    taskTitle.includes(type) ? "bg-[hsl(var(--primary))] border-blue-600 text-white shadow-lg" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]"
+                                                    taskTitle.includes(type) ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-lg" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]"
                                                 )}
                                             >
                                                 {type}
@@ -310,7 +310,7 @@ export default function TaskAssignment() {
                                     <textarea
                                         rows={4}
                                         placeholder="Ej: Dar bienvenida, preguntar por su familia..."
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all"
                                         value={taskDescription}
                                         onChange={(e) => setTaskDescription(e.target.value)}
                                     />

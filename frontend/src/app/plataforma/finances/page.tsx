@@ -117,7 +117,7 @@ export default function FinancesPage() {
         sidebarTitle="Tesorería Pro"
         sidebarSections={FINANCE_SECTIONS}
     >
-        <div className="h-full overflow-y-auto bg-[#f8fafc] dark:bg-[#1E1F21] font-display scrollbar-thin">
+        <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] font-display scrollbar-thin">
  <div className="w-full px-4 py-3 space-y-3">
 
                 {/* Header */}
@@ -166,13 +166,13 @@ export default function FinancesPage() {
                         <div className="lg:col-span-2">
                             <DSCard>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Comparativa Mensual de Ingresos</h3>
-                                <DSChart type="area" data={dashboard?.monthly_series} color="#10b981" height={220} />
+                                <DSChart type="area" data={dashboard?.monthly_series} color="hsl(var(--success))" height={220} />
                             </DSCard>
                         </div>
                         <div>
                             <DSCard>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Distribución por Categoría</h3>
-                                <DSChart type="bar" data={dashboard?.income_by_category} color="#3b82f6" height={220} />
+                                <DSChart type="bar" data={dashboard?.income_by_category} color="hsl(var(--info))" height={220} />
                             </DSCard>
                         </div>
                     </div>
@@ -193,7 +193,7 @@ export default function FinancesPage() {
                                             value={search}
                                             onChange={e => setSearch(e.target.value)}
                                             placeholder="Buscar..."
-                                            className="pl-8 pr-3 py-1.5 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 w-40"
+                                            className="pl-8 pr-3 py-1.5 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-40"
                                         />
                                     </div>
                                     <div className="flex rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-bold">
@@ -236,7 +236,7 @@ export default function FinancesPage() {
                                         >
                                             <div className={clsx(
                                                 'size-9 rounded-md flex items-center justify-center shrink-0',
-                                                isIngreso ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'bg-rose-50 dark:bg-rose-900/20 text-rose-500'
+                                                isIngreso ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : 'bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]'
                                             )}>
                                                 <Icon size={15} />
                                             </div>
@@ -246,7 +246,7 @@ export default function FinancesPage() {
                                             </div>
                                             <span className={clsx(
                                                 'text-sm font-semibold shrink-0 tabular-nums',
-                                                isIngreso ? 'text-emerald-600' : 'text-rose-500'
+                                                isIngreso ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--destructive))]'
                                             )}>
                                                 {isIngreso ? '+' : '-'}{fmt(tx.amount)}
                                             </span>
@@ -267,7 +267,7 @@ export default function FinancesPage() {
                                         const cats: Record<string, number> = {};
                                         transactions.forEach(t => { cats[t.category] = (cats[t.category] || 0) + t.amount; });
                                         const total = Object.values(cats).reduce((s, v) => s + v, 0) || 1;
-                                        const COLORS = ['bg-[hsl(var(--primary))]', 'bg-[hsl(var(--primary))]', 'bg-[hsl(var(--primary))]', 'bg-emerald-500', 'bg-amber-500'];
+                                        const COLORS = ['bg-[hsl(var(--primary))]', 'bg-[hsl(var(--primary))]', 'bg-[hsl(var(--primary))]', 'bg-[hsl(var(--success))]', 'bg-[hsl(var(--warning))]'];
                                         return Object.entries(cats).slice(0, 5).map(([label, amount], i) => {
                                             const pct = Math.round((amount / total) * 100);
                                             return (
@@ -294,13 +294,13 @@ export default function FinancesPage() {
 
                             {/* Transparency banner */}
                             <div className="bg-gradient-to-br from-[hsl(var(--bg-muted))] to-[hsl(var(--bg-muted))] rounded-lg p-3 text-white relative overflow-hidden">
-                                <div className="absolute top-0 right-0 size-10 bg-blue-500/20 rounded-full blur-2xl" />
+                                <div className="absolute top-0 right-0 size-10 bg-[hsl(var(--primary))/0.2] rounded-full blur-2xl" />
                                 <Landmark size={24} className="text-[hsl(var(--primary))] mb-3 relative z-10" />
                                 <h3 className="font-semibold relative z-10 mb-1">Informe de Transparencia</h3>
                                 <p className="text-[11px] text-[hsl(var(--text-secondary))] relative z-10 mb-4 leading-relaxed">
                                     Reportes auditados disponibles para la congregación.
                                 </p>
-                                <button className="flex items-center gap-2 font-semibold text-[hsl(var(--primary))] hover:text-blue-300 transition-colors relative z-10">
+                                <button className="flex items-center gap-2 font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))/0.7] transition-colors relative z-10">
                                     Ver informes <ChevronRight size={13} />
                                 </button>
                             </div>

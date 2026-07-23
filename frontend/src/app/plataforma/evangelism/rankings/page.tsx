@@ -190,7 +190,7 @@ export default function RankingsPage() {
               id="strategy-filter"
               value={selectedStrategy}
               onChange={(e) => setSelectedStrategy(e.target.value)}
-              className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-3 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+              className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
             >
               <option value="">Todas las estrategias</option>
               {strategies.map((s) => (

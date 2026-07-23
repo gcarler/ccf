@@ -197,7 +197,7 @@ export default function AdminMissionImpactPage() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_#3b82f605_0%,_transparent_50%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--info)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
                     
@@ -328,10 +328,10 @@ export default function AdminMissionImpactPage() {
 function ImpactStat({ label, value, icon: Icon, color }: any) {
     const colors: any = {
         blue: 'text-[hsl(var(--primary))] bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800',
-        rose: 'text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-800'
+        rose: 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.08)] dark:border-[hsl(var(--destructive)/0.08)]'
     };
     return (
-        <div className="impact-aura bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] p-4 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center gap-3 shadow-sm hover:shadow-2xl transition-all duration-500 group overflow-hidden">
+        <div className="impact-aura bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-4 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center gap-3 shadow-sm hover:shadow-2xl transition-all duration-500 group overflow-hidden">
             <div className={clsx("size-8 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12 duration-500 shadow-inner border", colors[color])}>
                 <Icon size={40} strokeWidth={1.5} />
             </div>

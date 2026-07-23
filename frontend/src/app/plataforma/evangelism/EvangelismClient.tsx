@@ -92,9 +92,9 @@ export default function EvangelismClient() {
  };
 
  const statusColors = {
- pending: '#F59E0B', // amber-500
- active: '#2563EB', // blue-600
- done: '#10B981', // emerald-500
+ pending: 'hsl(var(--warning))', // amber-500
+ active: 'hsl(var(--primary))', // blue-600
+ done: 'hsl(var(--success))', // emerald-500
  };
 
  const statusLabels = {
@@ -123,9 +123,9 @@ export default function EvangelismClient() {
  ]}
  >
  <div className="min-h-[60vh] flex items-center justify-center p-3">
- <div className="max-w-md w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-8 text-center">
- <h2 className="text-lg font-bold text-amber-900">Acceso restringido</h2>
- <p className="mt-2 text-sm font-medium text-amber-800">
+ <div className="max-w-md w-full rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning-muted))] px-3 py-8 text-center">
+ <h2 className="text-lg font-bold text-[hsl(var(--warning))]">Acceso restringido</h2>
+ <p className="mt-2 text-sm font-medium text-[hsl(var(--warning))]">
  Esta vista requiere permisos de lectura sobre evangelismo.
  </p>
  </div>
@@ -175,7 +175,7 @@ export default function EvangelismClient() {
  <div className="pb-16 flex-1">
  {/* ── TABLE VIEW ─────────────────────────────── */}
  {viewType === 'table' && (
- <div className="overflow-x-auto border border-[hsl(var(--border-primary))] dark:border-white/[0.06] rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
+ <div className="overflow-x-auto border border-[hsl(var(--border-primary))] dark:border-white/[0.06] rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
  <table className="w-full text-left border-collapse">
  <thead>
  <tr className="border-b border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))]/50 dark:bg-black/10">
@@ -275,7 +275,7 @@ export default function EvangelismClient() {
  animate={{ opacity: 1, scale: 1 }}
  transition={{ duration: 0.2 }}
  onClick={() => handleSelectStrategy(strategy)}
- className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99] border-t-4"
+ className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99] border-t-4"
  style={{ borderTopColor: statusColors[strategy.status] }}
  >
  <div className="flex items-start justify-between gap-4">
@@ -330,7 +330,7 @@ export default function EvangelismClient() {
  animate={{ opacity: 1, y: 0 }}
  transition={{ delay: idx * 0.03 }}
  onClick={() => handleSelectStrategy(strategy)}
- className="group bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer flex items-center justify-between gap-3"
+ className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer flex items-center justify-between gap-3"
  >
  <div className="flex items-start gap-4 flex-1 min-w-0">
  <div 

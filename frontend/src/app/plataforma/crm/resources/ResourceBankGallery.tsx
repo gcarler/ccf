@@ -21,9 +21,9 @@ import type {
 } from '@/types/crm';
 
 const CANAL_META: Record<CanalEnvio, { label: string; icon: React.ElementType; color: string; bg: string }> = {
-  WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-  EMAIL: { label: 'Email', icon: Mail, color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-  SMS: { label: 'SMS', icon: Send, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+  WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: 'text-[hsl(var(--success))] dark:text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)]' },
+  EMAIL: { label: 'Email', icon: Mail, color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.2)]' },
+  SMS: { label: 'SMS', icon: Send, color: 'text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.2)]' },
 };
 
 interface ResourceBankGalleryProps {
@@ -188,14 +188,14 @@ export default function ResourceBankGallery({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {!loading && error && (
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] px-4 py-3 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))]">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wide">Banco de recursos sin respuesta</p>
                 <p className="text-xs">{error}</p>
               </div>
               <button
                 onClick={() => setReloadKey(key => key + 1)}
-                className="rounded-md border border-amber-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-amber-100 dark:border-amber-400/30 dark:hover:bg-amber-500/20"
+                className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
               >
                 Reintentar
               </button>
@@ -298,7 +298,7 @@ export default function ResourceBankGallery({
           <p className="text-xs text-[hsl(var(--text-secondary))]">
             {filteredTemplates.length} plantilla{filteredTemplates.length !== 1 ? 's' : ''} disponible{filteredTemplates.length !== 1 ? 's' : ''}
           </p>
-          {error && <p className="text-xs text-rose-500">{error}</p>}
+          {error && <p className="text-xs text-[hsl(var(--destructive))]">{error}</p>}
         </div>
       </div>
     </>

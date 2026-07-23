@@ -67,7 +67,7 @@ export default function TaskDetailPage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Tareas" sidebarSections={sidebarSections}>
-            <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#0b0d11] overflow-hidden">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects/list#projects-list' },
@@ -129,7 +129,7 @@ export default function TaskDetailPage() {
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha Límite</span>
-                                    <div className="flex items-center gap-2 text-xs font-bold text-rose-500">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--destructive))]">
                                         <Calendar size={14} /> {new Date(task.due_date).toLocaleDateString()}
                                     </div>
                                 </div>
@@ -142,7 +142,7 @@ export default function TaskDetailPage() {
                                             onClick={() => setIsTimerRunning(!isTimerRunning)}
                                             className={clsx(
                                                 'size-10 rounded-full flex items-center justify-center transition-all',
-                                                isTimerRunning ? 'bg-rose-500 text-white animate-pulse' : 'bg-emerald-500 text-white'
+                                                isTimerRunning ? 'bg-[hsl(var(--destructive))] text-white animate-pulse' : 'bg-[hsl(var(--success))] text-white'
                                             )}
                                         >
                                             {isTimerRunning ? <Pause size={18} /> : <Play size={18} className="ml-1" />}

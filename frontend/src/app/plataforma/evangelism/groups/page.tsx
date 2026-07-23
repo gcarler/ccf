@@ -452,12 +452,12 @@ export default function GroupPage() {
  ].map(f => (
  <div key={f.key} className="space-y-1.5">
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">{f.label}</label>
- <input type={f.type} placeholder={f.placeholder} value={seasonForm[f.key as keyof SeasonForm]} onChange={e => setSeasonForm(p => ({ ...p, [f.key]: e.target.value } as SeasonForm))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
+ <input type={f.type} placeholder={f.placeholder} value={seasonForm[f.key as keyof SeasonForm]} onChange={e => setSeasonForm(p => ({ ...p, [f.key]: e.target.value } as SeasonForm))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" />
  </div>
  ))}
  <div className="space-y-1.5">
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Periodicidad de Reporte</label>
- <select value={seasonForm.periodicity} onChange={e => setSeasonForm(p => ({ ...p, periodicity: e.target.value as SeasonForm['periodicity'] }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+ <select value={seasonForm.periodicity} onChange={e => setSeasonForm(p => ({ ...p, periodicity: e.target.value as SeasonForm['periodicity'] }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none">
  <option value="SEMANAL">Semanal (Reporte cada semana)</option>
  <option value="MENSUAL">Mensual (Reporte cada mes)</option>
  </select>
@@ -490,7 +490,7 @@ export default function GroupPage() {
  
  <div className="space-y-1.5">
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Grupo</label>
- <select value={sessionForm.grupo_id} onChange={e => setSessionForm(p => ({ ...p, grupo_id: e.target.value, create_for_all_groups: e.target.value === 'all' }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 appearance-none">
+ <select value={sessionForm.grupo_id} onChange={e => setSessionForm(p => ({ ...p, grupo_id: e.target.value, create_for_all_groups: e.target.value === 'all' }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none">
  <option value="">— Seleccionar Grupo —</option>
  {canManageEvangelism && <option value="all" className="font-bold">✨ TODOS LOS GRUPOS ACTIVOS</option>}
  {houses.map(h => <option key={h.id} value={h.id}>{h.name} {h.leader_name ? `· Líder: ${h.leader_name}` : ''}</option>)}
@@ -503,11 +503,11 @@ export default function GroupPage() {
  <div className="grid grid-cols-2 gap-4">
  <div className="space-y-1.5">
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre / Alias (Ej. S1)</label>
- <input type="text" placeholder="S1" value={sessionForm.topic} onChange={e => setSessionForm(p => ({ ...p, topic: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
+ <input type="text" placeholder="S1" value={sessionForm.topic} onChange={e => setSessionForm(p => ({ ...p, topic: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" />
  </div>
  <div className="space-y-1.5">
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Fecha de la Reunión</label>
- <input type="date" value={sessionForm.session_date} onChange={e => setSessionForm(p => ({ ...p, session_date: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
+ <input type="date" value={sessionForm.session_date} onChange={e => setSessionForm(p => ({ ...p, session_date: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" />
  </div>
  </div>
 
@@ -515,7 +515,7 @@ export default function GroupPage() {
  <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block flex items-center gap-2">
  Fecha y Hora Límite para Reportar <span className="px-1.5 py-0.5 rounded-md bg-[hsl(var(--bg-muted))] text-[8px] font-bold">OPCIONAL</span>
  </label>
- <input type="datetime-local" value={sessionForm.report_deadline} onChange={e => setSessionForm(p => ({ ...p, report_deadline: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" />
+ <input type="datetime-local" value={sessionForm.report_deadline} onChange={e => setSessionForm(p => ({ ...p, report_deadline: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" />
  <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-1">Si configuras este límite, los líderes no podrán guardar asistencia después de esta hora.</p>
  </div>
  </div>

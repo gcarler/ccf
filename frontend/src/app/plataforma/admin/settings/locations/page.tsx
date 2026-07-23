@@ -175,16 +175,16 @@ export default function LocationManagement() {
                 <form id="location-create-form" onSubmit={handleCreate} className="space-y-3">
                     <div className="space-y-2">
                         <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre de la Sede *</label>
-                        <input required value={newLoc.nombre} onChange={e => setNewLoc({...newLoc, nombre: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all" placeholder="Ej: Sede Norte" />
+                        <input required value={newLoc.nombre} onChange={e => setNewLoc({...newLoc, nombre: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="Ej: Sede Norte" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Dirección</label>
-                        <input value={newLoc.address} onChange={e => setNewLoc({...newLoc, address: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all" placeholder="Calle #, Barrio..." />
+                        <input value={newLoc.address} onChange={e => setNewLoc({...newLoc, address: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="Calle #, Barrio..." />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pastor Encargado</label>
-                            <input value={newLoc.pastor} onChange={e => setNewLoc({...newLoc, pastor: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:text-white transition-all" placeholder="Nombre" />
+                            <input value={newLoc.pastor} onChange={e => setNewLoc({...newLoc, pastor: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="Nombre" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo</label>
