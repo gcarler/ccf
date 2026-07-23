@@ -653,3 +653,145 @@ class TestDeleteCmsMediaPathTraversalHardening:
             f"Soft delete fallo pese a no tocar filesystem: "
             f"{resp.status_code} {resp.text}"
         )
+
+
+# (F) C-02 false-positive verification — TOCTOU actor-sede-mutation vector
+#
+# Forensic audit claim C-02 (errorescms.md) argues that
+# ``update_cms_media_item`` passing ``incoming_author_persona_id=
+# row.created_by_persona_id`` to ``_crud_scope_re_check_cms_content_update``
+# leaves a TOCTOU: an actor whose token changed sede between fetch and
+# commit could slip through because the ``created_by_persona_id`` is
+# immutable.  This test class proves the existing defense-in-depth already
+# catches the named TOCTOU *and* related vectors, and therefore C-02 is a
+# FALSE POSITIVE.  We confirm this contractually so a regression that
+# removes the check #1 (``current_row_sede`` vs ``actor_sede``) will make
+# the suite fail instead of silently re-opening the TOCTOU.
+
+class TestC02TOCTOUFalsePositive:
+
+    def test_actor_sede_changed_blocks_update(self, client, db_session):
+        """CRITICO TOCTOU coverage: un actor crea contenido en sede_a
+        (ya con sede_a assignment), todo limpio.  Simulamos que el actor
+        es reasignado a sede_b ANTES del update.  El API helper ya no
+        permitira el fetch (existence-leak 404), pero el CRUD helper de
+        defense-in-depth debe bloquear incluso si algun caller saca la
+        fila por otra via.  Esto cubre el vector de la auditoria.
+
+        ``get_user_sede_id`` resuelve sede primero desde
+        ``auth_users.sede_id`` (see ``backend/core/tenant.py``), asi que
+        para simular la reasignacion movemos el ``Usuario.sede_id`` (no
+        solo el ``Persona.sede_id``).  ``Persona`` y ``Usuario`` comparten
+        el mismo UUID por la identidad canonica ``personas.id == auth_users.id``."""
+        import backend.crud.cms as _crud_cms
+        from backend.crud.crm import get_user_sede_id
+        from backend.models_auth import Usuario
+
+        (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b) = (
+            _seed_two_sedes(db_session)
+        )
+        # Media created in sede_a by admin_a (row.sede_id = sede_a).
+        m = _make_cms_media(
+            db_session,
+            persona_a,
+            sede_a,
+            url="https://cdn.example.com/was-in-a.png",
+            filename="was-in-a.png",
+            alt_text="TOCTOU-actor-moved-to-b",
+        )
+        db_session.commit()
+
+        # Simulate the actor relocating: reassign admin_a's auth_users
+        # sede_id (and persona_a.sede_id) to sede_b.  The user_id stays
+        # the same so the JWT stays valid, but
+        # ``_actor_sede_or_none_cms`` now returns sede_b.
+        db_session.query(Usuario).filter(
+            Usuario.id == admin_a.id
+        ).update({"sede_id": sede_b.id}, synchronize_session=False)
+        db_session.query(models.Persona).filter(
+            models.Persona.id == persona_a.id
+        ).update({"sede_id": sede_b.id}, synchronize_session=False)
+        db_session.flush()
+        assert str(get_user_sede_id(db_session, str(admin_a.id))) == str(sede_b.id)
+
+        # Cross-sede update attempt with row.sede_id still == sede_a.
+        # Defense-in-depth check #1 (current_row_sede vs actor_sede) must
+        # reject 404 existence-leak safe.
+        from fastapi import HTTPException as _HE
+
+        raised = False
+        try:
+            _crud_cms.update_cms_media_item(
+                db_session,
+                m.id,
+                alt_text="attempted-mutation-with-relocated-actor",
+                actor_user_id=str(admin_a.id),
+            )
+        except _HE as exc:
+            assert exc.status_code == 404, (
+                f"Cross-sede update no debe rejectar 404 existence-leak safe: "
+                f"{exc.status_code}"
+            )
+            raised = True
+        assert raised, (
+            "REGRESSION C-02: actor con sede cambiada logro mutar media de "
+            "la sede anterior — el defense-in-depth cayo el TOCTOU"
+        )
+
+        # Sanity: the row should be untouched.
+        db_session.expire_all()
+        m_after = _crud_cms.get_cms_media_item(db_session, m.id)
+        assert m_after.alt_text == "TOCTOU-actor-moved-to-b", (
+            "REGRESSION C-02: el row fue mutado pese al defense-in-depth"
+        )
+
+    def test_actor_same_sede_update_succeeds(self, client, db_session):
+        """Sanity: un update legit (el actor permanece en la misma sede)
+        no se rompe por una interpretacion demasiado estricta de la
+        logica — confirmamos que check #1 (current_row_sede) no active
+        falsos positivos."""
+        import backend.crud.cms as _crud_cms
+
+        (admin_a, persona_a, sede_a), _ = _seed_two_sedes(db_session)
+        m = _make_cms_media(
+            db_session,
+            persona_a,
+            sede_a,
+            url="https://cdn.example.com/legit-a.png",
+            filename="legit-a.png",
+            alt_text="legit-original",
+        )
+        db_session.commit()
+
+        m_updated = _crud_cms.update_cms_media_item(
+            db_session,
+            m.id,
+            alt_text="legit-updated",
+            actor_user_id=str(admin_a.id),
+        )
+        assert m_updated is not None, "Update legit fallo"
+        assert m_updated.alt_text == "legit-updated"
+
+    def test_superadmin_no_sede_may_update_anything(self, client, db_session):
+        """Sanity: el bypass para superadmin sin sede sigue funcionando
+        (consistente con REGLAS.md §4.1 — superadmin puede leer global, pero
+        UGC requiere sede attribuible).  Aqui validamos que el bypass del
+        actor_sede=None en CRUD helper no rompe el happy path del CRUD
+        en escenarios globales nominales.
+
+        ``Usuario.sede_id`` es NOT NULL, asi que no podemos crear un
+        Usuario real sin sede en esta base de datos de tests — el bypass
+        se testea indirectamente: cuando ``get_user_sede_id`` devuelve
+        None (e.g. un superadmin sin sede en un deployment especifico),
+        ``_crud_scope_re_check_cms_content_update`` retorna temprano sin
+        validar (lineas 194-195 de crud/cms.py).  Este test confirma el
+        codigo-path verificando que ``test_actor_same_sede_update_succeeds``
+        no dispara el bypass path—no puede cubrirlo con un Usuario NOT NULL.
+        MarcaSKIP explicita para fines de documentacion del contrato."""
+        import pytest
+
+        pytest.skip(
+            "Usuario.sede_id es NOT NULL — el bypass de superadmin sin "
+            "sede no puede ejercitarse con un Usuario real; ver lineas "
+            "194-195 de crud/cms.py para el codigo-path del bypass."
+        )
