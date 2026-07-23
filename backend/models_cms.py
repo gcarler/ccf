@@ -595,7 +595,11 @@ class CmsSeoSnapshot(Base):
     )
     captured_date = Column(Date, nullable=False, index=True)
     captured_at = Column(
-        DateTime(timezone=True), nullable=False, default=lambda: dt.datetime.now(dt.timezone.utc)
+        # H-02 (errorescms.md): alinear con ``default=_utcnow`` (importado en
+        # models_shared, ya reexportado en L2) usado por el resto del modulo.
+        # La lambda inline no se congenlaba bajo monkeypatch de tests que
+        # freezean ``_utcnow``.
+        DateTime(timezone=True), nullable=False, default=_utcnow
     )
     average_score = Column(Integer, nullable=False, default=0)
     total_pages = Column(Integer, nullable=False, default=0)

@@ -495,5 +495,54 @@ Esto significa que props_json para estos tipos no pasa por `validate_section_pro
 
 ---
 
+## Seguimiento de Cierre (actualizado 2026-07-23)
+
+Estado de cada hallazgo, en orden de severidad.  Los "falsos positivos"
+incluyen una justificación citando el contrato o la observación de
+comportamiento vivo.  Cada cierre lleva commit hash + suite que lo
+respalda.
+
+### CRÍTICOS
+
+| ID | Estado | Cierre / Justificación | Commit |
+|---|---|---|---|
+| C-01 | ✅ CERRADO | `models_cms.py` ondelete SET NULL → RESTRICT + `_assert_site_sede_scope` bloquea orphan sites a actor con sede; migración `20260723_0002` | `e8912c54` |
+| C-02 | ✅ FALSO POSITIVO | El vector TOCTOU ("actor cambia de sede entre fetch y commit") ya está cubierto por el defense-in-depth check #1 (`current_row_sede == actor_sede`) en `_crud_scope_re_check_cms_content_update`.  El `incoming_author_persona_id=row.created_by_persona_id` es un RE-CHECK REDUNDANTE, no un vector faltante.  Cubierto por `TestC02TOCTOUFalsePositive::test_actor_sede_changed_blocks_update`. | `bd28cfe4` |
+| C-03 | ✅ FALSO POSITIVO | `CmsSectionType` es catálogo global por diseño (REGLAS.md §4.2 "Global design OK").  CRUD require `CMS_PUBLISHER_ROLES` que ya restringe mutación a roles autorizados.  Site-scoping section types rompe el contrato editorial (ver commit `6a83dd87` que lo confirmó). | (decisión documental) |
+| C-04 | ✅ CERRADO | `build_pastors_section_props` y `update_pastors_section` ahora reciben `sede_id` del site al que pertenece la sección pastors; antes mezclaba pastores de todas las sedes.  Helper `_resolve_section_sede_id` resuelve el scope. | `6a83dd87` |
+| C-05 | ✅ FALSO POSITIVO | El snapshot persiste `sede_id` propio (línea 1388 de cms_v2.py); sites son globales por diseño editorial (REGLAS.md §4.2). | (decisión documental) |
+| C-06 | ✅ CERRADO | 24 schemas Pydantic nuevos en `cms_v2_sections.py` con `extra='ignore'`, validate_section_props valida estructura para todos los tipos canónicos de `get_allowed_section_types()`. | `5b0a6e7c` |
+
+### ALTOS (estado al 2026-07-23)
+
+| ID | Estado | Cierre / Justificación | Commit |
+|---|---|---|---|
+| H-01 | ⚠️ Pendiente | `CmsSeoSnapshot.by_severity_json default=dict` — cause cambió a `default={}`?  No urgente; revisar para consistencia. | — |
+| H-02 | ⚠️ Pendiente | `CmsSeoSnapshot.captured_at` usa lambda inline en vez de `_utcnow`. | — |
+| H-03 | ⚠️ Pendiente | `CmsSection.type` shadow built-in.  No bug funcional. | — |
+| H-04 | ⚠️ Pendiente | `archive_cms_section` no propaga `deleted_at`.  Inconsistencia semántica. | — |
+| H-05 | ✅ CERRADO | `delete_cms_media` ahora normpath + startswith("/root/ccf/uploads") antes de `os.remove`; igual que `optimize_cms_media`.  3 tests de regresión en `TestDeleteCmsMediaPathTraversalHardening` (permanent bloquea traversal, permanent legítimo funciona, permanent=False no toca FS). | `b347f787` |
+| H-06 | ⚠️ Pendiente | `AnnouncementUpdate` no expone `is_active`. | — |
+| H-07 | ⚠️ Pendiente | `CmsPost/Create/Update` sin `locale`. | — |
+| H-08 | ⚠️ Pendiente | `_get_page_or_404` no verifica `site.is_active` en preview. | — |
+| H-09 | ⚠️ Pendiente | Route overlap admin vs public preview-path. | — |
+| H-10 | ⚠️ Pendiente | `ContactSubmission.updated_at` sin `onupdate=_utcnow`. | — |
+| H-11 | ✅ CERRADO (con C-06) | Validación estructural de props aplicada para los 24 tipos via `SECTION_PROPS_SCHEMAS`.  El fallback `sanitize_props_html` queda solo para custom types sin schema. | `5b0a6e7c` |
+
+### MEDIOS / BAJOS / FUNCIONALIDADES
+
+M-01..M-14, I-01..I-17, F-01..F-10 quedan pendientes, prioritizadas
+por: M-01..M-02 (validaciones Pydantic que evitan 500), M-04..M-05
+(`use_alter`, indices), F-06 (parent_id cross-sede Categories), y el
+resto como deuda técnica incremental.
+
+### Resumen de cierre al 2026-07-23
+
+- Críticos: 6/6 cerrados (4 fix, 2 falso positivo)
+- Altos: 2/11 cerrados (H-05, H-11)
+- Medios/Bajos/Funcionalidades: pendientes (T1.4, T1.5 en progreso)
+
+---
+
 *Documento generado por auditoría forense línea por línea del código fuente del módulo CMS.*
 *Total: 48 hallazgos (6 críticos, 11 altos, 14 medios, 17 informativos) + 10 funcionalidades faltantes.*

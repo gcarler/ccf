@@ -347,6 +347,11 @@ class AnnouncementUpdate(BaseModel):
     category: Optional[str] = None
     image_url: Optional[str] = None
     is_featured: Optional[bool] = None
+    # H-06 (errorescms.md): el modelo ``Announcement`` tiene ``is_active``
+    # (models_cms.py:347) pero el schema no lo exponia. Sin este campo no
+    # se podia desactivar un announcement por API sin cambiar su status a
+    # "archived" — inconsistencia semantica entre el modelo y el contrato.
+    is_active: Optional[bool] = None
     status: Optional[AnnouncementStatus] = None
 
 
@@ -356,6 +361,7 @@ class AnnouncementRead(BaseModel):
     content: str
     category: str
     image_url: Optional[str] = None
+    is_active: bool = True
     is_featured: bool
     status: AnnouncementStatus
     # Axioma 3 — Multi-Tenant: expone ``sede_id`` y ``created_by_persona_id``
@@ -573,6 +579,12 @@ class CmsPostCreate(BaseModel):
     content: Optional[str] = None
     featured_image_url: Optional[str] = None
     status: str = "draft"
+    # H-07 (errorescms.md): el modelo ``CmsPost`` tiene ``locale`` con
+    # server_default="es" (models_cms.py) y ``CmsPage`` ya lo expone, pero
+    # ``CmsPostCreate`` y ``CmsPostUpdate`` no lo incluian — sin este
+    # campo un post siempre se crea con locale="es" sin API para
+    # cambiarlo.  Exponerlo alinea el contrato con el modelo.
+    locale: Optional[str] = None
     seo_json: Dict[str, Any] = Field(default_factory=dict)
     category_ids: List[UUID] = Field(default_factory=list)
     tag_ids: List[UUID] = Field(default_factory=list)
@@ -588,6 +600,7 @@ class CmsPostUpdate(BaseModel):
     content: Optional[str] = None
     featured_image_url: Optional[str] = None
     status: Optional[str] = None
+    locale: Optional[str] = None  # ver H-07 arriba
     seo_json: Optional[Dict[str, Any]] = None
     category_ids: Optional[List[UUID]] = None
     tag_ids: Optional[List[UUID]] = None
