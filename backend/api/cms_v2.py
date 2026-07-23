@@ -1602,18 +1602,7 @@ def public_theme(site_key: str, db: Session = Depends(get_db)):
     )
     if not row:
         raise HTTPException(status_code=404, detail="active theme not found")
-    return {
-        "id": row.id,
-        "site_id": row.site_id,
-        "name": row.name,
-        "tokens_json": row.tokens_json or {},
-        "is_active": row.is_active,
-        "status": row.status,
-        "version": row.version,
-        "created_by_persona_id": row.created_by_persona_id,
-        "created_at": row.created_at,
-        "updated_at": row.updated_at,
-    }
+    return schemas.CmsThemeRead.model_validate(row)
 
 
 @router.get(

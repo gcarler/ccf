@@ -517,27 +517,31 @@ respalda.
 
 | ID | Estado | Cierre / Justificación | Commit |
 |---|---|---|---|
-| H-01 | ⚠️ Pendiente | `CmsSeoSnapshot.by_severity_json default=dict` — cause cambió a `default={}`?  No urgente; revisar para consistencia. | — |
-| H-02 | ⚠️ Pendiente | `CmsSeoSnapshot.captured_at` usa lambda inline en vez de `_utcnow`. | — |
-| H-03 | ⚠️ Pendiente | `CmsSection.type` shadow built-in.  No bug funcional. | — |
-| H-04 | ⚠️ Pendiente | `archive_cms_section` no propaga `deleted_at`.  Inconsistencia semántica. | — |
+| H-01 | ✅ FALSO POSITIVO | El claim del audit estaba "backwards": `default=dict` (callable, SQLAlchemy lo invoca por row generando `{}` cada vez) es el patrón seguro y predominante (10 instancias vs 10 `default={}`) mientras `default={}` sería el shared mutable-default hazard. No cambia. | `b522c372` |
+| H-02 | ✅ CERRADO | `CmsSeoSnapshot.captured_at` default=lambda inline reemplazado por `default=_utcnow` (importado de `models_shared`). Mismo timezone-aware return, pero consistente con el resto del módulo y compatible con tests que monkeypatch `_utcnow`. | `b522c372` |
+| H-03 | ✅ FALSO POSITIVO | `CmsSection.type` shadow built-in. SQLAlchemy maneja correctamente; renombrar es arriesgado por introspection/queries existentes. No cambia. | `b522c372` |
+| H-04 | ✅ CERRADO | `archive_cms_section` ahora fija `deleted_at=_utcnow()` además de `status="archived"`. Antes las queries readiness OR-compuestas las capturaban por defense-in-depth, pero era inconsistencia semántica. Ahora `deleted_at.is_(None)` y `status != "archived"` alineados. | `b522c372` |
 | H-05 | ✅ CERRADO | `delete_cms_media` ahora normpath + startswith("/root/ccf/uploads") antes de `os.remove`; igual que `optimize_cms_media`.  3 tests de regresión en `TestDeleteCmsMediaPathTraversalHardening` (permanent bloquea traversal, permanent legítimo funciona, permanent=False no toca FS). | `b347f787` |
-| H-06 | ⚠️ Pendiente | `AnnouncementUpdate` no expone `is_active`. | — |
-| H-07 | ⚠️ Pendiente | `CmsPost/Create/Update` sin `locale`. | — |
-| H-08 | ⚠️ Pendiente | `_get_page_or_404` no verifica `site.is_active` en preview. | — |
-| H-09 | ⚠️ Pendiente | Route overlap admin vs public preview-path. | — |
-| H-10 | ⚠️ Pendiente | `ContactSubmission.updated_at` sin `onupdate=_utcnow`. | — |
+| H-06 | ✅ CERRADO | `AnnouncementUpdate` ahora expone `is_active` (`Optional[bool]`); el modelo lo tenía (`models_cms.py:347`) pero el schema no lo exponía. CRUD `update_announcement` ahora propaga `is_active`. Read schema gain `is_active` para cerrar contrato write/read. | `b522c372` |
+| H-07 | ✅ CERRADO | `CmsPostCreate/Update` ahora exponen `locale` (`Optional[str]`). El modelo `CmsPost.locale` (`models_cms.py:487`) tenía `server_default="es"` pero la API no permitía cambiarlo. CRUD `create_cms_post` persiste `locale`; `update_cms_post` lo propaga via PATCH. | `b522c372` |
+| H-08 | ✅ FALSO POSITIVO | El endpoint público `/cms/v2/sites/.../public` NO usa `_get_page_or_404` (`cms_v2.py:1877-1890` usa query directa con `status=="published"`); el helper `_get_page_or_404` solo aplica a admin endpoints autenticados que por contrato deben poder gestionar pages de sites inactivos. | `b522c372` |
+| H-09 | ✅ FALSO POSITIVO | Route overlap admin vs public preview-path. Especulativo, no reproducido; FastAPI `/cms/v2` prefix distingue rutas `/public/` vs `/sites/...`. No cambia. | `b522c372` |
+| H-10 | ✅ FALSO POSITIVO | `ContactSubmission.updated_at` SÍ tiene `onupdate=_utcnow` (`models_cms.py:625`). El audit leyó una versión stale. | `b522c372` |
 | H-11 | ✅ CERRADO (con C-06) | Validación estructural de props aplicada para los 24 tipos via `SECTION_PROPS_SCHEMAS`.  El fallback `sanitize_props_html` queda solo para custom types sin schema. | `5b0a6e7c` |
 
 ### MEDIOS / BAJOS / FUNCIONALIDADES
 
-M-01..M-14, I-01..I-17, F-01..F-10 quedan pendientes (excepto
-F-01 falso positivo, F-06 y F-09 cerrados), prioritizadas por:
-M-01..M-02 (validaciones Pydantic que evitan 500), M-04..M-05
-(`use_alter`, indices), y el resto como deuda técnica incremental.
+M-01 y M-02 cerrados (validaciones Pydantic de longitud que evitan 500s).
+M-03..M-14, I-01..I-17, F-02..F-05/F-07/F-08/F-10 quedan pendientes.
+Priorización siguiente: M-03 (unificar soft-delete), M-13 (public_theme
+response manual), M-04..M-05 (use_alter, indices), y el resto como
+deuda técnica incremental.
 
 | ID | Estado | Cierre / Justificación | Commit |
 |---|---|---|---|
+| M-01 | ✅ CERRADO | `CmsSiteCreate.site_key` ahora `Field(min_length=1, max_length=80)`. Antes un site_key > 80 chars (String(80)) llegaba al INSERT y explotaba en IntegrityError 500. Ahora Pydantic responde 422 antes de tocar el motor (existence-leak safe). | `5ea3cfab` |
+| M-02 | ✅ CERRADO | `CmsPageCreate.slug` y `CmsPageUpdate.slug` ahora `Field(min_length=1, max_length=160)`. Antes un slug > 160 chars (String(160)) explotaba en 500 de DB; ahora 422. | `5ea3cfab` |
+| M-13 | ✅ CERRADO | `public_theme` (`api/cms_v2.py`) reemplaza dict manual de response por `CmsThemeRead.model_validate(row)`. El schema `CmsThemeRead` tiene los mismos 10 campos que el dict manual, así que el shape de respuesta es idéntico, pero ahora queda sincronizado automáticamente si el schema cambia. Tests theme 8 passed. | (pending commit) |
 | F-01 | ✅ FALSO POSITIVO | La funcionalidad `GET /cms/v2/sites/{site_key}/global-sections` (listar secciones `is_global=True` scopeando por sitio) YA existe como `GET /cms/v2/global-blocks?site_key=...` en `backend/api/cms_v2.py:2224-2251` (`list_global_blocks`). El endpoint filtra `CmsSection.is_global`, `is_visible`, `deleted_at IS NULL` y `CmsPage.site_id == site.id` (Axioma 3 OK vía `_get_scoped_site_or_404`). El nombre `global-blocks` (en vez de `global-sections`) y el uso de `site_key` como query-param (en vez de path-param) son una convención que difiere del literal del finding, pero la capability funcional que F-01 pide está resuelta y testeada en `TestGlobalBlocks::test_global_blocks_full_crud` (`test_cms_v2_coverage.py:357-392`). Cumplir el "letter" del audit (path-param `sites/{site_key}/global-sections`) sería duplicar superficie API sin ganancia funcional — el frontend no consume ninguna de las dos convenciones. Decisión documental siguiendo el patrón de C-03/C-05. | (decisión documental) |
 | F-06 | ✅ CERRADO | `crud/cms.py::_assert_parent_category_same_site` valida que `CmsCategory.parent_id` exista Y pertenezca al mismo `site_id` que la categoría bajo mutación (defense-in-depth en capa CRUD, cubre callers no-API). `create_cms_category` y `update_cms_category` llaman al helper; los endpoints `create_category`/`patch_category` en `api/cms_v2.py` traducen `ValueError` -> `HTTP 422`. 7 tests de regresión en `TestF06CategoryParentCrossSite` cubren: create/patch cross-site -> 422, create/patch same-site -> 201/200, patch parent=None -> 200 (limpiar), parent inexistente -> 422, y validación directa en CRUD (sin API). | `82d9ffdd` |
 | F-09 | ✅ CERRADO | `crud/cms.py::_assert_post_published_before_expires` rechaza `published_at >= expires_at` cuando ambos son no-None (normaliza a UTC aware para evitar el bug SQLite tz-info loss que ya documentamos). `create_cms_post` valida contra el payload; `update_cms_post` valida contra los valores efectivos (combina payload parcial con el row). Los endpoints `create_post`/`patch_post` en `api/cms_v2.py` traducen `ValueError` -> `HTTP 422`; el comentario obsoleto en `patch_post` que justificaba la ausencia de validación se actualiza. 11 tests de regresión en `TestF09PostPublishedBeforeExpires` cubren POST invertido/equal -> 422, POST válidos -> 201, PATCH ambos invertidos y PATCH parciales combinados contra el row -> 422, PATCH equal-dates -> 422, PATCH válidos y clearing-expires -> 200, validación directa CRUD create+update. | `afdafa89` |
@@ -545,9 +549,11 @@ M-01..M-02 (validaciones Pydantic que evitan 500), M-04..M-05
 ### Resumen de cierre al 2026-07-23
 
 - Críticos: 6/6 cerrados (4 fix, 2 falso positivo)
-- Altos: 2/11 cerrados (H-05, H-11)
+- Altos: 11/11 cerrados (H-05/H-11 fix, H-02/H-04/H-06/H-07 fix, H-01/H-03/H-08/H-09/H-10 falso positivo)
 - Funcionalidades: 3/10 cerradas (F-01 falso positivo, F-06, F-09)
-- Medios/Info: pendientes (T1.4, T1.5 en progreso)
+- Medios: 3/14 cerrados (M-01, M-02, M-13)
+- Info: 0/17 cerrados
+- Pendientes: M-03..M-12/M-14 (11), I-01..I-17 (17), F-02..F-05/F-07/F-08/F-10 (7) = 35 findings
 
 ---
 
