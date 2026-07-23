@@ -199,7 +199,12 @@ class PopupProps(BaseModel):
     @field_validator("dismiss_days")
     @classmethod
     def validate_dismiss_days(cls, v: int) -> int:
-        return max(1, min(int(v), 3650))
+        # M-06 (errorescms.md): Pydantic v2 ya valida el tipo int antes de
+        # llamar el field_validator, asi que v siempre es int aqui. El int(v)
+        # anterior era redundante y daba falsa sensacion de robustez; sin el,
+        # un string no convertible como "abc" se rechaza con 422 en la capa
+        # de Pydantic (no 500). El clamp [1, 3650] es el rango logico.
+        return max(1, min(v, 3650))
 
 
 class EventsCalendarProps(BaseModel):

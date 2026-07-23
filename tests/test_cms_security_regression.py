@@ -530,6 +530,25 @@ class TestSectionPropsStructuralValidation:
         assert "<script>" not in body
         assert "<p>ok</p>" in body
 
+    # M-06: PopupProps.dismiss_days clamp + non-convertible string -> 422
+    def test_popup_dismiss_days_within_range(self):
+        result = validate_section_props("popup_banner", {"dismiss_days": 15})
+        assert result["dismiss_days"] == 15
+
+    def test_popup_dismiss_days_below_minimum_clamped(self):
+        result = validate_section_props("popup_banner", {"dismiss_days": -5})
+        assert result["dismiss_days"] == 1
+
+    def test_popup_dismiss_days_above_maximum_clamped(self):
+        result = validate_section_props("popup_banner", {"dismiss_days": 99999})
+        assert result["dismiss_days"] == 3650
+
+    def test_popup_dismiss_days_non_convertible_string_raises(self):
+        # M-06: a non-convertible string like "abc" must raise ValueError
+        # (which the API translates to 422), NOT a 500 from int().
+        with pytest.raises(ValueError):
+            validate_section_props("popup_banner", {"dismiss_days": "abc"})
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # F-06 — CmsCategory.parent_id cross-sede validation (Axioma 3)
