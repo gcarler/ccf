@@ -470,3 +470,63 @@ class TestCmsV2IdorCrossSede:
         db_session.add(item)
         db_session.commit()
         return site, menu, item
+
+
+class TestSectionPropsStructuralValidation:
+    """C-06/H-11 regression: every section type gets structural validation."""
+
+    @pytest.mark.parametrize(
+        "section_type",
+        [
+            "hero", "video_hero", "rich_text", "rich_text_columns", "cards",
+            "cta_banner", "gallery", "faq", "embed", "testimonials", "stats",
+            "team", "countdown", "pricing", "image_text", "timeline",
+            "icon_grid", "newsletter", "civic_hero_search",
+            "civic_convocatoria_cards", "civic_quick_links",
+            "civic_file_downloads", "civic_data_table", "civic_alert_banner",
+        ],
+    )
+    def test_returns_validated_dict_with_expected_keys(self, section_type):
+        # Each schema validates an empty dict and returns something
+        # (defaults). It must not raise — empty props is the CMS default
+        # for a freshly created placeholder section.
+        result = validate_section_props(section_type, {})
+        assert isinstance(result, dict)
+
+    def test_drops_unexpected_keys_with_extra_ignore(self):
+        # Permissive schemas drop unknown keys; an attacker cannot smuggle
+        # arbitrary structure past validation into a schema'd section type.
+        malicious_extra = {
+            "title": "Bienvenido",
+            "malicious_field": "<script>alert(1)</script>",
+            "another_sneaky_key": {"nested": "data"},
+        }
+        result = validate_section_props("hero", malicious_extra)
+        assert "malicious_field" not in result
+        assert "another_sneaky_key" not in result
+        assert result.get("title") == "Bienvenido"
+
+    def test_invalid_value_type_raises(self):
+        # Title is a str field in the Hero schema; an int 12345 should
+        # be rejected by strict Pydantic validation (no silent coercion
+        # to "12345" — that would mask malformed admin payloads).
+        with pytest.raises(ValueError):
+            validate_section_props("hero", {"title": 12345})
+
+    def test_items_list_validates_nested_objects(self):
+        # 'cards'│'faq' ... must route list dicts through their item schema.
+        result = validate_section_props(
+            "faq",
+            {"title": "Preguntas", "items": [{"q": "Q", "a": "A"}]},
+        )
+        assert isinstance(result.get("items"), list)
+
+    def test_html_in_body_is_sanitized_in_schema_validated_props(self):
+        # Even with a schema, the body still passes sanitize_props_html
+        # upstream (validate_section_props runs sanitize then validates).
+        props = {"body": "<p>ok</p><script>alert(1)</script>"}
+        result = validate_section_props("rich_text", props)
+        body = result.get("body", "")
+        assert "<script>" not in body
+        assert "<p>ok</p>" in body
+

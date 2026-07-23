@@ -366,6 +366,299 @@ class MobileMenuConfigProps(BaseModel):
     items: List[MobileMenuItem] = []
 
 
+# ── C-06/H-11 hardening: schemas for the 24 section types that previously
+#    fell through validate_section_props with only HTML sanitisation and no
+#    structural validation. Every schema is permissive (extra="ignore") and
+#    mirrors the frontend ``PublicSectionRenderer`` contract (field names +
+#    defaults match what ``val(props, key, default)`` reads). HTML-bearing
+#    fields are still routed through ``sanitize_props_html`` upstream.
+class _PermissiveProps(BaseModel):
+    model_config = {"extra": "ignore"}
+
+
+class HeroSlideItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    src: Optional[str] = None
+    url: Optional[str] = None
+    alt: Optional[str] = None
+    title: Optional[str] = None
+    caption: Optional[str] = None
+    href: Optional[str] = None
+    status: Optional[str] = None
+
+
+class HeroProps(_PermissiveProps):
+    title: str = ""
+    title_lead: str = ""
+    title_accent: str = ""
+    title_tail: str = ""
+    description: str = ""
+    body: str = ""
+    eyebrow: str = ""
+    primary_cta: str = ""
+    primary_cta_href: str = "/"
+    secondary_cta: str = ""
+    secondary_cta_href: str = "/"
+    cta_label: str = ""
+    cta_href: str = "/"
+    bg_image: str = ""
+    image_url: str = ""
+    image_alt: str = ""
+    slides: List[HeroSlideItem] = []
+    items: List[HeroSlideItem] = []
+
+
+class VideoHeroProps(_PermissiveProps):
+    title: str = ""
+    body: str = ""
+    cta_label: str = ""
+    cta_href: str = "/"
+    video_url: str = ""
+
+
+class RichTextProps(_PermissiveProps):
+    title: str = ""
+    body: str = ""
+    cta_label: str = ""
+    cta_href: str = "/"
+
+
+class RichTextColumnsProps(_PermissiveProps):
+    title: str = ""
+    body: str = ""
+    body_2: str = ""
+
+
+class CardItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    title: Optional[str] = None
+    body: Optional[str] = None
+    href: Optional[str] = None
+    icon: Optional[str] = None
+
+
+class CardsProps(_PermissiveProps):
+    title: str = ""
+    body: str = ""
+    items: List[CardItem] = []
+
+
+class CtaBannerProps(_PermissiveProps):
+    title: str = ""
+    body: str = ""
+    cta_label: str = ""
+    cta_href: str = "/"
+    cta_label_2: str = ""
+    cta_href_2: str = "/"
+
+
+class GalleryItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    url: Optional[str] = None
+    alt: Optional[str] = None
+    caption: Optional[str] = None
+
+
+class GalleryProps(_PermissiveProps):
+    title: str = ""
+    body: str = ""
+    image_url: str = ""
+    image_alt: str = ""
+    items: List[GalleryItem] = []
+
+
+class FaqItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    q: Optional[str] = None
+    a: Optional[str] = None
+
+
+class FaqProps(_PermissiveProps):
+    title: str = ""
+    items: List[FaqItem] = []
+
+
+class EmbedProps(_PermissiveProps):
+    title: str = ""
+    body: str = ""
+    embed_url: str = ""
+
+
+class TestimonialItemPublic(BaseModel):
+    model_config = {"extra": "ignore"}
+    author: Optional[str] = None
+    role: Optional[str] = None
+    content: Optional[str] = None
+    stars: int = 5
+
+
+class TestimonialsProps(_PermissiveProps):
+    title: str = "Testimonios"
+    items: List[TestimonialItemPublic] = []
+
+
+class StatItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    value: Optional[str] = None
+    label: Optional[str] = None
+
+
+class StatsProps(_PermissiveProps):
+    title: str = ""
+    items: List[StatItem] = []
+
+
+class TeamMemberItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    name: Optional[str] = None
+    role: Optional[str] = None
+    image: Optional[str] = None
+    bio: Optional[str] = None
+
+
+class TeamProps(_PermissiveProps):
+    title: str = "Nuestro Equipo"
+    items: List[TeamMemberItem] = []
+
+
+class CountdownProps(_PermissiveProps):
+    title: str = "Próximo Evento"
+    target_date: str = ""
+    body: str = ""
+
+
+class PricingItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    name: Optional[str] = None
+    price: Optional[str] = None
+    features: Optional[str] = None
+    btn: Optional[str] = None
+    btn_href: Optional[str] = None
+
+
+class PricingProps(_PermissiveProps):
+    title: str = "Opciones"
+    items: List[PricingItem] = []
+
+
+class ImageTextProps(_PermissiveProps):
+    title: str = ""
+    body: str = ""
+    image_url: str = ""
+    image_alt: str = ""
+    cta_label: str = ""
+    cta_href: str = "/"
+    image_side: str = "right"
+
+
+class TimelineEntryItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    year: Optional[str] = None
+    title: Optional[str] = None
+    body: Optional[str] = None
+
+
+class TimelineProps(_PermissiveProps):
+    title: str = ""
+    items: List[TimelineEntryItem] = []
+
+
+class IconGridItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    icon: Optional[str] = None
+    title: Optional[str] = None
+    body: Optional[str] = None
+
+
+class IconGridProps(_PermissiveProps):
+    title: str = ""
+    body: str = ""
+    items: List[IconGridItem] = []
+
+
+class NewsletterProps(_PermissiveProps):
+    title: str = "Mantente conectado"
+    body: str = ""
+    cta_label: str = "Suscribirse"
+    action_url: str = ""
+
+
+class CivicHeroSearchProps(_PermissiveProps):
+    eyebrow: str = ""
+    title: str = "¿Qué trámite buscas?"
+    subtitle: str = "Encuentra todo en un solo lugar."
+    placeholder: str = "Buscar trámites..."
+    action_url: str = "/buscar"
+    background_image: str = ""
+    suggestions: List[str] = []
+
+
+class CivicConvocatoriaItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    deadline: Optional[str] = None
+    category: Optional[str] = None
+    href: Optional[str] = None
+
+
+class CivicConvocatoriaCardsProps(_PermissiveProps):
+    title: str = "Convocatorias"
+    body: str = ""
+    items: List[CivicConvocatoriaItem] = []
+
+
+class CivicQuickLinkItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    icon: Optional[str] = None
+    label: Optional[str] = None
+    href: Optional[str] = None
+    description: Optional[str] = None
+    color: Optional[str] = None
+
+
+class CivicQuickLinksProps(_PermissiveProps):
+    title: str = "Accesos Rápidos"
+    body: str = ""
+    columns: str = "4"
+    items: List[CivicQuickLinkItem] = []
+
+
+class CivicFileDownloadItem(BaseModel):
+    model_config = {"extra": "ignore"}
+    name: Optional[str] = None
+    file_url: Optional[str] = None
+    format: Optional[str] = None
+    size_label: Optional[str] = None
+    description: Optional[str] = None
+
+
+class CivicFileDownloadsProps(_PermissiveProps):
+    title: str = "Documentos para descarga"
+    body: str = ""
+    items: List[CivicFileDownloadItem] = []
+
+
+class CivicDataTableProps(_PermissiveProps):
+    title: str = ""
+    caption: str = ""
+    headers: List[str] = []
+    rows: List[List[str]] = []
+    highlight_first_col: bool = True
+    striped: bool = True
+    footer_note: str = ""
+
+
+class CivicAlertBannerProps(_PermissiveProps):
+    level: str = "warning"
+    title: str = ""
+    message: str = ""
+    cta_label: str = ""
+    cta_href: str = ""
+    dismissible: bool = True
+
+
 # Union schema for validation dispatch
 SECTION_PROPS_SCHEMAS: Dict[str, type[BaseModel]] = {
     "button": ButtonProps,
@@ -391,6 +684,31 @@ SECTION_PROPS_SCHEMAS: Dict[str, type[BaseModel]] = {
     "policy_document": PolicyDocumentProps,
     "footer_config": FooterConfigProps,
     "mobile_menu_config": MobileMenuConfigProps,
+    # C-06/H-11: previously fell through to partial sanitisation only
+    "hero": HeroProps,
+    "video_hero": VideoHeroProps,
+    "rich_text": RichTextProps,
+    "rich_text_columns": RichTextColumnsProps,
+    "cards": CardsProps,
+    "cta_banner": CtaBannerProps,
+    "gallery": GalleryProps,
+    "faq": FaqProps,
+    "embed": EmbedProps,
+    "testimonials": TestimonialsProps,
+    "stats": StatsProps,
+    "team": TeamProps,
+    "countdown": CountdownProps,
+    "pricing": PricingProps,
+    "image_text": ImageTextProps,
+    "timeline": TimelineProps,
+    "icon_grid": IconGridProps,
+    "newsletter": NewsletterProps,
+    "civic_hero_search": CivicHeroSearchProps,
+    "civic_convocatoria_cards": CivicConvocatoriaCardsProps,
+    "civic_quick_links": CivicQuickLinksProps,
+    "civic_file_downloads": CivicFileDownloadsProps,
+    "civic_data_table": CivicDataTableProps,
+    "civic_alert_banner": CivicAlertBannerProps,
 }
 
 
@@ -402,7 +720,10 @@ def validate_section_props(section_type: str, props: Dict[str, Any]) -> Dict[str
     stored XSS in public rendering.
 
     Returns the validated/sanitised props dict, or raises ValueError with details.
-    Falls through gracefully for section types without schemas (existing 19).
+    Falls through to ``sanitize_props_html`` only for section types not in
+    ``SECTION_PROPS_SCHEMAS`` (custom admin types registered without a schema) —
+    that path keeps the mitigation for unschema'd types but cannot enforce
+    structure. All canonical ``get_allowed_section_types()`` now have schemas.
     """
     schema_cls = SECTION_PROPS_SCHEMAS.get(section_type)
     if schema_cls is None:
@@ -411,6 +732,8 @@ def validate_section_props(section_type: str, props: Dict[str, Any]) -> Dict[str
     try:
         cleaned = sanitize_props_html(props)
         validated = schema_cls.model_validate(cleaned)
+        # exclude_unset preserves partial admin edits; model_config extra="ignore"
+        # silently drops unexpected keys so stored props stay clean.
         return validated.model_dump(exclude_unset=True)
     except Exception as e:
         raise ValueError(f"Invalid props for section type '{section_type}': {e}")
