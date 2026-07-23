@@ -10,12 +10,14 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api._cms_helpers import (
+    _actor_sede_or_none,
     _get_scoped_cms_announcement,
     _get_scoped_cms_media,
     _get_scoped_cms_testimonial,
     _scope_cms_announcements_by_user_sede,
     _scope_cms_media_by_user_sede,
     _scope_cms_testimonials_by_user_sede,
+    collect_section_media_ids,
 )
 from backend.core.config import get_settings
 from backend.core.database import get_db
@@ -609,3 +611,79 @@ def get_cms_metrics(
             1 for row in media if (row.mime_type or "").startswith("audio/")
         ),
     )
+
+
+# ── F-10 (errorescms.md): limpieza de media items huerfanos ─────────
+# Archiva (soft) o borra (hard) media_items activos de la sede del actor
+# que no este referenciado por ninguna seccion de los sites de esa sede.
+# El endpoint NO implementa cleanup a nivel plataforma (superadmin sin
+# sede): el set de referenciados estaria mezclando sedes y podria
+# archivar media que otra sede usa.  Acepta ``dry_run`` para preview y
+# ``permanent`` (con guard de path traversal H-05) para hard-delete fisico.
+
+
+@router.post("/cms/media/cleanup")
+def cleanup_orphan_cms_media_endpoint(
+    dry_run: bool = Query(default=False),
+    permanent: bool = Query(default=False, description="Hard-delete files + rows (default: soft-archive)"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
+):
+    """Delete orphan media items (active but not referenced by any section).
+
+    Scope (Axioma 3): opera sobre ``CmsMediaItem.sede_id == sede del
+    actor``.  El set de IDs referenciados se construye escaneando los
+    ``props_json`` de todas las secciones activas de los sites de esa
+    sede via ``collect_section_media_ids``.  Un media item activo que no
+    aparezca ahi es candidato a limpieza.
+
+    ``dry_run=true`` retorna el count de candidatos sin mutar.  ``permanent=true``
+    borra los archivos fisicos (con guards de path traversal H-05) y
+    hard-deletea los rows; por defecto soft-archivea (``status=archived``).
+
+    El superadmin sin sede no puede correr el cleanup a nivel plataforma
+    (CRUD retorna 0): forzamos scope por sede.  Si el actor tiene sede,
+    la operacion se ejecuta sobre esa sede.
+    """
+    actor_sede = _actor_sede_or_none(db, current_user)
+    if actor_sede is None:
+        # Superadmin canonico sin sede: no permitimos cleanup a nivel
+        # plataforma para evitar mezclar referenciados de varias sedes.
+        if dry_run:
+            return {"purged": 0, "dry_run": True, "reason": "platform-scope disallowed"}
+        raise HTTPException(
+            status_code=400,
+            detail="Cleanup requiere scope por sede; el superadmin sin sede no puede limpiar a nivel plataforma",
+        )
+
+    # Recolectar todos los sites de la sede y sus secciones activas.
+    sites = (
+        db.query(models.CmsSite)
+        .filter(models.CmsSite.sede_id == actor_sede)
+        .all()
+    )
+    referenced_ids: set[str] = set()
+    for site in sites:
+        # Secciones activas de TODAS las paginas del site (incluye draft
+        # y published — un media referenciado por una pagina draft no es
+        # huerfano todavia).
+        sections = (
+            db.query(models.CmsSection)
+            .join(models.CmsPage, models.CmsPage.id == models.CmsSection.page_id)
+            .filter(models.CmsPage.site_id == site.id)
+            .filter(models.CmsSection.status != "archived")
+            .filter(models.CmsSection.deleted_at.is_(None))
+            .all()
+        )
+        for mid in collect_section_media_ids(sections):
+            referenced_ids.add(mid)
+
+    purged = crud.cleanup_orphan_cms_media(
+        db,
+        sede_id=actor_sede,
+        referenced_media_ids=referenced_ids,
+        actor_user_id=str(current_user.id),
+        dry_run=dry_run,
+        permanent=permanent,
+    )
+    return {"purged": purged, "dry_run": dry_run, "permanent": permanent}
