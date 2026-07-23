@@ -329,9 +329,14 @@ def _assert_site_sede_scope(
 
     Reglas:
       - Superadministradores globales (detectados por rol, no por ausencia
-        de sede) pueden acceder a cualquier site.
-      - Un actor con sede solo puede interactuar con sites de su propia sede
-        o sites sin sede asignada (migración histórica).
+        de sede) pueden acceder a cualquier site, incluidos los huérfanos
+        (sede_id NULL) resultantes de M&A histórico.
+      - Un actor con sede solo puede interactuar con sites de SU propia
+        sede. Los sites huérfanos (sede_id NULL) NO son accesibles por
+        actores con sede: previene el leak multi-tenant documentado en
+        C-01 (orphan sites tras ondelete SET NULL histórico). Con el FK
+        ahora ondelete=RESTRICT no se generan nuevos huérfanos, pero los
+        existentes solo los limpia un admin global.
       - Un actor sin sede que NO sea admin global recibe 404 para evitar
         escalación de privilegios por inconsistencia de datos.
     """
@@ -339,7 +344,9 @@ def _assert_site_sede_scope(
         return
     if actor_sede is None:
         raise HTTPException(status_code=404, detail="site not found")
-    if site.sede_id is not None and site.sede_id != actor_sede:
+    if site.sede_id is None:
+        raise HTTPException(status_code=404, detail="site not found")
+    if site.sede_id != actor_sede:
         raise HTTPException(status_code=404, detail="site not found")
 
 
