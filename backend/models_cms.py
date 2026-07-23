@@ -225,7 +225,7 @@ class CmsPageVersion(Base):
     snapshot_json = Column(JSON, default={})
     notes = Column(Text, nullable=True)
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     __table_args__ = (
         UniqueConstraint(
