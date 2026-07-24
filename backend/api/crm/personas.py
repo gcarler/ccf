@@ -180,9 +180,7 @@ def create_persona(
     user_sede = get_user_sede_id(db, current_user.id)
     if not user_sede:
         raise HTTPException(status_code=400, detail="El usuario no tiene sede asignada")
-    data = payload.model_dump()
-    data["sede_id"] = user_sede
-    return crud.create_persona(db, schemas.PersonaCreate(**data))
+    return crud.create_persona(db, payload, sede_id=user_sede)
 
 
 @router.put("/personas/{persona_id}", response_model=schemas.PersonaResponse)

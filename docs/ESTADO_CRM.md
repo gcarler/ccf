@@ -301,3 +301,29 @@ Busqueda rapida histórica:
 ```bash
 grep -nE "PARCIAL-|PEND-" /root/ccf/docs/ESTADO_CRM.md
 ```
+
+---
+
+## 15. Actualizacion de estado — 2026-07-24 (revision CRM)
+
+Revisión del módulo CRM ejecutada contra el smoke canónico. Se detectaron y corrigieron bugs reales de contrato/validación:
+
+1. **`POST /api/crm/personas`** — el endpoint intentaba inyectar `sede_id` reconstruyendo `schemas.PersonaCreate`, que tiene `extra="forbid"`, generando `422` en RBAC HTTP. Se pasó `sede_id` como argumento interno de `create_persona` en `backend/crud/crm_/personas.py`.
+2. **Response model de listados paginados en `backend/api/crm/pastoral.py`** — múltiples endpoints (`/counseling/`, `/casos/{case_id}/tasks`, `/messaging/history`, `/tasks`, `/tasks/mine`, `/grupos`, `/counseling/lead/{lead_id}`, `/roles`, `/prayer-requests`, `/volunteers`, `/groups`, `/casos/{case_id}/calls`) declaraban `response_model=List[dict]` pero devolvían objetos paginados `{"items": [...], "total": N}`. Se corrigieron a `response_model=dict`.
+3. **Tests de regresión** — se añadieron en `tests/test_crm_rbac_http.py` para validar que `POST /api/crm/personas` hereda `sede_id` del usuario autenticado y rechaza `sede_id` enviado por el cliente.
+
+Archivos modificados:
+
+- `backend/crud/crm_/personas.py`
+- `backend/api/crm/personas.py`
+- `backend/api/crm/pastoral.py`
+- `tests/test_crm_rbac_http.py`
+
+Validación posterior:
+
+- `scripts/test_crm_quality.py`: smoke mínimo + RBAC HTTP — **verde** ✅
+- `scripts/test_crm_quality.py --backend-deep`: mentoría, resource bank, automations DAG, concurrencia — **verde** ✅
+- `scripts/test_crm_quality.py --pipeline`: pipeline visual + challenger adversarial — **verde** ✅
+- `tests/test_crm_rbac_http.py`: **33 passed** ✅
+
+Estado: módulo CRM revalidado y libre de los 2 fallos de contrato detectados. La deuda técnica documentada en `CRM_RBAC_MATRIX.md` sobre helpers de automations sin guard explícito permanece como drift conocido fuera del alcance de esta revisión.
