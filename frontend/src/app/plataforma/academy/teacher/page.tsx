@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { apiFetch } from '@/lib/http';
-import { AssignmentSubmissionReview } from '@/types/academy';
+import { AssignmentSubmissionReview, CourseDetail } from '@/types/academy';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import {
     GraduationCap,
@@ -31,7 +31,7 @@ export default function TeacherWorkspace() {
     const { token, user, isAuthenticated } = useAuth();
     const router = useRouter();
     const [submissions, setSubmissions] = useState<AssignmentSubmissionReview[]>([]);
-    const [courses, setCourses] = useState<any[]>([]);
+    const [courses, setCourses] = useState<CourseDetail[]>([]);
     const [loading, setLoading] = useState(true);
     const [gradingId, setGradingId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'pending' | 'history' | 'courses'>('courses');
@@ -54,12 +54,13 @@ export default function TeacherWorkspace() {
                     cache: 'no-store',
                     signal,
                 }),
-                apiFetch<any[]>(`/academy/courses/`, { token, signal })
+                apiFetch<CourseDetail[]>(`/academy/courses/`, { token, signal })
             ]);
             setSubmissions(Array.isArray(subRes) ? subRes : []);
             setCourses(Array.isArray(courseRes) ? courseRes : []);
-        } catch (err) {
-            if ((err as Error).name === 'AbortError') return;
+        } catch (err: unknown) {
+            // H-11 (cierre 2026-07-24): AbortError filtrado tipo-safe.
+            if (err instanceof DOMException && err.name === 'AbortError') return;
             console.error(err);
             toast.error('No pudimos cargar los datos del panel');
         } finally {

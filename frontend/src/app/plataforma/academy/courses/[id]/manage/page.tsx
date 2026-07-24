@@ -214,14 +214,14 @@ export default function CourseManagementPage() {
                     </motion.section>
 
                     <div className="flex items-center gap-2 p-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg w-fit mx-auto lg:mx-0">
-                        {[
+                        {([
                             { id: 'students', label: 'Estudiantes', icon: Users },
                             { id: 'attendance', label: 'Asistencia', icon: Calendar },
                             { id: 'content', label: 'Curriculo', icon: BookOpen },
-                        ].map(tab => (
+                        ] as const).map(tab => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
+                                onClick={() => setActiveTab(tab.id)}
                                 className={clsx(
                                     "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide transition-all",
                                     activeTab === tab.id

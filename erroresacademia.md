@@ -516,7 +516,7 @@ respalda.
 | H-08 | ✅ CERRADO 2026-07-24 | Creado helper `_commit_or_raise_conflict(db, detail)` en `crud/academy.py` (patrón alineado con `api/cms_v2.py::_commit_or_raise_conflict`, M-12 defensivo). Sólo traga `IntegrityError` con `pgcode == '23505'` (Postgres unique) o mensaje SQLite `"UNIQUE constraint failed"` → `HTTPException(409)`. Toda otra `IntegrityError` (NOT NULL, FK, check) se re-raise post-rollback → 500 (no falso 409). Reemplazados los 7 commits directos (`create_course`/`update_course`/`archive_course`/`create_lesson`/`update_lesson`/`archive_lesson`/`create_enrollment`). 3 regression tests: unique→409, non-unique→re-raise, end-to-end course code duplicado→409. | `0e9073c8` |
 | H-09 | ✅ CERRADO 2026-07-24 | `AcademyClient.tsx` ahora usa `AbortController` + `controller.abort()` en cleanup de `useEffect`. `loadData` recibe `signal` y lo propaga a `apiFetch`. AbortError se filtra (no se muestra al usuario). | merge |
 | H-10 | ✅ CERRADO 2026-07-24 | `apiFetch` en `AcademyClient.tsx` ahora pasa `cache: 'no-store'` en las dos lecturas GET (`/academy/dashboard/metrics`, `/academy/me/profile`). Alinea con `coordination/page.tsx` y `profile/page.tsx` que ya lo aplicaban. | merge |
-| H-11 | 🔴 PENDIENTE | — | — |
+| H-11 | ✅ CERRADO 2026-07-24 | Eliminados los 31+ ``any`` explícitos en los 15 archivos frontend de Academy: 6 hooks/submódulos con ``catch (err: any)`` → ``catch (err: unknown)`` con filtrado tipo-safe de ``AbortError`` (``err instanceof DOMException && err.name === 'AbortError'``) y extracción del mensaje del shape HTTP ``{detail: {message}}`` o de ``Error``. 12+ ``useState<any>``/``apiFetch<any>`` → tipados con tipos nuevos ``ForumThreadRecord``, ``ForumCommentRecord``, ``CourseDetail``, ``ValidatedCertificate``, ``LessonProgressView`` (mirrors de las schemas Pydantic en ``types/academy.ts``). 4 ``{ icon: any }`` → ``LucideIcon`` importado de ``lucide-react``. 2 ``as any`` casts (``form[key]``, ``setActiveTab(tab.id)``) → tipados con ``as const`` arrays. ``colors: any`` → ``Record<StatColor, string>``. Regression test ``test_h11_academy_frontend_no_any_types`` en ``test_structural_contracts.py`` con regex patterns ``: any\\b``, ``<any>``, ``as any``, ``: any[]`` — siepra el reintroducir la debt. TypeScript academy: 0 errores. ESLint academy: 0 errores. | `<commit>` |
 
 ### MEDIOS
 
@@ -562,12 +562,12 @@ respalda.
 ### Resumen de cierre al 2026-07-24
 
 - **Críticos: 8/8 cerrados** ✅ (A-01 validate_certificate, A-02 forum outerjoin, A-03 scope admin estricto, A-04 rate-limit Request, A-05 submit_assignment IDOR, A-06 CRUD getters sede_id, A-07 CRUD mutadores sede_id, A-08 XSS MyEnrollments)
-- **Altos: 8/11 cerrados** ✅ (H-01 sede_id en contract Course, H-02 LessonProgressResponse, H-04 list_* sede_id, H-05 list_courses scope estricto, H-06 create_enrollment cross-tenant, H-07 create_course/lesson ownership, H-08 _commit_or_raise_conflict, H-09 AbortController, H-10 cache no-store) — 1 falso positivo justificado (H-03 — `file_url` es ruta `/api/static/...`, no FID Seaweed) — 1 pendiente (H-11)
+- **Altos: 9/11 cerrados** ✅ (H-01 sede_id en contract Course, H-02 LessonProgressResponse, H-04 list_* sede_id, H-05 list_courses scope estricto, H-06 create_enrollment cross-tenant, H-07 create_course/lesson ownership, H-08 _commit_or_raise_conflict, H-09 AbortController, H-10 cache no-store, H-11 frontend any cleanup) — 1 falso positivo justificado (H-03 — `file_url` es ruta `/api/static/...`, no FID Seaweed) — 0 pendientes altos
 - Medios: 0/12 cerrados
 - Info: 0/9 cerrados (2 en revisión)
 - Funcionalidades: 0/10 cerradas (F-01 parcial — cubre upload blocked archived)
-- **Pendientes: 24 hallazgos** (1 alto + 12 medios + 9 info + 2 en revisión en info).
-- Commits de cierre: `c2c92299` (WIP consolidado A-01/A-04/A-08), `4dc25ef0..62116fc2` (A-02/A-03/A-05), `3c7aae7d` (A-06/A-07/H-04), `65466384` (H-09/H-10), `2e590333` (H-05), `0e9073c8` (H-06/H-07/H-08), `6e1b95c0` (H-01/H-02 schemas). H-03 falso positivo — sin commit.
+- **Pendientes: 23 hallazgos** (0 altos + 12 medios + 9 info + 2 en revisión en info). H-03 queda fuera como falso positivo.
+- Commits de cierre: `c2c92299` (WIP consolidado A-01/A-04/A-08), `4dc25ef0..62116fc2` (A-02/A-03/A-05), `3c7aae7d` (A-06/A-07/H-04), `65466384` (H-09/H-10), `2e590333` (H-05), `0e9073c8` (H-06/H-07/H-08), `6e1b95c0` (H-01/H-02 schemas), `<commit>` (H-11 frontend any cleanup). H-03 falso positivo — sin commit.
 
 ---
 

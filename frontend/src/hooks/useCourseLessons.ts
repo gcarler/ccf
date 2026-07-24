@@ -44,9 +44,19 @@ export function useCourseLessons(courseIds: string[], token?: string | null): Le
         if (!cancelled) {
           setLessonsByCourse((prev) => ({ ...prev, ...Object.fromEntries(results) }));
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
+        // H-11 (cierre 2026-07-24): catch unknown. apiFetch rechaza con
+        // Error o un objeto con ``detail`` (HTTP error shape del backend);
+        // extraemos el mensaje de forma tipo-safe sin ``any``.
         if (!cancelled) {
-          setError(err?.detail?.message || 'No pudimos cargar el contenido de los cursos');
+          const message =
+            (err && typeof err === 'object' && 'detail' in err &&
+              typeof (err as { detail?: { message?: string } }).detail?.message === 'string'
+              ? (err as { detail: { message: string } }).detail.message
+              : undefined) ||
+            (err instanceof Error ? err.message : undefined) ||
+            'No pudimos cargar el contenido de los cursos';
+          setError(message);
         }
       } finally {
         if (!cancelled) {

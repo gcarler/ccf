@@ -35,9 +35,18 @@ export default function StudentCertificates() {
                 if (!cancelled) {
                     setCertificates(Array.isArray(data) ? data : []);
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
+                // H-11 (cierre 2026-07-24): catch unknown — extrae mensaje
+                // del shape HTTP ``{detail: {message: string}}`` o de Error.
                 if (!cancelled) {
-                    setError(err?.detail?.message || 'No pudimos obtener tus certificados');
+                    const message =
+                        (err && typeof err === 'object' && 'detail' in err &&
+                            typeof (err as { detail?: { message?: string } }).detail?.message === 'string'
+                            ? (err as { detail: { message: string } }).detail.message
+                            : undefined) ||
+                        (err instanceof Error ? err.message : undefined) ||
+                        'No pudimos obtener tus certificados';
+                    setError(message);
                 }
             } finally {
                 if (!cancelled) {

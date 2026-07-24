@@ -21,16 +21,26 @@ import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
+import type { ForumThreadRecord, ForumCommentRecord } from '@/types/academy';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+
+interface DisplayReply extends ForumCommentRecord {
+    text: string;
+    time: string;
+    author: string;
+    upvotes: number;
+    is_accepted: boolean;
+    is_pastoral: boolean;
+}
 
 export default function ForumThreadDetail() {
     const params = useParams<{ id: string }>();
     const id = params?.id ?? '';
     const router = useRouter();
     const { token } = useAuth();
-    const [thread, setThread] = useState<any>(null);
-    const [replies, setReplies] = useState<any[]>([]);
+    const [thread, setThread] = useState<ForumThreadRecord | null>(null);
+    const [replies, setReplies] = useState<DisplayReply[]>([]);
     const [inputText, setInputText] = useState('');
     const [viewType, setViewType] = useState<ViewType>('list');
     const [loading, setLoading] = useState(true);
@@ -42,10 +52,12 @@ export default function ForumThreadDetail() {
 
         const fetchThread = async () => {
             try {
-                const data = await apiFetch<any>(`/academy/forum/threads/${id}`, { token, signal: ctrl.signal });
+                const data = await apiFetch<ForumThreadRecord>(`/academy/forum/threads/${id}`, { token, signal: ctrl.signal });
                 setThread(data);
-            } catch (err: any) {
-                if (err?.name !== 'AbortError') {
+            } catch (err: unknown) {
+                // H-11 (cierre 2026-07-24): catch unknown — AbortError es de
+                // tipo DOMException, filtrar por nombre sin ``any``.
+                if (!(err instanceof DOMException && err.name === 'AbortError')) {
                     toast.error('Error al cargar el debate');
                 }
             }
@@ -53,18 +65,23 @@ export default function ForumThreadDetail() {
 
         const fetchReplies = async () => {
             try {
-                const data = await apiFetch<any[]>(`/academy/forum/threads/${id}/comments`, { token, signal: ctrl.signal });
+                const data = await apiFetch<ForumCommentRecord[]>(`/academy/forum/threads/${id}/comments`, { token, signal: ctrl.signal });
                 setReplies((Array.isArray(data) ? data : []).map((c) => ({
-                    ...c,
-                    text: c.text || c.content || '',
-                    time: c.time || (c.created_at ? new Date(c.created_at).toLocaleString('es-CO') : ''),
-                    author: c.author || c.author_name || `Usuario ${c.author_id ?? ''}`.trim(),
-                    upvotes: c.upvotes ?? 0,
-                    is_accepted: c.is_accepted ?? false,
-                    is_pastoral: c.is_pastoral ?? false,
+                    id: c.id,
+                    thread_id: c.thread_id,
+                    parent_id: c.parent_id ?? null,
+                    author_persona_id: c.author_persona_id,
+                    content: c.content,
+                    created_at: c.created_at,
+                    text: c.content,
+                    time: new Date(c.created_at).toLocaleString('es-CO'),
+                    author: `Usuario ${c.author_persona_id.slice(0, 8)}`,
+                    upvotes: 0,
+                    is_accepted: false,
+                    is_pastoral: false,
                 })));
-            } catch (err: any) {
-                if (err?.name !== 'AbortError') {
+            } catch (err: unknown) {
+                if (!(err instanceof DOMException && err.name === 'AbortError')) {
                     toast.error('Error al cargar las respuestas');
                 }
             }
@@ -79,12 +96,20 @@ export default function ForumThreadDetail() {
         const text = inputText;
         setInputText('');
         try {
-            const created = await apiFetch<any>(`/academy/forum/threads/${id}/comments`, {
+            const created = await apiFetch<ForumCommentRecord>(`/academy/forum/threads/${id}/comments`, {
                 method: 'POST',
                 token,
                 body: { content: text },
             });
-            setReplies((prev) => [...prev, created]);
+            setReplies((prev) => [...prev, {
+                ...created,
+                text: created.content,
+                time: new Date(created.created_at).toLocaleString('es-CO'),
+                author: `Usuario ${created.author_persona_id.slice(0, 8)}`,
+                upvotes: 0,
+                is_accepted: false,
+                is_pastoral: false,
+            }]);
             toast.success('Respuesta publicada');
         } catch {
             setInputText(text);
@@ -199,10 +224,10 @@ export default function ForumThreadDetail() {
 
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-9 rounded-lg bg-[hsl(var(--bg-muted))] flex items-center justify-center text-white text-[10px] font-semibold uppercase">{thread.author.charAt(0)}</div>
+                                    <div className="size-9 rounded-lg bg-[hsl(var(--bg-muted))] flex items-center justify-center text-white text-[10px] font-semibold uppercase">{(thread.author ?? '?').charAt(0)}</div>
                                     <div>
-                                        <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none mb-1">{thread.author}</p>
-                                        <p className="text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{thread.author_role}</p>
+                                        <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none mb-1">{thread.author ?? 'Usuario'}</p>
+                                        <p className="text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{thread.author_role ?? ''}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">

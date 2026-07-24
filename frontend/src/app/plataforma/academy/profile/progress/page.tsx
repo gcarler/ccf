@@ -18,7 +18,8 @@ import {
     Star, 
     ArrowRight,
     Search,
-    BarChart3
+    BarChart3,
+    LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -308,7 +309,16 @@ export default function StudentProgressPage() {
     );
 }
 
-function HeaderStat({ label, value, icon: Icon, color, bg }: any) {
+// H-11 (cierre 2026-07-24): prop tipada (antes ``any``).
+interface HeaderStatProps {
+    label: string;
+    value: number | string;
+    icon: LucideIcon;
+    color: string;
+    bg: string;
+}
+
+function HeaderStat({ label, value, icon: Icon, color, bg }: HeaderStatProps) {
     return (
         <div className="p-4 bg-white/5 backdrop-blur-2xl rounded-md border border-white/10 flex items-center gap-3 group hover:bg-white/10 transition-all cursor-default">
             <div className={clsx('size-9 rounded-lg flex items-center justify-center shadow-inner transition-transform group-hover:scale-110', bg, color)}>

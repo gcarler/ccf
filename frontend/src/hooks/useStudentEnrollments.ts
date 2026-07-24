@@ -32,8 +32,11 @@ export function useStudentEnrollments(): UseEnrollmentsResult {
         cache: 'no-store',
       });
       setEnrollments(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      console.warn("Enrollments fetch warning:", err);
+    } catch (err: unknown) {
+      // H-11 (cierre 2026-07-24): catch unknown — toasting was already
+      // swallowed upstream (I-05); preserve the empty-state UX while
+      // keeping the typed error path for future telemetry.
+      console.warn("Enrollments fetch warning:", err instanceof Error ? err.message : err);
       setError(null); // Force empty state instead of red error text for UX
       setEnrollments([]);
     } finally {

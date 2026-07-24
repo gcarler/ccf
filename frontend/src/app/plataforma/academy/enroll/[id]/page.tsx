@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
 import { BookOpen, Upload, CreditCard, Wallet, Landmark, Lock, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import type { CourseDetail } from '@/types/academy';
 
 import { motion, AnimatePresence } from "framer-motion";
 import { AcademyDetailContainer } from '@/components/academy/AcademyDetailShell';
@@ -19,7 +20,7 @@ export default function EnrollmentWizard() {
     const courseId = params?.id ?? '';
 
     const [step, setStep] = useState(1);
-    const [course, setCourse] = useState<any>(null);
+    const [course, setCourse] = useState<CourseDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [enrolling, setEnrolling] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('card');
@@ -34,10 +35,11 @@ export default function EnrollmentWizard() {
 
         const fetchCourse = async () => {
             try {
-                const data = await apiFetch(`/academy/courses/${courseId}`, { cache: 'no-store', signal: ctrl.signal });
+                const data = await apiFetch<CourseDetail>(`/academy/courses/${courseId}`, { cache: 'no-store', signal: ctrl.signal });
                 setCourse(data);
-            } catch (err: any) {
-                if (err?.name === 'AbortError') return;
+            } catch (err: unknown) {
+                // H-11 (cierre 2026-07-24): AbortError filtrado tipo-safe.
+                if (err instanceof DOMException && err.name === 'AbortError') return;
                 addToast("Curso no encontrado", "error");
                 router.push('/plataforma/academy');
             } finally {

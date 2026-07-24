@@ -495,6 +495,49 @@ def test_active_code_does_not_reintroduce_old_architecture_labels():
     assert violations == []
 
 
+def test_h11_academy_frontend_no_any_types():
+    """H-11 (cierre 2026-07-24): los submódulos frontend de Academy y los
+    hooks de dominio no deben contener ``any`` explícito. ``any`` enmascara
+    contratos rotos; los datos deben fluir via ``types/academy.ts`` (mirrors
+    de las schemas backend). Toleramos: comentos de doc, URLs relativas
+    ``/api/static`` y la palabra ``any`` en strings (no type annotation).
+    El tests siepra solo ocurrencias que son *type annotations*:
+    ``: any\\b``, ``<any>``, ``as any``, ``: any[]``.
+    """
+    root = Path(__file__).resolve().parents[1]
+    scan_paths = [
+        root / "frontend" / "src" / "app" / "plataforma" / "academy",
+        root / "frontend" / "src" / "hooks" / "useStudentEnrollments.ts",
+        root / "frontend" / "src" / "hooks" / "useCourseLessons.ts",
+        root / "frontend" / "src" / "types" / "academy.ts",
+    ]
+    # type-annotation shapes que senalize debt de TS:
+    import re
+    patterns = [
+        re.compile(r":\s*any\b"),
+        re.compile(r"<any>"),
+        re.compile(r"\bas\s+any\b"),
+        re.compile(r":\s*any\[\]"),
+    ]
+    violations = []
+    for scan_path in scan_paths:
+        if scan_path.is_file():
+            files = [scan_path]
+        else:
+            files = [p for p in scan_path.rglob("*") if p.suffix in {".ts", ".tsx"}]
+        for path in files:
+            rel = path.relative_to(root).as_posix()
+            for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                for pat in patterns:
+                    if pat.search(line):
+                        violations.append(f"{rel}:{line_no} contains explicit any")
+                        break
+    assert violations == [], (
+        "H-11 regression: Academy frontend contiene ``any`` explicitos: "
+        + "; ".join(violations[:10])
+    )
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # BACKEND AXIOMATIC RULES — REGLAS.md + ESTANDARES_DESARROLLO.md
 # ─────────────────────────────────────────────────────────────────────────────

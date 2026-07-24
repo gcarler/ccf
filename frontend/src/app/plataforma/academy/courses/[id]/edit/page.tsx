@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
 import { apiFetch } from '@/lib/http';
+import type { CourseDetail } from '@/types/academy';
 import {
     GraduationCap, Save, FileText, ShieldCheck, ArrowLeft, Clock, Loader2,
 } from 'lucide-react';
@@ -34,7 +35,7 @@ export default function EditCoursePage() {
     useEffect(() => {
         if (!token || !id) return;
         const ctrl = new AbortController();
-        apiFetch<any>(`/academy/courses/${id}`, { token, signal: ctrl.signal })
+        apiFetch<CourseDetail>(`/academy/courses/${id}`, { token, signal: ctrl.signal })
             .then(data => setForm({
                 code: data.code ?? '',
                 title: data.title ?? '',
@@ -165,16 +166,16 @@ export default function EditCoursePage() {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                                    {[
-                                        { key: 'is_published', title: 'Publicado', desc: 'Visible en el catalogo global' },
-                                        { key: 'is_self_paced', title: 'Autogestionado', desc: 'Sin restricciones de cohorte' },
-                                    ].map(({ key, title, desc }) => (
+                                    {([
+                                        { key: 'is_published' as const, title: 'Publicado', desc: 'Visible en el catalogo global' },
+                                        { key: 'is_self_paced' as const, title: 'Autogestionado', desc: 'Sin restricciones de cohorte' },
+                                    ]).map(({ key, title, desc }) => (
                                         <label key={key} className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-[hsl(var(--info)/100%)]/20 transition-all">
                                             <div>
                                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{title}</p>
                                                 <p className={LABEL}>{desc}</p>
                                             </div>
-                                            <input type="checkbox" checked={(form as any)[key]}
+                                            <input type="checkbox" checked={form[key]}
                                                 onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))}
                                                 className="size-8 rounded-lg accent-blue-600 transition-transform active:scale-90" />
                                         </label>

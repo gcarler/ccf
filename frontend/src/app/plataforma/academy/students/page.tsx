@@ -5,7 +5,7 @@ import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import { useAuth } from "@/context/AuthContext";
 import { MINIMAL_VIEWS,useViewType } from "@/hooks/useViewType";
 import { apiFetch } from "@/lib/http";
-import { BarChart3,BookOpen,GraduationCap,Search,UserRound } from "lucide-react";
+import { BarChart3,BookOpen,GraduationCap,Search,UserRound, LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect,useMemo,useState } from "react";
 
@@ -190,7 +190,7 @@ export default function AcademyStudentsPage() {
     );
 }
 
-function Metric({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) {
+function Metric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: number | string }) {
     return (
         <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
             <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10">
