@@ -362,9 +362,23 @@ MODULE_PERMISSION_MAP = {
 }
 ```
 
-### 7.3 Asignación de Permisos por Módulo
+### 7.3 Endpoints de Permisos Granulares
 
-El endpoint `PUT /api/admin/users/{user_id}/permissions` recibe:
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET`    | `/api/admin/permissions`                              | Taxonomía completa de permisos, módulos y niveles |
+| `GET`    | `/api/admin/users/{user_id}/permissions`             | Permisos actuales, override y efectivos de un usuario |
+| `PUT`    | `/api/admin/users/{user_id}/permissions`             | Establece override de permisos modulares (body plano) |
+| `GET`    | `/api/admin/user-module-roles`                        | Lista paginada de asignaciones de roles modulares |
+| `POST`   | `/api/admin/user-module-roles`                        | Asigna un rol modular a un usuario |
+| `DELETE` | `/api/admin/user-module-roles/{assignment_id}`        | Elimina una asignación de rol modular |
+| `GET`    | `/api/admin/users-with-roles`                         | Usuarios con rol de plataforma y roles modulares |
+
+Todos los endpoints requieren autenticación y el permiso `system:config` (guard `require_admin`).
+
+### 7.4 Asignación de Permisos por Módulo (Override)
+
+El endpoint `PUT /api/admin/users/{user_id}/permissions` recibe un **mapa plano** `módulo -> nivel`:
 
 ```json
 {
@@ -374,25 +388,230 @@ El endpoint `PUT /api/admin/users/{user_id}/permissions` recibe:
 }
 ```
 
-`set_user_permissions` expande cada par a los permisos concretos usando `expand_module_permissions` y los guarda en `UsuarioPermisoOverride`. El rol de plataforma original **no se modifica**.
+Cada par se expande internamente a los permisos concretos mediante `expand_module_permissions` y se persiste en `UsuarioPermisoOverride`. El rol de plataforma original **no se modifica**. Enviar `{}` elimina todos los overrides del usuario.
 
-### 7.4 Asignación de Roles Modulares
+**Schema de respuesta (`AdminUserPermissionsRead`)**
+
+```json
+{
+  "user_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+  "username": "jperez",
+  "email": "jperez@ccf.example",
+  "role": "MIEMBRO",
+  "role_permissions": {
+    "academy:study": "allow",
+    "profile:manage": "allow"
+  },
+  "override_permissions": {
+    "crm:read": "allow",
+    "crm:edit": "allow",
+    "crm:manage": "allow",
+    "projects:read": "allow",
+    "academy:study": "allow"
+  },
+  "module_roles": [],
+  "effective_permissions": {
+    "crm:read": "allow",
+    "crm:edit": "allow",
+    "crm:manage": "allow",
+    "projects:read": "allow",
+    "academy:study": "allow",
+    "profile:manage": "allow"
+  }
+}
+```
+
+### 7.5 Asignación de Roles Modulares
 
 El endpoint `POST /api/admin/user-module-roles` recibe:
 
 ```json
 {
-  "user_id": "uuid",
+  "user_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
   "modulo": "crm",
-  "rol_id": "uuid"
+  "rol_id": "b2c3d4e5-f6a7-8901-bcde-2345678901bc"
 }
 ```
 
 Requisitos del CRUD:
-- El usuario destino debe estar visible para el admin actual.
+- El usuario destino debe estar visible para el admin actual (misma sede, salvo superadmin).
 - El rol debe existir.
 - El rol debe contener **al menos un permiso** del módulo asignado.
-- Si ya existe una asignación para ese módulo, se actualiza (upsert lógico por soft-delete).
+- Si ya existe una asignación activa para ese módulo, se actualiza (upsert lógico).
+
+**Respuesta (creación/actualización)**
+
+```json
+{
+  "id": "c3d4e5f6-a7b8-9012-cdef-3456789012cd",
+  "user_id": "a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+  "modulo": "crm",
+  "rol_id": "b2c3d4e5-f6a7-8901-bcde-2345678901bc",
+  "created": true
+}
+```
+
+> Nota: `GET /api/admin/user-module-roles` devuelve el schema completo `AdminModuleRoleRead` con `rol_nombre` y `created_at`; el `POST` solo devuelve el resultado de la operación.
+
+### 7.6 Contrato de `/api/admin/permissions`
+
+`GET /api/admin/permissions` devuelve la taxonomía canónica que utiliza el frontend para renderizar la matriz de permisos. Las descripciones del campo `permissions` mostradas a continuación son ejemplos representativos; los valores exactos dependen de `PERMISSIONS` en `backend/core/permissions`.
+
+```json
+{
+  "permissions": {
+    "crm:read": "Ver contactos, casos y actividad del CRM",
+    "crm:edit": "Crear y editar registros del CRM",
+    "crm:manage": "Gestionar pipelines, roles y configuración del CRM",
+    "finance:read": "Ver transacciones y reportes financieros",
+    "finance:edit": "Crear/editar transacciones",
+    "finance:manage": "Gestionar categorías, conciliaciones y reportes",
+    "projects:read": "Ver proyectos",
+    "projects:edit": "Editar proyectos",
+    "projects:manage": "Gestionar proyectos",
+    "cms:read": "Ver contenido CMS",
+    "cms:edit": "Editar contenido CMS",
+    "cms:manage": "Gestionar CMS",
+    "academy:read": "Ver cursos y lecciones",
+    "academy:study": "Estudiar cursos",
+    "academy:edit": "Editar cursos y lecciones",
+    "academy:manage": "Gestionar academia",
+    "messaging:read": "Ver mensajes",
+    "messaging:edit": "Enviar y gestionar mensajes",
+    "evangelism:read": "Ver estrategias y grupos de evangelismo",
+    "evangelism:edit": "Editar estrategias y grupos",
+    "evangelism:manage": "Gestionar evangelismo",
+    "community:read": "Ver comunidad",
+    "community:edit": "Editar comunidad",
+    "community:manage": "Gestionar comunidad",
+    "spiritual_life:read": "Ver vida espiritual",
+    "spiritual_life:edit": "Editar vida espiritual",
+    "spiritual_life:manage": "Gestionar vida espiritual",
+    "wiki:read": "Ver wiki",
+    "wiki:edit": "Editar wiki",
+    "system:config": "Configurar la plataforma",
+    "profile:manage": "Gestionar perfil propio"
+  },
+  "modules": {
+    "crm": ["read", "edit", "manage"],
+    "finance": ["read", "edit", "manage"],
+    "projects": ["read", "edit", "manage"],
+    "cms": ["read", "edit", "manage"],
+    "academy": ["read", "study", "edit", "manage"],
+    "messaging": ["read", "edit"],
+    "evangelism": ["read", "edit", "manage"],
+    "community": ["read", "edit", "manage"],
+    "spiritual_life": ["read", "edit", "manage"],
+    "wiki": ["read", "edit"]
+  },
+  "levels": {
+    "read": ["read"],
+    "edit": ["read", "edit"],
+    "manage": ["read", "edit", "manage"]
+  }
+}
+```
+
+### 7.7 Ejemplos de Uso con cURL
+
+#### 1. Obtener taxonomía de permisos
+
+```bash
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+  "https://api.ccf.example/api/admin/permissions" | jq
+```
+
+#### 2. Ver permisos de un usuario
+
+```bash
+USER_ID="a1b2c3d4-e5f6-7890-abcd-1234567890ab"
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+  "https://api.ccf.example/api/admin/users/${USER_ID}/permissions" | jq
+```
+
+#### 3. Asignar override de permisos
+
+```bash
+USER_ID="a1b2c3d4-e5f6-7890-abcd-1234567890ab"
+curl -s -X PUT \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"crm":"manage","finance":"read","academy":"study"}' \
+  "https://api.ccf.example/api/admin/users/${USER_ID}/permissions" | jq
+```
+
+#### 4. Limpiar overrides (volver a los permisos del rol)
+
+```bash
+USER_ID="a1b2c3d4-e5f6-7890-abcd-1234567890ab"
+curl -s -X PUT \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}' \
+  "https://api.ccf.example/api/admin/users/${USER_ID}/permissions" | jq
+```
+
+#### 5. Asignar un rol modular
+
+```bash
+USER_ID="a1b2c3d4-e5f6-7890-abcd-1234567890ab"
+ROL_ID="b2c3d4e5-f6a7-8901-bcde-2345678901bc"
+curl -s -X POST \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"user_id\":\"${USER_ID}\",\"modulo\":\"crm\",\"rol_id\":\"${ROL_ID}\"}" \
+  "https://api.ccf.example/api/admin/user-module-roles" | jq
+```
+
+#### 6. Listar asignaciones modulares
+
+```bash
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+  "https://api.ccf.example/api/admin/user-module-roles?limit=10" | jq
+```
+
+#### 7. Ver usuarios con roles combinados
+
+```bash
+curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+  "https://api.ccf.example/api/admin/users-with-roles?limit=10" | jq
+```
+
+### 7.8 Flujo Recomendado desde el Frontend
+
+La página `/plataforma/admin/access` implementa el siguiente flujo:
+
+1. **Carga inicial:**
+   - `GET /api/admin/permissions` para armar la matriz de módulos y niveles.
+   - `GET /api/admin/roles` para listar los roles disponibles.
+   - `GET /api/admin/users-with-roles` para mostrar la audiencia de usuarios.
+
+2. **Selección de rol o usuario:**
+   - Si se edita un rol: `PATCH /api/admin/roles/{role_id}` con el mapa de permisos actualizado.
+   - Si se edita un usuario: `PUT /api/admin/users/{user_id}/permissions` con el mapa `módulo -> nivel`.
+
+3. **Persistencia y consistencia:**
+   - Tras guardar, el frontend refresca `GET /api/admin/users/{id}/permissions` para mostrar los permisos efectivos resultantes.
+   - La matriz de permisos distingue entre permisos heredados del rol de plataforma, permisos de roles modulares y overrides personales.
+
+### 7.9 Matriz de Permisos por Rol Canónico
+
+| Rol | crm | finance | projects | cms | academy | messaging | evangelism | wiki | system |
+|-----|-----|---------|----------|-----|---------|-----------|------------|------|--------|
+| **Super administrador** | manage | manage | manage | manage | manage | edit | manage | edit | config |
+| **Administrador** | manage | manage | manage | manage | manage | edit | manage | edit | — |
+| **Gestor** | manage | — | manage | — | manage | edit | — | — | — |
+| **Editor** | edit | — | edit | — | edit | edit | — | — | — |
+| **Lector / Miembro** | — | — | — | — | study | — | — | — | — |
+
+> **Nota:** `system:config` solo lo posee el rol `Super administrador`. Los roles `Lector` y `Miembro` solo tienen `academy:study` y `profile:manage`. Todos los roles canónicos reciben además `profile:manage`.
+
+### 7.10 Casos Límite y Validaciones
+
+- **Módulo inválido:** `PUT /users/{id}/permissions` con un módulo no presente en `MODULE_PERMISSION_MAP` retorna `400`.
+- **Nivel inválido:** enviar `"crm": "owner"` retorna `400` con los niveles válidos para ese módulo.
+- **Usuario de otra sede:** cualquier operación sobre un usuario fuera de la sede del admin (salvo superadmin) retorna `404`.
+- **Rol sin permisos del módulo:** `POST /user-module-roles` con un rol que no tenga al menos un permiso del módulo retorna `400`.
 
 ---
 
