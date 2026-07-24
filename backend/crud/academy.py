@@ -1,4 +1,11 @@
-"""Canonical data access for Academy UUID resources."""
+"""Canonical data access for Academy UUID resources.
+
+.. note::
+    This CRUD module is **OBSOLETE** and will be removed in a future release.
+    The API layer (``backend/api/academy.py``) inlines all queries directly.
+    No new code should import from this module. Existing callers should migrate
+    to using the API layer's inline queries or the ``schemas/academy.py`` models.
+"""
 
 from __future__ import annotations
 
