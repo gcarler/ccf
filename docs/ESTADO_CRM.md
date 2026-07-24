@@ -2,6 +2,8 @@
 
 > **TL;DR (una linea):** CRM es el centro de consolidacion de CCF: personas, familias, pipeline pastoral, casos, tareas, consejeria, prayer requests, voluntariado, mensajeria, grupos, recursos y automatizaciones. Es el modulo con mas cruces hacia `personas`, `auth`, `sede_id`, evangelismo y proyectos.
 
+> **Documentacion de arquitectura y reglas de negocio:** Para entender la arquitectura, entidades, reglas de negocio, contratos y flujos del modulo CRM, lee primero **[docs/CRM_ARCHITECTURE.md](CRM_ARCHITECTURE.md)**. Este documento (`ESTADO_CRM.md`) es el diario de estado, backlog y resultados de validacion del modulo.
+
 **Proposito.** Handover canonico para que cualquier sesion nueva pueda trabajar CRM como unidad propia y no mezclar correcciones con evangelismo, proyectos o capas compartidas sin evidencia.
 
 **Regla de uso.**

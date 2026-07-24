@@ -1,6 +1,8 @@
 # Contratos API — CRM CCF
 
 > **Objetivo:** fijar el contrato operativo del módulo CRM para backend, frontend, tests y agentes. El código sigue siendo la fuente final, pero este archivo evita cambios por intuición.
+>
+> **Contexto:** Esta es la referencia detallada de endpoints. Para la visión de arquitectura, modelo de datos, reglas de negocio y RBAC del CRM, ver **[docs/CRM_ARCHITECTURE.md](CRM_ARCHITECTURE.md)**.
 
 ## 1. Reglas generales
 
