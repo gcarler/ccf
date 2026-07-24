@@ -493,14 +493,14 @@ respalda.
 
 | ID | Estado | Cierre / Justificación | Commit |
 |---|---|---|---|
-| A-01 | 🔴 PENDIENTE | — | — |
+| A-01 | ✅ CERRADO 2026-07-24 | `validate_certificate` ahora: (1) aplica `@academy_limiter.limit("10/minute")` + `request: Request` (anti-enumeration); (2) response reducida a nuevo schema `schemas.CertificateValidation` que expone solo metadatos públicos (`certificate_code`, `issued_at`, `certificate_type`, `enrollment.student.username`, `enrollment.course.title`) — sin PII ni IDs internos (`id`, `enrollment_id`); (3) JOIN eager para enrollment.persona + course. Cierra enumeration oracle. | `c2c92299` |
 | A-02 | ✅ CERRADO 2026-07-24 | Reemplazado `outerjoin` simple por `outerjoin` con filtros `Course.deleted_at IS NULL` y `sede_check` en el `ON`. El `filter` distingue 3 casos: (1) hilo global `course_id IS NULL` visible; (2) hilo con `Course.id IS NOT NULL` (curso visible) → visible; (3) hilo con `course_id != NULL` pero Course archivado → outerjoin falla en el ON, queda NULL pero `course_id != NULL` → filter no lo incluye. Regresión existente: `test_forum_threads_isolate_by_sede` ya cubría el caso (thread on `Course.deleted_at`) y pasó post-fix. | merge |
 | A-03 | ✅ CERRADO 2026-07-24 | Scope admin estricto: los 4 endpoints admin (`all_enrollments`, `list_submissions`, `grade_submission`, `delete_submission_admin`) ahora filtran `Course.sede_id == sede_id` (sin `OR sede_id IS NULL`). El catálogo público (`_course_scope`) y el foro siguen incluyendo globales (lectura/captación). 4 regression tests en `test_academy_api.py::test_a03_*`. | `c2c92299`+patch |
 | A-04 | ✅ CERRADO 2026-07-24 | `create_enrollment` (30/min, `request: Request` ya presente), `check_in` (20/min, agregado), `request_certificate` (5/min, agregado), `submit_assignment` (10/min, agregado), `submit_assessment` (10/min, preexistente), `create_forum_thread` (5/min, preexistente), `validate_certificate` (10/min, agregado). Todos con `@academy_limiter.limit` + `request: Request` en firma. | `c2c92299` |
 | A-05 | ✅ CERRADO 2026-07-24 | `submit_assignment` ahora invoca `_get_scoped_course(db, current_user, enrollment.course_id)` antes del upload — aplica el scope Axioma 3 (sede + curso no archived + no unpublished). Cierre A-05 y cubre parte de F-01. Regression test `test_a05_submit_assignment_blocks_archived_course`. | merge |
 | A-06 | ✅ CERRADO 2026-07-24 | Hardening CRUD: `get_course`/`get_lesson`/`get_enrollment`/`get_assessment` tienen kwarg `sede_id=None` opt-in. Cuando se pasa, aplican filtro `Course.sede_id == sede_id OR sede_id IS NULL` (preserva globales). Compatibles con callers no-API que no pasan sede_id (behavior previo). 2 regression tests (`test_a06_get_course_blocks_cross_sede_with_sede_id_kwarg`, `test_h04_list_enrollments_filters_by_sede_id`). | merge |
 | A-07 | ✅ CERRADO 2026-07-24 | Hardening CRUD mutadores: `update_course`/`archive_course`/`update_lesson`/`archive_lesson`/`list_lessons`/`list_enrollments` tienen kwarg `sede_id=None` opt-in. Los mutadores delegan al getter (que filtra), por lo que no mutan rows de otra sede. 2 regression tests (`test_a07_update_course_blocks_cross_sede_with_sede_id_kwarg`, `test_a07_archive_course_blocks_cross_sede_with_sede_id_kwarg`). | merge |
-| A-08 | 🔴 PENDIENTE | — | — |
+| A-08 | ✅ CERRADO 2026-07-24 | `MyEnrollments.tsx:251` ahora `sanitizeCmsHtml(selectedLesson.content || '')` antes de `dangerouslySetInnerHTML`. Cierra stored XSS en panel autenticado. | `c2c92299` |
 
 ### ALTOS
 
@@ -561,14 +561,16 @@ respalda.
 
 ### Resumen de cierre al 2026-07-24
 
-- Críticos: 0/8 cerrados
-- Altos: 0/11 cerrados
+- **Críticos: 8/8 cerrados** ✅ (A-01 validate_certificate, A-02 forum outerjoin, A-03 scope admin estricto, A-04 rate-limit Request, A-05 submit_assignment IDOR, A-06 CRUD getters sede_id, A-07 CRUD mutadores sede_id, A-08 XSS MyEnrollments)
+- **Altos: 3/11 cerrados** ✅ (H-04 list_* sede_id, H-09 AbortController, H-10 cache no-store) — 8 pendientes (H-01, H-02, H-03, H-05, H-06, H-07, H-08, H-11)
 - Medios: 0/12 cerrados
 - Info: 0/9 cerrados (2 en revisión)
-- Funcionalidades: 0/10 cerradas
-- Pendientes: **40 hallazgos** — auditoría forense del módulo Academy recién emitida, sin cierres.
+- Funcionalidades: 0/10 cerradas (F-01 parcial — cubre upload blocked archived)
+- **Pendientes: 29 hallazgos** (8 altos + 12 medios + 9 info).
+- 3 commits: `c2c92299` (WIP consolidado A-01/A-04/A-08), `4dc25ef0..62116fc2` (A-02/A-03/A-05), `3c7aae7d` (A-06/A-07/H-04), `65466384` (H-09/H-10).
 
 ---
 
 *Documento generado por auditoría forense línea por línea del código fuente del módulo Academy.*
-*Total: 40 hallazgos (8 críticos, 11 altos, 12 medios, 9 informativos) + 10 funcionalidades/brechas de test pendientes.*
+*Total: 40 hallazgos (8 críticos, 11 altos, 12 medios, 9 informativos) + 10 funcionalidades/brechas de test.*
+*Hallazgos cerrados: 11/40 (8 críticos + 3 altos) — ver estados arriba.*
