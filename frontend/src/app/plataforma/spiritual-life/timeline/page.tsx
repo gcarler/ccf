@@ -12,7 +12,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { DSSkeleton } from '@/design';
 
 interface Milestone {
-    milestone_id: number;
+    id: string;
     type: string;
     event_date: string;
     notes?: string;
@@ -27,17 +27,20 @@ const MILESTONE_DEFS: Record<string, { label: string; icon: any; color: string; 
 };
 
 export default function SpiritualTimelinePage() {
-    const { token, user } = useAuth();
+    const { token, user, hasPermission } = useAuth();
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [loading, setLoading] = useState(true);
+    const canManage = hasPermission('spiritual_life:manage');
 
     useEffect(() => {
         if (!token || !user?.id) { setLoading(false); return; }
-        apiFetch<Milestone[]>(`/spiritual-life/milestones/${user.id}`, { token })
+        const controller = new AbortController();
+        apiFetch<Milestone[]>(`/spiritual-life/milestones/${user.id}`, { token, cache: 'no-store', signal: controller.signal })
             .then(data => setMilestones(Array.isArray(data) ? data : []))
             .catch(() => setMilestones([]))
             .finally(() => setLoading(false));
-    }, [token, user]);
+        return () => controller.abort();
+    }, [token, user?.id]);
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-[#0f1012] overflow-y-auto font-display">
@@ -59,9 +62,14 @@ export default function SpiritualTimelinePage() {
                             Cada hito de tu caminar con Cristo, registrado y celebrado.
                         </p>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
-                        <Plus size={13} /> Registrar Hito
-                    </button>
+                    {canManage && (
+                        <a
+                            href="/plataforma/admin/spiritual-life/milestones"
+                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
+                        >
+                            <Plus size={13} /> Administrar Hitos
+                        </a>
+                    )}
                 </div>
 
                 {/* Timeline */}
@@ -92,7 +100,7 @@ export default function SpiritualTimelinePage() {
                                 const Icon = def.icon;
                                 return (
                                     <motion.div
-                                        key={m.milestone_id}
+                                        key={m.id}
                                         initial={{ opacity: 0, x: -12 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.06 }}

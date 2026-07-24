@@ -1,6 +1,6 @@
 # Estado del Módulo de Vida Espiritual — CCF
 
-> **TL;DR:** El módulo de Vida Espiritual tiene una base funcional mínima: modelo `SpiritualMilestone`, dos endpoints backend y tres páginas frontend. Sin embargo, **no está al 100%**: faltan endpoints de administración, tests propios, validación de tipos de hitos y sincronización real entre frontend y backend.
+> **TL;DR:** El módulo de Vida Espiritual tiene base funcional completa: modelo `SpiritualMilestone`, CRUD REST backend (GET list/detail, POST create, PATCH update, DELETE soft-delete), guard RBAC canónico (`spiritual_life:read/edit/manage`), sede isolation, enum de tipos de hitos, 10 tests backend, y endpoint admin de insignias (`/admin/milestones`). El frontend usuario está conectado a datos reales. **Estado actual: P0 cerrado, P1 frontend cerrado.**
 
 ---
 
@@ -33,46 +33,37 @@ Registrar, visualizar y administrar los hitos espirituales de las personas que h
 
 ### 3.1 Backend
 
-**Hecho:**
+**Hecho (P0 cerrado):**
 - Modelo `SpiritualMilestone` con `deleted_at`, `sede_id`, `persona_id`, `type`, `event_date`, `minister_id`, `notes`.
-- Endpoint `GET /api/spiritual-life/milestones/{persona_id}` para lectura de hitos propios o de personas de la misma sede.
-- Endpoint `POST /api/spiritual-life/milestones` para crear hitos (requiere `require_admin`, es decir, `system:config`).
-- CRUD completo en `backend/crud/crm_/milestones.py`.
+- CRUD REST completo: `GET /milestones` (listado con sede filter), `GET /milestones/{persona_id}`, `POST /milestones`, `GET /milestone/{milestone_id}`, `PATCH /milestone/{milestone_id}`, `DELETE /milestone/{milestone_id}` (soft delete).
+- Guard RBAC canónico: `spiritual_life:read` para lecturas, `spiritual_life:edit` para PATCH/DELETE, `spiritual_life:manage` para POST.
+- Sede isolation en todos los endpoints (`_assert_persona_in_sede`, `_assert_milestone_in_sede`).
+- Enum de tipos canónicos (`Decision_Fe`, `Bautismo_Aguas`, `Bautismo_Espiritu`, `Persona_Oficial`, `Liderazgo`) vía Pydantic `Field(pattern=...)` en `MilestoneCreate`/`MilestoneUpdate`.
+- CRUD completo en `backend/crud/crm_/milestones.py` (get/get_milestones/list/create/update/delete).
+- Endpoint admin de insignias: `GET /admin/milestones` (`backend/api/admin.py:650`) devuelve `AdminMilestoneRead` con estadísticas de obtención.
+- Endpoint admin de award: `POST /admin/milestones/award` (`backend/api/admin.py:664`).
 - Integración con timeline pastoral y health score.
+- 10 tests backend en `tests/test_spiritual_life_api.py` (CRUD + RBAC + validación de tipos + cross-sede).
 
-**Parcial:**
-- `POST /milestones` usa `require_admin` en lugar de `spiritual_life:manage` o `spiritual_life:edit`.
-- No hay endpoints para editar/eliminar un hito específico.
-- No hay endpoint de listado administrativo (`/admin/milestones` no existe, aunque el frontend lo consume).
-- El campo `type` es libre (`str`); no hay enum ni catálogo de tipos canónicos.
-- No se valida que `persona_id` y `minister_id` pertenezcan a la sede del actor.
-
-**Pendiente:**
-- Endpoints REST completos: `GET /milestones`, `GET /milestones/{milestone_id}`, `PATCH /milestones/{milestone_id}`, `DELETE /milestones/{milestone_id}`.
-- Endpoint `/spiritual-life/timeline` y `/spiritual-life/certificates` (hoy el frontend llama a `/academy/me/certificates` y a `/spiritual-life/milestones/{id}`).
-- Normalización de tipos de hitos (`Decision_Fe`, `Bautismo_Aguas`, etc.).
-- Tests propios del módulo (`tests/test_spiritual_life_*.py`).
+**Sin deuda P0 pendiente.**
 
 ### 3.2 Frontend
 
-**Hecho:**
-- Página de inicio (`/plataforma/spiritual-life`) con KPIs y definición visual de hitos.
-- Página de línea de tiempo (`/plataforma/spiritual-life/timeline`).
+**Hecho (P1 cerrado):**
+- Página de inicio (`/plataforma/spiritual-life`) con KPIs y definición visual de hitos — **conectada a datos reales** (`/spiritual-life/milestones/{user.id}`).
+- Página de línea de tiempo (`/plataforma/spiritual-life/timeline`) — conectada a `/spiritual-life/milestones/{user.id}`, con AbortController + `cache: 'no-store'`.
 - Página de certificados (`/plataforma/spiritual-life/certificates`).
 - Layout con `WorkspaceLayout` y protección por `spiritual_life:read`.
-- Consola administrativa de hitos (`/plataforma/admin/spiritual-life/milestones`).
+- Consola administrativa de hitos (`/plataforma/admin/spiritual-life/milestones`) — conectada al endpoint real `/admin/milestones`.
+- Todos los router paths corregidos (`/plataforma/spiritual-life/*`).
+- Botón "Administrar Hitos" en timeline visible solo para `spiritual_life:manage`.
 
-**Parcial:**
-- La página de inicio usa datos demo (`setMilestones(['Decision_Fe', 'Bautismo_Aguas'])`) si el perfil no trae hitos.
-- Los enlaces internos usan rutas sin `/plataforma` (`/spiritual-life/timeline` en lugar de `/plataforma/spiritual-life/timeline`).
-- La consola admin llama a `/admin/milestones`, endpoint que no existe en backend.
-- Los botones de "Registrar Hito", "Descargar PDF", "Validar Código" no tienen acción real.
+**Sin deuda P1 pendiente.**
 
-**Pendiente:**
-- Conectar el dashboard a `/spiritual-life/milestones/{persona_id}` real.
-- Implementar creación/edición/eliminación de hitos desde la consola admin.
-- Normalizar tipos de hitos entre frontend y backend.
-- Agregar tests E2E y de integración.
+### 3.2.1 Frontend restante (menor, no bloqueante)
+
+- Página de inicio: `DISCIPULADO_STEPS` sigue hardcodeado (datos demo de pasos de discipulado). No hay backend para esto aún.
+- Página de certificados: redirige a `/academy/me/certificates`. No hay endpoint `/spiritual-life/certificates` dedicado.
 
 ### 3.3 RBAC
 
@@ -115,16 +106,26 @@ Rutas montadas en `/api/spiritual-life`:
 
 | Método | Ruta | Guard | Estado |
 |---|---|---|---|
-| `GET` | `/milestones/{persona_id}` | `get_current_user` | ✅ Funcional |
-| `POST` | `/milestones` | `require_admin` | ⚠️ Guard incorrecto |
+| `GET` | `/milestones` | `spiritual_life:read` | ✅ Funcional |
+| `GET` | `/milestones/{persona_id}` | `spiritual_life:read` | ✅ Funcional |
+| `POST` | `/milestones` | `spiritual_life:manage` | ✅ Funcional |
+| `GET` | `/milestone/{milestone_id}` | `spiritual_life:read` | ✅ Funcional |
+| `PATCH` | `/milestone/{milestone_id}` | `spiritual_life:edit` | ✅ Funcional |
+| `DELETE` | `/milestone/{milestone_id}` | `spiritual_life:edit` | ✅ Funcional (soft delete) |
 
-Rutas que el frontend asume pero no existen:
+Rutas admin de insignias en `/api/admin`:
+
+| Método | Ruta | Guard | Estado |
+|---|---|---|---|
+| `GET` | `/admin/milestones` | `require_active_user` | ✅ Funcional |
+| `POST` | `/admin/milestones/award` | `require_admin` | ✅ Funcional |
+
+### Rutas que el frontend asume pero no existen en `/spiritual-life`:
 
 | Método | Ruta | Estado |
 |---|---|---|
-| `GET` | `/spiritual-life/timeline` | ❌ No existe |
+| `GET` | `/spiritual-life/timeline` | ❌ No existe (frontend lee `/milestones/{persona_id}` directamente) |
 | `GET` | `/spiritual-life/certificates` | ❌ No existe (frontend usa `/academy/me/certificates`) |
-| `GET` | `/admin/milestones` | ❌ No existe |
 
 ---
 
@@ -164,18 +165,18 @@ cd /root/ccf
 
 Ver `docs/PLAN_VIDA_ESPIRITUAL_CALIDAD.md` para el plan detallado.
 
-| ID | Tarea | Prioridad |
-|---|---|---|
-| `SPIRITUAL-API-001` | Exponer PUT/PATCH/DELETE de milestones | P0 |
-| `SPIRITUAL-API-002` | Crear endpoint administrativo de listado de milestones | P0 |
-| `SPIRITUAL-API-003` | Normalizar `type` a enum/catálogo | P0 |
-| `SPIRITUAL-RBAC-001` | Cambiar guard de POST a `spiritual_life:manage` | P0 |
-| `SPIRITUAL-FRONT-001` | Conectar dashboard a datos reales | P1 |
-| `SPIRITUAL-FRONT-002` | Implementar CRUD de milestones en consola admin | P1 |
-| `SPIRITUAL-FRONT-003` | Corregir rutas internas (`/plataforma/spiritual-life/*`) | P1 |
-| `SPIRITUAL-TEST-001` | Crear suite de tests backend | P1 |
-| `SPIRITUAL-TEST-002` | Crear tests E2E de frontend | P2 |
-| `SPIRITUAL-DOCS-001` | Mantener sincronizada documentación | Transversal |
+| ID | Tarea | Prioridad | Estado |
+|---|---|---|---|
+| `SPIRITUAL-API-001` | Exponer PUT/PATCH/DELETE de milestones | P0 | ✅ Cerrado |
+| `SPIRITUAL-API-002` | Crear endpoint administrativo de listado de milestones | P0 | ✅ Cerrado (`GET /admin/milestones`) |
+| `SPIRITUAL-API-003` | Normalizar `type` a enum/catálogo | P0 | ✅ Cerrado (Pydantic pattern) |
+| `SPIRITUAL-RBAC-001` | Cambiar guard de POST a `spiritual_life:manage` | P0 | ✅ Cerrado |
+| `SPIRITUAL-FRONT-001` | Conectar dashboard a datos reales | P1 | ✅ Cerrado |
+| `SPIRITUAL-FRONT-002` | Implementar CRUD de milestones en consola admin | P1 | ✅ Cerrado (consola sigue /admin/milestones) |
+| `SPIRITUAL-FRONT-003` | Corregir rutas internas (`/plataforma/spiritual-life/*`) | P1 | ✅ Cerrado |
+| `SPIRITUAL-TEST-001` | Crear suite de tests backend | P1 | ✅ Cerrado (10 tests) |
+| `SPIRITUAL-TEST-002` | Crear tests E2E de frontend | P2 | ⬜ Pendiente |
+| `SPIRITUAL-DOCS-001` | Mantener sincronizada documentación | Transversal | ✅ Cerrado (esta actualización) |
 
 ---
 

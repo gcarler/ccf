@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Heart, Zap, Waves, Star, Shield, Award, ChevronRight,
     Calendar, BookOpen, TrendingUp, Users,
@@ -38,62 +38,46 @@ const DISCIPULADO_STEPS = [
 ];
 
 export default function SpiritualLifePage() {
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const [milestones, setMilestones] = useState<string[]>([]);
     const [academyProgress, setAcademyProgress] = useState<AcademyProgress | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const load = async () => {
-            if (!token) return;
-            try {
-                // Try to get milestones from user profile
-                const profile = await apiFetch<any>('/academy/me/profile', { token }).catch(() => null);
-                if (profile?.spiritual_milestones) {
-                    setMilestones(profile.spiritual_milestones);
-                } else {
-                    // Fallback demo data
-                    setMilestones(['Decision_Fe', 'Bautismo_Aguas']);
-                }
+    const loadSpiritualMilestones = useCallback(async (signal?: AbortSignal) => {
+        if (!token || !user?.id) { setLoading(false); return; }
+        try {
+            const data = await apiFetch<{ type: string }[]>(`/spiritual-life/milestones/${user.id}`, { token, cache: 'no-store', signal });
+            setMilestones(Array.isArray(data) ? data.map((m) => m.type) : []);
+        } catch {
+            setMilestones([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [token, user]);
 
-                // Try to get academy progress
-                const courses = await apiFetch<any>('/academy/enrollments', { token }).catch(() => null);
-                if (courses) {
-                    const completed = Array.isArray(courses) ? courses.filter((c: any) => c.completed).length : 0;
-                    const total = Array.isArray(courses) ? courses.length : 0;
-                    setAcademyProgress({ completed_courses: completed, total_courses: total, level: 'Fundamentos' });
-                } else {
-                    setAcademyProgress({ completed_courses: 2, total_courses: 5, level: 'Fundamentos' });
-                }
-            } finally {
+    const loadAcademyProgress = useCallback(async (signal?: AbortSignal) => {
+        if (!token) return;
+        try {
+            const courses = await apiFetch<any>('/academy/enrollments', { token, cache: 'no-store', signal });
+            if (Array.isArray(courses)) {
+                const completed = courses.filter((c: any) => c.completed).length;
+                setAcademyProgress({ completed_courses: completed, total_courses: courses.length, level: 'Fundamentos' });
             }
-        };
-        load();
+        } catch {
+            setAcademyProgress({ completed_courses: 0, total_courses: 0, level: 'Fundamentos' });
+        }
     }, [token]);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        loadSpiritualMilestones(controller.signal);
+        loadAcademyProgress(controller.signal);
+        return () => controller.abort();
+    }, [loadSpiritualMilestones, loadAcademyProgress]);
 
     const nextMilestone = MILESTONE_DEFS.find(m => !milestones.includes(m.key));
     const progressPct = Math.round((milestones.length / MILESTONE_DEFS.length) * 100);
     const discipuladoDone = DISCIPULADO_STEPS.filter(s => s.done).length;
-
-    const sidebarSections = [
-        {
-            title: 'Mi Caminar',
-            items: [
-                { id: 'spiritual-home',  label: 'Panel Espiritual',  href: '/plataforma/spiritual-life',              icon: Heart },
-                { id: 'spiritual-tl',    label: 'Línea de Tiempo',   href: '/plataforma/spiritual-life/timeline',     icon: Calendar },
-                { id: 'spiritual-certs', label: 'Mis Certificados',  href: '/plataforma/spiritual-life/certificates', icon: Award },
-            ]
-        },
-        {
-            title: 'Formación',
-            items: [
-                { id: 'academy-link',    label: 'Academia CCF',      href: '/plataforma/academy',                     icon: BookOpen },
-            ]
-        }
-    ];
-    void loading;
-    void setLoading;
-    void sidebarSections;
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-[#111213] overflow-y-auto font-display">
@@ -116,7 +100,7 @@ export default function SpiritualLifePage() {
                             </p>
                         </div>
 
-                        <Link href="/spiritual-life/timeline">
+                        <Link href="/plataforma/spiritual-life/timeline">
                             <motion.button
                                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                                 className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/25%)]"
@@ -261,7 +245,7 @@ export default function SpiritualLifePage() {
 
                             {/* Quick links */}
                             <div className="space-y-2">
-                                <Link href="/spiritual-life/timeline">
+                                <Link href="/plataforma/spiritual-life/timeline">
                                     <div className="flex items-center gap-3 p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/7 rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--info)/25%)] dark:hover:border-white/15 transition-all cursor-pointer group">
                                         <div className="size-9 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 flex items-center justify-center">
                                             <Calendar size={16} className="text-[hsl(var(--primary))]" />
@@ -274,7 +258,7 @@ export default function SpiritualLifePage() {
                                     </div>
                                 </Link>
 
-                                <Link href="/spiritual-life/certificates">
+                                <Link href="/plataforma/spiritual-life/certificates">
                                     <div className="flex items-center gap-3 p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/7 rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--info)/25%)] dark:hover:border-white/15 transition-all cursor-pointer group">
                                         <div className="size-9 rounded-md bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)] flex items-center justify-center">
                                             <Award size={16} className="text-[hsl(var(--domain-cyan)/90%)]" />
