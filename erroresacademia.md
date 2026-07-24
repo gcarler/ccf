@@ -498,8 +498,8 @@ respalda.
 | A-03 | ✅ CERRADO 2026-07-24 | Scope admin estricto: los 4 endpoints admin (`all_enrollments`, `list_submissions`, `grade_submission`, `delete_submission_admin`) ahora filtran `Course.sede_id == sede_id` (sin `OR sede_id IS NULL`). El catálogo público (`_course_scope`) y el foro siguen incluyendo globales (lectura/captación). 4 regression tests en `test_academy_api.py::test_a03_*`. | `c2c92299`+patch |
 | A-04 | ✅ CERRADO 2026-07-24 | `create_enrollment` (30/min, `request: Request` ya presente), `check_in` (20/min, agregado), `request_certificate` (5/min, agregado), `submit_assignment` (10/min, agregado), `submit_assessment` (10/min, preexistente), `create_forum_thread` (5/min, preexistente), `validate_certificate` (10/min, agregado). Todos con `@academy_limiter.limit` + `request: Request` en firma. | `c2c92299` |
 | A-05 | ✅ CERRADO 2026-07-24 | `submit_assignment` ahora invoca `_get_scoped_course(db, current_user, enrollment.course_id)` antes del upload — aplica el scope Axioma 3 (sede + curso no archived + no unpublished). Cierre A-05 y cubre parte de F-01. Regression test `test_a05_submit_assignment_blocks_archived_course`. | merge |
-| A-06 | 🔴 PENDIENTE | — | — |
-| A-07 | 🔴 PENDIENTE | — | — |
+| A-06 | ✅ CERRADO 2026-07-24 | Hardening CRUD: `get_course`/`get_lesson`/`get_enrollment`/`get_assessment` tienen kwarg `sede_id=None` opt-in. Cuando se pasa, aplican filtro `Course.sede_id == sede_id OR sede_id IS NULL` (preserva globales). Compatibles con callers no-API que no pasan sede_id (behavior previo). 2 regression tests (`test_a06_get_course_blocks_cross_sede_with_sede_id_kwarg`, `test_h04_list_enrollments_filters_by_sede_id`). | merge |
+| A-07 | ✅ CERRADO 2026-07-24 | Hardening CRUD mutadores: `update_course`/`archive_course`/`update_lesson`/`archive_lesson`/`list_lessons`/`list_enrollments` tienen kwarg `sede_id=None` opt-in. Los mutadores delegan al getter (que filtra), por lo que no mutan rows de otra sede. 2 regression tests (`test_a07_update_course_blocks_cross_sede_with_sede_id_kwarg`, `test_a07_archive_course_blocks_cross_sede_with_sede_id_kwarg`). | merge |
 | A-08 | 🔴 PENDIENTE | — | — |
 
 ### ALTOS
@@ -509,7 +509,7 @@ respalda.
 | H-01 | 🔴 PENDIENTE | — | — |
 | H-02 | 🔴 PENDIENTE | — | — |
 | H-03 | 🔴 PENDIENTE | — | — |
-| H-04 | 🔴 PENDIENTE | — | — |
+| H-04 | ✅ CERRADO 2026-07-24 | `list_courses`/`list_lessons`/`list_enrollments`/`list_forum_threads` ahora aceptan `sede_id=None` opt-in. `list_lessons` verifica `get_course(db, course_id, sede_id=...)` antes de listar — si el Course no es visible, retorna []. `list_forum_threads` aplica el patrón outerjoin de A-02. | merge |
 | H-05 | 🔴 PENDIENTE | — | — |
 | H-06 | 🔴 PENDIENTE | — | — |
 | H-07 | 🔴 PENDIENTE | — | — |
