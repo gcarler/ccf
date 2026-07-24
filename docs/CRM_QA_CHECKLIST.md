@@ -1,6 +1,8 @@
 # QA Checklist — CRM CCF
 
 > **Objetivo:** validar CRM como módulo aislado antes de cerrar una tarea, commit o despliegue.
+>
+> **Contexto:** Para la arquitectura, reglas de negocio y flujos del CRM, ver **[docs/CRM_ARCHITECTURE.md](CRM_ARCHITECTURE.md)**.
 
 ## 1. Preflight
 

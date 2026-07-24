@@ -1,5 +1,7 @@
 # Matriz RBAC — CRM CCF
 
+> **Contexto:** Este documento detalla la matriz de permisos. Para la visión general de arquitectura, reglas de negocio y flujos del CRM, ver **[docs/CRM_ARCHITECTURE.md](CRM_ARCHITECTURE.md)**.
+
 ## 1. Proposito
 
 Este documento fija la matriz RBAC operativa de CRM contra el código actual. No define un ideal; documenta lo que hoy protegen los routers y dónde existen asimetrías o huecos.
