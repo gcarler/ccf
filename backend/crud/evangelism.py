@@ -763,25 +763,43 @@ def update_seguimiento(
 
 
 def get_pendientes_seguimiento(
-    db: Session, limit: int = 50, *, sede_id: str | None = None
+    db: Session,
+    limit: int = 50,
+    *,
+    sede_id: str | None = None,
+    strategy_id: str | UUID | None = None,
 ) -> List[RegistroSeguimiento]:
     """Retorna los seguimientos pendientes (no completados).
 
     ``sede_id`` opcional aplica Axioma 3 (multi-tenant) por join
     ``seguimiento -> asistencia -> sesion -> grupo -> sede``. Sin ``sede_id``
     (= superadmin sin sede) se devuelven todas.
+
+    ``strategy_id`` opcional acota el resultado a seguimientos cuya
+    asistencia está dentro de un grupo de la estrategia dada (join extra
+    ``grupo.estrategia_id``). Útil para scoping del panel de la page
+    ``/strategies/[id]`` que sin esto mostraría seguimientos globales de
+    la sede dando una impresión falsa de "estos son de esta estrategia".
     """
     q = db.query(RegistroSeguimiento).filter(
         RegistroSeguimiento.estado_completado == False,  # noqa: E712
         RegistroSeguimiento.deleted_at.is_(None),
     )
-    if sede_id is not None:
+    if sede_id is not None or strategy_id is not None:
         q = (
             q.join(Asistencia, Asistencia.id == RegistroSeguimiento.asistencia_id)
             .join(SesionGrupo, SesionGrupo.id == Asistencia.sesion_id)
             .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
-            .filter(GrupoEvangelismo.sede_id == sede_id)
         )
+        if sede_id is not None:
+            q = q.filter(GrupoEvangelismo.sede_id == sede_id)
+        if strategy_id is not None:
+            try:
+                strategy_uuid = uuid.UUID(str(strategy_id))
+            except (TypeError, ValueError, AttributeError):
+                strategy_uuid = None
+            if strategy_uuid is not None:
+                q = q.filter(GrupoEvangelismo.estrategia_id == strategy_uuid)
     return (
         q.order_by(RegistroSeguimiento.fecha_seguimiento.asc().nullsfirst())
         .limit(limit)

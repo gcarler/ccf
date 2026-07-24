@@ -243,7 +243,7 @@ export function useMetrics(id: string, token: string | null) {
 
 // ── Hook: Seguimiento (follow-up) ───────────────────────────────────
 
-export function useFollowUps(token: string | null) {
+export function useFollowUps(token: string | null, strategyId?: string | null) {
   const [followUps, setFollowUps] = useState<FollowUpRecord[]>([]);
   const [loadingFollowUps, setLoadingFollowUps] = useState(false);
 
@@ -251,14 +251,18 @@ export function useFollowUps(token: string | null) {
     if (!token) return;
     setLoadingFollowUps(true);
     try {
-      const result = await apiFetch<FollowUpRecord[]>('/evangelism/follow-up/pending', { token, silent: true });
+      // Si ``strategyId`` está presente, scoping por estrategia — el panel
+      // dentro de ``/strategies/[id]`` solo muestra seguimientos de esa
+      // estrategia en vez de toda la sede (brecha #10 auditoria follow-up).
+      const query = strategyId ? `?strategy_id=${encodeURIComponent(strategyId)}` : '';
+      const result = await apiFetch<FollowUpRecord[]>(`/evangelism/follow-up/pending${query}`, { token, silent: true });
       setFollowUps(result || []);
     } catch {
       setFollowUps([]);
     } finally {
       setLoadingFollowUps(false);
     }
-  }, [token]);
+  }, [token, strategyId]);
 
   return { followUps, loadingFollowUps, fetchFollowUps };
 }

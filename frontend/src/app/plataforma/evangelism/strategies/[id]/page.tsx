@@ -193,7 +193,7 @@ export default function StrategyDetailPage() {
  } = useCustomRoles(id, token);
 
  // Seguimiento
- const { followUps, loadingFollowUps, fetchFollowUps } = useFollowUps(token);
+ const { followUps, loadingFollowUps, fetchFollowUps } = useFollowUps(token, id);
  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
  const [activeTab, setActiveTab] = useState<TabId>('overview');
  const { viewType, setViewType } = useViewType(`strategy_${id}`, 'dashboard');
