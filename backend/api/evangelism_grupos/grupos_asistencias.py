@@ -29,6 +29,7 @@ from backend.core.database import get_db
 from backend.core.permissions import (
     get_current_user,
     require_evangelism_edit,
+    require_evangelism_manage,
     require_evangelism_read,
 )
 from backend.core.tenant import require_user_sede_id
@@ -584,3 +585,18 @@ def update_seguimiento(
     if not result:
         raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
     return _serialize_seguimiento(result)
+
+
+@router.delete("/follow-up/{seguimiento_id}")
+def delete_seguimiento(
+    seguimiento_id: UUID,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_evangelism_manage),
+):
+    """Realiza soft-delete de un seguimiento (REGLAS.md §6 — no hard-delete)."""
+    from backend.crud.evangelism import delete_seguimiento as _delete_seguimiento
+
+    ok = _delete_seguimiento(db, seguimiento_id, actor_user_id=str(_user.id))
+    if not ok:
+        raise HTTPException(status_code=404, detail="Seguimiento no encontrado")
+    return {"ok": True}
