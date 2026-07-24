@@ -510,7 +510,7 @@ respalda.
 | H-02 | 🔴 PENDIENTE | — | — |
 | H-03 | 🔴 PENDIENTE | — | — |
 | H-04 | ✅ CERRADO 2026-07-24 | `list_courses`/`list_lessons`/`list_enrollments`/`list_forum_threads` ahora aceptan `sede_id=None` opt-in. `list_lessons` verifica `get_course(db, course_id, sede_id=...)` antes de listar — si el Course no es visible, retorna []. `list_forum_threads` aplica el patrón outerjoin de A-02. | merge |
-| H-05 | 🔴 PENDIENTE | — | — |
+| H-05 | ✅ CERRADO 2026-07-24 | `crud/academy.list_courses` ahora `include_global: bool = False` por defecto: el CRUD no mezcla `Course.sede_id IS NULL` (global) con la sede del actor a menos que el caller lo pida explicit con `include_global=True`. Alinea CRUD con la decisión A-03 (scope estricto por defecto). API layer usa `_course_scope` propio (no afectado); catálogo público `public.py` no filtra por sede (general). Callers de test sin `sede_id` devueven todos (preservado). Regression `test_h05_list_courses_excludes_global_by_default`. | `2e590333` |
 | H-06 | 🔴 PENDIENTE | — | — |
 | H-07 | 🔴 PENDIENTE | — | — |
 | H-08 | 🔴 PENDIENTE | — | — |
@@ -562,12 +562,12 @@ respalda.
 ### Resumen de cierre al 2026-07-24
 
 - **Críticos: 8/8 cerrados** ✅ (A-01 validate_certificate, A-02 forum outerjoin, A-03 scope admin estricto, A-04 rate-limit Request, A-05 submit_assignment IDOR, A-06 CRUD getters sede_id, A-07 CRUD mutadores sede_id, A-08 XSS MyEnrollments)
-- **Altos: 3/11 cerrados** ✅ (H-04 list_* sede_id, H-09 AbortController, H-10 cache no-store) — 8 pendientes (H-01, H-02, H-03, H-05, H-06, H-07, H-08, H-11)
+- **Altos: 4/11 cerrados** ✅ (H-04 list_* sede_id, H-05 list_courses scope estricto, H-09 AbortController, H-10 cache no-store) — 7 pendientes (H-01, H-02, H-03, H-06, H-07, H-08, H-11)
 - Medios: 0/12 cerrados
 - Info: 0/9 cerrados (2 en revisión)
 - Funcionalidades: 0/10 cerradas (F-01 parcial — cubre upload blocked archived)
-- **Pendientes: 29 hallazgos** (8 altos + 12 medios + 9 info).
-- 3 commits: `c2c92299` (WIP consolidado A-01/A-04/A-08), `4dc25ef0..62116fc2` (A-02/A-03/A-05), `3c7aae7d` (A-06/A-07/H-04), `65466384` (H-09/H-10).
+- **Pendientes: 28 hallazgos** (7 altos + 12 medios + 9 info).
+- Commits de cierre: `c2c92299` (WIP consolidado A-01/A-04/A-08), `4dc25ef0..62116fc2` (A-02/A-03/A-05), `3c7aae7d` (A-06/A-07/H-04), `65466384` (H-09/H-10), `2e590333` (H-05).
 
 ---
 
