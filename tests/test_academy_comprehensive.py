@@ -1206,3 +1206,132 @@ def test_enrollment_unpublished_course(client, db_session):
         },
     )
     assert resp.status_code == 404
+
+
+# ── H-01: sede_id en el contrato de Course read ─────────────────────────────
+
+
+def test_h01_course_response_exposes_sede_id(client, db_session):
+    """H-01 → ``GET /api/academy/courses`` y ``GET /api/academy/courses/{id}``
+    exponen ``sede_id`` (el contrato ya no depende de inferencia in-line)."""
+    admin, _, sede = seed_admin(db_session)
+    course = _create_course(db_session, sede_id=sede.id, is_published=True)
+    headers = auth_headers(client, email=admin.email)
+    # List endpoint.
+    resp_list = client.get("/api/academy/courses", headers=headers)
+    assert resp_list.status_code == 200
+    matched = [c for c in resp_list.json() if c["id"] == str(course.id)]
+    assert matched, "H-01: curso creado no aparece en list"
+    assert "sede_id" in matched[0], "H-01: sede_id ausente del list response"
+    assert matched[0]["sede_id"] == str(sede.id)
+    # Detail endpoint.
+    resp_detail = client.get(
+        f"/api/academy/courses/{course.id}", headers=headers
+    )
+    assert resp_detail.status_code == 200
+    assert resp_detail.json()["sede_id"] == str(sede.id)
+
+
+def test_h01_course_global_has_null_sede_id(client, db_session):
+    """H-01 → cuando ``Course.sede_id IS NULL`` (global), el response
+    expone ``sede_id: null`` explícitamente (no None implícito)."""
+    admin, _, sede = seed_admin(db_session)
+    course = _create_course(db_session, sede_id=None, is_published=True)
+    headers = auth_headers(client, email=admin.email)
+    resp = client.get(
+        f"/api/academy/courses/{course.id}", headers=headers
+    )
+    assert resp.status_code == 200
+    assert resp.json()["sede_id"] is None
+
+
+def test_h01_course_payload_forbids_sede_id(client, db_session):
+    """H-01 principio: el cliente NO puede atribuir sede — ``CoursePayload``
+    tiene ``extra="forbid"``, así que enviar ``sede_id`` en el write rechaza
+    con 422. La sede la inyecta la API vía ``get_user_sede_id``."""
+    admin, _, sede = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    resp = client.post(
+        "/api/academy/admin/courses",
+        headers=headers,
+        json={
+            "code": "FORBID-H01",
+            "title": "Test forbid sede_id",
+            "modality": "online",
+            "sede_id": str(_uuid.uuid4()),
+        },
+    )
+    assert resp.status_code == 422, (
+        f"H-01: CoursePayload debe rechazar sede_id con 422 (extra=forbid), "
+        f"got {resp.status_code}"
+    )
+
+
+# ── H-02: LessonProgressResponse contract tipado ────────────────────────────
+
+
+def test_h02_get_lesson_progress_contract(client, db_session):
+    """H-02 → ``GET /api/academy/lessons/{id}/progress`` devuelve un dict
+    conforme ``LessonProgressResponse`` con las 3 claves definidas
+    (``progress_percent``, ``last_position_seconds``, ``is_completed``) y
+    tipos correctos — sin progreso guardado el fallback es 0.0/0/False."""
+    admin, _, sede = seed_admin(db_session)
+    student, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="h02.student@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    course = _create_course(db_session, sede_id=sede.id)
+    lesson = _create_lesson(db_session, course.id)
+    headers = auth_headers(client, email=student.email)
+    resp = client.get(
+        f"/api/academy/lessons/{lesson.id}/progress", headers=headers
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    # Contract LessonProgressResponse.
+    assert set(data.keys()) == {
+        "progress_percent", "last_position_seconds", "is_completed"
+    }, f"H-02: response keys no conforman LessonProgressResponse: {set(data.keys())}"
+    assert isinstance(data["progress_percent"], float)
+    assert isinstance(data["last_position_seconds"], int)
+    assert isinstance(data["is_completed"], bool)
+    # Fallback sin progreso guardado.
+    assert data["progress_percent"] == 0.0
+    assert data["last_position_seconds"] == 0
+    assert data["is_completed"] is False
+
+
+def test_h02_get_lesson_progress_reflects_persisted_progress(client, db_session):
+    """H-02 → cuando existe un ``LessonProgress`` persistido, el endpoint
+    mapea sus columnas al contract LessonProgressResponse (antes devolvía
+    el ORM row crudo que Pydantic rechazaba bajo response_model)."""
+    admin, _, sede = seed_admin(db_session)
+    student, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="h02b.student@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    course = _create_course(db_session, sede_id=sede.id)
+    lesson = _create_lesson(db_session, course.id)
+    # Persistimos un progreso directamente en DB.
+    progress = models.LessonProgress(
+        persona_id=persona_st.id,
+        lesson_id=lesson.id,
+        progress_percent=42.5,
+        last_position_seconds=120,
+        is_completed=False,
+    )
+    db_session.add(progress)
+    db_session.commit()
+    headers = auth_headers(client, email=student.email)
+    resp = client.get(
+        f"/api/academy/lessons/{lesson.id}/progress", headers=headers
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["progress_percent"] == 42.5
+    assert data["last_position_seconds"] == 120
+    assert data["is_completed"] is False

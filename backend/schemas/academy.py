@@ -50,6 +50,11 @@ class Course(BaseModel):
     cta_text: Optional[str] = None
     syllabus: Optional[dict | list] = None
     modality: str
+    # H-01 (cierre 2026-07-24): sede del curso (NULL = global legítimo por
+    # A-03 lectura/captación). El API lo inyecta vía ``get_user_sede_id`` en
+    # ``create_course_admin``; el write schema ``CoursePayload`` NO lo acepta
+    # (``extra="forbid"``) para impedir que un cliente atribuya a otra sede.
+    sede_id: Optional[UUID] = None
     is_published: bool = True
     is_self_paced: bool = False
     duration_hours: int = 0
@@ -395,6 +400,26 @@ class ProgressUpdate(BaseModel):
     last_position_seconds: int = Field(default=0, ge=0)
 
 
+class LessonProgressResponse(BaseModel):
+    """H-02 (cierre 2026-07-24): response tipado para
+    ``GET /academy/lessons/{id}/progress``.
+
+    Antes, el endpoint devolvía un dict literal ``{"progress_percent": ...,
+    "last_position_seconds": ..., "is_completed": ...}`` sin
+    ``response_model``. ``ProgressUpdate`` valida el write, pero el read
+    quedaba fuera del contract — el ORM ``LessonProgress`` no se exponía
+    con schema. Ahora el endpoint declara ``response_model=LessonProgressResponse``,
+    y mapea tanto el ORM row (``progress_percent``, ``last_position_seconds``,
+    ``is_completed``) como el dict fallback (0.0 / 0 / False cuando no
+    hay progreso guardado) en el mismo contract.
+    """
+    model_config = orm_config
+
+    progress_percent: float = 0.0
+    last_position_seconds: int = 0
+    is_completed: bool = False
+
+
 class CoursePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -511,6 +536,8 @@ class CourseListItem(BaseModel):
     tag: str | None = None
     cta_text: str | None = None
     modality: str
+    # H-01 (cierre 2026-07-24): sede del curso en el contract list item.
+    sede_id: UUID | None = None
     is_published: bool
     is_self_paced: bool
     duration_hours: int
