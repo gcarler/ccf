@@ -789,6 +789,51 @@ def get_pendientes_seguimiento(
     )
 
 
+def delete_seguimiento(
+    db: Session,
+    seguimiento_id: UUID,
+    *,
+    actor_user_id: str | uuid.UUID,
+) -> bool:
+    """Realiza soft-delete de un ``RegistroSeguimiento``.
+
+    Axioma 3: valida que el seguimiento → asistencia → sesion → grupo
+    pertenezca a la sede del actor; ``deleted_at`` ya previene re-mutacion
+    (query inicial reusa el mismo filtro).
+    Retorna ``True`` si se elimino, ``False`` si no se encontro.
+    """
+    # ── Axioma 3 — Multi-Tenant: resolve actor ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
+    db_obj = (
+        db.query(RegistroSeguimiento)
+        .filter(
+            RegistroSeguimiento.id == seguimiento_id,
+            RegistroSeguimiento.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not db_obj:
+        return False
+    # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-commit ──
+    asist_row = (
+        db.query(Asistencia.id, GrupoEvangelismo.sede_id)
+        .join(SesionGrupo, SesionGrupo.id == Asistencia.sesion_id)
+        .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
+        .filter(Asistencia.id == db_obj.asistencia_id)
+        .first()
+    )
+    current_sede = str(asist_row[1]) if asist_row and asist_row[1] else None
+    _crud_scope_re_check_evangelism_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=current_sede,
+    )
+    db_obj.deleted_at = _utcnow()
+    db.commit()
+    return True
+
+
 # ──────────────────────────────────────────────
 # MOTIVOS DE EXCUSA
 # ──────────────────────────────────────────────
