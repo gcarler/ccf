@@ -503,7 +503,6 @@ function WorkspaceLayoutInner({
                                     </div>
                                 ) : (
                                 <WorkspaceMainSidebar
-                                        title={displayTitle}
                                         sections={filteredDisplaySections}
                                         isMini={isMiniSidebar}
                                         onToggle={cycleS2}
@@ -644,7 +643,6 @@ function WorkspaceLayoutInner({
                             >
                                 {customSidebar || (
                                     <WorkspaceMainSidebar
-                                        title={displayTitle}
                                         sections={filteredDisplaySections}
                                         isMini={false}
                                         onToggle={() => closeLayer('S2')}
