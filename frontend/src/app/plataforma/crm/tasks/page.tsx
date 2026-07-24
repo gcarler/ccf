@@ -22,7 +22,7 @@ import { useWikiDocument } from '@/hooks/useWikiDocument';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import PersonaSelect from '@/components/ui/PersonaSelect';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -152,7 +152,7 @@ export default function CrmTasksPage() {
     if (loading) return (
         <CrmShell breadcrumbs={[{ label: 'Consolidación', icon: Heart }, { label: 'Tareas de Consolidación', icon: CheckSquare }]}>
             <div className="p-4 space-y-3">
-                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
+                {[...Array(5)].map((_, i) => <DSSkeleton key={i} className="h-8 w-full rounded-lg" />)}
             </div>
         </CrmShell>
     );

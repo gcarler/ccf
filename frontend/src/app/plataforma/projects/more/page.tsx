@@ -10,7 +10,7 @@ import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import type { ProjectPortfolioSummaryRow, ProjectWorkloadSummaryRow } from '@/types/projects';
 import { BarChart3, Layout, MoreHorizontal } from 'lucide-react';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { toast } from 'sonner';
 
 export default function ProjectsMorePage() {
@@ -90,7 +90,7 @@ export default function ProjectsMorePage() {
                     </div>
                 )}
                 {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((idx) => <Skeleton key={idx} className="h-32 rounded-lg" />)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((idx) => <DSSkeleton key={idx} className="h-32 rounded-lg" />)}</div>
                 ) : !error && summary.length === 0 && workload.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <BarChart3 size={48} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4" />

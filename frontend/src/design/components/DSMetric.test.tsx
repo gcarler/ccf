@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSMetric } from './DSMetric';
 
 describe('DSMetric', () => {
@@ -49,10 +50,15 @@ describe('DSMetric', () => {
     expect(screen.queryByTestId('icon')).not.toBeInTheDocument();
   });
 
-  it('has correct structure', () => {
+    it('has correct structure', () => {
     render(<DSMetric label="Users" value="1,234" trend="+5" />);
     expect(screen.getByText('Users')).toBeInTheDocument();
     expect(screen.getByText('1,234')).toBeInTheDocument();
     expect(screen.getByText('+5')).toBeInTheDocument();
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<DSMetric label="Total" value="42" />);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

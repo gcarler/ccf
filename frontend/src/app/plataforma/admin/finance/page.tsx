@@ -18,7 +18,7 @@ import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { ColumnDef } from '@tanstack/react-table';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import type { ViewType } from '@/components/ViewSwitcher';
@@ -221,8 +221,8 @@ export default function FinanceAdminPage() {
                     <AnimatePresence mode="wait">
                         {loading ? (
                             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">{[1,2,3].map(i => <Skeleton key={i} className="h-44 rounded-lg" />)}</div>
-                                <Skeleton className="h-96 w-full rounded-lg" />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">{[1,2,3].map(i => <DSSkeleton key={i} className="h-44 rounded-lg" />)}</div>
+                                <DSSkeleton className="h-96 w-full rounded-lg" />
                             </motion.div>
                         ) : viewType === 'list' ? (
                             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">

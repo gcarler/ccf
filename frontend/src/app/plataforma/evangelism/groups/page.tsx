@@ -3,7 +3,7 @@
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import EmptyState from '@/components/ui/EmptyState';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import ViewSwitcher from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { useAuth } from '@/context/AuthContext';
@@ -243,9 +243,9 @@ export default function GroupPage() {
  <EvangelismShell breadcrumbs={[]}>
  <div className="p-4 space-y-3">
  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
- {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
+ {[1, 2, 3, 4].map(i => <DSSkeleton key={i} className="h-32 rounded-lg" />)}
  </div>
- <Skeleton className="h-[400px] rounded-lg" />
+ <DSSkeleton className="h-[400px] rounded-lg" />
  </div>
  </EvangelismShell>
  );

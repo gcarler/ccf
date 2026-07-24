@@ -27,7 +27,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import type { CrmAutomationEdgeRecord, CrmAutomationRecord } from '@/types/crm';
 
 const AUTOMATION_EDGES_API = '/crm/resources/automation-edges';
@@ -453,10 +453,10 @@ export default function AutomationBuilderPage() {
                 <div className="flex-1 relative h-full bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]">
                     {loading ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                            <Skeleton className="h-10 w-48 rounded-md" />
+                            <DSSkeleton className="h-10 w-48 rounded-md" />
                             <div className="flex gap-4">
-                                <Skeleton className="h-32 w-56 rounded-md" />
-                                <Skeleton className="h-32 w-56 rounded-md" />
+                                <DSSkeleton className="h-32 w-56 rounded-md" />
+                                <DSSkeleton className="h-32 w-56 rounded-md" />
                             </div>
                         </div>
                     ) : (

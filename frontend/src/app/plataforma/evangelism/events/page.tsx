@@ -14,7 +14,7 @@ import { ViewType,getStoredView } from '@/components/ViewSwitcher';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import { useAuth } from '@/context/AuthContext';
@@ -807,7 +807,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <EvangelismShell breadcrumbs={[{ label: 'Evangelismo' }, { label: 'Eventos' }]}>
  <div className="p-4 space-y-3">
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
- {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-48 rounded-lg" />)}
+ {[1, 2, 3, 4, 5, 6].map(i => <DSSkeleton key={i} className="h-48 rounded-lg" />)}
  </div>
  </div>
  </EvangelismShell>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState, MouseEvent } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { MessageSquare, GripVertical, MoreHorizontal, Trash2, Eye } from 'lucide-react';
@@ -49,7 +49,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
     const dueDateStr = task.due_date || undefined;
     const commentCount = task.comments_count ?? 0;
 
-    const handleDelete = (e: React.MouseEvent) => {
+    const handleDelete = (e: MouseEvent) => {
         e.stopPropagation();
         setMenuOpen(false);
         const label = task.title || 'esta tarea';

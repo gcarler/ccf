@@ -23,7 +23,7 @@ import { useWikiDocument } from '@/hooks/useWikiDocument';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
 import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
@@ -301,7 +301,7 @@ export default function PrayerSupportCenter() {
                     </div>
                     {loading ? (
                         <div className="p-4 space-y-4">
-                            {[1, 2, 3].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
+                            {[1, 2, 3].map(i => <DSSkeleton key={i} className="h-8 w-full rounded-lg" />)}
                         </div>
                     ) : viewType === 'table' ? (
                         <DataTable data={filtered} columns={columns} onRowClick={handleOpenRequest} />

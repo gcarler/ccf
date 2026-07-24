@@ -710,8 +710,8 @@ def _normalize_dates(obj):
                 )
             except MemoryError:
                 raise
-            except Exception as exc:
-                logger.debug(
+            except (ValueError, TypeError, OverflowError) as exc:
+                logger.warning(
                     "Failed to normalize project date: %s",
                     exc,
                     extra={"attribute": attr, "value": val},
@@ -919,10 +919,9 @@ def create_project_task(
     # subsequent MAX(order_index) + INSERT is serialized across concurrent
     # task creations. On PostgreSQL this is a real SELECT ... FOR UPDATE;
     # on SQLite it is a no-op (the test suite runs serialized transactions).
-    db.query(models.Project).filter(
+    project = db.query(models.Project).filter(
         models.Project.id == _to_uuid(project_id)
     ).with_for_update().first()
-    project = db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).first()
     payload = task.model_dump()
     _normalize_task_payload(payload)
     _assert_status_in_project_phases(db, project_id, payload.get("status"))
@@ -2006,13 +2005,14 @@ def create_comment(
     )
     db.commit()
     db.refresh(comment)
+    persona = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first() if comment.author_id else None
     return schemas.ProjectCommentItem(
         id=comment.id,
         project_id=str(comment.project_id) if comment.project_id is not None else None,
         task_id=str(comment.task_id) if comment.task_id is not None else None,
         content=comment.content,
         author_id=str(comment.author_id) if comment.author_id is not None else None,
-        author_name=_author_name(db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()),
+        author_name=_author_name(persona),
         is_resolved=comment.is_resolved,
         created_at=comment.created_at,
         updated_at=comment.updated_at,
@@ -2046,13 +2046,14 @@ def create_project_comment(
     )
     db.commit()
     db.refresh(comment)
+    persona = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first() if comment.author_id else None
     return schemas.ProjectCommentItem(
         id=comment.id,
         project_id=str(comment.project_id) if comment.project_id is not None else None,
         task_id=str(comment.task_id) if comment.task_id is not None else None,
         content=comment.content,
         author_id=str(comment.author_id) if comment.author_id is not None else None,
-        author_name=_author_name(db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()),
+        author_name=_author_name(persona),
         is_resolved=comment.is_resolved,
         created_at=comment.created_at,
         updated_at=comment.updated_at,
@@ -2365,8 +2366,8 @@ def send_project_message(
                     room=f"project_{project_id}",
                 )
             )
-    except RuntimeError:
-        pass
+    except RuntimeError as e:
+        logger.error(f"WebSocket broadcast failed: {e}")
 
     return schemas.ProjectMessageItem(
         id=msg.id,

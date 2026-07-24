@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import UniversalGanttView, { type GanttItem } from "@/components/ui/UniversalGanttView";
 import type { ProjectTaskRecord } from "@/types/projects";
 

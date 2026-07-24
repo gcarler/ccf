@@ -1,4 +1,4 @@
-export * from './tokens';
+export * from './tokens-semantic';
 export * from './components/DSBadge';
 export * from './components/DSButton';
 export * from './components/DSCard';

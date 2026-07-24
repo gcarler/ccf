@@ -2,7 +2,7 @@
  * CCF UI Kit — Barrel unificado.
  *
  * Re-exports todos los componentes de las capas `design/` y `components/ui/`.
- * Uso: import { DSCard, Skeleton, PersonaSelect } from '@/components';
+ * Uso: import { DSCard, DSSkeleton, PersonaSelect } from '@/components';
  */
 
 // ── Design System primitives (DS*) ────────────────────────────────────────
@@ -14,12 +14,11 @@ export { DSMetric } from '../design/components/DSMetric';
 export { DSToolbarChip } from '../design/components/DSToolbarChip';
 export { DSSectionHeader } from '../design/components/DSSectionHeader';
 export { DSSkeleton } from '../design/components/DSSkeleton';
+export { DSTooltip } from '../design/components/DSTooltip';
 export { DSCommandEntry } from '../design/components/DSCommandEntry';
 
 // ── Feedback ──────────────────────────────────────────────────────────────
-export { default as Skeleton } from './ui/Skeleton';
 export { default as EmptyState } from './ui/EmptyState';
-export { default as Tooltip } from './ui/Tooltip';
 
 // ── Data display ──────────────────────────────────────────────────────────
 export { DataTable } from './ui/DataTable';

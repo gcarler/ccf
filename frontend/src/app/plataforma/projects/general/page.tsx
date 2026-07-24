@@ -10,7 +10,7 @@ import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import type { ProjectActivityItem, ProjectRecord } from '@/types/projects';
 import { Hash, Layout } from 'lucide-react';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { toast } from 'sonner';
 
 const GENERAL_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
@@ -127,7 +127,7 @@ export default function ProjectsGeneralPage() {
                     </div>
                 </section>
                 {loading ? (
-                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
+                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <DSSkeleton key={idx} className="h-20 rounded-lg" />)}</div>
                 ) : !error && viewType === 'table' ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Proyecto</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Actividad</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{activities.map((activity) => <tr key={activity.id}><td className="px-3 py-2 text-sm font-medium">{activity.project_title}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{activity.description}</td></tr>)}</tbody></table></div>
                 ) : !error && viewType === 'grid' ? (

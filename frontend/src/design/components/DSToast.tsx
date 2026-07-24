@@ -79,7 +79,7 @@ export function DSToast({
                 {action && (
                     <button
                         onClick={action.onClick}
-                        className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline"
+                        className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
                     >
                         {action.label}
                     </button>
@@ -89,7 +89,7 @@ export function DSToast({
             {onClose && (
                 <button
                     onClick={onClose}
-                    className="p-0.5 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
+                    className="p-0.5 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
                     aria-label="Cerrar"
                 >
                     <X size={12} />

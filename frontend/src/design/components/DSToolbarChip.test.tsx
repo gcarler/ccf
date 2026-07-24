@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSToolbarChip } from './DSToolbarChip';
 import { Home } from 'lucide-react';
 
@@ -63,5 +64,10 @@ describe('DSToolbarChip', () => {
         render(<DSToolbarChip label="Filter" className="custom-class" />);
         const chip = screen.getByRole('button');
         expect(chip.className).toContain('custom-class');
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(<DSToolbarChip label="Filter" />);
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

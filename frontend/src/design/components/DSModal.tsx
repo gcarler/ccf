@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import clsx from 'clsx';
 import { X } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface DSModalProps {
     open: boolean;
@@ -19,22 +20,6 @@ const sizeClasses = {
     lg: 'max-w-lg',
 };
 
-let openModalsCount = 0;
-
-const FOCUSABLE_SELECTORS = [
-    'a[href]',
-    'button:not([disabled])',
-    'input:not([disabled])',
-    'select:not([disabled])',
-    'textarea:not([disabled])',
-    '[tabindex]:not([tabindex="-1"])',
-].join(', ');
-
-function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
-    if (!container) return [];
-    return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS));
-}
-
 export function DSModal({
     open,
     onClose,
@@ -44,81 +29,12 @@ export function DSModal({
     showClose = true,
 }: DSModalProps) {
     const modalRef = useRef<HTMLDivElement>(null);
-    const triggerRef = useRef<HTMLElement | null>(null);
-    const hasOpenedRef = useRef(false);
 
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-
-        const handleTab = (e: KeyboardEvent) => {
-            if (e.key !== 'Tab') return;
-            const modal = modalRef.current;
-            if (!modal) return;
-
-            const focusable = getFocusableElements(modal);
-            if (focusable.length === 0) {
-                e.preventDefault();
-                return;
-            }
-
-            const first = focusable[0];
-            const last = focusable[focusable.length - 1];
-            const active = document.activeElement as HTMLElement | null;
-
-            if (e.shiftKey) {
-                if (active === first || !modal.contains(active)) {
-                    e.preventDefault();
-                    last.focus();
-                }
-            } else {
-                if (active === last || !modal.contains(active)) {
-                    e.preventDefault();
-                    first.focus();
-                }
-            }
-        };
-
-        if (open) {
-            triggerRef.current = document.activeElement as HTMLElement | null;
-            document.addEventListener('keydown', handleEscape);
-            document.addEventListener('keydown', handleTab);
-
-            if (openModalsCount === 0) {
-                document.body.style.overflow = 'hidden';
-            }
-            openModalsCount++;
-            hasOpenedRef.current = true;
-
-            // Move focus to the first focusable element (close button or content)
-            const firstFocusable = getFocusableElements(modalRef.current)[0];
-            firstFocusable?.focus();
-        }
-
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-            document.removeEventListener('keydown', handleTab);
-
-            if (hasOpenedRef.current) {
-                openModalsCount--;
-                hasOpenedRef.current = false;
-
-                if (openModalsCount === 0) {
-                    document.body.style.overflow = '';
-                }
-            }
-        };
-    }, [open, onClose]);
-
-    // Restore focus when the modal is fully closed
-    const previousOpenRef = React.useRef(open);
-    useEffect(() => {
-        if (previousOpenRef.current && !open) {
-            triggerRef.current?.focus();
-        }
-        previousOpenRef.current = open;
-    }, [open]);
+    useFocusTrap(modalRef, {
+        active: open,
+        onEscape: onClose,
+        lockBodyScroll: true,
+    });
 
     if (!open) return null;
 
@@ -134,6 +50,7 @@ export function DSModal({
             {/* Modal */}
             <div
                 ref={modalRef}
+                tabIndex={-1}
                 className={clsx(
                     'relative w-full mx-4 bg-[hsl(var(--bg-primary))] rounded-lg',
                     'border border-[hsl(var(--border))] dark:border-white/10',
@@ -158,7 +75,7 @@ export function DSModal({
                         {showClose && (
                             <button
                                 onClick={onClose}
-                                className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))] transition-colors"
+                                className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
                                 aria-label="Cerrar"
                             >
                                 <X size={14} />

@@ -11,7 +11,7 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import type { AutomationRule } from '@/types/crm';
@@ -212,7 +212,7 @@ export default function AutomationsPage() {
 
                 {/* Rules list */}
                 {loading ? (
-                    [...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-md" />)
+                    [...Array(3)].map((_, i) => <DSSkeleton key={i} className="h-24 w-full rounded-md" />)
                 ) : !error && rules.length === 0 ? (
                     <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-center">
                         <div className="size-10 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))]">

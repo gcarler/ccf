@@ -20,8 +20,8 @@ UUIDStr = Annotated[str, BeforeValidator(coerce_uuid_to_str)]
 
 class TaskSupplyBase(BaseModel):
     item_name: str
-    quantity: int = 1
-    status: str = "pending"
+    quantity: int = Field(default=1, ge=0)
+    status: Literal["pending", "ordered", "received"] = "pending"
 
 
 class TaskSupplyCreate(TaskSupplyBase):
@@ -30,7 +30,7 @@ class TaskSupplyCreate(TaskSupplyBase):
 
 class TaskSupplyUpdate(BaseModel):
     item_name: Optional[str] = None
-    quantity: Optional[int] = None
+    quantity: Optional[int] = Field(default=None, ge=0)
     status: Optional[str] = None
 
 
@@ -386,7 +386,7 @@ ProjectTask.model_rebuild()
 
 
 class ProjectMessageCreate(BaseModel):
-    content: str
+    content: str = Field(..., min_length=1, max_length=10000)
 
 
 class ProjectMessageItem(BaseModel):

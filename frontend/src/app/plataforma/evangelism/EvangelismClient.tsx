@@ -4,7 +4,7 @@ import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import StrategyCreationDrawer from '@/components/evangelism/StrategyCreationDrawer';
 import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import EmptyState from '@/components/ui/EmptyState';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { useAuth } from '@/context/AuthContext';
 import { OPERATIONAL_VIEWS,useViewType } from '@/hooks/useViewType';
 import { apiFetch } from '@/lib/http';
@@ -161,7 +161,7 @@ export default function EvangelismClient() {
  <div className="h-full flex flex-col relative">
  {loading ? (
  <div className="p-4 space-y-4">
- {[1, 2, 3].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
+ {[1, 2, 3].map(i => <DSSkeleton key={i} className="h-8 w-full rounded-lg" />)}
  </div>
  ) : filteredData.length === 0 ? (
  <EmptyState

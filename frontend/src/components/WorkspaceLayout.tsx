@@ -4,7 +4,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MeshChat from '@/components/ui/MeshChat';
 import ThemeToggle from '@/components/ui/ThemeToggle';
-import Tooltip from '@/components/ui/Tooltip';
+import { DSTooltip } from '@/design';
 import UniversalCreationDrawer from '@/components/ui/UniversalCreationDrawer';
 import WorkspaceInbox from '@/components/WorkspaceInbox';
 import type { NavSection } from '@/components/WorkspaceMainSidebar';
@@ -490,7 +490,7 @@ function WorkspaceLayoutInner({
                                     <div className="flex flex-col h-full">
                                         <div className="flex-1 overflow-hidden">{customSidebar}</div>
                                         <div className="shrink-0 border-t border-[hsl(var(--border))] dark:border-white/5 p-2 flex justify-end">
-                                            <Tooltip content={layers.S2 ? 'Contraer panel' : 'Expandir panel'} side="right">
+                                            <DSTooltip content={layers.S2 ? 'Contraer panel' : 'Expandir panel'} side="right">
                                                 <button
                                                     onClick={cycleS2}
                                                     className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-all duration-200"
@@ -498,7 +498,7 @@ function WorkspaceLayoutInner({
                                                 >
                                                     {layers.S2 ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
                                                 </button>
-                                            </Tooltip>
+                                            </DSTooltip>
                                         </div>
                                     </div>
                                 ) : (

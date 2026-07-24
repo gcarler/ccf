@@ -52,6 +52,7 @@ frontend/.env.local
 frontend/.eslintcache
 frontend/.lighthouseci/
 frontend/.next/
+frontend/.next.backup-*/
 frontend/coverage/
 frontend/crm-lh.json
 frontend/eslint_report.json

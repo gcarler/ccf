@@ -11,7 +11,7 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -239,7 +239,7 @@ export default function ActaManagementPage() {
                         </div>
                         <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-1">
                             {loading ? (
-                                [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-8 w-full rounded-lg" />)
+                                [1, 2, 3, 4].map((i) => <DSSkeleton key={i} className="h-8 w-full rounded-lg" />)
                             ) : courses.map((course) => (
                                 <button
                                     key={course.id}

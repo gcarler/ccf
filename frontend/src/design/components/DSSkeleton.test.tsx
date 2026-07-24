@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSSkeleton } from './DSSkeleton';
 
 describe('DSSkeleton', () => {
@@ -52,15 +53,20 @@ describe('DSSkeleton', () => {
         expect(skeleton.className).toContain('custom-class');
     });
 
-    it('applies custom style', () => {
-        const { container } = render(<DSSkeleton style={{ width: '100px' }} />);
+    it('applies custom className for sizing', () => {
+        const { container } = render(<DSSkeleton className="w-[100px]" />);
         const skeleton = container.firstChild as HTMLElement;
-        expect(skeleton.style.width).toBe('100px');
+        expect(skeleton.className).toContain('w-[100px]');
     });
 
     it('has shimmer animation', () => {
         const { container } = render(<DSSkeleton />);
         const shimmer = container.querySelector('[class*="animate"]');
         expect(shimmer).toBeInTheDocument();
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(<DSSkeleton />);
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

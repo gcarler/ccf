@@ -17,7 +17,7 @@ import {
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 
 export default function ProjectsInboxPage() {
     const { token, loading: authLoading } = useAuth();
@@ -116,7 +116,7 @@ export default function ProjectsInboxPage() {
             <main className="flex-1 overflow-y-auto scrollbar-thin">
                 {loading ? (
                     <div className="p-4 space-y-3">
-                        {[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}
+                        {[1,2,3].map(i => <DSSkeleton key={i} className="h-20 w-full rounded-lg" />)}
                     </div>
                 ) : !error && filteredMessages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center p-4">

@@ -1,7 +1,7 @@
 'use client';
 
 import EmptyState from '@/components/ui/EmptyState';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { DSBadge } from '@/design';
 import {
   ArrowDownRight,
@@ -75,7 +75,7 @@ export default function GroupRankingsPanel({ groupRankings, loadingGroups, activ
       {loadingGroups ? (
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-16 rounded-lg" />
+            <DSSkeleton key={i} className="h-16 rounded-lg" />
           ))}
         </div>
       ) : groupRankings.length === 0 ? (

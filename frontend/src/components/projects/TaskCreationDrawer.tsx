@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { CheckSquare, Type, AlignLeft, Flag, Loader2, User } from 'lucide-react';
 import PersonaSelect from '@/components/ui/PersonaSelect';

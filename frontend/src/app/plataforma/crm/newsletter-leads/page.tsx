@@ -2,7 +2,7 @@
 
 import CrmShell from '@/components/crm/CrmShell';
 import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { ViewType,getStoredView } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -250,7 +250,7 @@ export default function NewsletterLeadsPage() {
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {loading ? (
-                        [...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-md" />)
+                        [...Array(5)].map((_, i) => <DSSkeleton key={i} className="h-20 w-full rounded-md" />)
                     ) : filteredLeads.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
                             <div className="size-12 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">

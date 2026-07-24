@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSBadge } from './DSBadge';
 
 describe('DSBadge', () => {
@@ -53,5 +54,10 @@ describe('DSBadge', () => {
         expect(badge.className).toContain('uppercase');
         expect(badge.className).toContain('rounded');
         expect(badge.className).toContain('font-sans');
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(<DSBadge label="Badge" />);
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

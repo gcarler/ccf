@@ -1,4 +1,4 @@
-import React from 'react';
+import { forwardRef } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ProjectTaskRecord } from '@/types/projects';
@@ -27,7 +27,7 @@ vi.mock('@/components/ui/inline-editors', () => ({
 }));
 
 vi.mock('@/components/projects/TitleCellEditor', () => {
-  const MockedTitleCellEditor = React.forwardRef((props: any, ref: any) => <input ref={ref} defaultValue={props.value} aria-label="title-editor" />);
+  const MockedTitleCellEditor = forwardRef((props: any, ref: any) => <input ref={ref} defaultValue={props.value} aria-label="title-editor" />);
   MockedTitleCellEditor.displayName = 'MockedTitleCellEditor';
   return {
     __esModule: true,

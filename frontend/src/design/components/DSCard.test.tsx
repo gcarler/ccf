@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSCard } from './DSCard';
 
 describe('DSCard', () => {
@@ -55,5 +56,10 @@ describe('DSCard', () => {
     const { container } = render(<DSCard>Content</DSCard>);
     const card = container.firstChild as HTMLElement;
     expect(card.className).toContain('shadow-sm');
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<DSCard>Card content</DSCard>);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

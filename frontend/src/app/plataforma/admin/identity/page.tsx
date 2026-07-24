@@ -2,7 +2,7 @@
 
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
@@ -304,7 +304,7 @@ export default function IdentityManagementPage() {
                     <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none overflow-x-auto">
                         {loading ? (
                             <div className="p-4 space-y-3">
-                                {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
+                                {[1, 2, 3, 4, 5].map(i => <DSSkeleton key={i} className="h-10 w-full rounded-lg" />)}
                             </div>
                         ) : filteredUsers.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -395,7 +395,7 @@ export default function IdentityManagementPage() {
             >
                 {profileLoading ? (
                     <div className="p-4 space-y-3">
-                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+                        {[1, 2, 3, 4, 5].map(i => <DSSkeleton key={i} className="h-12 w-full rounded-lg" />)}
                     </div>
                 ) : (
                     <div className="space-y-5 p-2 animate-in fade-in slide-in-from-right-4 duration-500">

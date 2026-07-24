@@ -8,7 +8,7 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import type { ProjectInboxItem } from '@/types/projects';
 import { useRouter } from 'next/navigation';
 import { Inbox, Layout } from 'lucide-react';
@@ -98,7 +98,7 @@ export default function ProjectsResponsesPage() {
                     </div>
                 )}
                 {loading ? (
-                    <div className="space-y-3">{[1, 2, 3].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
+                    <div className="space-y-3">{[1, 2, 3].map((idx) => <DSSkeleton key={idx} className="h-20 rounded-lg" />)}</div>
                 ) : !error && unread.length === 0 ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">No hay respuestas pendientes.</div>
                 ) : viewType === 'table' ? (

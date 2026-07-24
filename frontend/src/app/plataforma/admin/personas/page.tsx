@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
-import Skeleton from "@/components/ui/Skeleton";
+import { DSSkeleton } from '@/design';
 
 interface PersonaSummary {
     id: string;
@@ -81,7 +81,7 @@ export default function AdminPersonasPage() {
                         {loading ? (
                             <div className="p-4 space-y-3">
                                 {[1, 2, 3, 4, 5].map((i) => (
-                                    <Skeleton key={i} className="h-12 w-full rounded-md" />
+                                    <DSSkeleton key={i} className="h-12 w-full rounded-md" />
                                 ))}
                             </div>
                         ) : filtered.length === 0 ? (

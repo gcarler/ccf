@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSChart } from './DSChart';
 
 const OriginalResizeObserver = global.ResizeObserver;
@@ -178,5 +179,18 @@ describe('DSChart', () => {
             expect(line).toBeInTheDocument();
             expect(line?.getAttribute('data-stroke')).toBe('hsl(var(--primary))');
         });
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(
+            <DSChart
+                type="line"
+                data={[
+                    { label: 'A', value: 10 },
+                    { label: 'B', value: 20 },
+                ]}
+            />
+        );
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

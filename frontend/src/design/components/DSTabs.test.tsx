@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSTabs } from './DSTabs';
 
 const sampleTabs = [
@@ -111,5 +112,14 @@ describe('DSTabs', () => {
         const panel = screen.getByRole('tabpanel');
         expect(panel).toHaveAttribute('id', 'panel-tab1');
         expect(panel).toHaveAttribute('aria-labelledby', 'tab-tab1');
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(
+            <DSTabs tabs={sampleTabs}>
+                <div>Content</div>
+            </DSTabs>
+        );
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

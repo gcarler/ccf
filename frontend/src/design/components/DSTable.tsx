@@ -12,6 +12,8 @@ import {
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import clsx from 'clsx';
 
+const TANSTACK_DEFAULT_WIDTH = 150;
+
 interface DSTableProps<T> {
     data: T[];
     columns: ColumnDef<T, any>[];
@@ -70,7 +72,7 @@ export function DSTable<T>({
                                             compact ? 'px-2 py-1.5' : 'px-3 py-2',
                                             canSort && 'cursor-pointer hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 select-none transition-colors'
                                         )}
-                                        style={{ width: header.getSize() !== 150 ? header.getSize() : 'auto' }}
+                                        style={{ width: header.getSize() !== TANSTACK_DEFAULT_WIDTH ? header.getSize() : 'auto' }}
                                     >
                                         <div className="flex items-center gap-1.5">
                                             {flexRender(header.column.columnDef.header, header.getContext())}

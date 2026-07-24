@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, RefObject, ElementType } from "react";
 import { createPortal } from "react-dom";
 import * as fabric from "fabric";
 import {
@@ -507,7 +507,7 @@ export default function ProjectWhiteboard({
         </div>
 
         {/* Canvas */}
-        <canvas ref={canvasRef as React.RefObject<HTMLCanvasElement>} className="whiteboard-canvas" />
+        <canvas ref={canvasRef as RefObject<HTMLCanvasElement>} className="whiteboard-canvas" />
 
         {/* Zoom controls */}
         <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-white/90 dark:bg-[hsl(var(--admin-bg-secondary))]/90 backdrop-blur-xl px-3 py-2 rounded-full border border-[hsl(var(--border))] dark:border-white/10 shadow-lg">
@@ -593,7 +593,7 @@ function ToolBtn({
 }: {
   active: boolean;
   onClick: () => void;
-  icon: React.ElementType;
+  icon: ElementType;
   label: string;
   color?: string;
   disabled?: boolean;

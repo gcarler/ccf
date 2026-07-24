@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState, ElementType } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronRight, ChevronDown, FolderOpen,
@@ -33,7 +33,7 @@ interface TaskRouteTreeProps {
 // ─────────────────────────────────────────────────────────────────
 // NODE ICONS
 // ─────────────────────────────────────────────────────────────────
-const TYPE_ICON: Record<RouteNode['type'], React.ElementType> = {
+const TYPE_ICON: Record<RouteNode['type'], ElementType> = {
     workspace: Home,
     portfolio: Target,
     project:   FolderOpen,

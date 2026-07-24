@@ -10,6 +10,18 @@
   --text-primary: 222 47% 11%;
   --text-secondary: 215 16% 47%;
 
+  /* Legacy brand colors — sourced from CSS variables so Tailwind config can reference them */
+  --navy-dark: 210 41% 12%;
+  --sky-blue: 190 100% 43%;
+  --background-light: 220 14% 97%;
+  --background-dark: 210 50% 3%;
+  --ccf-blue-dark: 210 100% 14%;
+  --ccf-blue-medium: 210 100% 25%;
+  --ccf-blue-light: 197 98% 37%;
+  --ccf-blue-pale: 206 33% 92%;
+  --glass: 0 0% 100% / 0.1;
+  --glass-border: 0 0% 100% / 0.2;
+
   --primary: 197 98% 37%; /* rgb(1,138,189) — azul CCF */
   --primary-foreground: 0 0% 100%;
 
