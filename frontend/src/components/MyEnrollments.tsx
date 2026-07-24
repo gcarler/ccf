@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { apiUrl } from "../lib/api";
 import { apiFetch } from "@/lib/http";
+import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
 
 interface Enrollment {
   id: string;
@@ -248,7 +249,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
                     </div>
 
                     <div className="prose prose-invert prose-lg max-w-none">
-                      <div dangerouslySetInnerHTML={{ __html: selectedLesson.content.replace(/\n/g, '<br/>') }} className="text-[hsl(var(--text-secondary))] font-normal leading-relaxed text-lg" />
+                      <div dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(selectedLesson.content || '').replace(/\n/g, '<br/>') }} className="text-[hsl(var(--text-secondary))] font-normal leading-relaxed text-lg" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-12 border-t border-white/10">

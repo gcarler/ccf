@@ -406,7 +406,8 @@ def test_high_pending_tickets_have_negative_evidence(tkt: int, needle: str, rati
     module_configs = REPO_ROOT / "frontend" / "src" / "components" / "workspace" / "moduleConfigs.ts"
 
     if tkt == 20:
-        assert "class AssessmentQuestionPayload" in _read(api_file)
+        schemas_file = REPO_ROOT / "backend" / "schemas" / "academy.py"
+        assert "class AssessmentQuestionPayload" in _read(schemas_file) or "class AssessmentQuestionPayload" in _read(api_file)
     elif tkt == 21:
         text = _read(api_file)
         assert "MAX_SIZE" in text and "await file.read()" in text
