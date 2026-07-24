@@ -125,12 +125,6 @@ class AdminUserPermissionsRead(BaseModel):
     effective_permissions: Dict[str, Any] = Field(default_factory=dict)
 
 
-class AdminUserPermissionSet(BaseModel):
-    model_config = {"extra": "forbid"}
-
-    permissions: Dict[str, str]
-
-
 # ── Module Roles ────────────────────────────────────────────────────────────
 
 
