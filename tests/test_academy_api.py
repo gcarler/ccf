@@ -477,3 +477,202 @@ def test_forum_category_filter_and_resource_lifecycle_are_scoped(client, db_sess
         .all()
     }
     assert {"lesson_resource_created", "lesson_resource_archived"} <= events
+
+
+# ─── A-03 (cierre 2026-07-24): scope admin estricto por sede, sin cursos globales ──
+#
+# Los cuatro endpoints admin (all_enrollments, list_submissions, grade_submission,
+# delete_submission_admin) antes usaban ``or_(Course.sede_id == sede_id, sede_id IS NULL)``
+# y mezclaban el scope del actor con cursos globales — permitiendo a un Manager de
+# sede A ver/mutar UGC administrativo de cursos ``sede_id IS NULL``. Este test
+# produce un curso global + un enrollment + un submission, y verifica que un admin
+# con sede NO los recibe en listados ni puede operarlos (la operación debe 404).
+
+
+def test_a03_admin_scope_excludes_global_courses_in_all_enrollments(client, db_session):
+    """A-03 → ``all_enrollments`` oculta enrollments de cursos globales para admin con sede."""
+    import uuid as _uuid
+
+    admin_a, _persona_a, sede_a = seed_admin(
+        db_session, email="a03-admin@example.com", password="testpass123"
+    )
+    # Curso global (sede_id IS NULL) + su enrollment.
+    global_course = models.Course(
+        id=_uuid.uuid4(),
+        code=f"G-{_uuid.uuid4().hex[:6]}",
+        title="Curso global",
+        modality="online",
+        sede_id=None,
+    )
+    db_session.add(global_course)
+    db_session.commit()
+    persona_global = models.Persona(id=_uuid.uuid4(), first_name="G", last_name="Student", email="g-student@example.com")
+    db_session.add(persona_global)
+    db_session.commit()
+    enrollment = models.Enrollment(
+        persona_id=persona_global.id,
+        course_id=global_course.id,
+        status="active",
+        progress_percent=0,
+        attendance_percent=0,
+        approved=False,
+        acta_closed=False,
+    )
+    db_session.add(enrollment)
+    db_session.commit()
+
+    headers = auth_headers(client, email=admin_a.email, password="testpass123")
+    resp = client.get("/api/academy/enrollments", headers=headers)
+    assert resp.status_code == 200, resp.text
+    course_ids = {row.get("course_id") for row in resp.json()}
+    assert str(global_course.id) not in course_ids, (
+        "A-03 leak: admin con sede ve enrollment de curso global (sede_id IS NULL) en "
+        "all_enrollments — el scope admin debe ser estricto."
+    )
+
+
+def test_a03_admin_scope_excludes_global_courses_in_list_submissions(client, db_session):
+    """A-03 → ``list_submissions`` oculta entregas de cursos globales para admin con sede."""
+    import uuid as _uuid
+
+    admin_a, _persona_a, sede_a = seed_admin(
+        db_session, email="a03-sub@example.com", password="testpass123"
+    )
+    global_course = models.Course(
+        id=_uuid.uuid4(),
+        code=f"GS-{_uuid.uuid4().hex[:6]}",
+        title="Curso global con submission",
+        modality="online",
+        sede_id=None,
+    )
+    db_session.add(global_course)
+    db_session.commit()
+    lesson = models.Lesson(course_id=global_course.id, title="L global", content="", content_type="video", order_index=0)
+    persona_global = models.Persona(id=_uuid.uuid4(), first_name="G", last_name="Submitter", email="g-sub@example.com")
+    db_session.add_all([lesson, persona_global])
+    db_session.commit()
+    enrollment = models.Enrollment(
+        persona_id=persona_global.id,
+        course_id=global_course.id,
+        status="active",
+        progress_percent=0,
+        attendance_percent=0,
+        approved=False,
+        acta_closed=False,
+    )
+    db_session.add(enrollment)
+    db_session.commit()
+    submission = models.AssignmentSubmission(
+        enrollment_id=enrollment.id,
+        lesson_id=lesson.id,
+        file_url="seaweed://fid",
+    )
+    db_session.add(submission)
+    db_session.commit()
+
+    headers = auth_headers(client, email=admin_a.email, password="testpass123")
+    resp = client.get("/api/academy/admin/submissions", headers=headers)
+    assert resp.status_code == 200, resp.text
+    sub_ids = {row.get("id") for row in resp.json()}
+    assert str(submission.id) not in sub_ids, (
+        "A-03 leak: admin con sede ve entrega de curso global en list_submissions — "
+        "scope admin debe ser estricto."
+    )
+
+
+def test_a03_admin_grade_blocks_global_course_submission(client, db_session):
+    """A-03 → ``grade_submission`` 404 al editar entrega de curso global (admin con sede)."""
+    import uuid as _uuid
+
+    admin_a, _persona_a, sede_a = seed_admin(
+        db_session, email="a03-grade@example.com", password="testpass123"
+    )
+    global_course = models.Course(
+        id=_uuid.uuid4(),
+        code=f"GG-{_uuid.uuid4().hex[:6]}",
+        title="Curso global gradable",
+        modality="online",
+        sede_id=None,
+    )
+    db_session.add(global_course)
+    db_session.commit()
+    lesson = models.Lesson(course_id=global_course.id, title="L global", content="", content_type="video", order_index=0)
+    persona_global = models.Persona(id=_uuid.uuid4(), first_name="G", last_name="Graded", email="g-graded@example.com")
+    db_session.add_all([lesson, persona_global])
+    db_session.commit()
+    enrollment = models.Enrollment(
+        persona_id=persona_global.id,
+        course_id=global_course.id,
+        status="active",
+        progress_percent=0,
+        attendance_percent=0,
+        approved=False,
+        acta_closed=False,
+    )
+    db_session.add(enrollment)
+    db_session.commit()
+    submission = models.AssignmentSubmission(
+        enrollment_id=enrollment.id,
+        lesson_id=lesson.id,
+        file_url="seaweed://fid2",
+    )
+    db_session.add(submission)
+    db_session.commit()
+
+    headers = auth_headers(client, email=admin_a.email, password="testpass123")
+    resp = client.patch(
+        f"/api/academy/admin/submissions/{submission.id}/grade",
+        json={"grade": 80},
+        headers=headers,
+    )
+    assert resp.status_code == 404, (
+        f"A-03 leak: admin con sede calificó entrega de curso global — esperado 404, "
+        f"recibido {resp.status_code}: {resp.text}"
+    )
+
+
+def test_a03_admin_delete_blocks_global_course_submission(client, db_session):
+    """A-03 → ``delete_submission_admin`` 404 al archivar entrega de curso global (admin con sede)."""
+    import uuid as _uuid
+
+    admin_a, _persona_a, sede_a = seed_admin(
+        db_session, email="a03-del@example.com", password="testpass123"
+    )
+    global_course = models.Course(
+        id=_uuid.uuid4(),
+        code=f"GD-{_uuid.uuid4().hex[:6]}",
+        title="Curso global archivable",
+        modality="online",
+        sede_id=None,
+    )
+    db_session.add(global_course)
+    db_session.commit()
+    lesson = models.Lesson(course_id=global_course.id, title="L global", content="", content_type="video", order_index=0)
+    persona_global = models.Persona(id=_uuid.uuid4(), first_name="G", last_name="Deleter", email="g-del@example.com")
+    db_session.add_all([lesson, persona_global])
+    db_session.commit()
+    enrollment = models.Enrollment(
+        persona_id=persona_global.id,
+        course_id=global_course.id,
+        status="active",
+        progress_percent=0,
+        attendance_percent=0,
+        approved=False,
+        acta_closed=False,
+    )
+    db_session.add(enrollment)
+    db_session.commit()
+    submission = models.AssignmentSubmission(
+        enrollment_id=enrollment.id,
+        lesson_id=lesson.id,
+        file_url="seaweed://fid3",
+    )
+    db_session.add(submission)
+    db_session.commit()
+
+    headers = auth_headers(client, email=admin_a.email, password="testpass123")
+    resp = client.delete(f"/api/academy/admin/submissions/{submission.id}", headers=headers)
+    assert resp.status_code == 404, (
+        f"A-03 leak: admin con sede archivó entrega de curso global — esperado 404, "
+        f"recibido {resp.status_code}: {resp.text}"
+    )

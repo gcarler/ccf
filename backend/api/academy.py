@@ -464,8 +464,13 @@ def all_enrollments(
         .join(models.Course)
         .filter(models.Enrollment.deleted_at.is_(None), models.Course.deleted_at.is_(None))
     )
+    # A-03 (cierre 2026-07-24): admin listings estrictos por sede — un Manager de
+    # sede A NO ve enrollments de cursos globales (sede_id IS NULL) salvo que sea
+    # superadmin (sede_id is None). El catálogo público (_course_scope, línea 53)
+    # sigue incluyendo los globales (lectura captación); las operaciones admin son
+    # Axioma 3 estricto.
     if sede_id:
-        query = query.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
+        query = query.filter(models.Course.sede_id == sede_id)
     return [_serialize_enrollment(enrollment) for enrollment in query.offset(skip).limit(limit).all()]
 
 
@@ -1105,8 +1110,11 @@ def list_submissions(
     db: Session = Depends(get_db),
 ):
     # Axioma 3 — Multi-Tenant: las entregas SOLO se listan para cursos del scope del editor.
-    # Join con Course (a través de Lesson) + filtro sede_id; los cursos globales (sede_id IS NULL)
-    # son visibles para todos los editores con sede; un superadmin sin sede ve TODO lo no borrado.
+    # A-03 (cierre 2026-07-24): scope admin estricto por sede. Un editor/manager con
+    # sede NO ve entregas de cursos globales (sede_id IS NULL) — ésas son UGC de otros
+    # tenants o metadatos globales no atribuibles al actor. Sólo superadmin (sede_id is
+    # None) ve todo lo no borrado. Listado público (_course_scope) sigue incluyendo
+    # globales para captación; el escrutinio admin es Axioma 3.
     # ACAD-MED-003-FOLLOWUP: ocultamos entregas archivadas (soft-deleted) para que
     # el archivado desde ``delete_submission_admin`` se refleje en la lista.
     rows = (
@@ -1122,7 +1130,8 @@ def list_submissions(
     )
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
-        rows = rows.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
+        # A-03: scope estricto — no incluir cursos globales.
+        rows = rows.filter(models.Course.sede_id == sede_id)
     rows = rows.limit(limit).all()
     return [
         {
@@ -1168,7 +1177,8 @@ def grade_submission(
     )
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
-        query = query.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
+        # A-03: scope estricto — un editor no muta entregas de cursos globales.
+        query = query.filter(models.Course.sede_id == sede_id)
     submission = query.first()
     if not submission:
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
@@ -1397,7 +1407,8 @@ def delete_submission_admin(
     )
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
-        submission = submission.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
+        # A-03: scope estricto — un manager no archiva entregas de cursos globales.
+        submission = submission.filter(models.Course.sede_id == sede_id)
     row = submission.first()
     if not row:
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
