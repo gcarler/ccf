@@ -6,9 +6,10 @@ import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
 import { apiFetch } from '@/lib/http';
+import type { CourseDetail } from '@/types/academy';
 import {
     GraduationCap, BookOpen, Plus, Pencil, Trash2, X, Save, Loader2,
-    Video, FileText, Link as LinkIcon, ArrowLeft, GripVertical,
+    Video, FileText, Link as LinkIcon, ArrowLeft, GripVertical, LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
@@ -17,7 +18,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
 const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]";
 
-const CONTENT_TYPE_META: Record<string, { label: string; icon: any; color: string; bg: string }> = {
+// H-11 (cierre 2026-07-24): ``icon`` tipado como LucideIcon (antes ``any``).
+const CONTENT_TYPE_META: Record<string, { label: string; icon: LucideIcon; color: string; bg: string }> = {
     video:    { label: 'Video',    icon: Video,     color: 'text-[hsl(var(--destructive))]',   bg: 'bg-[hsl(var(--destructive)/0.08)]' },
     text:     { label: 'Texto',    icon: FileText,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
     document: { label: 'Documento',icon: FileText,  color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--primary))]/10' },
@@ -41,7 +43,7 @@ export default function LessonsPage() {
     const router = useRouter();
     const { token } = useAuth();
 
-    const [course, setCourse] = useState<any>(null);
+    const [course, setCourse] = useState<CourseDetail | null>(null);
     const [lessons, setLessons] = useState<Lesson[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewType, setViewType] = useState<ViewType>('table');
@@ -57,7 +59,7 @@ export default function LessonsPage() {
         try {
             setLoading(true);
             const [courseData, lessonsData] = await Promise.allSettled([
-                apiFetch<any>(`/academy/courses/${courseId}`, { token, signal }),
+                apiFetch<CourseDetail>(`/academy/courses/${courseId}`, { token, signal }),
                 apiFetch<Lesson[]>(`/academy/courses/${courseId}/lessons`, { token, signal }),
             ]);
             if (courseData.status === 'fulfilled') setCourse(courseData.value);

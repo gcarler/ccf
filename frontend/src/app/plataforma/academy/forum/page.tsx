@@ -18,14 +18,23 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
+import type { ForumThreadRecord } from "@/types/academy";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
+import type { ViewType } from "@/components/ViewSwitcher";
 
 const categories = ["Todos", "Teologia", "Liderazgo", "Academico", "Misiones", "Testimonios"];
 
+interface NormalizedThread extends ForumThreadRecord {
+    author: string;
+    replies: number;
+    upvotes: number;
+    last_activity: string;
+}
+
 export default function AcademyForumPage() {
     const { token, user } = useAuth();
-    const [threads, setThreads] = useState<any[]>([]);
+    const [threads, setThreads] = useState<NormalizedThread[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewType] = useState<"grid" | "list">("list");
     const [activeCategory, setActiveCategory] = useState("Todos");
@@ -40,7 +49,7 @@ export default function AcademyForumPage() {
             if (!token) return;
             setLoading(true);
             try {
-                const data = await apiFetch<any[]>("/academy/forum/threads", { token, signal: ctrl.signal });
+                const data = await apiFetch<ForumThreadRecord[]>("/academy/forum/threads", { token, signal: ctrl.signal });
                 setThreads((Array.isArray(data) ? data : []).map((thread) => normalizeThread(thread)));
             } catch (err) {
                 console.error(err);
@@ -67,7 +76,7 @@ export default function AcademyForumPage() {
         if (!token || !newThread.title.trim()) return;
         setSaving(true);
         try {
-            const created = await apiFetch<any>("/academy/forum/threads", {
+            const created = await apiFetch<ForumThreadRecord>("/academy/forum/threads", {
                 method: "POST",
                 token,
                 body: newThread,
@@ -88,7 +97,7 @@ export default function AcademyForumPage() {
                     { label: "Foros de Discusion", icon: MessageSquare },
                 ]}
                 viewType={viewMode}
-                setViewType={(value: any) => setViewType(value)}
+                setViewType={(value: ViewType) => setViewType(value === "grid" || value === "list" ? value : "list")}
                 rightActions={
                     <button
                         onClick={() => setIsCreateOpen(true)}
@@ -234,12 +243,17 @@ export default function AcademyForumPage() {
     );
 }
 
-function normalizeThread(thread: any, fallbackAuthor?: string) {
+function normalizeThread(
+    thread: ForumThreadRecord,
+    fallbackAuthor?: string,
+): NormalizedThread {
     return {
         ...thread,
-        author: thread.author || fallbackAuthor || `Usuario ${thread.author_id ?? ""}`.trim(),
-        replies: thread.replies ?? 0,
-        upvotes: thread.upvotes ?? 0,
-        last_activity: thread.last_activity || (thread.created_at ? new Date(thread.created_at).toLocaleDateString("es-CO") : "Sin fecha"),
+        author: fallbackAuthor || `Usuario ${(thread as { author_id?: string }).author_id ?? ""}`.trim(),
+        replies: 0,
+        upvotes: 0,
+        last_activity: thread.created_at
+            ? new Date(thread.created_at).toLocaleDateString("es-CO")
+            : "Sin fecha",
     };
 }

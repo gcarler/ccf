@@ -56,7 +56,15 @@ export default function CourseViewPage() {
     const [course, setCourse] = useState<Course | null>(null);
     const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
     const [loading, setLoading] = useState(true);
-    const [progress] = useState<any>(null);
+    // H-11 (cierre 2026-07-24): tipo del response de
+    // ``GET /academy/lessons/{id}/progress`` (alineado con el schema
+    // backend ``LessonProgressResponse`` post H-02).
+    interface LessonProgressView {
+        progress_percent: number;
+        last_position_seconds: number;
+        is_completed: boolean;
+    }
+    const [progress] = useState<LessonProgressView | null>(null);
     const [viewType, setViewType] = useState<ViewType>('grid');
 
     const fetchCourseData = useCallback(async () => {

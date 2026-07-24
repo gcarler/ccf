@@ -100,3 +100,76 @@ export interface AcademyStudentProfile {
   active_courses: EnrollmentRecord[];
   recent_certificates: CertificateRecord[];
 }
+
+// H-11 (cierre 2026-07-24): tipos mirror de las schemas Pydantic en
+// ``backend/schemas/academy.py`` — sustituyen los ``any`` en hooks y
+// submódulos del front (forum thread/comments, course detail).
+// Mantener sincronizado con el contract del backend.
+
+export interface ForumThreadRecord {
+  id: string;
+  title: string;
+  category: string;
+  author_persona_id: string;
+  is_resolved: boolean;
+  created_at: string;
+  // Backend ``ForumThread`` no expone ``content`` en la lista, pero el
+  // detalle del thread lo incluye vía el row ORM completo — opcional aquí
+  // para que page.tsx del detalle pueda leerlo sin romper TS.
+  content?: string;
+  course_id?: string | null;
+  // Campos opcionales derivados/presentes en el detalle del thread.
+  author?: string | null;
+  author_role?: string | null;
+  upvotes?: number;
+}
+
+export interface ForumCommentRecord {
+  id: string;
+  thread_id: string;
+  parent_id?: string | null;
+  author_persona_id: string;
+  content: string;
+  created_at: string;
+}
+
+export interface CourseDetail {
+  id: string;
+  code: string;
+  slug?: string | null;
+  title: string;
+  description?: string | null;
+  excerpt?: string | null;
+  tag?: string | null;
+  cta_text?: string | null;
+  syllabus?: Record<string, unknown> | unknown[] | null;
+  modality: string;
+  sede_id?: string | null;
+  is_published: boolean;
+  is_self_paced: boolean;
+  duration_hours: number;
+  xp_per_lesson?: number;
+  cohort_name?: string | null;
+  certificate_type?: string | null;
+  access_level: string;
+  image_url?: string | null;
+  instructor_name?: string | null;
+  created_at?: string | null;
+  lesson_count?: number;
+  total_minutes?: number;
+  lessons?: LessonRecord[];
+  // H-11 (cierre 2026-07-24): campos opcionales del frontend que algunos
+  // consumidores referencia (``students_count`` no proviene del serializador
+  // ``_serialize_course`` pero es tolerado como 0 por fallback ``|| 0``).
+  students_count?: number;
+  lessons_count?: number;
+}
+
+export interface CertificateDetail {
+  id: string;
+  enrollment_id: string;
+  certificate_code: string;
+  issued_at: string;
+  certificate_type?: string | null;
+  course_title?: string | null;
+}

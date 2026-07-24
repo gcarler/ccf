@@ -6,11 +6,23 @@ import { apiFetch } from '@/lib/http';
 import CertificateView from '@/components/academy/CertificateView';
 import { Loader2, ShieldAlert } from 'lucide-react';
 
+// H-11 (cierre 2026-07-24): tipo local mirror del schema público
+// ``schemas.CertificateValidation`` — sustituye el useState no tipado.
+interface ValidatedCertificate {
+    certificate_code: string;
+    issued_at: string;
+    certificate_type: string;
+    enrollment: {
+        student: { username: string };
+        course: { title: string };
+    };
+}
+
 export default function PublicCertificatePage() {
     const params = useParams();
     const router = useRouter();
     const code = (params?.code as string) ?? null;
-    const [certificate, setCertificate] = useState<any>(null);
+    const [certificate, setCertificate] = useState<ValidatedCertificate | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
@@ -23,10 +35,12 @@ export default function PublicCertificatePage() {
                 return;
             }
             try {
-                const data = await apiFetch(`/academy/certificates/validate/${code}`, { signal: ctrl.signal });
+                const data = await apiFetch<ValidatedCertificate>(`/academy/certificates/validate/${code}`, { signal: ctrl.signal });
                 setCertificate(data);
-            } catch (err) {
-                console.error("Error validating certificate:", err);
+            } catch (err: unknown) {
+                if (!(err instanceof DOMException && err.name === 'AbortError')) {
+                    console.error("Error validating certificate:", err);
+                }
                 setError(true);
             } finally {
                 setLoading(false);

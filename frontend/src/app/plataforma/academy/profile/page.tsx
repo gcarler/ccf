@@ -20,7 +20,8 @@ import {
     MapPin,
     Calendar,
     ChevronRight,
-    Target
+    Target,
+    LucideIcon,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
@@ -354,8 +355,16 @@ export default function StudentProfilePage() {
     );
 }
 
-function StatBox({ icon: Icon, label, value, color }: any) {
-    const colors: any = {
+// H-11 (cierre 2026-07-24): props tipadas (antes ``any``).
+interface StatBoxProps {
+    icon: LucideIcon;
+    label: string;
+    value: number | string;
+    color: 'blue' | 'emerald' | 'amber';
+}
+
+function StatBox({ icon: Icon, label, value, color }: StatBoxProps) {
+    const colors: Record<StatBoxProps['color'], string> = {
         blue: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20',
         emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))/0.1]',
         amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning))/0.08] dark:bg-[hsl(var(--warning))/0.1]'
