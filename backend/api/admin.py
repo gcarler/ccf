@@ -179,18 +179,28 @@ def get_user_permissions(
 @router.put("/users/{user_id}/permissions")
 def set_user_permissions(
     user_id: str,
-    payload: schemas.AdminUserPermissionSet,
+    payload: Dict[str, str],
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
 ):
-    """Asigna permisos modulares a un usuario auth_users por módulo/nivel."""
+    """Asigna permisos modulares a un usuario auth_users por módulo/nivel.
+
+    El cuerpo esperado es un mapa plano ``módulo -> nivel``:
+
+    .. code-block:: json
+
+        {"crm": "manage", "finance": "read"}
+
+    Cada nivel se expande a los permisos concretos de acuerdo con la
+    taxonomía del módulo. Un objeto vacío elimina los overrides.
+    """
     try:
         uid = uuid.UUID(str(user_id))
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id inválido")
     try:
         result = admin_crud.set_user_permissions(
-            db, current_user, uid, payload.permissions,
+            db, current_user, uid, payload,
             MODULE_PERMISSION_MAP, expand_module_permissions,
         )
     except ValueError as e:
@@ -199,7 +209,7 @@ def set_user_permissions(
         raise HTTPException(status_code=404, detail="User not found")
     record_admin_action(
         db, current_user, "permissions.set", "user", user_id,
-        {"modules": list(payload.permissions.keys())},
+        {"modules": list(payload.keys())},
     )
     return result
 

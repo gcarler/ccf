@@ -78,7 +78,6 @@ from backend.schemas.admin import (  # noqa: F401
                                      AdminSocialUpdate,
                                      AdminStatsRead,
                                      AdminUserCreate,
-                                     AdminUserPermissionSet,
                                      AdminUserPermissionsRead,
                                      AdminUserRead,
                                      AdminUserUpdate,
