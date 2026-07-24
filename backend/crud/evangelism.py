@@ -640,17 +640,27 @@ def submit_asistencia(
 # ──────────────────────────────────────────────
 
 def get_seguimientos(
-    db: Session, asistencia_id: UUID
+    db: Session, asistencia_id: UUID, *, sede_id: str | None = None
 ) -> List[RegistroSeguimiento]:
-    return (
-        db.query(RegistroSeguimiento)
-        .filter(
-            RegistroSeguimiento.asistencia_id == asistencia_id,
-            RegistroSeguimiento.deleted_at.is_(None),
-        )
-        .order_by(RegistroSeguimiento.created_at.desc())
-        .all()
+    """Lista seguimientos de una asistencia.
+
+    ``sede_id`` opcional aplica Axioma 3 (multi-tenant) por join
+    ``seguimiento -> asistencia -> sesion -> grupo -> sede``. Sin ``sede_id``
+    (= superadmin sin sede) se devuelven todas — consistente con el canon
+    del módulo.
+    """
+    q = db.query(RegistroSeguimiento).filter(
+        RegistroSeguimiento.asistencia_id == asistencia_id,
+        RegistroSeguimiento.deleted_at.is_(None),
     )
+    if sede_id is not None:
+        q = (
+            q.join(Asistencia, Asistencia.id == RegistroSeguimiento.asistencia_id)
+            .join(SesionGrupo, SesionGrupo.id == Asistencia.sesion_id)
+            .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
+            .filter(GrupoEvangelismo.sede_id == sede_id)
+        )
+    return q.order_by(RegistroSeguimiento.created_at.desc()).all()
 
 
 def create_seguimiento(
@@ -717,7 +727,10 @@ def update_seguimiento(
     actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(RegistroSeguimiento)
-        .filter(RegistroSeguimiento.id == seguimiento_id)
+        .filter(
+            RegistroSeguimiento.id == seguimiento_id,
+            RegistroSeguimiento.deleted_at.is_(None),
+        )
         .first()
     )
     if not db_obj:
@@ -750,16 +763,27 @@ def update_seguimiento(
 
 
 def get_pendientes_seguimiento(
-    db: Session, limit: int = 50
+    db: Session, limit: int = 50, *, sede_id: str | None = None
 ) -> List[RegistroSeguimiento]:
-    """Retorna todos los seguimientos pendientes (no completados)."""
-    return (
-        db.query(RegistroSeguimiento)
-        .filter(
-            RegistroSeguimiento.estado_completado == False,  # noqa: E712
-            RegistroSeguimiento.deleted_at.is_(None),
+    """Retorna los seguimientos pendientes (no completados).
+
+    ``sede_id`` opcional aplica Axioma 3 (multi-tenant) por join
+    ``seguimiento -> asistencia -> sesion -> grupo -> sede``. Sin ``sede_id``
+    (= superadmin sin sede) se devuelven todas.
+    """
+    q = db.query(RegistroSeguimiento).filter(
+        RegistroSeguimiento.estado_completado == False,  # noqa: E712
+        RegistroSeguimiento.deleted_at.is_(None),
+    )
+    if sede_id is not None:
+        q = (
+            q.join(Asistencia, Asistencia.id == RegistroSeguimiento.asistencia_id)
+            .join(SesionGrupo, SesionGrupo.id == Asistencia.sesion_id)
+            .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
+            .filter(GrupoEvangelismo.sede_id == sede_id)
         )
-        .order_by(RegistroSeguimiento.fecha_seguimiento.asc().nullsfirst())
+    return (
+        q.order_by(RegistroSeguimiento.fecha_seguimiento.asc().nullsfirst())
         .limit(limit)
         .all()
     )

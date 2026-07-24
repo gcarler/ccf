@@ -501,12 +501,13 @@ def submit_attendance(
 def list_pending_follow_ups(
     limit: int = 50,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_evangelism_read),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
-    """Lista todos los seguimientos pendientes (no completados)."""
+    """Lista los seguimientos pendientes de la sede del actor (Axioma 3)."""
     from backend.crud.evangelism import get_pendientes_seguimiento
 
-    rows = get_pendientes_seguimiento(db, limit=limit)
+    user_sede = require_user_sede_id(db, current_user)
+    rows = get_pendientes_seguimiento(db, limit=limit, sede_id=user_sede)
     # Pydantic v2 strict: UUID→str requiere serialización explícita vía
     # model_dump(mode="json") — evita el 500 ``string_type`` en
     # ``RegistroSeguimientoResponse.asistencia_id``.
@@ -526,12 +527,13 @@ def _serialize_seguimiento(obj) -> dict:
 def list_seguimientos_for_attendance(
     asistencia_id: UUID,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_evangelism_read),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
-    """Lista los seguimientos de una asistencia."""
+    """Lista los seguimientos de una asistencia (Axioma 3 — sede del actor)."""
     from backend.crud.evangelism import get_seguimientos
 
-    rows = get_seguimientos(db, asistencia_id)
+    user_sede = require_user_sede_id(db, current_user)
+    rows = get_seguimientos(db, asistencia_id, sede_id=user_sede)
     return [
         schemas.RegistroSeguimientoResponse.model_validate(r).model_dump(mode="json")
         for r in rows
@@ -543,20 +545,29 @@ def create_seguimiento(
     asistencia_id: UUID,
     payload: schemas.RegistroSeguimientoCreate,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_evangelism_edit),
+    current_user: models.User = Depends(require_evangelism_edit),
 ):
     """Crea un registro de seguimiento para una asistencia."""
     from backend.crud.evangelism import create_seguimiento
 
-    asistencia = db.query(Asistencia).filter(
-        models.Asistencia.id == asistencia_id,
-        models.Asistencia.deleted_at.is_(None),
-    ).first()
-    if not asistencia:
+    # ── Axioma 3 — Multi-Tenant: el handler valida que la asistencia
+    # exista y no esté soft-deleted; el CRUD re-validará la sede del
+    # actor defense-in-depth antes del commit.
+    asist_sede_row = (
+        db.query(models.Asistencia.id)
+        .join(SesionGrupo, SesionGrupo.id == models.Asistencia.sesion_id)
+        .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
+        .filter(
+            models.Asistencia.id == asistencia_id,
+            models.Asistencia.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not asist_sede_row:
         raise HTTPException(status_code=404, detail="Asistencia no encontrada")
 
     payload.asistencia_id = asistencia_id
-    return _serialize_seguimiento(create_seguimiento(db, payload, actor_user_id=str(_user.id)))
+    return _serialize_seguimiento(create_seguimiento(db, payload, actor_user_id=str(current_user.id)))
 
 
 @router.patch("/follow-up/{seguimiento_id}", response_model=schemas.RegistroSeguimientoResponse)
