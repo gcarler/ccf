@@ -522,13 +522,13 @@ respalda.
 
 | ID | Estado | Cierre / Justificación | Commit |
 |---|---|---|---|
-| M-01 | 🔴 PENDIENTE | — | — |
-| M-02 | 🔴 PENDIENTE | — | — |
-| M-03 | 🔴 PENDIENTE | — | — |
+| M-01 | ✅ CERRADO 2026-07-24 | `enrollment.persona` puede ser `None` (FK sin CASCADE garantizado — persona borrada deja enrollments huérfanos). `course_students` (`academy.py:~1400`) y `academy_personas` (`:~1167`) ahora usan helper `_persona_display_name(persona)` que devuelve `"Usuario eliminado"` cuando `persona is None`, evitando `AttributeError` en `.first_name`. Email también trata `None` → `None` (null-safe). | pendiente |
+| M-02 | ✅ CERRADO 2026-07-24 | `submit_assessment` (`academy.py:~315`): `enrollment.approved` ahora usa `bool(enrollment.approved or attempt.passed)` — un intento reprobador NO destruye el estado `approved=True` de un intento previo. `enrollment.final_grade` usa `max(enrollment.final_grade or 0.0, score)` para preservar la nota más alta. La semántica ahora es "cumplió el assessment" (best-effort), no "último intento". | pendiente |
+| M-03 | ✅ CERRADO 2026-07-24 | Defense-in-depth XSS en texto libre: `create_forum_thread` (`title`, `content`), `create_forum_comment` (`content`), `submit_assessment` (`text_response`) ahora aplican `_sanitize_text()` (`html.escape(value, quote=True)`) antes de persistir. React escapa automáticamente al render (texto plano), pero esto neutraliza cualquier payload antes de tocar DB y protege consumidores que eventualmente rendericen via `dangerouslySetInnerHTML` (path CMS) o exportaciones (PDF, email). `None` pasa por `None` (campos nullable del ORM). | pendiente |
 | M-04 | 🔴 PENDIENTE | — | — |
 | M-05 | 🔴 PENDIENTE | — | — |
-| M-06 | 🔴 PENDIENTE | — | — |
-| M-07 | 🔴 PENDIENTE | — | — |
+| M-06 | ✅ CERRADO 2026-07-24 | `academy_personas` (`academy.py:~1128`): `is_active` ya no se hardcodea a `True`. Ahora se hace outerjoin a `auth_users` (`models.Usuario`) para reflejar el valor real `is_active` de la tabla de autenticación. Fallback `True` si la persona no tiene usuario asociado (persona sin login). | pendiente |
+| M-07 | ✅ CERRADO 2026-07-24 | `crud/academy.py::list_forum_threads` ahora acepta kwargs opt-in `skip: int = 0` y `limit: int | None = 100` (None = sin tope para callers internos). El endpoint API `forum_threads` ya tenía paginación via Query params; el CRUD ahora expone el kwarg para callers directos (tests/seeds) que quieran acotar. Filtro sede (A-02) ya estaba aplicado. Nota: `ForumThread` no tiene `deleted_at` en el modelo — soft-delete de hilos queda como debt pendiente (migración DDL). | pendiente |
 | M-08 | 🔴 PENDIENTE | — | — |
 | M-09 | 🔴 PENDIENTE | — | — |
 | M-10 | 🔴 PENDIENTE | — | — |
@@ -563,11 +563,11 @@ respalda.
 
 - **Críticos: 8/8 cerrados** ✅ (A-01 validate_certificate, A-02 forum outerjoin, A-03 scope admin estricto, A-04 rate-limit Request, A-05 submit_assignment IDOR, A-06 CRUD getters sede_id, A-07 CRUD mutadores sede_id, A-08 XSS MyEnrollments)
 - **Altos: 9/11 cerrados** ✅ (H-01 sede_id en contract Course, H-02 LessonProgressResponse, H-04 list_* sede_id, H-05 list_courses scope estricto, H-06 create_enrollment cross-tenant, H-07 create_course/lesson ownership, H-08 _commit_or_raise_conflict, H-09 AbortController, H-10 cache no-store, H-11 frontend any cleanup) — 1 falso positivo justificado (H-03 — `file_url` es ruta `/api/static/...`, no FID Seaweed) — 0 pendientes altos
-- Medios: 0/12 cerrados
+- Medios: 5/12 cerrados ✅ (M-01 persona null-safe, M-02 approved best-effort, M-03 XSS escape texto libre, M-06 is_active real de auth, M-07 list_forum_threads paginación)
 - Info: 0/9 cerrados (2 en revisión)
 - Funcionalidades: 0/10 cerradas (F-01 parcial — cubre upload blocked archived)
-- **Pendientes: 23 hallazgos** (0 altos + 12 medios + 9 info + 2 en revisión en info). H-03 queda fuera como falso positivo.
-- Commits de cierre: `c2c92299` (WIP consolidado A-01/A-04/A-08), `4dc25ef0..62116fc2` (A-02/A-03/A-05), `3c7aae7d` (A-06/A-07/H-04), `65466384` (H-09/H-10), `2e590333` (H-05), `0e9073c8` (H-06/H-07/H-08), `6e1b95c0` (H-01/H-02 schemas), `23470306` (H-11 frontend any cleanup). H-03 falso positivo — sin commit.
+- **Pendientes: 18 hallazgos** (0 altos + 7 medios + 9 info + 2 en revisión en info). H-03 queda fuera como falso positivo.
+- Commits de cierre: `c2c92299` (WIP consolidado A-01/A-04/A-08), `4dc25ef0..62116fc2` (A-02/A-03/A-05), `3c7aae7d` (A-06/A-07/H-04), `65466384` (H-09/H-10), `2e590333` (H-05), `0e9073c8` (H-06/H-07/H-08), `6e1b95c0` (H-01/H-02 schemas), `23470306` (H-11 frontend any cleanup). H-03 falso positivo — sin commit. M-01..M-03/M-06/M-07 pendiente de commit.
 
 ---
 

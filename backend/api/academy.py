@@ -8,6 +8,7 @@ explicit Academy permission.
 from __future__ import annotations
 
 from datetime import date
+from html import escape as _html_escape
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -74,6 +75,33 @@ def _get_own_enrollment(db: Session, user: models.User, enrollment_id: UUID) -> 
     if not enrollment:
         raise HTTPException(status_code=404, detail="Inscripción no encontrada")
     return enrollment
+
+
+def _persona_display_name(persona: models.Persona | None) -> str:
+    """M-01 helper: display name seguro cuando la persona es None (FK sin
+    CASCADE — una persona borrada deja enrollment.persona = None). Devuelve
+    un placeholder en vez de lanzar AttributeError."""
+    if persona is None:
+        return "Usuario eliminado"
+    return " ".join(
+        part for part in [persona.first_name, persona.last_name] if part
+    ) or f"Usuario {str(persona.id)[:8]}"
+
+
+def _sanitize_text(value: str | None) -> str | None:
+    """M-03 (cierre 2026-07-24): defense-in-depth XSS en texto libre.
+
+    Forum ``content``, ``comment.content`` y ``text_response`` son texto
+    plano renderizado por React (no ``dangerouslySetInnerHTML``): React
+    escapa automáticamente al render. Pero aplicamos ``html.escape`` al
+    persistir para neutralizar cualquier payload antes de tocar DB y
+    proteger a consumidores que eventualmente rendericen via
+    ``dangerouslySetInnerHTML`` (path CMS) o exportaciones (PDF, email).
+    ``None`` pasa por ``None`` (campos nullable del ORM).
+    """
+    if value is None:
+        return None
+    return _html_escape(value, quote=True)
 
 
 def _serialize_course(course: models.Course) -> dict[str, Any]:
@@ -277,7 +305,8 @@ def submit_assessment(
                 attempt_id=attempt.id,
                 question_id=question.id,
                 selected_option_id=selected.id if selected else None,
-                text_response=submitted.text_response if submitted else None,
+                # M-03 (cierre 2026-07-24): escape HTML en text_response.
+                text_response=_sanitize_text(submitted.text_response) if submitted else None,
                 is_correct=correct if submitted else None,
                 points_awarded=awarded,
             )
@@ -286,8 +315,12 @@ def submit_assessment(
     score = round((points_awarded / total_points) * 100, 2) if total_points else 0.0
     attempt.score = score
     attempt.passed = score >= float(assessment.passing_score)
-    enrollment.final_grade = score
-    enrollment.approved = attempt.passed
+    enrollment.final_grade = max(enrollment.final_grade or 0.0, score)
+    # M-02 (cierre 2026-07-24): ``approved`` es semánticamente "cumplió el
+    # assessment" — no debe destruirse por un reintento que reprueba. Si
+    # un intento previo aprobó, se conserva aprobado; sólo cambia a False
+    # si no ha habido intento aprobado y éste reprueba.
+    enrollment.approved = bool(enrollment.approved or attempt.passed)
     db.commit()
     db.refresh(attempt)
     return attempt
@@ -878,9 +911,11 @@ def create_forum_thread(
     thread = models.ForumThread(
         course_id=payload.course_id,
         author_persona_id=current_user.id,
-        title=payload.title,
+        # M-03 (cierre 2026-07-24): escape HTML en texto libre — neutraliza
+        # XSS antes de tocar DB (defense-in-depth).
+        title=_sanitize_text(payload.title) or "",
         category=payload.category,
-        content=payload.content or payload.title,
+        content=_sanitize_text(payload.content or payload.title) or "",
     )
     db.add(thread)
     db.commit()
@@ -968,7 +1003,8 @@ def create_forum_comment(
         thread_id=thread_id,
         parent_id=payload.parent_id,
         author_persona_id=current_user.id,
-        content=payload.content.strip(),
+        # M-03 (cierre 2026-07-24): escape HTML en texto libre del comentario.
+        content=_sanitize_text(payload.content.strip()) or "",
     )
     db.add(comment)
     db.commit()
@@ -1092,7 +1128,14 @@ def academy_personas(
     role: str | None = None,
     db: Session = Depends(get_db),
 ):
-    query = db.query(models.Persona).filter(models.Persona.deleted_at.is_(None))
+    # M-06 (cierre 2026-07-24): la persona no persiste ``is_active``; el
+    # estado activo vive en ``auth_users.is_active``. Hacemos outerjoin
+    # para reflejar el valor real (antes hardcodeado ``True``).
+    query = (
+        db.query(models.Persona, models.Usuario)
+        .outerjoin(models.Usuario, models.Usuario.id == models.Persona.id)
+        .filter(models.Persona.deleted_at.is_(None))
+    )
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
         query = query.filter(models.Persona.sede_id == sede_id)
@@ -1124,12 +1167,15 @@ def academy_personas(
         {
             "id": persona.id,
             "persona_id": persona.id,
-            "username": " ".join(part for part in [persona.first_name, persona.last_name] if part),
+            "username": _persona_display_name(persona),
             "email": persona.email,
             "role": role or "student",
-            "is_active": True,
+            # M-06 (cierre 2026-07-24): estado activo real desde
+            # ``auth_users.is_active`` (nullable — fallback True si no
+            # existe usuario, e.g. persona sin login).
+            "is_active": bool(usuario.is_active) if usuario and usuario.is_active is not None else True,
         }
-        for persona in personas
+        for persona, usuario in personas
     ]
 
 
@@ -1354,10 +1400,12 @@ def course_students(course_id: UUID, current_user: AcademyEditor, db: Session = 
             "id": enrollment.id,
             "enrollment_id": enrollment.id,
             "persona_id": enrollment.persona_id,
-            "username": " ".join(
-                part for part in [enrollment.persona.first_name, enrollment.persona.last_name] if part
-            ),
-            "email": enrollment.persona.email,
+            # M-01 (cierre 2026-07-24): ``enrollment.persona`` puede ser None
+            # si la persona fue borrada (no hay ON DELETE CASCADE garantizado
+            # en el FK persona_id). Tratamos None con valores placeholder
+            # en vez de caer con AttributeError en ``.first_name``.
+            "username": _persona_display_name(enrollment.persona),
+            "email": enrollment.persona.email if enrollment.persona else None,
             "status": enrollment.status,
             "progress": enrollment.progress_percent,
             "progress_percent": enrollment.progress_percent,

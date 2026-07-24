@@ -451,7 +451,21 @@ def list_forum_threads(
     db: Session,
     *,
     sede_id: UUID | None = None,
+    skip: int = 0,
+    limit: int | None = 100,
 ) -> list[models.ForumThread]:
+    """M-07 (cierre 2026-07-24): añadidos ``skip``/``limit`` opt-in (limit
+    None = sin tope, para callers internos que quieren todo — raro). El
+    filtro sede (A-02) ya estaba aplicado vía ``outerjoin`` + filter.
+
+    Nota M-07: ``ForumThread`` NO tiene ``deleted_at`` en el modelo (ver
+    ``models_academy_core.py:317``) — el soft-delete de hilos queda como
+    debt pendiente (requiere migración DDL añadiendo la columna). Mientras
+    tanto no hay rows para filtrar por ``deleted_at``. El endpoint API
+    ``forum_threads`` ya tiene paginación (``skip``/``limit`` Query), por
+    lo que la paginación real sucede allí; el CRUD expone el kwarg para
+    callers directos (tests/seeds) que quieran acotar.
+    """
     query = db.query(models.ForumThread)
     if sede_id is not None:
         # M-07: filtra hilos globales (course_id IS NULL) o de Course no
@@ -472,4 +486,9 @@ def list_forum_threads(
                 models.Course.id.is_not(None),
             )
         )
-    return query.order_by(models.ForumThread.created_at.desc()).all()
+    query = query.order_by(models.ForumThread.created_at.desc())
+    if skip:
+        query = query.offset(skip)
+    if limit is not None:
+        query = query.limit(limit)
+    return query.all()
