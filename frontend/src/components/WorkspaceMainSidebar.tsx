@@ -31,11 +31,10 @@ export interface NavSection {
 }
 
 interface Props {
-    title: string;
     sections?: NavSection[];
     isMini?: boolean;
-    onToggle?: () => void;    // callback para colapsar/expandir desde el footer
-    isCollapsed?: boolean;    // estado actual para el ícono del botón
+    onToggle?: () => void;
+    isCollapsed?: boolean;
 }
 
 // ─── Sección expandible genérica ──────────────────────────────────────────────
@@ -167,7 +166,7 @@ function NavRow({
 }
 
 
-export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle, isCollapsed }: Props) {
+export default function WorkspaceMainSidebar({ sections, isMini, onToggle, isCollapsed }: Props) {
     const pathname = usePathname();
     const { 
         sidebarStack, 
@@ -215,6 +214,25 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
 
     return (
         <aside className="h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] transition-colors duration-500 ease-in-out relative overflow-hidden">
+            {/* Header: Botón de retroceso en drill-down */}
+            {!isMini && isDrillDown && (
+                <div className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[#0f1113]/80 backdrop-blur-xl">
+                    <div className="h-8 flex items-center px-3">
+                        <motion.button
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            whileHover={{ x: -2 }}
+                            onClick={() => {
+                                if (currentPanel?.onBack) currentPanel.onBack();
+                                popSidebarPanel();
+                            }}
+                            className="p-1 -ml-1 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all flex items-center justify-center shrink-0 border border-[hsl(var(--border))] dark:border-white/5 active:scale-90"
+                        >
+                            <ChevronLeft size={14} strokeWidth={2.5} />
+                        </motion.button>
+                    </div>
+                </div>
+            )}
             {/* 3. Body: Contenido con animación de Slide Direccional */}
             <div className="flex-1 relative overflow-hidden bg-[hsl(var(--surface-1))]/30 dark:bg-black/5">
                 <AnimatePresence mode="popLayout" custom={stackDirection} initial={false}>
