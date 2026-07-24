@@ -362,7 +362,10 @@ class RegistroSeguimientoResponse(BaseModel):
     responsable_id: Optional[UUID] = None
     created_at: datetime
 
-    model_config = orm_config
+    # ``from_attributes=True`` (preserva ``model_validate(orm_obj)``) +
+    # ``extra="forbid"`` para alinear con ``RegistroSeguimientoCreate/Update``
+    # que ya bloquean extras vía ``ConfigDict(extra="forbid")``.
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     @field_validator("asistencia_id", "responsable_id", mode="before")
     @classmethod
