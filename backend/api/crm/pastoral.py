@@ -2,7 +2,7 @@ import collections
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -1626,10 +1626,8 @@ def save_crm_settings(
     return data
 
 
-@router.get("/roles", response_model=dict)
+@router.get("/roles", response_model=List[dict])
 def list_crm_roles(
-    skip: int = 0,
-    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
@@ -1639,21 +1637,17 @@ def list_crm_roles(
         q = q.filter(
             or_(models.RoleDefinition.sede_id == user_sede, models.RoleDefinition.sede_id.is_(None))
         )
-    total = q.count()
-    rows = q.order_by(models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc()).offset(skip).limit(limit).all()
-    return {
-        "items": [
-            {
-                "id": row.id,
-                "name": row.name,
-                "color": row.color,
-                "is_leadership": row.is_leadership,
-                "sede_id": row.sede_id,
-            }
-            for row in rows
-        ],
-        "total": total,
-    }
+    rows = q.order_by(models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc()).all()
+    return [
+        {
+            "id": row.id,
+            "name": row.name,
+            "color": row.color,
+            "is_leadership": row.is_leadership,
+            "sede_id": row.sede_id,
+        }
+        for row in rows
+    ]
 
 
 @router.post("/roles", response_model=dict, status_code=201)
