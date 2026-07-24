@@ -15,6 +15,9 @@ import pytest
 
 from tests.conftest import auth_headers, seed_admin
 
+from backend import models as _models
+from backend.models_auth import Usuario
+
 
 def _seed_role(db_session, nombre, permisos):
     from backend.models_auth import RolPlataforma
@@ -156,6 +159,39 @@ class TestRBACPersonas:
         resp = _post(client, "/api/crm/personas",
                      json={"first_name": "Test", "last_name": "User", "email": "t@ccf.test"}, h=editor_h)
         assert resp.status_code in (200, 201)
+
+    def test_post_persona_inherits_user_sede(self, client, editor_h, db_session):
+        unique_email = f"sede_{_uuid.uuid4().hex[:6]}@ccf.test"
+        resp = _post(client, "/api/crm/personas",
+                     json={"first_name": "Sede", "last_name": "Test", "email": unique_email}, h=editor_h)
+        assert resp.status_code in (200, 201)
+        data = resp.json()
+        persona_id = data.get("id") or data.get("persona_id")
+        assert persona_id is not None
+
+        user = db_session.query(Usuario).filter(Usuario.email == "rbac_editor@ccf.test").first()
+        assert user is not None and user.sede_id is not None
+
+        persona = db_session.query(_models.Persona).filter(_models.Persona.id == persona_id).first()
+        assert persona is not None
+        assert str(persona.sede_id) == str(user.sede_id)
+
+    def test_post_persona_rejects_client_sede_id(self, client, editor_h, db_session):
+        unique_email = f"sede_ignore_{_uuid.uuid4().hex[:6]}@ccf.test"
+        fake_sede_id = str(_uuid.uuid4())
+        resp = _post(
+            client,
+            "/api/crm/personas",
+            json={
+                "first_name": "Ignore",
+                "last_name": "Sede",
+                "email": unique_email,
+                "sede_id": fake_sede_id,
+            },
+            h=editor_h,
+        )
+        # PersonaCreate has extra="forbid", so sede_id from the client is rejected.
+        assert resp.status_code == 422
 
 
 # ─── GRUPO 2: Pipeline ───────────────────────────────────────────────────

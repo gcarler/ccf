@@ -2,7 +2,7 @@ import collections
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -502,7 +502,7 @@ def delete_caso_crm(
     return None
 
 
-@router.get("/casos/{case_id}/tasks", response_model=List[dict])
+@router.get("/casos/{case_id}/tasks", response_model=dict)
 def list_caso_tasks(
     case_id: str,
     status_filter: Optional[str] = None,
@@ -595,7 +595,7 @@ def update_caso_task(
     }
 
 
-@router.get("/casos/{case_id}/interactions", response_model=List[dict])
+@router.get("/casos/{case_id}/interactions", response_model=dict)
 def list_caso_interactions(
     case_id: str,
     skip: int = 0,
@@ -740,7 +740,7 @@ async def send_crm_message(
     }
 
 
-@router.get("/messaging/history", response_model=List[dict])
+@router.get("/messaging/history", response_model=dict)
 def list_messaging_history(
     skip: int = 0,
     limit: int = 50,
@@ -792,7 +792,7 @@ def get_messaging_history_item(
     return _serialize_message_group(logs)
 
 
-@router.get("/tasks", response_model=List[dict])
+@router.get("/tasks", response_model=dict)
 def list_crm_tasks(
     assignee_persona_id: Optional[uuid.UUID] = None,
     skip: int = 0,
@@ -900,7 +900,7 @@ def create_crm_task(
     return _serialize_task(task)
 
 
-@router.get("/tasks/mine", response_model=List[dict])
+@router.get("/tasks/mine", response_model=dict)
 def list_my_crm_tasks(
     skip: int = 0,
     limit: int = 20,
@@ -1275,7 +1275,7 @@ def get_grupo_detail(
     }
 
 
-@router.get("/grupos", response_model=List[dict])
+@router.get("/grupos", response_model=dict)
 def list_grupos(
     skip: int = 0,
     limit: int = 20,
@@ -1408,7 +1408,7 @@ def get_prayer_request_detail(
 # ── Counseling (CRM prefix) ──────────────────────────────
 
 
-@router.get("/counseling/", response_model=List[dict])
+@router.get("/counseling/", response_model=dict)
 def list_counseling_tickets(
     status: Optional[str] = None,
     skip: int = 0,
@@ -1492,7 +1492,7 @@ def create_counseling_ticket(
     }
 
 
-@router.get("/counseling/lead/{lead_id}", response_model=List[dict])
+@router.get("/counseling/lead/{lead_id}", response_model=dict)
 def get_counseling_by_lead(
     lead_id: UUID,
     db: Session = Depends(get_db),
@@ -1626,7 +1626,7 @@ def save_crm_settings(
     return data
 
 
-@router.get("/roles", response_model=List[dict])
+@router.get("/roles", response_model=dict)
 def list_crm_roles(
     skip: int = 0,
     limit: int = 20,
@@ -1906,7 +1906,7 @@ def create_public_prayer_request(
     }
 
 
-@router.get("/prayer-requests", response_model=List[dict])
+@router.get("/prayer-requests", response_model=dict)
 def list_prayer_requests(
     source: Optional[str] = None,
     skip: int = 0,
@@ -2065,7 +2065,7 @@ def create_volunteer(
     }
 
 
-@router.get("/volunteers", response_model=List[dict])
+@router.get("/volunteers", response_model=dict)
 def list_volunteers(
     skip: int = 0,
     limit: int = 20,
@@ -2196,7 +2196,7 @@ def delete_volunteer(
     db.commit()
 
 
-@router.get("/groups", response_model=List[dict])
+@router.get("/groups", response_model=dict)
 def list_crm_groups(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
@@ -2410,7 +2410,7 @@ def export_newsletter_leads_csv(
 # PASTORAL CALL LOGS (Registro de llamadas de consolidación)
 # ──────────────────────────────────────────────
 
-@router.get("/casos/{case_id}/calls", response_model=List[dict])
+@router.get("/casos/{case_id}/calls", response_model=dict)
 def list_caso_calls(
     case_id: str,
     db: Session = Depends(get_db),

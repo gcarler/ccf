@@ -48,7 +48,7 @@ def prepare_persona_for_output(db: Session, persona: models.Persona):
     return persona
 
 
-def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Persona:
+def create_persona(db: Session, payload: schemas.PersonaCreate, *, sede_id: UUID | None = None) -> models.Persona:
     # Axioma 1 — Validación de Identidad Previa: buscar persona existente
     # por teléfono o documento antes de crear un duplicado.
     existing = _find_existing_persona(db, payload)
@@ -60,6 +60,8 @@ def create_persona(db: Session, payload: schemas.PersonaCreate) -> models.Person
 
     data = payload.model_dump(exclude_unset=True)
     data.setdefault("qr_token", _uuid.uuid4().hex[:16].upper())
+    if sede_id is not None:
+        data["sede_id"] = sede_id
     row = models.Persona(**data)
     db.add(row)
     db.commit()
