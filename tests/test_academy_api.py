@@ -676,3 +676,72 @@ def test_a03_admin_delete_blocks_global_course_submission(client, db_session):
         f"A-03 leak: admin con sede archivó entrega de curso global — esperado 404, "
         f"recibido {resp.status_code}: {resp.text}"
     )
+
+
+def test_a05_submit_assignment_blocks_archived_course(client, db_session):
+    """A-05 → ``submit_assignment`` 404 si el enrollment apunta a un Course
+    archivado (deleted_at != NULL), incluso conociendo enrollment_id propio.
+
+    Antes del fix, el Lesson sólo se filtraba por ``course_id ==
+    enrollment.course_id`` sin chequear is_published ni sede del Course.
+    Ahora ``_get_scoped_course`` aplica Axioma 3 antes de procesar el upload.
+    """
+    import io
+    import uuid as _uuid
+
+    student, persona_student, sede = seed_user_with_role(
+        db_session,
+        role_name="academy_student",
+        email="a05-student@example.com",
+        password="testpass123",
+    )
+    student.rol_plataforma.permisos = {"academy:study": "allow"}
+    db_session.commit()
+
+    archived_course = models.Course(
+        id=_uuid.uuid4(),
+        code=f"A05-{_uuid.uuid4().hex[:6]}",
+        title="Archived Course",
+        modality="online",
+        sede_id=sede.id,
+        is_published=False,
+        deleted_at=_utcnow(),
+    )
+    db_session.add(archived_course)
+    db_session.commit()
+    lesson = models.Lesson(
+        course_id=archived_course.id,
+        id=_uuid.uuid4(),
+        title="L archived",
+        content="x",
+        content_type="video",
+        order_index=0,
+    )
+    db_session.add(lesson)
+    db_session.commit()
+    enrollment = models.Enrollment(
+        persona_id=persona_student.id,
+        course_id=archived_course.id,
+        status="active",
+        progress_percent=0,
+        attendance_percent=0,
+        approved=False,
+        acta_closed=False,
+    )
+    db_session.add(enrollment)
+    db_session.commit()
+
+    headers = auth_headers(client, email=student.email, password="testpass123")
+    body = {"enrollment_id": str(enrollment.id), "comment": "intento"}
+    files = {"file": ("test.txt", io.BytesIO(b"hello"), "text/plain")}
+    resp = client.post(
+        f"/api/academy/lessons/{lesson.id}/submit-assignment",
+        data=body,
+        files=files,
+        headers=headers,
+    )
+    # _get_scoped_course del curso archived → 404 (scope no lo incluye).
+    assert resp.status_code == 404, (
+        f"A-05 leak: student pudo subir entrega a Lesson de un Course archivado "
+        f"(deleted_at != NULL) — esperado 404, recibido {resp.status_code}: {resp.text}"
+    )
