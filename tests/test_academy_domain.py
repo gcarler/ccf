@@ -201,3 +201,211 @@ def test_h05_list_courses_excludes_global_by_default(db_session):
     rows_global = academy_crud.list_courses(db_session, sede_id=sede_a.id, include_global=True)
     ids_global = {c.id for c in rows_global}
     assert course_global.id in ids_global, "H-05: include_global=True debe devolver globales"
+
+
+# ─── H-06: create_enrollment no reactiva cross-tenant ─────────────────────────
+
+
+def test_h06_create_enrollment_reactivates_own_sede(db_session):
+    """H-06 happy path: reactivar un enrollment archivado de un curso de la
+    MISMA sede del actor funciona normalmente (preserva comportamiento
+    previo cuando sede_id coincide)."""
+    import uuid as _uuid
+
+    sede_a, course_a, _, _ = _seed_two_sedes(db_session)
+    persona = models.Persona(
+        id=_uuid.uuid4(), first_name="A", last_name="B", email="h6a@example.com"
+    )
+    db_session.add(persona)
+    db_session.commit()
+    payload = EnrollmentCreate(persona_id=persona.id, course_id=course_a.id)
+    enrollment = academy_crud.create_enrollment(
+        db_session, payload, sede_id=sede_a.id
+    )
+    # Soft-delete y reaciclar con misma sede → reactiva.
+    enrollment.deleted_at = _utcnow()
+    db_session.commit()
+    restored = academy_crud.create_enrollment(
+        db_session, payload, sede_id=sede_a.id
+    )
+    assert restored.id == enrollment.id
+    assert restored.deleted_at is None
+    assert restored.status == "active"
+
+
+def test_h06_create_enrollment_reactivates_global_course(db_session):
+    """H-06: curso global (sede_id NULL) SIEMPRE es legítimo cross-tenant
+    (decisión A-03 lectura/captación). Reactivar su enrollment está
+    permitido independientemente de la sede del actor."""
+    import uuid as _uuid
+
+    sede_a, _, _, _ = _seed_two_sedes(db_session)
+    course_global = models.Course(
+        code=f"GG-{_uuid.uuid4().hex[:6]}",
+        title="Curso global",
+        modality="online",
+        sede_id=None,
+        is_published=True,
+    )
+    db_session.add(course_global)
+    db_session.commit()
+    persona = models.Persona(
+        id=_uuid.uuid4(), first_name="G", last_name="B", email="h6g@example.com"
+    )
+    db_session.add(persona)
+    db_session.commit()
+    payload = EnrollmentCreate(persona_id=persona.id, course_id=course_global.id)
+    enrollment = academy_crud.create_enrollment(
+        db_session, payload, sede_id=sede_a.id
+    )
+    enrollment.deleted_at = _utcnow()
+    db_session.commit()
+    restored = academy_crud.create_enrollment(
+        db_session, payload, sede_id=sede_a.id
+    )
+    assert restored.id == enrollment.id
+    assert restored.deleted_at is None
+
+
+def test_h06_create_enrollment_blocks_cross_sede_reactivation(db_session):
+    """H-06 core: existe un enrollment archivado en un curso de sede_a. Un
+    actor con sede_b que pase ``sede_id=sede_b`` NO debe reactivar ese
+    enrollment — se levanta ``ValueError`` (defense-in-depth contra leak
+    cross-tenant). Sin ``sede_id`` (compat callers no-API) se reactivaría
+    normalmente."""
+    import uuid as _uuid
+
+    sede_a, course_a, sede_b, _ = _seed_two_sedes(db_session)
+    persona = models.Persona(
+        id=_uuid.uuid4(), first_name="X", last_name="Y", email="h6x@example.com"
+    )
+    db_session.add(persona)
+    db_session.commit()
+    payload = EnrollmentCreate(persona_id=persona.id, course_id=course_a.id)
+    # Crear el enrollment con sede_a (sin sede_id = caller no-API legítimo).
+    enrollment = academy_crud.create_enrollment(db_session, payload)
+    enrollment.deleted_at = _utcnow()
+    db_session.commit()
+    # Actor de sede_b intenta reactivar — bloqueado.
+    with pytest.raises(ValueError):
+        academy_crud.create_enrollment(db_session, payload, sede_id=sede_b.id)
+
+
+# ─── H-07: create_course / create_lesson validan ownership del actor ─────────
+
+
+def test_h07_create_course_blocks_cross_sede_attribution(db_session):
+    """H-07: ``create_course(db, {...'sede_id': otra_sede}, sede_id=mia)``
+    levanta ``ValueError`` — el actor no puede crear un curso atribuyéndolo
+    a otra sede. Sin ``sede_id`` (caller no-API) se respeta el payload."""
+    sede_a, _, sede_b, _ = _seed_two_sedes(db_session)
+    # Sin sede_id: payload respeta sede_b (compatibilidad).
+    course = academy_crud.create_course(
+        db_session,
+        {"title": "B", "code": "B-H07-1", "modality": "online", "sede_id": sede_b.id},
+    )
+    assert course.sede_id == sede_b.id
+    # Con sede_id=sede_a: bloquea atribuir a sede_b.
+    with pytest.raises(ValueError):
+        academy_crud.create_course(
+            db_session,
+            {"title": "B2", "code": "B-H07-2", "modality": "online", "sede_id": sede_b.id},
+            sede_id=sede_a.id,
+        )
+    # Con sede_id=sede_a y payload sede_id=None (global legítimo): permitido.
+    course_global = academy_crud.create_course(
+        db_session,
+        {"title": "G", "code": "G-H07", "modality": "online", "sede_id": None},
+        sede_id=sede_a.id,
+    )
+    assert course_global.sede_id is None
+
+
+def test_h07_create_lesson_blocks_cross_sede(db_session):
+    """H-07: ``create_lesson(db, course_id_otra_sede, {...}, sede_id=mia)``
+    levanta ``ValueError`` — el actor no puede añadir lecciones a un curso
+    de otra sede. Sin ``sede_id`` (caller no-API) preserva comportamiento."""
+    import uuid as _uuid
+
+    sede_a, course_a, sede_b, course_b = _seed_two_sedes(db_session)
+    # Sin sede_id: crea normalmente (compatibilidad).
+    lesson = academy_crud.create_lesson(
+        db_session,
+        course_a.id,
+        {"title": "L1", "order_index": 1, "content": "", "content_type": "text"},
+    )
+    assert lesson.course_id == course_a.id
+    # Con sede_id=sede_a: OK (mismo curso/sede).
+    lesson2 = academy_crud.create_lesson(
+        db_session,
+        course_a.id,
+        {"title": "L2", "order_index": 2, "content": "", "content_type": "text"},
+        sede_id=sede_a.id,
+    )
+    assert lesson2.course_id == course_a.id
+    # Con sede_id=sede_a sobre course_b (otra sede): bloqueado.
+    with pytest.raises(ValueError):
+        academy_crud.create_lesson(
+            db_session,
+            course_b.id,
+            {"title": "L3", "order_index": 1, "content": "", "content_type": "text"},
+            sede_id=sede_a.id,
+        )
+
+
+# ─── H-08: _commit_or_raise_conflict distingue 409 de 500 ───────────────────
+
+
+def test_h08_commit_or_raise_conflict_unique_violation_returns_409(db_session):
+    """H-08: una IntegrityError por UNIQUE (23505 en Postgres / 'UNIQUE
+    constraint failed' en SQLite) se traduce a HTTPException 409. Una
+    IntegrityError por otra constraint (NOT NULL) se re-raise (no False-409)."""
+    from fastapi import HTTPException
+    from sqlalchemy.exc import IntegrityError
+    from unittest.mock import MagicMock
+
+    # Simulamos un db.commit() que lanza UNIQUE violation (SQLite).
+    db = MagicMock()
+    orig = MagicMock()
+    orig.pgcode = None  # Fuerza la rama SQLite.
+    exc = IntegrityError("stmt", params={}, orig=orig)
+    # Forzamos el str(orig) a contener 'UNIQUE constraint failed'.
+    orig.__str__ = lambda self: "UNIQUE constraint failed: course.code"
+    db.commit.side_effect = exc
+    with pytest.raises(HTTPException) as exc_info:
+        academy_crud._commit_or_raise_conflict(db, detail="course code already exists")
+    assert exc_info.value.status_code == 409
+    assert "course code already exists" in exc_info.value.detail
+    db.rollback.assert_called_once()
+
+
+def test_h08_commit_or_raise_conflict_non_unique_reraises(db_session):
+    """H-08: una IntegrityError que NO es unique-violation (e.g. NOT NULL,
+    FK, check) se re-raise post-rollback — NO se enmascara como falso 409.
+    Evita bugs silenciados (lo que M-12 corrigió en CMS)."""
+    from sqlalchemy.exc import IntegrityError
+    from unittest.mock import MagicMock
+
+    db = MagicMock()
+    orig = MagicMock()
+    orig.pgcode = "23502"  # NOT NULL violation (no 23505).
+    db.commit.side_effect = IntegrityError("stmt", params={}, orig=orig)
+    with pytest.raises(IntegrityError):
+        academy_crud._commit_or_raise_conflict(db, detail="whatever")
+    db.rollback.assert_called_once()
+
+
+def test_h08_create_course_unique_violation_surfaces_409(db_session):
+    """H-08 end-to-end: ``create_course`` con un code duplicado (UNIQUE
+    constraint en Postgres / SQLite) ahora levanta HTTPException(409) vía
+    el wrapper, no un IntegrityError 500 sin tragar."""
+    from fastapi import HTTPException
+
+    academy_crud.create_course(
+        db_session, {"title": "C1", "code": "DUP-H08", "modality": "online"}
+    )
+    with pytest.raises(HTTPException) as exc_info:
+        academy_crud.create_course(
+            db_session, {"title": "C2", "code": "DUP-H08", "modality": "online"}
+        )
+    assert exc_info.value.status_code == 409

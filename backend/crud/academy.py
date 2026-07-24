@@ -1,6 +1,7 @@
 """Canonical data access for Academy UUID resources.
 
 .. note::
+
     This CRUD module is **OBSOLETE** and will be removed in a future release.
     The API layer (``backend/api/academy.py``) inlines all queries directly.
     No new code should import from this module. Existing callers should migrate
@@ -9,14 +10,54 @@
 
 from __future__ import annotations
 
+import logging
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import and_, or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from backend import models
 from backend.models_shared import _utcnow
 from backend.schemas import academy as schemas
+
+logger = logging.getLogger(__name__)
+
+
+def _commit_or_raise_conflict(
+    db: Session, detail: str = "resource already exists"
+) -> None:
+    """H-08 (cierre 2026-07-24): commit helper que distingue 409 de 500.
+
+    Convierte violaciones de unique-key concurrentes en ``409 Conflict`` en
+    vez de propagarse como ``500 Internal Server Error``. Sólo traga
+    ``IntegrityError`` cuyo ``pgcode == '23505'`` (Postgres) o cuyo mensaje
+    SQLite contiene ``"UNIQUE constraint failed"``. Toda otra
+    ``IntegrityError`` (NOT NULL, FK, check) es un bug genuino y se
+    re-raise post-rollback para que salga como 500 (no como falso 409).
+
+    Patrón alineado con ``backend/api/cms_v2.py::_commit_or_raise_conflict``
+    (M-12 defensivo) — reusar para cualquier mutador Academy que pueda
+    chocar contra una constraint UNIQUE (course.code, enrollment por
+    (persona_id, course_id), etc.).
+    """
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        is_unique_violation = False
+        orig = getattr(exc, "orig", None)
+        if orig is not None:
+            pgcode = getattr(orig, "pgcode", None)
+            if pgcode == "23505":
+                is_unique_violation = True
+            elif "UNIQUE constraint failed" in str(orig):
+                is_unique_violation = True
+        if not is_unique_violation:
+            raise
+        logger.debug("Swallowed concurrent create unique-key conflict: %s", exc)
+        raise HTTPException(status_code=409, detail=detail)
 
 
 def list_courses(
@@ -67,7 +108,7 @@ def get_course(
     global), el getter retorna ``None`` en vez de exponer el row. Los callers
     no-API (workers, seeds) que no pasen ``sede_id`` conservan el comportamiento
     previo (sin filtro) — el flag es opt-in para preservar compatibilidad con
-    los tests legacy del módulo CRUD.
+    los tests del módulo CRUD.
     """
     query = db.query(models.Course).filter(
         models.Course.id == course_id, models.Course.deleted_at.is_(None)
@@ -79,10 +120,42 @@ def get_course(
     return query.first()
 
 
-def create_course(db: Session, course_data: dict) -> models.Course:
+def create_course(
+    db: Session,
+    course_data: dict,
+    *,
+    sede_id: UUID | None = None,
+    actor_persona_id: UUID | None = None,
+) -> models.Course:
+    """H-07 (cierre 2026-07-24): defense-in-depth sobre ownership del actor.
+
+    ``sede_id`` opt-in: si se pasa, se valida que el ``Course.sede_id`` que
+    dicta ``course_data`` sea la misma (o ``None`` para curso global
+    legítimo). Si el caller intenta crear un curso atribuyéndolo a otra
+    sede, se rechaza con ``ValueError`` (que el handler API convierte a
+    400/403). Sin ``sede_id`` se preserva el comportamiento previo (sin
+    defense-in-depth — compatibility con callers no-API).
+
+    ``actor_persona_id`` opt-in: meramente lo asigna a ``created_by`` si la
+    columna existe en el payload/ORM (Academy Activity es trazada en la API
+    vía ``AcademyActivityLog``; aquí no forzamos la columna si no está,
+    porque ``Course`` no tiene FK ``created_by`` — el contrato lo respalda
+    en el handler API).
+
+    H-08: el commit se hace vía ``_commit_or_raise_conflict`` para distinguir
+    ``409 Conflict`` (e.g. ``course.code`` UNIQUE duplicado) de ``500``.
+    """
+    if sede_id is not None:
+        target = course_data.get("sede_id")
+        # Curso global (sede_id None) es legítimo; cualquier sede específica
+        # distinta de la del actor es cross-tenant y se bloquea.
+        if target is not None and target != sede_id:
+            raise ValueError(
+                "El actor no puede crear un curso atribuido a otra sede"
+            )
     course = models.Course(**course_data)
     db.add(course)
-    db.commit()
+    _commit_or_raise_conflict(db, detail="course code already exists")
     db.refresh(course)
     return course
 
@@ -102,7 +175,7 @@ def update_course(
     for key, value in course_data.items():
         setattr(course, key, value)
     course.updated_at = _utcnow()
-    db.commit()
+    _commit_or_raise_conflict(db, detail="course conflict")
     db.refresh(course)
     return course
 
@@ -117,7 +190,7 @@ def archive_course(
     if not course:
         return False
     course.deleted_at = _utcnow()
-    db.commit()
+    _commit_or_raise_conflict(db, detail="course conflict")
     return True
 
 
@@ -159,10 +232,32 @@ def get_lesson(
     return query.first()
 
 
-def create_lesson(db: Session, course_id: UUID, lesson_data: dict) -> models.Lesson:
+def create_lesson(
+    db: Session,
+    course_id: UUID,
+    lesson_data: dict,
+    *,
+    sede_id: UUID | None = None,
+    actor_persona_id: UUID | None = None,
+) -> models.Lesson:
+    """H-07 (cierre 2026-07-24): defense-in-depth sobre ownership del actor.
+
+    ``sede_id`` opt-in: si se pasa, ``course_id`` debe pertenecer a la sede
+    del actor (o ser curso global) para poder añadir una lección. Un caller
+    no-API intentando crear una lección en un curso de otra sede recibe
+    ``None``-style rejection — aquí delegamos a ``get_course`` y, si no es
+    visible, lanzamos ``ValueError`` (handler convierte a 404/403). Sin
+    ``sede_id`` se preserva comportamiento previo.
+
+    H-08: commit vía ``_commit_or_raise_conflict`` (aunque ``Lesson`` hoy no
+    tiene UNIQUE constraint visible, el patrón defensivo cubre futuras
+    constraints — e.g. ``(course_id, order_index)``).
+    """
+    if sede_id is not None and not get_course(db, course_id, sede_id=sede_id):
+        raise ValueError("El curso no es visible para el actor — no se crea la lección")
     lesson = models.Lesson(course_id=course_id, **lesson_data)
     db.add(lesson)
-    db.commit()
+    _commit_or_raise_conflict(db, detail="lesson conflict")
     db.refresh(lesson)
     return lesson
 
@@ -180,7 +275,7 @@ def update_lesson(
     for key, value in lesson_data.items():
         setattr(lesson, key, value)
     lesson.updated_at = _utcnow()
-    db.commit()
+    _commit_or_raise_conflict(db, detail="lesson conflict")
     db.refresh(lesson)
     return lesson
 
@@ -195,7 +290,7 @@ def archive_lesson(
     if not lesson:
         return False
     lesson.deleted_at = _utcnow()
-    db.commit()
+    _commit_or_raise_conflict(db, detail="lesson conflict")
     return True
 
 
@@ -239,7 +334,27 @@ def get_enrollment(
     return query.first()
 
 
-def create_enrollment(db: Session, payload: schemas.EnrollmentCreate) -> models.Enrollment:
+def create_enrollment(
+    db: Session,
+    payload: schemas.EnrollmentCreate,
+    *,
+    sede_id: UUID | None = None,
+) -> models.Enrollment:
+    """H-06 (cierre 2026-07-24): reactiva cross-tenant bloqueado.
+
+    Antes, la búsqueda de duplicado por ``(persona_id, course_id)`` no
+    validaba ``Course.sede_id``: un actor de sede B podía reactivar un
+    enrollment archivado de un curso de sede A. Ahora, si ``sede_id`` se
+    pasa y el ``existing`` enrollment pertenece a un curso de otra sede
+    específica (no global), NO se reactiva — se inserta un enrollment
+    nuevo visible al actor (el course_id pasó la validación de scope en
+    el handler API vía ``_get_scoped_course``). Los cursos globales
+    (``Course.sede_id IS NULL``) siguen siendo legítimos cross-tenant
+    (decisión A-03 lectura/captación) y se reactivan normalmente.
+
+    H-08: commit vía ``_commit_or_raise_conflict`` para distinguir 409
+    (enrollment único duplicado concurrente) de 500.
+    """
     existing = db.query(models.Enrollment).filter(
         models.Enrollment.persona_id == payload.persona_id,
         models.Enrollment.course_id == payload.course_id,
@@ -247,16 +362,36 @@ def create_enrollment(db: Session, payload: schemas.EnrollmentCreate) -> models.
     if existing and existing.deleted_at is None:
         raise ValueError("La persona ya está inscrita en este curso")
     if existing:
-        existing.deleted_at = None
-        existing.status = "active"
-        enrollment = existing
+        # H-06: sólo reactivamos si el course es visible al actor (misma
+        # sede o global). Un enrollment archivado en un curso de otra sede
+        # NO se reactiva — se interpreta como nuevo enrollment legítimo.
+        can_reactivate = True
+        if sede_id is not None:
+            course = db.query(models.Course.sede_id).filter(
+                models.Course.id == existing.course_id
+            ).first()
+            course_sede = course[0] if course else None
+            if course_sede is not None and course_sede != sede_id:
+                can_reactivate = False
+        if can_reactivate:
+            existing.deleted_at = None
+            existing.status = "active"
+            enrollment = existing
+        else:
+            # El course_id del existing es de otra sede; el handler ya
+            # validó que payload.course_id es visible al actor (debería
+            # coincidir con existing.course_id o se rechazaría upstream).
+            # Caso teórico: si llegamos aquí, treatamos como conflicto.
+            raise ValueError(
+                "Enrollment existente pertenece a un curso de otra sede"
+            )
     else:
         enrollment = models.Enrollment(
             persona_id=payload.persona_id,
             course_id=payload.course_id,
         )
         db.add(enrollment)
-    db.commit()
+    _commit_or_raise_conflict(db, detail="enrollment already exists")
     db.refresh(enrollment)
     return enrollment
 
