@@ -89,6 +89,10 @@ def _serialize_course(course: models.Course) -> dict[str, Any]:
         "cta_text": course.cta_text,
         "syllabus": course.syllabus,
         "modality": course.modality,
+        # H-01 (cierre 2026-07-24): sede del curso en el contract read —
+        # NULL = global legítimo (A-03 lectura/captación). Hasta ahora se
+        # inyectaba en BD pero nunca se exponía al cliente.
+        "sede_id": course.sede_id,
         "is_published": course.is_published,
         "is_self_paced": course.is_self_paced,
         "duration_hours": course.duration_hours,
@@ -289,7 +293,7 @@ def submit_assessment(
     return attempt
 
 
-@router.get("/lessons/{lesson_id}/progress")
+@router.get("/lessons/{lesson_id}/progress", response_model=schemas.LessonProgressResponse)
 def get_lesson_progress(lesson_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
     lesson = db.query(models.Lesson).filter(
         models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)
@@ -307,7 +311,18 @@ def get_lesson_progress(lesson_id: UUID, current_user: AcademyStudent, db: Sessi
         )
         .first()
     )
-    return progress or {
+    # H-02 (cierre 2026-07-24): devolver siempre un dict conformando el
+    # response_model. Si existe el row ORM, mapeamos sus columnas; si no,
+    # el dict fallback (0.0 / 0 / False). Antes el endpoint devolvía el
+    # ORM row directamente (no serializable en response_model) para el
+    # caso True y el dict literal para False — inconsistencia de contract.
+    if progress is not None:
+        return {
+            "progress_percent": float(progress.progress_percent or 0.0),
+            "last_position_seconds": progress.last_position_seconds or 0,
+            "is_completed": bool(progress.is_completed),
+        }
+    return {
         "progress_percent": 0.0,
         "last_position_seconds": 0,
         "is_completed": False,
