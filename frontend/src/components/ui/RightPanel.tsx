@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import clsx from 'clsx';
 
 interface RightPanelProps {
@@ -41,15 +42,7 @@ function RightPanel({
     const isOpen = isControlled ? controlledOpen : layers.RIGHT;
     const panelRef = useRef<HTMLDivElement>(null);
 
-    // Focus trap: move focus into panel when it opens
-    useEffect(() => {
-        if (isOpen && panelRef.current) {
-            const focusable = panelRef.current.querySelectorAll<HTMLElement>(
-                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-            );
-            focusable[0]?.focus();
-        }
-    }, [isOpen]);
+    const isOverlay = isControlled || rightMode === 'overlay';
 
     const handleClose = () => {
         if (isControlled) {
@@ -58,6 +51,13 @@ function RightPanel({
             closeLayer('RIGHT');
         }
     };
+
+    // Focus trap + Escape: only in controlled/overlay mode where the panel
+    // behaves as a modal drawer. In push mode it is part of the normal layout.
+    useFocusTrap(panelRef, {
+        active: isOpen && isOverlay,
+        onEscape: handleClose,
+    });
 
     const panel = (
         <motion.aside
@@ -75,7 +75,8 @@ function RightPanel({
                     : 'relative h-full z-[25] shadow-[-8px_0_24px_rgba(0,0,0,0.06)]'
             )}
             tabIndex={-1}
-            role="complementary"
+            role={isOverlay ? 'dialog' : 'complementary'}
+            aria-modal={isOverlay ? 'true' : undefined}
             aria-label={title}
         >
             {/* Panel header */}
