@@ -679,7 +679,7 @@ def test_crud_create_announcement_inherits_actor_sede_for_orphan_fk(
 
     monkeypatch.setattr(
         _cms_crud,
-        "resolve_persona_id_for_user",
+        "resolve_persona_uuid_for_user",
         lambda db, user_id: None,
     )
 
@@ -724,7 +724,7 @@ def test_crud_create_announcement_blocks_cross_sede_when_fk_resolves_to_other_se
     # ``Persona`` cross-sede por inconsistência de DB.
     monkeypatch.setattr(
         _cms_crud,
-        "resolve_persona_id_for_user",
+        "resolve_persona_uuid_for_user",
         lambda db, user_id: persona_b.id
         if str(user_id) == str(admin_a.id) else None,
     )
@@ -800,7 +800,7 @@ def test_crud_create_testimonial_inherits_actor_sede_for_orphan_fk(
     # Simula resolve roto: author persona FK es None.
     monkeypatch.setattr(
         _cms_crud,
-        "resolve_persona_id_for_user",
+        "resolve_persona_uuid_for_user",
         lambda db, user_id: None,
     )
 
@@ -835,7 +835,7 @@ def test_crud_create_cms_media_item_inherits_actor_sede_for_orphan_fk(
 
     monkeypatch.setattr(
         _cms_crud,
-        "resolve_persona_id_for_user",
+        "resolve_persona_uuid_for_user",
         lambda db, user_id: None,
     )
 
