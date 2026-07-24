@@ -277,7 +277,15 @@ Componentes compartidos:
 
 - Ninguno.
 
-### Cerrado recientemente
+### Cerrado Fase 2 — Descomposición de estrategia (2026-07-24)
+
+20. **Drift de tipos `strategyDetailShared.ts` ↔ `types.ts`** `[NUEVO-DRIFT-TYPES-001]` — cerrada el `2026-07-24`. Eliminadas 4 interfaces duplicadas drifted (`Strategy`, `StrategyGroup`, `SessionRow`, `HabilitacionEstado`) que ninguna caller importaba desde `strategyDetailShared`. Reducción 185→141 LOC. Sustituido tipo hackish `typeof Users` por `LucideIcon` idiomático. Commit `51c2a0a0`. Ver `docs/CIERRA_FASE2_EVANGELISMO_2026-07-24.md`.
+
+21. **Sede-isolation en follow-up** `[NUEVO-FOLLOWUP-SEDE-001]` — cerrada el `2026-07-24`. CRUD `get_seguimientos` y `get_pendientes_seguimiento` ahora filtran por `sede_id` via join `seguimiento→asistencia→sesion→grupo→sede`. `update_seguimiento` añade `deleted_at.is_(None)` al query inicial. Handlers `GET /follow-up/pending` y `GET /follow-up/{asistencia_id}` pasan `require_user_sede_id` al CRUD. Smoke 2/2 + suite 226/226 verde. Commit `b346586e`.
+
+22. **Test falso follow-up + badge tipo** `[NUEVO-FOLLOWUP-TEST-BADGE-001]` — cerrada el `2026-07-24`. Test `test_pending_followups` apiuntaba a `/asistencias/pending-follow-ups` (path inexistente, _ok acepta 404 → falso verde). Ahora apunta al path real `/follow-up/pending`. Badge `tipo` en page.tsx comparaba minusculas vs enum mayusculas — los 3 variants actuales ahora matchean via `.toLowerCase().includes(...)`. Commit `09192539`.
+
+### Cerrado recientemente (Fase 0/1)
 
 1. **RBAC evangelismo migrado** `[PEND-RBAC-EVANGELISM-001]` — cerrada el `2026-07-17` con migracion radical de `require_pastor_or_admin` a `evangelism:read/edit/manage` en los 14 archivos del modulo. Se agregaron guards `require_evangelism_*`, bypasses por rol (pastor/coordinador), y se eliminaron todas las referencias a `require_pastor_or_admin` del modulo.
 2. **Enum canonico estados asistencia** `[PEND-ATTENDANCE-ENUM-001]` — cerrada el `2026-07-17`. `StatusAsistenciaCanonico` es ahora la fuente de verdad unica en `evangelism_shared.py`. Sets derivados del enum. Funciones `_attended()` y `_is_primera_vez()` migradas.

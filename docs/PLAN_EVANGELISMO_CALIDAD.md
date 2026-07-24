@@ -94,25 +94,19 @@ Criterio de salida alcanzado:
 
 **IDs:** `PARCIAL-STRATEGY-PAGE-001`, `PEND-STRATEGY-DECOMPOSE-001`
 
-Este sigue siendo el frente estructural principal del módulo.
+**Estado:** ✅ CERRADA el 2026-07-24. Bitácora: `docs/CIERRA_FASE2_EVANGELISMO_2026-07-24.md`.
 
-Estado actual:
+Cierre formal tras:
 
-- ya se extrajeron hooks funcionales relevantes
-- la page sigue siendo demasiado grande y sensible
+- 5 commits atómicos por panel (ses_075c59c7): `470b5d73` `26dc07d7` `fa547d18` `9a89fd06` `96c28863` — `page.tsx` 2580→2005 LOC, paneles en `strategies/[id]/panels/`.
+- Cierre de drift de tipos (`51c2a0a0`): `strategyDetailShared.ts` 185→141 LOC, eliminadas 4 interfaces drifted que ninguna caller importaba.
+- Cierre de auditoria follow-up (`b346586e`, `09192539`): sede-isolation CRUD/handlers, soft-delete filter en `update_seguimiento`, test falso remediado, badge `tipo` case-insensitive.
 
-Orden recomendado:
+Criterio de salida alcanzado:
 
-1. congelar contrato actual
-2. seguir separando lectura, mutaciones y paneles visuales
-3. dejar la page como orquestador
-4. cubrir cada extracción sensible con prueba o e2e focalizada
-
-Criterio de salida:
-
-- menos lógica de negocio embebida en `strategies/[id]/page.tsx`
-- fetches centralizados y cancelables
-- cero regresiones de layout, permisos o rutas
+- menos lógica de negocio embebida en `strategies/[id]/page.tsx` ✓
+- fetches centralizados y cancelables ✓
+- cero regresiones de layout, permisos o rutas ✓ (smoke 2/2 + suite 226/226 + tsc clean)
 
 ## 6. Fase 3 — Validación canónica
 
@@ -161,16 +155,21 @@ Criterio de salida:
 
 ### Activo
 
-- (vacío tras cierre de Fase 1 — Fase 2/3/4 son disciplina operativa, no deuda pendiente)
+- (vacío tras cierre de Fase 2 el 2026-07-24 — todas las fases del plan están cerradas o son disciplina operativa)
 
 ### Disciplina operativa continua (no reactivar como backlog)
 
-- `PARCIAL-STRATEGY-PAGE-001` (Fase 2 — descomposición): mantener el monolito `strategies/[id]/page.tsx` como orquestador; si vuelve a crecer, extraer hooks/paneles. La lectura por rol queda alineada al guard real (ver RBAC_MATRIX seccion 3).
-- `PEND-STRATEGY-DECOMPOSE-001` (Fase 2 — descomposición): vigilancia de pobreza estructural adicional en la page; extraer si fetches/mutaciones vuelven a concentrarse.
+- Vigilancia de pobreza estructural en `strategies/[id]/page.tsx`: si vuelve a crecer sobre 2005 LOC o re-concentra fetches, extraer hooks/paneles adicionales. La lectura por rol queda alineada al guard real (ver RBAC_MATRIX seccion 3).
+- `NUEVO-FOLLOWUP-PENDING-FIXES` (cola de calidad): 7 brechas menores pendientes identificadas en auditoria follow-up que requieren migracion DB o cambio con masaje (ver `notes.md` ses_06be8d107ffe): #4 default `estado_completado=True→False`, #5 enum CHECK en `tipo`, #6 indices FK, #7 `extra="forbid"` en `RegistroSeguimientoResponse`, #10 UI scoping por estrategia del panel de seguimiento, #12 tests cross-sede/update-sobre-soft-deleted, #3 endpoint DELETE via API. No forman backlog activo — ejecutar en proxima sesión con migración agrupada.
 
 ### Cerrado y no reabrir salvo nueva evidencia
 
 - `PARCIAL-RUNTIME-AUTH-001` — cerrado el 2026-07-21 (Fase 1 RBAC radical + wrapper legacy eliminado)
+- `PARCIAL-STRATEGY-PAGE-001` — cerrado el 2026-07-24 (Fase 2: paneles extraídos + drift eliminado)
+- `PEND-STRATEGY-DECOMPOSE-001` — cerrado el 2026-07-24 (Fase 2: page consume hooks canonicos)
+- `NUEVO-DRIFT-TYPES-001` — cerrado el 2026-07-24 (`51c2a0a0`)
+- `NUEVO-FOLLOWUP-SEDE-001` — cerrado el 2026-07-24 (`b346586e`)
+- `NUEVO-FOLLOWUP-TEST-BADGE-001` — cerrado el 2026-07-24 (`09192539`)
 - `PEND-PERSONAS-SEARCH-001`
 - `PEND-RBAC-EVANGELISM-001`
 - `PARCIAL-EVENTS-001`
