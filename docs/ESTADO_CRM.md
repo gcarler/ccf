@@ -319,11 +319,18 @@ Archivos modificados:
 - `backend/api/crm/pastoral.py`
 - `tests/test_crm_rbac_http.py`
 
-Validación posterior:
+## 16. Actualizacion de estado — 2026-07-24 (calidad integral CRM)
 
-- `scripts/test_crm_quality.py`: smoke mínimo + RBAC HTTP — **verde** ✅
-- `scripts/test_crm_quality.py --backend-deep`: mentoría, resource bank, automations DAG, concurrencia — **verde** ✅
-- `scripts/test_crm_quality.py --pipeline`: pipeline visual + challenger adversarial — **verde** ✅
-- `tests/test_crm_rbac_http.py`: **33 passed** ✅
+Revalidación integral del módulo CRM ejecutada tras los fixes de contrato. Se corrieron todas las suites canónicas y el análisis estático:
 
-Estado: módulo CRM revalidado y libre de los 2 fallos de contrato detectados. La deuda técnica documentada en `CRM_RBAC_MATRIX.md` sobre helpers de automations sin guard explícito permanece como drift conocido fuera del alcance de esta revisión.
+- `scripts/test_crm_quality.py`: smoke mínimo + RBAC HTTP — **80 passed** ✅
+- `scripts/test_crm_quality.py --backend-deep`: mentoría, resource bank, automations DAG, concurrencia — **24 passed** ✅
+- `scripts/test_crm_quality.py --pipeline`: pipeline visual + challenger adversarial — **99 passed** ✅
+- `pytest tests/test_crm_rbac_http.py tests/test_crm_domain.py tests/test_crm_sede_isolation.py tests/test_crm_runtime_security.py tests/test_crm_resource_bank.py tests/test_crm_automations_dag.py tests/test_crm_persona_mentorship.py` — **94 passed** ✅
+- `pyflakes backend/api/crm/*.py backend/crud/crm_/personas.py` — **sin errores** ✅
+
+**Estado:** Backend, tests unitarios y análisis estático del CRM están al 100% en el alcance canónico. Los 2 fallos de contrato detectados fueron corregidos.
+
+**Caveats / pendientes fuera de este alcance:**
+- **E2E frontend CRM**: se validó históricamente el 2026-07-16 con `npm run test:e2e:crm` (14 passed) y `npm run test:e2e:crm:deep` (17 passed), pero no se reejecutó en esta sesión debido al timeout de build de Next.js (~2.4 min). Para considerar el módulo cerrado al 100% frontend, se debe revalidar el E2E con timeout ≥ 15 minutos.
+- **Deuda técnica documentada**: `CRM_RBAC_MATRIX.md` señala helpers de automations sin guard explícito; permanece como drift conocido fuera del alcance de esta revisión.
