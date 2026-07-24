@@ -457,7 +457,7 @@ class TestAllOtherEndpoints:
 
     def test_pending_followups(self, full):
         c, h = full["c"], full["h"]
-        assert _ok(c.get("/api/evangelism/asistencias/pending-follow-ups", headers=h).status_code)
+        assert _ok(c.get("/api/evangelism/follow-up/pending", headers=h).status_code)
 
     def test_analytics_overview(self, full):
         c, h = full["c"], full["h"]
