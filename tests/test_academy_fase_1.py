@@ -37,13 +37,13 @@ import inspect
 import pytest
 from pydantic import ValidationError
 
-from backend.api.academy import (
+from backend.schemas.academy import (
     AssessmentPayload,
     AssessmentQuestionPayload,
     CoursePayload,
+    ForumThreadCreate,
     LessonPayload,
 )
-from backend.schemas.academy import ForumThreadCreate
 
 # ──────────────────────────────────────────────────────────────────────
 # Helpers: payloads válidos mínimos por modelo

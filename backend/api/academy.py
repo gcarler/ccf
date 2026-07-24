@@ -8,18 +8,14 @@ explicit Academy permission.
 from __future__ import annotations
 
 from datetime import date
-from enum import Enum
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
-from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
 from backend import models
-
-# TKT-203: helpers de cache LRU + N+1 consolidation para dashboard_metrics y list_lessons
 from backend.api.academy_cache import (
     _fetch_dashboard_metrics_cached,
     _fetch_list_lessons_cached,
@@ -39,123 +35,10 @@ from backend.schemas import academy as schemas
 router = APIRouter(prefix="/academy", tags=["Academy"])
 
 
-class Modality(str, Enum):
-    ONLINE = "online"
-    PRESENTIAL = "presential"
-    HYBRID = "hybrid"
-
-
-class ContentType(str, Enum):
-    VIDEO = "video"
-    TEXT = "text"
-    DOCUMENT = "document"
-    IMAGE = "image"
-
-
 AcademyReader = Annotated[models.User, Depends(require_module_access("academy", "read"))]
 AcademyStudent = Annotated[models.User, Depends(require_module_access("academy", "study"))]
 AcademyEditor = Annotated[models.User, Depends(require_module_access("academy", "edit"))]
 AcademyManager = Annotated[models.User, Depends(require_module_access("academy", "manage"))]
-
-
-class ProgressUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    progress_percent: float = Field(ge=0, le=100)
-    last_position_seconds: int = Field(default=0, ge=0)
-
-
-class CoursePayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    code: str = Field(max_length=50)
-    title: str = Field(max_length=200)
-    description: str | None = None
-    modality: Modality = Modality.ONLINE
-    is_published: bool = False
-    is_self_paced: bool = False
-    duration_hours: int = Field(default=0, ge=0)
-    cohort_name: str | None = Field(default=None, max_length=100)
-    certificate_type: str | None = Field(default=None, max_length=50)
-    instructor_name: str | None = Field(default=None, max_length=200)
-    image_url: str | None = Field(default=None, max_length=255)
-    access_level: Literal["open", "persona", "advanced"] = "persona"
-
-
-class CourseUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    code: str | None = Field(default=None, max_length=50)
-    title: str | None = Field(default=None, max_length=200)
-    description: str | None = None
-    modality: Modality | None = None
-    is_published: bool | None = None
-    is_self_paced: bool | None = None
-    duration_hours: int | None = Field(default=None, ge=0)
-    cohort_name: str | None = Field(default=None, max_length=100)
-    certificate_type: str | None = Field(default=None, max_length=50)
-    instructor_name: str | None = Field(default=None, max_length=200)
-    image_url: str | None = Field(default=None, max_length=255)
-    access_level: Literal["open", "persona", "advanced"] | None = None
-
-
-class LessonPayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    title: str = Field(max_length=200)
-    content: str = ""
-    content_type: ContentType = ContentType.VIDEO
-    media_url: str | None = None
-    order_index: int = 0
-    duration_minutes: int = Field(default=0, ge=0)
-    is_published: bool = False
-
-
-class LessonUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    title: str | None = Field(default=None, max_length=200)
-    content: str | None = None
-    content_type: ContentType | None = None
-    media_url: str | None = None
-    order_index: int | None = None
-    duration_minutes: int | None = Field(default=None, ge=0)
-    is_published: bool | None = None
-
-
-class AssessmentQuestionPayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    text: str
-    type: str = "multiple_choice"
-    points: int = Field(default=1, ge=1)
-    options: list[str] = Field(default_factory=list)
-    correct_option: int = Field(default=0, ge=0)
-
-
-class AssessmentPayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    course_id: UUID
-    lesson_id: UUID | None = None
-    title: str = Field(max_length=200)
-    description: str | None = None
-    passing_score: float = Field(default=70, ge=0, le=100)
-    questions: list[AssessmentQuestionPayload] = Field(default_factory=list)
-
-
-class AssessmentUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    title: str | None = Field(default=None, max_length=200)
-    passing_score: float | None = Field(default=None, ge=0, le=100)
-
-
-class GradeSubmissionPayload(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    grade: float = Field(ge=0, le=100)
-    feedback: str | None = None
 
 
 def _can_edit_academy(db: Session, user: models.User) -> bool:
@@ -201,6 +84,10 @@ def _serialize_course(course: models.Course) -> dict[str, Any]:
         "slug": course.slug,
         "title": course.title,
         "description": course.description,
+        "excerpt": course.excerpt,
+        "tag": course.tag,
+        "cta_text": course.cta_text,
+        "syllabus": course.syllabus,
         "modality": course.modality,
         "is_published": course.is_published,
         "is_self_paced": course.is_self_paced,
@@ -293,7 +180,7 @@ def list_lessons(
     )
 
 
-@router.get("/courses/{course_id}/assessments")
+@router.get("/courses/{course_id}/assessments", response_model=list[schemas.Assessment])
 def list_assessments(
     course_id: UUID,
     current_user: AcademyReader,
@@ -327,7 +214,7 @@ def get_assessment(assessment_id: UUID, current_user: AcademyStudent, db: Sessio
     return assessment
 
 
-@router.post("/assessments/{assessment_id}/submit")
+@router.post("/assessments/{assessment_id}/submit", response_model=schemas.AssessmentAttempt)
 @academy_limiter.limit("10/minute")
 def submit_assessment(
     request: Request,
@@ -430,7 +317,7 @@ def get_lesson_progress(lesson_id: UUID, current_user: AcademyStudent, db: Sessi
 @router.post("/lessons/{lesson_id}/progress")
 def update_lesson_progress(
     lesson_id: UUID,
-    payload: ProgressUpdate,
+    payload: schemas.ProgressUpdate,
     current_user: AcademyStudent,
     db: Session = Depends(get_db),
 ):
@@ -582,8 +469,9 @@ def all_enrollments(
     return [_serialize_enrollment(enrollment) for enrollment in query.offset(skip).limit(limit).all()]
 
 
-@router.post("/enrollments/{enrollment_id}/check-in")
-def check_in(enrollment_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
+@router.post("/enrollments/{enrollment_id}/check-in", response_model=schemas.CourseAttendance)
+@academy_limiter.limit("20/minute")
+def check_in(enrollment_id: UUID, request: Request, current_user: AcademyStudent, db: Session = Depends(get_db)):
     enrollment = _get_own_enrollment(db, current_user, enrollment_id)
     today = date.today()
     attendance = (
@@ -752,7 +640,8 @@ def my_certificates(
 
 
 @router.post("/enrollments/{enrollment_id}/request-certificate")
-def request_certificate(enrollment_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
+@academy_limiter.limit("5/minute")
+def request_certificate(enrollment_id: UUID, request: Request, current_user: AcademyStudent, db: Session = Depends(get_db)):
     enrollment = _get_own_enrollment(db, current_user, enrollment_id)
     if enrollment.status != "completed" and not enrollment.approved:
         raise HTTPException(status_code=400, detail="El curso todavía no está aprobado")
@@ -773,17 +662,62 @@ def request_certificate(enrollment_id: UUID, current_user: AcademyStudent, db: S
     return certificate
 
 
-@router.get("/certificates/validate/{code}")
-def validate_certificate(code: str, db: Session = Depends(get_db)):
-    certificate = db.query(models.Certificate).filter(models.Certificate.certificate_code == code).first()
+@router.get("/certificates/validate/{code}", response_model=schemas.CertificateValidation)
+@academy_limiter.limit("10/minute")
+def validate_certificate(code: str, request: Request, db: Session = Depends(get_db)):
+    # A-01 (cierre 2026-07-24): el endpoint sigue siendo público (un externo
+    # puede verificar autenticidad de un diploma), pero ahora (1) aplica rate
+    # limiting fuerte, (2) reduce el response a metadatos públicos sin PII ni
+    # IDs internos, y (3) carga vía JOIN los anidados ``enrollment.student`` +
+    # ``enrollment.course`` que consume el frontend — antes el schema plano
+    # ``Certificate`` llegaba al cliente sin los anidados y rompía en runtime.
+    if not code or len(code) > 128:
+        raise HTTPException(status_code=404, detail="Certificado no encontrado")
+    certificate = (
+        db.query(models.Certificate)
+        .options(
+            joinedload(models.Certificate.enrollment)
+            .joinedload(models.Enrollment.persona),
+            joinedload(models.Certificate.enrollment)
+            .joinedload(models.Enrollment.course),
+        )
+        .filter(models.Certificate.certificate_code == code)
+        .first()
+    )
     if not certificate:
         raise HTTPException(status_code=404, detail="Certificado no encontrado")
-    return certificate
+    if not certificate.enrollment or not certificate.enrollment.course:
+        raise HTTPException(status_code=404, detail="Certificado no encontrado")
+    student_username = None
+    persona = certificate.enrollment.persona
+    if persona is not None:
+        # ``Persona`` no tiene ``username`` ni ``nombre_completo``; el frontend
+        # de validación usa ``enrollment.student.username`` como el nombre
+        # público del estudiante certificado, así que aquí se compone a partir
+        # de los campos canónicos de Persona (first_name/last_name).
+        parts = [
+            getattr(persona, "first_name", None),
+            getattr(persona, "second_last_name", None) or getattr(persona, "last_name", None),
+        ]
+        student_username = " ".join(p for p in parts if p) or None
+    return schemas.CertificateValidation(
+        certificate_code=certificate.certificate_code,
+        certificate_type=certificate.certificate_type,
+        issued_at=certificate.issued_at,
+        enrollment=schemas.CertificateValidationEnrollment(
+            student=schemas.CertificateValidationStudent(username=student_username),
+            course=schemas.CertificateValidationCourse(
+                title=certificate.enrollment.course.title
+            ),
+        ),
+    )
 
 
-@router.post("/lessons/{lesson_id}/submit-assignment")
+@router.post("/lessons/{lesson_id}/submit-assignment", response_model=schemas.AssignmentSubmission)
+@academy_limiter.limit("10/minute")
 async def submit_assignment(
     lesson_id: UUID,
+    request: Request,
     current_user: AcademyStudent,
     enrollment_id: UUID = Form(...),
     comment: str | None = Form(None),
@@ -829,7 +763,7 @@ async def submit_assignment(
     return submission
 
 
-@router.get("/forum/threads")
+@router.get("/forum/threads", response_model=list[schemas.ForumThread])
 def forum_threads(
     current_user: AcademyStudent,
     category: schemas.ForumCategory | None = None,
@@ -859,7 +793,7 @@ def forum_threads(
     return query.order_by(models.ForumThread.created_at.desc()).offset(skip).limit(limit).all()
 
 
-@router.post("/forum/threads", status_code=status.HTTP_201_CREATED)
+@router.post("/forum/threads", response_model=schemas.ForumThread, status_code=status.HTTP_201_CREATED)
 @academy_limiter.limit("5/minute")
 def create_forum_thread(
     request: Request,
@@ -891,7 +825,7 @@ def create_forum_thread(
     return thread
 
 
-@router.patch("/forum/threads/{thread_id}/resolve")
+@router.patch("/forum/threads/{thread_id}/resolve", response_model=schemas.ForumThread)
 def resolve_forum_thread(
     thread_id: UUID,
     current_user: AcademyEditor,
@@ -928,7 +862,7 @@ def _get_scoped_forum_thread(db: Session, current_user: models.User, thread_id: 
     return thread
 
 
-@router.get("/forum/threads/{thread_id}")
+@router.get("/forum/threads/{thread_id}", response_model=schemas.ForumThread)
 def get_forum_thread(
     thread_id: UUID,
     current_user: AcademyStudent,
@@ -1211,7 +1145,7 @@ def list_submissions(
 def grade_submission(
     submission_id: UUID,
     current_user: AcademyEditor,
-    payload: GradeSubmissionPayload,
+    payload: schemas.GradeSubmissionPayload,
     db: Session = Depends(get_db),
 ):
     # Axioma 3 — Multi-Tenant: una entrega sólo puede mutarse si su Course pertenece
@@ -1261,7 +1195,7 @@ def grade_submission(
 
 
 @router.post("/admin/courses", status_code=status.HTTP_201_CREATED)
-def create_course_admin(payload: CoursePayload, current_user: AcademyEditor, db: Session = Depends(get_db)):
+def create_course_admin(payload: schemas.CoursePayload, current_user: AcademyEditor, db: Session = Depends(get_db)):
     course = models.Course(**payload.model_dump(), sede_id=get_user_sede_id(db, current_user.id))
     db.add(course)
     db.commit()
@@ -1272,7 +1206,7 @@ def create_course_admin(payload: CoursePayload, current_user: AcademyEditor, db:
 @router.patch("/admin/courses/{course_id}")
 def update_course_admin(
     course_id: UUID,
-    payload: CourseUpdate,
+    payload: schemas.CourseUpdate,
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
@@ -1367,10 +1301,10 @@ def course_students(course_id: UUID, current_user: AcademyEditor, db: Session = 
     ]
 
 
-@router.post("/admin/courses/{course_id}/lessons", status_code=status.HTTP_201_CREATED)
+@router.post("/admin/courses/{course_id}/lessons", response_model=schemas.Lesson, status_code=status.HTTP_201_CREATED)
 def create_lesson_admin(
     course_id: UUID,
-    payload: LessonPayload,
+    payload: schemas.LessonPayload,
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
@@ -1382,10 +1316,10 @@ def create_lesson_admin(
     return lesson
 
 
-@router.patch("/admin/lessons/{lesson_id}")
+@router.patch("/admin/lessons/{lesson_id}", response_model=schemas.Lesson)
 def update_lesson_admin(
     lesson_id: UUID,
-    payload: LessonUpdate,
+    payload: schemas.LessonUpdate,
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
@@ -1495,9 +1429,9 @@ def delete_submission_admin(
     db.commit()
 
 
-@router.post("/admin/assessments", status_code=status.HTTP_201_CREATED)
+@router.post("/admin/assessments", response_model=schemas.Assessment, status_code=status.HTTP_201_CREATED)
 def create_assessment_admin(
-    payload: AssessmentPayload,
+    payload: schemas.AssessmentPayload,
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
@@ -1544,10 +1478,10 @@ def create_assessment_admin(
     return assessment
 
 
-@router.patch("/admin/assessments/{assessment_id}")
+@router.patch("/admin/assessments/{assessment_id}", response_model=schemas.Assessment)
 def update_assessment_admin(
     assessment_id: UUID,
-    payload: AssessmentUpdate,
+    payload: schemas.AssessmentUpdate,
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):

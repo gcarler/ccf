@@ -2,12 +2,31 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from backend.schemas._common import orm_config
+
+# ── Enums canónicos (validación en borde Pydantic) ────────────────────────────
+# Definidos aquí (no en api/academy.py) porque los write schemas los usan.
+# Reflejan el vocabulario de String(50) en models_academy_core.py.
+
+
+class Modality(str, Enum):
+    """TKT-051 — vocabulario canónico para ``Course.modality`` (String 50)."""
+    ONLINE = "online"
+    PRESENTIAL = "presential"
+    HYBRID = "hybrid"
+
+
+class ContentType(str, Enum):
+    """TKT-054 — vocabulario canónico para ``Lesson.content_type`` (String 50)."""
+    VIDEO = "video"
+    TEXT = "text"
+    DOCUMENT = "document"
+    IMAGE = "image"
 
 
 class CoursePrerequisiteBase(BaseModel):
@@ -23,8 +42,13 @@ class CoursePrerequisite(CoursePrerequisiteBase):
 class Course(BaseModel):
     id: UUID
     code: str
+    slug: Optional[str] = None
     title: str
     description: Optional[str] = None
+    excerpt: Optional[str] = None
+    tag: Optional[str] = None
+    cta_text: Optional[str] = None
+    syllabus: Optional[dict | list] = None
     modality: str
     is_published: bool = True
     is_self_paced: bool = False
@@ -83,7 +107,7 @@ class Assessment(BaseModel):
 class AssessmentAttempt(BaseModel):
     id: UUID
     enrollment_id: UUID
-    assessment_id: str
+    assessment_id: UUID
     score: float = 0.0
     passed: bool = False
     created_at: datetime | None = None
@@ -93,8 +117,9 @@ class AssessmentAttempt(BaseModel):
 
 class AssessmentAnswer(BaseModel):
     id: UUID
-    question_id: str
-    selected_option_id: Optional[str] = None
+    attempt_id: UUID
+    question_id: UUID
+    selected_option_id: Optional[UUID] = None
     text_response: Optional[str] = None
     is_correct: Optional[bool] = None
     points_awarded: float = 0
@@ -102,8 +127,8 @@ class AssessmentAnswer(BaseModel):
 
 
 class AssessmentAnswerSubmit(BaseModel):
-    question_id: str
-    selected_option_id: Optional[str] = None
+    question_id: UUID
+    selected_option_id: Optional[UUID] = None
     text_response: Optional[str] = None
 
 
@@ -161,6 +186,40 @@ class Certificate(BaseModel):
     enrollment_id: UUID
     certificate_code: str
     issued_at: datetime
+    model_config = orm_config
+
+
+class CertificateValidationStudent(BaseModel):
+    """Metadatos públicos del estudiante certificado — sin PII ni IDs internos."""
+    username: str | None = None
+
+
+class CertificateValidationCourse(BaseModel):
+    """Metadatos públicos del curso asociado al certificado."""
+    title: str
+
+
+class CertificateValidationEnrollment(BaseModel):
+    """Datos públicos de la inscripción firmada por el certificado."""
+    student: CertificateValidationStudent
+    course: CertificateValidationCourse
+
+
+class CertificateValidation(BaseModel):
+    """Respuesta pública de validación de un certificado por código.
+
+    A diferencia del schema ``Certificate`` (que expone IDs internos y se
+    reserva al flujo autenticado de emisión), este schema sólo transporta
+    metadatos públicos无毒: ``certificate_code``, ``issued_at``,
+    ``certificate_type`` y los anidados ``enrollment.student.username`` +
+    ``enrollment.course.title`` que consume el frontend de validación
+    pública. No expone ``id`` ni ``enrollment_id`` internos — cierra la
+    enumeración oracle de A-01.
+    """
+    certificate_code: str
+    certificate_type: str | None = None
+    issued_at: datetime
+    enrollment: CertificateValidationEnrollment
     model_config = orm_config
 
 
@@ -246,10 +305,6 @@ class AssignmentSubmissionReview(BaseModel):
     submitted_at: datetime
 
 
-# Alias usado por api/academy.py
-Attendance = CourseAttendance
-
-
 class AcademyStudentProfile(BaseModel):
     persona_id: UUID
     username: str
@@ -330,9 +385,249 @@ class ForumCommentRead(BaseModel):
     model_config = orm_config
 
 
-class ChatMessage(BaseModel):
+# ── Write schemas (consolidated from api/academy.py inline models) ────────────
+
+
+class ProgressUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    progress_percent: float = Field(ge=0, le=100)
+    last_position_seconds: int = Field(default=0, ge=0)
+
+
+class CoursePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(max_length=50)
+    slug: str | None = Field(default=None, max_length=200)
+    title: str = Field(max_length=200)
+    description: str | None = None
+    excerpt: str | None = None
+    tag: str | None = Field(default=None, max_length=100)
+    cta_text: str | None = Field(default=None, max_length=100)
+    syllabus: dict | list | None = None
+    modality: Modality = Modality.ONLINE
+    is_published: bool = False
+    is_self_paced: bool = False
+    duration_hours: int = Field(default=0, ge=0)
+    cohort_name: str | None = Field(default=None, max_length=100)
+    certificate_type: str | None = Field(default=None, max_length=50)
+    instructor_name: str | None = Field(default=None, max_length=200)
+    image_url: str | None = Field(default=None, max_length=255)
+    access_level: Literal["open", "persona", "advanced"] = "persona"
+
+
+class CourseUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: str | None = Field(default=None, max_length=50)
+    slug: str | None = Field(default=None, max_length=200)
+    title: str | None = Field(default=None, max_length=200)
+    description: str | None = None
+    excerpt: str | None = None
+    tag: str | None = Field(default=None, max_length=100)
+    cta_text: str | None = Field(default=None, max_length=100)
+    syllabus: dict | list | None = None
+    modality: Modality | None = None
+    is_published: bool | None = None
+    is_self_paced: bool | None = None
+    duration_hours: int | None = Field(default=None, ge=0)
+    cohort_name: str | None = Field(default=None, max_length=100)
+    certificate_type: str | None = Field(default=None, max_length=50)
+    instructor_name: str | None = Field(default=None, max_length=200)
+    image_url: str | None = Field(default=None, max_length=255)
+    access_level: Literal["open", "persona", "advanced"] | None = None
+
+
+class LessonPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(max_length=200)
+    content: str = ""
+    content_type: ContentType = ContentType.VIDEO
+    media_url: str | None = None
+    order_index: int = 0
+    duration_minutes: int = Field(default=0, ge=0)
+    is_published: bool = False
+
+
+class LessonUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str | None = Field(default=None, max_length=200)
+    content: str | None = None
+    content_type: ContentType | None = None
+    media_url: str | None = None
+    order_index: int | None = None
+    duration_minutes: int | None = Field(default=None, ge=0)
+    is_published: bool | None = None
+
+
+class AssessmentQuestionPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    text: str
+    type: str = "multiple_choice"
+    points: int = Field(default=1, ge=1)
+    options: list[str] = Field(default_factory=list)
+    correct_option: int = Field(default=0, ge=0)
+
+
+class AssessmentPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    course_id: UUID
+    lesson_id: UUID | None = None
+    title: str = Field(max_length=200)
+    description: str | None = None
+    passing_score: float = Field(default=70, ge=0, le=100)
+    questions: list[AssessmentQuestionPayload] = Field(default_factory=list)
+
+
+class AssessmentUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str | None = Field(default=None, max_length=200)
+    passing_score: float | None = Field(default=None, ge=0, le=100)
+
+
+class GradeSubmissionPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    grade: float = Field(ge=0, le=100)
+    feedback: str | None = None
+
+
+# ── Response schemas (typed responses for serialize_dict endpoints) ────────────
+
+
+class CourseListItem(BaseModel):
     id: UUID
-    sender_id: str
-    content: str
-    created_at: datetime
+    code: str
+    slug: str | None = None
+    title: str
+    description: str | None = None
+    excerpt: str | None = None
+    tag: str | None = None
+    cta_text: str | None = None
+    modality: str
+    is_published: bool
+    is_self_paced: bool
+    duration_hours: int
+    cohort_name: str | None = None
+    certificate_type: str | None = None
+    xp_per_lesson: int
+    access_level: str
+    image_url: str | None = None
+    instructor_name: str | None = None
+    created_at: datetime | None = None
+    lesson_count: int = 0
+    total_minutes: int = 0
     model_config = orm_config
+
+
+class EnrollmentResponse(BaseModel):
+    id: UUID
+    persona_id: UUID
+    course_id: UUID
+    status: str
+    progress_percent: float
+    final_grade: float | None = None
+    attendance_percent: float
+    approved: bool
+    acta_closed: bool
+    certificate_issued: bool
+    created_at: datetime | None = None
+    course: CourseListItem | None = None
+    model_config = orm_config
+
+
+class MyProgressItem(BaseModel):
+    id: UUID
+    title: str
+    progress_percent: float
+    status: str
+    average_grade: float
+    lessons_completed: int
+    total_lessons: int
+    last_activity: datetime | None = None
+    certificate_issued: bool
+
+
+class MyCertificateItem(BaseModel):
+    id: UUID
+    enrollment_id: UUID
+    certificate_code: str
+    certificate_type: str | None = None
+    course_title: str
+    issued_at: datetime
+
+
+class ScheduleItem(BaseModel):
+    id: UUID
+    title: str
+    modality: str
+    cohort_name: str | None = None
+    duration_hours: int
+
+
+class DashboardMetricsResponse(BaseModel):
+    active_students: int = 0
+    completion_rate: float = 0.0
+    certificates_issued: int = 0
+    cards: list[dict] = []
+    formal_stats: dict = {}
+    no_formal_stats: dict = {}
+    top_courses: list[dict] = []
+
+
+class PilotReadinessResponse(BaseModel):
+    environment_ready: bool = False
+    readiness_score: float = 0.0
+    checklist: list[dict] = []
+
+
+class SubmissionListItem(BaseModel):
+    id: UUID
+    enrollment_id: UUID
+    lesson_id: UUID
+    student_name: str
+    lesson_title: str
+    file_url: str
+    comment: str | None = None
+    grade: float | None = None
+    teacher_feedback: str | None = None
+    submitted_at: datetime
+
+
+class CourseStudentItem(BaseModel):
+    id: UUID
+    enrollment_id: UUID
+    persona_id: UUID
+    username: str
+    email: str
+    status: str
+    progress: float
+    progress_percent: float
+    attendance_count: int
+    average_grade: float
+    approved: bool
+
+
+class AcademyPersonaItem(BaseModel):
+    id: UUID
+    persona_id: UUID
+    username: str
+    email: str
+    role: str
+    is_active: bool
+
+
+class MyProfileResponse(BaseModel):
+    persona_id: UUID
+    username: str
+    total_progress: float
+    enrollments_count: int
+    certificates_count: int
+    active_courses: list[EnrollmentResponse] = []
+    recent_certificates: list[Certificate] = []
