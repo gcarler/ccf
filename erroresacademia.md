@@ -1,0 +1,574 @@
+# Auditoría Forense de Calidad — Módulo Academy
+## Completitud y Consistencia (Revisión Línea por Línea)
+
+**Fecha:** 2026-07-24  
+**Alcance:** `backend/models_academy_core.py`, `backend/api/academy.py`, `backend/api/academy_cache.py`, `backend/crud/academy.py`, `backend/schemas/academy.py`, `frontend/src/app/plataforma/academy/**`, `frontend/src/app/plataforma/dashboard/academy/**`, `frontend/src/components/academy/**`, `frontend/src/components/MyEnrollments.tsx`, `frontend/src/types/academy.ts`, `frontend/src/hooks/useStudentEnrollments.ts`, `frontend/src/hooks/useCourseLessons.ts`, y `tests/*academy*` relacionados.
+
+---
+
+## Resumen Ejecutivo
+
+| Métrica | Valor |
+|---|---|
+| Archivos revisados | 42 |
+| Archivos de test revisados | 15 (~186 funciones) |
+| Endpoints API en scope | ~36 |
+| Hallazgos críticos | 8 |
+| Hallazgos altos | 11 |
+| Hallazgos medios | 12 |
+| Hallazgos bajos (info) | 9 |
+| Cobertura test runtime (academy) | ~38 % (meta repo 70 %, gate 39 %) |
+| **Total** | **40** |
+
+---
+
+## 🔴 CRÍTICOS
+
+### A-01: `validate_certificate` sin autenticación ni filtro de sede — enumeración cross-tenant de certificados
+
+**Archivo:** `backend/api/academy.py:663-668`  
+**Línea:** `def validate_certificate(code: str, db: Session = Depends(get_db)):`
+
+**Problema:** El endpoint `GET /academy/certificates/validate/{code}` sólo recibe `db: Session = Depends(get_db)` — **sin `current_user`**, sin `get_user_sede_id`, sin JOIN a `Course.sede_id`. Cualquiera (incluido un actor fuera del tenant) con el `certificate_code` recupera el `Certificate` completo. El `certificate_code` se genera con patrón predecible `CCF-ACA-{enrollment.id.hex[:12].upper()}` (`academy.py:649`) — no es secreto criptográfico. Aunque el endpoint se documenta como "validación pública", exponer el certificado crudo (con `enrollment_id`, `certificate_type`, `issued_at`) sin siquiera un rate-limit habilita enumeración y oracle de existencia.
+
+**Impacto:** Violación de Axioma 3 — fuga de datos cross-tenant y enumeration oracle.
+
+**Solución:** O bien (a) exponer sólo un booleano `valid: true/false` + metadatos públicos (curso, fecha,.Estudiante sin PII), o (b) requerir autenticación y filtrar por sede del actor.
+
+---
+
+### A-02: Forum threads de cursos archivados se re-exponen vía outerjoin NULL
+
+**Archivo:** `backend/api/academy.py:727-746`  
+**Líneas:** branch `course_id.is_(None)` en `forum_threads`
+
+**Problema:** `course_scope` exige `Course.deleted_at.is_(None)`, pero la rama `course_id.is_(None)` (anuncios globales, línea 743) admite huérfanos **sin verificar** que el `course_id` original no haya sido archivado. Si un `ForumThread.course_id` apunta a un Course ya archived, el `outerjoin` produce NULL y cae en la rama global, re-exponiendo el hilo en un scope que ya debía estar oculto.
+
+**Impacto:** Gaslight de scope — hilos de cursos archivados quedan visibles en el listado global.
+
+---
+
+### A-03: `all_enrollments` / `list_submissions` / `grade_submission` / `delete_submission_admin` incluyen cursos globales en el scope de cualquier Manager
+
+**Archivo:** `backend/api/academy.py:467-468` (all_enrollments), `:1078` (list_submissions), `:1124` (grade_submission), `:1353` (delete_submission_admin)  
+**Línea:** `or_(Course.sede_id == sede_id, Course.sede_id.is_(None))`
+
+**Problema:** Cuatro endpoints admin mezclan contenido global (`sede_id IS NULL`) con el scope de la sede del actor. Contradicción interna: `course_students:1219` filtra estrictamente `== user_sede` sin el `OR` global. Esto permite a un Manager de sede A ver/editar/archivar submissions y enrollments de cursos globales que el diseño no documentó como cross-tenant legítimos (a diferencia de CMS site-faro, REGLAS.md §4.2 — Academy NO está en la lista de excepciones globales).
+
+**Impacto:** Leak y mutación cross-tenant de UGC admin.
+
+---
+
+### A-04: Rate-limiting declarado pero no efectivo — `create_enrollment` sin `Request`
+
+**Archivo:** `backend/api/academy.py:387-392` (`create_enrollment`), comparado con `:218` (`submit_assessment`), `:750` (`create_forum_thread`)  
+**Línea:** `@academy_limiter.limit("30/minute")` sin `request: Request` en la firma
+
+**Problema:** slowapi requiere que el handler reciba `request: Request` (o `request: Request = None`) para identificar al actor por IP/token. `create_enrollment` declara el decorator pero **NO incluye `Request`** en sus params, así que el limiter no aplica — la decoration es silenciosamente no-op. Adicionalmente, `check_in:472`, `request_certificate:641` y `submit_assignment:671` carecen de rate-limit pese a ser endpoints sensibles (emisión de certificados, check-in flooding, upload de archivos).
+
+**Impacto:** Ausencia de protección anti-abuso en endpoints sensibles.
+
+---
+
+### A-05: IDOR en `submit_assignment` — scope de curso sin `is_published` ni sede
+
+**Archivo:** `backend/api/academy.py:680-689`  
+**Línea:** filtro `Lesson.course_id == enrollment.course_id, Lesson.deleted_at.is_(None)`
+
+**Problema:** `_get_own_enrollment` valida `persona_id == current_user.id` (línea 69), lo que salva el caso base. Pero el `Lesson` se filtra sólo por `course_id == enrollment.course_id` sin chequear `is_published` ni la sede del Course. Un estudiante inscrito en un curso archivado/despublicado (o cuyo `enrollment.course_id` colisiona con un curso global) puede subir entregas, generando `AssignmentSubmission` con `file_url` en Seaweed sin control.
+
+**Impacto:** Entregas en cursos no publicados/archivados; abuso de storage.
+
+---
+
+### A-06: CRUD layer sin `sede_id` en getters single-record — brecha Axioma 3 (defense-in-depth)
+
+**Archivo:** `backend/crud/academy.py:46` (`get_course`), `:91` (`get_lesson`), `:142` (`get_enrollment`), `:178` (`get_assessment`)  
+**Línea:** firmas sin kwarg `sede_id`
+
+**Problema:** REGLAS.md §4 exige que la capa CRUD **re-valide** sede aunque la API ya lo haga. Ninguna de estas funciones recibe `sede_id` ni filtra por ella. Cualquiera con el UUID puede leer cross-tenant si un caller no-API (worker, seed, test, script de migración) invoca el CRUD directamente.
+
+**Impacto:** Defense-in-depth roto en capa CRUD.
+
+---
+
+### A-07: CRUD layer `update_*` / `archive_*` sin contraste de sede del row
+
+**Archivo:** `backend/crud/academy.py:60` (`update_course`), `:72` (`archive_course`), `:105` (`update_lesson`), `:117` (`archive_lesson`)  
+**Línea:** llamadas al getter correspondiente sin `sede_id`
+
+**Problema:** Los mutadores delegan el fetch a los getters (que tampoco filtran por sede — véase A-06) y mutan/soft-delete sin contrastar que `row.sede_id` coincida con la sede del actor. Permite actualizar rows de otra sede pasando simplemente el UUID del row.
+
+**Impacto:** Mutación cross-tenant silent.
+
+---
+
+### A-08: XSS stored confirmado en `MyEnrollments.tsx` — `dangerouslySetInnerHTML` sin sanitización
+
+**Archivo:** `frontend/src/components/MyEnrollments.tsx:251`  
+**Línea:** `<div dangerouslySetInnerHTML={{ __html: selectedLesson.content.replace(/\n/g, '<br/>') }} ... />`
+
+**Problema:** Se renderiza `lesson.content` directamente sin `sanitizeCmsHtml`. El resto del repo SÍ sanitiza HTML de CMS/rich-text (`RichText.tsx:193`, `PublicSectionRenderer.tsx:1112`, `pastores/[slug]/page.tsx:312`). Un editor con rol `academy:edit` puede inyectar `<script>` en el `content` de una lección → stored XSS en cualquier estudiante que abra la lección vía `/plataforma/academy`.
+
+**Impacto:** Stored XSS en panel autenticado — robo de sesión/token.
+
+---
+
+## 🟠 ALTOS
+
+### H-01: `sede_id` ausente en todo el contrato de schemas Academy
+
+**Archivo:** `backend/schemas/academy.py:345` (`CoursePayload`), `:367` (`CourseUpdate`), `:23` (Course read), `:451` (`CourseListItem`), `:123` (`EnrollmentCreate`), `:130` (Enrollment read)  
+**Línea:** ningún schema expone ni exige `sede_id`
+
+**Problema:** El modelo `Course.sede_id` existe (`models_academy_core.py:29`, UUID FK a `sedes.id`), pero ningún schema Academy lo menciona. El admin crea cursos vía `CoursePayload` sin atribuir tenant, y el response nunca informa sede. Viola REGLAS.md §4.2 (cobertura UGC) y la política estricta de ownership (§4.1 — owner+sede atribuible).
+
+**Impacto:** El contrato API permite omitir sede; el sistema depende del código in-line para inferirla.
+
+---
+
+### H-02: `LessonProgress` sin schema de response — dict raw en API
+
+**Archivo:** `backend/api/academy.py:310-314`; sin schema en `backend/schemas/academy.py`  
+**Línea:** `return {"progress_percent": ..., "last_position_seconds": ..., "is_completed": ...}`
+
+**Problema:** `GET /lessons/{lesson_id}/progress` devuelve un dict literal sin `response_model`. `ProgressUpdate` (`schemas/academy.py:338`) valida el write, pero el read queda fuera del contrato — el ORM `LessonProgress` (`models_academy_core.py:96`) no se expone con schema. Viola REGLAS.md (no dict sin schema).
+
+---
+
+### H-03: `file_url` (Seaweed FID) expuesto en responses
+
+**Archivo:** `backend/schemas/academy.py:234, 248, 543, 216`  
+**Línea:** `file_url: str` en `AssignmentSubmission`, `SubmissionListItem`, `Resource`
+
+**Problema:** El ORM mapea `file_url = Column("seaweed_fid", String(500))` (`models_academy_core.py:245`) — el nombre ORM oculta la columna, pero el schema sigue exponiendo el FID crudo al frontend. Sin capa de redirección firmada ni expiración, cualquier cliente autenticado puede inferir el patrón de la URL de Seaweed y tentar acceso directo.
+
+**Impacto:** Fuga de identificador interno de storage.
+
+---
+
+### H-04: TODOS los `list_*` en CRUD sin kwarg `sede_id`
+
+**Archivo:** `backend/crud/academy.py:36` (`list_courses`), `:81` (`list_lessons`), `:126` (`list_enrollments`), `:171` (`list_assessments`), `:196` (`list_certificates`), `:209` (`list_forum_threads`)  
+**Línea:** firmas sin `sede_id`
+
+**Problema:** Cada `list_*` filtra por `course_id`/`lesson_id`/`persona_id` pero nunca por sede. El aislamiento se delega exclusivamente al caller API, rompiendo el principio de defense-in-depth de CCF.
+
+---
+
+### H-05: `list_courses` mezcla contenido global con sede — leak cross-tenant
+
+**Archivo:** `backend/crud/academy.py:36-38`  
+**Línea:** `or_(Course.sede_id == sede_id, Course.sede_id.is_(None))`
+
+**Problema:** Al pasar `sede_id`, devuelve cursos globales junto a los de la sede. No está documentado como intencional (CMS site-faro sí lo está, Academy no). Cursa globales no auditoriados como cross-tenant legítimos.
+
+---
+
+### H-06: `create_enrollment` reactiva enrollments cross-tenant sin validar sede
+
+**Archivo:** `backend/crud/academy.py:149-168`  
+**Línea:** búsqueda de duplicado por `(persona_id, course_id)` únicamente
+
+**Problema:** Si existía un enrollment soft-deleted, lo reactiva (`deleted_at = None`) **sin verificar** que `course.sede_id` coincida con la sede del actor. Un actor de sede B podría reactivar un enrollment archivado en un curso de sede A. Viola REGLAS.md §4.1 (creator de otra sede → 404).
+
+---
+
+### H-07: `create_course` / `create_lesson` sin validación de ownership del actor
+
+**Archivo:** `backend/crud/academy.py:52` (`create_course`), `:97` (`create_lesson`)  
+**Línea:** firmas sin `actor_persona_id`
+
+**Problema:** Ninguna función recibe ni valida el actor. Un caller no-API puede crear cursos/lecciones sin política estricta 401/409/404. En la API se atribuyen vía el handler, pero el CRUD no tiene defensa en profundidad.
+
+---
+
+### H-08: `_commit_or_raise_conflict` no se usa — commits directos propagan 500 sin distinguir 409
+
+**Archivo:** `backend/crud/academy.py:55, 67, 77, 99, 112, 122, 166`  
+**Línea:** `db.commit()` directo
+
+**Problema:** REGLAS.md (patrón CMS) exige distinguir `UniqueViolation` → 409 de otros errores → 500. Aquí todos los commits son directos y cualquier `IntegrityError` se propaga como 500. No testing amigable y contract roto.
+
+---
+
+### H-09: AbortController faltante en `AcademyClient.tsx` — memory leak + race condition
+
+**Archivo:** `frontend/src/app/plataforma/academy/AcademyClient.tsx:49-73`  
+**Línea:** `useEffect` con `apiFetch` sin `AbortController`
+
+**Problema:** `loadData` no usa `AbortController`. Al desmontar (cambio rápido de ruta, común en SPA) se llama `setDashboard`/`setError` sobre componente desmontado. Los submódulos `coordination/page.tsx:36` y `profile/page.tsx:42` SÍ lo usan — inconsistencia. Viola el patrón estándar CCF documentado en memory (commit `682a529d`).
+
+---
+
+### H-10: `cache: 'no-store'` ausente en reads del dashboard
+
+**Archivo:** `frontend/src/app/plataforma/academy/AcademyClient.tsx:55, 58`  
+**Línea:** GET a `/academy/dashboard/metrics` y `/academy/me/profile`
+
+**Problema:** Las dos llamadas GET no especifican `cache: 'no-store'`. Incumple el patrón estándar. Comparar con `coordination/page.tsx:41-43` y `profile/page.tsx:49-50` que sí lo aplican.
+
+---
+
+### H-11: `any` masivo en hooks y submódulos — type safety rota
+
+**Archivo:** `frontend/src/hooks/useStudentEnrollments.ts:35` (`catch (err: any)`), `useCourseLessons.ts:47` (`any`); `forum/[id]/page.tsx:32-33,45,47,56,66,82` (`useState<any>`, `apiFetch<any>`); `courses/[id]/lessons/page.tsx:20,44,60`; `courses/[id]/edit/page.tsx:37,177`; `teacher/page.tsx:34,57`; `certificates/[code]/page.tsx:13`; `certificates/page.tsx:38`; `enroll/[id]/page.tsx:22,39`; `profile/page.tsx:357-358`; `profile/progress/page.tsx:311`; `students/page.tsx:193`; `teachers/page.tsx:140`; `course/[id]/page.tsx:59`
+
+**Problema:** 28+ sitios con `any` explícito o implícito en catch/useState/apiFetch. `AcademyClient.tsx` y `AcademyDashboardClient.tsx` están limpios (`catch (err: unknown)`) pero los submódulos acumulan la deuda. Viola REGLAS.md §10 (tipos estrictos).
+
+---
+
+## 🟡 MEDIOS
+
+### M-01: `course_students` lanza `AttributeError` si `enrollment.persona` es None
+
+**Archivo:** `backend/api/academy.py:1242-1245`  
+**Línea:** `joinedload(Enrollment.persona)` accede a `.first_name` sin None-check
+
+**Problema:** FK `persona_id → personas.id` sin `ON DELETE CASCADE` garantizado. Si se borra una persona, `enrollment.persona.first_name` rompe con `AttributeError` en vez de `None`.
+
+---
+
+### M-02: `submit_assessment` no restaura `approved=False` correctamente en reintentos
+
+**Archivo:** `backend/api/academy.py:284-286`  
+**Línea:** seteo de `approved` por último intento
+
+**Problema:** Setea `approved=True/False` según el último intento. Si reintentos previos aprobaron y éste reprueba, deja `approved=False` sin guardar histórico — referencia destructiva del estado de aprobación.
+
+---
+
+### M-03: Sanitización XSS ausente en inputs de texto (forum, content, text_response)
+
+**Archivo:** `backend/api/academy.py:861` (`comment`), `:773` (`content` thread), `:276` (`text_response` answer)  
+**Línea:** sólo `strip()` en comentarios
+
+**Problema:** No hay `bleach` / `html.escape` / sanitización en todo `backend/schemas/` ni `api/academy.py` para texto libre. `file.filename` SÍ se sanitiza (`academy.py:705` vía `sanitize_filename`). Combinado con A-08 (frontend sin sanitizar), cualquier HTML inyectado se renderiza.
+
+---
+
+### M-04: `dashboard_metrics` cache 5min sin invalidación en mutaciones
+
+**Archivo:** `backend/api/academy_cache.py:41-172`  
+**Línea:** docstring admite ausencia de invalidación
+
+**Problema:** Crear/archivar curso, emitir certificado, nuevo enrollment NO invalidan cache. Para un dashboard operativo poblado por Manager puede inducir decisiones con datos stale hasta 5 min.
+
+---
+
+### M-05: `list_lessons` cache key usa `viewer_role`, no `current_user.id`
+
+**Archivo:** `backend/api/academy_cache.py:178-183`  
+**Línea:** key incluye `viewer_role` ("editor"/"student")
+
+**Problema:** Si dos estudiantes con permisos efectivos distintos comparten role "student", reciben el mismo snapshot. Si `published_only` cambia entre calls sin nombre de role, vira. Bajo riesgo pero impreciso.
+
+---
+
+### M-06: `academy_personas` hardcodea `is_active: True`
+
+**Archivo:** `backend/api/academy.py:1020`  
+**Línea:** `is_active: True`
+
+**Problema:** No refleja estado real de persona. Bug lógico: expone personas inactivas como activas.
+
+---
+
+### M-07: `list_forum_threads` sin paginación, sin filtro sede, sin soft-delete
+
+**Archivo:** `backend/crud/academy.py:209-210`  
+**Línea:** `order_by(ForumThread.created_at.desc())` sin límite
+
+**Problema:** `ForumThread` no tiene `deleted_at` en el modelo (`models_academy_core.py:317`), y el CRUD no filtra sede ni pagina. Orable masivamente.
+
+---
+
+### M-08: Drift de nombres modelo ↔ schema (consistencia)
+
+**Archivo:** `backend/schemas/academy.py:82` vs `models_academy_core.py:118-119`; `:416` vs `:137`  
+**Línea:** `min_score`/`passing_score` (synonym), `text`/`question_text`
+
+**Problema:** `Assessment.min_score` en read, `passing_score` en write (asimetría). `AssessmentQuestion.text` vs modelo `question_text`. Contrato de escritura/lectura asimétrico.
+
+---
+
+### M-09: `created_at`/`issued_at`/`session_date` como `datetime` sin `tzinfo` constraint
+
+**Archivo:** `backend/schemas/academy.py:94, 141, 169, 207, 238, 314, 331, 470, 487, 500, 547`  
+**Línea:** `datetime` plano
+
+**Problema:** Pydantic no valida `tzinfo` por defecto. El ORM persiste `DateTime(timezone=True)` pero el schema aceptaría naive datetimes. REGLAS.md §6 pide timezone-aware; no hay `field_validator`. Conocida la pérdida tz-info en SQLite (documentado en memory).
+
+---
+
+### M-10: `Optional` donde el modelo es `nullable=False`
+
+**Archivo:** `backend/schemas/academy.py:79` (`Assessment.course_id: Optional[UUID] = None`), `:148` (`CourseAttendanceBase.session_date: Optional[datetime] = None`)  
+**Línea:** campos Optional en schema
+
+**Problema:** El modelo es `nullable=False`. Inconsistencia de nullabilidad entre contrato API y ORM.
+
+---
+
+### M-11: `FormalActa` schema omite actor y metadatos del modelo
+
+**Archivo:** `backend/schemas/academy.py:203` vs `models_academy_core.py:293-296`  
+**Línea:** schema sin `cohort_name`, `closed_by_persona_id`, `min_grade`, `min_attendance`
+
+**Problema:** El acta cerrada no registra actor en el schema. Viola REGLAS.md §4.1 (actor required) a nivel contrato.
+
+---
+
+### M-12: `text-yellow-500` hardcoded en `certificates/page.tsx`
+
+**Archivo:** `frontend/src/app/plataforma/academy/certificates/page.tsx:111, 125, 126`  
+**Línea:** `text-yellow-500` (3 ocurrencias)
+
+**Problema:** Debería ser `text-[hsl(var(--warning))]` o token semántico. El resto del módulo usa correctamente `hsl(var(--*))`. Viola REGLAS.md §8 (Tailwind semántico).
+
+---
+
+## 🔵 BAJOS (INFO)
+
+### I-01: `crud/academy.py` declarado OBSOLETE en docstring pero 21 referencias live
+
+**Archivo:** `backend/crud/academy.py:3-7`
+
+**Problema:** El docstring declara el módulo OBSOLETE (la API inlinea todas las queries), pero `tests/test_crud_all_modules.py`, `tests/test_crud_integration.py` y `tests/test_academy_domain.py` aún lo importan. Decisión arquitectural pendiente: eliminarlo (migrar tests a la API inlined) o reconocerlo como capa viva y endurecer Axioma 3 (véase A-06, A-07, H-04).
+
+---
+
+### I-02: `course_students` filtra sede estricta, el resto usa `OR` global — inconsistencia
+
+**Archivo:** `backend/api/academy.py:1219` (`== user_sede`) vs `:467, :1078, :1124, :1353` (`OR sede_id.is_(None)`)
+
+**Problema:** Diseño dudoso multi-tenant. `course_students` es el único estricto; los demás son inclusivos con cursos globales. Falta decisión documental sobre si cursos globales en Academy son legítimos.
+
+---
+
+### I-03: `Course.sede_id` es `nullable=True` — ambigüedad "curso global"
+
+**Archivo:** `backend/models_academy_core.py:29`  
+**Línea:** `sede_id = Column(UUID(...), ForeignKey("sedes.id"), nullable=True, index=True)`
+
+**Problema:** El diseño permite cursos globales (`sede_id IS NULL`), pero la semántica cross-tenant no está documentada en REGLAS.md (a diferencia de CMS site-faro). Crea inconsistencia (véase A-03, H-05, I-02).
+
+---
+
+### I-04: `submit_assignment` no aplica rate-limit
+
+**Archivo:** `backend/api/academy.py:671`
+
+**Problema:** Sin `@academy_limiter`. Upload de archivos sin control anti-abuso. Menor que A-04 pero relacionado.
+
+---
+
+### I-05: `useStudentEnrollments.ts` swallow de errores sin toast
+
+**Archivo:** `frontend/src/hooks/useStudentEnrollments.ts:35-38`  
+**Línea:** `setError(null)` deliberado, sin toast
+
+**Problema:** Error silenciado por "UX" — patrón débil, el usuario no recibe feedback de fallo.
+
+---
+
+### I-06: `AcademyClient.tsx:62-63` cast intermedio frágil para error
+
+**Archivo:** `frontend/src/app/plataforma/academy/AcademyClient.tsx:62-63`  
+**Línea:** `const candidate = err as { detail?: string; message?: string }`
+
+**Problema:** Funciona pero el cast es frágil. Mejor `err instanceof Error`.
+
+---
+
+### I-07: `useCourseLessons.ts:49` asume forma no garantizada en error HTTP
+
+**Archivo:** `frontend/src/hooks/useCourseLessons.ts:49`  
+**Línea:** `err?.detail?.message`
+
+**Problema:** Asume estructura `detail.message` no garantizada para `Error` estándar. Produz "No pudimos cargar…" pero no preciso.
+
+---
+
+### I-08: Tests no usan fixture estándar `full`/`seed_admin_v2`
+
+**Archivo:** `tests/*academy*` (todas las suites)
+
+**Problema:** Cada suite academy define helpers propios (`_create_course`, etc.). Diverge del estándar cross-módulo documentado en MEMORY (fixture `full(client, db_session)` con `seed_admin_v2`, helper `_ok(status)` con 204).
+
+---
+
+### I-09: Sin smoke test de router mount
+
+**Archivo:** `tests/test_smoke.py` no referencia academy
+
+**Problema:** No existe smoke mínimo que valide que el router academy monta correctamente en la app fresca. `test_acad_tkt_130_happy_path_endpoint_coverage` sólo cuenta `def test_` en el archivo.
+
+---
+
+## Hallazgos de Completitud — Funcionalidades Faltantes / Brechas de Test
+
+| Código | Funcionalidad / Brecha | Dónde debería estar |
+|---|---|---|
+| **F-01** | Sin test runtime de `POST /lessons/{id}/submit-assignment` — upload, límites (MAX_SIZE/ALLOWED_TYPES), propiedad del enrollment | `tests/test_academy_*` |
+| **F-02** | Sin test de `GET /admin/courses/{id}/students` — posible fuga cross-sede de listado | `tests/test_academy_*` |
+| **F-03** | Sin test runtime de `GET /academy/personas` (sólo firma estática fase_6) — no verifica filtrado sede/role/is_active | `tests/test_academy_*` |
+| **F-04** | Aislamiento sede en mutaciones del forum no verificado: `create_forum_thread`/`resolve_forum_thread`/`create_forum_comment` cuando actor es de sede B apuntando a course de sede A | `tests/test_academy_*` |
+| **F-05** | RBAC negativo faltante: `Reader` no escribe progreso (debe `Student`); `Editor` no archiva curso (debe `Manager`); `Student` no grade | `tests/test_academy_*` |
+| **F-06** | IDOR no verificado en `get_lesson_progress` y `submit_assignment` — estudiante X leyendo progreso de enrollment ajeno | `tests/test_academy_*` |
+| **F-07** | `dashboard_metrics` skip condicional silencia fallo SQLite (`date_trunc` no disponible) — gate ineficaz para ese endpoint | `tests/test_academy_comprehensive.py:533` |
+| **F-08** | Bypass 429 de manager no testeado runtime (`fase_7_transversal.py:360` skip) — en prod un admin podría recibir 429 | `tests/test_academy_fase_7_transversal.py` |
+| **F-09** | Soft-delete en enrollments queries no verificado — `my_enrollments`/`all_enrollments`/`my_progress` con `deleted_at IS NOT NULL` | `tests/test_academy_*` |
+| **F-10** | `LessonProgress` (read), `AcademyActivityLog`, `FormalActaEntry` sin schema dedicado — dict raw o JSON libre en payload | `backend/schemas/academy.py` |
+
+---
+
+## Consistencia Multi-Tenant (Axioma 3) — Brechas
+
+| Entidad | ¿Tiene sede_id? | ¿Filtro en API? | ¿Filtro en CRUD? | ¿Test cross-sede? | Status |
+|---|---|---|---|---|---|
+| Course | ✅ (nullable) | ⚠️ parcial (OR global en all_enrollments/submissions/grade/delete) | ❌ | ✅ read; ❌ mutaciones | ⚠️ Véase A-03, H-04, H-05 |
+| Lesson | ❌ (vía course) | ✅ (vía course) | ❌ | ✅ read | OK by proxy |
+| LessonProgress | ❌ (vía persona) | ⚠️ IDOR (F-06) | ❌ (`get_lesson_progress`:187`) | ❌ | ⚠️ |
+| Enrollment | ❌ (vía course→sede) | ⚠️ resurrect cross-tenant (H-06) | ❌ (`get_enrollment`:142) | ✅ IDOR; ❌ resurrect | ⚠️ |
+| Assessment | ❌ (vía course) | ✅ (vía course) | ❌ (`get_assessment`:178`) | ✅ submit; ❌ read | ⚠️ |
+| AssessmentAttempt | ❌ (vía enrollment) | ✅ (vía enrollment) | n/a | ✅ | OK by proxy |
+| AssignmentSubmission | ❌ (vía enrollment) | ⚠️ scope de course sin sede (A-05) | n/a (no CRUD) | ❌ (F-01) | ⚠️ |
+| CourseAttendance | ❌ (vía enrollment) | ✅ (vía enrollment) | n/a | ✅ | OK by proxy |
+| Certificate | ❌ (vía enrollment) | ❌ (A-01 sin auth ni sede) | ❌ (`get_certificate_by_code`:203) | ✅ validate; ⚠️ | ⚠️ Véase A-01 |
+| FormalActa | ❌ (vía course) | ✅ (vía course) | n/a (no CRUD) | n/a | OK by proxy |
+| ForumThread | ❌ (vía course) | ⚠️ outerjoin NULL (A-02) | ❌ (`list_forum_threads`:209 sin sede/pag) | ✅ read; ❌ mutaciones | ⚠️ |
+| ForumComment | ❌ (vía thread→course) | ✅ (vía thread) | n/a | ✅ | OK by proxy |
+| Resource | ❌ (vía lesson→course) | ✅ (vía lesson) | n/a | ✅ | OK by proxy |
+| AcademyActivityLog | ❌ (vía course/persona) | ✅ (vía course) | n/a | n/a | OK by proxy |
+
+---
+
+## Resumen de Deuda Técnica
+
+### Código ambiguo / no referenciado
+1. `crud/academy.py` declarado OBSOLETE pero con 21 referencias live en tests (I-01) — decisión pendiente
+2. `Course.sede_id` nullable sin documentar semántica "curso global" (I-03, A-03, H-05)
+3. `FormalActaEntry`, `AcademyActivityLog`, `LessonProgress` read sin schema (F-10, H-02)
+
+### Duplicación / inconsistencia
+1. `course_students` filtra estricto, el resto usa `OR` global (I-02)
+2. `min_score`/`passing_score` asimetría read/write (M-08)
+3. `AssessmentQuestion.text` vs `question_text` en modelo (M-08)
+4. `cache: 'no-store'` en submódulos pero no en page principal (H-10)
+5. `AbortController` en submódulos pero no en `AcademyClient.tsx` (H-09)
+6. `any` masivo en submódulos vs `unknown` limpio en page principal (H-11)
+
+### Bugs lógicos
+1. `course_students` `AttributeError` si `persona=None` (M-01)
+2. `submit_assessment` no restaura `approved` histórico (M-02)
+3. `academy_personas` hardcodea `is_active=True` (M-06)
+4. `dashboard_metrics` sin invalidación de cache (M-04)
+
+---
+
+## Recomendaciones Prioritarias
+
+1. **A-08**: Sanitizar `selectedLesson.content` con `sanitizeCmsHtml` antes de `dangerouslySetInnerHTML` —\Doctrine XSS stored, fix inmediato
+2. **A-01**: Requerir auth en `validate_certificate` o reducir response a booleano — cierre de enumeración oracle
+3. **A-04**: Añadir `request: Request` a `create_enrollment` y rate-limit a `check_in`/`request_certificate`/`submit_assignment`
+4. **A-03 + H-04 + H-05**: Decisión documental sobre `Course.sede_id IS NULL` (¿legítimo?) seguida de un pase Axioma 3 sobre el CRUD de Academy, similar al realizado en evangelismo (commit `b346586e`)
+5. **A-06 + A-07 + H-06 + H-07**: Endurecer `crud/academy.py` con defensa en profundidad (sede_id kwarg, `actor_persona_id`, contraste de sede en mutadores)
+6. **H-01**: Exponer `sede_id` en schemas Academy (`CoursePayload`, `EnrollmentCreate`, responses) — alinea con REGLAS.md §4.2
+7. **H-08**: Introducir `_commit_or_raise_conflict` en `crud/academy.py` (patrón CMS canon)
+8. **F-01..F-06**: Cobertura de tests en endpoints sensibles (upload, course_students, IDOR, RBAC negativo, mutaciones forum cross-sede)
+9. **I-01**: Decisión sobre OBSOLETE de `crud/academy.py` — eliminar o endurecer
+10. **M-12**: Reemplazar `text-yellow-500` por token semántico
+
+---
+
+## Seguimiento de Cierre (actualizado 2026-07-24)
+
+Estado de cada hallazgo, en orden de severidad. Los "falsos positivos"
+incluirán una justificación citando el contrato o la observación de
+comportamiento vivo. Cada cierre llevará commit hash + suite que lo
+respalda.
+
+### CRÍTICOS
+
+| ID | Estado | Cierre / Justificación | Commit |
+|---|---|---|---|
+| A-01 | 🔴 PENDIENTE | — | — |
+| A-02 | 🔴 PENDIENTE | — | — |
+| A-03 | ✅ CERRADO 2026-07-24 | Scope admin estricto: los 4 endpoints admin (`all_enrollments`, `list_submissions`, `grade_submission`, `delete_submission_admin`) ahora filtran `Course.sede_id == sede_id` (sin `OR sede_id IS NULL`). El catálogo público (`_course_scope`) y el foro siguen incluyendo globales (lectura/captación). 4 regression tests en `test_academy_api.py::test_a03_*`. | `c2c92299`+patch |
+| A-04 | 🔴 PENDIENTE | — | — |
+| A-05 | 🔴 PENDIENTE | — | — |
+| A-06 | 🔴 PENDIENTE | — | — |
+| A-07 | 🔴 PENDIENTE | — | — |
+| A-08 | 🔴 PENDIENTE | — | — |
+
+### ALTOS
+
+| ID | Estado | Cierre / Justificación | Commit |
+|---|---|---|---|
+| H-01 | 🔴 PENDIENTE | — | — |
+| H-02 | 🔴 PENDIENTE | — | — |
+| H-03 | 🔴 PENDIENTE | — | — |
+| H-04 | 🔴 PENDIENTE | — | — |
+| H-05 | 🔴 PENDIENTE | — | — |
+| H-06 | 🔴 PENDIENTE | — | — |
+| H-07 | 🔴 PENDIENTE | — | — |
+| H-08 | 🔴 PENDIENTE | — | — |
+| H-09 | 🔴 PENDIENTE | — | — |
+| H-10 | 🔴 PENDIENTE | — | — |
+| H-11 | 🔴 PENDIENTE | — | — |
+
+### MEDIOS
+
+| ID | Estado | Cierre / Justificación | Commit |
+|---|---|---|---|
+| M-01 | 🔴 PENDIENTE | — | — |
+| M-02 | 🔴 PENDIENTE | — | — |
+| M-03 | 🔴 PENDIENTE | — | — |
+| M-04 | 🔴 PENDIENTE | — | — |
+| M-05 | 🔴 PENDIENTE | — | — |
+| M-06 | 🔴 PENDIENTE | — | — |
+| M-07 | 🔴 PENDIENTE | — | — |
+| M-08 | 🔴 PENDIENTE | — | — |
+| M-09 | 🔴 PENDIENTE | — | — |
+| M-10 | 🔴 PENDIENTE | — | — |
+| M-11 | 🔴 PENDIENTE | — | — |
+| M-12 | 🔴 PENDIENTE | — | — |
+
+### INFORMATIVOS / FUNCIONALIDADES
+
+| ID | Estado | Cierre / Justificación | Commit |
+|---|---|---|---|
+| I-01 | 🟡 DEUDA EN REVISIÓN | — | — |
+| I-02 | 🔴 PENDIENTE | — | — |
+| I-03 | 🟡 DEUDA EN REVISIÓN | — | — |
+| I-04 | 🔴 PENDIENTE | — | — |
+| I-05 | 🔴 PENDIENTE | — | — |
+| I-06 | 🔴 PENDIENTE | — | — |
+| I-07 | 🔴 PENDIENTE | — | — |
+| I-08 | 🔴 PENDIENTE | — | — |
+| I-09 | 🔴 PENDIENTE | — | — |
+| F-01 | 🔴 PENDIENTE | — | — |
+| F-02 | 🔴 PENDIENTE | — | — |
+| F-03 | 🔴 PENDIENTE | — | — |
+| F-04 | 🔴 PENDIENTE | — | — |
+| F-05 | 🔴 PENDIENTE | — | — |
+| F-06 | 🔴 PENDIENTE | — | — |
+| F-07 | 🔴 PENDIENTE | — | — |
+| F-08 | 🔴 PENDIENTE | — | — |
+| F-09 | 🔴 PENDIENTE | — | — |
+| F-10 | 🔴 PENDIENTE | — | — |
+
+### Resumen de cierre al 2026-07-24
+
+- Críticos: 0/8 cerrados
+- Altos: 0/11 cerrados
+- Medios: 0/12 cerrados
+- Info: 0/9 cerrados (2 en revisión)
+- Funcionalidades: 0/10 cerradas
+- Pendientes: **40 hallazgos** — auditoría forense del módulo Academy recién emitida, sin cierres.
+
+---
+
+*Documento generado por auditoría forense línea por línea del código fuente del módulo Academy.*
+*Total: 40 hallazgos (8 críticos, 11 altos, 12 medios, 9 informativos) + 10 funcionalidades/brechas de test pendientes.*
