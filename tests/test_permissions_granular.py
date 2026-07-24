@@ -176,15 +176,8 @@ class TestAuthRoleDefinitions:
 
 
 class TestUserModuleRoles:
-    """CRUD de UsuarioRolModulo via /admin/user-module-roles.
+    """CRUD de UsuarioRolModulo via /admin/user-module-roles."""
 
-    NOTE: Este endpoint ya no existe en la API consolidada. Los roles
-    modulares ahora se gestionan a través del CRUD interno o de endpoints
-    futuros. Se dejan los tests como skipped para no perder la lógica de
-    validación cuando se exponga el endpoint.
-    """
-
-    @pytest.mark.skip(reason="No hay endpoint activo para roles modulares en la API actual")
     def test_assign_and_list_module_role(self, client: TestClient, db_session: Session):
         _seed_auth_roles(db_session)
         token = _login_as_admin(client, db_session)
@@ -203,11 +196,12 @@ class TestUserModuleRoles:
         data = resp.json()
         assert data["modulo"] == "crm"
         assert data["user_id"] == auth_user_id
+        assert data["created"] is True
 
-        # List module roles
+        # List module roles (paginated response)
         list_resp = client.get("/api/admin/user-module-roles", headers={"Authorization": f"Bearer {token}"})
         assert list_resp.status_code == 200
-        assignments = list_resp.json()
+        assignments = list_resp.json()["items"]
         assert any(a["user_id"] == auth_user_id and a["modulo"] == "crm" for a in assignments)
 
     def test_reassign_module_role_updates(self, client: TestClient, db_session: Session):
