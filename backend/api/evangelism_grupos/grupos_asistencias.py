@@ -501,14 +501,21 @@ def submit_attendance(
 @router.get("/follow-up/pending", response_model=List[schemas.RegistroSeguimientoResponse])
 def list_pending_follow_ups(
     limit: int = 50,
+    strategy_id: UUID | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    """Lista los seguimientos pendientes de la sede del actor (Axioma 3)."""
+    """Lista los seguimientos pendientes de la sede del actor (Axioma 3).
+
+    ``strategy_id`` opcional acota a seguimientos cuyas asistencias
+    pertenecen a un grupo de la estrategia dada (scoping por estrategia).
+    """
     from backend.crud.evangelism import get_pendientes_seguimiento
 
     user_sede = require_user_sede_id(db, current_user)
-    rows = get_pendientes_seguimiento(db, limit=limit, sede_id=user_sede)
+    rows = get_pendientes_seguimiento(
+        db, limit=limit, sede_id=user_sede, strategy_id=strategy_id
+    )
     # Pydantic v2 strict: UUID→str requiere serialización explícita vía
     # model_dump(mode="json") — evita el 500 ``string_type`` en
     # ``RegistroSeguimientoResponse.asistencia_id``.
