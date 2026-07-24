@@ -348,5 +348,8 @@ Antes de esta revalidación se corrigió un bug de contrato en `/api/crm/roles`:
 - `npm run test:e2e:crm`: **14 passed** ✅ (build 88s, EXIT:0)
 - `npm run test:e2e:crm:deep`: **17 passed** ✅ (build 85s, EXIT:0)
 
+**Deuda técnica cerrada:**
+- **RBAC de helpers de automations**: revisados y documentados en `docs/CRM_RBAC_MATRIX.md` (sección 7). Todos los endpoints auxiliares de automations en `backend/api/crm/pipelines.py` cuentan con guard explícito; el documento fue actualizado para reflejar el estado actual.
+
 **Pendientes fuera de este alcance:**
-- **Deuda técnica documentada**: `CRM_RBAC_MATRIX.md` señala helpers de automations sin guard explícito; permanece como drift conocido fuera del alcance de esta revisión.
+- Ninguno. El módulo CRM queda operativamente cerrado al 100% en el alcance canónico.

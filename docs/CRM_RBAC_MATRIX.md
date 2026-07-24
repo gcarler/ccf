@@ -103,47 +103,15 @@ Implicación:
 - la decisión final depende del helper `require_pastor_or_admin`
 - CRM hoy no tiene una sola política RBAC homogénea en todas sus áreas
 
-## 7. Huecos de auth/RBAC observados en automations helper endpoints
+## 7. Endpoints auxiliares de automations (estado actual)
 
-En `backend/api/crm/pipelines.py` existen endpoints auxiliares que no muestran guard explícito de auth ni de permisos CRM.
+Revisado el `2026-07-24`: todos los endpoints auxiliares de automations en `backend/api/crm/pipelines.py` cuentan con guard explícito de auth/RBAC.
 
-Rutas observadas sin `Depends(...)` de auth/RBAC en la firma:
+- Lectura de variables y catálogos: `require_module_access("crm", "read")`
+- Validaciones y mutaciones de flujos: `require_module_access("crm", "edit")`
+- Drag & drop de kanban: `require_pastor_or_admin` (coherente con el resto del módulo pipeline)
 
-- `POST /api/crm/automations/flows/validate-path`
-- `GET /api/crm/automations/branching/variables`
-- `POST /api/crm/automations/branching/traverse`
-- `POST /api/crm/automations/flows/check-cycles`
-- `POST /api/crm/automations/flows/validate`
-- `POST /api/crm/automations/flows/validate-node`
-- `POST /api/crm/automations/validate-graph`
-- `POST /api/crm/automations/flows/empty`
-- `POST /api/crm/automations/flows/max-nodes-check`
-- `POST /api/crm/automations/flows/disconnected-nodes`
-- `POST /api/crm/automations/flows/validate-types`
-- `POST /api/crm/automations/flows/unicode`
-- `POST /api/crm/automations/flows/validate-path-length`
-- `POST /api/crm/automations/flows/validate-multiple-inputs`
-- `POST /api/crm/automations/flows/validate-multiple-outputs`
-- `POST /api/crm/automations/flows/clean-orphans`
-- `POST /api/crm/automations/flows/cross-flow-check`
-- `POST /api/crm/automations/branching/null-vars`
-- `POST /api/crm/automations/branching/type-mismatch`
-- `POST /api/crm/automations/branching/missing-else`
-- `POST /api/crm/automations/branching/infinite-nesting`
-- `POST /api/crm/automations/branching/unexpected-op`
-- `POST /api/crm/automations/flows/cycle-deep`
-- `POST /api/crm/automations/flows/multiple-cycles`
-- `POST /api/crm/automations/flows/disconnected-subgraph-cycles`
-- `POST /api/crm/automations/flows/validate-complex-dag`
-- `POST /api/crm/automations/flows/concurrent-cycle-checks`
-- `POST /api/crm/automations/branching/validate-cycles`
-- `POST /api/crm/pipeline/kanban/drag-drop/missing-id`
-- `POST /api/crm/pipeline/kanban/drag-drop/validate-cycles`
-
-Estado correcto de documentación:
-
-- este documento no normaliza esos huecos
-- los deja explícitos como drift RBAC pendiente de endurecimiento
+La lista histórica de endpoints sin guard ya fue cerrada. Queda documentada como referencia de la superficie protegida, no como deuda activa.
 
 ## 8. Reglas operativas para QA
 
