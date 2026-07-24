@@ -331,6 +331,19 @@ Revalidación integral del módulo CRM ejecutada tras los fixes de contrato. Se 
 
 **Estado:** Backend, tests unitarios y análisis estático del CRM están al 100% en el alcance canónico. Los 2 fallos de contrato detectados fueron corregidos.
 
+## 17. Actualizacion de estado — 2026-07-24 (revalidación E2E CRM deep)
+
+Revalidación del circuito E2E frontend CRM ejecutada con el runner estable `run-managed-playwright.mjs`, build limpio y timeout de 20 minutos:
+
+- `npm run test:e2e:crm:deep`: dashboard, groups-admin, persona-detail, messaging, resources, pipeline-deep — **17 passed** ✅
+- Build de Next.js: **85s** ✅
+- Servidor `next start`: arrancó correctamente en puerto efímero ✅
+- Código de salida: **EXIT:0** ✅
+
+Antes de esta revalidación se corrigió un bug de contrato en `/api/crm/roles`: el endpoint había quedado devolviendo un objeto paginado (`response_model=dict`) mientras el frontend `/plataforma/crm/personas` esperaba un array y ejecutaba `roles.map(...)`. Se restauró el retorno de lista plana con `response_model=List[dict]` y se revalidó con `pyflakes` y `pytest tests/test_crm_rbac_http.py`.
+
+**Estado:** CRM backend, tests unitarios y E2E frontend deep están al 100% en el alcance canónico. El módulo queda operativamente cerrado para la línea de trabajo actual.
+
 **Caveats / pendientes fuera de este alcance:**
-- **E2E frontend CRM**: se validó históricamente el 2026-07-16 con `npm run test:e2e:crm` (14 passed) y `npm run test:e2e:crm:deep` (17 passed), pero no se reejecutó en esta sesión debido al timeout de build de Next.js (~2.4 min). Para considerar el módulo cerrado al 100% frontend, se debe revalidar el E2E con timeout ≥ 15 minutos.
+- **Smoke E2E CRM (`test:e2e:crm`)**: no se reejecutó en esta sesión; históricamente 14 passed. Para cierre 100% frontend se recomienda revalidar también este circuito con timeout ≥ 15 minutos.
 - **Deuda técnica documentada**: `CRM_RBAC_MATRIX.md` señala helpers de automations sin guard explícito; permanece como drift conocido fuera del alcance de esta revisión.
