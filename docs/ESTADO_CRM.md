@@ -342,8 +342,11 @@ Revalidación del circuito E2E frontend CRM ejecutada con el runner estable `run
 
 Antes de esta revalidación se corrigió un bug de contrato en `/api/crm/roles`: el endpoint había quedado devolviendo un objeto paginado (`response_model=dict`) mientras el frontend `/plataforma/crm/personas` esperaba un array y ejecutaba `roles.map(...)`. Se restauró el retorno de lista plana con `response_model=List[dict]` y se revalidó con `pyflakes` y `pytest tests/test_crm_rbac_http.py`.
 
-**Estado:** CRM backend, tests unitarios y E2E frontend deep están al 100% en el alcance canónico. El módulo queda operativamente cerrado para la línea de trabajo actual.
+**Estado:** Backend, tests unitarios y E2E CRM (smoke + deep) están al 100% en el alcance canónico.
 
-**Caveats / pendientes fuera de este alcance:**
-- **Smoke E2E CRM (`test:e2e:crm`)**: no se reejecutó en esta sesión; históricamente 14 passed. Para cierre 100% frontend se recomienda revalidar también este circuito con timeout ≥ 15 minutos.
+**Resultados E2E CRM en esta sesión:**
+- `npm run test:e2e:crm`: **14 passed** ✅ (build 88s, EXIT:0)
+- `npm run test:e2e:crm:deep`: **17 passed** ✅ (build 85s, EXIT:0)
+
+**Pendientes fuera de este alcance:**
 - **Deuda técnica documentada**: `CRM_RBAC_MATRIX.md` señala helpers de automations sin guard explícito; permanece como drift conocido fuera del alcance de esta revisión.
