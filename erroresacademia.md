@@ -514,8 +514,8 @@ respalda.
 | H-06 | 🔴 PENDIENTE | — | — |
 | H-07 | 🔴 PENDIENTE | — | — |
 | H-08 | 🔴 PENDIENTE | — | — |
-| H-09 | 🔴 PENDIENTE | — | — |
-| H-10 | 🔴 PENDIENTE | — | — |
+| H-09 | ✅ CERRADO 2026-07-24 | `AcademyClient.tsx` ahora usa `AbortController` + `controller.abort()` en cleanup de `useEffect`. `loadData` recibe `signal` y lo propaga a `apiFetch`. AbortError se filtra (no se muestra al usuario). | merge |
+| H-10 | ✅ CERRADO 2026-07-24 | `apiFetch` en `AcademyClient.tsx` ahora pasa `cache: 'no-store'` en las dos lecturas GET (`/academy/dashboard/metrics`, `/academy/me/profile`). Alinea con `coordination/page.tsx` y `profile/page.tsx` que ya lo aplicaban. | merge |
 | H-11 | 🔴 PENDIENTE | — | — |
 
 ### MEDIOS
