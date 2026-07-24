@@ -13,6 +13,7 @@ import uuid as _uuid
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Column,
     Date,
     DateTime,
@@ -498,16 +499,27 @@ class Asistencia(Base):
 
 class RegistroSeguimiento(Base):
     __tablename__ = "registros_seguimiento"
+    # CHECK constraint alinea el ``String(30)`` con los 4 valores validos del
+    # ``TipoSeguimientoEnum`` evita INSERT de tipos fuera del enum a nivel DB.
+    __table_args__ = (
+        CheckConstraint(
+            "tipo IN ('LLAMADA', 'MENSAJE_WHATSAPP', 'VISITA_PRESENCIAL', 'ORACION')",
+            name="ck_registros_seguimiento_tipo",
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    asistencia_id = Column(UUID(as_uuid=True), ForeignKey("asistencias.id", ondelete="CASCADE"), nullable=False)
-    responsable_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    asistencia_id = Column(UUID(as_uuid=True), ForeignKey("asistencias.id", ondelete="CASCADE"), nullable=False, index=True)
+    responsable_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     fecha_seguimiento = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
     created_at = synonym("fecha_creacion")
     tipo = Column(String(30), nullable=False)
     observaciones = Column(Text, nullable=True)
-    estado_completado = Column(Boolean, default=True)
+    # Default False: un seguimiento nuevo nace pendiente; el flujo UI lo
+    # marca como completado cuando se procesa. Antes default=True creaba
+    # registros "ya completados" contradiciendo el panel de pendientes.
+    estado_completado = Column(Boolean, default=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     asistencia = relationship("Asistencia", back_populates="seguimientos")
