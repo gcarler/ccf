@@ -628,17 +628,10 @@ class CmsSeoSnapshot(Base):
     site = relationship("CmsSite", back_populates="seo_snapshots", lazy="joined")
     sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")
 
-
-class ContactSubmission(Base):
-    __tablename__ = "public_contact_submissions"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(200), nullable=False)
-    email = Column(String(255), nullable=False)
-    phone = Column(String(50), nullable=True)
-    message = Column(Text, nullable=True)
-    status = Column(String(20), default="new", index=True)  # new, contacted, closed
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
-
-    sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")
+    # NOTE (M-10 / fix código muerto): la clase ``ContactSubmission`` que
+    # vivía aquí como ORM muerto (tabla ``public_contact_submissions``,
+    # 0 referencias en schemas/api/crud/tests/frontend) fue retirada.
+    # La tabla física sigue en Postgres (gestionada por la migración
+    # cerrada ``20260713_0001_backend_schema_drift_repair.py``, no se
+    # toca por REGLAS.md §9.1). Limpieza DROP TABLE queda como deuda
+    # separada (ver ADDENDUM en ``errorescms.md``).
