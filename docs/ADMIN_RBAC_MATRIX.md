@@ -2,6 +2,9 @@
 
 **Actualizado:** 2026-07-21 (refactorización completa)
 
+> 📚 **Documento maestro de arquitectura:** `docs/ADMIN_ARCHITECTURE.md`
+> Explica en detalle el sistema de permisos granulares, la resolución de roles modulares y los guards del módulo Admin.
+
 ---
 
 ## Roles de plataforma

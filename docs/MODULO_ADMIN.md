@@ -1,9 +1,12 @@
 # Módulo Administración — Gestión Central
 
-**Actualizado:** 2026-07-18
+**Actualizado:** 2026-07-18 (referencia de arquitectura: 2026-07-24)
 **Ruta base frontend:** `/plataforma/admin`
 **Ruta base API:** `/api/admin`
 **Router backend:** `backend/api/admin.py`
+
+> 📚 **Documento maestro de arquitectura:** `docs/ADMIN_ARCHITECTURE.md`
+> Contiene la visión global del módulo Admin: propósito, arquitectura, modelo de datos, reglas de negocio, sistema de permisos granulares y guía operativa para agentes.
 
 ---
 
