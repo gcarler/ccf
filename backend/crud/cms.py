@@ -27,9 +27,11 @@ from backend.crud.crm import (
 _logger = logging.getLogger(__name__)
 
 
-def resolve_persona_id_for_user(db: Session, user_id: uuid.UUID | str | None):
-    persona_id = resolve_persona_uuid_for_user(db, user_id)
-    return persona_id
+# ``resolve_persona_id_for_user`` (imported as ``resolve_persona_uuid_for_user``
+# above) comes from ``backend.crud.crm`` which re-exports the canonical
+# implementation in ``backend.crud.crm_.shared``. We call that directly
+# throughout this module — the previous local wrapper added only
+# indirection (M-10 in ``errorescms.md``).
 
 
 def _commit_or_conflict(db: Session) -> bool:
@@ -88,7 +90,7 @@ def _actor_sede_or_none_cms(
         actor_uuid = uuid.UUID(str(actor_user_id))
     except (TypeError, ValueError, AttributeError):
         raise _HTTPException(status_code=401, detail="Authenticated actor required")
-    if resolve_persona_id_for_user(db, actor_uuid) is None:
+    if resolve_persona_uuid_for_user(db, actor_uuid) is None:
         raise _HTTPException(status_code=401, detail="Authenticated actor required")
     return get_user_sede_id(db, str(actor_uuid))
 
@@ -287,7 +289,7 @@ def create_cms_media_item(
     o es unresoluble, raise 404. Superadmin / anterior path (actor sin sede)
     bypassea — consistente con resto del axioma 3.
     """
-    creator_persona_id = resolve_persona_id_for_user(db, created_by)
+    creator_persona_id = resolve_persona_uuid_for_user(db, created_by)
     actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
     derived_sede = _crud_scope_re_check_cms_content_create(
         db,
@@ -549,7 +551,7 @@ def create_cms_theme(
         is_active=bool(payload.is_active) and status != "archived",
         status=status,
         version=int(version) + 1,
-        created_by_persona_id=resolve_persona_id_for_user(db, created_by),
+        created_by_persona_id=resolve_persona_uuid_for_user(db, created_by),
     )
     db.add(row)
     if row.is_active:
@@ -845,8 +847,8 @@ def create_cms_page(
         title=payload.title.strip(),
         status=payload.status,
         seo_json=payload.seo_json or {},
-        created_by_persona_id=resolve_persona_id_for_user(db, user_id),
-        updated_by_persona_id=resolve_persona_id_for_user(db, user_id),
+        created_by_persona_id=resolve_persona_uuid_for_user(db, user_id),
+        updated_by_persona_id=resolve_persona_uuid_for_user(db, user_id),
     )
     db.add(row)
     if commit_with_conflict_check and not _commit_or_conflict(db):
@@ -884,7 +886,7 @@ def update_cms_page(
     if "expires_at" in data:
         row.expires_at = data["expires_at"]
     if user_id is not None:
-        row.updated_by_persona_id = resolve_persona_id_for_user(db, user_id)
+        row.updated_by_persona_id = resolve_persona_uuid_for_user(db, user_id)
     db.commit()
     db.refresh(row)
     return row
@@ -909,7 +911,7 @@ def clone_cms_page(
     y unicidad del slug destino.  Este helper asume que ``new_slug`` ya
     pasó por ``_slugify`` y no existe en el site.
     """
-    persona_id = resolve_persona_id_for_user(db, user_id)
+    persona_id = resolve_persona_uuid_for_user(db, user_id)
     cloned_page = models.CmsPage(
         site_id=source.site_id,
         slug=new_slug,
@@ -1163,7 +1165,7 @@ def create_cms_page_version(
         version_number=int(max_version) + 1,
         snapshot_json=snapshot,
         notes=notes,
-        created_by_persona_id=resolve_persona_id_for_user(db, user_id),
+        created_by_persona_id=resolve_persona_uuid_for_user(db, user_id),
     )
     db.add(row)
     db.commit()
@@ -1238,7 +1240,7 @@ def restore_cms_page_version(
         page.title = str(page_data.get("title") or page.title)
         page.seo_json = page_data.get("seo_json") or {}
     page.status = "draft"
-    page.updated_by_persona_id = resolve_persona_id_for_user(db, user_id)
+    page.updated_by_persona_id = resolve_persona_uuid_for_user(db, user_id)
     db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(
         synchronize_session=False
     )
@@ -1291,7 +1293,7 @@ def transition_cms_page_status(
         version = create_cms_page_version(db, page, user_id=user_id, notes=notes)
         page.published_version_id = version.id
     page.status = next_status
-    actor_persona_id = resolve_persona_id_for_user(db, user_id)
+    actor_persona_id = resolve_persona_uuid_for_user(db, user_id)
     page.updated_by_persona_id = actor_persona_id
     db.add(
         models.CmsPublishLog(
@@ -1715,7 +1717,7 @@ def create_announcement(
 
     Nota: como Announcement originalmente no aceptaba author_persona,
     usamos ``actor_user_id`` como creator persona fallback. La función
-    resuelve ``created_by_persona_id`` vía ``resolve_persona_id_for_user``
+    resuelve ``created_by_persona_id`` vía ``resolve_persona_uuid_for_user``
     sobre ``actor_user_id`` (consistente con cómo ``current_user.id`` se
     traduce a ``Persona.id`` en ``auth_v3``).
     """
@@ -1725,7 +1727,7 @@ def create_announcement(
         db,
         actor_user_id,
         actor_sede=actor_sede,
-        author_persona_id=resolve_persona_id_for_user(db, actor_user_id),
+        author_persona_id=resolve_persona_uuid_for_user(db, actor_user_id),
     )
     row = models.Announcement(
         title=payload.title.strip(),
@@ -1735,7 +1737,7 @@ def create_announcement(
         is_featured=payload.is_featured,
         status=status,
         sede_id=derived_sede,
-        created_by_persona_id=resolve_persona_id_for_user(db, actor_user_id),
+        created_by_persona_id=resolve_persona_uuid_for_user(db, actor_user_id),
         published_at=_utcnow(),
     )
     db.add(row)
@@ -1848,7 +1850,7 @@ def create_testimonial(
     # fallback usa directamente ``actor_user_id`` (la fuente canónica).
     author_persona_id = payload.author_persona_id
     if author_persona_id is None:
-        author_persona_id = resolve_persona_id_for_user(db, actor_user_id)
+        author_persona_id = resolve_persona_uuid_for_user(db, actor_user_id)
     actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
     derived_sede = _crud_scope_re_check_cms_content_create(
         db,
@@ -2278,8 +2280,8 @@ def create_cms_post(
         locale=payload.locale,
         seo_json=payload.seo_json or {},
         published_at=payload.published_at,
-        created_by_persona_id=resolve_persona_id_for_user(db, user_id),
-        updated_by_persona_id=resolve_persona_id_for_user(db, user_id),
+        created_by_persona_id=resolve_persona_uuid_for_user(db, user_id),
+        updated_by_persona_id=resolve_persona_uuid_for_user(db, user_id),
     )
     db.add(row)
     db.flush()
@@ -2326,7 +2328,7 @@ def update_cms_post(
     # (PATCH parcial: combinar payload con el estado actual del row).
     _assert_post_published_before_expires(row.published_at, row.expires_at)
     if user_id is not None:
-        row.updated_by_persona_id = resolve_persona_id_for_user(db, user_id)
+        row.updated_by_persona_id = resolve_persona_uuid_for_user(db, user_id)
     db.flush()
     if "category_ids" in data and data["category_ids"] is not None:
         _set_post_categories(db, row.id, data["category_ids"])
