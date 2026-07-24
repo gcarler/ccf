@@ -411,6 +411,7 @@ def _resolve_assignee_for_task(
     try:
         persona_uuid = _uuid.UUID(raw_str)
     except (TypeError, ValueError):
+        logger.warning("_resolve_assignee_for_task: assignee_id con formato UUID inválido: %r", raw_str)
         persona_uuid = None
     if persona_uuid:
         return _get_scoped_persona(db, current_user, persona_uuid).id

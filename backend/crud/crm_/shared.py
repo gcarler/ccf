@@ -23,6 +23,10 @@ def resolve_persona_id_for_user(db: Session, user_id: uuid.UUID | str | None):
     try:
         persona_uuid = uuid.UUID(str(user_id))
     except (TypeError, ValueError, AttributeError):
+        _logger.warning(
+            "resolve_persona_id_for_user: user_id con formato UUID inválido, devolviendo None: %r",
+            user_id,
+        )
         return None
     persona = (
         db.query(models.Persona.id)

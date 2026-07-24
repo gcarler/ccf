@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.crud._utils import _utcnow
+from backend.crud._utils import _coerce_uuid_or_404, _to_uuid, _utcnow
 
 
 def get_milestone(db: Session, milestone_id: UUID) -> Optional[models.SpiritualMilestone]:
@@ -21,7 +21,7 @@ def get_milestone(db: Session, milestone_id: UUID) -> Optional[models.SpiritualM
 
 
 def get_milestones(db: Session, persona_id) -> List[models.SpiritualMilestone]:
-    persona_uuid = uuid.UUID(str(persona_id))
+    persona_uuid = _coerce_uuid_or_404(persona_id, "Persona no encontrada")
     return (
         db.query(models.SpiritualMilestone)
         .filter(
@@ -49,9 +49,9 @@ def create_milestone(
     sede_id: Optional[UUID] = None,
     notes: Optional[str] = None,
 ) -> models.SpiritualMilestone:
-    persona_uuid = uuid.UUID(str(persona_id))
-    minister_uuid = uuid.UUID(str(minister_id)) if minister_id else None
-    sede_uuid = uuid.UUID(str(sede_id)) if sede_id else None
+    persona_uuid = _to_uuid(persona_id)
+    minister_uuid = _to_uuid(minister_id) if minister_id else None
+    sede_uuid = _to_uuid(sede_id) if sede_id else None
     row = models.SpiritualMilestone(
         persona_id=persona_uuid,
         type=type,

@@ -55,7 +55,11 @@ def _create_log(
             try:
                 leader_uuid = uuid.UUID(str(leader_id))
             except (ValueError, TypeError):
-                pass
+                logger.warning(
+                    "_create_log: leader_id con formato UUID inválido, "
+                    "leader_id quedará None en el log: %r",
+                    leader_id,
+                )
 
     log = models.CommunicationLog(
         persona_id=persona_id,
@@ -90,7 +94,12 @@ class MessagingGateway:
     # -- helpers --------------------------------------------------------
 
     def _resolve_to_uuid(self, persona_id: str) -> uuid.UUID:
-        return uuid.UUID(str(persona_id))
+        if isinstance(persona_id, uuid.UUID):
+            return persona_id
+        try:
+            return uuid.UUID(str(persona_id))
+        except (ValueError, TypeError, AttributeError):
+            raise ValueError(f"persona_id con formato UUID inválido: {persona_id!r}")
 
     def _persona_or_raise(self, db: Session, persona_id: str, *, require_email: bool = False):
         pid = self._resolve_to_uuid(persona_id)

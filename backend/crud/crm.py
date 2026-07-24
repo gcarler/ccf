@@ -69,6 +69,7 @@ from backend.crud.crm_ import (
     get_volunteer_shift,
     get_volunteer_shifts,
     list_mentor_candidates,
+    list_milestones,
     mark_all_notifications_read,
     mark_notification_as_read,
     resolve_persona_id_for_user,

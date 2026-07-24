@@ -70,6 +70,7 @@ from backend.crud.crm_.milestones import (
     delete_milestone,
     get_milestone,
     get_milestones,
+    list_milestones,
     update_milestone,
 )
 from backend.crud.crm_.notifications import (

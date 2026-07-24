@@ -1,4 +1,5 @@
 """Grupos evangelismo CRUD."""
+import logging
 import uuid
 from typing import Optional
 from uuid import UUID
@@ -6,7 +7,9 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.crud._utils import _utcnow
+from backend.crud._utils import _to_uuid, _utcnow
+
+logger = logging.getLogger(__name__)
 
 
 def _group_participant_role_values(item):
@@ -79,7 +82,7 @@ def create_grupo(db: Session, payload: schemas.GrupoEvangelismoCreate, sede_id: 
             role, custom_role_id = _group_participant_role_values(item)
             attendee = models.ParticipanteGrupo(
                 grupo_id=db_obj.id,
-                persona_id=uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id,
+                persona_id=_to_uuid(item.persona_id) if isinstance(item.persona_id, str) else item.persona_id,
                 role=role,
                 rol_personalizado_id=custom_role_id,
             )
@@ -138,7 +141,7 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
         )
         for item in payload.base_attendees_with_roles:
             role, custom_role_id = _group_participant_role_values(item)
-            p_id = uuid.UUID(str(item.persona_id)) if isinstance(item.persona_id, str) else item.persona_id
+            p_id = _to_uuid(item.persona_id) if isinstance(item.persona_id, str) else item.persona_id
             existing = db.query(models.ParticipanteGrupo).filter(
                 models.ParticipanteGrupo.grupo_id == house_id,
                 models.ParticipanteGrupo.persona_id == p_id
@@ -199,6 +202,7 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
                 try:
                     normalized_ids.add(uuid.UUID(rid))
                 except (ValueError, AttributeError):
+                    logger.warning("rol_personalizado_id inválido ignorado en update_grupo: %r", rid)
                     continue
 
         custom_roles_by_id: dict = {}
@@ -232,6 +236,10 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
                     try:
                         lookup_id = uuid.UUID(pg.rol_personalizado_id)
                     except (ValueError, AttributeError):
+                        logger.warning(
+                            "rol_personalizado_id inválido en participante %s: %r",
+                            pg.persona_id, pg.rol_personalizado_id,
+                        )
                         lookup_id = None
                 cr = custom_roles_by_id.get(lookup_id) if lookup_id else None
                 if cr:
@@ -261,7 +269,7 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
             synchronize_session=False,
         )
         for persona_id in payload.base_attendee_ids:
-            p_id = uuid.UUID(str(persona_id)) if isinstance(persona_id, str) else persona_id
+            p_id = _to_uuid(persona_id) if isinstance(persona_id, str) else persona_id
             existing = db.query(models.ParticipanteGrupo).filter(
                 models.ParticipanteGrupo.grupo_id == house_id,
                 models.ParticipanteGrupo.persona_id == p_id

@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from backend.crud._utils import _coerce_uuid_or_404, _to_uuid
 from backend.models_crm import (
     BitacoraEnvioPlantilla,
     CanalEnvio,
@@ -29,7 +30,9 @@ def list_categorias(db: Session) -> List[CategoriaRecurso]:
 
 
 def get_categoria(db: Session, categoria_id: str) -> Optional[CategoriaRecurso]:
-    return db.query(CategoriaRecurso).filter_by(id=_uuid.UUID(categoria_id), activo=True).first()
+    return db.query(CategoriaRecurso).filter_by(
+        id=_coerce_uuid_or_404(categoria_id, "Categoría no encontrada"), activo=True
+    ).first()
 
 
 def create_categoria(db: Session, payload: CategoriaRecursoCreate) -> CategoriaRecurso:
@@ -71,11 +74,15 @@ def list_plantillas(
     skip: int = 0,
     limit: int = 100,
 ) -> List[PlantillaMensaje]:
-    qry = db.query(PlantillaMensaje).filter_by(sede_id=_uuid.UUID(sede_id), activo=True)
+    qry = db.query(PlantillaMensaje).filter_by(
+        sede_id=_coerce_uuid_or_404(sede_id, "Sede no encontrada"), activo=True
+    )
     if canal:
         qry = qry.filter(PlantillaMensaje.canal == CanalEnvio(canal))
     if categoria_id:
-        qry = qry.filter(PlantillaMensaje.categoria_id == _uuid.UUID(categoria_id))
+        qry = qry.filter(
+            PlantillaMensaje.categoria_id == _coerce_uuid_or_404(categoria_id, "Categoría no encontrada")
+        )
     if q:
         term = f"%{q}%"
         qry = qry.filter(
@@ -85,7 +92,9 @@ def list_plantillas(
 
 
 def get_plantilla(db: Session, plantilla_id: str) -> Optional[PlantillaMensaje]:
-    return db.query(PlantillaMensaje).filter_by(id=_uuid.UUID(plantilla_id), activo=True).first()
+    return db.query(PlantillaMensaje).filter_by(
+        id=_coerce_uuid_or_404(plantilla_id, "Plantilla no encontrada"), activo=True
+    ).first()
 
 
 def create_plantilla(
@@ -97,11 +106,11 @@ def create_plantilla(
 ) -> PlantillaMensaje:
     data = payload.model_dump()
     data["canal"] = CanalEnvio(data["canal"])
-    data["categoria_id"] = _uuid.UUID(data["categoria_id"])
+    data["categoria_id"] = _to_uuid(data["categoria_id"])
     obj = PlantillaMensaje(
         **data,
-        sede_id=_uuid.UUID(sede_id),
-        creado_por_id=_uuid.UUID(creado_por_id) if creado_por_id else None,
+        sede_id=_to_uuid(sede_id),
+        creado_por_id=_to_uuid(creado_por_id) if creado_por_id else None,
     )
     db.add(obj)
     db.commit()
@@ -119,7 +128,7 @@ def update_plantilla(
     if "canal" in data and data["canal"]:
         data["canal"] = CanalEnvio(data["canal"])
     if "categoria_id" in data and data["categoria_id"]:
-        data["categoria_id"] = _uuid.UUID(data["categoria_id"])
+        data["categoria_id"] = _to_uuid(data["categoria_id"])
     for k, v in data.items():
         setattr(obj, k, v)
     db.commit()
@@ -139,7 +148,7 @@ def delete_plantilla(db: Session, plantilla_id: str) -> bool:
 def count_envios(db: Session, plantilla_id: str) -> int:
     return (
         db.query(func.count(BitacoraEnvioPlantilla.id))
-        .filter_by(plantilla_id=_uuid.UUID(plantilla_id))
+        .filter_by(plantilla_id=_coerce_uuid_or_404(plantilla_id, "Plantilla no encontrada"))
         .scalar()
         or 0
     )
@@ -150,7 +159,10 @@ def count_envios(db: Session, plantilla_id: str) -> int:
 def list_adjuntos(db: Session, *, plantilla_id: str) -> List[RecursoAdjunto]:
     return (
         db.query(RecursoAdjunto)
-        .filter_by(plantilla_id=_uuid.UUID(plantilla_id), activo=True)
+        .filter_by(
+            plantilla_id=_coerce_uuid_or_404(plantilla_id, "Plantilla no encontrada"),
+            activo=True,
+        )
         .order_by(RecursoAdjunto.fecha_creacion)
         .all()
     )
@@ -169,15 +181,15 @@ def create_adjunto(
     creado_por_id: Optional[str] = None,
 ) -> RecursoAdjunto:
     obj = RecursoAdjunto(
-        sede_id=_uuid.UUID(sede_id),
-        plantilla_id=_uuid.UUID(plantilla_id) if plantilla_id else None,
+        sede_id=_to_uuid(sede_id),
+        plantilla_id=_to_uuid(plantilla_id) if plantilla_id else None,
         nombre_recurso=nombre_recurso,
         seaweed_fid=seaweed_fid,
         url_acceso=url_acceso,
         nombre_archivo=nombre_archivo,
         tipo_mime=tipo_mime,
         peso_bytes=peso_bytes,
-        creado_por_id=_uuid.UUID(creado_por_id) if creado_por_id else None,
+        creado_por_id=_to_uuid(creado_por_id) if creado_por_id else None,
     )
     db.add(obj)
     db.commit()
@@ -186,7 +198,9 @@ def create_adjunto(
 
 
 def delete_adjunto(db: Session, adjunto_id: str) -> bool:
-    obj = db.query(RecursoAdjunto).filter_by(id=_uuid.UUID(adjunto_id), activo=True).first()
+    obj = db.query(RecursoAdjunto).filter_by(
+        id=_coerce_uuid_or_404(adjunto_id, "Adjunto no encontrado"), activo=True
+    ).first()
     if not obj:
         return False
     obj.activo = False
@@ -206,11 +220,11 @@ def create_envio(
     payload_hidratado: Dict,
 ) -> BitacoraEnvioPlantilla:
     obj = BitacoraEnvioPlantilla(
-        sede_id=_uuid.UUID(sede_id),
-        plantilla_id=_uuid.UUID(plantilla_id) if plantilla_id else None,
-        caso_id=_uuid.UUID(caso_id) if caso_id else None,
-        enviado_por_id=_uuid.UUID(enviado_por_id) if enviado_por_id else None,
-        destinatario_id=_uuid.UUID(destinatario_id),
+        sede_id=_to_uuid(sede_id),
+        plantilla_id=_to_uuid(plantilla_id) if plantilla_id else None,
+        caso_id=_to_uuid(caso_id) if caso_id else None,
+        enviado_por_id=_to_uuid(enviado_por_id) if enviado_por_id else None,
+        destinatario_id=_to_uuid(destinatario_id),
         payload_hidratado=payload_hidratado,
         estado=EstadoEnvioPlantilla.PROCESANDO,
     )
@@ -223,7 +237,9 @@ def create_envio(
 def update_estado_envio(
     db: Session, envio_id: str, estado: str, log_error: Optional[str] = None
 ) -> Optional[BitacoraEnvioPlantilla]:
-    obj = db.query(BitacoraEnvioPlantilla).filter_by(id=_uuid.UUID(envio_id)).first()
+    obj = db.query(BitacoraEnvioPlantilla).filter_by(
+        id=_coerce_uuid_or_404(envio_id, "Envío no encontrado")
+    ).first()
     if not obj:
         return None
     obj.estado = EstadoEnvioPlantilla(estado)
@@ -239,7 +255,7 @@ def list_envios_plantilla(
 ) -> List[BitacoraEnvioPlantilla]:
     return (
         db.query(BitacoraEnvioPlantilla)
-        .filter_by(plantilla_id=_uuid.UUID(plantilla_id))
+        .filter_by(plantilla_id=_coerce_uuid_or_404(plantilla_id, "Plantilla no encontrada"))
         .order_by(BitacoraEnvioPlantilla.fecha_envio.desc())
         .offset(skip)
         .limit(limit)
@@ -252,7 +268,7 @@ def list_envios_sede(
 ) -> List[BitacoraEnvioPlantilla]:
     return (
         db.query(BitacoraEnvioPlantilla)
-        .filter_by(sede_id=_uuid.UUID(sede_id))
+        .filter_by(sede_id=_coerce_uuid_or_404(sede_id, "Sede no encontrada"))
         .order_by(BitacoraEnvioPlantilla.fecha_envio.desc())
         .offset(skip)
         .limit(limit)

@@ -15,6 +15,7 @@ from backend.core.permissions import require_module_access
 from backend.core.storage import storage_service
 from backend.core.tenant import get_user_sede_id
 from backend.core.uploads import ensure_allowed_extension, sanitize_filename
+from backend.crud._utils import _coerce_uuid_or_404
 from backend.crud.crm_.extended import (
     create_crm_automation,
     create_crm_automation_edge,
@@ -279,11 +280,11 @@ def del_adjunto(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm", "edit")),
 ):
-    import uuid
-
     from backend.models_crm import RecursoAdjunto
 
-    obj = db.query(RecursoAdjunto).filter_by(id=uuid.UUID(adjunto_id), activo=True).first()
+    obj = db.query(RecursoAdjunto).filter_by(
+        id=_coerce_uuid_or_404(adjunto_id, "Adjunto no encontrado"), activo=True
+    ).first()
     if not obj:
         raise HTTPException(404, "Adjunto no encontrado")
     sede_id = get_user_sede_id(db, str(user.id))

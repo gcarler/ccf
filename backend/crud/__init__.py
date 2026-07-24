@@ -245,6 +245,7 @@ from backend.crud.crm import (
     resolve_persona_id_from_identity,
     resolve_persona_id_for_user,
     list_mentor_candidates,
+    list_milestones,
     search_personas,
     search_personas_page,
     search_personas_paginated,
