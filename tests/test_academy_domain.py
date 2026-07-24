@@ -160,3 +160,44 @@ def test_h04_list_enrollments_filters_by_sede_id(db_session):
     assert course_b.id not in course_ids_a, "H-04 leak: actor sede_a ve enrollment de sede_b"
     assert course_b.id in course_ids_b
     assert course_a.id not in course_ids_b, "H-04 leak: actor sede_b ve enrollment de sede_a"
+
+
+# ─── H-05: list_courses con sede_id NO mezcla globales por defecto ─────────────
+
+
+def test_h05_list_courses_excludes_global_by_default(db_session):
+    """H-05 → ``list_courses(db, sede_id=...)`` por defecto NO incluye
+    ``Course.sede_id IS NULL`` (global) — alinea con A-03. ``include_global=True``
+    los re-incorpora explicit."""
+    import uuid as _uuid
+
+    sede_a = models.Sede(id=_uuid.uuid4(), nombre="Sede X", ciudad="Cdad X")
+    db_session.add(sede_a)
+    db_session.commit()
+    course_a = models.Course(
+        code=f"AX-{_uuid.uuid4().hex[:6]}",
+        title="Curso A sede",
+        modality="online",
+        sede_id=sede_a.id,
+        is_published=True,
+    )
+    course_global = models.Course(
+        code=f"GX-{_uuid.uuid4().hex[:6]}",
+        title="Curso global",
+        modality="online",
+        sede_id=None,
+        is_published=True,
+    )
+    db_session.add_all([course_a, course_global])
+    db_session.commit()
+
+    # Default (include_global=False): sólo su sede.
+    rows_strict = academy_crud.list_courses(db_session, sede_id=sede_a.id)
+    ids_strict = {c.id for c in rows_strict}
+    assert course_a.id in ids_strict
+    assert course_global.id not in ids_strict, "H-05 leak: list_courses incluye curso global sin include_global=True"
+
+    # Opt-in: incluye globales.
+    rows_global = academy_crud.list_courses(db_session, sede_id=sede_a.id, include_global=True)
+    ids_global = {c.id for c in rows_global}
+    assert course_global.id in ids_global, "H-05: include_global=True debe devolver globales"

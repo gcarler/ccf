@@ -27,15 +27,27 @@ def list_courses(
     limit: int = 100,
     modality: str | None = None,
     published_only: bool = True,
+    include_global: bool = False,
 ) -> list[models.Course]:
+    """H-05 (cierre 2026-07-24): ``include_global`` ahora es opt-in (default
+    ``False``) para alinear el CRUD con la decisión A-03 (scope admin estricto:
+    no incluir ``Course.sede_id IS NULL`` a menos que el caller lo pida
+    explicit). El catálogo público del API (_course_scope) sigue
+    pidiéndolo con ``include_global=True``; los callers CRUD que querían
+    mezclar globales ahora deben hacerlo visible con el flag.
+    """
     query = db.query(models.Course).options(
         selectinload(models.Course.lessons),
         selectinload(models.Course.prerequisites),
     ).filter(models.Course.deleted_at.is_(None))
     if sede_id:
-        query = query.filter(
-            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
-        )
+        if include_global:
+            query = query.filter(
+                or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
+            )
+        else:
+            # H-05: scope estricto por defecto — sin cursos globales.
+            query = query.filter(models.Course.sede_id == sede_id)
     if modality:
         query = query.filter(models.Course.modality == modality)
     if published_only:
