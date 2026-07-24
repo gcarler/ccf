@@ -1,34 +1,11 @@
-import type { Users } from 'lucide-react';
 import {
   BarChart3,
   Calendar,
   ClipboardList,
   FolderOpen,
   Sparkles,
+  type LucideIcon,
 } from 'lucide-react';
-
-export interface Strategy {
-  id: string;
-  name: string;
-  description: string;
-  codigo?: string;
-  clase_raiz?: string;
-  activa: boolean;
-  default_role_id?: string | null;
-  typology: string;
-  recurrence: string | null;
-  day_of_week: string | null;
-  start_time: string | null;
-  event_format: string | null;
-  niche_objective: string | null;
-  status: 'active' | 'pending' | 'done';
-  strategy_type: string;
-  start_date?: string | null;
-  end_date?: string | null;
-  created_at: string;
-  updated_at: string;
-  group_count?: number;
-}
 
 export interface CustomRole {
   id: string;
@@ -45,27 +22,6 @@ export interface FollowUpRecord {
   observaciones?: string;
   estado_completado: boolean;
   responsable_id?: string;
-}
-
-export interface StrategyGroup {
-  id: string;
-  name: string;
-  zone: string | null;
-  leader_name: string | null;
-  personas_count: number;
-}
-
-export type HabilitacionEstado = 'DESHABILITADO' | 'HABILITADO' | 'CERRADO' | 'CANCELADA';
-
-export interface SessionRow {
-  id: string;
-  grupo_id: string;
-  session_date: string;
-  status: string;
-  estado_habilitacion?: HabilitacionEstado;
-  topic?: string | null;
-  offering_amount?: number | null;
-  report_notes?: string | null;
 }
 
 export interface AttendancePersona {
@@ -144,7 +100,7 @@ export const ROLE_COLORS: Record<string, string> = {
   personalizado: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-info-text',
 };
 
-export const TABS: { id: TabId; label: string; icon: typeof Users }[] = [
+export const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'overview', label: 'General', icon: Sparkles },
   { id: 'groups', label: 'Grupos', icon: FolderOpen },
   { id: 'sessions', label: 'Sesiones', icon: Calendar },
