@@ -63,3 +63,100 @@ def test_archived_enrollment_is_reactivated(db_session):
     assert restored.id == enrollment.id
     assert restored.deleted_at is None
     assert restored.status == "active"
+
+
+# ─── A-06/A-07/H-04: defense-in-depth del CRUD con sede_id kwarg ─────────────
+
+
+def _seed_two_sedes(db_session):
+    import uuid as _uuid
+
+    sede_a = models.Sede(id=_uuid.uuid4(), nombre="Sede A", ciudad="Ciudad A")
+    sede_b = models.Sede(id=_uuid.uuid4(), nombre="Sede B", ciudad="Ciudad B")
+    db_session.add_all([sede_a, sede_b])
+    db_session.commit()
+    course_a = models.Course(
+        code=f"CAA-{_uuid.uuid4().hex[:6]}",
+        title="Curso A",
+        modality="online",
+        sede_id=sede_a.id,
+        is_published=True,
+    )
+    course_b = models.Course(
+        code=f"CBB-{_uuid.uuid4().hex[:6]}",
+        title="Curso B",
+        modality="online",
+        sede_id=sede_b.id,
+        is_published=True,
+    )
+    db_session.add_all([course_a, course_b])
+    db_session.commit()
+    return sede_a, course_a, sede_b, course_b
+
+
+def test_a06_get_course_blocks_cross_sede_with_sede_id_kwarg(db_session):
+    """A-06 → ``get_course(db, course_id, sede_id=sede_b)`` retorna None para
+    un Course cuya ``sede_id`` es sede_a (otra sede)."""
+    sede_a, course_a, sede_b, _ = _seed_two_sedes(db_session)
+    # Sin sede_id: row accesible (compatibilidad callers no-API).
+    assert academy_crud.get_course(db_session, course_a.id) is not None
+    # Con sede_id del actor correcto: row accesible.
+    assert academy_crud.get_course(db_session, course_a.id, sede_id=sede_a.id) is not None
+    # Con sede_id del actor incorrecto: None (defense-in-depth).
+    assert academy_crud.get_course(db_session, course_a.id, sede_id=sede_b.id) is None
+
+
+def test_a07_update_course_blocks_cross_sede_with_sede_id_kwarg(db_session):
+    """A-07 → ``update_course(db, course_id, data, sede_id=sede_b)`` retorna
+    None (no muta) para un Course de sede_a. La row no se modifica."""
+    sede_a, course_a, sede_b, _ = _seed_two_sedes(db_session)
+    result = academy_crud.update_course(
+        db_session, course_a.id, {"title": "Hacked"}, sede_id=sede_b.id
+    )
+    assert result is None, (
+        "A-07 leak: update_course con sede_id incorrecto no debe retornar el row."
+    )
+    db_session.expire_all()
+    assert db_session.query(models.Course).get(course_a.id).title == "Curso A", (
+        "A-07 leak: la row del Course fue mutada por actor de otra sede."
+    )
+
+
+def test_a07_archive_course_blocks_cross_sede_with_sede_id_kwarg(db_session):
+    """A-07 → ``archive_course(db, course_id, sede_id=sede_b)`` retorna False y
+    no archiva para un Course de sede_a."""
+    sede_a, course_a, sede_b, _ = _seed_two_sedes(db_session)
+    archived = academy_crud.archive_course(
+        db_session, course_a.id, sede_id=sede_b.id
+    )
+    assert archived is False, (
+        "A-07 leak: archive_course con sede_id incorrecto no debe retornar True."
+    )
+    db_session.expire_all()
+    assert (
+        db_session.query(models.Course).get(course_a.id).deleted_at is None
+    ), "A-07 leak: el Course fue archivado por actor de otra sede."
+
+
+def test_h04_list_enrollments_filters_by_sede_id(db_session):
+    """H-04 → ``list_enrollments(db, sede_id=sede_a)`` excluye enrollments de
+    courses de sede_b (preserva globales)."""
+    import uuid as _uuid
+
+    sede_a, course_a, sede_b, course_b = _seed_two_sedes(db_session)
+    persona = models.Persona(id=_uuid.uuid4(), first_name="X", last_name="Y", email="h04@example.com")
+    db_session.add(persona)
+    db_session.commit()
+    e_a = models.Enrollment(persona_id=persona.id, course_id=course_a.id)
+    e_b = models.Enrollment(persona_id=persona.id, course_id=course_b.id)
+    db_session.add_all([e_a, e_b])
+    db_session.commit()
+
+    rows_a = academy_crud.list_enrollments(db_session, sede_id=sede_a.id)
+    rows_b = academy_crud.list_enrollments(db_session, sede_id=sede_b.id)
+    course_ids_a = {row.course_id for row in rows_a}
+    course_ids_b = {row.course_id for row in rows_b}
+    assert course_a.id in course_ids_a
+    assert course_b.id not in course_ids_a, "H-04 leak: actor sede_a ve enrollment de sede_b"
+    assert course_b.id in course_ids_b
+    assert course_a.id not in course_ids_b, "H-04 leak: actor sede_b ve enrollment de sede_a"

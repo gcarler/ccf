@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from backend import models
@@ -43,10 +43,28 @@ def list_courses(
     return query.offset(skip).limit(limit).all()
 
 
-def get_course(db: Session, course_id: UUID) -> models.Course | None:
-    return db.query(models.Course).filter(
+def get_course(
+    db: Session,
+    course_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> models.Course | None:
+    """A-06 hardening: ``sede_id`` opcional aplica defense-in-depth Axioma 3.
+
+    Si ``sede_id`` se pasa y el row pertenece a otra sede (distinta del NULL
+    global), el getter retorna ``None`` en vez de exponer el row. Los callers
+    no-API (workers, seeds) que no pasen ``sede_id`` conservan el comportamiento
+    previo (sin filtro) — el flag es opt-in para preservar compatibilidad con
+    los tests legacy del módulo CRUD.
+    """
+    query = db.query(models.Course).filter(
         models.Course.id == course_id, models.Course.deleted_at.is_(None)
-    ).first()
+    )
+    if sede_id is not None:
+        query = query.filter(
+            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
+        )
+    return query.first()
 
 
 def create_course(db: Session, course_data: dict) -> models.Course:
@@ -57,8 +75,16 @@ def create_course(db: Session, course_data: dict) -> models.Course:
     return course
 
 
-def update_course(db: Session, course_id: UUID, course_data: dict) -> models.Course | None:
-    course = get_course(db, course_id)
+def update_course(
+    db: Session,
+    course_id: UUID,
+    course_data: dict,
+    *,
+    sede_id: UUID | None = None,
+) -> models.Course | None:
+    # A-07: el pasaje de ``sede_id`` acota el getter a rows visibles — el
+    # contraste de sede vive en ``get_course``.
+    course = get_course(db, course_id, sede_id=sede_id)
     if not course:
         return None
     for key, value in course_data.items():
@@ -69,8 +95,13 @@ def update_course(db: Session, course_id: UUID, course_data: dict) -> models.Cou
     return course
 
 
-def archive_course(db: Session, course_id: UUID) -> bool:
-    course = get_course(db, course_id)
+def archive_course(
+    db: Session,
+    course_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> bool:
+    course = get_course(db, course_id, sede_id=sede_id)
     if not course:
         return False
     course.deleted_at = _utcnow()
@@ -78,7 +109,17 @@ def archive_course(db: Session, course_id: UUID) -> bool:
     return True
 
 
-def list_lessons(db: Session, course_id: UUID, *, published_only: bool = False) -> list[models.Lesson]:
+def list_lessons(
+    db: Session,
+    course_id: UUID,
+    *,
+    published_only: bool = False,
+    sede_id: UUID | None = None,
+) -> list[models.Lesson]:
+    # H-04: si ``sede_id`` se pasa, el course_id debe pertenecer a la sede del
+    # actor (o ser global) — sino retorna [].
+    if sede_id is not None and not get_course(db, course_id, sede_id=sede_id):
+        return []
     query = db.query(models.Lesson).options(selectinload(models.Lesson.resources)).filter(
         models.Lesson.course_id == course_id,
         models.Lesson.deleted_at.is_(None),
@@ -88,10 +129,22 @@ def list_lessons(db: Session, course_id: UUID, *, published_only: bool = False) 
     return query.order_by(models.Lesson.order_index).all()
 
 
-def get_lesson(db: Session, lesson_id: UUID) -> models.Lesson | None:
-    return db.query(models.Lesson).filter(
+def get_lesson(
+    db: Session,
+    lesson_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> models.Lesson | None:
+    query = db.query(models.Lesson).filter(
         models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)
-    ).first()
+    )
+    if sede_id is not None:
+        # A-06: join con Course para aplicar scope de sede.
+        query = query.join(models.Course).filter(
+            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)),
+            models.Course.deleted_at.is_(None),
+        )
+    return query.first()
 
 
 def create_lesson(db: Session, course_id: UUID, lesson_data: dict) -> models.Lesson:
@@ -102,8 +155,14 @@ def create_lesson(db: Session, course_id: UUID, lesson_data: dict) -> models.Les
     return lesson
 
 
-def update_lesson(db: Session, lesson_id: UUID, lesson_data: dict) -> models.Lesson | None:
-    lesson = get_lesson(db, lesson_id)
+def update_lesson(
+    db: Session,
+    lesson_id: UUID,
+    lesson_data: dict,
+    *,
+    sede_id: UUID | None = None,
+) -> models.Lesson | None:
+    lesson = get_lesson(db, lesson_id, sede_id=sede_id)
     if not lesson:
         return None
     for key, value in lesson_data.items():
@@ -114,8 +173,13 @@ def update_lesson(db: Session, lesson_id: UUID, lesson_data: dict) -> models.Les
     return lesson
 
 
-def archive_lesson(db: Session, lesson_id: UUID) -> bool:
-    lesson = get_lesson(db, lesson_id)
+def archive_lesson(
+    db: Session,
+    lesson_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> bool:
+    lesson = get_lesson(db, lesson_id, sede_id=sede_id)
     if not lesson:
         return False
     lesson.deleted_at = _utcnow()
@@ -128,6 +192,7 @@ def list_enrollments(
     *,
     persona_id: UUID | None = None,
     course_id: UUID | None = None,
+    sede_id: UUID | None = None,
 ) -> list[models.Enrollment]:
     query = db.query(models.Enrollment).options(
         joinedload(models.Enrollment.course), joinedload(models.Enrollment.persona)
@@ -136,14 +201,30 @@ def list_enrollments(
         query = query.filter(models.Enrollment.persona_id == persona_id)
     if course_id:
         query = query.filter(models.Enrollment.course_id == course_id)
+    if sede_id is not None:
+        # H-04: filtra por sede del Course del enrollment.
+        query = query.join(models.Course).filter(
+            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
+        )
     return query.order_by(models.Enrollment.created_at.desc()).all()
 
 
-def get_enrollment(db: Session, enrollment_id: UUID) -> models.Enrollment | None:
-    return db.query(models.Enrollment).filter(
+def get_enrollment(
+    db: Session,
+    enrollment_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> models.Enrollment | None:
+    query = db.query(models.Enrollment).filter(
         models.Enrollment.id == enrollment_id,
         models.Enrollment.deleted_at.is_(None),
-    ).first()
+    )
+    if sede_id is not None:
+        query = query.join(models.Course).filter(
+            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)),
+            models.Course.deleted_at.is_(None),
+        )
+    return query.first()
 
 
 def create_enrollment(db: Session, payload: schemas.EnrollmentCreate) -> models.Enrollment:
@@ -175,13 +256,26 @@ def list_assessments(db: Session, course_id: UUID) -> list[models.Assessment]:
     ).all()
 
 
-def get_assessment(db: Session, assessment_id: UUID) -> models.Assessment | None:
-    return db.query(models.Assessment).options(
+def get_assessment(
+    db: Session,
+    assessment_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> models.Assessment | None:
+    query = db.query(models.Assessment).options(
         selectinload(models.Assessment.questions).selectinload(models.AssessmentQuestion.options)
     ).filter(
         models.Assessment.id == assessment_id,
         models.Assessment.deleted_at.is_(None),
-    ).first()
+    )
+    if sede_id is not None:
+        # A-06: Assessment carece de sede_id propia; el scope proviene del Course
+        # al que está asociado.
+        query = query.join(models.Course).filter(
+            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)),
+            models.Course.deleted_at.is_(None),
+        )
+    return query.first()
 
 
 def get_lesson_progress(
@@ -206,5 +300,29 @@ def get_certificate_by_code(db: Session, code: str) -> models.Certificate | None
     ).first()
 
 
-def list_forum_threads(db: Session) -> list[models.ForumThread]:
-    return db.query(models.ForumThread).order_by(models.ForumThread.created_at.desc()).all()
+def list_forum_threads(
+    db: Session,
+    *,
+    sede_id: UUID | None = None,
+) -> list[models.ForumThread]:
+    query = db.query(models.ForumThread)
+    if sede_id is not None:
+        # M-07: filtra hilos globales (course_id IS NULL) o de Course no
+        # archivado de la sede del actor.
+        query = query.outerjoin(
+            models.Course,
+            and_(
+                models.ForumThread.course_id == models.Course.id,
+                models.Course.deleted_at.is_(None),
+                or_(
+                    models.Course.sede_id == sede_id,
+                    models.Course.sede_id.is_(None),
+                ),
+            ),
+        ).filter(
+            or_(
+                models.ForumThread.course_id.is_(None),
+                models.Course.id.is_not(None),
+            )
+        )
+    return query.order_by(models.ForumThread.created_at.desc()).all()
