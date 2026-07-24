@@ -372,7 +372,7 @@ export default function CmsResourcesPage() {
 
   return (
     <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--admin-bg-input))]">
-      <div className="mx-auto max-w-7xl space-y-4 p-4">
+      <div className="space-y-4 p-4">
         <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[hsl(var(--admin-bg-primary))]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
@@ -449,7 +449,7 @@ export default function CmsResourcesPage() {
           </aside>
 
           <div className="space-y-3">
-            <section className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+            <section className="grid grid-cols-1 gap-3 xl:grid-cols-2 2xl:grid-cols-3">
               {filteredResources.map((item) => {
                 const Icon = item.icon;
                 return (

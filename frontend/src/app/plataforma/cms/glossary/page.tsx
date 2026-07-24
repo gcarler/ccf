@@ -40,7 +40,7 @@ export default function GlossaryPage() {
   const grouped = terms.reduce((acc, t) => { const cat = t.category || "General"; (acc[cat] = acc[cat] || []).push(t); return acc; }, {} as Record<string, GlossaryTerm[]>);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <BookOpen size={24} className="text-[hsl(var(--primary))]" />
@@ -77,7 +77,7 @@ export default function GlossaryPage() {
       {loading ? <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Cargando...</div> : Object.entries(grouped).map(([cat, catTerms]) => (
         <div key={cat}>
           <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">{cat}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {catTerms.map(t => (
               <div key={t.id} className="p-4 border rounded-xl bg-[hsl(var(--bg-primary))] hover:shadow-sm transition-shadow">
                 <div className="flex items-start justify-between">
