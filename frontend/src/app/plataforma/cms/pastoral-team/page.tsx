@@ -205,7 +205,7 @@ export default function PastoralTeamPage() {
   return (
     <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[var(--bg-primary)]">
       {/* ── Actions Bar ── */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 py-6">
+      <div className="px-4 md:px-6 lg:px-8 xl:px-12 py-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search
@@ -245,7 +245,7 @@ export default function PastoralTeamPage() {
       </div>
 
       {/* ── Grid / Loading ── */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12 pb-20">
+      <div className="px-4 md:px-6 lg:px-8 xl:px-12 pb-20">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
@@ -266,7 +266,7 @@ export default function PastoralTeamPage() {
           <>
             {/* Grid View */}
             {viewType === "grid" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {paginated.map((profile) => (
                   <div
                     key={profile.id}
