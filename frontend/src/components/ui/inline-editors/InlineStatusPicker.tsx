@@ -1,56 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import clsx from "clsx";
 import { Check, ChevronDown } from "lucide-react";
-import { STATUS_LABELS, type TaskStatus } from "@/lib/projects/constants";
-
-const STATUS_OPTIONS: { value: TaskStatus; label: string; dot: string; bg: string; text: string; border: string }[] = [
-  {
-    value: "todo",
-    label: STATUS_LABELS.todo,
-    dot: "bg-[hsl(var(--surface-3))]",
-    bg: "bg-[hsl(var(--surface-2))]",
-    text: "text-[hsl(var(--text-secondary))]",
-    border: "border-[hsl(var(--border))]",
-  },
-  {
-    value: "in_progress",
-    label: STATUS_LABELS.in_progress,
-    dot: "bg-[hsl(var(--primary))]",
-    bg: "bg-[hsl(var(--info-muted))]",
-    text: "text-[hsl(var(--info))]",
-    border: "border-[hsl(var(--info))]/30",
-  },
-  {
-    value: "review",
-    label: STATUS_LABELS.review,
-    dot: "bg-[hsl(var(--warning))]",
-    bg: "bg-[hsl(var(--warning-muted))]",
-    text: "text-[hsl(var(--warning-text))]",
-    border: "border-[hsl(var(--warning))]/30",
-  },
-  {
-    value: "completed",
-    label: STATUS_LABELS.completed,
-    dot: "bg-[hsl(var(--success))]",
-    bg: "bg-[hsl(var(--success-muted))]",
-    text: "text-[hsl(var(--success-text))]",
-    border: "border-[hsl(var(--success))]/30",
-  },
-];
+import { buildStatusOptions } from "@/lib/projects/constants";
+import type { PhaseDef } from "@/context/ProjectUpdateContext";
 
 interface InlineStatusPickerProps {
   value: string;
-  onChange: (value: TaskStatus) => void;
+  onChange: (value: string) => void;
   disabled?: boolean;
   size?: "sm" | "md";
+  /** Dynamic project phases; overrides the 4 canonical slugs when provided. */
+  phases?: PhaseDef[];
 }
 
-export function InlineStatusPicker({ value, onChange, disabled, size = "md" }: InlineStatusPickerProps) {
+export function InlineStatusPicker({ value, onChange, disabled, size = "md", phases }: InlineStatusPickerProps) {
   const [open, setOpen] = useState(false);
-  const cfg = STATUS_OPTIONS.find((s) => s.value === value) ?? STATUS_OPTIONS[0];
+  const options = useMemo(() => buildStatusOptions(phases), [phases]);
+  const cfg = options.find((s) => s.value === value) ?? options[0];
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -69,7 +38,7 @@ export function InlineStatusPicker({ value, onChange, disabled, size = "md" }: I
           )}
           aria-label="Cambiar estado"
         >
-          <span className={clsx("size-1.5 rounded-full shrink-0", cfg.dot)} />
+          <span className={clsx("size-1.5 rounded-full shrink-0", cfg.dot)} style={cfg.dotStyle} />
           {cfg.label}
           <ChevronDown size={size === "sm" ? 9 : 10} className="opacity-60" />
         </button>
@@ -84,7 +53,7 @@ export function InlineStatusPicker({ value, onChange, disabled, size = "md" }: I
           <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">
             Estado
           </p>
-          {STATUS_OPTIONS.map((s) => (
+          {options.map((s) => (
             <button
               key={s.value}
               onClick={() => {
@@ -93,7 +62,7 @@ export function InlineStatusPicker({ value, onChange, disabled, size = "md" }: I
               }}
               className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
             >
-              <span className={clsx("size-2 rounded-full shrink-0", s.dot)} />
+              <span className={clsx("size-2 rounded-full shrink-0", s.dot)} style={s.dotStyle} />
               <span className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1 text-left">
                 {s.label}
               </span>

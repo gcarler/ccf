@@ -1,6 +1,9 @@
 // Canonical task status/priority enums shared across the projects frontend.
 // These values must stay in sync with the backend schemas.
 
+import type { CSSProperties } from 'react';
+import type { PhaseDef } from '@/context/ProjectUpdateContext';
+
 export const TASK_STATUSES = ['todo', 'in_progress', 'review', 'completed'] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
@@ -30,9 +33,10 @@ export const PRIORITY_CYCLE: TaskPriority[] = [...TASK_PRIORITIES];
 
 // ─── Visual status option configs (shared across project views) ───────────────
 export interface StatusOption {
-    readonly value: TaskStatus;
+    readonly value: string;            // TaskStatus slug OR dynamic ProjectPhase.slug
     readonly label: string;
     readonly dot: string;
+    readonly dotStyle?: CSSProperties; // for dynamic phase hex colors (PhaseDef.color)
     readonly bg: string;
     readonly text: string;
     readonly border: string;
@@ -47,6 +51,28 @@ export const STATUS_OPTIONS: readonly StatusOption[] = [
 
 export function getStatusOption(val: string): StatusOption {
     return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0];
+}
+
+// ─── Dynamic phase → StatusOption builder ─────────────────────────────────────
+// When a project has custom phases (ProjectPhase slugs), the InlineStatusPicker
+// and ListView grouping must reflect those instead of the 4 canonical slugs.
+// Mirrors the backend `_assert_status_in_project_phases` fallback semantics:
+// empty phases → canonical STATUS_OPTIONS.
+const PHASE_NEUTRAL_BG = 'bg-[hsl(var(--surface-2))] dark:bg-white/5';
+const PHASE_NEUTRAL_TEXT = 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]';
+const PHASE_NEUTRAL_BORDER = 'border-[hsl(var(--border))] dark:border-white/10';
+
+export function buildStatusOptions(phases?: readonly PhaseDef[] | null): readonly StatusOption[] {
+    if (!phases || phases.length === 0) return STATUS_OPTIONS;
+    return phases.map(p => ({
+        value: p.slug,
+        label: p.name,
+        dot: '',
+        dotStyle: { backgroundColor: p.color },
+        bg: PHASE_NEUTRAL_BG,
+        text: PHASE_NEUTRAL_TEXT,
+        border: PHASE_NEUTRAL_BORDER,
+    }));
 }
 
 // ─── Visual priority option configs (shared across project views) ─────────────

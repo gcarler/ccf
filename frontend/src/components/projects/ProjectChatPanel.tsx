@@ -106,7 +106,12 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   const handleSocketEvent = useCallback(
     (payload: WsEvent) => {
       if (payload?.event === "project_message" && "project_id" in payload && "message" in payload && payload.project_id === projectId) {
-        setMessages((prev) => [...prev, payload.message as ChatMessage]);
+        const incoming = payload.message as ChatMessage;
+        // Dedup: the backend broadcasts the message back to the sender's own
+        // client via WS. Since handleSend already added it from the POST
+        // response, skip if we already have it (handles both arrival orders).
+        if (!incoming?.id) return;
+        setMessages((prev) => (prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]));
       }
     },
     [projectId]
@@ -127,7 +132,9 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
         token,
         body: { content: input.trim() },
       });
-      setMessages((prev) => [...prev, msg]);
+      // Dedup guard (defensive): if the WS broadcast arrived before the POST
+      // resolved, the message is already in the list — skip adding it again.
+      setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
       setInput("");
     } catch (err) {
       toast.error("Failed to send message");
