@@ -7,6 +7,7 @@ Cubre:
 
 import uuid
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -102,14 +103,14 @@ def _create_module_role(db_session: Session, module: str) -> str:
 # ──────────────────────────────────────────────
 
 class TestAuthRoleDefinitions:
-    """CRUD de RolPlataforma via /admin/auth-role-definitions."""
+    """CRUD de RolPlataforma via /admin/roles (consolidated endpoint)."""
 
     def test_list_auth_roles(self, client: TestClient, db_session: Session):
         _seed_auth_roles(db_session)
         token = _login_as_admin(client, db_session)
-        resp = client.get("/api/admin/auth-role-definitions", headers={"Authorization": f"Bearer {token}"})
+        resp = client.get("/api/admin/roles", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
-        data = resp.json()
+        data = resp.json()["items"]
         assert isinstance(data, list)
         nombres = [r["nombre"] for r in data]
         assert "ADMINISTRADOR" in nombres
@@ -118,11 +119,11 @@ class TestAuthRoleDefinitions:
     def test_create_auth_role(self, client: TestClient, db_session: Session):
         token = _login_as_admin(client, db_session)
         resp = client.post(
-            "/api/admin/auth-role-definitions",
+            "/api/admin/roles",
             headers={"Authorization": f"Bearer {token}"},
             json={"nombre": "TEST_ROL", "permisos": {"crm:read": "allow"}},
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         data = resp.json()
         assert data["nombre"] == "TEST_ROL"
         assert data["permisos"] == {"crm:read": "allow"}
@@ -130,12 +131,12 @@ class TestAuthRoleDefinitions:
     def test_create_duplicate_auth_role_fails(self, client: TestClient, db_session: Session):
         token = _login_as_admin(client, db_session)
         client.post(
-            "/api/admin/auth-role-definitions",
+            "/api/admin/roles",
             headers={"Authorization": f"Bearer {token}"},
             json={"nombre": "DUP_ROL", "permisos": {}},
         )
         resp = client.post(
-            "/api/admin/auth-role-definitions",
+            "/api/admin/roles",
             headers={"Authorization": f"Bearer {token}"},
             json={"nombre": "DUP_ROL", "permisos": {}},
         )
@@ -145,14 +146,14 @@ class TestAuthRoleDefinitions:
         token = _login_as_admin(client, db_session)
         # Create a role
         create_resp = client.post(
-            "/api/admin/auth-role-definitions",
+            "/api/admin/roles",
             headers={"Authorization": f"Bearer {token}"},
             json={"nombre": "ROL_UPDATE", "permisos": {"crm:read": "allow"}},
         )
         role_id = create_resp.json()["id"]
         # Update it
         resp = client.patch(
-            f"/api/admin/auth-role-definitions/{role_id}",
+            f"/api/admin/roles/{role_id}",
             headers={"Authorization": f"Bearer {token}"},
             json={"permisos": {"crm:read": "allow", "crm:edit": "allow"}},
         )
@@ -162,21 +163,28 @@ class TestAuthRoleDefinitions:
     def test_delete_auth_role(self, client: TestClient, db_session: Session):
         token = _login_as_admin(client, db_session)
         create_resp = client.post(
-            "/api/admin/auth-role-definitions",
+            "/api/admin/roles",
             headers={"Authorization": f"Bearer {token}"},
             json={"nombre": "ROL_DEL", "permisos": {}},
         )
         role_id = create_resp.json()["id"]
         resp = client.delete(
-            f"/api/admin/auth-role-definitions/{role_id}",
+            f"/api/admin/roles/{role_id}",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 204
 
 
 class TestUserModuleRoles:
-    """CRUD de UsuarioRolModulo via /admin/user-module-roles."""
+    """CRUD de UsuarioRolModulo via /admin/user-module-roles.
 
+    NOTE: Este endpoint ya no existe en la API consolidada. Los roles
+    modulares ahora se gestionan a través del CRUD interno o de endpoints
+    futuros. Se dejan los tests como skipped para no perder la lógica de
+    validación cuando se exponga el endpoint.
+    """
+
+    @pytest.mark.skip(reason="No hay endpoint activo para roles modulares en la API actual")
     def test_assign_and_list_module_role(self, client: TestClient, db_session: Session):
         _seed_auth_roles(db_session)
         token = _login_as_admin(client, db_session)
