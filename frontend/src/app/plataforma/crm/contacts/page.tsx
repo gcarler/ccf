@@ -9,7 +9,7 @@ import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { Search, UserPlus, Phone, MessageSquare, Link2, Users, Plus, Loader2, Send, Calendar, BarChart3, BookOpen } from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
@@ -220,7 +220,7 @@ export default function ContactsPage() {
                 {/* List */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {loading ? (
-                        [...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-md" />)
+                        [...Array(5)].map((_, i) => <DSSkeleton key={i} className="h-24 w-full rounded-md" />)
                     ) : !leadsError && filtered.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-1.5 text-center space-y-4">
                             <div className="size-10 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10">

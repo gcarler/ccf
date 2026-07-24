@@ -1,6 +1,6 @@
 "use client";
 
-import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState, KeyboardEvent } from "react";
 import type { ICellEditorParams } from "ag-grid-community";
 
 export interface TitleCellEditorRef {
@@ -22,7 +22,7 @@ const TitleCellEditor = forwardRef<TitleCellEditorRef, ICellEditorParams>((props
         },
     }));
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
             e.preventDefault();
             props.stopEditing();

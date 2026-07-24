@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, MapPin, Users, Navigation } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 
 interface GroupRecord {
     id: number;
@@ -68,7 +68,7 @@ export default function DiscoverPage() {
             <main className="flex-1 overflow-y-auto p-3 scrollbar-thin">
                 {loading ? (
  <div className="space-y-3 w-full">
-                        {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-md" />)}
+                        {[1, 2, 3].map(i => <DSSkeleton key={i} className="h-20 w-full rounded-md" />)}
                     </div>
                 ) : (
  <div className="w-full grid gap-3">

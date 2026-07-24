@@ -53,7 +53,7 @@ function ChartWrapper({ children, height }: { children: React.ReactNode; height:
     const ready = width > 0 && h > 0;
 
     return (
-        <div ref={ref} style={{ width: '100%', height, minWidth: 1, minHeight: 1 }}>
+        <div ref={ref} className="w-full min-w-[1px] min-h-[1px]" style={{ height }}>
             {ready ? (
                 // Pass explicit pixel dimensions to avoid Recharts' internal
                 // "width(-1) / height(-1)" warning in flex/grid layouts.
@@ -61,7 +61,7 @@ function ChartWrapper({ children, height }: { children: React.ReactNode; height:
                     {children}
                 </ResponsiveContainer>
             ) : (
-                <div style={{ width: '100%', height: h, minWidth: 1, minHeight: 1 }} />
+                <div className="w-full min-w-[1px] min-h-[1px]" style={{ height: h }} />
             )}
         </div>
     );
@@ -186,7 +186,7 @@ export function DSChart({
     }, []);
 
     if (!mounted || data.length === 0) {
-        return <div style={{ width: '100%', height, minWidth: 1, minHeight: 1 }} />;
+        return <div className="w-full min-w-[1px] min-h-[1px]" style={{ height }} />;
     }
 
     switch (type) {

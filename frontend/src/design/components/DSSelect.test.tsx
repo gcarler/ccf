@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSSelect } from './DSSelect';
 
 const sampleOptions = [
@@ -99,5 +100,18 @@ describe('DSSelect', () => {
         render(<DSSelect ref={ref} options={sampleOptions} />);
         expect(ref.current).toBeInstanceOf(HTMLSelectElement);
         expect(ref.current?.tagName).toBe('SELECT');
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(
+            <DSSelect
+                label="Option"
+                options={[
+                    { value: 'a', label: 'A' },
+                    { value: 'b', label: 'B' },
+                ]}
+            />
+        );
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

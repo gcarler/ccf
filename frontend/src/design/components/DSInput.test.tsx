@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSInput } from './DSInput';
 
 describe('DSInput', () => {
@@ -93,5 +94,10 @@ describe('DSInput', () => {
     render(<DSInput ref={ref} />);
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
     expect(ref.current?.tagName).toBe('INPUT');
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<DSInput label="Name" />);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

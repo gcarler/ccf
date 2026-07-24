@@ -88,7 +88,7 @@ function RightPanel({
                     <button
                         onClick={handleClose}
                         aria-label="Cerrar panel"
-                        className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
+                        className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
                     >
                         <X size={14} />
                     </button>

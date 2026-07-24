@@ -31,7 +31,7 @@ import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -495,7 +495,7 @@ export default function AccessManagementPage() {
  <div className="w-full">
                     {loading ? (
                         <div className="space-y-3">
-                            {[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-8 w-full rounded-lg" />)}
+                            {[1,2,3,4,5,6].map(i => <DSSkeleton key={i} className="h-8 w-full rounded-lg" />)}
                         </div>
                     ) : currentRows.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-1.5 text-center">

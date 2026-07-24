@@ -69,17 +69,39 @@ PUBLIC_CMS_RATE_LIMIT = 240
 
 
 def _commit_or_raise_conflict(db: Session, detail: str = "resource already exists") -> None:
-    """Commit helper that converts concurrent unique-key violations into 409.
+    """Commit helper that converts concurrent **unique-key** violations into 409.
 
     Without this, two simultaneous requests can pass the existence check and
     then raise an unhandled ``IntegrityError`` (500). Wrapping the commit
     lets us return a controlled ``409 Conflict`` instead.
+
+    Aligned (M-12, defensivo) con ``crud.cms._commit_or_conflict``: solo
+    traga ``IntegrityError`` cuyo ``pgcode == '23505'`` (Postgres unique
+    violation) o el mensaje SQLite ``"UNIQUE constraint failed"``. Toda
+    otra ``IntegrityError`` (NOT NULL, FK, check) es un bug genuino y se
+    re-raise post-rollback para que salga como 500 (no como falso 409).
+    Antes de este fix, el helper tragaba TODA ``IntegrityError`` como 409
+    — enmascaraba bugs.
     """
     try:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        logger.debug("Concurrent create conflict: %s", exc)
+        # Only swallow unique-key violations (Postgres 23505 / SQLite
+        # "UNIQUE constraint failed"). Everything else is a genuine bug
+        # that should not be masked as a conflict.
+        is_unique_violation = False
+        orig = getattr(exc, "orig", None)
+        if orig is not None:
+            pgcode = getattr(orig, "pgcode", None)
+            if pgcode == "23505":
+                is_unique_violation = True
+            # SQLite exposes unique violations via IntegrityError message
+            elif "UNIQUE constraint failed" in str(orig):
+                is_unique_violation = True
+        if not is_unique_violation:
+            raise
+        logger.debug("Swallowed concurrent create unique-key conflict: %s", exc)
         raise HTTPException(status_code=409, detail=detail)
 
 # ── Section Types (platform-wide catalog admin endpoints) ─────────────────

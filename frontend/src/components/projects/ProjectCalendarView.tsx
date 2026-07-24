@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import UniversalCalendarView from "@/components/ui/UniversalCalendarView";
 import TaskCreationDrawer from "@/components/projects/TaskCreationDrawer";
 import { useProjectTasks } from "@/hooks/useProjectTasks";
@@ -34,7 +34,7 @@ export default function ProjectCalendarView({ projectId, projectTitle, tasks, on
     const [draftDueDate, setDraftDueDate] = useState<string | undefined>(undefined);
     const [calendarTasks, setCalendarTasks] = useState<ProjectTaskRecord[]>(tasks);
 
-    React.useEffect(() => {
+    useEffect(() => {
         setCalendarTasks(tasks);
     }, [tasks]);
 

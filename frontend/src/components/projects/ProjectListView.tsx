@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
     ChevronDown, ChevronRight, Plus,
     MessageSquare, MoreHorizontal, CheckCircle2, X, Send,
@@ -11,31 +11,14 @@ import clsx from 'clsx';
 import type { ProjectTaskRecord } from '@/types/projects';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { useProjectTasks } from '@/hooks/useProjectTasks';
+import { getStatusOption, STATUS_GROUP_PILL } from '@/lib/projects/constants';
+import type { TaskStatus } from '@/lib/projects/constants';
 import {
     InlineStatusPicker,
     InlinePriorityPicker,
     InlineDatePicker,
     InlineUserPicker,
 } from '@/components/ui/inline-editors';
-
-// ─── Status Config ────────────────────────────────────────────────────────────
-const STATUS_OPTIONS = [
-    { value: 'todo',        label: 'Pendiente',   dot: 'bg-[hsl(var(--surface-2))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',           text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',    border: 'border-[hsl(var(--border))] dark:border-white/10' },
-    { value: 'in_progress', label: 'En Progreso', dot: 'bg-[hsl(var(--primary))]',  bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20',    text: 'text-[hsl(var(--primary))] dark:text-info-text',  border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30' },
-    { value: 'review',      label: 'En Revisión', dot: 'bg-[hsl(var(--warning))]',   bg: 'bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/20',    text: 'text-warning-text dark:text-warning-text',  border: 'border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30' },
-    { value: 'completed',   label: 'Completado',  dot: 'bg-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20',  text: 'text-success-text dark:text-success-text', border: 'border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30' },
-] as const;
-function getStatus(val: string) {
-    return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0];
-}
-
-// ─── Group header pill styles ─────────────────────────────────────────────────
-const GROUP_PILL: Record<string, string> = {
-    todo:        'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]',
-    in_progress: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20 dark:text-info-text',
-    review:      'bg-[hsl(var(--warning-muted))] text-warning-text dark:bg-[hsl(var(--warning))]/30 dark:text-[hsl(var(--warning))]',
-    completed:   'bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/30 dark:text-[hsl(var(--success))]',
-};
 
 // ─── TYPE DEFINITIONS ─────────────────────────────────────────────────────────
 interface Props {
@@ -66,7 +49,7 @@ interface Props {
 function CommentPopover({ onClose }: { onClose: () => void }) {
     const [text, setText] = useState('');
     return (
-        <div className="absolute right-0 top-full mt-1 w-80 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 z-[500] overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 w-80 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 z-[500] overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comentario rápido</span>
@@ -293,11 +276,11 @@ function StatusGroup({
     onQuickAddConfirm?: () => void;
     onQuickAddCancel?: () => void;
 }) {
-    const inputRef = React.useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
     const isAddingHere = quickAddStatus === status;
     const [collapsed, setCollapsed] = useState(false);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (isAddingHere && inputRef.current) {
             setTimeout(() => {
                 inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -306,8 +289,8 @@ function StatusGroup({
         }
     }, [isAddingHere]);
 
-    const cfg = getStatus(status);
-    const pillCls = GROUP_PILL[status] ?? GROUP_PILL['todo'];
+    const cfg = getStatusOption(status);
+    const pillCls = STATUS_GROUP_PILL[status as TaskStatus] ?? STATUS_GROUP_PILL.todo;
 
     return (
         <div className="mb-0">
@@ -427,7 +410,7 @@ export default function ProjectListView({
 
     // Keep a ref to latest tasks so the change handler can compute an updated array
     // without depending on the tasks array itself (avoids stale closure).
-    const tasksRef = React.useRef(tasks);
+    const tasksRef = useRef(tasks);
     useEffect(() => { tasksRef.current = tasks; }, [tasks]);
 
     // Sync hook state back to the parent when `projectId` is provided.
@@ -544,8 +527,8 @@ function QuickAddBar({
     onQuickAddConfirm?: () => void;
     onQuickAddCancel?: () => void;
 }) {
-    const inputRef = React.useRef<HTMLInputElement>(null);
-    React.useEffect(() => { setTimeout(() => inputRef.current?.focus(), 60); }, []);
+    const inputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => { setTimeout(() => inputRef.current?.focus(), 60); }, []);
 
     return (
         <div className="flex items-center gap-3 px-4 py-3 min-h-[40px]">

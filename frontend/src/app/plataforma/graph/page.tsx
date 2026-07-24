@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Network, Search, RefreshCw } from "lucide-react";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import type { ViewType } from "@/components/ViewSwitcher";
-import Skeleton from "@/components/ui/Skeleton";
+import { DSSkeleton } from '@/design';
 import { useRegisterCommands } from "@/context/CommandCenterContext";
 import { useGraphInsights } from "@/hooks/useGraphInsights";
 import type { GraphNode } from "@/types/graph";
@@ -158,7 +158,7 @@ export default function KnowledgeGraphPage() {
             <div className="h-[60vh] overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-black/20">
               {configLoading ? (
                 <div className="grid h-full place-items-center">
-                  <Skeleton className="h-[60%] w-[90%] rounded-lg" />
+                  <DSSkeleton className="h-[60%] w-[90%] rounded-lg" />
                 </div>
               ) : !enabled ? (
                 <div className="grid h-full place-items-center text-sm font-semibold text-[hsl(var(--text-secondary))]">
@@ -166,7 +166,7 @@ export default function KnowledgeGraphPage() {
                 </div>
               ) : loading ? (
                 <div className="grid h-full place-items-center">
-                  <Skeleton className="h-[60%] w-[90%] rounded-lg" />
+                  <DSSkeleton className="h-[60%] w-[90%] rounded-lg" />
                 </div>
               ) : error ? (
                 <div className="grid h-full place-items-center text-sm font-semibold text-[hsl(var(--danger))]">{error}</div>

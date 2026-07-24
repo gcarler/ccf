@@ -10,7 +10,7 @@ import clsx from 'clsx';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import ProjectsShell from '@/components/projects/ProjectsShell';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import EmptyState from '@/components/ui/EmptyState';
 import RightPanel from '@/components/ui/RightPanel';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
@@ -105,7 +105,7 @@ export default function TeamPage() {
                     </div>
                     {loading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 rounded-lg" />)}
+                            {[...Array(6)].map((_, i) => <DSSkeleton key={i} className="h-48 rounded-lg" />)}
                         </div>
                     ) : !error && team.length === 0 ? (
                         <EmptyState

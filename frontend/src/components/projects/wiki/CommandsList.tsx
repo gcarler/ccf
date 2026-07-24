@@ -1,9 +1,22 @@
 "use client";
 
-import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState, type ElementType } from 'react';
+import type { SuggestionKeyDownProps } from '@tiptap/suggestion';
 import clsx from 'clsx';
 
-export const CommandsList = forwardRef((props: any, ref) => {
+interface CommandItem {
+    title: string;
+    description: string;
+    icon: ElementType;
+    command: (item: CommandItem) => void;
+}
+
+interface CommandsListProps {
+    items: CommandItem[];
+    command: (item: CommandItem) => void;
+}
+
+export const CommandsList = forwardRef((props: CommandsListProps, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
     const selectItem = (index: number) => {
@@ -28,7 +41,7 @@ export const CommandsList = forwardRef((props: any, ref) => {
     useEffect(() => setSelectedIndex(0), [props.items]);
 
     useImperativeHandle(ref, () => ({
-        onKeyDown: ({ event }: any) => {
+        onKeyDown: ({ event }: SuggestionKeyDownProps) => {
             if (event.key === 'ArrowUp') {
                 upHandler();
                 return true;
@@ -51,7 +64,7 @@ export const CommandsList = forwardRef((props: any, ref) => {
                 <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comandos Rápidos</span>
             </div>
             {props.items.length ? (
-                props.items.map((item: any, index: number) => (
+                props.items.map((item: CommandItem, index: number) => (
                     <button
                         key={index}
                         onClick={() => selectItem(index)}

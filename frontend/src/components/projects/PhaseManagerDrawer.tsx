@@ -200,11 +200,15 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
             // receive the new phases without page.tsx prop-drilling.
             await reloadProject();
             onClose();
-        } catch (err: any) {
+        } catch (err: unknown) {
             setError('No se pudieron guardar las fases. Ajusta los cambios y vuelve a intentarlo.');
-            const detail = typeof err?.detail === 'string'
-                ? err.detail
-                : err?.detail?.detail || err?.detail?.message || (err?.detail ? JSON.stringify(err.detail) : '');
+            const detail = typeof err === 'object' && err !== null && 'detail' in err
+                ? typeof (err as { detail: unknown }).detail === 'string'
+                    ? (err as { detail: string }).detail
+                    : (err as { detail: { detail?: string; message?: string } }).detail?.detail
+                        || (err as { detail: { detail?: string; message?: string } }).detail?.message
+                        || (err as { detail: unknown }).detail ? JSON.stringify((err as { detail: unknown }).detail) : ''
+                : '';
             addToast(detail || 'Error al guardar fases', 'error');
             // Intentional: keep drawer open on error so user can fix and retry;
             // localStorage draft is preserved.

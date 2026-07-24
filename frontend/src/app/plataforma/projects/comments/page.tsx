@@ -10,7 +10,7 @@ import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import type { ProjectCommentItem, ProjectRecord } from '@/types/projects';
 import { Layout, MessageCircle } from 'lucide-react';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 
@@ -148,7 +148,7 @@ export default function ProjectsCommentsPage() {
                 </section>
 
                 {loading ? (
-                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <Skeleton key={idx} className="h-20 rounded-lg" />)}</div>
+                    <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <DSSkeleton key={idx} className="h-20 rounded-lg" />)}</div>
                 ) : !error && comments.length === 0 ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">Sin comentarios pendientes.</div>
                 ) : viewType === 'table' ? (

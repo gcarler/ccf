@@ -27,7 +27,7 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import type { AcademyStudentProfile, CertificateRecord, EnrollmentRecord } from '@/types/academy';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { toast } from 'sonner';
 
 export default function StudentProfilePage() {
@@ -82,11 +82,11 @@ export default function StudentProfilePage() {
                     availableViews={['grid', 'list', 'table']}
                 />
                 <div className="flex-1 p-3 space-y-3">
-                    <Skeleton className="h-48 rounded-lg" />
+                    <DSSkeleton className="h-48 rounded-lg" />
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        <Skeleton className="h-48 rounded-md" />
-                        <Skeleton className="h-48 rounded-md" />
-                        <Skeleton className="h-48 rounded-md" />
+                        <DSSkeleton className="h-48 rounded-md" />
+                        <DSSkeleton className="h-48 rounded-md" />
+                        <DSSkeleton className="h-48 rounded-md" />
                     </div>
                 </div>
             </div>

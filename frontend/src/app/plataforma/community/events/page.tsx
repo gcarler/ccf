@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { MapPin, Plus, CalendarDays, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { apiFetch } from '@/lib/http';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 
 interface EventRecord {
     id: number;
@@ -85,7 +85,7 @@ export default function EventsCalendar() {
 
                 {loading ? (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {[1, 2].map(i => <Skeleton key={i} className="h-48 w-full rounded-md" />)}
+                        {[1, 2].map(i => <DSSkeleton key={i} className="h-48 w-full rounded-md" />)}
                     </div>
                 ) : filteredEvents.length === 0 ? (
                     <div className="text-center py-1.5 text-[hsl(var(--text-secondary))]">

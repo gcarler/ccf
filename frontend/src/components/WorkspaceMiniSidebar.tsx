@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import Tooltip from '@/components/ui/Tooltip';
+import { DSTooltip } from '@/design';
 import clsx from 'clsx';
 import { useCreation } from '@/context/CreationContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
@@ -65,7 +65,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     const NavItem = ({ id, icon: Icon, href, label, badge }: any) => {
         const isActive = href === '/' ? (pathname === '/' || !pathname) : pathname?.startsWith(href);
         return (
-            <Tooltip key={id} content={label} side="right">
+            <DSTooltip key={id} content={label} side="right">
                 <Link href={href} prefetch={false} className="relative" onClick={() => resetSidebarStack()}>
                     <div
                         className={clsx(
@@ -83,7 +83,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                         )}
                     </div>
                 </Link>
-            </Tooltip>
+            </DSTooltip>
         );
     };
 
@@ -119,15 +119,15 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
 
             {/* ── Footer: solo Settings + Collapse (SIN ThemeToggle — ya está en el header) */}
             <div className="flex flex-col items-center gap-1 mb-2">
-                <Tooltip content="Ajustes" side="right">
+                <DSTooltip content="Ajustes" side="right">
                     <Link href="/plataforma/settings" prefetch={false}>
                         <div className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 sidebar-nav-item transition-all duration-200 cursor-pointer">
                             <Settings size={19} />
                         </div>
                     </Link>
-                </Tooltip>
+                </DSTooltip>
 
-                <Tooltip content="Ocultar barra" side="right">
+                <DSTooltip content="Ocultar barra" side="right">
                     <button
                         onClick={onHide}
                         className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all duration-200 group"
@@ -135,7 +135,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                     >
                         <ChevronLeft size={19} />
                     </button>
-                </Tooltip>
+                </DSTooltip>
             </div>
         </aside>
     );

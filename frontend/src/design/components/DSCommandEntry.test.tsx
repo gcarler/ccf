@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSCommandEntry } from './DSCommandEntry';
 import { Home } from 'lucide-react';
 
@@ -61,5 +62,10 @@ describe('DSCommandEntry', () => {
         const shortcut = screen.getByText('G C');
         expect(shortcut.className).toContain('text-[9px]');
         expect(shortcut.className).toContain('uppercase');
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(<DSCommandEntry label="Command" />);
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

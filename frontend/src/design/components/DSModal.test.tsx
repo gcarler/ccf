@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSModal } from './DSModal';
 
 describe('DSModal', () => {
@@ -99,5 +100,14 @@ describe('DSModal', () => {
             fireEvent.click(backdrop);
             expect(handleClose).toHaveBeenCalledTimes(1);
         }
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(
+            <DSModal open={true} onClose={() => {}} title="Modal">
+                Modal content
+            </DSModal>
+        );
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

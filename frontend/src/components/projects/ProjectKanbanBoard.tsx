@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     DndContext,
     closestCenter,
@@ -97,7 +97,7 @@ export function ProjectKanbanBoard({ project, tasks, phases, onTasksChange, onOp
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex h-full overflow-x-auto gap-3 p-3 pb-4 scrollbar-thin bg-[hsl(var(--surface-1))]/50 dark:bg-[#1a1b1d]">
+            <div className="flex h-full overflow-x-auto gap-3 p-3 pb-4 scrollbar-thin bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--admin-bg-secondary))]">
                 <SortableContext
                     items={phases.map(s => s.slug)}
                     strategy={horizontalListSortingStrategy}

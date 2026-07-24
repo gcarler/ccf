@@ -53,7 +53,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import clsx from 'clsx';
 
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 
 
 
@@ -432,7 +432,7 @@ export default function DonationConfig() {
 
                                     {loading ? (
 
-                                        [1,2,3].map(i => <Skeleton key={i} className="h-24 w-full rounded-lg" />)
+                                        [1,2,3].map(i => <DSSkeleton key={i} className="h-24 w-full rounded-lg" />)
 
                                     ) : categories.length > 0 ? categories.map((cat, i) => (
 

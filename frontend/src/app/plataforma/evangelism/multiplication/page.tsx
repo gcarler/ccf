@@ -2,7 +2,7 @@
 
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import EmptyState from '@/components/ui/EmptyState';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { DSBadge, DSCard } from '@/design';
@@ -253,7 +253,7 @@ export default function MultiplicationPage() {
           {loadingChecks ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-20 rounded-lg" />
+                <DSSkeleton key={i} className="h-20 rounded-lg" />
               ))}
             </div>
           ) : checks.length === 0 ? (
@@ -343,7 +343,7 @@ export default function MultiplicationPage() {
           {loadingHistory ? (
             <div className="space-y-2">
               {[1, 2].map((i) => (
-                <Skeleton key={i} className="h-20 rounded-lg" />
+                <DSSkeleton key={i} className="h-20 rounded-lg" />
               ))}
             </div>
           ) : history.length === 0 ? (
@@ -455,7 +455,7 @@ export default function MultiplicationPage() {
               Nuevo Líder
             </label>
             {loadingPersonas ? (
-              <Skeleton className="h-10 rounded-lg" />
+              <DSSkeleton className="h-10 rounded-lg" />
             ) : personasOptions.length > 0 ? (
               <select
                 value={nuevoLiderId}

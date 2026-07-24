@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { axe } from 'jest-axe';
 import { ColumnDef } from '@tanstack/react-table';
 import { DSTable } from './DSTable';
 
@@ -199,5 +200,12 @@ describe('DSTable', () => {
                 'cursor-pointer'
             );
         });
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(
+            <DSTable data={baseData} columns={baseColumns} />
+        );
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

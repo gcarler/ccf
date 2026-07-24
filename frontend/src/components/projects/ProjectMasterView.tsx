@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState, ElementType } from 'react';
 import { motion } from 'framer-motion';
 import {
     Radio, Share2, Globe, CheckCircle2, Clock,
@@ -328,7 +328,15 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     );
 }
 
-function AnalyticCard({ title, value, detail, icon: Icon, color }: any) {
+interface AnalyticCardProps {
+    title: string;
+    value: string;
+    detail: string;
+    icon: ElementType;
+    color: string;
+}
+
+function AnalyticCard({ title, value, detail, icon: Icon, color }: AnalyticCardProps) {
     return (
         <div className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm hover:shadow-xl transition-all">
             <div className="flex items-center gap-2 mb-2">
@@ -345,7 +353,7 @@ function AnalyticCard({ title, value, detail, icon: Icon, color }: any) {
 
 interface NodeCardProps {
     title: string;
-    icon: React.ElementType;
+    icon: ElementType;
     color: string;
     tasks: ProjectTaskRecord[];
     onOpenTask?: (task: ProjectTaskRecord) => void;

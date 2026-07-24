@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, KeyboardEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
+import type { WsEvent } from "@/types/directMessages";
 import { Send, Trash2, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
@@ -103,9 +104,9 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   }, [messages]);
 
   const handleSocketEvent = useCallback(
-    (payload: any) => {
-      if (payload?.event === "project_message" && payload?.project_id === projectId) {
-        setMessages((prev) => [...prev, payload.message]);
+    (payload: WsEvent) => {
+      if (payload?.event === "project_message" && "project_id" in payload && "message" in payload && payload.project_id === projectId) {
+        setMessages((prev) => [...prev, payload.message as ChatMessage]);
       }
     },
     [projectId]
@@ -133,7 +134,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -174,7 +175,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   }
 
   return (
-    <div className="relative flex flex-col flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21]">
+    <div className="relative flex flex-col flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))]">
       {error && (
         <div className="mx-4 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
           <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>

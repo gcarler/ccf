@@ -1,7 +1,7 @@
 "use client";
 
 import DashboardEmbed from '@/components/DashboardEmbed';
-import DSSkeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { useAuth } from '@/context/AuthContext';
 import { DSCard } from '@/design';
 import { DSChart } from '@/design';

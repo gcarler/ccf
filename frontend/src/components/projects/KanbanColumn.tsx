@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableTaskCard } from './SortableTaskCard';
@@ -137,7 +137,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -8 }}
                             transition={{ duration: 0.15 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#25262b] rounded-md border border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/40 shadow-md p-3 flex flex-col gap-2"
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md border border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/40 shadow-md p-3 flex flex-col gap-2"
                         >
                             <input
                                 ref={inputRef}

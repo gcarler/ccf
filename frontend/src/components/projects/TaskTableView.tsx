@@ -4,16 +4,18 @@
 import '@/lib/agGrid';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { DEFAULT_TASK_PRIORITY } from '@/lib/projects/constants';
+import { DEFAULT_TASK_PRIORITY, getStatusOption, getPriorityOption, STATUS_OPTIONS, PRIORITY_OPTIONS } from '@/lib/projects/constants';
 import type { ProjectTaskRecord } from '@/types/projects';
 import { InlineStatusPicker, InlinePriorityPicker, InlineDatePicker, InlineUserPicker } from '@/components/ui/inline-editors';
 import { useProjectTasks } from '@/hooks/useProjectTasks';
 import * as Popover from '@radix-ui/react-popover';
 import {
-ColDef,
-GetRowIdParams,
-ICellRendererParams,
-themeQuartz,
+  CellDoubleClickedEvent,
+  ColDef,
+  GetRowIdParams,
+  ICellRendererParams,
+  IsFullWidthRowParams,
+  RowHeightParams,
 } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 import clsx from 'clsx';
@@ -28,25 +30,9 @@ Plus,
 Settings2,
 X
 } from 'lucide-react';
-import React, { useCallback,useEffect,useMemo,useRef,useState } from 'react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import TitleCellEditor from './TitleCellEditor';
-
-// ─── Status / Priority configs ─────────────────────────────────────────────────
-const STATUS_OPTIONS = [
-    { value:'todo',        label:'Pendiente',   dot:'bg-[hsl(var(--surface-2))]',   bg:'bg-[hsl(var(--surface-2))] dark:bg-white/5',            text:'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',      border:'border-[hsl(var(--border))] dark:border-white/10' },
-    { value:'in_progress', label:'En Progreso', dot:'bg-[hsl(var(--primary))]',    bg:'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20',         text:'text-[hsl(var(--primary))] dark:text-info-text',        border:'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30' },
-    { value:'review',      label:'En Revisión', dot:'bg-[hsl(var(--warning))]',   bg:'bg-[hsl(var(--warning)/0.15)] dark:bg-[hsl(var(--warning)/0.2)]',       text:'text-[hsl(var(--warning))]',      border:'border-[hsl(var(--warning)/0.3)]' },
-    { value:'completed',   label:'Completado',  dot:'bg-[hsl(var(--success))]', bg:'bg-[hsl(var(--success)/0.15)] dark:bg-[hsl(var(--success)/0.2)]',   text:'text-[hsl(var(--success))]',  border:'border-[hsl(var(--success)/0.3)]' },
-] as const;
-function getStatus(val: string) { return STATUS_OPTIONS.find(s => s.value === val) ?? STATUS_OPTIONS[0]; }
-
-const PRIORITY_OPTIONS = [
-    { value:'low',    label:'Baja',    color:'text-[hsl(var(--text-secondary))]',  fill:'hsl(var(--text-secondary))' },
-    { value:'medium', label:'Media',   color:'text-[hsl(var(--primary))]',   fill:'hsl(var(--primary))' },
-    { value:'high',   label:'Alta',    color:'text-[hsl(var(--warning))]', fill:'hsl(var(--warning))' },
-    { value:'urgent', label:'Urgente', color:'text-[hsl(var(--destructive))]',   fill:'hsl(var(--destructive))' },
-] as const;
-function getPriority(val: string) { return PRIORITY_OPTIONS.find(p => p.value === val) ?? PRIORITY_OPTIONS[1]; }
+import { useIsDark, agGridLightTheme, agGridDarkTheme } from '@/lib/projects/agGridTheme';
 
 const FlagIcon = ({ fill, size = 14 }: { fill: string; size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} xmlns="http://www.w3.org/2000/svg">
@@ -54,10 +40,6 @@ const FlagIcon = ({ fill, size = 14 }: { fill: string; size?: number }) => (
         <line x1="4" y1="22" x2="4" y2="15" stroke={fill} strokeWidth="2" strokeLinecap="round"/>
     </svg>
 );
-
-// ─── AG Grid Themes ────────────────────────────────────────────────────────────
-const lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'hsl(var(--bg-primary))', foregroundColor: 'hsl(var(--text-primary))', borderColor: 'hsl(var(--border))', oddRowBackgroundColor: 'hsl(var(--surface-1))', headerBackgroundColor: 'hsl(var(--surface-2))', headerTextColor: 'hsl(var(--text-secondary))', selectedRowBackgroundColor: 'hsl(var(--primary)/0.1)', accentColor: 'hsl(var(--primary))', cellHorizontalPaddingScale: 0.8 });
-const darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'hsl(var(--admin-bg-secondary))', foregroundColor: 'hsl(var(--text-secondary))', borderColor: 'hsla(0,0%,100%,0.08)', oddRowBackgroundColor: 'hsla(0,0%,100%,0.02)', headerBackgroundColor: 'hsla(0,0%,100%,0.04)', headerTextColor: 'hsl(var(--text-secondary))', selectedRowBackgroundColor: 'hsla(var(--primary-hsl),0.15)', accentColor: 'hsl(var(--primary))', cellHorizontalPaddingScale: 0.8 });
 
 // ─── AG Grid Cell Renderers (use context for callbacks) ────────────────────────
 function TitleRenderer(params: ICellRendererParams) {
@@ -115,7 +97,7 @@ interface Props {
     tasks: ProjectTaskRecord[];
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string, dueDate?: string, title?: string) => Promise<void> | void;
-    onTaskUpdated?: (taskId: number, field: string, value: any) => void;
+    onTaskUpdated?: (taskId: number, field: string, value: string | number | null | undefined) => void;
 }
 
 type GroupKey = 'status' | 'priority' | 'none';
@@ -129,13 +111,14 @@ const ALL_COLUMNS: { id: ColumnId; label: string }[] = [
     { id: 'comments', label: 'Comentarios' },
 ];
 type ActiveFilter = { field: 'status' | 'priority'; value: string; label: string };
+type GroupRow = { __isGroup: boolean; __groupKey: string; __groupCount: number; id: string };
+type FlatRow = ProjectTaskRecord | GroupRow;
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask, onTaskUpdated }: Props) {
     const { token } = useAuth();
     const { updateTask } = useProjectTasks();
     const gridRef = useRef<AgGridReact>(null);
-    const [isDark, setIsDark] = useState(false);
     const [overrides, setOverrides] = useState<Record<string, Partial<ProjectTaskRecord>>>({});
     const [groupBy, setGroupBy]     = useState<GroupKey>('status');
     const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
@@ -147,15 +130,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     const [quickAddTitle, setQuickAddTitle] = useState('');
     const [isLoaded, setIsLoaded]   = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    // Dark mode detection
-    useEffect(() => {
-        const check = () => setIsDark(document.documentElement.classList.contains('dark'));
-        check();
-        const obs = new MutationObserver(check);
-        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        return () => obs.disconnect();
-    }, []);
+    const isDark = useIsDark();
 
     // Preferences persistence
     useEffect(() => {
@@ -179,7 +154,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     }, [isLoaded, projectId, groupBy, activeFilters, visibleCols]);
 
     // Optimistic update via shared hook
-    const applyChange = useCallback(async (taskId: number | string, field: string, value: any, extraOpt: Record<string, any> = {}) => {
+    const applyChange = useCallback(async (taskId: number | string, field: string, value: string | number | null | undefined, extraOpt: Record<string, string | number | null | undefined> = {}) => {
         setOverrides(prev => ({ ...prev, [taskId]: { ...prev[taskId], [field]: value, ...extraOpt } }));
         const updated = await updateTask(String(taskId), { [field]: value }, { optimistic: false });
         if (updated) {
@@ -194,10 +169,10 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     useEffect(() => { applyChangeRef.current = applyChange; }, [applyChange]);
 
     // Trigger title edit on double click for the title column
-    const handleCellDoubleClicked = useCallback((e: any) => {
+    const handleCellDoubleClicked = useCallback((e: CellDoubleClickedEvent) => {
         if (e.colDef.field === 'title' && !e.data?.__isGroup) {
             e.event?.stopPropagation?.();
-            e.api.startEditingCell({ rowIndex: e.rowIndex, colKey: 'title' });
+            if (e.rowIndex != null) e.api.startEditingCell({ rowIndex: e.rowIndex, colKey: 'title' });
         }
     }, []);
 
@@ -223,8 +198,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
             groups[k].push(t);
         });
         const order: string[] = groupBy === 'priority' ? PRIORITY_OPTIONS.map(p => p.value) : STATUS_OPTIONS.map(s => s.value);
-        const flat: any[] = [];
-        const sorted = Object.entries(groups).sort(([a],[b]) => (order.indexOf(a as any) ?? 99) - (order.indexOf(b as any) ?? 99));
+        const flat: FlatRow[] = [];
+        const sorted = Object.entries(groups).sort(([a],[b]) => (order.indexOf(a) ?? 99) - (order.indexOf(b) ?? 99));
         sorted.forEach(([key, rows]) => {
             flat.push({ __isGroup: true, __groupKey: key, __groupCount: rows.length, id: `__group__${key}` });
             flat.push(...rows);
@@ -244,18 +219,19 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     }, [visibleCols]);
 
     // Full-width group row renderer
-    const isFullWidthRow = useCallback((p: any) => !!p.rowNode.data?.__isGroup, []);
-    const fullWidthCellRenderer = useCallback(({ data: row }: any) => {
+    const isFullWidthRow = useCallback((p: IsFullWidthRowParams<FlatRow>) => !!(p.rowNode.data as GroupRow | undefined)?.__isGroup, []);
+    const fullWidthCellRenderer = useCallback(({ data: row }: ICellRendererParams<FlatRow>) => {
+        const groupRow = row as GroupRow;
         const label = groupBy === 'priority'
-            ? (getPriority(row.__groupKey)?.label ?? row.__groupKey)
-            : (getStatus(row.__groupKey)?.label ?? row.__groupKey);
-        const dot = groupBy === 'status' ? getStatus(row.__groupKey)?.dot : undefined;
+            ? (getPriorityOption(groupRow.__groupKey)?.label ?? groupRow.__groupKey)
+            : (getStatusOption(groupRow.__groupKey)?.label ?? groupRow.__groupKey);
+        const dot = groupBy === 'status' ? getStatusOption(groupRow.__groupKey)?.dot : undefined;
         return (
             <div className="flex items-center gap-2.5 px-4 h-full bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border-b border-[hsl(var(--border))] dark:border-white/5">
                 {dot && <span className={clsx('size-2 rounded-full flex-shrink-0', dot)} />}
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
-                <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full px-2 py-0.5">{row.__groupCount}</span>
-                <button onClick={() => setQuickAddGroup(row.__groupKey)}
+                <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full px-2 py-0.5">{groupRow.__groupCount}</span>
+                <button onClick={() => setQuickAddGroup(groupRow.__groupKey)}
                     className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/0.8)] transition-colors">
                     <Plus size={11} /> Agregar
                 </button>
@@ -266,8 +242,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     // AG Grid context
     const gridContext = useMemo(() => ({ applyChangeRef, onOpenTask, token }), [onOpenTask, token]);
 
-    const getRowId = useCallback((p: GetRowIdParams) => String((p.data as any).id), []);
-    const getRowHeight = useCallback((p: any) => p.data?.__isGroup ? 32 : 40, []);
+    const getRowId = useCallback((p: GetRowIdParams<FlatRow>) => String(p.data.id), []);
+    const getRowHeight = useCallback((p: RowHeightParams<FlatRow>) => (p.data as GroupRow | undefined)?.__isGroup ? 32 : 40, []);
 
     // Quick add task
     const handleQuickAdd = async (status: string, title: string) => {
@@ -421,8 +397,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 ) : (
                     <AgGridReact
                         ref={gridRef}
-                        theme={isDark ? darkTheme : lightTheme}
-                        rowData={rowData as any[]}
+                        theme={isDark ? agGridDarkTheme : agGridLightTheme}
+                        rowData={rowData}
                         columnDefs={colDefs}
                         defaultColDef={{ resizable: true, sortable: false, filter: false, editable: false, suppressMovable: false, minWidth: 96 }}
                         context={gridContext}
@@ -430,10 +406,10 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         getRowHeight={getRowHeight}
                         isFullWidthRow={groupBy !== 'none' ? isFullWidthRow : undefined}
                         fullWidthCellRenderer={groupBy !== 'none' ? fullWidthCellRenderer : undefined}
-                        onRowDoubleClicked={(e) => { if (!e.data?.__isGroup) onOpenTask(e.data); }}
+                        onRowDoubleClicked={(e) => { if (e.data && !('__isGroup' in e.data)) onOpenTask(e.data as ProjectTaskRecord); }}
                         onCellDoubleClicked={handleCellDoubleClicked}
                         onCellValueChanged={(e) => {
-                            if (e.colDef.field === 'title' && !e.data?.__isGroup) {
+                            if (e.colDef.field === 'title' && e.data && !('__isGroup' in e.data)) {
                                 const taskId = String(e.data.id);
                                 const newTitle = e.newValue;
                                 if (newTitle && newTitle.trim()) {

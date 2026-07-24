@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import { CSSProperties } from 'react';
 import { ArrowUpRight, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -44,7 +44,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04, duration: 0.3 }}
             className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden"
-            style={{ '--card-color': color } as React.CSSProperties}
+            style={{ '--card-color': color } as CSSProperties}
         >
             {/* Color accent bar top */}
             <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl opacity-80 group-hover:opacity-100 transition-opacity"

@@ -1,7 +1,7 @@
 'use client';
 
 import EmptyState from '@/components/ui/EmptyState';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { DSBadge, DSCard } from '@/design';
 import { User } from 'lucide-react';
 
@@ -30,7 +30,7 @@ export default function LeadersPanel({ leaders, loadingLeaders }: Props) {
       {loadingLeaders ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-16 rounded-lg" />
+            <DSSkeleton key={i} className="h-16 rounded-lg" />
           ))}
         </div>
       ) : leaders.length === 0 ? (

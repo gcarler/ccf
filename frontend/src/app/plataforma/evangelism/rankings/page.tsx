@@ -1,7 +1,7 @@
 'use client';
 
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import { useAuth } from '@/context/AuthContext';
 import { DSMetric } from '@/design';
 import { apiFetch } from '@/lib/http';
@@ -206,7 +206,7 @@ export default function RankingsPage() {
         {loadingMonthly ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-28 rounded-lg" />
+              <DSSkeleton key={i} className="h-28 rounded-lg" />
             ))}
           </div>
         ) : monthlyComparison ? (

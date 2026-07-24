@@ -9,7 +9,7 @@ import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import EmptyState from '@/components/ui/EmptyState';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 
 interface Milestone {
     milestone_id: number;
@@ -67,7 +67,7 @@ export default function SpiritualTimelinePage() {
                 {/* Timeline */}
                 {loading ? (
                     <div className="space-y-4">
-                        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
+                        {[...Array(4)].map((_, i) => <DSSkeleton key={i} className="h-20 rounded-lg" />)}
                     </div>
                 ) : milestones.length === 0 ? (
                     <EmptyState

@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSSectionHeader } from './DSSectionHeader';
 
 describe('DSSectionHeader', () => {
@@ -55,5 +56,10 @@ describe('DSSectionHeader', () => {
         const title = screen.getByText('Title');
         expect(title.className).toContain('text-base');
         expect(title.className).toContain('font-bold');
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(<DSSectionHeader title="Section" />);
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

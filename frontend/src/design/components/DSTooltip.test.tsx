@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSTooltip } from './DSTooltip';
 
 describe('DSTooltip', () => {
@@ -62,5 +63,14 @@ describe('DSTooltip', () => {
             </DSTooltip>
         );
         expect(screen.getByTestId('complex-child')).toBeInTheDocument();
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(
+            <DSTooltip content="Tooltip">
+                <button>Trigger</button>
+            </DSTooltip>
+        );
+        expect(await axe(container)).toHaveNoViolations();
     });
 });

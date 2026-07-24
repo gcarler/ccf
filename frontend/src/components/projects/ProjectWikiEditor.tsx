@@ -1,19 +1,20 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useEditor, EditorContent, ReactRenderer } from '@tiptap/react';
-import { Extension } from '@tiptap/core';
+import { Extension, type Editor, type Range } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
-import Suggestion from '@tiptap/suggestion';
-import tippy from 'tippy.js';
+import Suggestion, { type SuggestionProps, type SuggestionKeyDownProps } from '@tiptap/suggestion';
+import tippy, { type Instance as TippyInstance } from 'tippy.js';
 import { 
     Bold, Italic, Heading1, Heading2, 
     List, CheckSquare, Quote, Undo, Redo,
     Cloud, Loader2, Minus
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { CommandsList } from './wiki/CommandsList';
@@ -71,7 +72,7 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
                     return {
                         suggestion: {
                             char: '/',
-                            command: ({ editor, range, props }: any) => {
+                            command: ({ editor, range, props }: { editor: Editor; range: Range; props: { command: (opts: { editor: Editor; range: Range }) => void } }) => {
                                 props.command({ editor, range });
                             },
                         },
@@ -82,25 +83,25 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
                         Suggestion({
                             editor: this.editor,
                             char: '/',
-                            command: ({ editor, range, props }: any) => {
+                            command: ({ editor, range, props }: { editor: Editor; range: Range; props: { command: (opts: { editor: Editor; range: Range }) => void } }) => {
                                 props.command({ editor, range });
                             },
-                            items: ({ query }: any) => {
+                            items: ({ query }: { query: string }) => {
                                 return [
-                                    { title: 'Encabezado 1', description: 'Título grande', icon: Heading1, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run() },
-                                    { title: 'Encabezado 2', description: 'Subtítulo mediano', icon: Heading2, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run() },
-                                    { title: 'Lista de Tareas', description: 'Checklist interactivo', icon: CheckSquare, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleTaskList().run() },
-                                    { title: 'Lista con Viñetas', description: 'Lista simple', icon: List, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleBulletList().run() },
-                                    { title: 'Cita', description: 'Resaltar texto ministerial', icon: Quote, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).toggleBlockquote().run() },
-                                    { title: 'Divisor', description: 'Separador horizontal', icon: Minus, command: ({ editor, range }: any) => editor.chain().focus().deleteRange(range).setHorizontalRule().run() },
+                                    { title: 'Encabezado 1', description: 'Título grande', icon: Heading1, command: ({ editor, range }: { editor: Editor; range: Range }) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run() },
+                                    { title: 'Encabezado 2', description: 'Subtítulo mediano', icon: Heading2, command: ({ editor, range }: { editor: Editor; range: Range }) => editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run() },
+                                    { title: 'Lista de Tareas', description: 'Checklist interactivo', icon: CheckSquare, command: ({ editor, range }: { editor: Editor; range: Range }) => editor.chain().focus().deleteRange(range).toggleTaskList().run() },
+                                    { title: 'Lista con Viñetas', description: 'Lista simple', icon: List, command: ({ editor, range }: { editor: Editor; range: Range }) => editor.chain().focus().deleteRange(range).toggleBulletList().run() },
+                                    { title: 'Cita', description: 'Resaltar texto ministerial', icon: Quote, command: ({ editor, range }: { editor: Editor; range: Range }) => editor.chain().focus().deleteRange(range).toggleBlockquote().run() },
+                                    { title: 'Divisor', description: 'Separador horizontal', icon: Minus, command: ({ editor, range }: { editor: Editor; range: Range }) => editor.chain().focus().deleteRange(range).setHorizontalRule().run() },
                                 ].filter(item => item.title.toLowerCase().startsWith(query.toLowerCase()));
                             },
                             render: () => {
-                                let component: any;
-                                let popup: any;
+                                let component: ReactRenderer;
+                                let popup: TippyInstance[];
 
                                 return {
-                                    onStart: (props: any) => {
+                                    onStart: (props: SuggestionProps) => {
                                         component = new ReactRenderer(CommandsList, {
                                             props,
                                             editor: props.editor,
@@ -109,7 +110,7 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
                                         if (!props.clientRect) return;
 
                                         popup = tippy('body', {
-                                            getReferenceClientRect: props.clientRect,
+                                            getReferenceClientRect: props.clientRect as () => DOMRect,
                                             appendTo: () => document.body,
                                             content: component.element,
                                             showOnCreate: true,
@@ -118,19 +119,19 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
                                             placement: 'bottom-start',
                                         });
                                     },
-                                    onUpdate(props: any) {
+                                    onUpdate(props: SuggestionProps) {
                                         component.updateProps(props);
                                         if (!props.clientRect) return;
                                         popup[0].setProps({
-                                            getReferenceClientRect: props.clientRect,
+                                            getReferenceClientRect: props.clientRect as () => DOMRect,
                                         });
                                     },
-                                    onKeyDown(props: any) {
+                                    onKeyDown(props: SuggestionKeyDownProps) {
                                         if (props.event.key === 'Escape') {
                                             popup[0].hide();
                                             return true;
                                         }
-                                        return component.ref?.onKeyDown(props);
+                                        return (component.ref as { onKeyDown?: (props: SuggestionKeyDownProps) => boolean } | undefined)?.onKeyDown?.(props) ?? false;
                                     },
                                     onExit() {
                                         popup[0].destroy();
@@ -206,7 +207,7 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
     );
 }
 
-function MenuButton({ onClick, isActive, disabled, icon: Icon }: any) {
+function MenuButton({ onClick, isActive, disabled, icon: Icon }: { onClick: () => void; isActive?: boolean; disabled?: boolean; icon: LucideIcon }) {
     return (
         <button onClick={onClick} disabled={disabled} className={`p-2 rounded-md transition-all ${isActive ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-sm ring-1 ring-[hsl(var(--border))] dark:ring-white/10' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-white'} ${disabled ? 'opacity-20' : ''}`}><Icon size={16} /></button>
     );

@@ -23,8 +23,8 @@ import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import VideoPlayer from '@/components/academy/VideoPlayer';
-import Skeleton from '@/components/ui/Skeleton';
-import Tooltip from '@/components/ui/Tooltip';
+import { DSSkeleton } from '@/design';
+import { DSTooltip } from '@/design';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -186,8 +186,8 @@ export default function CourseViewPage() {
             <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden">
                 <WorkspaceToolbar breadcrumbs={[{ label: 'Cargando curso...', icon: GraduationCap }]} />
                 <div className="flex-1 flex">
-                    <aside className="w-80 lg:w-96 border-r border-[hsl(var(--border))] dark:border-white/5 p-4 space-y-4"><Skeleton className="h-4 w-1/2" /><Skeleton className="h-8 w-full rounded-lg" /><Skeleton className="h-8 w-full rounded-lg" /></aside>
-                    <main className="flex-1 p-4 space-y-3"><Skeleton className="aspect-video w-full rounded-lg" /><Skeleton className="h-10 w-1/2" /><Skeleton className="h-32 w-full rounded-lg" /></main>
+                    <aside className="w-80 lg:w-96 border-r border-[hsl(var(--border))] dark:border-white/5 p-4 space-y-4"><DSSkeleton className="h-4 w-1/2" /><DSSkeleton className="h-8 w-full rounded-lg" /><DSSkeleton className="h-8 w-full rounded-lg" /></aside>
+                    <main className="flex-1 p-4 space-y-3"><DSSkeleton className="aspect-video w-full rounded-lg" /><DSSkeleton className="h-10 w-1/2" /><DSSkeleton className="h-32 w-full rounded-lg" /></main>
                 </div>
             </div>
         );
@@ -204,8 +204,8 @@ export default function CourseViewPage() {
                 availableViews={['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <Tooltip content="Compartir curso"><button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><Share2 size={18} /></button></Tooltip>
-                        <Tooltip content="Ayuda"><button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><HelpCircle size={18} /></button></Tooltip>
+                        <DSTooltip content="Compartir curso"><button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><Share2 size={18} /></button></DSTooltip>
+                        <DSTooltip content="Ayuda"><button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><HelpCircle size={18} /></button></DSTooltip>
                         <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-2" />
                         <button onClick={() => router.push('/plataforma/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] rounded-md text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all active:scale-95">Salir</button>
                     </div>

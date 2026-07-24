@@ -3,7 +3,7 @@
 import React from 'react';
 import clsx from 'clsx';
 
-interface DSSkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+interface DSSkeletonProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'style'> {
     rounded?: 'sm' | 'md' | 'lg' | 'xl' | 'pill' | 'none';
 }
 
@@ -16,7 +16,7 @@ const roundedClasses: Record<NonNullable<DSSkeletonProps['rounded']>, string> = 
     none: '',
 };
 
-export function DSSkeleton({ rounded = 'md', className, style, ...props }: DSSkeletonProps) {
+export function DSSkeleton({ rounded = 'md', className, ...props }: DSSkeletonProps) {
     return (
         <div
             className={clsx(
@@ -24,7 +24,6 @@ export function DSSkeleton({ rounded = 'md', className, style, ...props }: DSSke
                 roundedClasses[rounded],
                 className
             )}
-            style={style}
             {...props}
         >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent animate-[shimmer_1.8s_infinite]" />

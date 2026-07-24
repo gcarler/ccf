@@ -1,13 +1,13 @@
 "use client";
 
-import React from 'react';
+import { ComponentType, ReactNode } from 'react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { ViewType } from '@/components/ViewSwitcher';
 
 export interface BreadcrumbOption {
     label: string;
     href?: string;
-    icon?: React.ComponentType<{ size?: number | string }>;
+    icon?: ComponentType<{ size?: number | string }>;
 
 }
 
@@ -17,8 +17,8 @@ interface ProjectsShellProps {
     viewType?: ViewType;
     onViewChange?: (view: ViewType) => void;
     onSearch?: (term: string) => void;
-    rightActions?: React.ReactNode;
-    children: React.ReactNode;
+    rightActions?: ReactNode;
+    children: ReactNode;
 }
 
 export default function ProjectsShell({

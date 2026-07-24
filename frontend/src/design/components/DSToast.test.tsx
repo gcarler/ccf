@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { axe } from 'jest-axe';
 import { DSToast, toast } from './DSToast';
 
 describe('DSToast', () => {
@@ -61,6 +62,11 @@ describe('DSToast', () => {
     render(<DSToast type="success" message="Message" />);
     const toastEl = screen.getByRole('alert');
     expect(toastEl).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<DSToast type="success" message="Saved" />);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });
 

@@ -58,7 +58,7 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
                 {/* Main Action */}
                 <button
                     onClick={onMainClick}
-                    className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 transition-colors border-r border-white/20 active:bg-white/15 whitespace-nowrap"
+                    className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 transition-colors border-r border-white/20 active:bg-white/15 whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                     {Icon && <Icon size={12} />}
                     {mainLabel}
@@ -68,7 +68,7 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     aria-label="Mostrar opciones"
-                    className="h-7 w-7 flex items-center justify-center transition-colors hover:bg-white/15 active:bg-white/25"
+                    className="h-7 w-7 flex items-center justify-center transition-colors hover:bg-white/15 active:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                     <ChevronDown size={13} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -112,7 +112,7 @@ function DropdownItem({ icon: Icon, label, selected, onClick }: any) {
     return (
         <button 
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-[13px] text-left transition-all ${
+            className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-[13px] text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))] ${
                 selected 
                     ? 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white font-bold' 
                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'

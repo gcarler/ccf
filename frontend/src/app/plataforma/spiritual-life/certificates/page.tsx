@@ -9,7 +9,7 @@ import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import EmptyState from '@/components/ui/EmptyState';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 
 interface Certificate {
     id: number;
@@ -58,7 +58,7 @@ export default function DigitalCertificatesPage() {
                 {/* Certificates Grid */}
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 rounded-lg" />)}
+                        {[...Array(4)].map((_, i) => <DSSkeleton key={i} className="h-48 rounded-lg" />)}
                     </div>
                 ) : certificates.length === 0 ? (
                     <EmptyState

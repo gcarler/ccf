@@ -28,7 +28,7 @@ import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
-import Skeleton from '@/components/ui/Skeleton';
+import { DSSkeleton } from '@/design';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -386,10 +386,10 @@ export default function ConsolidationPipelinePage() {
     if (loading && leads.length === 0) return (
         <div className="p-3 space-y-3">
             <div className="grid grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-8 rounded-full" />)}
+                {[1, 2, 3, 4].map(i => <DSSkeleton key={i} className="h-8 rounded-full" />)}
             </div>
             <div className="grid grid-cols-5 gap-4">
-                {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-48 rounded-md" />)}
+                {[1, 2, 3, 4, 5].map(i => <DSSkeleton key={i} className="h-48 rounded-md" />)}
             </div>
         </div>
     );
