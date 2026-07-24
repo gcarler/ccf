@@ -269,7 +269,7 @@ class TestUserPermissions:
         c, h = full["c"], full["h"]
         resp = c.put(
             f"/api/admin/users/{full['admin'].id}/permissions",
-            json={"permissions": {"crm": "read"}},
+            json={"crm": "read"},
             headers=h,
         )
         assert resp.status_code == 200
@@ -278,7 +278,7 @@ class TestUserPermissions:
         c, h = full["c"], full["h"]
         resp = c.put(
             f"/api/admin/users/{full['admin'].id}/permissions",
-            json={"permissions": {"nonexistent": "read"}},
+            json={"nonexistent": "read"},
             headers=h,
         )
         assert resp.status_code == 400
@@ -287,7 +287,7 @@ class TestUserPermissions:
         c, h = full["c"], full["h"]
         resp = c.put(
             f"/api/admin/users/{full['admin'].id}/permissions",
-            json={"permissions": {"crm": "invalid_level"}},
+            json={"crm": "invalid_level"},
             headers=h,
         )
         assert resp.status_code == 400
