@@ -1794,7 +1794,7 @@ export default function StrategyDetailPage() {
  {followUps.filter(f => !f.estado_completado).slice(0, 10).map(f => (
  <div key={f.id} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))]">
  <div className="flex items-center gap-2">
- <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${f.tipo === 'llamada' ? 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]' : f.tipo === 'visita' ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
+ <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${(f.tipo ?? '').toLowerCase().includes('llamada') ? 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]' : (f.tipo ?? '').toLowerCase().includes('visita') ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]' : (f.tipo ?? '').toLowerCase().includes('oracion') ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
  {f.tipo}
  </span>
  <span className="text-[11px] text-[hsl(var(--text-secondary))]">{f.observaciones || '—'}</span>
