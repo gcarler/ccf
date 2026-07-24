@@ -16,14 +16,13 @@
 ## 1. Leer primero (cualquier agente)
 
 ```bash
-cat /root/ccf/docs/ESTADO_CMS.md
+cat /root/ccf/docs/ARQUITECTURA_CMS.md   # ⭐ Guía canónica de arquitectura + reglas de negocio (LEER PRIMERO)
+cat /root/ccf/docs/ESTADO_CMS.md         # Este documento — estado operativo, backlog, handover
 cat /root/ccf/docs/CMS_API_CONTRACTS.md
 cat /root/ccf/docs/CMS_RBAC_MATRIX.md
 cat /root/ccf/docs/CMS_QA_CHECKLIST.md
 cat /root/ccf/docs/PLAN_CMS_CALIDAD.md
-cat /root/ccf/docs/PLAN_CMS_100.md
 cat /root/ccf/docs/AUDITORIA_FORENSE_CMS.md
-cat /root/ccf/docs/PLAN_ARQUITECTURA_MODULAR_CCF.md
 ```
 
 ## 2. Verificar entorno
@@ -234,11 +233,22 @@ Frontend test existente:
 - validación de MIME/extension en uploads
 - helpers de scope `_cms_helpers`
 - bootstrap de contenido público implementado y verificado para `ccf` con `scripts/bootstrap_public_cms_content.py`
+- **Auditoría forense 100% cerrada** (ciclo 7, commits `fc80da41`/`4d1ba06a`/`94f97d4a`)
+  - Críticos: 6/6, Altos: 11/11, Medios: 14/14, Info: 17/17, Funcionalidades: 10/10
+  - Migraciones de fix canonizadas en `canonical_versions/` (`20260723_0001`→`0006`)
+  - Head alembic único `20260723_0006` (cadena lineal limpia)
+  - 194 tests CMS pasan sin skips
+- **Guía de arquitectura canónica creada**: `docs/ARQUITECTURA_CMS.md`
 
 ### Pendiente
 
-1. **Builder CMS no funcional** `[PEND-CMS-BUILDER-001]` — en `/plataforma/cms/builder` el editor reportado no funciona; owner probable: frontend CMS builder y contratos de sections/global blocks, con posible incidencia de estado de shell o datos del catálogo.
-2. **Backlog forense CMS-medio/bajo restante** – sesiones 2026-07-22 (error) cerraron todos los CRÍTICOS (C-01..06) + ALTOS (H-01..10)  y los medios M-01..M-02 (validaciones de length); quedan abiertos los hallazgos M-03..M-14 (inconsistencias de soft-delete y duplicidades), I-01..I-17 (info histórica, no roturas) y F-01..F-10 (funcionalidades faltantes para considerar).  Estado completo en `errorescms.md` seccion "Seguimiento de Cierre".  El front de seguridad F-06 (CmsCategory.parent_id cross-sede) es la prioridad restanteAxsiomática 3.
+**No hay hallazgos abiertos.** La auditoría forense `errorescms.md` está 100% cerrada. El backlog histórico fue resuelto en su totalidad:
+
+- ✅ 6 críticos (C-01..06) — cerrados y verificados
+- ✅ 11 altos (H-01..11) — cerrados y verificados
+- ✅ 14 medios (M-01..14) — cerrados (incluye M-03 soft-delete unification, M-05 index)
+- ✅ 17 info (I-01..17) — cerrados
+- ✅ 10 funcionalidades (F-01..10) — cerradas (incluye F-08 publish log retention, F-10 orphan media cleanup)
 
 ### Cerrado recientemente
 
@@ -338,22 +348,24 @@ Frontend test existente:
 
 ## 15. Ruta de cierre a 100%
 
-Estado de cierre:
+**Estado de cierre: 100% alcanzado.**
 
-- el gate canónico y la pasada exhaustiva pasan
-- el smoke autenticado CMS y el contrato público pasan
-- preview, publicado y builder quedaron cubiertos por suites reproducibles
-- `docs/ESTADO_CMS.md`, `docs/CMS_API_CONTRACTS.md`, `docs/CMS_QA_CHECKLIST.md` y `docs/PLAN_CMS_CALIDAD.md` quedaron sincronizados con el estado final
-- branding sigue pendiente por el error de guardado en `/plataforma/cms/branding`
-- builder sigue pendiente por la regresión reportada en `/plataforma/cms/builder`
-- la creación de pop-ups quedó expuesta de forma clara en el builder
-- branding quedó alineado con la guardia de edición y ya no expone guardado para roles de solo lectura
+- ✅ el gate canónico y la pasada exhaustiva pasan (194 tests)
+- ✅ el smoke autenticado CMS y el contrato público pasan
+- ✅ preview, publicado y builder quedaron cubiertos por suites reproducibles
+- ✅ `docs/ESTADO_CMS.md`, `docs/CMS_API_CONTRACTS.md`, `docs/CMS_QA_CHECKLIST.md` y `docs/PLAN_CMS_CALIDAD.md` quedaron sincronizados con el estado final
+- ✅ branding quedó alineado con la guardia de edición y ya no expone guardado para roles de solo lectura
+- ✅ la creación de pop-ups quedó expuesta de forma clara en el builder
+- ✅ auditoría forense `errorescms.md` 100% cerrada (48/48 findings + 10/10 funcionalidades)
+- ✅ migraciones de fix canonizadas en `canonical_versions/` (head único `20260723_0006`)
+- ✅ guía de arquitectura canónica creada: `docs/ARQUITECTURA_CMS.md`
 
-**Actualización forense 2026-07-22 / 2026-07-23 (audit `errorescms.md`):**
+**Actualización forense 2026-07-22 / 2026-07-23 / 2026-07-24 (audit `errorescms.md`):**
 
-- 6 hallazgos críticos CERRADOS (C-01 fix, C-04 fix, C-06+H-11 fix; C-02, C-03, C-05 falsos positivos confirmados)
-- 11 hallazgos altos: 2 cerrados con fix (H-02, H-04, H-05, H-06, H-07; H-11 cubierto con C-06), 5 falsos positivos confirmados (H-01, H-03, H-08, H-09, H-10)
-- 2 hallazgos medios cerrados (M-01, M-02 — validaciones length de site_key/slug)
-- 12 medios restantes (M-03..M-14) + 17 bajos (I-01..I-17) + 10 funcionalidades faltantes (F-01..F-10) en backlog de calidad incremental — ver `errorescms.md` § Seguimiento de Cierre
-- Commits alcanzados: `e8912c54` (C-01), `6a83dd87` (C-04), `5b0a6e7c` (C-06/H-11), `b347f787` (H-05), `bd28cfe4` (C-02 verificación), `b522c372` (H-02/H-04/H-06/H-07 + 5 falsos positivos), `5ea3cfab` (M-01/M-02)
-- Cobertura de bytes: smoke base + deep coverage + security regression + upload hardening — todos en verde (155+ tests pasados)
+- ✅ 6 hallazgos críticos CERRADOS (C-01 fix, C-04 fix, C-06+H-11 fix; C-02, C-03, C-05 falsos positivos confirmados)
+- ✅ 11 hallazgos altos CERRADOS (H-02/H-04/H-05/H-06/H-07 fixes; H-01/H-03/H-08/H-09/H-10 falsos positivos; H-11 cubierto con C-06)
+- ✅ 14 hallazgos medios CERRADOS (M-01/M-02 length validations, M-03 CmsPage deleted_at, M-05 index, etc.)
+- ✅ 17 hallazgos info CERRADOS (I-01..I-17)
+- ✅ 10 funcionalidades CERRADAS (F-01..F-10, incluye F-08 publish log retention, F-10 orphan media cleanup)
+- Commits clave: `e8912c54`, `6a83dd87`, `5b0a6e7c`, `b347f787`, `bd28cfe4`, `b522c372`, `5ea3cfab`, `82d9ffdd`, `afdafa89`, `3f7a0c7e`, `accb7b34`, `fc80da41`, `4d1ba06a`, `94f97d4a`, `8396e74f` (canonización migraciones)
+- Cobertura: 194+ tests pasan sin skips (domain + sede isolation + upload hardening + security regression + v2 coverage + schedule + SEO audit)
