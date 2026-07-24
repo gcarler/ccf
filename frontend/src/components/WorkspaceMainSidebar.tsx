@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import Tooltip from '@/components/ui/Tooltip';
+import { DSTooltip } from '@/design';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { SITE_NAME } from '@/lib/site-config';
 import { useSiteBranding } from '@/lib/site-branding';
@@ -241,39 +241,10 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[hsl(var(--text-primary))] dark:text-white truncate">
                                 {logoName || SITE_NAME}
                             </p>
-                            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))] truncate">
-                                {displayTitle}
-                            </p>
                         </div>
                     </div>
                 )}
-                {/* 1. Breadcrumbs (Opcional pero recomendado para contexto) */}
-                {!isMini && (
-                    <div className="px-3 pt-2 pb-0.5 flex items-center gap-1.5 overflow-hidden min-h-[18px]">
-                        <span
-                            onClick={() => resetSidebarStack()}
-                            className={clsx(
-                                "text-[9px] font-semibold uppercase tracking-wide transition-all cursor-pointer",
-                                isDrillDown ? "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]" : "text-[hsl(var(--primary))]"
-                            )}
-                        >
-                            {title}
-                        </span>
-                        {isDrillDown && sidebarStack.map((level, i) => (
-                            <React.Fragment key={level.id}>
-                                <div className="size-[3px] rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 shrink-0" />
-                                <span className={clsx(
-                                    "text-[9px] font-semibold uppercase tracking-wide truncate transition-all",
-                                    i === sidebarStack.length - 1 ? "text-[hsl(var(--text-primary))] dark:text-white" : "text-[hsl(var(--text-secondary))]"
-                                )}>
-                                    {level.title}
-                                </span>
-                            </React.Fragment>
-                        ))}
-                    </div>
-                )}
-
-                {/* 2. Header Anatomy: Botón Atrás + Título */}
+                {/* Header: Botón Atrás + Título */}
                 <div className="h-10 flex items-center px-3 gap-2">
                     {!isMini && (
                         <>
@@ -373,7 +344,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
             )}>
                 {/* Collapse / Expand toggle */}
                 {onToggle && (
-                    <Tooltip content={isCollapsed ? 'Expandir panel' : 'Contraer panel'} side="right">
+                    <DSTooltip content={isCollapsed ? 'Expandir panel' : 'Contraer panel'} side="right">
                         <button
                             onClick={onToggle}
                             className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-all duration-200 shrink-0"
@@ -384,7 +355,7 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
                                 : <ChevronLeft size={16} />
                             }
                         </button>
-                    </Tooltip>
+                    </DSTooltip>
                 )}
             </div>
         </aside>
