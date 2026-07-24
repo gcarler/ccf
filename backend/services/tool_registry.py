@@ -235,10 +235,15 @@ class CRMGetPersonaProfile(AgentTool):
         from backend import models
         from backend.core.database import SessionLocal
 
+        try:
+            persona_uuid = uuid.UUID(persona_id)
+        except (TypeError, ValueError, AttributeError):
+            return {"error": f"persona_id con formato UUID inválido: {persona_id!r}"}
+
         db = SessionLocal()
         try:
             persona = db.query(models.Persona).filter(
-                models.Persona.id == uuid.UUID(persona_id),
+                models.Persona.id == persona_uuid,
             ).first()
             if not persona:
                 return {"error": f"Persona {persona_id} not found"}

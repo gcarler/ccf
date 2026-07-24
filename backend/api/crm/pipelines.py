@@ -957,7 +957,11 @@ def drag_drop_recovery(
 
     caso_id = payload.get("caso_id")
     if caso_id:
-        case = case_query(db).filter(models.CasoCRM.id == UUID(caso_id), models.CasoCRM.sede_id == sede_id).first()
+        try:
+            caso_uuid = UUID(caso_id)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="caso_id con formato UUID inválido")
+        case = case_query(db).filter(models.CasoCRM.id == caso_uuid, models.CasoCRM.sede_id == sede_id).first()
         if case:
             return {"status": "recovered", "stage_id": str(case.etapa_actual_id), "sort_order": case.sort_order}
     return {"status": "recovered"}

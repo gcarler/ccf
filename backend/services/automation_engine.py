@@ -199,6 +199,11 @@ class AutomationEngine:
                     else:
                         return str(actual_val) == str(expected_val_str)
                 except Exception:
+                    logger.warning(
+                        "evaluate_condition: fallo al comparar actual_val=%r con expected=%r, "
+                        "degradando a comparación de strings",
+                        actual_val, expected_val_str,
+                    )
                     return str(actual_val) == str(expected_val_str)
 
             if cond_type == "contains":

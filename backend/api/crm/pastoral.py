@@ -35,6 +35,7 @@ from backend.api.crm._shared import (
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
 from backend.core.tenant import get_user_sede_id
+from backend.crud._utils import _coerce_uuid_or_404, _to_uuid
 from backend.crud.crm_.shared import resolve_persona_id_for_user
 from backend.models_crm_pipeline import CanalOrigenEnum, EstadoCasoEnum, TipoInteraccionEnum
 from backend.schemas.crm.base import (
@@ -131,6 +132,7 @@ def _get_persona_or_404(db: Session, persona_ref: str, user_sede: Optional[uuid.
         persona_uuid = uuid.UUID(str(persona_ref))
         persona = persona_query(db).filter(models.Persona.id == persona_uuid).first()
     except (TypeError, ValueError):
+        logger.warning("_get_persona_or_404: persona_ref con formato UUID inválido: %r", persona_ref)
         persona = None
 
     if not persona:
@@ -558,8 +560,8 @@ def update_caso_task(
     task = (
         db.query(models.TareaCRM)
         .filter(
-            models.TareaCRM.id == uuid.UUID(str(task_id)),
-            models.TareaCRM.caso_id == uuid.UUID(str(case_id)),
+            models.TareaCRM.id == _coerce_uuid_or_404(task_id, "Task not found"),
+            models.TareaCRM.caso_id == _to_uuid(case_id),
             models.TareaCRM.deleted_at.is_(None),
         )
         .first()
@@ -1346,6 +1348,10 @@ def update_grupo(
             try:
                 normalized_ids.append(uuid.UUID(raw_id))
             except (TypeError, ValueError):
+                logger.warning(
+                    "update_grupo: participante_id con formato UUID inválido ignorado: %r",
+                    raw_id,
+                )
                 continue
         normalized_ids = list(dict.fromkeys(normalized_ids))
         current_rows = db.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == grupo.id).all()

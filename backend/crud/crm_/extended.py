@@ -6,6 +6,7 @@ volunteer_skills, chat_messages.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -16,6 +17,8 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.models_shared import _utcnow
+
+logger = logging.getLogger(__name__)
 
 # ── Inline Schemas ────────────────────────────────────────────────────────
 
@@ -858,7 +861,10 @@ def create_chat_message(db: Session, payload: ChatMessageCreate) -> models.ChatM
                 conv.last_message_at = row.created_at or _utcnow()
                 conv.last_sender_id = row.sender_id
         except (ValueError, TypeError):
-            pass
+            logger.warning(
+                "room_id con UUID inválido en create_chat_message, metadata no actualizada: %r",
+                row.room_id,
+            )
     db.commit()
     db.refresh(row)
     return row
@@ -1117,6 +1123,9 @@ def get_unread_counts_batch(
             cid = UUID(cid_str)
             unread_counts[cid] = count
         except (ValueError, AttributeError):
-            pass
+            logger.warning(
+                "room_id con UUID inválido en get_unread_counts_batch, contador omitido: %r",
+                room_id,
+            )
 
     return unread_counts
