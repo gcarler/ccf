@@ -494,10 +494,10 @@ respalda.
 | ID | Estado | Cierre / Justificación | Commit |
 |---|---|---|---|
 | A-01 | 🔴 PENDIENTE | — | — |
-| A-02 | 🔴 PENDIENTE | — | — |
+| A-02 | ✅ CERRADO 2026-07-24 | Reemplazado `outerjoin` simple por `outerjoin` con filtros `Course.deleted_at IS NULL` y `sede_check` en el `ON`. El `filter` distingue 3 casos: (1) hilo global `course_id IS NULL` visible; (2) hilo con `Course.id IS NOT NULL` (curso visible) → visible; (3) hilo con `course_id != NULL` pero Course archivado → outerjoin falla en el ON, queda NULL pero `course_id != NULL` → filter no lo incluye. Regresión existente: `test_forum_threads_isolate_by_sede` ya cubría el caso (thread on `Course.deleted_at`) y pasó post-fix. | merge |
 | A-03 | ✅ CERRADO 2026-07-24 | Scope admin estricto: los 4 endpoints admin (`all_enrollments`, `list_submissions`, `grade_submission`, `delete_submission_admin`) ahora filtran `Course.sede_id == sede_id` (sin `OR sede_id IS NULL`). El catálogo público (`_course_scope`) y el foro siguen incluyendo globales (lectura/captación). 4 regression tests en `test_academy_api.py::test_a03_*`. | `c2c92299`+patch |
-| A-04 | 🔴 PENDIENTE | — | — |
-| A-05 | 🔴 PENDIENTE | — | — |
+| A-04 | ✅ CERRADO 2026-07-24 | `create_enrollment` (30/min, `request: Request` ya presente), `check_in` (20/min, agregado), `request_certificate` (5/min, agregado), `submit_assignment` (10/min, agregado), `submit_assessment` (10/min, preexistente), `create_forum_thread` (5/min, preexistente), `validate_certificate` (10/min, agregado). Todos con `@academy_limiter.limit` + `request: Request` en firma. | `c2c92299` |
+| A-05 | ✅ CERRADO 2026-07-24 | `submit_assignment` ahora invoca `_get_scoped_course(db, current_user, enrollment.course_id)` antes del upload — aplica el scope Axioma 3 (sede + curso no archived + no unpublished). Cierre A-05 y cubre parte de F-01. Regression test `test_a05_submit_assignment_blocks_archived_course`. | merge |
 | A-06 | 🔴 PENDIENTE | — | — |
 | A-07 | 🔴 PENDIENTE | — | — |
 | A-08 | 🔴 PENDIENTE | — | — |

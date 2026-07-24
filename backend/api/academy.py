@@ -730,6 +730,14 @@ async def submit_assignment(
     db: Session = Depends(get_db),
 ):
     enrollment = _get_own_enrollment(db, current_user, enrollment_id)
+    # A-05 (cierre 2026-07-24): además de emparejar ``Lesson.course_id`` con
+    # ``enrollment.course_id`` y ``Lesson.deleted_at IS NULL``, debemos
+    # garantizar que el ``Course`` del enrollment es visible para el actor —
+    # es decir, no está archivado (deleted_at IS NULL) y pertenece a su sede
+    # (o es global legítimo para captación pública). Sin este check, un
+    # estudiante inscrito en un curso despublicado/archivado de otra sede
+    # podía seguir subiendo entregas.
+    _get_scoped_course(db, current_user, enrollment.course_id)
     lesson = (
         db.query(models.Lesson)
         .filter(
@@ -777,22 +785,57 @@ def forum_threads(
     db: Session = Depends(get_db),
 ):
     # Axioma 3: ForumThread.course_id IS NULL → anuncio global (visible a todas las sedes).
-    # Hilos vinculados a Course: scope por Course.sede_id via outerjoin (preserva huerfanos).
-    # Hilos de cursos con deleted_at != NULL quedan ocultos automáticamente.
-    query = db.query(models.ForumThread).outerjoin(models.Course, models.ForumThread.course_id == models.Course.id)
+    # Hilos vinculados a Course: scope por Course.sede_id.
+    # A-02 (cierre 2026-07-24): el outerjoin previo preservaba huerfanos via
+    # ``FORUM.course_id IS NULL``, pero un hilo cuyo ``course_id`` apunta a un
+    # ``Course.deleted_at != NULL`` (archivado) caía en la misma rama NULL
+    # porque el outerjoin producía NULL en todas las columnas de Course,
+    # re-exponiéndolo como anuncio global. Fix: el scope ahora ordena los tres
+    # casos — (1) hilo global puro (course_id IS NULL, legítimo): visible;
+    # (2) hilo vinculado a Course visible (no borrado + sede match): visible;
+    # (3) hilo vinculado a Course archivado/borrado: oculto.
     sede_id = get_user_sede_id(db, current_user.id)
+    # innerjoin para los hilos con course_id != NULL descarta automáticamente
+    # los huérfanos/archivados (JOIN falla → row no aparece). Complementado con
+    # el branch course_id IS NULL para los anuncios globales puros.
+    query = db.query(models.ForumThread)
     if sede_id:
-        course_scope = and_(
-            models.Course.deleted_at.is_(None),
-            or_(
-                models.Course.sede_id == sede_id,
-                models.Course.sede_id.is_(None),
+        # Hilos globales (course_id IS NULL) O hilos con Course no borrado de la sede.
+        query = query.outerjoin(
+            models.Course,
+            and_(
+                models.ForumThread.course_id == models.Course.id,
+                models.Course.deleted_at.is_(None),
+                or_(
+                    models.Course.sede_id == sede_id,
+                    models.Course.sede_id.is_(None),
+                ),
             ),
         )
+        # Filter: un hilo aparece si (a) course_id IS NULL (anuncio global puro), o
+        # (b) el outerjoin matchó (Course.id IS NOT NULL → curso visible). Los hilos
+        # cuyo course_id apunta a un Course archivado fallan el ON y quedan con
+        # Course.id NULL pero course_id != NULL → no aparecen (A-02 fix).
+        query = query.filter(
+            or_(
+                models.ForumThread.course_id.is_(None),
+                models.Course.id.is_not(None),
+            )
+        )
     else:
-        # Superadmin sin sede: ve cursos no borrados + huerfanos.
-        course_scope = models.Course.deleted_at.is_(None)
-    query = query.filter(or_(models.ForumThread.course_id.is_(None), course_scope))
+        # Superadmin sin sede: hilos globales + hilos con Course no borrado.
+        query = query.outerjoin(
+            models.Course,
+            and_(
+                models.ForumThread.course_id == models.Course.id,
+                models.Course.deleted_at.is_(None),
+            ),
+        ).filter(
+            or_(
+                models.ForumThread.course_id.is_(None),
+                models.Course.id.is_not(None),
+            )
+        )
     if category is not None:
         query = query.filter(models.ForumThread.category == category.value)
     return query.order_by(models.ForumThread.created_at.desc()).offset(skip).limit(limit).all()
