@@ -5,8 +5,6 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableTaskCard } from './SortableTaskCard';
 import { Plus, X } from 'lucide-react';
-import { apiFetch } from '@/lib/http';
-import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import type { ProjectTaskRecord } from '@/types/projects';
@@ -19,21 +17,20 @@ interface Props {
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: () => void;
     projectId?: string | number;
-    onTaskCreated?: (task: ProjectTaskRecord) => void;
+    onCreateTask?: (data: { title: string; status: string; priority: string }) => Promise<boolean | void>;
     onTaskUpdate?: (taskId: string, patch: Partial<ProjectTaskRecord>) => void;
     onTaskDelete?: (taskId: string) => void;
 }
 
-export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, projectId, onTaskCreated, onTaskUpdate, onTaskDelete }: Props) {
+export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, projectId, onCreateTask, onTaskUpdate, onTaskDelete }: Props) {
     const { setNodeRef, isOver } = useDroppable({ id });
-    const { token } = useAuth();
     const [isAdding, setIsAdding] = useState(false);
     const [title, setTitle] = useState('');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const completedCount = tasks.filter(t => t.status === 'completed').length;
+    const completedCount = tasks.filter(t => (t.status || 'todo').toLowerCase() === 'completed').length;
     const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
     const handleStartAdd = () => {
@@ -43,25 +40,31 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
 
     const handleSave = async () => {
         if (!title.trim()) { setIsAdding(false); return; }
-        if (projectId && onTaskCreated) {
+        if (projectId && onCreateTask) {
             setSaving(true);
-            try {
-                const newTask = await apiFetch<ProjectTaskRecord>(`/projects/${projectId}/tasks`, {
-                    method: 'POST',
-                    token,
-                    body: { title: title.trim(), status: id, priority: 'medium' }
-                });
-                onTaskCreated(newTask);
+            // createTask del contexto (useProjectUpdate) ya POSTea + recarga
+            // (loadProject) + toast.success('Tarea creada') en éxito, y
+            // toast.error('Error al crear tarea') en fallo. Retorna false
+            // (no lanza) cuando falla — lo usamos para mantener el input
+            // abierto y mostrar el error local de la columna.
+            const ok = await onCreateTask({
+                title: title.trim(),
+                status: id,
+                priority: 'medium',
+            });
+            if (ok) {
                 setError(null);
-            } catch {
+                setTitle('');
+                setIsAdding(false);
+            } else {
                 setError('No se pudo crear la tarea.');
             }
             setSaving(false);
         } else {
             onAddTask();
+            setTitle('');
+            setIsAdding(false);
         }
-        setTitle('');
-        setIsAdding(false);
     };
 
     const handleCancel = () => { setTitle(''); setIsAdding(false); };

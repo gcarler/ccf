@@ -53,17 +53,21 @@ export function ProjectViewsContent({
     const { project, tasks, phases, activities, createTask, reloadProject, updateTask } = useProjectUpdate();
 
     if (viewType === 'board' || viewType === 'kanban') {
+        if (!project?.id) {
+            return (
+                <div className="h-full flex items-center justify-center p-6">
+                    <p className="text-sm text-[hsl(var(--text-secondary))]">
+                        No se pudo cargar el proyecto.
+                    </p>
+                </div>
+            );
+        }
         return (
             <div className="h-full">
                 <ProjectKanbanBoard
-                    project={project!}
+                    project={project}
                     tasks={tasks}
                     phases={phases}
-                    onTasksChange={(next) => {
-                        // The Kanban still updates parent DOM nodes optimistically; the effect
-                        // is auto-reverted by `reloadProject` if the PATCH fails upstream.
-                        void next; // no-op here; tasks+phases are in context
-                    }}
                     onOpenTask={onOpenTask}
                     onAddTask={() => setShowTaskModal(true)}
                 />
