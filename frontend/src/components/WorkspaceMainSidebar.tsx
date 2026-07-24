@@ -4,7 +4,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import OptimizedImage from '@/components/ui/OptimizedImage';
 import {
     ChevronDown, Plus,
     ChevronLeft, ChevronRight, Circle
@@ -13,8 +12,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { DSTooltip } from '@/design';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
-import { SITE_NAME } from '@/lib/site-config';
-import { useSiteBranding } from '@/lib/site-branding';
 
 export interface NavItem {
     id: string;
@@ -172,7 +169,6 @@ function NavRow({
 
 export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle, isCollapsed }: Props) {
     const pathname = usePathname();
-    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const { 
         sidebarStack, 
         popSidebarPanel, 
@@ -194,8 +190,6 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
     const currentLevelIndex = sidebarStack.length;
     const isDrillDown = currentLevelIndex > 0;
     const currentPanel = isDrillDown ? sidebarStack[currentLevelIndex - 1] : null;
-
-    const displayTitle = currentPanel?.title ?? title;
 
     // Find the single best matching href to prevent multiple active items
     const activeHref = useMemo(() => {
@@ -222,53 +216,21 @@ export default function WorkspaceMainSidebar({ title, sections, isMini, onToggle
     return (
         <aside className="h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] transition-colors duration-500 ease-in-out relative overflow-hidden">
             <div className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[#0f1113]/80 backdrop-blur-xl">
-                {!isMini && (
-                    <div className="px-3 pt-3 pb-2 flex items-center gap-2.5">
-                        {logoUrl ? (
-                            <OptimizedImage
-                                src={logoUrl}
-                                alt={logoName || SITE_NAME}
-                                width={28}
-                                height={28}
-                                className="size-7 object-contain shrink-0"
-                            />
-                        ) : (
-                            <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white font-black text-[10px] shrink-0">
-                                CCF
-                            </div>
-                        )}
-                        <div className="min-w-0">
-                            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[hsl(var(--text-primary))] dark:text-white truncate">
-                                {logoName || SITE_NAME}
-                            </p>
-                        </div>
-                    </div>
-                )}
-                {/* Header: Botón Atrás + Título */}
+                {/* Header: Botón Atrás */}
                 <div className="h-10 flex items-center px-3 gap-2">
-                    {!isMini && (
-                        <>
-                            {isDrillDown && (
-                                <motion.button
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    whileHover={{ x: -2 }}
-                                    onClick={() => {
-                                        if (currentPanel?.onBack) currentPanel.onBack();
-                                        popSidebarPanel();
-                                    }}
-                                    className="p-1 -ml-1 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all flex items-center justify-center shrink-0 border border-[hsl(var(--border))] dark:border-white/5 active:scale-90"
-                                >
-                                    <ChevronLeft size={14} strokeWidth={2.5} />
-                                </motion.button>
-                            )}
-                            <h2 className={clsx(
-                                "text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate tracking-tight flex-1",
-                                isDrillDown && "italic"
-                            )}>
-                                {displayTitle}
-                            </h2>
-                        </>
+                    {!isMini && isDrillDown && (
+                        <motion.button
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            whileHover={{ x: -2 }}
+                            onClick={() => {
+                                if (currentPanel?.onBack) currentPanel.onBack();
+                                popSidebarPanel();
+                            }}
+                            className="p-1 -ml-1 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all flex items-center justify-center shrink-0 border border-[hsl(var(--border))] dark:border-white/5 active:scale-90"
+                        >
+                            <ChevronLeft size={14} strokeWidth={2.5} />
+                        </motion.button>
                     )}
                 </div>
             </div>
