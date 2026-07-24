@@ -46,19 +46,28 @@ export default function AcademyClient() {
     // para obtener `cards`, `enrollment_trends` y `top_courses` reales.
     // Si el usuario no tiene `academy:manage` (caso 99%), cae al endpoint genérico
     // `/dashboard/academy` que sigue entregando métricas a cualquier rol con `academy:read`.
-    const loadData = useCallback(async () => {
+    const loadData = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         setError(null);
         try {
+            // H-09 (cierre 2026-07-24): AbortController para abortar la carga en
+            // desmontaje (evita setState sobre componente desmontado + race). El
+            // signal se propaga a apiFetch para cancelar el fetch subyacente.
+            // H-10 (cierre 2026-07-24): cache: 'no-store' para evitar servir dashboard
+            // stale — el resto del módulo (coordination, profile) ya lo aplica.
+            const fetchOpts = { token, cache: 'no-store' as RequestCache, signal };
+            let data: AcademyDashboard;
             if (hasModuleAccess('academy', 'manage')) {
-                const data = await apiFetch<AcademyDashboard>('/academy/dashboard/metrics', { token });
+                data = await apiFetch<AcademyDashboard>('/academy/dashboard/metrics', fetchOpts);
                 setDashboard({ ...data, cards: data.cards ?? [] });
             } else {
-                const profile = await apiFetch<{ enrollments_count: number; certificates_count: number; total_progress: number }>('/academy/me/profile', { token });
-                setDashboard(dashboardFromProfile(profile));
+                const profile = await apiFetch<{ enrollments_count: number; certificates_count: number; total_progress: number }>('/academy/me/profile', fetchOpts);
+                setDashboard(dashboardFromProfile(profile as { enrollments_count: number; certificates_count: number; total_progress: number }));
             }
         } catch (err: unknown) {
+            // AbortError es esperado al desmontar; no se muestra al usuario.
+            if (err instanceof DOMException && err.name === 'AbortError') return;
             const candidate = err as { detail?: string; message?: string };
             const message = candidate.detail || candidate.message || 'Error al cargar métricas de la Academia';
             setError(message);
@@ -69,7 +78,9 @@ export default function AcademyClient() {
     }, [hasModuleAccess, token]);
 
     useEffect(() => {
-        loadData();
+        const controller = new AbortController();
+        loadData(controller.signal);
+        return () => controller.abort();
     }, [loadData]);
 
     if (loading && !dashboard) {
