@@ -152,18 +152,42 @@ class LocalASGITestClient:
     The installed Starlette/httpx/anyio combination hangs in this sandbox when
     TestClient starts its blocking portal. ASGITransport works correctly when
     driven directly from asyncio.
+
+    Soporte ``default_headers`` (Iteración 2, 2026-07-25): headers que se inyectan
+    en cada ``request`` automáticamente, salvo que el caller los sobreescriba
+    en ``kwargs['headers']``. Esto permite a fixtures de tests de módulo
+    (ej. ``authed_client`` en ``test_crm_automations_remediation``) configurar
+    ``client.default_headers`` una vez y dejar que el resto de los tests usen
+    ``client.post(...)`` sin pasar ``headers=`` explícitamente — elimina el
+    smell de 32 tests invocando sin auth que fallaban en aislamiento.
     """
 
     def __init__(self, app):
         self.app = app
         self.base_url = "http://testserver"
         self.cookies = httpx.Cookies()
+        self.default_headers: dict[str, str] = {}
 
     def request(self, method: str, url: str, **kwargs):
         return asyncio.run(self._request(method, url, **kwargs))
 
     async def _request(self, method: str, url: str, **kwargs):
         transport = httpx.ASGITransport(app=self.app)
+        # Merge: default_headers iniciales + headers explícitos del caller ganan.
+        merged_headers = dict(self.default_headers)
+        caller_headers = kwargs.pop("headers", None)
+        if caller_headers:
+            if isinstance(caller_headers, dict):
+                merged_headers.update(caller_headers)
+            else:
+                # httpx.Headers o lista de tuplas → caller keep_existing semantics.
+                if hasattr(caller_headers, "items"):
+                    iterator = caller_headers.items()
+                else:
+                    iterator = caller_headers
+                for key, value in iterator:
+                    merged_headers[key] = value
+        kwargs["headers"] = merged_headers
         async with httpx.AsyncClient(
             transport=transport,
             base_url=self.base_url,

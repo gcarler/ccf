@@ -783,12 +783,15 @@ def get_messaging_history_item(
     if not log:
         raise HTTPException(status_code=404, detail="Message not found")
     if log.external_id:
-        logs = (
+        # Axioma 3 — el re-query por external_id también debe aplicar scope sede,
+        # no reexponer logs de personas de otra sede que compartan external_id.
+        related = (
             db.query(models.CommunicationLog)
+            .join(models.Persona, models.CommunicationLog.persona_id == models.Persona.id)
             .filter(models.CommunicationLog.external_id == log.external_id)
-            .order_by(models.CommunicationLog.created_at.desc())
-            .all()
         )
+        related = _scope_by_user_sede_via_persona(db, current_user, related)
+        logs = related.order_by(models.CommunicationLog.created_at.desc()).all()
     else:
         logs = [log]
     return _serialize_message_group(logs)
@@ -1498,7 +1501,7 @@ def create_counseling_ticket(
     }
 
 
-@router.get("/counseling/lead/{lead_id}", response_model=dict)
+@router.get("/counseling/lead/{lead_id}", response_model=List[dict])
 def get_counseling_by_lead(
     lead_id: UUID,
     db: Session = Depends(get_db),
@@ -1671,11 +1674,16 @@ def create_crm_role(
     if exists:
         raise HTTPException(status_code=400, detail="El rol ya existe")
     user_sede = get_user_sede_id(db, current_user.id)
+    if user_sede is None:
+        raise HTTPException(
+            status_code=409,
+            detail="El actor no tiene una sede atribuible; no puede crear roles sin tenant canónico",
+        )
     row = models.RoleDefinition(
         name=name,
         color=color,
         is_leadership=bool(data.get("is_leadership")),
-        sede_id=data.get("sede_id") or (uuid.UUID(str(user_sede)) if user_sede else None),
+        sede_id=uuid.UUID(str(user_sede)),
     )
     db.add(row)
     db.commit()
@@ -1696,9 +1704,33 @@ def update_crm_role(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    row = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
+    user_sede = get_user_sede_id(db, current_user.id)
+    if user_sede is None:
+        raise HTTPException(
+            status_code=409,
+            detail="El actor no tiene una sede atribuible; no puede editar roles",
+        )
+    row = (
+        db.query(models.RoleDefinition)
+        .filter(
+            models.RoleDefinition.id == role_id,
+            models.RoleDefinition.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
+    # Axioma 3 — IDOR cross-sede: never expose roles owned by another sede.
+    if row.sede_id is not None and row.sede_id != uuid.UUID(str(user_sede)):
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+    # Roles globales (sede_id IS NULL) solo los edita un actor con sede válida
+    # si la.Por seguridad mantiene ownership del actor: roles globales quedan
+    # bloqueados a mutación salvo actor sin sede (superadmin plataforma).
+    if row.sede_id is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Los roles globales son inmutables desde una sede",
+        )
 
     data = payload.model_dump(exclude_unset=True)
 
@@ -1712,20 +1744,26 @@ def update_crm_role(
             .filter(
                 models.RoleDefinition.name == new_name,
                 models.RoleDefinition.id != role_id,
+                models.RoleDefinition.deleted_at.is_(None),
             )
             .first()
         )
         if exists:
             raise HTTPException(status_code=400, detail="Ya existe otro rol con ese nombre")
-        db.query(models.Persona).filter(models.Persona.church_role == row.name).update({"church_role": new_name})
+        # Axioma 3 — el bulk update de church_role scoped a la sede del actor.
+        actor_sede = uuid.UUID(str(user_sede))
+        db.query(models.Persona).filter(
+            models.Persona.sede_id == actor_sede,
+            models.Persona.church_role == row.name,
+        ).update({"church_role": new_name})
         row.name = new_name
 
     if "color" in data:
         row.color = str(data.get("color") or "").strip()
     if "is_leadership" in data:
         row.is_leadership = bool(data.get("is_leadership"))
-    if "sede_id" in data:
-        row.sede_id = data.get("sede_id")
+    # sede_id es server-side source of truth — el cliente no puede re-attribuir.
+    data.pop("sede_id", None)
 
     db.commit()
     db.refresh(row)
@@ -1745,8 +1783,30 @@ def delete_crm_role(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    role = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
+    user_sede = get_user_sede_id(db, current_user.id)
+    if user_sede is None:
+        raise HTTPException(
+            status_code=409,
+            detail="El actor no tiene una sede atribuible; no puede eliminar roles",
+        )
+    actor_sede = uuid.UUID(str(user_sede))
+    role = (
+        db.query(models.RoleDefinition)
+        .filter(
+            models.RoleDefinition.id == role_id,
+            models.RoleDefinition.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not role:
+        raise HTTPException(status_code=404, detail="Rol a eliminar no encontrado")
+    # Axioma 3 — IDOR cross-sede: el rol debe pertenecer a la sede del actor.
+    if role.sede_id is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Los roles globales son inmutables desde una sede",
+        )
+    if role.sede_id != actor_sede:
         raise HTTPException(status_code=404, detail="Rol a eliminar no encontrado")
     if fallback_id is None:
         raise HTTPException(
@@ -1758,10 +1818,27 @@ def delete_crm_role(
             status_code=400,
             detail="El rol de reemplazo no puede ser el mismo rol a eliminar",
         )
-    fallback = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == fallback_id).first()
+    fallback = (
+        db.query(models.RoleDefinition)
+        .filter(
+            models.RoleDefinition.id == fallback_id,
+            models.RoleDefinition.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not fallback:
         raise HTTPException(status_code=404, detail="Rol de reemplazo no encontrado")
-    db.query(models.Persona).filter(models.Persona.church_role == role.name).update({"church_role": fallback.name})
+    # El fallback también debe pertenecer a la misma sede (o global legítimo).
+    if fallback.sede_id is not None and fallback.sede_id != actor_sede:
+        raise HTTPException(
+            status_code=400,
+            detail="El rol de reemplazo debe pertenecer a la misma sede",
+        )
+    # Axioma 3 — bulk update de church_role scoped a la sede del actor.
+    db.query(models.Persona).filter(
+        models.Persona.sede_id == actor_sede,
+        models.Persona.church_role == role.name,
+    ).update({"church_role": fallback.name})
     role.deleted_at = utc_now()
     db.commit()
     return {
@@ -2196,7 +2273,7 @@ def delete_volunteer(
     db.commit()
 
 
-@router.get("/groups", response_model=dict)
+@router.get("/groups", response_model=List[dict])
 def list_crm_groups(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
@@ -2410,7 +2487,7 @@ def export_newsletter_leads_csv(
 # PASTORAL CALL LOGS (Registro de llamadas de consolidación)
 # ──────────────────────────────────────────────
 
-@router.get("/casos/{case_id}/calls", response_model=dict)
+@router.get("/casos/{case_id}/calls", response_model=List[dict])
 def list_caso_calls(
     case_id: str,
     db: Session = Depends(get_db),

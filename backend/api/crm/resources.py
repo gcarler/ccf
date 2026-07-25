@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from backend.api.crm._shared import _resolve_campaign_personas
 from backend.core.database import get_db
-from backend.core.permissions import require_module_access
+from backend.core.permissions import require_admin, require_module_access
 from backend.core.storage import storage_service
 from backend.core.tenant import get_user_sede_id
 from backend.core.uploads import ensure_allowed_extension, sanitize_filename
@@ -22,6 +22,7 @@ from backend.crud.crm_.extended import (
     delete_crm_automation,
     delete_crm_automation_edge,
     get_crm_automation,
+    get_crm_automation_edge,
     get_crm_automation_edges,
     get_crm_automations,
     update_crm_automation,
@@ -45,7 +46,7 @@ from backend.crud.crm_.resources import (
     update_estado_envio,
     update_plantilla,
 )
-from backend.crud.crm_.shared import resolve_persona_id_from_identity
+from backend.crud.crm_.shared import _audit_log, resolve_persona_id_from_identity
 from backend.models_crm import CategoriaRecurso, EstadoEnvioPlantilla
 from backend.schemas.crm.automation import (
     AutomationTriggerPayload,
@@ -105,9 +106,16 @@ def get_categorias(
 def post_categoria(
     payload: CategoriaRecursoCreate,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm", "edit")),
+    user=Depends(require_admin),
 ):
     obj = create_categoria(db, payload)
+    _audit_log(
+        db,
+        "crm_recurso_categorias",
+        str(obj.id),
+        "CREATE",
+        detalles={"nombre": obj.nombre, "creado_por_sede": getattr(user, "sede_id", None)},
+    )
     return CategoriaRecursoOut.from_orm_safe(obj)
 
 
@@ -116,7 +124,7 @@ def patch_categoria(
     categoria_id: str,
     payload: CategoriaRecursoUpdate,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm", "edit")),
+    user=Depends(require_admin),
 ):
     obj = update_categoria(db, categoria_id, payload)
     if not obj:
@@ -128,7 +136,7 @@ def patch_categoria(
 def del_categoria(
     categoria_id: str,
     db: Session = Depends(get_db),
-    user=Depends(require_module_access("crm", "edit")),
+    user=Depends(require_admin),
 ):
     if not delete_categoria(db, categoria_id):
         raise HTTPException(404, "Categoría no encontrada")
@@ -614,7 +622,23 @@ def _list_automation_edges_response(
     user=Depends(require_module_access("crm")),
 ):
     rows = get_crm_automation_edges(db, source_id=source_id, target_id=target_id)
-    return [CrmAutomationEdgeOut.from_orm_safe(r) for r in rows]
+    user_sede = get_user_sede_id(db, str(user.id))
+    if not user_sede:
+        return [CrmAutomationEdgeOut.from_orm_safe(r) for r in rows]
+    # Axioma 3 — un edge es visible para el actor SOLO si ambos extremos
+    # (source/target automation) pertenecen a la sede del actor. Las
+    # automatizaciones legacy con sede_id NULL se consideran globales y
+    # quedan fuera de scope desde una sede concreta (mismo criterio que
+    # `_owned_flow` en pipelines.py y `/automations/{id}` en este archivo).
+    allowed_ids: set[UUID] = set()
+    for r in rows:
+        src = get_crm_automation(db, r.source_id)
+        tgt = get_crm_automation(db, r.target_id)
+        src_ok = src is not None and (not src.sede_id or str(src.sede_id) == user_sede)
+        tgt_ok = tgt is not None and (not tgt.sede_id or str(tgt.sede_id) == user_sede)
+        if src_ok and tgt_ok:
+            allowed_ids.add(r.id)
+    return [CrmAutomationEdgeOut.from_orm_safe(r) for r in rows if r.id in allowed_ids]
 
 
 def _create_automation_edge_response(
@@ -632,6 +656,17 @@ def _create_automation_edge_response(
     if not target:
         raise HTTPException(404, f"Target automation with id {payload.target_id} not found")
 
+    # Axioma 3 — un edge entre automatizaciones de otra sede sería un
+    # cross-tenant write. Si el actor está asignado a una sede, ambos
+    # extremos deben pertenecer a esa sede (los legacy NULL quedan fuera
+    # de scope desde una sede concreta — idem `_owned_flow`).
+    user_sede = get_user_sede_id(db, str(user.id))
+    if user_sede:
+        if source.sede_id and str(source.sede_id) != user_sede:
+            raise HTTPException(404, f"Source automation with id {payload.source_id} not found")
+        if target.sede_id and str(target.sede_id) != user_sede:
+            raise HTTPException(404, f"Target automation with id {payload.target_id} not found")
+
     obj = create_crm_automation_edge(db, payload)
     return CrmAutomationEdgeOut.from_orm_safe(obj)
 
@@ -641,6 +676,17 @@ def _delete_automation_edge_response(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm", "edit")),
 ):
+    # Axioma 3 — antes de borrar, validar que el edge que pertenece a
+    # automatizaciones de la sede del actor. Reuso `get_crm_automation_edge`
+    # y valido scope via el source automation.
+    edge = get_crm_automation_edge(db, edge_id)
+    if not edge:
+        raise HTTPException(status_code=404, detail="Edge not found")
+    user_sede = get_user_sede_id(db, str(user.id))
+    if user_sede:
+        src = get_crm_automation(db, edge.source_id)
+        if src is None or (src.sede_id and str(src.sede_id) != user_sede):
+            raise HTTPException(status_code=404, detail="Edge not found")
     if not delete_crm_automation_edge(db, edge_id):
         raise HTTPException(status_code=404, detail="Edge not found")
 
