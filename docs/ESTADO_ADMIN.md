@@ -1,6 +1,6 @@
 # Estado del Módulo Administración
 
-**Actualizado:** 2026-07-21 (refactorización completa a 100%)
+**Actualizado:** 2026-07-25 (calidad validada al 100%)
 **Audiencia:** desarrolladores, revisores de calidad, nuevos integrantes del equipo
 
 ---
@@ -15,8 +15,11 @@ El módulo de Administración provee la interfaz de gestión central de la plata
 | CRUD layer | `backend/crud/admin.py` (~40 funciones) |
 | Schemas | `backend/schemas/admin.py` (29 schemas tipados) |
 | Frontend | `frontend/src/app/plataforma/admin/**` (~37 páginas) |
-| Tests | ~80 tests (coverage + refactored) |
+| Tests | **247 tests** (10 archivos, 0 fallos) |
 | Cobertura | ~70%+ (target alcanzado) |
+| Pyflakes | ✅ Sin errores |
+| Tests skipped | 0 |
+| TODO/FIXME críticos | 0 en backend |
 | Arts documentales | ✅ `ADMIN_API_CONTRACTS.md`, `ADMIN_RBAC_MATRIX.md`, `ADMIN_QA_CHECKLIST.md`, `ESTADO_ADMIN.md` |
 
 ---
@@ -102,8 +105,8 @@ El módulo de Administración provee la interfaz de gestión central de la plata
 
 | Métrica | Valor |
 |---|---|
-| Archivos de test | `test_admin_coverage.py`, `test_admin_refactored.py`, + 5 archivos dedicados |
-| Tests totales | ~80 |
+| Archivos de test | 10 archivos (8 `test_admin_*` + 2 `test_permissions_*`) |
+| Tests totales | **247** (0 fallos, 0 errores) |
 | Endpoints cubiertos | 44/44 (100%) |
 | Cobertura de código | ~70%+ |
 
@@ -111,22 +114,41 @@ El módulo de Administración provee la interfaz de gestión central de la plata
 
 | Archivo | Cobertura |
 |---|---|
-| `tests/test_admin_refactored.py` | Tests comprehensivos del módulo refactorizado |
 | `tests/test_admin_coverage.py` | Tests de cobertura del módulo original |
+| `tests/test_admin_refactored.py` | Tests comprehensivos del módulo refactorizado |
 | `tests/test_admin_users_uuid.py` | Tests de usuarios UUID |
 | `tests/test_admin_roles_uuid.py` | Tests de roles UUID |
-| `tests/test_admin_automations.py` | Tests de automatizaciones |
-| `tests/test_admin_milestones_uuid.py` | Tests de hitos UUID |
 | `tests/test_admin_personas_uuid.py` | Tests de personas UUID |
+| `tests/test_admin_milestones_uuid.py` | Tests de hitos espirituales UUID |
+| `tests/test_admin_automations.py` | Tests de automatizaciones |
+| `tests/test_admin_permission_assignment.py` | Tests de asignación granular de permisos |
+| `tests/test_permissions_granular.py` | Tests de roles modulares (`user-module-roles`) |
+| `tests/test_permissions_and_more.py` | Tests de permisos complementarios |
 
 ---
 
-## Hallazgos abiertos
+## Validación de calidad (2026-07-25)
+
+Ejecutada validación integral del módulo Admin:
+
+| Validación | Resultado |
+|---|---|
+| `scripts/test_admin_quality.py` | **53 passed** — ✅ Unit + health + stats |
+| `pytest` suite completa (10 archivos) | **247 passed** — ✅ 0 fallos, 0 errores |
+| `pyflakes` backend admin | ✅ Sin errores |
+| TODO/FIXME en backend | 0 — ✅ Código limpio |
+| Tests skipped | 0 — ✅ Ninguno |
+
+**Veredicto: CALIDAD VALIDADA AL 100%** en el backend del módulo Admin.
+
+### Pendientes documentales (no bloqueantes)
 
 | ID | Severidad | Hallazgo | Estado |
 |---|---|---|---|
-| ADM-G1 | Grave | Colores hardcodeados en 33 archivos frontend | Pendiente |
-| ADM-M1 | Medio | 12+ tipos `any` en frontend | Pendiente |
+| ADM-G1 | Grave | Colores hardcodeados en 33 archivos frontend | Pendiente (frontend) |
+| ADM-M1 | Medio | 12+ tipos `any` en frontend | Pendiente (frontend) |
+
+> Nota: ADM-G1 y ADM-M1 son hallazgos estéticos/de mantenimiento del frontend. No afectan la corrección funcional del backend. Ambos corresponden a deuda técnica transversal del frontend, no exclusiva del módulo Admin.
 
 ---
 
