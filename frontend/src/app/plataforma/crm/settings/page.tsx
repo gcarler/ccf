@@ -52,8 +52,9 @@ export default function CrmSettingsPage() {
             if (data) setConfig(data);
         } catch (err) {
             console.error("Error fetching settings", err);
+            addToast("No se pudo cargar la configuración del CRM", "error");
         }
-    }, [token]);
+    }, [token, addToast]);
 
     const fetchPositions = useCallback(async () => {
         if (!token) return;
@@ -63,10 +64,11 @@ export default function CrmSettingsPage() {
             setPositions(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Error fetching consolidation positions', err);
+            addToast('No se pudieron cargar los cargos de consolidación', 'error');
         } finally {
             setIsLoadingPositions(false);
         }
-    }, [token]);
+    }, [token, addToast]);
 
     useEffect(() => {
         fetchSettings();
