@@ -37,7 +37,7 @@ const TRIGGER_COLORS: Record<string, string> = {
     new_persona: 'bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]/20',
     birthday: 'bg-[hsl(var(--warning))]/10 text-warning-text border-[hsl(var(--warning)/100%)]/20',
     inactivity: 'bg-[hsl(var(--danger))]/10 text-danger-text border-[hsl(var(--danger)/100%)]/20',
-    low_attendance: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
+    low_attendance: 'bg-[hsl(var(--warning))]/10 text-warning-text border-[hsl(var(--warning))/20]',
     anniversary: 'bg-[hsl(var(--info))]/10 text-info-text border-[hsl(var(--info)/100%)]/20',
     stage_change: 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20',
 };
