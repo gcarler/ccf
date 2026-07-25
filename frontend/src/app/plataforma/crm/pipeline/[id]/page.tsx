@@ -30,10 +30,12 @@ export default function LeadDetailPage() {
 
     useEffect(() => {
         if (!token || !id) return;
+        // M-05 — AbortController cancela el fetch al desmontar.
+        const controller = new AbortController();
         const loadLead = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/casos/${id}`, { token });
+                const data = await apiFetch<any>(`/crm/casos/${id}`, { token, signal: controller.signal });
                 if (!data) {
                     toast.error('Expediente no encontrado');
                     return;
@@ -41,13 +43,15 @@ export default function LeadDetailPage() {
                 setLead(data);
                 setHistory([]);
             } catch (err) {
+                if (controller.signal.aborted) return;
                 toast.error('Error al cargar expediente del prospecto');
                 setLead(null);
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             }
         };
         loadLead();
+        return () => controller.abort();
     }, [id, token]);
 
     if (loading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recuperando expediente ministerial...</div>;

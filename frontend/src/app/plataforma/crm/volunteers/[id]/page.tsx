@@ -57,20 +57,26 @@ export default function VolunteerDetailPage() {
     // Edit form
     const [fRole, setFRole] = useState("");
 
-    const loadVolunteer = useCallback(async () => {
+    const loadVolunteer = useCallback(async (signal?: AbortSignal) => {
         if (!token || !id) return;
         try {
             setLoading(true);
-            const data = await apiFetch<Volunteer>(`/crm/volunteers/${id}`, { token });
+            const data = await apiFetch<Volunteer>(`/crm/volunteers/${id}`, { token, signal });
             setVolunteer(data);
-        } catch {
+        } catch (err) {
+            if (signal?.aborted) return; // M-05 — unmount
             toast.error("Error al cargar perfil de servidor");
         } finally {
-            setLoading(false);
+            if (!signal?.aborted) setLoading(false);
         }
     }, [id, token]);
 
-    useEffect(() => { loadVolunteer(); }, [loadVolunteer]);
+    // M-05 — AbortController cancela el fetch al desmontar el detalle.
+    useEffect(() => {
+        const controller = new AbortController();
+        loadVolunteer(controller.signal);
+        return () => controller.abort();
+    }, [loadVolunteer]);
 
     const openEdit = () => {
         if (!volunteer) return;
