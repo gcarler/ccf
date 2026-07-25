@@ -243,7 +243,7 @@ def test_group_session_crud(db_session):
 
     user, persona, sede = seed_admin(db_session)
     grupo = create_grupo(
-        db_session, GrupoEvangelismoCreate(name="Grupo Joven", description="Grupo de jovenes"),
+        db_session, GrupoEvangelismoCreate(name="Grupo Joven"),
         sede_id=str(sede.id),
     )
     assert grupo.name == "Grupo Joven"
@@ -553,7 +553,7 @@ def test_resource_categorias_crud(client, db_session):
     if cat_id:
         resp = client.patch(
             f"/api/crm/resources/categorias/{cat_id}",
-            json={"name": "Updated Category"},
+            json={"nombre": "Updated Category"},
             headers=headers,
         )
         assert resp.status_code == 200, resp.text
@@ -569,7 +569,7 @@ def test_resource_plantillas_crud(client, db_session):
 
     resp = client.post(
         "/api/crm/resources/plantillas",
-        json={"nombre": "Test Template", "titulo": "Asunto", "canal": "EMAIL", "contenido_texto": "Hola", "contenido_html": "<p>Hola</p>", "categoria_id": str(_uuid.uuid4())},
+        json={"titulo": "Test Template", "canal": "EMAIL", "contenido_texto": "Hola", "contenido_html": "<p>Hola</p>", "categoria_id": str(_uuid.uuid4())},
         headers=headers,
     )
     assert resp.status_code in (200, 201), resp.text
@@ -582,7 +582,7 @@ def test_resource_plantillas_crud(client, db_session):
 
         resp = client.patch(
             f"/api/crm/resources/plantillas/{tpl_id}",
-            json={"nombre": "Updated Template"},
+            json={"titulo": "Updated Template"},
             headers=headers,
         )
         assert resp.status_code == 200, resp.text

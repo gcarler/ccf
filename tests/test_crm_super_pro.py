@@ -50,7 +50,23 @@ def _call_scoring_engine(db_session: Session, persona_id: uuid.UUID):
 
 # ── OpenAI Mock Fixture ───────────────────────────────────────────────
 @pytest.fixture
-def mock_openai_client():
+def mock_openai_client(monkeypatch):
+    """Mockea el cliente OpenAI para que los tests copilot-draft no
+    requieran credenciales reales ni red.
+
+    QC-05 (auditoría de calidad 2026-07-25): adicionalmente, seteamos
+    ``OPENAI_API_KEY`` para que el endpoint ``get_copilot_draft`` en
+    ``backend/api/crm/pastoral.py:1161`` NO retorne el fallback por
+    "API key is missing" antes de instanciar ``OpenAI(api_key=...)``
+    (que es donde el mock intercepta). Sin esta env-var el endpoint cae
+    al early-return fallback en tests, dejando ``call_args=None`` y
+    rompiendo tests que verifican el prompt enviado al LLM
+    (``test_combo_copilot_uses_timeline`` TypeError al desempaquetar
+    ``None``; ``test_ai_copilot_endpoint_success`` assertion contra el
+    fallback string). El valor es un dummy ("test-mock-key") — el mock
+    agarra ``OpenAI`` ANTES de que se haga cualquier llamada de red.
+    """
+    monkeypatch.setenv("OPENAI_API_KEY", "test-mock-key")
     with patch("openai.OpenAI") as mock_class:
         mock_client = MagicMock()
         mock_class.return_value = mock_client
