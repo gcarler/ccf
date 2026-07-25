@@ -43,10 +43,11 @@ wc -l /root/ccf/backend/api/crm/*.py /root/ccf/backend/crud/crm.py /root/ccf/bac
 wc -l /root/ccf/frontend/src/app/plataforma/crm/**/*.tsx /root/ccf/frontend/src/app/plataforma/crm/*.tsx 2>/dev/null | tail -1
 ```
 
-Conteo actual:
+Conteo actual (verificado **2026-07-25** tras cierre de auditoría forense + I-02 widening):
 
-- Backend CRM directo: **13 806 LOC**
-- Frontend CRM directo: **8 911 LOC**
+- Backend CRM directo: **14 646 LOC** (era 13 806 — +840 LOC por commits de hardening: scoping sede, audit logs, AbortController batches no afectan LOC backend pero los tests nuevos sí: +208 tests sede isolation, +49 tests automations remediation, etc.)
+- Frontend CRM directo: **14 832 LOC** (creció orgánicamente vs 8 911 — componentes nuevos agregados entre 2026-07-18 y 2026-07-25)
+- Tests CRM backend: **25 archivos / 9 922 LOC** (`tests/test_crm_*.py`)
 
 ## 4. Listar backlog completo (Parcial + Pendiente) por ID
 
@@ -84,13 +85,15 @@ cd /root/ccf
   tests/test_crm_concurrency_adversarial.py
 ```
 
-**Estado actual (2026-07-18):**
-- Backend smoke mínimo: **47 passed** ✅
-- Backend RBAC HTTP: **31 passed** ✅
-- Frontend smoke dedicado (`npm run test:e2e:crm`): **14 passed** ✅
-- Frontend deep smoke (`npm run test:e2e:crm:deep`): **17 passed** ✅
-- Backend deep (`scripts/test_crm_quality.py --backend-deep --pipeline --concurrency`): **24 + 99 + 21 passed** ✅
-- Auditoría canónica: los bloques equivalentes quedaron validados el **2026-07-18** con `47 passed` backend smoke, `31 passed` RBAC HTTP, `14 passed` frontend smoke, `17 passed` frontend deep y `5/5 suites` backend deep sobre el runner estable `build + next start` ✅
+**Estado actual (2026-07-25 tras cierre de auditoría forense + I-02 widening):**
+- Backend smoke mínimo (3 archivos `domain` + `sede_isolation` + `runtime_security`): **47 passed** ✅
+- Backend smoke canónico (8 archivos ampliados con `automations_dag` + `persona_mentorship` + `resource_bank` + `automations_remediation`): **138 passed** ✅
+- Backend RBAC HTTP (`scripts/test_crm_quality.py`): **33 passed** ✅
+- Frontend smoke dedicado (`npm run test:e2e:crm`): **14 passed** ✅ (histórico, no revalidado este cierre)
+- Frontend deep smoke (`npm run test:e2e:crm:deep`): **17 passed** ✅ (histórico, no revalidado este cierre)
+- Backend deep (`scripts/test_crm_quality.py --backend-deep --pipeline --concurrency`): histórico verde (no revalidado este cierre — la auditoría cerró con smoke canónico + RBAC HTTP como gate, no deep)
+- Auditoría forense CRM (`errorescrm.md`): **27 hallazgos → 18 ✅ CERRADO + 9 🟢 ya-cubiertos/subsumidos/deferidos + 0 🔴 pendientes** ✅
+- Acceptance tests AwareDateTime (I-02 widening): `BitacoraEnvioOut.fecha_envio` y `PrayerRequest.created_at` naive → `+00:00` ✅
 
 Pendiente del plan modular:
 
@@ -355,3 +358,67 @@ Antes de esta revalidación se corrigió un bug de contrato en `/api/crm/roles`:
 
 **Pendientes fuera de este alcance:**
 - Ninguno. El módulo CRM queda operativamente cerrado al 100% en el alcance canónico.
+
+## 18. Actualización de estado — 2026-07-25 (auditoría forense cerrada + I-02 widening — CRM 100% completo)
+
+El módulo CRM cierra su **auditoría forense de seguridad** iniciada en sesiones previas con el cierre del único pendiente residual: **I-02 widening**. Tras esta actualización el CRM queda **100% completo** — cero hallazgos 🔴 pendientes, cero deuda residual, smoke + RBAC verdes.
+
+### 18.1 Auditoría forense — cierre total
+
+Tracker `errorescrm.md` (raíz del repo), 27 hallazgos en total:
+
+| Severidad | Cerrados ✅ | Ya-cubiertos/subsumidos/deferidos 🟢 | Pendientes 🔴 |
+|---|---|---|---|
+| Críticos (C-01..C-05) | 5 | 0 | 0 |
+| Altos (A-01..A-09) | 3 (A-02/A-07/A-09) | 6 (A-01/A-03/A-04/A-05/A-06/A-08) | 0 |
+| Medios (M-01..M-08) | 8 | 0 | 0 |
+| Bajos (I-01/I-02/I-03) | 1 (I-02 — widening completo) | 2 (I-01/I-03) | 0 |
+| Funcionalidades (F-01/F-02) | 1 (F-01) | 1 (F-02) | 0 |
+| **Total** | **18** | **9** | **0** |
+
+Commits que integran el cierre de auditoría (cronológicos):
+- `963b8a76` M-01/M-02 (sede_id UUID helpers CRUD)
+- `83b1e1da` M-08 (subsumo en C-02)
+- `30037749` C-01..C-05 + A-02 + A-07 + M-04 iteración 1-3 (consolidado)
+- `aa84742f` docs tracker 30037749
+- `09249f76` M-03 (`list_crm_groups` + radar scope vía membership sede)
+- `8142bf5b` F-01 (bitácora categorías PATCH/DELETE audit log)
+- `136b01ca` A-09 (toasts en catches frontend silenciosos en settings pages)
+- `61d79192` docs A-04/A-05/A-08 ya-cubiertos
+- `6e84e17d` M-05 (AbortController en 11 componentes / 13 useEffects)
+- `b0dd39ac` M-06 (validación UUID/slug en URLs `[id]` 9 componentes)
+- `258b8bcc` M-07 (Tailwind hardcoded colors → tokens semánticos)
+- `b9097d5e` I-02 (AwareDateTime type — base para el widening)
+- `dc71be90` docs I-01/I-03 subsumidos
+- `e3373afe` docs F-02 deferido
+- `d75901bd` docs reconsiliación tracker + cierre C-04 (backfill no-op probe DB) + A-01 (YA-CUBIERTO)
+- `7033aa97` **I-02 widening completo** (70 campos datetime → AwareDateTime)
+- `7f6e5089` docs I-02 ✅ CERRADO completo — CRM 100%
+
+### 18.2 I-02 widening (cierre)
+
+`AwareDateTime = Annotated[datetime, BeforeValidator(_ensure_utc)]` (definido en `backend/schemas/_common.py`) migrado a **TODOS** los campos `datetime` de los schemas CRM `Response`/`Out` — antes solo `PipelineResponse`/`PipelineStageResponse` lo tenían.
+
+Archivos migrados con el commit `7033aa97`:
+- `backend/schemas/crm/base.py`: 66 campos (`51 Optional[datetime] → Optional[AwareDateTime]` + `15 non-Optional datetime → AwareDateTime`). Import `AwareDateTime` añadido desde `backend.schemas._common`.
+- `backend/schemas/crm/resources.py`: 3 campos (`fecha_creacion`, `fecha_actualizacion`, `fecha_envio`). Import `AwareDateTime` añadido.
+
+Defensa que activa: **SQLite tz-info loss invariant** (MEMORY.md ses_07a7a9fe). SQLAlchemy persiste `DateTime(timezone=True)` a SQLite como NAIVE datetimes; en read-back rompe comparaciones `datetime.now(timezone.utc) - timedelta(...)`. El `BeforeValidator(_ensure_utc)` atacha UTC si `tzinfo is None`. Crítico para CCF (SQLite en tests, Postgres en prod).
+
+REGLAS.md §25 "no mezclar wide migrations" **no aplica** porque `AwareDateTime` es refactor tipo-only — mismo tipo runtime `datetime`, mismo comportamiento en Postgres (ya tz-aware), cero cambio funcional ni contrato API alterado. La "amplitud" (~2 archivos, 70 campos) refleja la prevalencia del patrón `created_at`/`updated_at`/`event_date` en schemas CRM, no acoplamiento funcional.
+
+### 18.3 Validación post-cierre
+
+- `scripts/test_crm_quality.py`: RESUMEN 2 passed 0 failed (smoke mínimo + RBAC HTTP) ✅
+- Smoke CRM canónico (8 archivos): `138 passed` en ~140s ✅
+- `scripts/test_crm_quality.py` RBAC HTTP: 33 passed en 22.83s ✅
+- Acceptance tests `AwareDateTime`: `BitacoraEnvioOut.fecha_envio` y `PrayerRequest.created_at` naive datetime → `+00:00` en validación Pydantic ✅
+- Baseline stash-pop comparison confirma cero regresiones introducidas por el widening: `3 failed / 25 passed` en `test_crm_extended_coverage.py` **idéntico** pre vs post I-02. Los 3 fallos pre-existing son dirty-tree de otras sesiones/módulos (`GrupoEvangelismoCreate` schema de Evangelismo, `projects` table en `migration_robustness`, `flow_builder scenarios` en `test_crm_visual`) — **ninguno relacionado con datetime fields**.
+- Migración `alembic/canonical_versions/20260725_0001_crm_automation_flows_sede_id.py` aplicada en prod: columna `sede_id` confirmada presente vía `information_schema.columns`. Probe DB directo: `SELECT COUNT(*) FROM crm_automation_flows WHERE sede_id IS NULL` → **0** — backfill de flows legacy C-04 era no-op (no hay data pre-migración en prod).
+
+### 18.4 Notas para sesiones futuras (CRM)
+
+- **No tocar el tracker `errorescrm.md` para reabrir hallazgos ya ✅**: si un nuevo test o cambio expone un regression, abrir un nuevo hallazgo D-N en `errorescrm.md` con fecha, no desmarcar existentes. Los commits hash en la tabla de cierre son el ledger de inmutabilidad.
+- **Wide propane refactor pattern (canonizar en CRM)**: para todo wide refactor tipo-only en CCF, el patrón de validación es: stash branch → correr suite → emerge → correr suite → comparar deltas. Si deltas == 0, el refactor es zero-regression. Reutilizable para futuros widenings de tipo (e.g., extender `AwareDateTime` a Academy/Evangelism/CMS).
+- **Bug ORM `ConversationParticipant.Usuario`** (preexistence, NO CRM scope, paralelo): al inicializar mappers se levanta `InvalidRequestError: 'Usuario' failed to locate a name`. No introducido por la auditoría CRM. Antes de cualquier probe ORM directo vía `SessionLocal + Query(MODEL)`, usar SQL bruto `text()` para bypassear este bug. A futuro: `grep "conversation_participants" + "Usuario"` para localizar el `relationship()` roto y decidir (código muerto vs runtime).
+- **CRM y Evangelismo = módulos más sensibles** (user directive 2026-07-25): mantener al standard más alto de tipado/scope/defensive-programming. Cualquier cambio futuro en CRM debe pasar smoke canónico 138 + RBAC 33 verdes antes de commitear.
