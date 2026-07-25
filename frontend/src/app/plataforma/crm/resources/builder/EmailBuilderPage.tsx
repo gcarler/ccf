@@ -1,7 +1,7 @@
 /** Builder page — editor visual drag & drop para plantillas email. */
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
@@ -31,9 +31,8 @@ export default function EmailBuilderPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!plantillaId) {
-      setLoading(false);
-      setError('No se encontró la plantilla.');
+    if (!plantillaId || !/^[a-z0-9-]+$/i.test(plantillaId)) {
+      notFound();
       return;
     }
     if (!token) {
@@ -42,7 +41,8 @@ export default function EmailBuilderPage() {
       return;
     }
     setError(null);
-    apiFetch<PlantillaMensaje>(`/crm/resources/plantillas/${plantillaId}`, { token })
+    const controller = new AbortController();
+    apiFetch<PlantillaMensaje>(`/crm/resources/plantillas/${plantillaId}`, { token, signal: controller.signal })
       .then(data => {
         if (data) {
           setTemplateName(data.titulo);
@@ -52,14 +52,20 @@ export default function EmailBuilderPage() {
           } catch (parseErr) {
             console.error(parseErr);
             setError('La plantilla tiene contenido inválido.');
+            toast.error('La plantilla tiene contenido inválido.');
           }
         }
       })
       .catch((err) => {
+        if (controller.signal.aborted) return;
         console.error(err);
         setError('No se pudo cargar el editor de plantilla.');
+        toast.error('No se pudo cargar el editor de plantilla.');
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, [authLoading, plantillaId, reloadKey, setBlocks, token]);
 
   const handleSave = useCallback(async () => {

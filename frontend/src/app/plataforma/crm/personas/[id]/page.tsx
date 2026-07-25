@@ -996,7 +996,7 @@ export default function PersonaDetailPage() {
                                 ) : donations.length > 0 ? (
                                     <div className="space-y-3">
                                         {donations.map((d: any, i: number) => (
-                                            <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg">
+                                            <div key={d.id ?? i} className="flex items-center justify-between p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-9 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/10 flex items-center justify-center">
                                                         <DollarSign size={16} className="text-success-text" />
@@ -1032,7 +1032,7 @@ export default function PersonaDetailPage() {
                                     <div className="relative space-y-0">
                                         <div className="absolute left-5 top-0 bottom-0 w-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                                         {history.map((event: any, i: number) => (
-                                            <div key={i} className="flex gap-4 pl-12 pb-8 relative">
+                                            <div key={event.id ?? i} className="flex gap-4 pl-12 pb-8 relative">
                                                 <div className="absolute left-0 top-1 size-8 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center shadow-sm z-10">
                                                     <MessageSquare size={16} className="text-[hsl(var(--primary))]" />
                                                 </div>
