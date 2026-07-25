@@ -25,6 +25,7 @@ import AdminHero from '@/components/admin/AdminHero';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import type { StatusCardProps, AgentStateProps } from '@/types/admin';
 
 
 interface AgentInsight {
@@ -33,7 +34,7 @@ interface AgentInsight {
     description?: string;
     insight_type?: string;
     payload?: Record<string, unknown> | string | null;
-    metadata?: Record<string, any> | null;
+    metadata?: Record<string, unknown> | null;
     acknowledged: boolean;
     acknowledged_at?: string;
     created_at?: string;
@@ -428,8 +429,8 @@ export default function IntelligenceConsole() {
     );
 }
 
-function StatusCard({ label, value, status, icon: Icon, color }: any) {
-    const colors: any = {
+function StatusCard({ label, value, status, icon: Icon, color = 'blue' }: StatusCardProps) {
+    const colors: Record<string, string> = {
         blue: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20',
         sky: 'text-info-text bg-info-soft dark:bg-[hsl(var(--info))]/20',
         amber: 'text-warning-text bg-warning-soft dark:bg-[hsl(var(--warning))]/20'
@@ -441,7 +442,7 @@ function StatusCard({ label, value, status, icon: Icon, color }: any) {
         <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all relative overflow-hidden">
             <div className="flex justify-between items-start">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
-                    <Icon size={28} />
+                    {Icon && <Icon size={28} />}
                 </div>
                 <div className={clsx("flex items-center gap-1.5 px-2 py-1 rounded-lg", statusTone)}>
                     <div className={clsx("size-1.5 rounded-full animate-pulse", status === 'degraded' ? 'bg-[hsl(var(--danger))]' : 'bg-[hsl(var(--success))]')} />
@@ -456,7 +457,7 @@ function StatusCard({ label, value, status, icon: Icon, color }: any) {
     );
 }
 
-function AgentState({ label, load, status, color }: any) {
+function AgentState({ label, load, status, color }: AgentStateProps) {
     return (
         <div className="space-y-3">
             <div className="flex justify-between items-end">

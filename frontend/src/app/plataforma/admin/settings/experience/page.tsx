@@ -262,7 +262,7 @@ export default function WorkspaceExperienceManager() {
                                                 : "bg-[hsl(var(--surface-1))] dark:bg-black/20 border-transparent grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
                                         )}
                                     >
-                                        {isEnabled && <div className="absolute top-3 right-6 size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_10px_#2563eb]" />}
+                                        {isEnabled && <div className="absolute top-3 right-6 size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_10px_hsl(var(--primary))]" />}
                                         <div className="space-y-3">
                                             <div className={clsx("size-7 rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12", isEnabled ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--text-secondary))]")}>
                                                 <feature.icon size={24} />

@@ -23,6 +23,7 @@ import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import type { ImpactStatProps, GoalProgressProps } from '@/types/admin';
 
 const MISSION_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -164,7 +165,7 @@ export default function AdminMissionImpactPage() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] font-display overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] font-display overflow-hidden">
             <style jsx global>{`
                 .impact-aura {
                     position: relative;
@@ -325,15 +326,15 @@ export default function AdminMissionImpactPage() {
     );
 }
 
-function ImpactStat({ label, value, icon: Icon, color }: any) {
-    const colors: any = {
+function ImpactStat({ label, value, icon: Icon, color = 'blue' }: ImpactStatProps) {
+    const colors: Record<string, string> = {
         blue: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20 border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]',
         rose: 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.08)] dark:border-[hsl(var(--destructive)/0.08)]'
     };
     return (
         <div className="impact-aura bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-4 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center gap-3 shadow-sm hover:shadow-2xl transition-all duration-500 group overflow-hidden">
             <div className={clsx("size-8 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12 duration-500 shadow-inner border", colors[color])}>
-                <Icon size={40} strokeWidth={1.5} />
+                {Icon && <Icon size={40} strokeWidth={1.5} />}
             </div>
             <div>
                 <div className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white italic tracking-tighter leading-none mb-1">{value}</div>
@@ -343,7 +344,7 @@ function ImpactStat({ label, value, icon: Icon, color }: any) {
     );
 }
 
-function GoalProgress({ label, current, target, color }: any) {
+function GoalProgress({ label, current, target, color }: GoalProgressProps) {
     const pct = Math.min(100, (current / target) * 100);
     return (
         <div className="space-y-3 group/goal">

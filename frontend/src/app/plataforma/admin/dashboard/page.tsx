@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import type { ModalityCardProps, StatCardProps, ProgressItemProps } from '@/types/admin';
 
 type AdminStats = {
     users: number;
@@ -311,10 +312,10 @@ export default function AdminDashboard() {
     );
 }
 
-function ModalityCard({ title, stats, icon: Icon, color }: any) {
+function ModalityCard({ title, stats, icon: Icon, color = 'blue' }: ModalityCardProps) {
     if (!stats) return <div className="h-48 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />;
     
-    const colorMap: any = {
+    const colorMap: Record<string, { text: string; bg: string; bar: string; border: string }> = {
         blue: { text: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info-muted))]', bar: 'bg-[hsl(var(--primary))]', border: 'border-[hsl(var(--primary))/0.2]' },
         amber: { text: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning-muted))]', bar: 'bg-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))/0.2]' }
     };
@@ -324,7 +325,7 @@ function ModalityCard({ title, stats, icon: Icon, color }: any) {
         <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 space-y-3 shadow-sm group hover:shadow-xl transition-all">
             <div className="flex justify-between items-start">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", c.bg, "dark:bg-white/10", c.text)}>
-                    <Icon size={24} />
+                    {Icon && <Icon size={24} />}
                 </div>
                 <div className="text-right">
                     <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Éxito</span>
@@ -362,8 +363,8 @@ function ModalityCard({ title, stats, icon: Icon, color }: any) {
     );
 }
 
-function StatCard({ label, value, icon: Icon, trend, color }: any) {
-    const colors: any = {
+function StatCard({ label, value, icon: Icon, trend, color = 'blue' }: StatCardProps) {
+    const colors: Record<string, string> = {
         blue: 'text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)]',
         rose: 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.15)]',
         emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.15)]'
@@ -374,10 +375,10 @@ function StatCard({ label, value, icon: Icon, trend, color }: any) {
             <div className="relative z-10 space-y-3">
                 <div className="flex justify-between items-center">
                     <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
-                        <Icon size={28} />
+                        {Icon && <Icon size={28} />}
                     </div>
                     <div className={clsx("font-semibold px-2 py-0.5 rounded-lg border", 
-                        trend.startsWith('+') ? "text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border-[hsl(var(--success))/0.2] dark:bg-[hsl(var(--success)/0.15)] dark:border-[hsl(var(--success))/0.2]" : "text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.2)] dark:bg-[hsl(var(--destructive)/0.15)] dark:border-[hsl(var(--destructive)/0.2)]"
+                        trend?.startsWith('+') ? "text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border-[hsl(var(--success))/0.2] dark:bg-[hsl(var(--success)/0.15)] dark:border-[hsl(var(--success))/0.2]" : "text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.2)] dark:bg-[hsl(var(--destructive)/0.15)] dark:border-[hsl(var(--destructive)/0.2)]"
                     )}>
                         {trend}
                     </div>
@@ -391,7 +392,7 @@ function StatCard({ label, value, icon: Icon, trend, color }: any) {
     );
 }
 
-function ProgressItem({ label, value, color }: any) {
+function ProgressItem({ label, value, color }: ProgressItemProps) {
     return (
         <div className="space-y-2">
             <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">

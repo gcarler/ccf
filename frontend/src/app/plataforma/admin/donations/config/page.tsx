@@ -48,10 +48,9 @@ import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
-import UniversalWikiView from '@/components/ui/UniversalWikiView';
-import { motion, AnimatePresence } from 'framer-motion';
-
+import UniversalWikiView from '@/components/ui/UniversalWikiView';import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import type { PaymentMethodItemProps, CSSAuraProperties } from '@/types/admin';
 
 import { DSSkeleton } from '@/design';
 
@@ -150,7 +149,7 @@ export default function DonationConfig() {
     const renderList = () => (
         <div className="space-y-4">
             {categories.map((cat) => (
-                <div key={cat.id} className="config-aura p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between gap-3" style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}>
+                <div key={cat.id} className="config-aura p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between gap-3" style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as CSSAuraProperties}>
                     <div>
                         <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{cat.name}</h3>
                         <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{cat.description || 'Fondo ministerial'}</p>
@@ -208,7 +207,7 @@ export default function DonationConfig() {
 
     return (
 
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden animate-fade-in font-display">
 
             <style jsx global>{`
 
@@ -444,7 +443,7 @@ export default function DonationConfig() {
 
                                             className="config-aura group p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between shadow-sm hover:shadow-2xl transition-all duration-500"
 
-                                            style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}
+                                            style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as CSSAuraProperties}
 
                                         >
 
@@ -560,7 +559,7 @@ export default function DonationConfig() {
 
 
 
-function PaymentMethodItem({ icon: Icon, label, active }: any) {
+function PaymentMethodItem({ icon: Icon, label, active }: PaymentMethodItemProps) {
 
     return (
 
@@ -576,7 +575,7 @@ function PaymentMethodItem({ icon: Icon, label, active }: any) {
 
                 )}>
 
-                    <Icon size={28} strokeWidth={1.5} />
+                    {Icon && <Icon size={28} strokeWidth={1.5} />}
 
                 </div>
 

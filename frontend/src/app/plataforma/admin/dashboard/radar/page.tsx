@@ -17,6 +17,7 @@ import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import type { RadarStatProps, GoalItemProps, CSSAuraProperties } from '@/types/admin';
 
 interface RadarData {
     membresia_viva: number;
@@ -218,8 +219,8 @@ export default function PastorRadarPage() {
     );
 }
 
-function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
-    const colorMap: any = {
+function RadarStat({ label, value, icon: Icon, color = 'blue', trend, auraColor }: RadarStatProps) {
+    const colorMap: Record<string, string> = {
         blue: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20 border-[hsl(var(--info)/20%)]',
         cyan: 'text-[hsl(var(--domain-cyan)/90%)] bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)] border-[hsl(var(--domain-cyan)/30%)]',
         emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]',
@@ -228,15 +229,15 @@ function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
     return (
         <div 
             className="radar-aura p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
-            style={{ '--aura-color': auraColor } as any}
+            style={{ '--aura-color': auraColor } as CSSAuraProperties}
         >
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-700"><Icon size={64} /></div>
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-700">{Icon && <Icon size={64} />}</div>
             <div className="space-y-3 relative z-10">
                 <div className="flex justify-between items-center">
                     <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colorMap[color])}>
-                        <Icon size={28} />
+                        {Icon && <Icon size={28} />}
                     </div>
-                    <span className="px-3 py-1 bg-white/50 dark:bg-white/5 rounded-lg font-semibold text-[hsl(var(--success))] border border-[hsl(var(--success)/0.3)] uppercase">{trend}</span>
+                    <span className="px-3 py-1 bg-white/50 dark:bg-white/5 rounded-lg font-semibold text-[hsl(var(--success))] border border-[hsl(var(--success)/0.3)] uppercase">{trend ?? '—'}</span>
                 </div>
                 <div>
                     <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">{label}</p>
@@ -247,7 +248,7 @@ function RadarStat({ label, value, icon: Icon, color, trend, auraColor }: any) {
     );
 }
 
-function GoalItem({ label, target, current, color }: any) {
+function GoalItem({ label, target, current, color }: GoalItemProps) {
     const pct = Math.min(100, (current / target) * 100);
     return (
         <div className="space-y-3 group/goal">

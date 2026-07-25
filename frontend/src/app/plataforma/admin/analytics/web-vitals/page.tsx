@@ -85,7 +85,7 @@ export default function WebVitalsAnalyticsPage() {
           ) : (
             <div className="max-h-[520px] overflow-y-auto overflow-x-auto">
               <table className="w-full text-left text-sm min-w-[520px]">
-                <thead className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[#17181a]">
+                <thead className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-surface)]">
                   <tr className="text-[10px] uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     <th className="py-2">Metrica</th>
                     <th className="py-2">Valor</th>

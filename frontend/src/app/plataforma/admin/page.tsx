@@ -29,6 +29,7 @@ Zap
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { KpiCardProps, AdminTaskRowProps, LogItemProps } from "@/types/admin";
 
 interface AdminTestimonial {
   id: number;
@@ -114,7 +115,7 @@ export default function AdminDashboardPage() {
 
   if (loading) {
       return (
-          <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden items-center justify-center space-y-3">
+          <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden items-center justify-center space-y-3">
               <div className="relative">
                   <div className="absolute inset-0 bg-[hsl(var(--primary))/0.2] blur-xl rounded-full animate-pulse" />
                   <Shield className="w-8 h-8 animate-pulse text-[hsl(var(--primary))] relative z-10" />
@@ -135,7 +136,7 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden font-sans relative">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden font-sans relative">
         <WorkspaceToolbar
             breadcrumbs={[{ label: 'Ecosistema', icon: Globe }, { label: 'Gestión Central', icon: Shield }]}
             viewType={viewType} setViewType={setViewType} availableViews={['grid']}
@@ -160,7 +161,7 @@ export default function AdminDashboardPage() {
 
                 {/* 1. High Impact Financial & Stats Grid */}
                 <motion.section variants={itemVariants} className="grid grid-cols-1 xl:grid-cols-4 gap-3">
-                    <div className="xl:col-span-2 relative overflow-hidden rounded-lg bg-[#001b48] p-4 text-white shadow-lg group border border-[hsl(var(--primary))/0.2] flex flex-col justify-between">
+                    <div className="xl:col-span-2 relative overflow-hidden rounded-lg bg-ccf-blue-dark p-4 text-white shadow-lg group border border-[hsl(var(--primary))/0.2] flex flex-col justify-between">
                         <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.05] mix-blend-overlay" />
                         <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[hsl(var(--primary))/0.3] via-[hsl(var(--primary))/0.1] to-transparent blur-3xl transition-transform duration-1000 group-hover:scale-110 pointer-events-none" />
 
@@ -211,7 +212,7 @@ export default function AdminDashboardPage() {
                             ))}
                             {pendingTestimonials > 0 && (
                                 <AdminTaskRow
-                                    task={{ title: 'Moderador de Testimonios', description: `Hay ${pendingTestimonials} nuevos milagros esperando aprobación.`, priority: 'medium', status: 'Pendiente', is_special: true }}
+                                    task={{ id: 'special-testimonial', title: 'Moderador de Testimonios', description: `Hay ${pendingTestimonials} nuevos milagros esperando aprobación.`, priority: 'medium', status: 'Pendiente', is_special: true }}
                                     onOpen={() => router.push('/plataforma/admin/cms')}
                                     index={100}
                                 />
@@ -315,13 +316,13 @@ export default function AdminDashboardPage() {
   );
 }
 
-function KpiCard({ title, value, trend, icon: Icon, color }: any) {
+function KpiCard({ title, value, trend, icon: Icon, color }: KpiCardProps) {
     return (
         <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm relative overflow-hidden group hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[hsl(var(--surface-2))] dark:from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full pointer-events-none" />
             <div className="flex items-center justify-between mb-2 relative z-10">
                 <div className={clsx("size-10 rounded-md flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-black/20 shadow-inner group-hover:scale-105 transition-transform", color)}>
-                    <Icon size={10} strokeWidth={2.5} />
+                    {Icon && <Icon size={10} strokeWidth={2.5} />}
                 </div>
                 <button className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors p-1 rounded-lg"><MoreHorizontal size={10} /></button>
             </div>
@@ -338,10 +339,10 @@ function KpiCard({ title, value, trend, icon: Icon, color }: any) {
     );
 }
 
-function AdminTaskRow({ task, onOpen, index }: any) {
+function AdminTaskRow({ task, onOpen, index }: AdminTaskRowProps) {
     return (
         <motion.div
-            initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.03, type: 'spring', stiffness: 300, damping: 24 }}
+            initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: (index ?? 0) * 0.03, type: 'spring', stiffness: 300, damping: 24 }}
             onClick={() => onOpen(task)}
             className={clsx(
                 "p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-[hsl(var(--primary))/0.4] hover:shadow-sm shadow-sm transition-all cursor-pointer relative overflow-hidden",
@@ -369,12 +370,11 @@ function AdminTaskRow({ task, onOpen, index }: any) {
     );
 }
 
-function LogItem({ icon: Icon, title, user, time, color, bg }: any) {
+function LogItem({ icon: Icon, title, user, time, color, bg }: LogItemProps) {
     return (
-        <div className="flex gap-3 relative z-10 group cursor-default">
-            <div className={clsx("size-8 rounded-lg flex items-center justify-center shadow-inner shrink-0 transition-transform duration-300 group-hover:scale-105", bg, color)}>
-                <Icon size={10} strokeWidth={2.5} />
-            </div>
+        <div className="flex gap-3 relative z-10 group cursor-default">                <div className={clsx("size-8 rounded-lg flex items-center justify-center shadow-inner shrink-0 transition-transform duration-300 group-hover:scale-105", bg, color)}>
+                    {Icon && <Icon size={10} strokeWidth={2.5} />}
+                </div>
             <div className="flex-1 min-w-0 border-b border-[hsl(var(--border))] dark:border-white/5 pb-3 group-last:border-0 group-last:pb-0">
                 <div className="flex justify-between items-center gap-2">
                     <h5 className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate tracking-tight leading-tight">{title}</h5>

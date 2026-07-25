@@ -1184,7 +1184,7 @@ def provision_personas_sin_cuenta(
         raise ValueError("No hay sedes configuradas")
 
     # Find personas without auth_user using ORM
-    existing_user_ids = db.query(Usuario.id).subquery()
+    existing_user_ids = db.query(Usuario.id).scalar_subquery()
     personas_without_user = (
         db.query(Persona)
         .filter(

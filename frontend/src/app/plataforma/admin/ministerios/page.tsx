@@ -118,7 +118,7 @@ export default function MinisteriosPage() {
         setForm(f => ({ ...f, [field]: e.target.value }));
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
@@ -324,7 +324,7 @@ export default function MinisteriosPage() {
                             initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] shadow-2xl border-l border-[hsl(var(--border))] dark:border-white/10 flex flex-col">
+                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] shadow-2xl border-l border-[hsl(var(--border))] dark:border-white/10 flex flex-col">
 
                             <div className="flex items-center justify-between px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
                                 <div className="flex items-center gap-3">
@@ -380,7 +380,7 @@ export default function MinisteriosPage() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
                         <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 shadow-2xl max-w-sm w-full">
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 shadow-2xl max-w-sm w-full">
                             <div className="size-7 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 rounded-md flex items-center justify-center text-danger-text mb-4">
                                 <Trash2 size={20} />
                             </div>

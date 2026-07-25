@@ -75,7 +75,7 @@ export default function LocationManagement() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-[#0a0f16] font-display overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] font-display overflow-hidden">
             {/* Header Area */}
             <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-b border-[hsl(var(--border))] dark:border-white/10 sticky top-0 z-50 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">

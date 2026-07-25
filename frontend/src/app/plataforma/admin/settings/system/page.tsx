@@ -32,6 +32,7 @@ import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/Confi
 import TextPromptDrawer from '@/components/ui/TextPromptDrawer';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
+import type { HealthCardProps, FeatureToggleProps, ProviderRowProps, SecurityCheckProps, ClusterNodeProps } from '@/types/admin';
 
 interface FeatureRule {
     roles_allow?: string[];
@@ -93,7 +94,7 @@ interface Incident {
     note?: string;
     mtta_minutes?: number;
     mttr_minutes?: number;
-    history?: Array<{ status: string; timestamp: string; note?: string }>;
+    history?: Array<{ event: string; by?: string; at?: string; status?: string; timestamp?: string; note?: string }>;
 }
 
 interface IncidentsSummary {
@@ -882,9 +883,9 @@ export default function SystemSettings() {
                 <div className="lg:col-span-8 space-y-3">
                     {/* Real-time Health Monitor */}
                     <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <HealthCard label="Latencia de Red" value={loading ? '...' : config?.health?.latency} status="optimal" icon={Activity} />
-                        <HealthCard label="Uptime de Sistema" value={loading ? '...' : config?.health?.uptime} status="optimal" icon={Server} />
-                        <HealthCard label="Consumo de RAM" value={loading ? '...' : config?.health?.memory} status="stable" icon={Cpu} />
+                        <HealthCard label="Latencia de Red" value={loading ? '...' : (config?.health?.latency ?? '—')} status="optimal" icon={Activity} />
+                        <HealthCard label="Uptime de Sistema" value={loading ? '...' : (config?.health?.uptime ?? '—')} status="optimal" icon={Server} />
+                        <HealthCard label="Consumo de RAM" value={loading ? '...' : (config?.health?.memory ?? '—')} status="stable" icon={Cpu} />
                     </section>
 
                     {/* Feature Flags Grid */}
@@ -1043,7 +1044,7 @@ export default function SystemSettings() {
                             <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Top Actores</p>
                                 <div className="space-y-2">
-                                    {(auditSummary?.top_actors || []).slice(0, 4).map((item: any) => (
+                                    {(auditSummary?.top_actors || []).slice(0, 4).map((item: { actor: string; count: number }) => (
                                         <div key={`${item.actor}-${item.count}`} className="flex items-center justify-between text-xs">
                                             <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.actor}</span>
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{item.count}</span>
@@ -1057,7 +1058,7 @@ export default function SystemSettings() {
                             <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Top Features</p>
                                 <div className="space-y-2">
-                                    {(auditSummary?.top_features || []).slice(0, 4).map((item: any) => (
+                                    {(auditSummary?.top_features || []).slice(0, 4).map((item: { feature: string; count: number }) => (
                                         <div key={`${item.feature}-${item.count}`} className="flex items-center justify-between text-xs">
                                             <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.feature}</span>
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{item.count}</span>
@@ -1074,7 +1075,7 @@ export default function SystemSettings() {
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Picos por Actor (24h)</p>
                                 {(auditAnomalies?.actor_spikes || []).length > 0 ? (
                                     <div className="space-y-2">
-                                        {auditAnomalies?.actor_spikes?.map((item: any) => (
+                                        {auditAnomalies?.actor_spikes?.map((item: { actor: string; count: number; threshold?: number }) => (
                                             <div key={`${item.actor}-${item.count}`} className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.actor}</span>
                                                 <span className="font-semibold text-[hsl(var(--destructive))]">{item.count}</span>
@@ -1089,7 +1090,7 @@ export default function SystemSettings() {
                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Picos por Acción (24h)</p>
                                 {(auditAnomalies?.action_spikes || []).length > 0 ? (
                                     <div className="space-y-2">
-                                        {auditAnomalies?.action_spikes?.map((item: any) => (
+                                        {auditAnomalies?.action_spikes?.map((item: { action: string; count: number; threshold?: number }) => (
                                             <div key={`${item.action}-${item.count}`} className="flex items-center justify-between text-xs">
                                                 <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.action}</span>
                                                 <span className="font-semibold text-[hsl(var(--destructive))]">{item.count}</span>
@@ -1115,7 +1116,7 @@ export default function SystemSettings() {
                                         {event?.diff?.count ? (
                                             <div className="mt-2 space-y-1">
                                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{event.diff.summary}</p>
-                                                {event.diff.changes?.slice(0, 3).map((change: any) => (
+                                                {event.diff.changes?.slice(0, 3).map((change: { key: string; before: unknown; after: unknown }) => (
                                                     <p key={`${change.key}-${String(change.before)}-${String(change.after)}`} className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                         {change.key}: {String(change.before)} {'->'} {String(change.after)}
                                                     </p>
@@ -1384,7 +1385,7 @@ export default function SystemSettings() {
                                 </div>
                                 {Array.isArray(compliancePolicy?.resolved?.suppressions) && compliancePolicy.resolved.suppressions.length > 0 ? (
                                     <div className="space-y-1 max-h-36 overflow-y-auto">
-                                        {compliancePolicy.resolved.suppressions.map((item: any) => (
+                                        {compliancePolicy.resolved.suppressions.map((item: { id: string; kind: string; value: string; expires_at?: string }) => (
                                             <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-white/70 dark:bg-black/30 px-2 py-1 text-[10px]">
                                                 <span className="font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.kind}:{item.value || '*'} (exp {item.expires_at ? new Date(item.expires_at).toLocaleString() : 'n/a'})</span>
                                                 <button onClick={() => deleteSuppression(String(item.id || ''))} className="font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">del</button>
@@ -1434,7 +1435,7 @@ export default function SystemSettings() {
                                             <div className="mt-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-white/60 dark:bg-black/30 p-3">
                                                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Timeline</p>
                                                 <div className="space-y-2">
-                                                    {incident.history.slice(-4).reverse().map((entry: any, idx: number) => (
+                                                    {incident.history.slice(-4).reverse().map((entry, idx: number) => (
                                                         <div key={`${entry.at || idx}-${entry.event || 'event'}`} className="text-xs">
                                                             <p className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wider">{entry.event} <span className="font-bold text-[hsl(var(--text-secondary))]">by {entry.by || 'system'}</span></p>
                                                             <p className="text-[11px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{entry.at ? new Date(entry.at).toLocaleString() : 'n/a'}</p>
@@ -1492,12 +1493,12 @@ export default function SystemSettings() {
     );
 }
 
-function HealthCard({ label, value, status, icon: Icon }: any) {
+function HealthCard({ label, value, status, icon: Icon }: HealthCardProps) {
     return (
         <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all">
             <div className="flex justify-between items-start">
                 <div className="size-7 rounded-lg bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.3)] text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Icon size={24} />
+                    {Icon && <Icon size={24} />}
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] rounded-lg">
                     <div className="size-1.5 rounded-full bg-[hsl(var(--success))] animate-pulse" />
@@ -1512,7 +1513,7 @@ function HealthCard({ label, value, status, icon: Icon }: any) {
     );
 }
 
-function FeatureToggle({ label, desc, active, onToggle, loading }: any) {
+function FeatureToggle({ label, desc, active, onToggle, loading }: FeatureToggleProps) {
     return (
         <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-[hsl(var(--primary)/0.2)] transition-all">
             <div className="flex-1 pr-4">
@@ -1554,8 +1555,8 @@ function DeltaMetric({ label, value, inverse }: { label: string; value: number |
     );
 }
 
-function ProviderRow({ icon: Icon, name, status, color, detail }: any) {
-    const colors: any = {
+function ProviderRow({ icon: Icon, name, status, color = 'blue', detail }: ProviderRowProps) {
+    const colors: Record<string, string> = {
         emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)]',
         amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.2)]',
         blue: 'text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.2)]'
@@ -1564,7 +1565,7 @@ function ProviderRow({ icon: Icon, name, status, color, detail }: any) {
         <div className="flex items-center justify-between p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg group hover:border-[hsl(var(--primary)/0.2)] transition-all shadow-sm">
             <div className="flex items-center gap-3">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", colors[color])}>
-                    <Icon size={24} />
+                    {Icon && <Icon size={24} />}
                 </div>
                 <div>
                     <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none block mb-1">{name}</span>
@@ -1578,7 +1579,7 @@ function ProviderRow({ icon: Icon, name, status, color, detail }: any) {
     );
 }
 
-function SecurityCheck({ label }: any) {
+function SecurityCheck({ label }: SecurityCheckProps) {
     return (
         <div className="flex items-center gap-3">
             <div className="size-2.5 rounded-full bg-[hsl(var(--success))] shadow-[0_0_10px_hsl(var(--success))]" />
@@ -1587,7 +1588,7 @@ function SecurityCheck({ label }: any) {
     );
 }
 
-function ClusterNode({ label, status, load }: any) {
+function ClusterNode({ label, status, load }: ClusterNodeProps) {
     return (
         <div className="flex items-center justify-between p-2">
             <div className="flex items-center gap-3">

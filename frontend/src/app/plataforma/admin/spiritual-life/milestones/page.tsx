@@ -20,8 +20,9 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import type { CSSAuraProperties } from '@/types/admin';
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ComponentType<any>> = {
     'zap': Zap,
     'flame': Flame,
     'star': Star,
@@ -152,7 +153,7 @@ export default function SpiritualMilestones() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] font-display overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] font-display overflow-hidden">
             <style jsx global>{`
                 .milestone-aura {
                     position: relative;
@@ -228,7 +229,7 @@ export default function SpiritualMilestones() {
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 transition={{ delay: i * 0.05 }}
                                                 className="milestone-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden"
-                                                style={{ '--aura-color': 'rgba(59, 130, 246, 0.15)' } as any}
+                                                style={{ '--aura-color': 'rgba(59, 130, 246, 0.15)' } as CSSAuraProperties}
                                             >
                                                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-1000">
                                                     <Icon size={120} />

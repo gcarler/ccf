@@ -108,7 +108,7 @@ export default function CommentModeration() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] font-display overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] font-display overflow-hidden">
             <style jsx global>{`
                 .comment-aura {
                     position: relative;
@@ -261,10 +261,10 @@ export default function CommentModeration() {
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className="relative shrink-0">
-                                                <div className="size-8 rounded-full bg-gradient-to-tr from-[hsl(var(--surface-2))] to-white dark:from-white/10 dark:to-white/5 flex items-center justify-center text-[hsl(var(--primary))] font-black text-xl border-4 border-white dark:border-[#0a0f16] shadow-xl group-hover:rotate-6 transition-transform duration-500">
+                                                <div className="size-8 rounded-full bg-gradient-to-tr from-[hsl(var(--surface-2))] to-white dark:from-white/10 dark:to-white/5 flex items-center justify-center text-[hsl(var(--primary))] font-black text-xl border-4 border-white dark:border-[hsl(var(--bg-primary))] shadow-xl group-hover:rotate-6 transition-transform duration-500">
                                                     {comment.author.charAt(0)}
                                                 </div>
-                                                <div className="absolute -bottom-1 -right-1 size-7 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shadow-lg border-2 border-white dark:border-[#0a0f16]">
+                                                <div className="absolute -bottom-1 -right-1 size-7 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shadow-lg border-2 border-white dark:border-[hsl(var(--bg-primary))]">
                                                     <MessageSquare size={14} fill="currentColor" />
                                                 </div>
                                             </div>

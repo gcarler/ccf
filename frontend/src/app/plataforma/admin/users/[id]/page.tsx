@@ -172,7 +172,7 @@ export default function UserDetailPage() {
     if (!user) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">Usuario no encontrado</div>;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
@@ -238,7 +238,7 @@ export default function UserDetailPage() {
                                                 <select 
                                                     value={editRoleId || ''} 
                                                     onChange={e => setEditRoleId(e.target.value || null)}
-                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] min-w-[200px]"
+                                                    className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] min-w-[200px]"
                                                 >
                                                     <option value="">Sin rol asignado</option>
                                                     {roles.map(r => (
@@ -273,7 +273,7 @@ export default function UserDetailPage() {
                                                     type="email" 
                                                     value={editEmail} 
                                                     onChange={e => setEditEmail(e.target.value)}
-                                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
+                                                    className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                     autoFocus
                                                 />
                                             ) : (

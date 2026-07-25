@@ -315,7 +315,7 @@ class AdminDonationCategoryRead(BaseModel):
 class AdminCommentRead(BaseModel):
     model_config = orm_config
 
-    id: Any
+    id: str = ""
     author: str = "Anónimo"
     text: Optional[str] = None
     context: str = "General"
