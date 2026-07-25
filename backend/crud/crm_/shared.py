@@ -42,15 +42,32 @@ def resolve_persona_id_from_identity(db: Session, identity: uuid.UUID | str | No
     return resolve_persona_id_for_user(db, identity)
 
 
-def get_user_sede_id(db: Session, user_id: str) -> str | None:
+def get_user_sede_id(db: Session, user_id: "str | uuid.UUID | Any") -> uuid.UUID | None:
     """Obtiene el sede_id de la Persona vinculada al usuario actual.
 
-    Retorna None si el usuario no tiene persona asociada o la persona no tiene sede.
-    Usado para imponer filtro Multi-Tenant (Axioma 3) en todas las queries.
+    Retorna ``uuid.UUID`` (no ``str``) para que los callers CRUD puedan
+    comparar directamente con ``Persona.sede_id`` (que es ``UUID(as_uuid=True)``
+    en el modelo). La fuente canónica en ``backend.core.tenant.get_user_sede_id``
+    delegada aquí retorna ``str | None`` — esta envoltura CRM hace la coerción
+    a ``UUID`` una sola vez en el límite de la capa CRUD, donde es tipicamente
+    consistente con el ORM.
+
+    Retorna ``None`` si el usuario no tiene persona asociada o la persona no
+    tiene sede. Usado para imponer filtro Multi-Tenant (Axioma 3) en todas las
+    queries.
     """
     from backend.core.tenant import get_user_sede_id as resolve_user_sede_id
 
-    return resolve_user_sede_id(db, user_id)
+    raw = resolve_user_sede_id(db, user_id)
+    if raw is None:
+        return None
+    try:
+        return uuid.UUID(str(raw))
+    except (TypeError, ValueError, AttributeError):
+        # Valor legacy no-UUID: preferimos None (scope desactivado para el
+        # actor) en vez de propagate el str y romper comparaciones ORM.
+        _logger.warning("get_user_sede_id: valor no-UUID descartado: %r", raw)
+        return None
 
 
 # ── Axioma 3 — Multi-Tenant: Defense-in-Depth scope re-check (CRUD layer) ───
@@ -58,12 +75,15 @@ def get_user_sede_id(db: Session, user_id: str) -> str | None:
 
 def _actor_sede_or_none(
     db: Session, actor_user_id: str | uuid.UUID
-) -> str | None:
+) -> uuid.UUID | None:
     """Resolve la sede de un actor canónico autenticado.
 
-    ``None`` sólo significa que una persona válida no tiene sede asignada
-    (superadministración). Un actor ausente, malformado o inexistente se
-    rechaza y nunca desactiva silenciosamente los controles de scope.
+    Retorna ``uuid.UUID`` (no ``str``) para que los callers CRUD puedan
+    comparar directamente con columnas ``sede_id`` modeladas como
+    ``UUID(as_uuid=True)``. ``None`` sólo significa que una persona válida no
+    tiene sede asignada (superadministración). Un actor ausente, malformado o
+    inexistente se rechaza y nunca desactiva silenciosamente los controles de
+    scope.
     """
     from fastapi import HTTPException as _HTTPException
 
@@ -73,14 +93,16 @@ def _actor_sede_or_none(
         raise _HTTPException(status_code=401, detail="Authenticated actor required")
     if resolve_persona_id_for_user(db, actor_uuid) is None:
         raise _HTTPException(status_code=401, detail="Authenticated actor required")
-    return get_user_sede_id(db, str(actor_uuid))
+    return get_user_sede_id(db, actor_uuid)
 
 
 def _resolve_anchor_sede(
     db: Session, anchor_name: str, anchor_value
-) -> str | None:
-    """Resuelve la sede_id del target de un anchor FK. Retorna None si el
-    target no existe o no tiene sede asignada.
+) -> uuid.UUID | None:
+    """Resuelve la sede_id del target de un anchor FK. Retorna ``uuid.UUID``
+    (no ``str``) para que los callers puedan comparar directamente con
+    ``user_sede`` (también ``UUID``) en el re-check de scope Axioma 3.
+    Retorna ``None`` si el target no existe o no tiene sede asignada.
 
     Anchors soportados (multi-tenant TareaCRM):
       - `caso_id`: FK a CasoCRM (sede_id propia).
@@ -111,7 +133,13 @@ def _resolve_anchor_sede(
 
     if not row or not row[0]:
         return None
-    return str(row[0])
+    raw = row[0]
+    if isinstance(raw, uuid.UUID):
+        return raw
+    try:
+        return uuid.UUID(str(raw))
+    except (TypeError, ValueError, AttributeError):
+        return None
 
 
 def _crud_scope_re_check_task(
@@ -208,7 +236,7 @@ def _crud_scope_re_check_task(
             # Slot no seteado → nada que validar. Skip silenciosamente.
             continue
         anchor_sede = _resolve_anchor_sede(db, anchor_name, anchor_value)
-        if anchor_sede is None or anchor_sede != str(user_sede):
+        if anchor_sede is None or anchor_sede != user_sede:
             # Cross-sede o target inexistente → violation.
             _logger.warning(
                 "Axioma 3 scope violation blocked at CRUD layer "
