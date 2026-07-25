@@ -1107,11 +1107,11 @@ class TestSupplies:
         headers = auth_headers(client)
         resp = client.patch(
             f"/api/projects/{proj.id}/tasks/{task.id}/supplies/{supply.id}",
-            json={"status": "purchased"},
+            json={"status": "ready"},
             headers=headers,
         )
         assert resp.status_code == 200
-        assert resp.json()["status"] == "purchased"
+        assert resp.json()["status"] == "ready"
 
     def test_delete_supply(self, client, db_session):
         _, _, sede = seed_admin(db_session)

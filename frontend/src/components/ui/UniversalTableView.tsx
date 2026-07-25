@@ -1,12 +1,6 @@
 "use client";
 
-import '@/lib/agGrid';
-import {
-  ColDef,
-  GetRowIdParams,
-  themeQuartz,
-} from 'ag-grid-community';
-import { AgGridReact } from 'ag-grid-react';
+import AgGridTable, { ColDef, GetRowIdParams, type AgGridTableRef } from '@/components/ui/AgGridTable';
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -182,7 +176,7 @@ function StatusCell({ value }: { value: unknown }) {
   const st = getStatus(String(value ?? ''));
   return (
     <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11px] font-semibold leading-none', st.bg, st.text)}>
-      <span className={clsx('size-1.5 rounded-full shrink-0', st.dot)} />
+      <span className={clsx('size-1.5 rounded-full shrink-0', st.dot)} aria-hidden="true" />
       {st.label}
     </span>
   );
@@ -191,7 +185,7 @@ function PriorityCell({ value }: { value: unknown }) {
   const p = PRIORITY_MAP[String(value ?? '').toLowerCase()] ?? PRIORITY_MAP.normal;
   return (
     <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11px] font-semibold', p.bg, p.color)}>
-      <Flag size={9} /> {p.label}
+      <Flag size={9} aria-hidden="true" /> {p.label}
     </span>
   );
 }
@@ -201,7 +195,7 @@ function DateCell({ value }: { value: unknown }) {
   if (isNaN(d.getTime())) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs">—</span>;
   return (
     <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-      <Calendar size={11} className="shrink-0" />
+      <Calendar size={11} className="shrink-0" aria-hidden="true" />
       <span className="text-[12px] font-medium tabular-nums whitespace-nowrap">
         {d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })}
       </span>
@@ -214,7 +208,7 @@ function UserCell({ value }: { value: unknown }) {
   const initials = words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
   return (
     <div className="flex items-center gap-2 h-full">
-      <div className="size-6 rounded-full bg-[hsl(var(--primary)/0.12)] dark:bg-[hsl(var(--primary)/0.25)] flex items-center justify-center font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-[9px] shrink-0 leading-none">
+      <div className="size-6 rounded-full bg-[hsl(var(--primary)/0.12)] dark:bg-[hsl(var(--primary)/0.25)] flex items-center justify-center font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-[9px] shrink-0 leading-none" aria-hidden="true">
         {initials || <User size={10} className="text-[hsl(var(--text-secondary))]" />}
       </div>
       <span className="text-[12px] text-[hsl(var(--text-primary))] font-medium truncate">{String(value)}</span>
@@ -224,7 +218,7 @@ function UserCell({ value }: { value: unknown }) {
 function IdCell({ value }: { value: unknown }) {
   return (
     <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-      <Hash size={9} />{String(value ?? '').substring(0, 8)}
+      <Hash size={9} aria-hidden="true" />{String(value ?? '').substring(0, 8)}
     </div>
   );
 }
@@ -233,7 +227,15 @@ function ProgressCell({ value }: { value: unknown }) {
   const pct = isNaN(raw) ? 0 : Math.round(raw <= 1 ? raw * 100 : raw);
   const color = pct === 100 ? 'bg-success' : pct >= 60 ? 'bg-primary' : 'bg-warning';
   return (
-    <div className="flex items-center gap-2.5 w-full pr-2">
+    <div
+      className="flex items-center gap-2.5 w-full pr-2"
+      role="progressbar"
+      aria-valuenow={pct}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuetext={`${pct}%`}
+      aria-label={`Progreso: ${pct}%`}
+    >
       <div className="flex-1 h-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
         <div className={clsx('h-full rounded-full transition-all', color)} style={{ width: `${pct}%` }} />
       </div>
@@ -317,52 +319,6 @@ function SkeletonRow({ cols }: { cols: number }) {
   );
 }
 
-// ─── AG Grid themes ───────────────────────────────────────────────────────────
-
-const lightTheme = themeQuartz.withParams({
-  fontFamily: 'inherit',
-  fontSize: 12.5,
-  rowHeight: 42,
-  headerHeight: 40,
-  backgroundColor: '#ffffff',
-  foregroundColor: '#0f172a',
-  borderColor: '#e2e8f0',
-  oddRowBackgroundColor: '#ffffff',
-  rowHoverColor: '#f8fafc',
-  headerBackgroundColor: '#f8fafc',
-  headerTextColor: '#64748b',
-  headerFontSize: 11,
-  headerFontWeight: 700,
-  selectedRowBackgroundColor: '#eef2ff',
-  accentColor: '#6366f1',
-  cellHorizontalPaddingScale: 1,
-  rowBorder: { style: 'solid', width: 1, color: '#f1f5f9' },
-  columnBorder: false,
-  wrapperBorder: false,
-});
-
-const darkTheme = themeQuartz.withParams({
-  fontFamily: 'inherit',
-  fontSize: 12.5,
-  rowHeight: 42,
-  headerHeight: 40,
-  backgroundColor: 'hsl(222 47% 11%)',
-  foregroundColor: '#e2e8f0',
-  borderColor: 'rgba(255,255,255,0.06)',
-  oddRowBackgroundColor: 'hsl(222 47% 11%)',
-  rowHoverColor: 'rgba(255,255,255,0.03)',
-  headerBackgroundColor: 'rgba(255,255,255,0.03)',
-  headerTextColor: '#64748b',
-  headerFontSize: 11,
-  headerFontWeight: 700,
-  selectedRowBackgroundColor: 'rgba(99,102,241,0.12)',
-  accentColor: '#6366f1',
-  cellHorizontalPaddingScale: 1,
-  rowBorder: { style: 'solid', width: 1, color: 'rgba(255,255,255,0.04)' },
-  columnBorder: false,
-  wrapperBorder: false,
-});
-
 // ─── Module-level constants (no re-creation per render) ───────────────────────
 
 const GROUP_ROW_ID_PREFIX = '__group__';
@@ -403,7 +359,6 @@ export default function UniversalTableView<T extends { id: string | number }>({
   emptyMessage = 'No hay registros para mostrar',
   renderDetailPanel,
 }: UniversalTableViewProps<T>) {
-  const [isDark, setIsDark] = useState(false);
   const [quickFilter, setQuickFilter] = useState('');
   const [hiddenCols, setHiddenCols] = useState<Set<string>>(() => new Set(loadState(viewName)?.hiddenCols ?? []));
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>(() => loadState(viewName)?.filters ?? []);
@@ -414,18 +369,11 @@ export default function UniversalTableView<T extends { id: string | number }>({
   const [selectedItem, setSelectedItem] = useState<T | null>(null);
 
   const filterIdRef = useRef(1000);
-  const gridRef = useRef<AgGridReact>(null);
+  const gridRef = useRef<AgGridTableRef>(null);
   const colPanelRef = useRef<HTMLDivElement>(null);
   const groupPanelRef = useRef<HTMLDivElement>(null);
 
-  // Dark mode
-  useEffect(() => {
-    const check = () => setIsDark(document.documentElement.classList.contains('dark'));
-    check();
-    const obs = new MutationObserver(check);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, []);
+
 
   // Close panels on outside click
   useEffect(() => {
@@ -848,9 +796,9 @@ export default function UniversalTableView<T extends { id: string | number }>({
             </button>
           </div>
         ) : (
-          <AgGridReact
+          <AgGridTable
             ref={gridRef}
-            theme={isDark ? darkTheme : lightTheme}
+            density="comfortable"
             rowData={rowData as Record<string, unknown>[]}
             columnDefs={colDefs}
             defaultColDef={{ resizable: true, sortable: true, minWidth: 80 }}

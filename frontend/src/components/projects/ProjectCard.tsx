@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
 import { InlineUserPicker } from '@/components/ui/inline-editors/InlineUserPicker';
+import { DEFAULT_PROJECT_COLOR } from '@/lib/projects/palette';
 
 function _formatDate(dateStr: string) {
     if (!dateStr) return '—';
@@ -34,7 +35,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
     const completed = tasks.filter(t => ['completed', 'completed'].includes((t.status || '').toLowerCase())).length;
     const inProgress = tasks.filter(t => ['in_progress'].includes((t.status || '').toLowerCase())).length;
     const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
-    const color = project.color || '#2563eb';
+    const color = project.color || DEFAULT_PROJECT_COLOR;
     const canDeleteProject = user?.role === 'admin' || user?.role === 'administrador' || hasPermission('system:config');
 
     return (

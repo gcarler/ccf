@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useRef, useState, KeyboardEvent } from "react";
-import type { ICellEditorParams } from "ag-grid-community";
+import type { ICellEditorParams } from "@/components/ui/AgGridTable";
 
 export interface TitleCellEditorRef {
     getValue: () => string;

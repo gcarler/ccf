@@ -1,8 +1,7 @@
 "use client";
 
 import { evaluateFormula } from "@/lib/formulaEngine";
-import "@/lib/agGrid";
-import {
+import AgGridTable, {
 CellValueChangedEvent,
 ColDef,
 GetRowIdParams,
@@ -10,9 +9,9 @@ IDatasource,
 IGetRowsParams,
 type ValueFormatterParams,
 type ValueGetterParams,
-themeQuartz
-} from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react";
+type AgGridTableRef
+} from "@/components/ui/AgGridTable";
+import type { AgGridDensity } from "@/design/agGridTheme";
 import clsx from "clsx";
 import {
 Download,
@@ -94,13 +93,14 @@ function SelectRenderer({ value, colDef }: any) {
   if (!opt) return <span className="text-[hsl(var(--text-secondary))] text-xs">—</span>;
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-medium">
-      {color && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />}
+      {color && <span className="w-2 h-2 rounded-full flex-shrink-0" aria-hidden="true" style={{ backgroundColor: color }} />}
       {opt.label}
     </span>
   );
 }
 
 function CheckboxRenderer({ value, node, column }: any) {
+  const rowName = node?.data?.name ?? node?.data?.title ?? node?.data?.id;
   return (
     <input
       type="checkbox"
@@ -108,6 +108,7 @@ function CheckboxRenderer({ value, node, column }: any) {
       onChange={(e) => {
         node.setDataValue(column.getColId(), e.target.checked);
       }}
+      aria-label={rowName ? `Seleccionar fila ${rowName}` : 'Seleccionar fila'}
       className="w-4 h-4 rounded cursor-pointer accent-[hsl(var(--primary))]"
     />
   );
@@ -116,9 +117,9 @@ function CheckboxRenderer({ value, node, column }: any) {
 function RatingRenderer({ value }: any) {
   const n = Math.round(Number(value) || 0);
   return (
-    <span className="flex gap-0.5">
+    <span className="flex gap-0.5" role="img" aria-label={`Calificación: ${n} de 5 estrellas`}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={clsx("text-sm", i <= n ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-primary))]")}>★</span>
+        <span key={i} aria-hidden="true" className={clsx("text-sm", i <= n ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-primary))]")}>★</span>
       ))}
     </span>
   );
@@ -127,7 +128,15 @@ function RatingRenderer({ value }: any) {
 function ProgressRenderer({ value }: any) {
   const pct = Math.min(100, Math.max(0, Number(value) || 0));
   return (
-    <div className="flex items-center gap-2 w-full">
+    <div
+      className="flex items-center gap-2 w-full"
+      role="progressbar"
+      aria-valuenow={pct}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuetext={`${pct}%`}
+      aria-label={`Progreso: ${pct}%`}
+    >
       <div className="flex-1 h-1.5 bg-[hsl(var(--surface-3))] dark:bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
         <div className="h-full bg-[hsl(var(--primary))] rounded-full" style={{ width: `${pct}%` }} />
       </div>
@@ -227,37 +236,7 @@ function toColDef(col: TableColumn): ColDef {
 
 // ─── Light / Dark theme ───────────────────────────────────────────────────────
 
-const lightTheme = themeQuartz.withParams({
-  fontFamily: "inherit",
-  fontSize: 12,
-  rowHeight: 36,
-  headerHeight: 36,
-  backgroundColor: "#ffffff",
-  foregroundColor: "#1e293b",
-  borderColor: "#e2e8f0",
-  oddRowBackgroundColor: "#f8fafc",
-  headerBackgroundColor: "#f1f5f9",
-  headerTextColor: "#475569",
-  // accent/range/selected colors are overridden via CSS variables in globals.css
-  // because themeQuartz.withParams does not reliably resolve CSS custom properties.
-  cellHorizontalPaddingScale: 0.8,
-});
 
-const darkTheme = themeQuartz.withParams({
-  fontFamily: "inherit",
-  fontSize: 12,
-  rowHeight: 36,
-  headerHeight: 36,
-  backgroundColor: "rgb(15 23 42)",
-  foregroundColor: "#e2e8f0",
-  borderColor: "rgba(255,255,255,0.08)",
-  oddRowBackgroundColor: "rgba(255,255,255,0.02)",
-  headerBackgroundColor: "rgba(255,255,255,0.04)",
-  headerTextColor: "#94a3b8",
-  // accent/range/selected colors are overridden via CSS variables in globals.css
-  // because themeQuartz.withParams does not reliably resolve CSS custom properties.
-  cellHorizontalPaddingScale: 0.8,
-});
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -274,21 +253,11 @@ export default function TableView<T extends Record<string, any>>({
   enableFilters = true,
   serverSide,
 }: TableViewProps<T>) {
-  const gridRef = useRef<AgGridReact>(null);
+  const gridRef = useRef<AgGridTableRef>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [quickFilter, setQuickFilter] = useState("");
-  const [isDark, setIsDark] = useState(false);
   // Server-side search debounce
   const serverSearchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Detect dark mode
-  React.useEffect(() => {
-    const check = () => setIsDark(document.documentElement.classList.contains("dark"));
-    check();
-    const obs = new MutationObserver(check);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    return () => obs.disconnect();
-  }, []);
 
   const getId = useCallback(
     (row: T): string => {
@@ -382,7 +351,7 @@ export default function TableView<T extends Record<string, any>>({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!serverSide]);
 
-  const theme = isDark ? darkTheme : lightTheme;
+  const density: AgGridDensity = rowHeight <= 36 ? "compact" : rowHeight >= 44 ? "comfortable" : "default";
 
   return (
     <div className="flex min-w-0 flex-col h-full gap-2">
@@ -456,9 +425,9 @@ export default function TableView<T extends Record<string, any>>({
           </div>
         ) : serverSide ? (
           /* ── Server-side InfiniteRowModel ── */
-          <AgGridReact<any>
+          <AgGridTable<any>
             ref={gridRef as any}
-            theme={theme}
+            density={density}
             rowModelType="infinite"
             datasource={datasource}
             cacheBlockSize={serverSide.pageSize ?? 100}
@@ -476,9 +445,9 @@ export default function TableView<T extends Record<string, any>>({
           />
         ) : (
           /* ── Client-side ── */
-          <AgGridReact<T>
+          <AgGridTable<T>
             ref={gridRef}
-            theme={theme}
+            density={density}
             rowData={data}
             columnDefs={colDefs}
             defaultColDef={defaultColDef}

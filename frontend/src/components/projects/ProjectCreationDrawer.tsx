@@ -14,6 +14,7 @@ import {
 import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import PersonaSelect from '@/components/ui/PersonaSelect';
+import { PROJECT_COLOR_OPTIONS } from '@/lib/projects/palette';
 
 interface Props {
     isOpen: boolean;
@@ -38,13 +39,7 @@ interface FormValues {
 
 /** Paleta curada para usar como color semilla del proyecto.
  *  Equivale a la paleta categórica permitida por AGENTS_FRONTEND.md §4. */
-const COLOR_OPTIONS = [
-    { value: '#2563eb', label: 'Azul ministerial', preview: 'bg-[hsl(var(--primary))]' },
-    { value: '#0891b2', label: 'Cyan teal', preview: 'bg-[#0891b2]' },
-    { value: '#16a34a', label: 'Verde pastoral', preview: 'bg-[#16a34a]' },
-    { value: '#f59e0b', label: 'Ámbar misión', preview: 'bg-[hsl(var(--warning))]' },
-    { value: '#ef4444', label: 'Rojo urgente', preview: 'bg-[#ef4444]' },
-];
+const COLOR_OPTIONS = PROJECT_COLOR_OPTIONS;
 
 const STATUS_OPTIONS = [
     { value: 'planning', label: 'Planificación', dot: 'bg-[hsl(var(--warning))]' },
@@ -60,7 +55,7 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                 description: '',
                 status: initialStatus,
                 owner_id: null,
-                color: COLOR_OPTIONS[0].value,
+                color: PROJECT_COLOR_OPTIONS[0].value,
             },
         });
 
@@ -75,7 +70,7 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                 description: '',
                 status: initialStatus,
                 owner_id: null,
-                color: COLOR_OPTIONS[0].value,
+                color: PROJECT_COLOR_OPTIONS[0].value,
             });
         }
     }, [initialStatus, isOpen, reset]);
@@ -176,7 +171,7 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                         <Palette size={12} /> Color del proyecto
                     </label>
                     <div className="grid grid-cols-5 gap-2">
-                        {COLOR_OPTIONS.map((option) => (
+                        {PROJECT_COLOR_OPTIONS.map((option) => (
                             <button
                                 key={option.value}
                                 type="button"

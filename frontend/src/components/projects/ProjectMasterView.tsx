@@ -218,9 +218,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
             {/* 3. Línea de Tiempo de Hitos — auto-gestionada */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
-                    <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tighter flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tighter flex items-center gap-2">
                         <BarChart3 className="text-[hsl(var(--primary))]" size={16} /> Hitos Estratégicos
-                    </h3>
+                    </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {milestones.map((m) => {
@@ -231,8 +231,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                     <button
                                         onClick={() => milestonePatch(m.id, { is_completed: !m.is_completed })}
                                         disabled={isBusy}
+                                        aria-label={m.is_completed ? 'Reabrir hito' : 'Completar hito'}
                                         className={clsx(
-                                            "size-8 rounded-md flex items-center justify-center shadow-lg transition-colors shrink-0",
+                                            "size-8 rounded-md flex items-center justify-center shadow-lg transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--success))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]",
                                             m.is_completed ? "bg-[hsl(var(--success))] text-white"
                                                 : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--success))]/10 hover:text-[hsl(var(--success))]",
                                             isBusy && "opacity-60 cursor-wait"
@@ -254,7 +255,8 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                         onClick={() => milestoneDelete(m)}
                                         disabled={isBusy}
                                         title="Eliminar hito"
-                                        className="p-1.5 rounded-lg text-[hsl(var(--danger))]/60 hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        aria-label="Eliminar hito"
+                                        className="p-1.5 rounded-lg text-[hsl(var(--danger))]/60 hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--danger))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
                                     >
                                         <Trash2 size={14} />
                                     </button>
@@ -294,7 +296,8 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                 onClick={milestoneCreate}
                                 disabled={addingMilestone || !newMilestone.title.trim()}
                                 title="Crear hito"
-                                className="p-1.5 rounded-lg bg-[hsl(var(--primary))] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shrink-0"
+                                aria-label="Crear hito"
+                                className="p-1.5 rounded-lg bg-[hsl(var(--primary))] text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
                             >
                                 <Plus size={14} />
                             </button>
@@ -369,7 +372,7 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                     <Icon size={18} />
                 </div>
                 <div>
-                    <h4 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{title}</h4>
+                    <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{title}</h3>
                     <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">Avance por Nodo</p>
                 </div>
             </div>
@@ -387,7 +390,7 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                                 title={t.status === 'completed' ? 'Reabrir tarea' : 'Completar tarea'}
                                 aria-label={t.status === 'completed' ? 'Reabrir tarea' : 'Completar tarea'}
                                 className={clsx(
-                                    "size-3 rounded-full shadow-sm shrink-0 transition-all hover:scale-125",
+                                    "size-3 rounded-full shadow-sm shrink-0 transition-all hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--success))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]",
                                     t.status === 'completed' ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--primary))]",
                                 )}
                             />
@@ -401,7 +404,8 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                             <button
                                 onClick={() => onOpenTask?.(t)}
                                 title="Abrir detalle"
-                                className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors shrink-0"
+                                aria-label="Abrir detalle"
+                                className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
                             >
                                 <ArrowUpRight size={14} />
                             </button>

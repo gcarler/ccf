@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import TaskActivitySection from './TaskActivitySection';
+import { PROJECT_COLOR_OPTIONS } from '@/lib/projects/palette';
 import type { Activity } from './TaskActivitySection';
 
 const noop = () => {};
@@ -29,7 +30,7 @@ export const Empty: Story = {
 const flatActivities: Activity[] = [
     { id: 'a1', title: 'Preparar materiales', completed: false },
     { id: 'a2', title: 'Enviar invitaciones', completed: true, assignee: { name: 'Ana' } },
-    { id: 'a3', title: 'Configurar sonido', completed: false, assignee: { name: 'Luis', color: '#22c55e' } },
+    { id: 'a3', title: 'Configurar sonido', completed: false, assignee: { name: 'Luis', color: PROJECT_COLOR_OPTIONS[2].value } },
 ];
 
 export const WithActivities: Story = {
@@ -41,7 +42,7 @@ const nestedActivities: Activity[] = [
         id: 'a1',
         title: 'Preparar escenario',
         completed: false,
-        assignee: { name: 'Carlos', color: '#8b5cf6' },
+        assignee: { name: 'Carlos', color: PROJECT_COLOR_OPTIONS[5].value },
         children: [
             { id: 'a1-1', title: 'Montar tarima', completed: true },
             { id: 'a1-2', title: 'Instalar luces', completed: false, assignee: { name: 'Ana' } },

@@ -232,11 +232,10 @@ export default function AutomationsPage() {
                     key={rule.id}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.07 }}
-                    className={clsx(
+                    transition={{ delay: idx * 0.07 }}                      className={clsx(
                       "group p-3 rounded-lg border transition-all",
                       rule.is_active
-                        ? "bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:border-[hsl(var(--info)/25%)] dark:hover:border-[hsl(var(--info)/100%)]/20"
+                        ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:border-[hsl(var(--info)/25%)] dark:hover:border-[hsl(var(--info)/100%)]/20"
                         : "bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border-[hsl(var(--border))] dark:border-white/[0.04] opacity-60"
                     )}
                   >

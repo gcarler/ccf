@@ -69,3 +69,25 @@ export const WithRowClick: Story = {
     onRowClick: () => {},
   },
 };
+
+export const Grouped: Story = {
+  args: {
+    data: sampleData,
+    columns: sampleColumns,
+    viewName: 'grouped-view',
+    groupBy: 'priority',
+  },
+};
+
+export const Editable: Story = {
+  args: {
+    data: sampleData,
+    columns: sampleColumns,
+    viewName: 'editable-view',
+    onUpdateItem: async (id, field, value) => {
+      // eslint-disable-next-line no-console
+      console.log('onUpdateItem', { id, field, value });
+      return true;
+    },
+  },
+};

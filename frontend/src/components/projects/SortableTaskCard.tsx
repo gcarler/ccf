@@ -67,6 +67,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
     return (
         <div
             ref={setNodeRef}
+            data-testid={`task-card-${task.id}`}
             style={style}
             onClick={() => onOpen(task)}
             className={clsx(
@@ -84,14 +85,16 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
             <div className="p-3.5 space-y-3">
                 {/* Drag handle + Title */}
                 <div className="flex items-start gap-2">
-                    <div
+                    <button
+                        type="button"
                         {...attributes}
                         {...listeners}
-                        className="mt-0.5 opacity-0 group-hover/card:opacity-40 hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity shrink-0"
+                        aria-label="Arrastrar tarea"
+                        className="mt-0.5 opacity-0 group-hover/card:opacity-40 hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity shrink-0 p-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
                         onClick={e => e.stopPropagation()}
                     >
                         <GripVertical size={14} className="text-[hsl(var(--text-secondary))]" />
-                    </div>
+                    </button>
                     <div
                         className="flex-1 min-w-0"
                         onClick={(e) => e.stopPropagation()}
@@ -137,7 +140,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                             <DropdownMenu.Trigger asChild>
                                 <button
                                     onClick={(e) => e.stopPropagation()}
-                                    className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors"
+                                    className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
                                     aria-label="Opciones de tarea"
                                 >
                                     <MoreHorizontal size={14} />
