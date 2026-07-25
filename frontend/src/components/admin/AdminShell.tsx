@@ -3,11 +3,12 @@
 import React from 'react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { ViewType } from '@/components/ViewSwitcher';
+import type { LucideIcon } from 'lucide-react';
 
 export interface BreadcrumbOption {
     label: string;
     href?: string;
-    icon?: any;
+    icon?: LucideIcon;
 }
 
 interface AdminShellProps {
@@ -31,8 +32,8 @@ export default function AdminShell({
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] overflow-hidden animate-fade-in">
             <WorkspaceToolbar
                 breadcrumbs={breadcrumbs}
-                viewType={viewType as any}
-                setViewType={onViewChange as any}
+                viewType={viewType}
+                setViewType={onViewChange}
                 availableViews={viewOptions}
                 rightActions={rightActions}
             />

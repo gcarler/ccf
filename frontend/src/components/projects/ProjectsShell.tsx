@@ -1,14 +1,14 @@
 "use client";
 
-import { ComponentType, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { ViewType } from '@/components/ViewSwitcher';
+import type { AppIcon } from '@/types/icons';
 
 export interface BreadcrumbOption {
     label: string;
     href?: string;
-    icon?: ComponentType<{ size?: number | string }>;
-
+    icon?: AppIcon;
 }
 
 interface ProjectsShellProps {
