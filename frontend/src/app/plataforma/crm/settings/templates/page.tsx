@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/http";
+import { useToast } from "@/context/ToastContext";
 
 interface Plantilla {
   id: string;
@@ -21,6 +22,7 @@ interface Categoria {
 }
 
 export default function TemplatesPage() {
+  const { addToast } = useToast();
   const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,10 +42,11 @@ export default function TemplatesPage() {
       setPlantillas(plantsRes);
     } catch (err) {
       console.error(err);
+      addToast("No se pudieron cargar las plantillas y categorías", "error");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [addToast]);
 
   useEffect(() => {
     loadData();
@@ -81,9 +84,10 @@ export default function TemplatesPage() {
       setSelectedFile(null);
       setFormData({});
       loadData();
+      addToast("Plantilla guardada", "success");
     } catch (err) {
       console.error(err);
-      alert("Error al guardar la plantilla");
+      addToast("Error al guardar la plantilla", "error");
     }
   };
 
