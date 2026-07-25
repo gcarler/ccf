@@ -33,16 +33,31 @@ def list_community_cards(
 def create_community_card(
     card: schemas.CommunityBoardCardCreate,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("community", "edit")),
 ):
-    return crud.create_community_card(db, card)
+    # QC-08 (auditoría de calidad 2026-07-25): el endpoint era público sin
+    # auth, lo que permitia mutación anónima del tablero comunitario. Ahora
+    # requiere ``community:edit`` y atribuye ``sede_id`` server-side desde
+    # el JWT del actor. Consistente con ``create_community_grupo`` (L138)
+    # que sí auth-scopea. La exención de Axioma 3 documentada en
+    # ``list_community_cards`` (GET público) NO se extiende a las
+    # mutaciones — éstas requieren identidad atribuida.
+    actor_sede = get_user_sede_id(db, current_user.id) if hasattr(current_user, "id") else None
+    return crud.create_community_card(db, card, actor_sede=actor_sede)
 
 
 @router.delete("/cards/{card_id}", status_code=204)
 def delete_community_card(
     card_id: UUID,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("community", "edit")),
 ):
-    """Elimina una tarjeta del tablero comunitario."""
+    """Elimina una tarjeta del tablero comunitario.
+
+    QC-08 (auditoría de calidad 2026-07-25): ahora requiere ``community:edit``.
+    Antes era público anónimo — cualquier visitante podia borrar tarjetas de
+    cualquier sede. Consistente con ``create_community_grupo`` (auth-scopea).
+    """
     deleted = crud.delete_community_card(db, card_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Card not found")

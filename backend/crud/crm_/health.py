@@ -60,7 +60,16 @@ def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
     )
 
     # EventAttendance opportunities & attended
-    event_attendances = db.query(models.EventAttendance).filter(models.EventAttendance.persona_id == persona_id).all()
+    # QC-07 + QC-10: filtrar deleted_at.is_(None) — ahora EventAttendance
+    # declara la columna, excluye asistencias soft-deletadas del score.
+    event_attendances = (
+        db.query(models.EventAttendance)
+        .filter(
+            models.EventAttendance.persona_id == persona_id,
+            models.EventAttendance.deleted_at.is_(None),
+        )
+        .all()
+    )
     opp_events_count = len(event_attendances)
     attended_events_count = sum(1 for e in event_attendances if e.attended is True)
 
@@ -75,7 +84,17 @@ def calculate_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
     attended_courses_count = sum(1 for c in course_attendances if c.status and c.status.strip().lower() == "present")
 
     # CommunicationLog content check for attendance opportunity
-    comm_logs = db.query(models.CommunicationLog).filter(models.CommunicationLog.persona_id == persona_id).all()
+    # QC-10: filtrar deleted_at.is_(None) — exclude logs soft-deletados del
+    # score pastoral (regresión latente QC-02: get_communication_logs YA filtraba
+    # pero este bypass-no-CRUD path los reincorporaba al scoring).
+    comm_logs = (
+        db.query(models.CommunicationLog)
+        .filter(
+            models.CommunicationLog.persona_id == persona_id,
+            models.CommunicationLog.deleted_at.is_(None),
+        )
+        .all()
+    )
     comm_log_attend_count = 0
     for log in comm_logs:
         if log.content:

@@ -1,4 +1,11 @@
-"""User notification CRUD."""
+"""User notification CRUD.
+
+Funciones para leer y mutar ``NotificacionUsuario`` ( ``auth_notifications`` ).
+Todas las queries filtran por ``user_id`` (ownership). ``mark_all_notifications_read``
+retorna el count de filas afectadas (A-06).
+
+Axioma 3: cada usuario ve y modifica SÓLO sus propias notifications.
+"""
 import uuid
 from typing import List
 
@@ -14,6 +21,11 @@ def get_user_notifications(
     limit: int = 20,
     offset: int = 0,
 ) -> List[models.Notification]:
+    """Lista notificaciones de un usuario, ordenadas por fecha descendente.
+
+    Soporta paginación vía ``offset``/``limit`` (M-01).
+    Resuelve ``user_id`` → ``persona_id`` vía ``resolve_persona_id_for_user``.
+    """
     notification_user_id = resolve_persona_id_for_user(db, user_id)
     if notification_user_id is None:
         return []
@@ -67,6 +79,11 @@ def mark_notification_as_read(
 
 
 def mark_all_notifications_read(db: Session, user_id: uuid.UUID | str) -> int:
+    """Marca todas las notificaciones no leídas de un usuario como leídas.
+
+    Retorna el número de filas actualizadas (A-06: ``marked_count``).
+    Si ``user_id`` no resuelve a una persona, retorna 0.
+    """
     notification_user_id = resolve_persona_id_for_user(db, user_id)
     if notification_user_id is None:
         return 0

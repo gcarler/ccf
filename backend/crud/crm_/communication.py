@@ -175,7 +175,10 @@ def get_communication_log(db: Session, log_id: str) -> Optional[models.Communica
 def update_communication_log(
     db: Session, log_id: str, payload: CommunicationLogUpdate
 ) -> Optional[models.CommunicationLog]:
-    row = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+    row = db.query(models.CommunicationLog).filter(
+        models.CommunicationLog.id == log_id,
+        models.CommunicationLog.deleted_at.is_(None),
+    ).first()
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -186,7 +189,10 @@ def update_communication_log(
 
 
 def delete_communication_log(db: Session, log_id: str) -> bool:
-    row = db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+    row = db.query(models.CommunicationLog).filter(
+        models.CommunicationLog.id == log_id,
+        models.CommunicationLog.deleted_at.is_(None),
+    ).first()
     if not row:
         return False
     row.deleted_at = _utcnow()

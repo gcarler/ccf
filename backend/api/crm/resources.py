@@ -783,7 +783,13 @@ def get_one_automation(
     if not obj:
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
-    if sede_id and obj.sede_id and str(obj.sede_id) != sede_id:
+    # QC-09 (auditoría de calidad 2026-07-25): alineado con doctrina
+    # ``_owned_flow`` (C-04) + ``_list_automation_edges_response`` (A-07) —
+    # las automatizaciones legacy con ``sede_id IS NULL`` se consideran
+    # globales y quedan FUERA de scope desde una sede concreta (antes el
+    # guard ``if sede_id and obj.sede_id and ...`` short-circuit-evaluaba
+    # cuando ``obj.sede_id`` era None, dejando operar sobre legacy NULL).
+    if sede_id is not None and (obj.sede_id is None or str(obj.sede_id) != sede_id):
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     return CrmAutomationOut.from_orm_safe(obj)
 
@@ -799,7 +805,8 @@ def patch_automation(
     if not obj:
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
-    if sede_id and obj.sede_id and str(obj.sede_id) != sede_id:
+    # QC-09: legacy NULL fuera-de-scope desde sede concreta.
+    if sede_id is not None and (obj.sede_id is None or str(obj.sede_id) != sede_id):
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     obj = update_crm_automation(db, automation_id, payload)
     return CrmAutomationOut.from_orm_safe(obj)
@@ -815,7 +822,8 @@ def del_automation(
     if not obj:
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
-    if sede_id and obj.sede_id and str(obj.sede_id) != sede_id:
+    # QC-09: legacy NULL fuera-de-scope desde sede concreta.
+    if sede_id is not None and (obj.sede_id is None or str(obj.sede_id) != sede_id):
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     if not delete_crm_automation(db, automation_id):
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")

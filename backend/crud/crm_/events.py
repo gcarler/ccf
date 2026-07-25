@@ -68,7 +68,12 @@ def delete_crm_event(db: Session, event_id: UUID) -> bool:
 
 
 def get_event_attendance(db: Session, event_id: UUID) -> List[models.EventAttendance]:
-    return db.query(models.EventAttendance).filter(models.EventAttendance.event_id == event_id).all()
+    # QC-07: respetar soft-delete — no retornar asistencias soft-deletadas.
+    return (
+        db.query(models.EventAttendance)
+        .filter(models.EventAttendance.event_id == event_id, models.EventAttendance.deleted_at.is_(None))
+        .all()
+    )
 
 
 def create_event_attendance(db: Session, payload: schemas.EventAttendanceCreate) -> models.EventAttendance:
@@ -84,7 +89,12 @@ def create_event_attendance(db: Session, payload: schemas.EventAttendanceCreate)
 
 
 def delete_event_attendance(db: Session, attendance_id: UUID) -> bool:
-    row = db.query(models.EventAttendance).filter(models.EventAttendance.id == attendance_id).first()
+    # QC-07: ahora deleted_at existe en el modelo — el soft-delete realmente persista.
+    row = (
+        db.query(models.EventAttendance)
+        .filter(models.EventAttendance.id == attendance_id, models.EventAttendance.deleted_at.is_(None))
+        .first()
+    )
     if not row:
         return False
     row.deleted_at = _utcnow()
