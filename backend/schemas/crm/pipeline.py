@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.schemas._common import orm_config
+from backend.schemas._common import AwareDateTime, orm_config
 
 
 class PipelineCreate(BaseModel):
@@ -27,8 +27,8 @@ class PipelineResponse(BaseModel):
     pipeline_type: str
     description: str | None = None
     is_active: bool
-    created_at: datetime
-    updated_at: datetime
+    created_at: AwareDateTime
+    updated_at: AwareDateTime
 
 
 class PipelineStageCreate(BaseModel):
@@ -48,4 +48,4 @@ class PipelineStageResponse(BaseModel):
     name: str
     order_index: int
     requires_action: bool
-    created_at: datetime
+    created_at: AwareDateTime
