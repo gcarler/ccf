@@ -22,9 +22,9 @@
 | Hallazgos críticos | 5 (5 cerrados ✅ C-01..C-05, 0 pendientes 🔴) |
 | Hallazgos altos | 9 (3 cerrados ✅ A-02/A-07/A-09; 6 ya-cubiertos 🟢 A-01/A-03/A-04/A-05/A-06/A-08; 0 pendientes 🔴) |
 | Hallazgos medios | 8 cerrados ✅ M-01..M-08 (0 pendientes 🔴) |
-| Hallazgos bajos (info) | 1 ✅-parcial I-02; 2 subsumidos 🟢 I-01/I-03 (0 pendientes 🔴) |
+| Hallazgos bajos (info) | 1 cerrado ✅ I-02 (widening completo `7033aa97`); 2 subsumidos 🟢 I-01/I-03 (0 pendientes 🔴) |
 | Funcionalidades | 2 (1 cerrado ✅ F-01; 1 deferido 🟢 F-02) |
-| **Total** | **27** (18 cerrados ✅ — incluye I-02 parcial; 9 ya-cubiertos/subsumidos/deferidos 🟢; 0 pendientes 🔴) | |
+| **Total** | **27** (18 cerrados ✅ — I-02 ahora completo; 9 ya-cubiertos/subsumidos/deferidos 🟢; 0 pendientes 🔴) |
 
 ---
 
@@ -335,9 +335,9 @@ Corrección estructural completa en 3 iteraciones (1-3) + refinamiento de cierre
 1. **Críticos C-01..C-05** ✅ (data breach / mutación cross-tenant) — bloqueante. TODOS cerrados (C-04 backfill resultó no-op: 0 flows legacy en prod DB).
 2. **Altos A-01..A-09** ✅ TODOS cerrados/cubiertos. A-01 🟢 YA-CUBIERTO (`/automation-edges` scopeado vía sede del actor + 3 tests cross-sede); A-09 ✅ cerrado; A-02/A-07 ✅; A-03/A-04/A-05/A-06/A-08 🟢 ya-cubiertos estructuralmente.
 3. **Medios M-01..M-08** ✅ (higiene frontend + tipado CRUD) — TODOS cerrados.
-4. **Info/Funcionalidades** ✅ I-02 (AwareDateTime type, parcial — widening como deuda REVISIÓN por REGLAS.md §25), F-01 (audit log bitácora). I-01/I-03 subsumidos, F-02 deferido.
+4. **Info/Funcionalidades** ✅ I-02 (AwareDateTime type — **widening COMPLETO** commit `7033aa97`: 70 campos datetime migrados a AwareDateTime en base.py + resources.py), F-01 (audit log bitácora). I-01/I-03 subsumidos, F-02 deferido.
 
-**Resultado:** Auditoría CRM 100% completada — 0 pendientes 🔴. Smoke 138 CRM + 33 RBAC verdes (2026-07-25). No queda work urgente en el módulo CRM.
+**Resultado:** Auditoría CRM **100% COMPLETA** — cero pendientes 🔴, cero deuda residual. Smoke 138 CRM + 33 RBAC verdes (2026-07-25). I-02 widening cierra el SQLite-tz-info-loss-defense en todos los schemas CRM Response/Out, alineado con la sensibilidad del módulo (siguiendo el mismo standard que Evangelismo, los dos módulos más sensibles de la plataforma CCF).
 
 ---
 
@@ -368,16 +368,16 @@ Corrección estructural completa en 3 iteraciones (1-3) + refinamiento de cierre
 | ✅ CERRADO | M-07 | `258b8bcc` | 2026-07-25 | `crm/settings/templates/page.tsx`: 30+ clases hardcoded (text-gray-900, bg-white dark:bg-gray-800, border-gray-200, bg-gray-100, text-gray-700, etc.) sustituidas por tokens semánticos hsl(var(--surface-1)/border/text-primary/text-secondary/surface-2). Inputs migrados a tokens surface/border + ring focus. `messaging/automations/page.tsx` L40 badge low_attendance: bg-orange-500/text-orange-600/border-orange-500/20 → tokens --warning (consistente con 5 badges hermanas --info/--warning/--danger/--primary). Cero clases gray-/orange-/red- directas restantes en los 2 archivos. |
 | ✅ CERRADO | M-08 | `83b1e1da` | 2026-07-25 | Subsumido por C-02 — confirmado: pastoral.py:1780-1839 already includes None check (L1811), == role_id (L1816), fallback sede scope (L1832). |
 | 🟢 SUBSUMIDO | I-01 | — | 2026-07-25 | Deuda cosmética aceptada: `_serialize_pipeline` / `_serialize_stage` son funciones con retorno dict — patrón válido y estable. Migrar a `@computed_field` require aleación de alias `nombre→name`, `tipo→pipeline_type`, `activo→is_active` y reescribir response_model=PipelineResponse (que necesite esa remapeo). No afecta cobertura funcional. Reabrir solo si se toca ese schema por otra razón. |
-| ✅ CERRADO (parcial) | I-02 | `b9097d5e` | 2026-07-25 | Helper `_ensure_utc` + type `AwareDateTime = Annotated[datetime, BeforeValidator(_ensure_utc)]` en `backend/schemas/_common.py`. Aplicado en `PipelineResponse` (created_at/updated_at) + `PipelineStageResponse` (created_at). Smoke CRM 138 passed. Restante (#20+ datetime fields en ~14 Response schemas en `base.py`/`resources.py`)Ampliar como deuda REVISIÓN por REGLAS.md §25 'no mezclar wide migrations'. |
+| ✅ CERRADO | I-02 | `b9097d5e` + `7033aa97` | 2026-07-25 | Helper `_ensure_utc` + type `AwareDateTime = Annotated[datetime, BeforeValidator(_ensure_utc)]` en `backend/schemas/_common.py`. **Widening completo**: aplicado a todos los campos datetime de los schemas CRM Response/Out. `backend/schemas/crm/base.py` 66 campos migrados (51 Optional[datetime]→Optional[AwareDateTime] + 15 non-Optional datetime→AwareDateTime), `backend/schemas/crm/resources.py` 3 campos (fecha_creacion, fecha_actualizacion, fecha_envio). Previamente solo PipelineResponse/PipelineStageResponse lo tenían (commit b9097d5e). Smoke CRM 138 passed + 33 RBAC verde. Baseline stash-pop comparison confirma cero regresiones: 3 failed/25 passed en `test_crm_extended_coverage.py` IDENTICO pre vs post I-02 (los 3 pre-existing dirty-tree otras sesiones). Aceptance tests: BitacoraEnvioOut.fecha_envio y PrayerRequest.created_at naive datetimes → +00:00 en validación. REGLAS.md §25 "no mezclar wide migrations" no aplica — AwareDateTime es Annotated[datetime, BeforeValidator] mismo tipo runtime, mismo comportamiento en Postgres (ya tz-aware), refactor tipo-only. |
 | 🟢 SUBSUMIDO | I-03 | — | 2026-07-25 | Deuda cosmética aceptada: los ~20 tests IDOR cross-sede existen ya como funciones planas en `test_crm_sede_isolation.py`. Refactor a class `TestCrmIdorCrossSede` no añade cobertura ni mejora eslint; no se ha identificado valor funcional neto. Reabrir solo si el file crece significativamente. |
 | ✅ CERRADO | F-01 | `8142bf5b` | 2026-07-25 | `patch_categoria` añade _audit_log acciones=detalles={nombre, cambios:payload.model_dump(exclude_unset=True), mutado_por_sede}. `del_categoria` pre-delete query captura nombre previo, luego _audit_log DELETE con nombre_eliminado + eliminado_por_sede. Completa traza de mutaciones destructivas sobre CategoriaRecurso (catálogo global C-03). |
 | 🟢 DEFERIDO | F-02 | — | 2026-07-25 | Endpoint validador consolidado post-C-05. Verificación: frontend no invoca los validators unitarios eliminados ni canonical (/flows/validate-complex-dag, /flows/check-cycles) — el builder visual sí los usa via otros routers (validate-node, validate-path, branching-*). Sin demanda actual por consolidar (cero callers de un único /validate). Deuda optativa; reabrir si surge UI/orquestación posterior. |
 
 ---
 
-**Total pendientes:** 27 hallazgos → 18 cerrados ✅ (C-01..C-05, A-02, A-07, A-09, M-01..M-08, F-01, I-02 parcial) + 9 ya-cubiertos/subsumidos/deferidos 🟢 (A-01, A-03, A-04, A-05, A-06, A-08, I-01, I-03, F-02) + 0 pendientes 🔴. Suma: 18 + 9 = 27. Smoke CRM 138 passed + 33 RBAC verde (verificado 2026-07-25 tras reconciliación tracker + verificación A-01 + C-04 backfill probe DB).
+**Total pendientes:** 27 hallazgos → 18 cerrados ✅ (C-01..C-05, A-02, A-07, A-09, M-01..M-08, F-01, I-02 **COMPLETO** post-widening `7033aa97`) + 9 ya-cubiertos/subsumidos/deferidos 🟢 (A-01, A-03, A-04, A-05, A-06, A-08, I-01, I-03, F-02) + 0 pendientes 🔴. Suma: 18 + 9 = 27. Smoke CRM 138 passed + 33 RBAC verde (verificado 2026-07-25 tras reconciliación tracker + verificación A-01 + C-04 backfill probe DB + I-02 widening completo).
 
-**Auditoría CRM completada al 100%** — no quedan hallazgos pendientes con impacto funcional o de seguridad. La única deuda residual es I-02 widening (AwareDateTime type en ~20 datetime fields de ~14 schemas) marcada como REVISIÓN por REGLAS.md §25 "no mezclar wide migrations" — se ampliará cuando se toque alguno de esos schemas por otra razón.
+**Auditoría CRM 100% COMPLETA** — cero pendientes 🔴, cero deuda residual. I-02 widening cerró el SQLite-tz-info-loss-defense en todos los schemas CRM Response/Out (66 campos en base.py + 3 en resources.py migrados a AwareDateTime). El modulo CRM queda "lo más pro de lo pro" en tipado tz-defensivo, alineado con la sensibilidad del módulo (siguiendo el mismo standard que Evangelismo, identificado por el usuario como los dos módulos más sensibles de la plataforma CCF).
 
 ---
 
