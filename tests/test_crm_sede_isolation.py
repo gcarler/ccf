@@ -2129,28 +2129,51 @@ def test_get_counseling_by_lead_returns_list(client, db_session):
 
 
 def test_list_crm_groups_returns_list(client, db_session):
-    """GET /groups: response_model=List[dict] (M-04).
+    """GET /groups: response_model=List[dict] (M-04 + M-03 scope sede).
 
     El endpoint lista grupos/ministerios para vistas comunitarias.
-    Drift dict → List[dict].
+    Drift dict → List[dict] (M-04). Tras M-03, el ministerio aparece sólo
+    si hay personas de la sede del actor asignadas a él
+    (membership-scoped, no catalog-leak cross-tenant).
     """
-    _seed_two_sedes(db_session)
-    # Crear un Ministry para que el array no esté vacío.
-    # Axioma — Ministry es catálogo global legítimo (doctrina C-03/A-04),
-    # no expuesto a mutación sede-scoped; sólo tiene `name`/`description`.
+    (admin_a, persona_a, sede_a), (_, persona_b, _) = _seed_two_sedes(db_session)
+    # Crear un Ministry Y asignarlo a personas de ambas sedes.
     ministry = models.Ministry(name="Ministerio M-04 smoke")
     db_session.add(ministry)
+    db_session.flush()
+    db_session.add_all([
+        models.PersonaMinistryAssignment(persona_id=persona_a.id, ministry_id=ministry.id, is_active=True),
+        models.PersonaMinistryAssignment(persona_id=persona_b.id, ministry_id=ministry.id, is_active=True),
+    ])
     db_session.commit()
 
-    headers = auth_headers(client, email="aboxA@example.com")
-    resp = client.get("/api/crm/groups", headers=headers)
+    headers_a = auth_headers(client, email="aboxA@example.com")
+    resp = client.get("/api/crm/groups", headers=headers_a)
     assert resp.status_code == 200
     assert isinstance(resp.json(), list), (
         f"Drift regresado: got {type(resp.json()).__name__}, esperado list"
     )
-    # Regression del contract: al menos el ministry creado.
+    # Regression del contract: el ministerio aparece porque persona_a (sede A)
+    # está asignada. Y el recuento debe ser 1 (sólo persona_a), no 2.
     names = {g["name"] for g in resp.json() if g.get("name")}
-    assert "Ministerio M-04 smoke" in names
+    assert "Ministerio M-04 smoke" in names, (
+        f"M-03 regression: ministerio con persona sede_a asignada NO apareció "
+        f"para admin sede_a (groups={sorted(names)})"
+    )
+    group_a = next(g for g in resp.json() if g.get("name") == "Ministerio M-04 smoke")
+    assert group_a["personas_count"] == 1, (
+        f"M-03 leak: personas_count={group_a['personas_count']} para sede_a "
+        f"debería ser 1 (sólo persona_a), el count NO se está scoping por sede"
+    )
+
+    # Cross-sede: el admin B también lo ve via persona_b, mismo ministerio.
+    headers_b = auth_headers(client, email="aboxB@example.com")
+    resp_b = client.get("/api/crm/groups", headers=headers_b)
+    assert resp.status_code == 200
+    names_b = {g["name"] for g in resp_b.json() if g.get("name")}
+    assert "Ministerio M-04 smoke" in names_b
+    group_b = next(g for g in resp_b.json() if g.get("name") == "Ministerio M-04 smoke")
+    assert group_b["personas_count"] == 1
 
 
 def test_list_caso_calls_returns_list(client, db_session):
