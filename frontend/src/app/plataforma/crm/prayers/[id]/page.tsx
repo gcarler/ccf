@@ -41,21 +41,26 @@ export default function PrayerDetailPage() {
             setError("Debes iniciar sesión para ver esta petición.");
             return;
         }
+        // M-05 — AbortController cancela el fetch si el componente se desmonta
+        // mientras la promise está pending (evita state update en unmounted).
+        const controller = new AbortController();
         const loadPrayer = async () => {
             try {
                 setError(null);
                 setLoading(true);
-                const data = await apiFetch<PrayerDetail>(`/crm/prayer-requests/${id}`, { token });
+                const data = await apiFetch<PrayerDetail>(`/crm/prayer-requests/${id}`, { token, signal: controller.signal });
                 setPrayer(data);
             } catch (err) {
+                if (controller.signal.aborted) return; // unmount, no mostrar error
                 setPrayer(null);
                 setError("No se pudo cargar la petición.");
                 toast.error("Error al cargar detalle de intercesion");
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             }
         };
         loadPrayer();
+        return () => controller.abort();
     }, [authLoading, id, reloadKey, token]);
 
     if (authLoading) {

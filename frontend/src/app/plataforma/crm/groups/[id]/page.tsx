@@ -32,21 +32,25 @@ export default function GroupDetailPage() {
             setError("Debes iniciar sesión para ver este grupo.");
             return;
         }
+        // M-05 — AbortController cancela el fetch al desmontar.
+        const controller = new AbortController();
         const loadGroup = async () => {
             try {
                 setError(null);
                 setLoading(true);
-                const data = await apiFetch<GrupoDetail>(`/crm/grupos/${id}`, { token });
+                const data = await apiFetch<GrupoDetail>(`/crm/grupos/${id}`, { token, signal: controller.signal });
                 setGroup(data);
             } catch (err) {
+                if (controller.signal.aborted) return;
                 setGroup(null);
                 setError("No se pudo cargar el grupo.");
                 toast.error("Error al cargar detalle del grupo");
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             }
         };
         loadGroup();
+        return () => controller.abort();
     }, [authLoading, id, reloadKey, token]);
 
     if (authLoading) {

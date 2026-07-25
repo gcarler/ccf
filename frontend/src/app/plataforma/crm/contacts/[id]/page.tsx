@@ -89,7 +89,7 @@ export default function LeadDetail() {
     const [isStageOpen, setIsStageOpen] = useState(false);
     const [isSavingStage, setIsSavingStage] = useState(false);
 
-    const fetchLeadData = useCallback(async () => {
+    const fetchLeadData = useCallback(async (signal?: AbortSignal) => {
         if (authLoading) return;
         if (!leadId) {
             setLoading(false);
@@ -105,8 +105,8 @@ export default function LeadDetail() {
         try {
             setError(null);
             const [leadData, logsData] = await Promise.allSettled([
-                apiFetch(`/crm/casos/${leadId}`, { token, cache: 'no-store' }),
-                apiFetch<CallLog[]>(`/crm/casos/${leadId}/calls`, { token, cache: 'no-store' }),
+                apiFetch(`/crm/casos/${leadId}`, { token, cache: 'no-store', signal }),
+                apiFetch<CallLog[]>(`/crm/casos/${leadId}/calls`, { token, cache: 'no-store', signal }),
             ]);
             if (leadData.status === 'fulfilled') {
                 const leadValue = leadData.value as { persona_id?: string | null };
@@ -116,6 +116,7 @@ export default function LeadDetail() {
                         const counselingData = await apiFetch(`/crm/counseling/lead/${leadValue.persona_id}`, {
                             token,
                             cache: 'no-store',
+                            signal,
                         });
                         setCounselingSessions(Array.isArray(counselingData) ? counselingData : []);
                     } catch {
@@ -131,17 +132,23 @@ export default function LeadDetail() {
             }
             setCallLogs(logsData.status === 'fulfilled' && Array.isArray(logsData.value) ? logsData.value : []);
         } catch (err) {
+            if (signal?.aborted) return; // M-05 — unmount
             setLead(null);
             setCallLogs([]);
             setCounselingSessions([]);
             setError('No se pudo cargar el contacto.');
             addToast('No se pudo cargar el contacto', 'error');
         } finally {
-            setLoading(false);
+            if (!signal?.aborted) setLoading(false);
         }
     }, [addToast, authLoading, leadId, token]);
 
-    useEffect(() => { fetchLeadData(); }, [fetchLeadData, reloadKey]);
+    // M-05 — AbortController cancela los 3 apiFetch en cascadea al desmontar.
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchLeadData(controller.signal);
+        return () => controller.abort();
+    }, [fetchLeadData, reloadKey]);
 
     const handleStageChange = async (newStage: string) => {
         setIsStageOpen(false);

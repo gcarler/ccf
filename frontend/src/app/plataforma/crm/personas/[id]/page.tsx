@@ -465,11 +465,15 @@ export default function PersonaDetailPage() {
             setEditCities([]);
             return;
         }
+        // M-05 — AbortController cancela el fetch si el drawer cambia de dept o
+        // el componente se desmonta antes de resolver.
+        const controller = new AbortController();
         setLoadingEditCities(true);
-        apiFetch<any[]>(`/crm/colombian-departments/${editPersona.colombian_department_id}/cities`, { token })
-            .then(setEditCities)
-            .catch(() => setEditCities([]))
-            .finally(() => setLoadingEditCities(false));
+        apiFetch<any[]>(`/crm/colombian-departments/${editPersona.colombian_department_id}/cities`, { token, signal: controller.signal })
+            .then(d => { if (!controller.signal.aborted) setEditCities(d); })
+            .catch(() => { if (!controller.signal.aborted) setEditCities([]); })
+            .finally(() => { if (!controller.signal.aborted) setLoadingEditCities(false); });
+        return () => controller.abort();
     }, [token, editPersona.colombian_department_id]);
 
     const handleSavePersona = async () => {
@@ -541,22 +545,30 @@ export default function PersonaDetailPage() {
     // Fetch history when tab activated
     useEffect(() => {
         if (activeTab === 'history' && history.length === 0 && token) {
+            // M-05 — AbortController cancela el fetch si el usuario cambia de
+            // tab o el componente se desmonta antes de resolver el fetch de timeline.
+            const controller = new AbortController();
             setLoadingHistory(true);
-            apiFetch<any[]>(`/crm/personas/${id}/timeline`, { token })
-                .then(d => setHistory(Array.isArray(d) ? d : []))
-                .catch(() => setHistory([]))
-                .finally(() => setLoadingHistory(false));
+            apiFetch<any[]>(`/crm/personas/${id}/timeline`, { token, signal: controller.signal })
+                .then(d => { if (!controller.signal.aborted) setHistory(Array.isArray(d) ? d : []); })
+                .catch(() => { if (!controller.signal.aborted) setHistory([]); })
+                .finally(() => { if (!controller.signal.aborted) setLoadingHistory(false); });
+            return () => controller.abort();
         }
-        }, [activeTab, id, token, history.length]);
+    }, [activeTab, id, token, history.length]);
 
     // Fetch donations when financial tab activated
     useEffect(() => {
         if (activeTab === 'financial' && donations.length === 0 && token) {
+            // M-05 — AbortController cancela el fetch si el tab financial se cierra
+            // o el componente se desmonta antes de resolver el fetch de donations.
+            const controller = new AbortController();
             setLoadingDonations(true);
-            apiFetch<any[]>(`/crm/personas/${id}/donations`, { token })
-                .then(d => setDonations(Array.isArray(d) ? d : []))
-                .catch(() => setDonations([]))
-                .finally(() => setLoadingDonations(false));
+            apiFetch<any[]>(`/crm/personas/${id}/donations`, { token, signal: controller.signal })
+                .then(d => { if (!controller.signal.aborted) setDonations(Array.isArray(d) ? d : []); })
+                .catch(() => { if (!controller.signal.aborted) setDonations([]); })
+                .finally(() => { if (!controller.signal.aborted) setLoadingDonations(false); });
+            return () => controller.abort();
         }
     }, [activeTab, id, token, donations.length]);
 

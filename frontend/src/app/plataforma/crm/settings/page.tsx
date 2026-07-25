@@ -45,39 +45,47 @@ export default function CrmSettingsPage() {
         smtpServer: ''
     });
 
-    const fetchSettings = useCallback(async () => {
+    const fetchSettings = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         try {
-            const data = await apiFetch('/crm/settings', { token, cache: 'no-store' });
+            const data = await apiFetch('/crm/settings', { token, cache: 'no-store', signal });
+            if (signal?.aborted) return;
             if (data) setConfig(data);
         } catch (err) {
+            if (signal?.aborted) return; // M-05 — unmount
             console.error("Error fetching settings", err);
             addToast("No se pudo cargar la configuración del CRM", "error");
         }
     }, [token, addToast]);
 
-    const fetchPositions = useCallback(async () => {
+    const fetchPositions = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setIsLoadingPositions(true);
         try {
-            const data = await apiFetch<any[]>('/crm/positions', { token, cache: 'no-store' });
+            const data = await apiFetch<any[]>('/crm/positions', { token, cache: 'no-store', signal });
+            if (signal?.aborted) return;
             setPositions(Array.isArray(data) ? data : []);
         } catch (err) {
+            if (signal?.aborted) return; // M-05 — unmount
             console.error('Error fetching consolidation positions', err);
             addToast('No se pudieron cargar los cargos de consolidación', 'error');
         } finally {
-            setIsLoadingPositions(false);
+            if (!signal?.aborted) setIsLoadingPositions(false);
         }
     }, [token, addToast]);
 
+    // M-05 — AbortController cancela los loaders iniciales al desmontar.
     useEffect(() => {
-        fetchSettings();
+        const controller = new AbortController();
+        fetchSettings(controller.signal);
+        return () => controller.abort();
     }, [fetchSettings]);
 
     useEffect(() => {
-        if (activeSection === 'consolidation') {
-            fetchPositions();
-        }
+        if (activeSection !== 'consolidation') return;
+        const controller = new AbortController();
+        fetchPositions(controller.signal);
+        return () => controller.abort();
     }, [activeSection, fetchPositions]);
 
     const handleSave = async (e: React.FormEvent) => {

@@ -40,21 +40,25 @@ export default function CrmTaskDetailPage() {
             setError('Debes iniciar sesión para ver esta tarea pastoral.');
             return;
         }
+        // M-05 — AbortController cancela el fetch al desmontar.
+        const controller = new AbortController();
         const loadTask = async () => {
             try {
                 setError(null);
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/tasks/${id}`, { token });
+                const data = await apiFetch<any>(`/crm/tasks/${id}`, { token, signal: controller.signal });
                 setTask(data);
             } catch (err) {
+                if (controller.signal.aborted) return;
                 setTask(null);
                 setError('No se pudo cargar la tarea pastoral.');
                 toast.error('Error al cargar la tarea pastoral');
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             }
         };
         loadTask();
+        return () => controller.abort();
     }, [authLoading, id, reloadKey, token]);
 
     if (authLoading) {

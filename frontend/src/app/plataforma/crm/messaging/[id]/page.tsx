@@ -48,21 +48,25 @@ export default function MessagingDetailPage() {
             setError('Debes iniciar sesión para ver esta campaña.');
             return;
         }
+        // M-05 — AbortController cancela el fetch al desmontar.
+        const controller = new AbortController();
         const loadCampaign = async () => {
             try {
                 setError(null);
                 setLoading(true);
-                const data = await apiFetch<MessagingHistoryDetail>(`/crm/messaging/history/${id}`, { token });
+                const data = await apiFetch<MessagingHistoryDetail>(`/crm/messaging/history/${id}`, { token, signal: controller.signal });
                 setCampaign(data);
             } catch (err) {
+                if (controller.signal.aborted) return;
                 setCampaign(null);
                 setError('No se pudo cargar el detalle de la campaña.');
                 toast.error("Error al cargar detalle de campana");
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             }
         };
         loadCampaign();
+        return () => controller.abort();
     }, [authLoading, id, reloadKey, token]);
 
     if (authLoading) {

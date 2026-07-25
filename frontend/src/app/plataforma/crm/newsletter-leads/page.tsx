@@ -81,24 +81,31 @@ export default function NewsletterLeadsPage() {
         title: 'Wiki de leads de newsletter',
     });
 
-    const fetchLeads = useCallback(async () => {
+    const fetchLeads = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
             const params = new URLSearchParams({ page: String(page), page_size: '50' });
             if (dateFrom) params.set('date_from', dateFrom);
             const res = await apiFetch<NewsletterResponse>(`/crm/leads/newsletter?${params}`, {
-                token, cache: 'no-store',
+                token, cache: 'no-store', signal,
             });
+            if (signal?.aborted) return;
             setData(res);
-        } catch {
+        } catch (err) {
+            if (signal?.aborted) return; // M-05 — unmount
             addToast('Error al cargar leads del newsletter', 'error');
         } finally {
-            setLoading(false);
+            if (!signal?.aborted) setLoading(false);
         }
     }, [token, page, dateFrom, addToast]);
 
-    useEffect(() => { fetchLeads(); }, [fetchLeads]);
+    // M-05 — AbortController cancela el fetch al desmontar.
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchLeads(controller.signal);
+        return () => controller.abort();
+    }, [fetchLeads]);
 
     const filteredLeads = useMemo(() => {
         if (!data?.leads) return [];

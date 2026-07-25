@@ -89,21 +89,25 @@ export default function CounselingDetailPage() {
             setError("Debes iniciar sesión para ver esta sesión.");
             return;
         }
+        // M-05 — AbortController cancela el fetch al desmontar.
+        const controller = new AbortController();
         const loadSession = async () => {
             try {
                 setError(null);
                 setLoading(true);
-                const data = await apiFetch<CounselingDetail>(`/crm/counseling/${id}`, { token });
+                const data = await apiFetch<CounselingDetail>(`/crm/counseling/${id}`, { token, signal: controller.signal });
                 setSession(data);
             } catch (err) {
+                if (controller.signal.aborted) return;
                 setSession(null);
                 setError("No se pudo cargar la sesión de consejería.");
                 toast.error("Error al cargar la sesion de consejeria");
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             }
         };
         loadSession();
+        return () => controller.abort();
     }, [authLoading, id, reloadKey, token]);
 
     if (authLoading) {
