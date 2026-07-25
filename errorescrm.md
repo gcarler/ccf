@@ -280,7 +280,7 @@ def flows_unicode(payload: dict = None, db: Session = Depends(get_db),
 **Capa:** API  
 **Problema.** `fallback_id: UUID | None = None` vía query param; `fallback_id == role_id` compara UUID — correcto pero el `== role_id` requiere mismo None check;SUB-issue de C-02.  
 **Fix.** Subsumido por C-02.  
-**Estado:** 🔴 PENDIENTE
+**Estado:** ✅ CERRADO Iter3 (2026-07-25) — Confirmado subsumido por C-02. Código actual en `pastoral.py:1780-1839` ya incluye: (1) `if fallback_id is None:` raise 400 ANTES del `== role_id` (L1811-1815) — el None check que pedía la auditoría. (2) `if fallback_id == role_id:` raise 400 (L1816-1820). (3) Validación que fallback también pertenece a la sede del actor (L1832) — defense-in-depth adicional. No requiere fix.
 
 ---
 
@@ -364,7 +364,7 @@ La corrección estructural procede en orden de severidad:
 | 🔴 PENDIENTE | M-05 | — | — | useEffect sin AbortController (~10 componentes) |
 | 🔴 PENDIENTE | M-06 | — | — | URL [id] sin validación (9 componentes) |
 | 🔴 PENDIENTE | M-07 | — | — | Tailwind hardcoded colors |
-| 🔴 PENDIENTE | M-08 | — | — | fallback_id sub C-02 (cerrado con C-02) |
+| ✅ CERRADO | M-08 | — | 2026-07-25 | Subsumido por C-02 — confirmado: pastoral.py:1780-1839 already includes None check (L1811), == role_id (L1816), fallback sede scope (L1832). |
 | 🟡 REVISIÓN | I-01 | — | — | @computed_field en pipeline serializers |
 | 🟡 REVISIÓN | I-02 | — | — | _ensure_utc en read schemas |
 | 🟡 REVISIÓN | I-03 | — | — | TestCrmIdorCrossSede refactor |
