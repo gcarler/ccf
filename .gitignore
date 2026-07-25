@@ -1,3 +1,10 @@
+# Agent operational workspace
+.agents/*
+!.agents/.gitkeep
+!.agents/ORIGINAL_REQUEST.md
+
+# Node modules at any level
+node_modules/
 
 !test_artifacts/.gitkeep
 !test_artifacts/pytest_cache/.gitkeep
