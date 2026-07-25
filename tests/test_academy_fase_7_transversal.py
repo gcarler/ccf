@@ -519,22 +519,32 @@ def test_acad_tkt_203_dashboard_metrics_key_excludes_session_object() -> None:
 
 
 def test_acad_tkt_203_list_lessons_key_includes_all_serialization_fields() -> None:
-    """``_list_lessons_key`` deriva de (course_id, viewer_role, skip, limit)."""
+    """``_list_lessons_key`` deriva de (course_id, viewer_persona_id, is_editor, skip, limit).
+
+    M-05 (cierre 2026-07-24): el key ahora incluye ``viewer_persona_id`` +
+    ``is_editor`` en vez de ``viewer_role`` ("editor"/"student"), para que
+    dos usuarios con rol "student" divergentes reciban snapshots separados.
+    Args del caller: ``(course_id_str, viewer_persona_id, is_editor, skip,
+    limit, db)`` — el ``db: Session`` se excluye de la key (último arg).
+    """
     from backend.api.academy_cache import _list_lessons_key
 
-    base = _list_lessons_key(("course-a", "editor", 0, 50, object(), True), {})
-    # Misma course + viewer + paginación → misma key
-    again = _list_lessons_key(("course-a", "editor", 0, 50, object(), True), {})
+    base = _list_lessons_key(("course-a", "user-1", True, 0, 50, object()), {})
+    # Misma course + user + editor + paginación → misma key
+    again = _list_lessons_key(("course-a", "user-1", True, 0, 50, object()), {})
     assert base == again
     # Distinto skip → distinta key (paginación es parte del key)
-    assert base != _list_lessons_key(("course-a", "editor", 10, 50, object(), True), {})
+    assert base != _list_lessons_key(("course-a", "user-1", True, 10, 50, object()), {})
     # Distinto limit → distinta key
-    assert base != _list_lessons_key(("course-a", "editor", 0, 100, object(), True), {})
-    # Distinto viewer → distinta key (student vs editor ven distinto visibility)
-    assert base != _list_lessons_key(("course-a", "student", 0, 50, object(), False), {})
+    assert base != _list_lessons_key(("course-a", "user-1", True, 0, 100, object()), {})
+    # Distinto is_editor → distinta key (editor vs student ven distinto visibility)
+    assert base != _list_lessons_key(("course-a", "user-1", False, 0, 50, object()), {})
+    # Distinto viewer_persona_id → distinta key (aislamiento por usuario, M-05)
+    assert base != _list_lessons_key(("course-a", "user-2", True, 0, 50, object()), {})
     # Distinto course → distinta key
-    assert base != _list_lessons_key(("course-b", "editor", 0, 50, object(), True), {})
-    assert "viewer=editor" in base, f"viewer_role faltante en key: {base!r}"
+    assert base != _list_lessons_key(("course-b", "user-1", True, 0, 50, object()), {})
+    assert "user=user-1" in base, f"viewer_persona_id faltante en key: {base!r}"
+    assert "editor=True" in base, f"is_editor faltante en key: {base!r}"
     assert ":skip=" in base and ":limit=" in base, f"paginación faltante en key: {base!r}"
 
 
@@ -664,7 +674,8 @@ def test_acad_tkt_203_sede_id_cache_keys_v1_semantic_versioning() -> None:
     from backend.api.academy_cache import _dashboard_metrics_key, _list_lessons_key
 
     dk = _dashboard_metrics_key(("abc-uuid", object()), {})
-    lk = _list_lessons_key(("course-uuid", "editor", 0, 50, object(), True), {})
+    # M-05 — args: (course_id_str, viewer_persona_id, is_editor, skip, limit, db)
+    lk = _list_lessons_key(("course-uuid", "user-a", True, 0, 50, object()), {})
 
     assert ":v1:" in dk, f"dashboard key sin sufijo de versión: {dk!r}"
     assert ":v1:" in lk, f"list_lessons key sin sufijo de versión: {lk!r}"

@@ -1,13 +1,27 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 from backend.schemas._common import orm_config
+
+
+# M-09 — Helper de normalización tz-aware (modo before-validation).
+# SQLite read-back pierde tzinfo (documentado en projects/MEMORY.md —
+# `_as_aware_utc`). Pydantic acepta naive datetimes por defecto; este helper
+# adjunta UTC si falta tzinfo, sin rechazar el input. Aplicado vía
+# `@field_validator(..., mode="before")` en los read schemas con datetimes
+# sensibles (Enrollment.created_at, Certificate.issued_at,
+# AssessmentAttempt.created_at). No se aplica a `datetime | None` (None pasa).
+def _ensure_utc(value: Any) -> Any:
+    """Normaliza un datetime naive → aware UTC在读膜back desde SQLite."""
+    if isinstance(value, datetime) and value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
 
 # ── Enums canónicos (validación en borde Pydantic) ────────────────────────────
 # Definidos aquí (no en api/academy.py) porque los write schemas los usan.
@@ -97,16 +111,38 @@ class AssessmentQuestion(BaseModel):
     options: List[AssessmentOption] = Field(default_factory=list)
     model_config = orm_config
 
+    # M-08 — alias de escritura: el write ``AssessmentQuestionPayload`` usa
+    # ``text``/``type``; exponemos también esos nombres en lectura para que
+    # un cliente pueda consumir una sola surface sin distinguir read vs write.
+    @computed_field
+    @property
+    def text(self) -> str:
+        return self.question_text
+
+    @computed_field
+    @property
+    def type(self) -> str:
+        return self.question_type
+
 
 class Assessment(BaseModel):
     id: UUID
-    course_id: Optional[UUID] = None
+    # M-10 — el ORM es ``nullable=False``; el schema read no debe aceptar None.
+    course_id: UUID
     title: str = "Assessment"
     description: Optional[str] = None
     min_score: float = 70
     weight: float = 1.0
     questions: List[AssessmentQuestion] = Field(default_factory=list)
     model_config = orm_config
+
+    # M-08 — alias de escritura: el ORM persiste ``passing_score`` (sinónimo
+    # ORM de ``min_score``); el write schema ``AssessmentPayload``/``AssessmentUpdate``
+    # usa ``passing_score``. Exponemos ambos en lectura para estabilizar el contrato.
+    @computed_field
+    @property
+    def passing_score(self) -> float:
+        return self.min_score
 
 
 class AssessmentAttempt(BaseModel):
@@ -118,6 +154,11 @@ class AssessmentAttempt(BaseModel):
     created_at: datetime | None = None
     answers: List[AssessmentAnswer] = Field(default_factory=list)
     model_config = orm_config
+
+    # M-09 — tz-aware normalización (SQLite read-back pierde tzinfo).
+    _ensure_tz_created = field_validator("created_at", mode="before")(
+        classmethod(lambda cls, v: _ensure_utc(v))
+    )
 
 
 class AssessmentAnswer(BaseModel):
@@ -165,11 +206,17 @@ class Enrollment(BaseModel):
     created_at: datetime | None = None
     model_config = orm_config
 
+    # M-09 — tz-aware normalización (SQLite read-back pierde tzinfo).
+    _ensure_tz_created = field_validator("created_at", mode="before")(
+        classmethod(lambda cls, v: _ensure_utc(v))
+    )
+
 
 class CourseAttendanceBase(BaseModel):
     enrollment_id: UUID
     status: str = "present"
-    session_date: Optional[datetime] = None
+    # M-10 — el ORM ``session_date`` es ``nullable=False``; no debe ser Optional.
+    session_date: datetime
 
 
 class CourseAttendanceCreate(CourseAttendanceBase):
@@ -192,6 +239,11 @@ class Certificate(BaseModel):
     certificate_code: str
     issued_at: datetime
     model_config = orm_config
+
+    # M-09 — tz-aware normalización (SQLite read-back pierde tzinfo).
+    _ensure_tz_issued = field_validator("issued_at", mode="before")(
+        classmethod(lambda cls, v: _ensure_utc(v))
+    )
 
 
 class CertificateValidationStudent(BaseModel):
@@ -263,6 +315,13 @@ class FormalActa(BaseModel):
     course_id: UUID
     status: str = "closed"
     created_at: datetime
+    # M-11 — exponer actor y metadatos del acta para cumplir REGLAS.md §4.1
+    # (actor required) a nivel contrato. El modelo los定义 en
+    # ``models_academy_core.py:288-296`` como ``nullable=False``.
+    cohort_name: str = "General"
+    closed_by_persona_id: UUID
+    min_grade: float = 70
+    min_attendance: float = 75
     model_config = orm_config
 
 
