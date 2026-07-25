@@ -2278,15 +2278,41 @@ def list_crm_groups(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Lista grupos/ministerios para vistas comunitarias."""
-    ministries = db.query(models.Ministry).all()
+    """Lista grupos/ministerios activos en la sede del usuario.
+
+    Axioma 3 — Ministry es catálogo global legítimo (sin sede_id propio,
+    doctrina C-03/A-04), pero el endpoint暴露 su membership por sede: un
+    ministerio aparece sólo si hay personas de la sede del actor asignadas
+    a él vía `persona_ministry_assignments`. Esto previene enumeration
+    cross-tenant de la taxonomía global.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    ministries_q = (
+        db.query(models.Ministry)
+        .join(models.PersonaMinistryAssignment, models.PersonaMinistryAssignment.ministry_id == models.Ministry.id)
+        .join(models.Persona, models.PersonaMinistryAssignment.persona_id == models.Persona.id)
+    )
+    if user_sede:
+        ministries_q = ministries_q.filter(models.Persona.sede_id == user_sede)
+    # Distinct por ministry可能出现 multiples times si好多 personas de la sede
+    # pertenecen al mismo ministry.
+    ministries = ministries_q.distinct().all()
     return [
         {
             "id": m.id,
             "name": m.name,
             "description": m.description,
             "leader": None,
-            "personas_count": len(m.personas) if m.personas else 0,
+            # Recuento scoped: personas de la sede del actor en este ministry.
+            "personas_count": (
+                db.query(func.count(models.PersonaMinistryAssignment.id))
+                .join(models.Persona, models.PersonaMinistryAssignment.persona_id == models.Persona.id)
+                .filter(
+                    models.PersonaMinistryAssignment.ministry_id == m.id,
+                    models.Persona.sede_id == user_sede if user_sede else True,
+                )
+                .scalar() or 0
+            ) if user_sede else len(m.personas or []),
         }
         for m in ministries
     ]
@@ -2304,7 +2330,14 @@ def get_crm_radar(
     personas_q = _scope_by_user_sede_via_persona(db, current_user, personas_q)
     total_personas = personas_q.count()
 
-    total_ministries = db.query(models.Ministry).count()
+    total_ministries = (
+        db.query(func.count(models.Ministry.id.distinct()))
+        .join(models.PersonaMinistryAssignment, models.PersonaMinistryAssignment.ministry_id == models.Ministry.id)
+        .join(models.Persona, models.PersonaMinistryAssignment.persona_id == models.Persona.id)
+    )
+    if user_sede:
+        total_ministries = total_ministries.filter(models.Persona.sede_id == user_sede)
+    total_ministries = total_ministries.scalar() or 0
 
     # Nota: cases_q se filtra por CasoCRM.sede_id (no por Persona) — el helper
     # _scope_by_user_sede_via_persona NO aplica aquí porque el modelo raíz no
