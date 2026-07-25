@@ -21,9 +21,8 @@ import { useToast } from '@/context/ToastContext';
 import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
-import { DSSkeleton } from '@/design';
+import { DSSkeleton, DSTable } from '@/design';
 import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
 import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
@@ -59,7 +58,7 @@ export default function PrayerSupportCenter() {
         title: 'Wiki de intercesion CRM',
     });
 
-    const fetchRequests = useCallback(async () => {
+    const fetchRequests = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
             setLoading(false);
             return;
@@ -67,7 +66,7 @@ export default function PrayerSupportCenter() {
         setLoading(true);
         setRequestsError(null);
         try {
-            const data = await apiFetch<PrayerRequest[]>('/crm/prayer-requests', { token });
+            const data = await apiFetch<PrayerRequest[]>('/crm/prayer-requests', { token, signal });
             if (Array.isArray(data)) {
                 setRequests(data.map((r) => {
                     const rr = r as PrayerRequest & { name?: string; request?: string; is_answered?: boolean; is_urgent?: boolean };
@@ -81,16 +80,21 @@ export default function PrayerSupportCenter() {
                     time: new Date(rr.created_at ?? Date.now()).toLocaleDateString()
                 }; }));
             }
-        } catch (err) {
+        } catch (err: any) {
+            if (err?.name === 'AbortError') return;
             setRequests([]);
             const message = extractErrorMessage(err, 'Error al cargar peticiones');
             setRequestsError(message);
             addToast(message, 'error');
         }
-        finally { setLoading(false); }
+        finally { if (!signal?.aborted) setLoading(false); }
     }, [token, addToast]);
 
-    useEffect(() => { fetchRequests(); }, [fetchRequests]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchRequests(controller.signal);
+        return () => controller.abort();
+    }, [fetchRequests]);
 
 
     const updateRequestStatus = useCallback(async (id: string, newStatus: string) => {
@@ -247,7 +251,7 @@ export default function PrayerSupportCenter() {
                         <p className="text-sm text-[hsl(var(--warning)/0.8)] dark:text-[hsl(var(--warning)/0.8)] mt-1 break-words">{requestsError}</p>
                     </div>
                     <button
-                        onClick={fetchRequests}
+                        onClick={() => fetchRequests()}
                         className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:opacity-90 transition-all"
                     >
                         Reintentar
@@ -304,7 +308,15 @@ export default function PrayerSupportCenter() {
                             {[1, 2, 3].map(i => <DSSkeleton key={i} className="h-8 w-full rounded-lg" />)}
                         </div>
                     ) : viewType === 'table' ? (
-                        <DataTable data={filtered} columns={columns} onRowClick={handleOpenRequest} />
+                        <DSTable
+                            data={filtered}
+                            columns={columns}
+                            onRowClick={handleOpenRequest}
+                            stickyHeader
+                            cursorPointer
+                            emptyMessage="No se encontraron resultados."
+                            className="flex-1 min-w-[620px] md:min-w-[800px] bg-[hsl(var(--bg-primary))]"
+                        />
                     ) : viewType === 'list' || viewType === 'grid' ? (
                         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                             {filtered.map(req => (

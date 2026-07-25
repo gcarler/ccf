@@ -429,9 +429,9 @@ export default function MessagingCampaignCenter() {
                                             aria-describedby="campaignName-error"
                                             value={campaignName} onChange={(e) => setCampaignName(e.target.value)}
                                         placeholder="Ej: Invitación Asamblea de Personas"
-                                        className={`w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border rounded-lg py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all ${campaignErrors.campaignName ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/5'}`}
+                                        className={`w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border rounded-lg py-2 px-4 text-sm font-medium outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all ${campaignErrors.campaignName ? 'border-danger dark:border-danger/50' : 'border-[hsl(var(--border))] dark:border-white/5'}`}
                                     />
-                                    {campaignErrors.campaignName && <p id="campaignName-error" className="text-red-500 text-xs mt-1">Campo requerido</p>}
+                                    {campaignErrors.campaignName && <p id="campaignName-error" className="text-danger text-xs mt-1">Campo requerido</p>}
                                 </div>
 
                                 <div className="space-y-2">
@@ -444,15 +444,15 @@ export default function MessagingCampaignCenter() {
                                             aria-describedby="message-error"
                                             value={message} onChange={(e) => setMessage(e.target.value)}
                                             placeholder="Hola {nombre}, te escribimos de CCF para..."
-                                            className={`w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border rounded-md p-4 text-sm font-medium outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none ${campaignErrors.message ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/5'}`}
+                                            className={`w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border rounded-md p-4 text-sm font-medium outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none ${campaignErrors.message ? 'border-danger dark:border-danger/50' : 'border-[hsl(var(--border))] dark:border-white/5'}`}
                                         />
                                         <div className="absolute bottom-4 right-4 flex gap-2">
                                             <button disabled={!canEditCrm} aria-label="Generar con IA" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors shadow-sm disabled:opacity-50"><Bot size={18} /></button>
                                             <button disabled={!canEditCrm} aria-label="Insertar imagen" className="p-2.5 bg-[hsl(var(--surface-1))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors shadow-sm disabled:opacity-50"><ImageIcon size={18} /></button>
                                         </div>
                                     </div>
-                                    {campaignErrors.message && <p id="message-error" className="text-red-500 text-xs mt-1">Campo requerido</p>}
-                                    {campaignErrors.segments && <p className="text-red-500 text-xs mt-1">Selecciona al menos un segmento</p>}
+                                    {campaignErrors.message && <p id="message-error" className="text-danger text-xs mt-1">Campo requerido</p>}
+                                    {campaignErrors.segments && <p className="text-danger text-xs mt-1">Selecciona al menos un segmento</p>}
                                 </div>
                             </div>
 
@@ -517,7 +517,7 @@ export default function MessagingCampaignCenter() {
                             </div>
                             <div className="space-y-3">
                                 {loadingHistory ? (
-                                    <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-gray-100 dark:bg-white/5 rounded animate-pulse" />)}</div>
+                                    <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded animate-pulse" />)}</div>
                                 ) : history.map((item) => (
                                     <div 
                                         key={item.id} 
