@@ -475,3 +475,163 @@ class TestAgendaDashboard:
         assert len(data["cards"]) == 4
         events_card = next(c for c in data["cards"] if c["title"] == "Eventos")
         assert events_card["value"] == "1"
+
+
+# ── 9. 404 edge cases (cobertura 100%) ───────────────────────────────────
+
+class TestNotFoundEdgeCases:
+    def test_update_nonexistent_event_returns_404(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        resp = client.put(
+            f"/api/agenda/events/{uuid4()}",
+            json=_event_payload("X"),
+            headers=headers,
+        )
+        assert resp.status_code == 404
+
+    def test_delete_nonexistent_event_returns_404(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        resp = client.delete(f"/api/agenda/events/{uuid4()}", headers=headers)
+        assert resp.status_code == 404
+
+    def test_create_participant_nonexistent_event_returns_404(self, client, db_session):
+        admin, persona, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        resp = client.post(
+            "/api/agenda/participants",
+            json=_participant_payload(str(uuid4()), persona.id),
+            headers=headers,
+        )
+        assert resp.status_code == 404
+
+    def test_create_participant_nonexistent_persona_returns_404(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        event = _create_event(client, headers)
+        resp = client.post(
+            "/api/agenda/participants",
+            json=_participant_payload(event["id"], uuid4()),
+            headers=headers,
+        )
+        assert resp.status_code == 404
+
+    def test_update_nonexistent_participant_returns_404(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        event = _create_event(client, headers)
+        resp = client.put(
+            f"/api/agenda/participants/{uuid4()}",
+            json=_participant_payload(event["id"], uuid4()),
+            headers=headers,
+        )
+        assert resp.status_code == 404
+
+    def test_create_reservation_nonexistent_event_returns_404(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        resource = _create_resource(client, headers)
+        t = datetime(2026, 7, 10, 10, 0, tzinfo=timezone.utc)
+        resp = client.post(
+            "/api/agenda/reservations",
+            json=_reservation_payload(str(uuid4()), resource["id"], t, t + timedelta(hours=1)),
+            headers=headers,
+        )
+        assert resp.status_code == 404
+
+    def test_create_reservation_nonexistent_resource_returns_404(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        event = _create_event(client, headers)
+        t = datetime(2026, 7, 10, 10, 0, tzinfo=timezone.utc)
+        resp = client.post(
+            "/api/agenda/reservations",
+            json=_reservation_payload(event["id"], str(uuid4()), t, t + timedelta(hours=1)),
+            headers=headers,
+        )
+        assert resp.status_code == 404
+
+    def test_list_reservations_nonexistent_event_returns_404(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        resp = client.get(f"/api/agenda/events/{uuid4()}/reservations", headers=headers)
+        assert resp.status_code == 404
+
+    def test_update_nonexistent_reservation_returns_404(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        event = _create_event(client, headers)
+        resource = _create_resource(client, headers)
+        t = datetime(2026, 7, 10, 10, 0, tzinfo=timezone.utc)
+        resp = client.put(
+            f"/api/agenda/reservations/{uuid4()}",
+            json=_reservation_payload(event["id"], resource["id"], t, t + timedelta(hours=1)),
+            headers=headers,
+        )
+        assert resp.status_code == 404
+
+    def test_get_event_detail_success(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        event = _create_event(client, headers)
+        resp = client.get(f"/api/agenda/events/{event['id']}", headers=headers)
+        assert resp.status_code == 200
+        assert resp.json()["id"] == event["id"]
+
+    def test_update_event_success(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        event = _create_event(client, headers)
+        payload = _event_payload("Actualizado completo")
+        payload["location"] = "Nueva ubicación"
+        payload["color_hex"] = "#ff0000"
+        payload["url_conferencia"] = "https://meet.example.com/abc"
+        payload["visibilidad"] = "PUBLICO"
+        resp = client.put(
+            f"/api/agenda/events/{event['id']}",
+            json=payload,
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["title"] == "Actualizado completo"
+        assert data["location"] == "Nueva ubicación"
+        assert data["color_hex"] == "#ff0000"
+        assert data["url_conferencia"] == "https://meet.example.com/abc"
+        assert data["visibilidad"] == "PUBLICO"
+
+    def test_create_reservation_conflict_returns_409(self, client, db_session):
+        admin, _, _ = seed_admin(db_session)
+        headers = auth_headers(client, email=admin.email)
+
+        event = _create_event(client, headers)
+        resource = _create_resource(client, headers)
+
+        t1 = datetime(2026, 7, 11, 10, 0, tzinfo=timezone.utc)
+        t2 = t1 + timedelta(hours=2)
+        client.post(
+            "/api/agenda/reservations",
+            json=_reservation_payload(event["id"], resource["id"], t1, t2),
+            headers=headers,
+        )
+
+        overlap_start = datetime(2026, 7, 11, 11, 0, tzinfo=timezone.utc)
+        overlap_end = overlap_start + timedelta(hours=1)
+        resp = client.post(
+            "/api/agenda/reservations",
+            json=_reservation_payload(event["id"], resource["id"], overlap_start, overlap_end),
+            headers=headers,
+        )
+        assert resp.status_code == 409
