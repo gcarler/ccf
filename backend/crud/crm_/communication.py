@@ -119,7 +119,10 @@ def create_communication_log(
 
 
 def get_communication_logs(
-    db: Session, limit: int = 50, sede_id: "uuid.UUID | str | None" = None
+    db: Session,
+    limit: int = 50,
+    offset: int = 0,
+    sede_id: "uuid.UUID | str | None" = None,
 ):
     """Lista los CommunicationLog más recientes, opcionalmente acotados a la sede indicada.
 
@@ -137,7 +140,9 @@ def get_communication_logs(
     (API) deben pasar explícitamente su ``user_sede`` recibido desde JWT vía
     ``get_user_sede_id``.
     """
-    query = db.query(models.CommunicationLog)
+    query = db.query(models.CommunicationLog).filter(
+        models.CommunicationLog.deleted_at.is_(None)
+    )
     if sede_id is not None:
         sede_uuid = sede_id if isinstance(sede_id, uuid.UUID) else _coerce_sede_uuid(sede_id)
         if sede_uuid is not None:
@@ -145,7 +150,7 @@ def get_communication_logs(
                 models.Persona,
                 models.CommunicationLog.persona_id == models.Persona.id,
             ).filter(models.Persona.sede_id == sede_uuid)
-    return query.order_by(models.CommunicationLog.created_at.desc()).limit(limit).all()
+    return query.order_by(models.CommunicationLog.created_at.desc()).offset(offset).limit(limit).all()
 
 
 def _coerce_sede_uuid(value) -> "uuid.UUID | None":
@@ -161,7 +166,10 @@ def _coerce_sede_uuid(value) -> "uuid.UUID | None":
 
 
 def get_communication_log(db: Session, log_id: str) -> Optional[models.CommunicationLog]:
-    return db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+    return db.query(models.CommunicationLog).filter(
+        models.CommunicationLog.id == log_id,
+        models.CommunicationLog.deleted_at.is_(None),
+    ).first()
 
 
 def update_communication_log(

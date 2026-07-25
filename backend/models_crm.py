@@ -691,6 +691,7 @@ class CommunicationLog(Base):
     outcome = Column(String(50), default="sent", index=True)
     external_id = Column(String(120), nullable=True, index=True)
     is_read = Column(Boolean, default=False, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     persona = relationship("Persona", foreign_keys=[persona_id], back_populates="communication_logs")
