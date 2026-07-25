@@ -19,10 +19,11 @@ import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { LucideIcon } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import type { CSSAuraProperties } from '@/types/admin';
 
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<string, LucideIcon> = {
     'zap': Zap,
     'flame': Flame,
     'star': Star,

@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import type { AppIcon } from '@/types/icons';
 import { 
     Search, 
     Filter, 
@@ -18,7 +19,7 @@ import Link from 'next/link';
 interface Breadcrumb {
     label: string;
     href?: string;
-    icon?: any;
+    icon?: AppIcon;
 }
 
 interface WorkspaceToolbarProps {
@@ -139,7 +140,7 @@ export default function WorkspaceToolbar({
     );
 }
 
-function ToolbarButton({ icon: Icon, onClick, tooltip, active }: { icon: any, onClick?: () => void, tooltip: string, active?: boolean }) {
+function ToolbarButton({ icon: Icon, onClick, tooltip, active }: { icon: AppIcon, onClick?: () => void, tooltip: string, active?: boolean }) {
     return (
         <div className="relative group/toolbar-btn">
             <button

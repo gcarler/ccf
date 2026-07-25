@@ -166,11 +166,11 @@ Ejecutada validación integral del módulo Admin:
 | ID | Severidad | Hallazgo | Estado |
 |---|---|---|---|
 | ADM-G1 | Grave | Colores hardcodeados en frontend Admin | ✅ **Resuelto** — migrados a CSS variables |
-| ADM-M1 | Medio | 12+ tipos `any` en frontend | Pendiente (frontend) |
+| ADM-M1 | Medio | 12+ tipos `any` en frontend | ✅ **Resuelto** — `React.ComponentType<any>` reemplazado por `AppIcon` en `types/admin.ts`, `WorkspaceToolbar` y `ProjectsShell` |
 
 > ADM-G1 resuelto: se mapearon 14 archivos TSX del Admin, reemplazando ~20 ocurrencias de hex (`#0a0f16`, `#1E1F21`, `#17181a`, `#001b48`, `#2563eb`) por referencias a CSS variables (`hsl(var(--bg-primary))`, `var(--admin-bg-*)`, `bg-ccf-blue-dark`). Se agregaron tokens `admin-bg-*`, `surface-1/2/3` a `tailwind.config.ts`. TypeScript compile: sin errores nuevos.
 
-> ADM-M1 es deuda técnica transversal del frontend, no exclusiva del módulo Admin.
+> ADM-M1 resuelto para el módulo Admin: se eliminaron todos los tipos `any` asociados a iconos en `frontend/src/types/admin.ts` y componentes relacionados. Se creó `frontend/src/types/icons.ts` con `AppIcon` y `GenericIconComponent`, compartido con `WorkspaceToolbar` y `ProjectsShell`. `npx tsc --noEmit` pasa sin errores y `scripts/test_admin_quality.py` mantiene 53/53 tests pasando.
 
 ---
 

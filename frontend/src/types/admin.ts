@@ -1,3 +1,5 @@
+import type { AppIcon } from './icons';
+
 /**
  * Shared TypeScript types for the Admin module.
  *
@@ -188,7 +190,7 @@ export interface AgentInsight {
 
 /** Admin activity log entry */
 export interface ActivityLogEntry {
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   title: string;
   user: string;
   time: string;
@@ -367,7 +369,7 @@ export interface AnnouncementGroup {
 export interface StatCardProps {
   label: string;
   value: string | number;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   trend?: string;
   color?: string;
   bg?: string;
@@ -379,7 +381,7 @@ export interface TabButtonProps {
   label: string;
   active?: boolean;
   onClick?: () => void;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
 }
 
 /** Props for a progress bar item */
@@ -395,7 +397,7 @@ export interface SummaryCardProps {
   title: string;
   value: string;
   trend?: string;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   color?: string;
   auraColor?: string;
 }
@@ -404,7 +406,7 @@ export interface SummaryCardProps {
 export interface ModalityCardProps {
   title: string;
   stats?: { total: number; completed: number; rate: number; avg_grade: number } | null;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   color?: string;
 }
 
@@ -419,7 +421,7 @@ export interface AdminTaskRowProps {
 export interface DrawerStatProps {
   label: string;
   value?: string | number | null;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
 }
 
 /** Props for a budget item */
@@ -431,7 +433,7 @@ export interface BudgetItemProps {
 
 /** Props for log/item in activity feed */
 export interface LogItemProps {
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   title: string;
   user: string;
   time: string;
@@ -444,7 +446,7 @@ export interface HealthCardProps {
   label: string;
   value: string | number;
   status?: string;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
 }
 
 /** Props for a feature toggle */
@@ -458,7 +460,7 @@ export interface FeatureToggleProps {
 
 /** Props for a provider row */
 export interface ProviderRowProps {
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   name: string;
   status?: string;
   color?: string;
@@ -484,7 +486,7 @@ export interface StorageStatProps {
   label: string;
   count: number | string;
   size: string;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   color?: string;
 }
 
@@ -492,7 +494,7 @@ export interface StorageStatProps {
 export interface ImpactStatProps {
   label: string;
   value: string | number;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   color?: string;
   auraColor?: string;
 }
@@ -517,7 +519,7 @@ export interface GoalItemProps {
 export interface RadarStatProps {
   label: string;
   value: string | number;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   color?: string;
   trend?: string;
   auraColor?: string;
@@ -528,7 +530,7 @@ export interface StatusCardProps {
   label: string;
   value: string | number;
   status?: string;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   color?: string;
 }
 
@@ -542,7 +544,7 @@ export interface AgentStateProps {
 
 /** Props for payment method item */
 export interface PaymentMethodItemProps {
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   label: string;
   active?: boolean;
 }
@@ -552,7 +554,7 @@ export interface KpiCardProps {
   title: string;
   value: string;
   trend?: string;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   color?: string;
 }
 
@@ -560,7 +562,7 @@ export interface KpiCardProps {
 export interface CandidateStatProps {
   label: string;
   value: string | number;
-  icon?: React.ComponentType<any>;
+  icon?: AppIcon;
   color?: string;
   auraColor?: string;
 }
