@@ -6,6 +6,7 @@ import { ShieldCheck, User, QrCode, Sparkles, Church, Share2, Download, Loader2,
 import { apiFetch } from '@/lib/http';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 
@@ -35,6 +36,7 @@ export default function MyCardPage() {
             setPersona(data);
         } catch (err) {
             console.error(err);
+            toast.error('No se pudieron cargar tus datos.');
         } finally {
             setLoading(false);
         }

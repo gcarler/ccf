@@ -130,11 +130,13 @@ export default function ConsolidationPipelinePage() {
             setPipelineStages(Array.isArray(data) ? data : []);
         } catch (err: any) {
             if (err?.name !== 'AbortError') {
-                console.error(extractErrorMessage(err, "No se pudieron cargar las etapas del pipeline"));
+                const message = extractErrorMessage(err, "No se pudieron cargar las etapas del pipeline");
+                console.error(message);
+                addToast(message, 'error');
             }
             setPipelineStages([]);
         }
-    }, [token]);
+    }, [token, addToast]);
 
     const handleBulkDelete = useCallback(async () => {
         if (!token || selectedLeads.length === 0) return;
