@@ -117,7 +117,7 @@ export default function StudentCertificates() {
                         <>
                             <section className="mt-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <h2 className="px-4 text-[hsl(var(--text-primary))] dark:text-white text-base font-bold mb-3 flex items-center gap-3">
-                                    <Award className="text-yellow-500" size={24} /> Diplomas destacados
+                                    <Award className="text-[hsl(var(--warning))]" size={24} /> Diplomas destacados
                                 </h2>
                                 <div className="flex overflow-x-auto hide-scrollbar gap-3 px-4 snap-x pb-6">
                                     {featured.map((certificate) => {
@@ -131,8 +131,8 @@ export default function StudentCertificates() {
                                                 <div className="aspect-[1.6/1] rounded-md relative overflow-hidden border border-white/10 shadow-2xl shadow-yellow-500/20 bg-gradient-to-br from-[hsl(var(--bg-muted))] to-[hsl(var(--bg-muted))] group-hover:border-primary/40 transition-all">
                                                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/15 via-transparent to-transparent opacity-80"></div>
                                                     <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center transform group-hover:scale-105 transition-transform duration-500">
-                                                        <Award className="text-yellow-500 mb-3" size={48} />
-                                                        <p className="text-[9px] uppercase tracking-wide text-yellow-500 font-bold">{certificate.certificate_type || 'Certificado'}</p>
+                                                        <Award className="text-[hsl(var(--warning))] mb-3" size={48} />
+                                                        <p className="text-[9px] uppercase tracking-wide text-[hsl(var(--warning))] font-bold">{certificate.certificate_type || 'Certificado'}</p>
                                                         <h3 className="text-base font-bold mt-2 text-white">
                                                             {enrollment?.course.title || 'Curso completado'}
                                                         </h3>

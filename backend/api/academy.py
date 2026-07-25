@@ -20,6 +20,7 @@ from backend import models
 from backend.api.academy_cache import (
     _fetch_dashboard_metrics_cached,
     _fetch_list_lessons_cached,
+    invalidate_dashboard_metrics,
 )
 from backend.core.database import get_db
 from backend.core.permissions import (
@@ -102,6 +103,19 @@ def _sanitize_text(value: str | None) -> str | None:
     if value is None:
         return None
     return _html_escape(value, quote=True)
+
+
+def _invalidate_dashboard_for(db: Session, current_user) -> None:
+    """M-04 — helper que invalida el cache de dashboard_metrics para la sede del actor.
+
+    Encapsula el patrón ``sede_id_str = "_global_" if None else str(sede_id)``
+    usado por ``dashboard_metrics`` para que ambas partes (read e invalidación)
+    deriven la misma cache key. Llamar sólo tras un ``db.commit()`` exitoso.
+    Safe en tests (MemoryRedis.delete no raises si la key no existe).
+    """
+    sede_id = get_user_sede_id(db, current_user.id)
+    sede_id_str = str(sede_id) if sede_id else "_global_"
+    invalidate_dashboard_metrics(sede_id_str)
 
 
 def _serialize_course(course: models.Course) -> dict[str, Any]:
@@ -198,17 +212,21 @@ def list_lessons(
     limit: int = Query(default=100, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    """Lista lecciones de un curso (TKT-203: cache TTL 5min, key por curso+viewer+paginación)."""
+    """Lista lecciones de un curso (TKT-203: cache TTL 5min, key por curso+viewer+paginación).
+
+    M-05 — el key incluye ``current_user.id`` para que cada usuario tenga su
+    snapshot aislado, en vez de compartir un bucket por ``viewer_role``.
+    """
     # Garantiza scope/sede via Course antes de delegar al helper cacheado.
     _get_scoped_course(db, current_user, course_id)
     is_editor = _can_edit_academy(db, current_user)
     return _fetch_list_lessons_cached(
         str(course_id),
-        "editor" if is_editor else "student",
+        str(current_user.id),
+        is_editor,
         skip,
         limit,
         db,
-        is_editor,
     )
 
 
@@ -471,6 +489,7 @@ def create_enrollment(
     )
     db.commit()
     db.refresh(enrollment)
+    _invalidate_dashboard_for(db, current_user)  # M-04 — contador de enrollments fresh
     return _serialize_enrollment(enrollment)
 
 
@@ -712,6 +731,7 @@ def request_certificate(enrollment_id: UUID, request: Request, current_user: Aca
     db.add(certificate)
     db.commit()
     db.refresh(certificate)
+    _invalidate_dashboard_for(db, current_user)  # M-04 — contador de certificados fresh
     return certificate
 
 
@@ -1314,6 +1334,7 @@ def create_course_admin(payload: schemas.CoursePayload, current_user: AcademyEdi
     db.add(course)
     db.commit()
     db.refresh(course)
+    _invalidate_dashboard_for(db, current_user)  # M-04 — fresh dashboard tras crear curso
     return _serialize_course(course)
 
 
@@ -1341,6 +1362,7 @@ def update_course_admin(
     )
     db.commit()
     db.refresh(course)
+    _invalidate_dashboard_for(db, current_user)  # M-04 — fresh dashboard tras actualizar curso
     return _serialize_course(course)
 
 
@@ -1359,6 +1381,7 @@ def archive_course_admin(course_id: UUID, current_user: AcademyManager, db: Sess
         )
     )
     db.commit()
+    _invalidate_dashboard_for(db, current_user)  # M-04 — fresh dashboard tras archivar curso
 
 
 @router.get("/admin/courses/{course_id}/students")

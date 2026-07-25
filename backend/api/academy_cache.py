@@ -38,6 +38,29 @@ def _dashboard_metrics_key(args, kwargs):
     return f"academy:dashboard:metrics:v1:sede={args[0]}"
 
 
+def invalidate_dashboard_metrics(sede_id_str: str) -> None:
+    """M-04 — invalidación activa del cache de ``dashboard_metrics``.
+
+    Borrar la key cacheada de la sede afectada tras una mutación que cambia
+    las métricas (Course archive/publish, Enrollment create, Certificate
+    emit, etc.). Antes, el cache era puramente pasivo con TTL 5min → un
+    Manager podía tomar decisiones con datos stale hasta 5 minutos.
+
+    Llamar solo tras un ``db.commit()`` exitoso, y pasando el mismo
+    ``sede_id_str`` que el lector usaría (``_global_`` para superadmin).
+    Es no-op si la key no existe. Safe en tests (MemoryRedis.delete mira
+    el store y no raises).
+    """
+    from backend.core.cache import get_redis
+
+    key = f"academy:dashboard:metrics:v1:sede={sede_id_str}"
+    try:
+        get_redis().delete(key)
+    except Exception:
+        # Best-effort: si Redis está caído no rompemos el flujo de mutación.
+        pass
+
+
 @cached(ttl=300, key_fn=_dashboard_metrics_key)
 def _fetch_dashboard_metrics_cached(
     sede_id_str: str,
@@ -53,10 +76,11 @@ def _fetch_dashboard_metrics_cached(
     filtra cursos por sede + cursos globales (``sede_id IS NULL``) — semántica
     idéntica a ``_course_scope`` en backend.api.academy.
 
-    Staleness: TTL 5min pasivo (no hay invalidación activa). Mutaciones de
-    Course (archive, publish toggle, nuevos Enrollments, cert emitidos) se
-    reflejan hasta 5min después, vía expiración natural. Aceptable para
-    un dashboard de métricas donde staleness de minutos no rompe contrato.
+    Staleness: TTL 5min pasivo, ALTA invalidación activa vía
+    ``invalidate_dashboard_metrics(sede_id_str)`` tras mutaciones
+    (Course archive/publish, Enrollment create, Certificate emit). El TTL
+    sigue siendo 5min como backstop para cualquier cambio que no invoque
+    el helper, pero el path normal ahora garantiza lectura fresh.
 
     Si se necesita lectura guaranteed-fresh tras un cambio, bump
     ``academy:dashboard:metrics:v1`` → ``v2`` en ``_dashboard_metrics_key``
@@ -176,10 +200,23 @@ def _fetch_dashboard_metrics_cached(
 
 
 def _list_lessons_key(args, kwargs):
-    """Cache key de list_lessons: (course_id, viewer_role, skip, limit)."""
+    """Cache key de list_lessons: (course_id, viewer_persona_id, is_editor, skip, limit).
+
+    M-05 — antes la key usaba ``viewer_role`` ("editor"/"student"), derivado
+    1:1 de ``is_editor``: dos estudiantes con permisos efectivos distintos
+    compartían "student" y la misma key pese a potencial divergencia futura.
+    Ahora la key incluye ``viewer_persona_id`` (estable por request y único por
+    usuario autenticado) + ``is_editor`` explícito, de modo que cualquier
+    personalización por usuario (roles granulares, ACLs) invalidar_a la key
+    correctamente sin compartir snapshot entre usuarios distintos.
+
+    Nota: ``args`` incluye también ``db: Session`` como último parámetro
+    (no serializable); se excluye de la key deliberadamente.
+    """
+    course_id_str, viewer_persona_id, is_editor, skip, limit, _db = args
     return (
-        f"academy:courses:{args[0]}:lessons:v1:"
-        f"viewer={args[1]}:skip={args[2]}:limit={args[3]}"
+        f"academy:courses:{course_id_str}:lessons:v1:"
+        f"user={viewer_persona_id}:editor={bool(is_editor)}:skip={skip}:limit={limit}"
     )
 
 
@@ -224,11 +261,11 @@ def _lesson_to_dict(lesson: models.Lesson) -> dict[str, Any]:
 @cached(ttl=300, key_fn=_list_lessons_key)
 def _fetch_list_lessons_cached(
     course_id_str: str,
-    viewer_role: str,
+    viewer_persona_id: str,
+    is_editor: bool,
     skip: int,
     limit: int,
     db: Session,
-    is_editor: bool,
 ) -> list[dict[str, Any]]:
     """Implementación cacheada de list_lessons (TKT-203).
 
@@ -247,6 +284,11 @@ def _fetch_list_lessons_cached(
     Si se necesita lectura guaranteed-fresh tras un cambio, bump
     ``academy:courses:{course_id}:lessons:v1`` → ``v2`` en ``_list_lessons_key``
     para forzar MISS general sin esperar al TTL.
+
+    M-05 — el parámetro ``viewer_persona_id`` reemplaza al anterior
+    ``viewer_role`` ("editor"/"student") en la cache key, para que dos
+    usuarios con rol "student" divergent-restrictibles reciban snapshots
+    separados por user-id.
     """
     query = (
         db.query(models.Lesson)
