@@ -343,28 +343,28 @@ La corrección estructural procede en orden de severidad:
 
 | Estado | ID | Commit | Fecha | Nota |
 |---|---|---|---|---|
-| ✅ CERRADO | C-01 | pendiente | 2026-07-25 | _find_existing_persona cross-sede corregido (sede_id param) |
-| ✅ CERRADO | C-02 | pendiente | 2026-07-25 | /roles/{id} IDOR + bulk global corregidos (scope sede) |
-| ✅ CERRADO | C-03 | pendiente | 2026-07-25 | /categorias PATCH/DELETE requieren admin + audit log POST |
-| 🟡 PARCIAL | C-04 | pendiente | 2026-07-25 | Modelo+Migración+_owned_flow aplicados. Pendiente backfill flow legacy y A-01 endpoints edges |
-| ✅ CERRADO | C-05 | pendiente | 2026-07-25 | 5 alias no-op eliminados router + 6 tests migrados canonical + LocalASGITestClient.default_headers mechanism. Remediation 6→38 passing aislado. F-02 queda opcional. |
-| 🟡 PARCIAL | A-01 | pendiente | 2026-07-25 | cross_flow_check usa _owned_flow; /automation-edges direct CRUD pendiente próxima iter |
-| ✅ CERRADO | A-02 | pendiente | 2026-07-25 | get_messaging_history_item external_id scoped (Axioma 3) |
-| ✅ CERRADO | A-07 | pendiente | 2026-07-25 | Refinado a IDOR: _list/_create/_delete_automation_edge_response scopen via sede del actor + JOIN CrmAutomation.sede_id (patrón C-02). 3 tests IDOR cross-sede nuevos en test_crm_sede_isolation.py. Smoke 135 passed. |
+| ✅ CERRADO | C-01 | `30037749` | 2026-07-25 | _find_existing_persona cross-sede corregido (sede_id param) |
+| ✅ CERRADO | C-02 | `30037749` | 2026-07-25 | /roles/{id} IDOR + bulk global corregidos (scope sede) |
+| ✅ CERRADO | C-03 | `30037749` | 2026-07-25 | /categorias PATCH/DELETE requieren admin + audit log POST |
+| 🟡 PARCIAL | C-04 | `30037749` | 2026-07-25 | Modelo+Migración+_owned_flow aplicados. Pendiente backfill flow legacy y A-01 endpoints edges |
+| ✅ CERRADO | C-05 | `30037749` | 2026-07-25 | 5 alias no-op eliminados router + 6 tests migrados canonical + LocalASGITestClient.default_headers mechanism. Remediation 6→38 passing aislado. F-02 queda opcional. |
+| 🟡 PARCIAL | A-01 | `30037749` | 2026-07-25 | cross_flow_check usa _owned_flow; /automation-edges direct CRUD pendiente próxima iter |
+| ✅ CERRADO | A-02 | `30037749` | 2026-07-25 | get_messaging_history_item external_id scoped (Axioma 3) |
+| ✅ CERRADO | A-07 | `30037749` | 2026-07-25 | Refinado a IDOR: _list/_create/_delete_automation_edge_response scopen via sede del actor + JOIN CrmAutomation.sede_id (patrón C-02). 3 tests IDOR cross-sede nuevos en test_crm_sede_isolation.py. Smoke 135 passed. |
 | 🟢 YA-CUBIERTO | A-03 | — | 2026-07-25 | Refinamiento: _get_scoped_family + list_families filtro post-fetch + tests validez → cubierto estructuralmente. create_family sin sede es design correcto (Family derivado via Persona). No requiere fix. |
 | 🟢 YA-CUBIERTO | A-04 | — | 2026-07-25 | Parcial: CrmAutomation (C-04) + CrmAutomationEdge (A-07) cerrados. Position/Ministry/VolunteerSkill = catálogos globales legítimos (C-03). Restante RoleDefinition/Fund = sede_id visible pero 0 callers API → APLAZAR. |
 | 🔴 LATENTE | A-05 | — | 2026-07-25 | VolunteerShift 0 callers API (endpoints /volunteers manipulan Persona directo). Reabrir si surge endpoint /volunteer-shifts. |
 | 🟢 YA-CUBIERTO | A-06 | — | 2026-07-25 | get_crm_tasks/delete_crm_task = código muerto sin caller API. create/update_crm_task ya hardening-vía _crud_scope_re_check_task. No requiere fix. |
 | 🔴 PENDIENTE | A-08 | — | — | ⚠ Corregir: cubierto por _owned_flow (C-04) y _get_scoped_task en pastoral.py. Re-validación post-C-04. |
 | 🔴 PENDIENTE | A-09 | — | — | catches frontend silenciosos |
-| ✅ CERRADO | M-01 | pendiente | 2026-07-25 | get_user_sede_id + _actor_sede_or_none + _resolve_anchor_sede retornan UUID\|None. wiki.py caller idempotente fix. |
-| ✅ CERRADO | M-02 | pendiente | 2026-07-25 | Subsumido por M-01. get_communication_logs sede_id UUID|str|None + _coerce_sede_uuid local. |
+| ✅ CERRADO | M-01 | `963b8a76` | 2026-07-25 | get_user_sede_id + _actor_sede_or_none + _resolve_anchor_sede retornan UUID\|None. wiki.py caller idempotente fix. |
+| ✅ CERRADO | M-02 | `963b8a76` | 2026-07-25 | Subsumido por M-01. get_communication_logs sede_id UUID|str|None + _coerce_sede_uuid local. |
 | 🔴 PENDIENTE | M-03 | — | — | Ministry.all() sin scope (subsume con A-04) |
-| 🔴 PENDIENTE | M-04 | — | — | response_model=dict drift |
+| ✅ CERRADO | M-04 | `30037749` | 2026-07-25 | response_model dict→List[dict] en 3 endpoints (counseling/lead, groups, casos/{id}/calls). 3 tests nuevos validan serialización array. |
 | 🔴 PENDIENTE | M-05 | — | — | useEffect sin AbortController (~10 componentes) |
 | 🔴 PENDIENTE | M-06 | — | — | URL [id] sin validación (9 componentes) |
 | 🔴 PENDIENTE | M-07 | — | — | Tailwind hardcoded colors |
-| ✅ CERRADO | M-08 | — | 2026-07-25 | Subsumido por C-02 — confirmado: pastoral.py:1780-1839 already includes None check (L1811), == role_id (L1816), fallback sede scope (L1832). |
+| ✅ CERRADO | M-08 | `83b1e1da` | 2026-07-25 | Subsumido por C-02 — confirmado: pastoral.py:1780-1839 already includes None check (L1811), == role_id (L1816), fallback sede scope (L1832). |
 | 🟡 REVISIÓN | I-01 | — | — | @computed_field en pipeline serializers |
 | 🟡 REVISIÓN | I-02 | — | — | _ensure_utc en read schemas |
 | 🟡 REVISIÓN | I-03 | — | — | TestCrmIdorCrossSede refactor |
