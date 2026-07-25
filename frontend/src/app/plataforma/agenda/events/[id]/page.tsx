@@ -7,16 +7,7 @@ import WorkspaceLayout from "@/components/WorkspaceLayout";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
-
-type AgendaEvent = {
-    id: number;
-    title: string;
-    description?: string | null;
-    start_at: string;
-    end_at?: string | null;
-    location?: string | null;
-    is_all_day: boolean;
-};
+import type { AgendaEvent } from "@/types/agenda";
 
 export default function AgendaEventDetailPage() {
     const { token } = useAuth();

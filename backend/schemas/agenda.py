@@ -13,6 +13,9 @@ class AgendaEventCreate(BaseModel):
     end_at: datetime | None = None
     location: str | None = None
     is_all_day: bool = True
+    color_hex: str | None = Field(default=None, max_length=10)
+    url_conferencia: str | None = Field(default=None, max_length=255)
+    visibilidad: str = Field(default="SEDE", pattern="^(PRIVADO|PUBLICO|COMUNIDAD|SEDE)$")
 
     @model_validator(mode="after")
     def validate_range(self):

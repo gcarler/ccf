@@ -43,8 +43,10 @@ def _event_payload(payload: AgendaEventCreate, sede_id: UUID, persona_id: UUID) 
         "todo_el_dia": payload.is_all_day,
         "ubicacion_texto": payload.location,
         "organizador_persona_id": persona_id,
-        "visibilidad": "SEDE",
+        "visibilidad": payload.visibilidad,
         "estado": "ACTIVO",
+        "color_hex": payload.color_hex,
+        "url_conferencia": payload.url_conferencia,
     }
 
 
@@ -60,6 +62,9 @@ def _serialize_event(row: models.EventoAgenda) -> dict:
         "created_by_persona_id": row.organizador_persona_id,
         "created_at": row.created_at,
         "updated_at": row.updated_at,
+        "color_hex": row.color_hex,
+        "url_conferencia": row.url_conferencia,
+        "visibilidad": row.visibilidad,
     }
 
 
@@ -97,10 +102,13 @@ def _serialize_reservation(row: models.ReservaRecurso) -> dict:
 
 @router.get("/events", response_model=list[AgendaEvent])
 def list_events(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=500),
     db: Session = Depends(get_db),
     current_user: models.User = AgendaReader,
 ):
-    return [_serialize_event(row) for row in crud.list_events(db, _sede_id(db, current_user))]
+    rows = crud.list_events(db, _sede_id(db, current_user))
+    return [_serialize_event(row) for row in rows[skip:skip + limit]]
 
 
 @router.get("/events/by-date-range", response_model=list[AgendaEvent])
@@ -336,12 +344,9 @@ def create_reservation(
     current_user: models.User = AgendaEditor,
 ):
     _validate_reservation_scope(db, payload, _sede_id(db, current_user))
-    conflict = db.query(models.ReservaRecurso).filter(
-        models.ReservaRecurso.recurso_id == payload.resource_id,
-        models.ReservaRecurso.bloqueo_inicio < payload.ends_at,
-        models.ReservaRecurso.bloqueo_fin > payload.starts_at,
-        models.ReservaRecurso.deleted_at.is_(None),
-    ).first()
+    conflict = crud.check_reservation_conflict(
+        db, payload.resource_id, payload.starts_at, payload.ends_at
+    )
     if conflict:
         raise HTTPException(status_code=409, detail="El recurso ya está reservado en ese horario")
     row = crud.create_reservation(
@@ -368,13 +373,10 @@ def update_reservation(
     if not row or not crud.get_event(db, row.evento_id, sede_id):
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
     _validate_reservation_scope(db, payload, sede_id)
-    conflict = db.query(models.ReservaRecurso).filter(
-        models.ReservaRecurso.id != reservation_id,
-        models.ReservaRecurso.recurso_id == payload.resource_id,
-        models.ReservaRecurso.bloqueo_inicio < payload.ends_at,
-        models.ReservaRecurso.bloqueo_fin > payload.starts_at,
-        models.ReservaRecurso.deleted_at.is_(None),
-    ).first()
+    conflict = crud.check_reservation_conflict(
+        db, payload.resource_id, payload.starts_at, payload.ends_at,
+        exclude_reservation_id=reservation_id,
+    )
     if conflict:
         raise HTTPException(status_code=409, detail="El recurso ya está reservado en ese horario")
     row = crud.update_reservation(

@@ -519,40 +519,84 @@ def get_finance_dashboard(db: Session) -> FinanceDashboard:
 # ═══════════════════════════════════════════════════════════════════
 
 def get_agenda_dashboard(db: Session) -> AgendaDashboard:
-    from sqlalchemy import text as sqlt
+    from backend.models_agenda import EventoAgenda, ReservaRecurso, RecursoFisico
+    from backend.models_agenda import ParticipanteEvento
+    from sqlalchemy import func
 
-    total = db.execute(sqlt("SELECT COUNT(*) FROM agenda_events")).scalar() or 0
-    upcoming = db.execute(sqlt(
-        "SELECT COUNT(*) FROM agenda_events WHERE start_at >= :now"
-    ), {"now": _utcnow()}).scalar() or 0
+    now = _utcnow()
 
-    # Próximos eventos
-    proximos = db.execute(sqlt("""
-        SELECT title, location, start_at, end_at
-        FROM agenda_events
-        WHERE start_at >= :now
-        ORDER BY start_at ASC
-        LIMIT 5
-    """), {"now": _utcnow()}).all()
+    total = (
+        db.query(func.count(EventoAgenda.id))
+        .filter(EventoAgenda.deleted_at.is_(None))
+        .scalar() or 0
+    )
+    upcoming = (
+        db.query(func.count(EventoAgenda.id))
+        .filter(
+            EventoAgenda.deleted_at.is_(None),
+            EventoAgenda.fecha_inicio >= now,
+        )
+        .scalar() or 0
+    )
+
+    proximos = (
+        db.query(EventoAgenda)
+        .filter(
+            EventoAgenda.deleted_at.is_(None),
+            EventoAgenda.fecha_inicio >= now,
+        )
+        .order_by(EventoAgenda.fecha_inicio.asc())
+        .limit(5)
+        .all()
+    )
 
     eventos_proximos = [
-        {"titulo": r[0], "ubicacion": r[1] or "",
-         "fecha": r[2].isoformat() if hasattr(r[2], 'isoformat') else str(r[2]),
-         "participantes": 0}
-        for r in proximos
+        {
+            "titulo": ev.titulo,
+            "ubicacion": ev.ubicacion_texto or "",
+            "fecha": ev.fecha_inicio.isoformat() if hasattr(ev.fecha_inicio, 'isoformat') else str(ev.fecha_inicio),
+            "participantes": (
+                db.query(func.count(ParticipanteEvento.id))
+                .filter(
+                    ParticipanteEvento.evento_id == ev.id,
+                    ParticipanteEvento.deleted_at.is_(None),
+                )
+                .scalar() or 0
+            ),
+        }
+        for ev in proximos
     ]
+
+    total_recursos = (
+        db.query(func.count(RecursoFisico.id))
+        .filter(
+            RecursoFisico.deleted_at.is_(None),
+            RecursoFisico.activo.is_(True),
+        )
+        .scalar() or 0
+    )
+
+    colisiones = (
+        db.query(func.count(ReservaRecurso.id))
+        .filter(
+            ReservaRecurso.deleted_at.is_(None),
+            ReservaRecurso.bloqueo_inicio < now,
+            ReservaRecurso.bloqueo_fin > now,
+        )
+        .scalar() or 0
+    )
 
     return AgendaDashboard(
         cards=[
             MetricCard(title="Eventos", value=str(total), trend=f"{upcoming} próximos", tone="blue", icon="Calendar"),
             MetricCard(title="Próximos 30d", value=str(upcoming), tone="emerald", icon="CalendarCheck"),
-            MetricCard(title="Colisiones", value="0", tone="amber", icon="AlertTriangle"),
-            MetricCard(title="Recursos", value="0", tone="blue", icon="Package"),
+            MetricCard(title="Colisiones", value=str(colisiones), tone="amber", icon="AlertTriangle"),
+            MetricCard(title="Recursos", value=str(total_recursos), tone="blue", icon="Package"),
         ],
         eventos_proximos=eventos_proximos,
         recursos_ocupados=[],
         participacion_por_evento=[],
-        colisiones_recurso=0,
+        colisiones_recurso=colisiones,
         filters=[],
         last_updated=_utcnow().isoformat(),
     )
