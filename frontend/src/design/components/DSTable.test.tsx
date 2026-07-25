@@ -208,4 +208,145 @@ describe('DSTable', () => {
         );
         expect(await axe(container)).toHaveNoViolations();
     });
+
+    describe('column visibility', () => {
+        it('renders the "Columnas" menu button when enableColumnVisibility is set', () => {
+            render(
+                <DSTable
+                    data={baseData}
+                    columns={baseColumns}
+                    enableColumnVisibility
+                />
+            );
+            expect(screen.getByRole('button', { name: /Columnas/i })).toBeInTheDocument();
+        });
+
+        it('does not render the "Columnas" button by default', () => {
+            render(<DSTable data={baseData} columns={baseColumns} />);
+            expect(screen.queryByRole('button', { name: /Columnas/i })).not.toBeInTheDocument();
+        });
+
+        it('opens the checklist menu and lists every column on click', () => {
+            render(
+                <DSTable
+                    data={baseData}
+                    columns={baseColumns}
+                    enableColumnVisibility
+                />
+            );
+            fireEvent.click(screen.getByRole('button', { name: /Columnas/i }));
+            // Ambos headers aparecen como items del menú (rol menuitemcheckbox).
+            const items = screen.getAllByRole('menuitemcheckbox');
+            expect(items).toHaveLength(2);
+            expect(items[0]).toHaveTextContent('Nombre');
+            expect(items[1]).toHaveTextContent('Rol');
+            expect(items[0]).toHaveAttribute('aria-checked', 'true');
+        });
+
+        it('hides a column when its menu item is toggled off', () => {
+            const { container } = render(
+                <DSTable
+                    data={baseData}
+                    columns={baseColumns}
+                    enableColumnVisibility
+                />
+            );
+            fireEvent.click(screen.getByRole('button', { name: /Columnas/i }));
+            // Toggling 'Nombre' off → column disappears from the rendered table.
+            fireEvent.click(screen.getByRole('menuitemcheckbox', { name: /Nombre/i }));
+            const headNames = Array.from(
+                container.querySelectorAll('thead th')
+            ) as HTMLTableCellElement[];
+            expect(headNames.some((th) => th.textContent?.includes('Nombre'))).toBe(false);
+        });
+
+        it('closes the menu on outside click', () => {
+            render(
+                <DSTable
+                    data={baseData}
+                    columns={baseColumns}
+                    enableColumnVisibility
+                />
+            );
+            fireEvent.click(screen.getByRole('button', { name: /Columnas/i }));
+            expect(screen.getAllByRole('menuitemcheckbox')).toHaveLength(2);
+            // Outside click closes the menu.
+            fireEvent.mouseDown(document.body);
+            expect(screen.queryAllByRole('menuitemcheckbox')).toHaveLength(0);
+        });
+    });
+
+    describe('row selection', () => {
+        it('does not render a checkbox column by default', () => {
+            const { container } = render(
+                <DSTable data={baseData} columns={baseColumns} />
+            );
+            const checkboxes = container.querySelectorAll('tbody input[type="checkbox"]');
+            expect(checkboxes).toHaveLength(0);
+        });
+
+        it('renders one checkbox per data row plus the header when enableRowSelection is set', () => {
+            const { container } = render(
+                <DSTable
+                    data={baseData}
+                    columns={baseColumns}
+                    enableRowSelection
+                />
+            );
+            const headerCheckbox = container.querySelector('thead input[type="checkbox"]');
+            const bodyCheckboxes = container.querySelectorAll('tbody input[type="checkbox"]');
+            expect(headerCheckbox).not.toBeNull();
+            expect(bodyCheckboxes).toHaveLength(3); // 3 data rows
+        });
+
+        it('selects all rows when the header checkbox is clicked', () => {
+            const { container } = render(
+                <DSTable
+                    data={baseData}
+                    columns={baseColumns}
+                    enableRowSelection
+                />
+            );
+            const headerCheckbox = container.querySelector('thead input[type="checkbox"]') as HTMLInputElement;
+            fireEvent.click(headerCheckbox);
+            const bodyCheckboxes = Array.from(
+                container.querySelectorAll('tbody input[type="checkbox"]')
+            ) as HTMLInputElement[];
+            expect(bodyCheckboxes.every((cb) => cb.checked)).toBe(true);
+        });
+
+        it('calls onSelectionChange with the selected row objects', () => {
+            const handleSelection = vi.fn();
+            render(
+                <DSTable
+                    data={baseData}
+                    columns={baseColumns}
+                    enableRowSelection
+                    onSelectionChange={handleSelection}
+                />
+            );
+            const firstRowCheckbox = screen.getAllByLabelText(/Seleccionar fila 1/i)[0];
+            fireEvent.click(firstRowCheckbox);
+            // Effect fires async; at least one call happened with the matching row.
+            expect(handleSelection).toHaveBeenCalled();
+            const lastCall = handleSelection.mock.calls[handleSelection.mock.calls.length - 1][0];
+            expect(Array.isArray(lastCall)).toBe(true);
+            expect(lastCall).toContainEqual(baseData[0]);
+        });
+
+        it('deselects a row on a second checkbox click', () => {
+            const { container } = render(
+                <DSTable
+                    data={baseData}
+                    columns={baseColumns}
+                    enableRowSelection
+                />
+            );
+            const firstRowCheckbox = screen.getAllByLabelText(/Seleccionar fila 1/i)[0];
+            fireEvent.click(firstRowCheckbox);
+            expect(firstRowCheckbox).toHaveProperty('checked', true);
+            fireEvent.click(firstRowCheckbox);
+            expect(firstRowCheckbox).toHaveProperty('checked', false);
+        });
+    });
 });
