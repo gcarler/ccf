@@ -492,7 +492,11 @@ def test_tier2_f5_flow_builder_invalid_node_type(client, db_session):
 
 def test_tier2_f5_flow_builder_unicode_labels(client, db_session):
     headers = _automation_headers(client, db_session, email="crm-visual-admin-13@example.com")
-    response = client.post("/api/crm/automations/flows/unicode", json={"label": "🤖_unicode_flujo"}, headers=headers)
+    # QC-12 (auditoría de calidad 2026-07-25): migrado del alias removido
+    # ``/flows/unicode`` (no-op que retornaba {"status":"success"} sin leer
+    # payload, eliminado por C-05) al canonical ``/flows/empty`` que sí
+    # valida el grafo y retorna 200 con payload vacio legítimo.
+    response = client.post("/api/crm/automations/flows/empty", json={"label": "🤖_unicode_flujo"}, headers=headers)
     assert response.status_code == 200
 
 # Feature 6: 3-Node Connection (5 tests)
@@ -569,18 +573,56 @@ def test_tier2_f7_backend_branching_unexpected_operator(client, db_session):
 # Feature 8: Loop/Cycle Validation (5 tests)
 def test_tier2_f8_loop_cycle_deep_nesting(client, db_session):
     headers = _automation_headers(client, db_session, email="crm-visual-admin-24@example.com")
-    response = client.post("/api/crm/automations/flows/cycle-deep", json={}, headers=headers)
+    # QC-12 (auditoría de calidad 2026-07-25): migrado del alias removido
+    # ``/flows/cycle-deep`` (wrapper trivial de ``check_cycles`` eliminado
+    # por C-05) al canonical ``/flows/check-cycles`` con payload de un grafo
+    # con ciclo profundo anidado (n1→n2→n3→n1).
+    response = client.post("/api/crm/automations/flows/check-cycles", json={
+        "nodes": ["n1", "n2", "n3", "n4"],
+        "edges": [
+            {"source": "n1", "target": "n2"},
+            {"source": "n2", "target": "n3"},
+            {"source": "n3", "target": "n4"},
+            {"source": "n4", "target": "n2"}
+        ]
+    }, headers=headers)
     assert response.status_code == 200
+    # Endpoint canonical retorna {"cycles": [...]}. Lista NO vacía = ciclo.
+    assert len(response.json()["cycles"]) > 0
 
 def test_tier2_f8_loop_cycle_multiple_cycles(client, db_session):
     headers = _automation_headers(client, db_session, email="crm-visual-admin-25@example.com")
-    response = client.post("/api/crm/automations/flows/multiple-cycles", json={}, headers=headers)
+    # QC-12: migrado del alias ``/flows/multiple-cycles`` a canonical
+    # ``/flows/check-cycles`` con payload de grafo con dos ciclos (n1→n2→n1
+    # + n3→n4→n3).
+    response = client.post("/api/crm/automations/flows/check-cycles", json={
+        "nodes": ["n1", "n2", "n3", "n4"],
+        "edges": [
+            {"source": "n1", "target": "n2"},
+            {"source": "n2", "target": "n1"},
+            {"source": "n3", "target": "n4"},
+            {"source": "n4", "target": "n3"}
+        ]
+    }, headers=headers)
     assert response.status_code == 200
+    assert len(response.json()["cycles"]) > 0
 
 def test_tier2_f8_loop_cycle_disconnected_cycles(client, db_session):
     headers = _automation_headers(client, db_session, email="crm-visual-admin-26@example.com")
-    response = client.post("/api/crm/automations/flows/disconnected-subgraph-cycles", json={}, headers=headers)
+    # QC-12: migrado del alias ``/flows/disconnected-subgraph-cycles`` a
+    # canonical ``/flows/check-cycles`` con payload de grafo con dos
+    # subgrafos disconnexos cada uno con un ciclo.
+    response = client.post("/api/crm/automations/flows/check-cycles", json={
+        "nodes": ["n1", "n2", "n3", "n4"],
+        "edges": [
+            {"source": "n1", "target": "n2"},
+            {"source": "n2", "target": "n1"},
+            {"source": "n3", "target": "n4"},
+            {"source": "n4", "target": "n3"}
+        ]
+    }, headers=headers)
     assert response.status_code == 200
+    assert len(response.json()["cycles"]) > 0
 
 def test_tier2_f8_loop_cycle_valid_dag_false_alarm(client, db_session):
     headers = _automation_headers(client, db_session, email="crm-visual-admin-27@example.com")
@@ -589,8 +631,19 @@ def test_tier2_f8_loop_cycle_valid_dag_false_alarm(client, db_session):
 
 def test_tier2_f8_loop_cycle_concurrent_validation(client, db_session):
     headers = _automation_headers(client, db_session, email="crm-visual-admin-28@example.com")
-    response = client.post("/api/crm/automations/flows/concurrent-cycle-checks", json={}, headers=headers)
+    # QC-12: migrado del alias ``/flows/concurrent-cycle-checks`` (wrapper
+    # trivial de ``check_cycles`` eliminado por C-05) a canonical
+    # ``/flows/check-cycles`` con payload de DAG sin ciclos (valid path).
+    response = client.post("/api/crm/automations/flows/check-cycles", json={
+        "nodes": ["n1", "n2", "n3"],
+        "edges": [
+            {"source": "n1", "target": "n2"},
+            {"source": "n2", "target": "n3"}
+        ]
+    }, headers=headers)
     assert response.status_code == 200
+    # DAG sin ciclos → ``cycles`` lista vacía.
+    assert len(response.json()["cycles"]) == 0
 
 
 # ==============================================================================
@@ -628,7 +681,10 @@ def test_tier3_drag_drop_atomic_reorder(db_session):
 def test_tier3_flow_builder_three_node(client, db_session):
     from backend.models_crm import CrmAutomationFlow, CrmAutomationNode
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
-    flow = CrmAutomationFlow(name="Test Flow", is_active=True)
+    # QC-13 (auditoría de calidad 2026-07-25): el flow se crea CON sede_id
+    # del admin (doctrina C-04 _owned_flow: legacy NULL = fuera-de-scope
+    # desde sede concreta). Antes creaba flow sin sede_id → 404 en endpoint.
+    flow = CrmAutomationFlow(name="Test Flow", is_active=True, sede_id=sede.id)
     db_session.add(flow)
     db_session.commit()
     node1 = CrmAutomationNode(flow_id=flow.id, node_type="new_persona", ports_config={"output": "out"})
@@ -751,7 +807,10 @@ def test_tier4_scenario2_support_ticket_routing(client, db_session):
 def test_tier4_scenario3_cyclical_flow_resolution(client, db_session):
     from backend.models_crm import CrmAutomationFlow
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
-    flow = CrmAutomationFlow(name="Cyclical Flow Test", is_active=True)
+    # QC-13 (auditoría de calidad 2026-07-25): el flow se crea CON sede_id
+    # del admin (doctrina C-04 _owned_flow requiere sede_id no NULL cuando
+    # el actor tiene sede). Antes creaba flow sin sede_id → 404 en endpoint.
+    flow = CrmAutomationFlow(name="Cyclical Flow Test", is_active=True, sede_id=sede.id)
     db_session.add(flow)
     db_session.commit()
     headers = auth_headers(client, email=admin.email)
