@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
+import { toast } from 'sonner';
 import type { EnrollmentRecord } from '@/types/academy';
 
 interface UseEnrollmentsResult {
@@ -33,11 +34,22 @@ export function useStudentEnrollments(): UseEnrollmentsResult {
       });
       setEnrollments(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
-      // H-11 (cierre 2026-07-24): catch unknown — toasting was already
-      // swallowed upstream (I-05); preserve the empty-state UX while
-      // keeping the typed error path for future telemetry.
+      // I-05 (cierre 2026-07-24): antes el error se silenciaba sin feedback.
+      // Ahora se hace toast al usuario (UX), se conserva el empty-state y se
+      // mantiene el catch ``unknown`` tipo-safe (H-11).
+      let message = 'No pudimos cargar tus inscripciones';
+      if (err instanceof Error && err.message) {
+        message = err.message;
+      } else if (
+        err && typeof err === 'object' &&
+        'detail' in err &&
+        typeof (err as { detail?: unknown }).detail === 'string'
+      ) {
+        message = (err as { detail: string }).detail;
+      }
       console.warn("Enrollments fetch warning:", err instanceof Error ? err.message : err);
-      setError(null); // Force empty state instead of red error text for UX
+      toast.error(message);
+      setError(message);
       setEnrollments([]);
     } finally {
       setLoading(false);

@@ -45,18 +45,23 @@ export function useCourseLessons(courseIds: string[], token?: string | null): Le
           setLessonsByCourse((prev) => ({ ...prev, ...Object.fromEntries(results) }));
         }
       } catch (err: unknown) {
-        // H-11 (cierre 2026-07-24): catch unknown. apiFetch rechaza con
-        // Error o un objeto con ``detail`` (HTTP error shape del backend);
-        // extraemos el mensaje de forma tipo-safe sin ``any``.
+        // H-11/I-07 (cierre 2026-07-24): catch unknown — extracción tipo-safe
+        // del mensaje sin ``any``. El backend FastAPI rechaza con un shape
+        // ``{detail: string}`` o ``{detail: {message: string}}``; los errores
+        // lanzados por ``apiFetch`` son ``Error`` estándar. Cubrimos ambos.
         if (!cancelled) {
-          const message =
-            (err && typeof err === 'object' && 'detail' in err &&
-              typeof (err as { detail?: { message?: string } }).detail?.message === 'string'
-              ? (err as { detail: { message: string } }).detail.message
-              : undefined) ||
-            (err instanceof Error ? err.message : undefined) ||
-            'No pudimos cargar el contenido de los cursos';
-          setError(message);
+          let message: string | undefined;
+          if (err && typeof err === 'object' && 'detail' in err) {
+            const detail = (err as { detail?: unknown }).detail;
+            if (typeof detail === 'string') {
+              message = detail;
+            } else if (detail && typeof detail === 'object' && 'message' in detail) {
+              const inner = (detail as { message?: unknown }).message;
+              if (typeof inner === 'string') message = inner;
+            }
+          }
+          if (!message && err instanceof Error) message = err.message;
+          setError(message || 'No pudimos cargar el contenido de los cursos');
         }
       } finally {
         if (!cancelled) {

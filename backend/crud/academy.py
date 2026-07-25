@@ -2,10 +2,19 @@
 
 .. note::
 
-    This CRUD module is **OBSOLETE** and will be removed in a future release.
-    The API layer (``backend/api/academy.py``) inlines all queries directly.
-    No new code should import from this module. Existing callers should migrate
-    to using the API layer's inline queries or the ``schemas/academy.py`` models.
+    I-01 (cierre 2026-07-24): este CRUD **no** es OBSOLETE. La auditoría
+    forense de Academy (`erroresacademia.md` I-01) originalmente marcaba el
+    módulo como removible porque la API layer (``backend/api/academy.py``)
+    inlinea queries directamente. Sin embargo, los hallazgos A-06, A-07 y
+    H-04 endurecieron este módulo con kwargs opt-in ``sede_id`` para
+    defense-in-depth (defense-in-depth: la capa CRUD re-valida sede aunque
+    la API ya lo haga, protegiendo callers no-API como workers, seeds y
+    scripts de migración). La decisión arquitectural final es:
+    **mantener ``crud/academy.py`` como capa viva endurecida** — no eliminarla,
+    no declararla removible, y todos los getters/mutadores ``get_*``/
+    ``list_*``/``update_*``/``create_*`` deben exponer el kwarg ``sede_id=None``
+    opt-in. Tests que lo importan (``test_crud_all_modules``,
+    ``test_academy_domain``) son válidos y parte del contrato.
 """
 
 from __future__ import annotations
