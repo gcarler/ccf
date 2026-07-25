@@ -228,7 +228,7 @@ export default function CounselingDetailPage() {
                                             <button
                                                 onClick={() => setIsEditing(false)}
                                                 disabled={saving || copilotLoading}
-                                                className="px-3 py-1.5 bg-slate-600 text-white text-[10px] font-bold uppercase tracking-wide rounded hover:bg-slate-700 disabled:opacity-50"
+                                                className="px-3 py-1.5 bg-primary text-white text-[10px] font-bold uppercase tracking-wide rounded hover:bg-primary/90 disabled:opacity-50"
                                             >
                                                 Cancelar
                                             </button>

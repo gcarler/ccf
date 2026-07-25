@@ -277,7 +277,7 @@ function metricToneClass(tone?: string) {
         case 'blue':
             return 'bg-[hsl(var(--primary))]';
         default:
-            return 'bg-slate-400';
+            return 'bg-[hsl(var(--surface-2))]';
     }
 }
 

@@ -258,8 +258,8 @@ export default function VolunteersPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">Nombre Completo *</label>
-                                        <input required aria-invalid={!!formErrors.name} aria-describedby="vol-name-error" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre del servidor..." className={`w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border rounded-md outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all placeholder:text-[hsl(var(--text-secondary))] ${formErrors.name ? 'border-red-500 dark:border-red-500/50' : 'border-[hsl(var(--border))] dark:border-white/10'}`} />
-                                        {formErrors.name && <p id="vol-name-error" className="text-red-500 text-xs mt-1">Campo requerido</p>}
+                                        <input required aria-invalid={!!formErrors.name} aria-describedby="vol-name-error" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Nombre del servidor..." className={`w-full px-3 py-2.5 text-xs font-medium bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border rounded-md outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all placeholder:text-[hsl(var(--text-secondary))] ${formErrors.name ? 'border-danger dark:border-danger/50' : 'border-[hsl(var(--border))] dark:border-white/10'}`} />
+                                        {formErrors.name && <p id="vol-name-error" className="text-danger text-xs mt-1">Campo requerido</p>}
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">Equipo</label>

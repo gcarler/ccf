@@ -27,10 +27,10 @@ import type { PipelineLead } from '@/types/crm';
 
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
-import { DataTable } from '@/components/ui/DataTable';
+import { DSSkeleton, DSTable } from '@/design';
 import { ColumnDef } from '@tanstack/react-table';
-import { DSSkeleton } from '@/design';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
+import { DataTable } from '@/components/ui/DataTable';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -247,7 +247,7 @@ export default function ConsolidationPipelinePage() {
     }, [token, addToast, fetchPipeline, canEditCrm, resolveStageId]);
 
     // Table columns with proper labels
-    const columns = useMemo<ColumnDef<any>[]>(() => [
+    const columns = useMemo<ColumnDef<PipelineLead>[]>(() => [
         {
             accessorKey: 'name',
             header: 'Prospecto',
@@ -282,7 +282,7 @@ export default function ConsolidationPipelinePage() {
                         {stage.label}
                     </span>
                 ) : (
-                    <span className="text-[10px] text-[hsl(var(--text-secondary))]">{STAGE_LABEL[row.original.stage] ?? row.original.stage}</span>
+                    <span className="text-[10px] text-[hsl(var(--text-secondary))]">{STAGE_LABEL[row.original.stage ?? ''] ?? row.original.stage}</span>
                 );
             }
         },
@@ -292,7 +292,7 @@ export default function ConsolidationPipelinePage() {
             size: 130,
             cell: ({ row }) => (
                 <span className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">
-                    {SOURCES[row.original.source] ?? '📌'} {row.original.source ?? 'General'}
+                    {SOURCES[row.original.source ?? ''] ?? '📌'} {row.original.source ?? 'General'}
                 </span>
             )
         },
@@ -708,10 +708,14 @@ export default function ConsolidationPipelinePage() {
                                             </div>
                                         </div>
                                     )}
-                                    <DataTable
-                                        data={filteredLeads}
+                                    <DSTable
+                                        data={filteredLeads as any[]}
                                         columns={columns}
                                         onRowClick={(l) => handleLeadSelect(l)}
+                                        stickyHeader
+                                        cursorPointer
+                                        emptyMessage="No se encontraron resultados."
+                                        className="flex-1 min-w-[620px] md:min-w-[800px] bg-[hsl(var(--bg-primary))]"
                                         enableColumnVisibility
                                         enableRowSelection
                                         onSelectionChange={setSelectedLeads}
