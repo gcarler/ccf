@@ -7,6 +7,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from backend.schemas._common import AwareDateTime
+
 # ── CategoriaRecurso ──────────────────────────────────────────────────────────
 
 class CategoriaRecursoCreate(BaseModel):
@@ -55,7 +57,7 @@ class RecursoAdjuntoOut(BaseModel):
     nombre_archivo: str
     tipo_mime: str
     peso_bytes: int
-    fecha_creacion: datetime
+    fecha_creacion: AwareDateTime
 
     @classmethod
     def from_orm_safe(cls, obj) -> "RecursoAdjuntoOut":
@@ -112,8 +114,8 @@ class PlantillaMensajeOut(BaseModel):
     variables_requeridas: List[str]
     meta_template_id: Optional[str] = None
     creado_por_id: Optional[UUID] = None
-    fecha_creacion: datetime
-    fecha_actualizacion: datetime
+    fecha_creacion: AwareDateTime
+    fecha_actualizacion: AwareDateTime
     activo: bool
     categoria: Optional[CategoriaRecursoOut] = None
     adjuntos: List[RecursoAdjuntoOut] = []
@@ -159,7 +161,7 @@ class BitacoraEnvioOut(BaseModel):
     caso_id: Optional[UUID] = None
     enviado_por_id: Optional[UUID] = None
     destinatario_id: str
-    fecha_envio: datetime
+    fecha_envio: AwareDateTime
     estado: str
     payload_hidratado: Dict[str, Any]
     log_error: Optional[str] = None

@@ -8,7 +8,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from backend.core.context import user_role_context
-from backend.schemas._common import orm_config
+from backend.schemas._common import AwareDateTime, orm_config
 
 # Catálogo oficial de tipos de evento CCF
 EVENT_TYPES = [
@@ -82,12 +82,12 @@ class CrmEventBase(BaseModel):
     target_role_id: Optional[UUID] = None
     target_role_ids: Optional[list[UUID]] = None
     target_persona_ids: Optional[list[str]] = None
-    event_date: Optional[datetime] = None
+    event_date: Optional[AwareDateTime] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     day_of_week: Optional[int] = None
     month_day: Optional[str] = None
-    fixed_date: Optional[datetime] = None
+    fixed_date: Optional[AwareDateTime] = None
     location: Optional[str] = None
     status: str = "SCHEDULED"
     cancellation_reason: Optional[str] = None
@@ -106,7 +106,7 @@ class CrmEventUpdate(BaseModel):
     target_audience: Optional[EventAudienceType] = None
     target_role_ids: Optional[list[UUID]] = None
     target_persona_ids: Optional[list[str]] = None
-    event_date: Optional[datetime] = None
+    event_date: Optional[AwareDateTime] = None
     location: Optional[str] = None
     status: Optional[str] = None
     cancellation_reason: Optional[str] = None
@@ -114,7 +114,7 @@ class CrmEventUpdate(BaseModel):
 
 class CrmEvent(CrmEventBase):
     id: UUID
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
 
@@ -126,10 +126,10 @@ class EventAttendanceBase(BaseModel):
     status: str = "present"
     role_at_event: str = "attendee"
     source: str = "manual"
-    check_in_at: Optional[datetime] = None
-    check_out_at: Optional[datetime] = None
+    check_in_at: Optional[AwareDateTime] = None
+    check_out_at: Optional[AwareDateTime] = None
     notes: Optional[str] = None
-    scanned_at: Optional[datetime] = None
+    scanned_at: Optional[AwareDateTime] = None
 
 
 class EventAttendanceCreate(EventAttendanceBase):
@@ -138,7 +138,7 @@ class EventAttendanceCreate(EventAttendanceBase):
 
 class EventAttendance(EventAttendanceBase):
     id: UUID
-    scanned_at: Optional[datetime] = None
+    scanned_at: Optional[AwareDateTime] = None
     model_config = orm_config
 
 
@@ -175,7 +175,7 @@ class CounselingTicket(CounselingTicketBase):
     priority_level: Optional[str] = None
     sentiment_score: Optional[float] = None
     sentiment_label: Optional[str] = None
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
     @model_validator(mode="after")
@@ -227,7 +227,7 @@ class PrayerRequestPublicCreate(BaseModel):
 
 class PrayerRequest(PrayerRequestBase):
     id: UUID
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
 
@@ -258,7 +258,7 @@ class Donation(DonationBase):
     status: str = "completed"
     reference_code: Optional[str] = None
     payment_method: str = "Transferencia"
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
 
@@ -288,10 +288,10 @@ class CrmTaskBase(BaseModel):
     persona_id: Optional[UUID] = None
     assignee_id: Optional[UUID] = None
     category: Optional[str] = None
-    due_date: Optional[datetime] = None
+    due_date: Optional[AwareDateTime] = None
     status: CrmTaskStatus = CrmTaskStatus.pending
     priority: CrmTaskPriority = CrmTaskPriority.medium
-    completed_at: Optional[datetime] = None  # synonym en TareaCRM para fecha_completada
+    completed_at: Optional[AwareDateTime] = None  # synonym en TareaCRM para fecha_completada
 
 
 class CrmTaskCreate(CrmTaskBase):
@@ -318,8 +318,8 @@ class CrmTaskUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[CrmTaskStatus] = None
     priority: Optional[CrmTaskPriority] = None
-    due_date: Optional[datetime] = None
-    completed_at: Optional[datetime] = None  # side-effect: se estampa/limpia según status
+    due_date: Optional[AwareDateTime] = None
+    completed_at: Optional[AwareDateTime] = None  # side-effect: se estampa/limpia según status
     # FK fields (Axioma 3 Multi-Tenant):
     #   * persona_id: target persona de la tarea. Cambio cross-sede debe
     #     ser rechazado por el scope re-check del CRUD.
@@ -338,7 +338,7 @@ class CrmTaskUpdate(BaseModel):
 
 class CrmTask(CrmTaskBase):
     id: UUID
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
 
@@ -346,8 +346,8 @@ class VolunteerShiftBase(BaseModel):
     persona_id: UUID
     role_name: str
     team_name: str
-    shift_start: datetime
-    shift_end: datetime
+    shift_start: AwareDateTime
+    shift_end: AwareDateTime
     status: str = "confirmed"
     notes: Optional[str] = None
 
@@ -360,8 +360,8 @@ class VolunteerShiftUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     persona_id: Optional[UUID] = None
-    shift_start: Optional[datetime] = None
-    shift_end: Optional[datetime] = None
+    shift_start: Optional[AwareDateTime] = None
+    shift_end: Optional[AwareDateTime] = None
     role_name: Optional[str] = None
     team_name: Optional[str] = None
     status: Optional[str] = None
@@ -370,7 +370,7 @@ class VolunteerShiftUpdate(BaseModel):
 
 class VolunteerShift(VolunteerShiftBase):
     id: UUID
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
 
@@ -405,8 +405,8 @@ class PersonaMentorshipResponse(BaseModel):
     assigned_by_user_id: Optional[UUID] = None
     status: str = "active"
     notes: Optional[str] = None
-    started_at: datetime
-    ended_at: Optional[datetime] = None
+    started_at: AwareDateTime
+    ended_at: Optional[AwareDateTime] = None
     model_config = orm_config
 
 
@@ -422,7 +422,7 @@ class PersonaMeshInsight(BaseModel):
     metrics: List[PersonaMeshMetric] = Field(default_factory=list)
     signals: List[str] = Field(default_factory=list)
     current_mentorship: Optional[PersonaMentorshipResponse] = None
-    generated_at: datetime
+    generated_at: AwareDateTime
     model_config = orm_config
 
 
@@ -475,7 +475,7 @@ class PersonaResponse(BaseModel):
     is_baptized: Optional[bool] = None
     baptism_date: Optional[date] = None
     birthday: Optional[date] = None
-    created_at: Optional[datetime] = None
+    created_at: Optional[AwareDateTime] = None
     family_id: Optional[UUID] = None
     talents: Optional[str] = None
     spiritual_gifts: Optional[str] = None
@@ -543,7 +543,7 @@ class Persona(BaseModel):
     church_role: str = "Miembro"
     spiritual_status: str = "Nuevo"
     family_id: Optional[UUID] = None
-    birthday: Optional[datetime] = None
+    birthday: Optional[AwareDateTime] = None
     gender: Optional[str] = None  # Compat alias — DB column is 'sex'
     spiritual_health: float = 0.8
     academy_progress: float = 0.0
@@ -587,7 +587,7 @@ class Persona(BaseModel):
     church_join_date: Optional[date] = None
     colombian_department_id: Optional[UUID] = None
     city: Optional[str] = None
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
     @model_validator(mode="after")
@@ -757,7 +757,7 @@ class PositionUpdate(BaseModel):
 
 class Position(PositionBase):
     id: UUID
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
 
@@ -784,8 +784,8 @@ class PersonaMinistryAssignmentBase(BaseModel):
     persona_id: UUID
     ministry_id: UUID
     role: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[AwareDateTime] = None
+    end_date: Optional[AwareDateTime] = None
     is_active: bool = True
     notes: Optional[str] = None
 
@@ -798,7 +798,7 @@ class PersonaMinistryAssignmentUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     role: Optional[str] = None
-    end_date: Optional[datetime] = None
+    end_date: Optional[AwareDateTime] = None
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
@@ -811,8 +811,8 @@ class PersonaMinistryAssignment(PersonaMinistryAssignmentBase):
 class PersonaPositionBase(BaseModel):
     persona_id: UUID
     position_id: UUID
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[AwareDateTime] = None
+    end_date: Optional[AwareDateTime] = None
     is_active: bool = True
     notes: Optional[str] = None
 
@@ -825,8 +825,8 @@ class PersonaPositionUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     position_id: Optional[UUID] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[AwareDateTime] = None
+    end_date: Optional[AwareDateTime] = None
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
@@ -858,7 +858,7 @@ class FormationLevelUpdate(BaseModel):
 
 class FormationLevel(FormationLevelBase):
     id: UUID
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
 
@@ -867,8 +867,8 @@ class PersonaFormationBase(BaseModel):
     formation_level_id: UUID
     role_in_level: str = "student"
     cohort: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[AwareDateTime] = None
+    end_date: Optional[AwareDateTime] = None
     is_active: bool = True
     notes: Optional[str] = None
 
@@ -883,8 +883,8 @@ class PersonaFormationUpdate(BaseModel):
     formation_level_id: Optional[UUID] = None
     role_in_level: Optional[str] = None
     cohort: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[AwareDateTime] = None
+    end_date: Optional[AwareDateTime] = None
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
@@ -930,8 +930,8 @@ class EvangelismStrategyBase(BaseModel):
     niche_objective: Optional[str] = None
     strategy_type: Optional[str] = None
     default_role_id: Optional[UUID] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[AwareDateTime] = None
+    end_date: Optional[AwareDateTime] = None
     status: str = "active"
     group_count: Optional[int] = None
 
@@ -940,9 +940,9 @@ class EvangelismStrategy(EvangelismStrategyBase):
     """Respuesta canónica de una estrategia de evangelismo."""
 
     id: UUID
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    fecha_creacion: Optional[datetime] = None
+    created_at: Optional[AwareDateTime] = None
+    updated_at: Optional[AwareDateTime] = None
+    fecha_creacion: Optional[AwareDateTime] = None
     model_config = orm_config
 
 
@@ -950,8 +950,8 @@ class PersonaEvangelismBase(BaseModel):
     persona_id: UUID
     evangelism_strategy_id: UUID
     role: str = "assistant"
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[AwareDateTime] = None
+    end_date: Optional[AwareDateTime] = None
     is_active: bool = True
     notes: Optional[str] = None
 
@@ -965,8 +965,8 @@ class PersonaEvangelismUpdate(BaseModel):
 
     evangelism_strategy_id: Optional[UUID] = None  # UUID string
     role: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[AwareDateTime] = None
+    end_date: Optional[AwareDateTime] = None
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
@@ -981,8 +981,8 @@ class TeachingAssignmentBase(BaseModel):
     formation_level_id: UUID
     subject: Optional[str] = None
     group_name: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[AwareDateTime] = None
+    end_date: Optional[AwareDateTime] = None
     is_active: bool = True
     notes: Optional[str] = None
 
@@ -997,8 +997,8 @@ class TeachingAssignmentUpdate(BaseModel):
     formation_level_id: Optional[UUID] = None
     subject: Optional[str] = None
     group_name: Optional[str] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    start_date: Optional[AwareDateTime] = None
+    end_date: Optional[AwareDateTime] = None
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
@@ -1015,8 +1015,8 @@ class CaseUpdate(BaseModel):
     status: Optional[str] = None
     source: Optional[str] = None
     source_campaign: Optional[str] = None
-    last_contact_at: Optional[datetime] = None
-    next_contact_at: Optional[datetime] = None
+    last_contact_at: Optional[AwareDateTime] = None
+    next_contact_at: Optional[AwareDateTime] = None
     assigned_pastor_id: Optional[UUID] = None
     assigned_leader_id: Optional[UUID] = None
     notes: Optional[str] = None
@@ -1026,10 +1026,10 @@ class CaseInteractionCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     interaction_type: str
-    interaction_date: Optional[datetime] = None
+    interaction_date: Optional[AwareDateTime] = None
     result: Optional[str] = None
     notes: Optional[str] = None
-    next_action_date: Optional[datetime] = None
+    next_action_date: Optional[AwareDateTime] = None
 
 
 class CaseTaskCreate(BaseModel):
@@ -1037,9 +1037,9 @@ class CaseTaskCreate(BaseModel):
 
     title: str
     description: Optional[str] = None
-    due_date: Optional[datetime] = None
+    due_date: Optional[AwareDateTime] = None
     status: str = "pending"
-    completed_at: Optional[datetime] = None
+    completed_at: Optional[AwareDateTime] = None
 
 
 class CaseTaskUpdate(BaseModel):
@@ -1047,9 +1047,9 @@ class CaseTaskUpdate(BaseModel):
 
     title: Optional[str] = None
     description: Optional[str] = None
-    due_date: Optional[datetime] = None
+    due_date: Optional[AwareDateTime] = None
     status: Optional[str] = None
-    completed_at: Optional[datetime] = None
+    completed_at: Optional[AwareDateTime] = None
 
 
 class Family(BaseModel):
@@ -1057,7 +1057,7 @@ class Family(BaseModel):
     name: str
     address: Optional[str] = None
     personas_count: int = 0
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
 
@@ -1090,7 +1090,7 @@ class GroupSessionAttendanceItem(BaseModel):
     attended: bool = True
     absence_reason: Optional[str] = None
     absence_reason_detail: Optional[str] = None
-    scanned_at: Optional[datetime] = None
+    scanned_at: Optional[AwareDateTime] = None
     estado: Optional[str] = None  # EstadoAsistenciaEnum
     es_primera_vez: bool = False
 
@@ -1131,7 +1131,7 @@ class CaseCall(BaseModel):
     notes: Optional[str] = None
     prayer_requests: Optional[str] = None
     duration_seconds: int = 0
-    created_at: datetime
+    created_at: AwareDateTime
     model_config = orm_config
 
 
@@ -1201,8 +1201,8 @@ class VolunteerCreate(BaseModel):
     team_name: Optional[str] = None
     sede_id: Optional[UUID] = None
     status: str = "active"
-    shift_start: Optional[datetime] = None
-    shift_end: Optional[datetime] = None
+    shift_start: Optional[AwareDateTime] = None
+    shift_end: Optional[AwareDateTime] = None
     notes: Optional[str] = None
 
 
