@@ -3,6 +3,12 @@ import 'jest-axe/extend-expect';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
+declare module 'vitest' {
+  interface Assertion<T = any> {
+    toHaveNoViolations(): void;
+  }
+}
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();

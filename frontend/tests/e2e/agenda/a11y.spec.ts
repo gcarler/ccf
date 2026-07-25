@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { installMockPlatformSession } from '../helpers/mockPlatformSession';
 
 const EVENTS = [
