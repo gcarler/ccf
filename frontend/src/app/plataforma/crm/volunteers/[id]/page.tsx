@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, notFound } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useCrmAccess } from "@/hooks/useCrmAccess";
 import { apiFetch } from "@/lib/http";
@@ -45,6 +45,10 @@ export default function VolunteerDetailPage() {
     const params = useParams();
     const router = useRouter();
     const id = params?.id as string;
+    // M-06 — validar formato (UUID o slug hex+guion); 404 otherwise.
+    if (!id || !/^[a-z0-9-]+$/i.test(id)) {
+        notFound();
+    }
     const { token } = useAuth();
     const { canEditCrm } = useCrmAccess();
 

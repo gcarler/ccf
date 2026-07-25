@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, notFound } from 'next/navigation';
 import {
     Calendar,
     Check,
@@ -71,6 +71,10 @@ export default function LeadDetail() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
     const leadId = params?.id ?? '';
+    // M-06 — validar formato (UUID o slug hex+guion); 404 otherwise.
+    if (!leadId || !/^[a-z0-9-]+$/i.test(leadId)) {
+        notFound();
+    }
 
     const [activeTab, setActiveTab] = useState<'history' | 'notes'>('history');
     const [lead, setLead] = useState<any>(null);
