@@ -88,8 +88,6 @@ function GanttBarItem({ item, pos, width, idx, onClick, onMove, onResize }: Gant
                 const s = new Date(item.start_date);
                 if (new Date(newEnd) >= s) onResize(item, newEnd);
             }
-        } else if (dragState.type === 'move') {
-            onClick?.(item);
         }
 
         setDragState(null);
@@ -111,6 +109,8 @@ function GanttBarItem({ item, pos, width, idx, onClick, onMove, onResize }: Gant
                     bounce: 0,
                     delay: isDragging ? 0 : idx * 0.05
                 }}
+                data-testid={`gantt-bar-${item.id}`}
+                onClick={() => onClick?.(item)}
                 onPointerDown={(e) => handlePointerDown(e, 'move')}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
@@ -194,16 +194,19 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
             <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                 <div className="flex items-center gap-4">
                     <div className="flex bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-1 shadow-sm">
-                        <button 
+                        <button
                             onClick={() => setZoom('day')}
+                            aria-pressed={zoom === 'day'}
                             className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'day' ? "bg-[hsl(var(--bg-muted))] text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Día</button>
-                        <button 
+                        <button
                             onClick={() => setZoom('week')}
+                            aria-pressed={zoom === 'week'}
                             className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'week' ? "bg-[hsl(var(--bg-muted))] text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Semana</button>
-                        <button 
+                        <button
                             onClick={() => setZoom('month')}
+                            aria-pressed={zoom === 'month'}
                             className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'month' ? "bg-[hsl(var(--bg-muted))] text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Mes</button>
                     </div>

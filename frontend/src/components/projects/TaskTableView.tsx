@@ -9,15 +9,15 @@ import type { ProjectTaskRecord } from '@/types/projects';
 import { InlineStatusPicker, InlinePriorityPicker, InlineDatePicker, InlineUserPicker } from '@/components/ui/inline-editors';
 import { useProjectTasks } from '@/hooks/useProjectTasks';
 import * as Popover from '@radix-ui/react-popover';
-import {
+import AgGridTable, {
   CellDoubleClickedEvent,
   ColDef,
   GetRowIdParams,
   ICellRendererParams,
   IsFullWidthRowParams,
   RowHeightParams,
-} from 'ag-grid-community';
-import { AgGridReact } from 'ag-grid-react';
+  type AgGridTableRef,
+} from '@/components/ui/AgGridTable';
 import clsx from 'clsx';
 import { AnimatePresence,motion } from 'framer-motion';
 import {
@@ -32,7 +32,6 @@ X
 } from 'lucide-react';
 import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import TitleCellEditor from './TitleCellEditor';
-import { useIsDark, agGridLightTheme, agGridDarkTheme } from '@/lib/projects/agGridTheme';
 
 const FlagIcon = ({ fill, size = 14 }: { fill: string; size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} xmlns="http://www.w3.org/2000/svg">
@@ -118,7 +117,7 @@ type FlatRow = ProjectTaskRecord | GroupRow;
 export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask, onTaskUpdated }: Props) {
     const { token } = useAuth();
     const { updateTask } = useProjectTasks();
-    const gridRef = useRef<AgGridReact>(null);
+    const gridRef = useRef<AgGridTableRef>(null);
     const [overrides, setOverrides] = useState<Record<string, Partial<ProjectTaskRecord>>>({});
     const [groupBy, setGroupBy]     = useState<GroupKey>('status');
     const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
@@ -130,7 +129,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     const [quickAddTitle, setQuickAddTitle] = useState('');
     const [isLoaded, setIsLoaded]   = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const isDark = useIsDark();
+
 
     // Preferences persistence
     useEffect(() => {
@@ -395,9 +394,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         </button>
                     </div>
                 ) : (
-                    <AgGridReact
+                    <AgGridTable
                         ref={gridRef}
-                        theme={isDark ? agGridDarkTheme : agGridLightTheme}
                         rowData={rowData}
                         columnDefs={colDefs}
                         defaultColDef={{ resizable: true, sortable: false, filter: false, editable: false, suppressMovable: false, minWidth: 96 }}

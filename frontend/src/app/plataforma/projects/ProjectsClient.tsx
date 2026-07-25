@@ -1,26 +1,17 @@
 "use client";
 
-import {
-Folder,
-Layers,
-Plus
-} from 'lucide-react';
+import { Folder, Layers, Plus } from 'lucide-react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import React,{ useCallback,useEffect,useMemo,useRef,useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import type { ViewType } from '@/components/ViewSwitcher';
+import type { CalendarEvent } from '@/components/ui/UniversalCalendarView';
+import type { GanttItem } from '@/components/ui/UniversalGanttView';
 import ProjectsShell from '@/components/projects/ProjectsShell';
-import ProjectCard from '@/components/projects/ProjectCard';
 import ProjectCreationDrawer from '@/components/projects/ProjectCreationDrawer';
-import { formatDate } from '@/components/projects/utils';
-import { DataTable } from '@/components/ui/DataTable';
-import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
-import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
-import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
-import UniversalGanttView from '@/components/ui/UniversalGanttView';
-import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { useAuth } from '@/context/AuthContext';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { DSCard } from '@/design';
@@ -29,25 +20,43 @@ import { DSMetric } from '@/design';
 import { apiFetch } from '@/lib/http';
 import { useProjects } from '@/hooks/useProjects';
 import type { ProjectRecord } from '@/types/projects';
-import type { ColumnDef } from '@tanstack/react-table';
-import { AnimatePresence,motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { Suspense } from 'react';
 import { getProjectMetricHref, PROJECTS_LIST_ANCHOR } from './projectsLinks';
+
+// Light views loaded synchronously
+import ProjectsGridView from './views/ProjectsGridView';
+import ProjectsListView from './views/ProjectsListView';
+import ProjectsTableView from './views/ProjectsTableView';
+import ProjectsBoardView from './views/ProjectsBoardView';
+
+// Heavy views loaded on demand (client-only to avoid SSR issues with DOM libraries)
+function ViewSkeleton() {
+    return <div className="h-[360px] animate-pulse rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5" />;
+}
+
+const ProjectsCalendarView = dynamic(() => import('./views/ProjectsCalendarView'), { ssr: false, loading: ViewSkeleton });
+const ProjectsGanttView = dynamic(() => import('./views/ProjectsGanttView'), { ssr: false, loading: ViewSkeleton });
+const ProjectsWikiView = dynamic(() => import('./views/ProjectsWikiView'), { ssr: false, loading: ViewSkeleton });
 
 const PROJECT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
-export default function ProjectsClient({
-    initialProjects,
-    initialViewType = 'grid',
-}: {
+interface ProjectsClientProps {
     initialProjects: ProjectRecord[];
     initialViewType?: ViewType;
-}) {
+}
+
+export default function ProjectsClient({ initialProjects, initialViewType = 'grid' }: ProjectsClientProps) {
     const { token } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
-    const [dashboard, setDashboard] = useState<{ cards?: Array<{ label: string; value: number; icon?: string; color?: string }>; workload_distribution?: Array<{ name: string; tasks: number }>; delayed_tasks_count?: number } | null>(null);
+    const [dashboard, setDashboard] = useState<{
+        cards?: Array<{ label: string; title?: string; value: number; icon?: string; color?: string; trend?: number }>;
+        workload_distribution?: Array<{ name: string; tasks: number }>;
+        delayed_tasks_count?: number;
+    } | null>(null);
     const [viewType, setViewType] = useState<ViewType>(initialViewType);
     const [search, setSearch] = useState('');
     const [isCreating, setIsCreating] = useState(false);
@@ -59,7 +68,11 @@ export default function ProjectsClient({
         if (!token) return;
         const loadDashboard = async () => {
             try {
-                const data = await apiFetch<{ cards?: Array<{ label: string; value: number }>; workload_distribution?: Array<{ name: string; tasks: number }>; delayed_tasks_count?: number }>('/dashboard/projects', { token });
+                const data = await apiFetch<{
+                    cards?: Array<{ label: string; value: number }>;
+                    workload_distribution?: Array<{ name: string; tasks: number }>;
+                    delayed_tasks_count?: number;
+                }>('/dashboard/projects', { token });
                 setDashboard(data);
             } catch (err) {
                 toast.error('Error al cargar dashboard');
@@ -96,9 +109,10 @@ export default function ProjectsClient({
 
     const filtered = projects
         .filter(isValidProject)
-        .filter((p) =>
-            p.title.toLowerCase().includes(search.toLowerCase()) ||
-            (p.description || '').toLowerCase().includes(search.toLowerCase())
+        .filter(
+            (p) =>
+                p.title.toLowerCase().includes(search.toLowerCase()) ||
+                (p.description || '').toLowerCase().includes(search.toLowerCase())
         );
 
     const handleUpdateProject = useCallback(
@@ -167,104 +181,65 @@ export default function ProjectsClient({
         }
     };
 
-    const projectCommands = useMemo(() => filtered.slice(0, 7).map((project) => ({
-        id: `project-${project.id}`,
-        label: project.title,
-        description: project.description || 'Ver proyecto',
-        icon: Folder,
-        group: 'Proyectos',
-        action: () => router.push(`/plataforma/projects/${project.id}?view=list`),
-    })), [filtered, router]);
+    const projectCommands = useMemo(
+        () =>
+            filtered.slice(0, 7).map((project) => ({
+                id: `project-${project.id}`,
+                label: project.title,
+                description: project.description || 'Ver proyecto',
+                icon: Folder,
+                group: 'Proyectos',
+                action: () => router.push(`/plataforma/projects/${project.id}?view=list`),
+            })),
+        [filtered, router]
+    );
 
     useRegisterCommands('projects-quick-links', projectCommands);
 
-    const tableColumns = useMemo<ColumnDef<ProjectRecord>[]>(() => [
-        {
-            accessorKey: 'title',
-            header: 'Proyecto',
-            cell: ({ row }) => {
-                const project = row.original;
+    const handleEventClick = useCallback(
+        (event: CalendarEvent) => router.push(`/plataforma/projects/${event.id}?view=list`),
+        [router]
+    );
+
+    const handleGanttItemClick = useCallback(
+        (item: GanttItem) => router.push(`/plataforma/projects/${item.id}?view=list`),
+        [router]
+    );
+
+    const renderView = () => {
+        if (filtered.length === 0) {
+            return (
+                <EmptyProjectsState
+                    search={search}
+                    onShowCreate={() => setShowCreateForm(true)}
+                />
+            );
+        }
+
+        switch (viewType) {
+            case 'grid':
+                return <ProjectsGridView projects={filtered} onUpdate={handleUpdateProject} onDelete={handleDeleteProject} />;
+            case 'list':
                 return (
-                    <div className="flex items-center gap-3">
-                        <div
-                            className="size-8 rounded-lg flex items-center justify-center font-semibold text-white"
-                            style={{ backgroundColor: project.color || 'hsl(var(--primary))' }}
-                        >
-                            {project.title.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                            <InlineTextInput
-                                value={project.title}
-                                onChange={(v) => handleUpdateProject(project.id, { title: v })}
-                                placeholder="Título del proyecto"
-                                className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate"
-                                inputClassName="text-[13px]"
-                            />
-                            <p className="text-[11px] text-[hsl(var(--text-secondary))] truncate">{project.description || 'Sin descripción'}</p>
-                        </div>
+                    <div id={PROJECTS_LIST_ANCHOR} ref={projectsListRef}>
+                        <ProjectsListView projects={filtered} onUpdate={handleUpdateProject} />
                     </div>
                 );
-            },
-        },
-        {
-            accessorKey: 'status',
-            header: 'Estado',
-            cell: ({ row }) => {
-                const project = row.original;
-                return (                            <InlineProjectStatusPicker
-                                value={project.status || 'active'}
-                                onChange={(v) => handleUpdateProject(project.id, { status: v })}
-                                size="sm"
-                            />
-                );
-            },
-        },
-        {
-            accessorKey: 'tasks',
-            header: 'Tareas',
-            cell: ({ row }) => {
-                const tasks = row.original.tasks?.length || 0;
-                return <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{tasks}</span>;
-            },
-        },
-        {
-            accessorKey: 'created_at',
-            header: 'Creado',
-            cell: ({ getValue }) => <span className="text-sm text-[hsl(var(--text-secondary))]">{formatDate(getValue() as string)}</span>,
-        },
-    ], [handleUpdateProject]);
-
-    const groupedByStatus = useMemo(() => {
-        const statuses = ['active', 'planning', 'on_hold', 'completed', 'archived'];
-        return statuses.map((status) => ({
-            status,
-            projects: filtered.filter((project) => (project.status || 'active') === status),
-        })).filter((column) => column.projects.length > 0 || ['active', 'planning', 'completed'].includes(column.status));
-    }, [filtered]);
-
-    const calendarEvents = useMemo(() => filtered.map((project) => ({
-        id: project.id,
-        title: project.title,
-        date: (project.updated_at || project.created_at || new Date().toISOString()).slice(0, 10),
-        color: project.status === 'completed' ? 'emerald' as const : project.status === 'on_hold' ? 'amber' as const : 'blue' as const,
-        location: project.description || undefined,
-    })), [filtered]);
-
-    const ganttItems = useMemo(() => filtered.map((project) => {
-        const start = project.created_at || new Date().toISOString();
-        const end = project.updated_at || start;
-        const tasks = Array.isArray(project.tasks) ? project.tasks : [];
-        const done = tasks.filter((task) => ['completed', 'completed'].includes((task.status || '').toLowerCase())).length;
-        return {
-            id: project.id,
-            title: project.title,
-            subtitle: project.status || 'active',
-            start_date: start.slice(0, 10),
-            end_date: end.slice(0, 10),
-            color: project.status === 'completed' ? 'emerald' as const : 'blue' as const,
-            progress: tasks.length ? Math.round((done / tasks.length) * 100) : project.progress_percent ?? 0,
-        };
-    }), [filtered]);
+            case 'table':
+                return <ProjectsTableView projects={filtered} onUpdate={handleUpdateProject} />;
+            case 'board':
+            case 'kanban':
+                return <ProjectsBoardView projects={filtered} onUpdate={handleUpdateProject} onDelete={handleDeleteProject} />;
+            case 'calendar':
+                return <ProjectsCalendarView projects={filtered} onEventClick={handleEventClick} />;
+            case 'gantt':
+                return <ProjectsGanttView projects={filtered} onItemClick={handleGanttItemClick} />;
+            case 'wiki':
+                return <ProjectsWikiView />;
+            default:
+                return null;
+        }
+    };
 
     return (
         <ProjectsShell
@@ -283,144 +258,111 @@ export default function ProjectsClient({
                 </button>
             }
         >
-                <ProjectCreationDrawer
-                    isOpen={showCreateForm}
-                    onClose={() => setShowCreateForm(false)}
-                    onSubmit={handleCreateProject}
-                />
+            <ProjectCreationDrawer
+                isOpen={showCreateForm}
+                onClose={() => setShowCreateForm(false)}
+                onSubmit={handleCreateProject}
+            />
 
-                {/* 📊 Project Metrics */}
-                <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {dashboard?.cards?.map((card: { label: string; title?: string; value: number; trend?: number; icon?: string; color?: string }, idx: number) => {
-                        const label = (card.title || card.label).toLowerCase();
-                        return (
-                            <DSMetric
-                                key={idx}
-                                label={card.title || card.label}
-                                value={String(card.value)}
-                                trend={card.trend != null ? `${card.trend > 0 ? '+' : ''}${card.trend}%` : undefined}
-                                tone={card.color as "blue" | "emerald" | "amber" | undefined}
-                                href={getProjectMetricHref(label)}
+            {/* 📊 Project Metrics */}
+            <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {dashboard?.cards?.map((card, idx) => {
+                    const label = (card.title || card.label).toLowerCase();
+                    return (
+                        <DSMetric
+                            key={idx}
+                            label={card.title || card.label}
+                            value={String(card.value)}
+                            trend={
+                                card.trend != null
+                                    ? `${card.trend > 0 ? '+' : ''}${card.trend}%`
+                                    : undefined
+                            }
+                            tone={card.color as 'blue' | 'emerald' | 'amber' | undefined}
+                            href={getProjectMetricHref(label)}
+                        />
+                    );
+                })}
+            </section>
+
+            {/* 📈 Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <div className="lg:col-span-2">
+                    <Link href="/plataforma/projects/team" className="block">
+                        <DSCard className="hover:border-[hsl(var(--primary))]/30 transition-all cursor-pointer">
+                            <h2 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
+                                Carga de Trabajo del Equipo
+                            </h2>
+                            <DSChart
+                                type="bar"
+                                data={dashboard?.workload_distribution?.map((w) => ({
+                                    label: w.name,
+                                    value: w.tasks,
+                                }))}
+                                color="hsl(var(--warning))"
+                                height={220}
                             />
-                        );
-                    })}
-                </section>
-
-                {/* 📈 Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                    <div className="lg:col-span-2">
-                        <Link href="/plataforma/projects/team" className="block">
-                            <DSCard className="hover:border-[hsl(var(--primary))]/30 transition-all cursor-pointer">
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Carga de Trabajo del Equipo</h3>
-                                <DSChart type="bar" data={dashboard?.workload_distribution?.map((w: { name: string; tasks: number }) => ({ label: w.name, value: w.tasks }))} color="hsl(var(--warning))" height={220} />
-                            </DSCard>
-                        </Link>
-                    </div>
-                    <div>
-                        <Link href="/plataforma/projects/tasks?view=list&scope=all" className="block">
-                            <DSCard className="hover:border-[hsl(var(--danger)/40%)]/30 transition-all cursor-pointer">
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Tareas</h3>
-                                <div className="space-y-4 pt-4">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">Tareas Atrasadas</span>
-                                        <span className="text-sm font-semibold text-[hsl(var(--danger))]">{dashboard?.delayed_tasks_count || 0}</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[hsl(var(--danger))]" style={{ width: '15%' }} />
-                                    </div>
-                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] italic">
-                                        Se recomienda revisar los hitos críticos para evitar cuellos de botella.
-                                    </p>
+                        </DSCard>
+                    </Link>
+                </div>
+                <div>
+                    <Link href="/plataforma/projects/tasks?view=list&scope=all" className="block">
+                        <DSCard className="hover:border-[hsl(var(--danger)/40%)]/30 transition-all cursor-pointer">
+                            <h2 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
+                                Estado de Tareas
+                            </h2>
+                            <div className="space-y-4 pt-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">Tareas Atrasadas</span>
+                                    <span className="text-sm font-semibold text-[hsl(var(--danger))]">{dashboard?.delayed_tasks_count || 0}</span>
                                 </div>
-                            </DSCard>
-                        </Link>
-                    </div>
+                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full w-[15%] bg-[hsl(var(--danger))]" />
+                                </div>
+                                <p className="text-[10px] text-[hsl(var(--text-secondary))] italic">
+                                    Se recomienda revisar los hitos críticos para evitar cuellos de botella.
+                                </p>
+                            </div>
+                        </DSCard>
+                    </Link>
                 </div>
+            </div>
 
-                <div className="h-px bg-white/5 my-8" />
+            <div className="h-px bg-white/5 my-8" />
 
-                <div className="relative">
-                    <AnimatePresence mode="wait">
-                        {filtered.length === 0 ? (
-                            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-16 text-center">
-                                <Folder size={48} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4" />
-                                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">No hay proyectos</h3>
-                                <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 mb-4 max-w-md">{search ? 'Ningún proyecto coincide con tu búsqueda.' : 'Crea tu primer proyecto para empezar.'}</p>
-                                {!search && (                                                <button onClick={() => setShowCreateForm(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95">
-                                        <Plus size={16} /> Crear proyecto
-                                    </button>
-                                )}
-                            </motion.div>
-                        ) : viewType === 'grid' ? (
-                            <motion.div key="grid" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
-                                {filtered.map((p, idx) => <ProjectCard key={p.id} project={p} index={idx} onUpdate={handleUpdateProject} onDelete={handleDeleteProject} />)}
-                            </motion.div>
-                        ) : viewType === 'table' ? (
-                            <motion.div key="table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-4">
-                                <DataTable columns={tableColumns} data={filtered} />
-                            </motion.div>
-                        ) : viewType === 'list' ? (
-                            <motion.div
-                                id={PROJECTS_LIST_ANCHOR}
-                                ref={projectsListRef}
-                                key="list"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="space-y-2 pb-4 scroll-mt-24"
-                            >
-                                {filtered.map((project) => (
-                                    <div key={project.id} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left transition-all duration-300 hover:border-[hsl(var(--primary))]/60 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]">
-                                        <div className="flex items-center justify-between gap-4">
-                                            <div className="min-w-0 flex-1">
-                                                <InlineTextInput
-                                                    value={project.title}
-                                                    onChange={(v) => handleUpdateProject(project.id, { title: v })}
-                                                    placeholder="Título del proyecto"
-                                                    className="truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white"
-                                                    inputClassName="text-sm"
-                                                />
-                                                <p className="truncate text-xs font-medium text-[hsl(var(--text-secondary))]">{project.description || 'Sin descripcion'}</p>
-                                            </div>
-                                            <InlineProjectStatusPicker
-                                                value={(project.status || 'active') as any}
-                                                onChange={(v) => handleUpdateProject(project.id, { status: v })}
-                                                size="sm"
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                            </motion.div>
-                        ) : viewType === 'board' || viewType === 'kanban' ? (
-                            <motion.div key="board" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex gap-4 overflow-x-auto pb-4">
-                                {groupedByStatus.map((column) => (
-                                    <section key={column.status} className="w-80 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-[#252528]">
-                                        <div className="mb-3 flex items-center justify-between px-1">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.status}</p>
-                                            <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.projects.length}</span>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {column.projects.map((project, index) => <ProjectCard key={project.id} project={project} index={index} onUpdate={handleUpdateProject} onDelete={handleDeleteProject} />)}
-                                            {column.projects.length === 0 && <div className="rounded-md border border-dashed border-[hsl(var(--border))] py-8 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">Vacio</div>}
-                                        </div>
-                                    </section>
-                                ))}
-                            </motion.div>
-                        ) : viewType === 'calendar' ? (
-                            <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-[720px] pb-4">
-                                <UniversalCalendarView events={calendarEvents} title="Calendario de proyectos" onEventClick={(event) => router.push(`/plataforma/projects/${event.id}?view=list`)} />
-                            </motion.div>
-                        ) : viewType === 'gantt' ? (
-                            <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-[720px] pb-4">
-                                <UniversalGanttView items={ganttItems} moduleName="Portfolio" onItemClick={(item) => router.push(`/plataforma/projects/${item.id}?view=list`)} />
-                            </motion.div>
-                        ) : (
-                            <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-4">
-                                <UniversalWikiView moduleName="Proyectos" storageKey="wiki_projects_portfolio" />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
+            <div className="relative">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={viewType + (filtered.length === 0 ? '-empty' : '')}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="pb-4"
+                    >
+                        {renderView()}
+                    </motion.div>
+                </AnimatePresence>
+            </div>
         </ProjectsShell>
+    );
+}
+
+function EmptyProjectsState({ search, onShowCreate }: { search: string; onShowCreate: () => void }) {
+    return (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Folder size={48} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4" />
+            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">No hay proyectos</h3>
+            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 mb-4 max-w-md">
+                {search ? 'Ningún proyecto coincide con tu búsqueda.' : 'Crea tu primer proyecto para empezar.'}
+            </p>
+            {!search && (
+                <button
+                    onClick={onShowCreate}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
+                >
+                    <Plus size={16} /> Crear proyecto
+                </button>
+            )}
+        </div>
     );
 }

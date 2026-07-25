@@ -47,17 +47,20 @@ npx vitest run src/lib/__tests__/useProjectTasks.test.tsx
 cd /root/ccf/frontend
 npm run test:e2e:projects
 npm run test:e2e:projects:detail
+npm run test:e2e:projects:whiteboard
 ```
 
 Nota operativa:
 
 - `test:e2e:projects:detail` levanta el frontend con `webServer` administrado por Playwright.
+- `test:e2e:projects:whiteboard` levanta el frontend con `webServer` administrado por Playwright para probar la pizarra sobre un proyecto real.
 - `test:e2e:projects` ejecuta primero el smoke modular normal y luego la cobertura seeded del detalle sobre ese runner administrado.
 
 ## 4. Checks manuales obligatorios
 
 - `/plataforma/projects` lista proyectos sin errores de consola.
 - `/plataforma/projects/[id]` carga dashboard, tabla, kanban, calendar, gantt y wiki sin perder estado.
+- `/plataforma/whiteboard/[project_id]` carga el canvas, permite agregar texto, aplicar negrita/cursiva, exportar PNG/SVG/JSON y recargar sin perder el contenido.
 - crear tarea desde una vista aparece en las otras vistas sin recarga.
 - cambiar fases no deja tareas huérfanas.
 - inbox de proyectos responde y `mark read` funciona.
@@ -81,6 +84,9 @@ Nota operativa:
 - `frontend/src/context/ProjectUpdateContext.tsx`
 - `frontend/src/components/projects/PhaseManagerDrawer.tsx`
 - `frontend/src/components/projects/ProjectViewsContent.tsx`
+- `frontend/src/components/whiteboard/WhiteboardEditor.tsx`
+- `frontend/src/hooks/useWhiteboardSave.ts`
+- `frontend/src/lib/whiteboardExport.ts`
 
 ## 7. Deuda documentada que sigue viva
 
@@ -89,3 +95,4 @@ Nota operativa:
 - la matriz compacta vive en `docs/PROJECTS_RBAC_MATRIX.md` y debe mantenerse sincronizada con `tests/test_projects_rbac.py`
 - `PEND-FRONTEND-E2E-PROJECTS-001` cerrada el 2026-07-16 con `frontend/tests/e2e/projects/smoke.spec.ts`
 - `PEND-FRONTEND-E2E-PROJECTS-DETAIL-001` cerrada el 2026-07-16 con `frontend/tests/e2e/projects/detail.spec.ts`
+- `PEND-FRONTEND-E2E-WHITEBOARD-001` cerrada el 2026-07-25 con `frontend/tests/e2e/projects/whiteboard.spec.ts`

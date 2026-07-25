@@ -5,6 +5,7 @@
 **Propósito.** Handover canónico. Este archivo existe para que cada sesión nueva de trabajo pueda leerlo al inicio y arrancar con el contexto ya cargado, sin redescubrir el módulo de cero.
 
 > **Cambios recientes (post handover 2026-07-15):**
+> - **`WHITEBOARD-REFACTOR-001` cerrada el 2026-07-25** — Refactor de la pizarra (whiteboard) del proyecto. Se centralizó la lógica del lienzo en `frontend/src/components/whiteboard/WhiteboardEditor.tsx`, reutilizado por `/plataforma/whiteboard/[id]` y por el modal `ProjectWhiteboard`. Se corrigió el bug por el que el lienzo cargaba pero las herramientas no respondían (el modal montaba el editor oculto). Se añadieron herramientas de formato de texto (negrita, cursiva, fuente, tamaño, color), exportación a PNG/SVG/JSON, compartir enlace, capas, deshacer/rehacer y panel de propiedades. Typecheck del área whiteboard sin errores; backend roundtrip tests verdes (10/10).
 > - `PARCIAL-LISTVIEW-001` cerrada el 2026-07-16. Hook + tests verdes.
 > - `PARCIAL-MASTERVIEW-001` cerrada el 2026-07-16. MasterView self-sufficient + page.tsx cleanup. Hook + tests verdes.
 > - `PARCIAL-PHASES-001` cerrada el 2026-07-16. PhaseManagerDrawer self-sufficient vía context + validacion reforzada + pre-flight orphan tasks. Hook + tests verdes.

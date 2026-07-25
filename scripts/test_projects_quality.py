@@ -478,16 +478,16 @@ section("9. PRUEBA DE API (ENDPOINTS)")
 
 import httpx
 
-# Login como admin (endpoint v3)
+# Login como GESTOR de prueba (endpoint v3) — credenciales conocidas del script
 login_resp = httpx.post("http://127.0.0.1:8000/api/v3/auth/login", json={
-    "email": "admin@ccf.com",
-    "password": "Ccf2026*+",
+    "email": "prueba3@ccf.test",
+    "password": "prueba123",
 }, follow_redirects=False)
 
 if login_resp.status_code == 200:
     token = login_resp.json().get("access_token", "")
     headers = {"Authorization": f"Bearer {token}"}
-    ok("Login admin exitoso")
+    ok("Login GESTOR de prueba exitoso")
 
     # GET /projects
     resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers)
@@ -600,7 +600,7 @@ if login_resp.status_code == 200:
         fail(f"Login usuario_prueba_1 → HTTP {login_u1b.status_code}")
 
 else:
-    fail(f"Login admin → HTTP {login_resp.status_code}: {login_resp.text[:100]}")
+    fail(f"Login GESTOR de prueba → HTTP {login_resp.status_code}: {login_resp.text[:100]}")
 
 # ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")

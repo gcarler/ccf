@@ -21,7 +21,7 @@ UUIDStr = Annotated[str, BeforeValidator(coerce_uuid_to_str)]
 class TaskSupplyBase(BaseModel):
     item_name: str
     quantity: int = Field(default=1, ge=0)
-    status: Literal["pending", "ordered", "received"] = "pending"
+    status: Literal["pending", "ready", "unavailable"] = "pending"
 
 
 class TaskSupplyCreate(TaskSupplyBase):

@@ -7,6 +7,7 @@ import { InlineTextInput } from "@/components/ui/inline-editors/InlineTextInput"
 import { InlineTextArea } from "@/components/ui/inline-editors/InlineTextArea";
 import { InlineProjectStatusPicker } from "@/components/ui/inline-editors/InlineProjectStatusPicker";
 import { InlineUserPicker } from "@/components/ui/inline-editors/InlineUserPicker";
+import { DEFAULT_PROJECT_COLOR } from "@/lib/projects/palette";
 import type { ProjectRecord } from "@/types/projects";
 
 interface ProjectSettingsDrawerProps {
@@ -124,12 +125,12 @@ export default function ProjectSettingsDrawer({
                                 <div className="flex items-center gap-3">
                                     <input
                                         type="color"
-                                        value={draft.color || "#2563eb"}
+                                        value={draft.color || DEFAULT_PROJECT_COLOR}
                                         onChange={(e) => setDraft((prev) => ({ ...prev, color: e.target.value }))}
                                         className="h-10 w-20 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent cursor-pointer"
                                     />
                                     <span className="text-[12px] font-mono text-[hsl(var(--text-secondary))]">
-                                        {draft.color || "#2563eb"}
+                                        {draft.color || DEFAULT_PROJECT_COLOR}
                                     </span>
                                 </div>
                             </div>

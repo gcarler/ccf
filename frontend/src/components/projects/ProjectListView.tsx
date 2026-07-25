@@ -53,7 +53,7 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comentario rápido</span>
-                <button onClick={onClose} className="p-0.5 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
+                <button onClick={onClose} aria-label="Cerrar comentario rápido" className="p-0.5 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]">
                     <X size={13}/>
                 </button>
             </div>
@@ -73,13 +73,13 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
             </div>
             {/* Toolbar */}
             <div className="flex items-center gap-1 px-3 pb-3">
-                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors" title="Adjuntar">
+                <button aria-label="Adjuntar archivo" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]" title="Adjuntar">
                     <Paperclip size={13} />
                 </button>
-                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors" title="Mencionar">
+                <button aria-label="Mencionar usuario" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]" title="Mencionar">
                     <AtSign size={13} />
                 </button>
-                <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors" title="Emoji">
+                <button aria-label="Añadir emoji" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]" title="Emoji">
                     <Smile size={13} />
                 </button>
                 <div className="flex-1" />
@@ -149,11 +149,10 @@ function TaskRow({
             className="flex items-center group border-b border-[hsl(var(--border))] dark:border-white/[0.04] hover:bg-[hsl(var(--surface-1))]/70 dark:hover:bg-white/[0.02] transition-colors relative min-h-[40px]"
         >
             {/* Checkbox */}
-            <div className="w-8 flex-shrink-0 flex items-center justify-center pl-2">
-                <button
+            <div className="w-8 flex-shrink-0 flex items-center justify-center pl-2">                    <button
                     onClick={() => onChange({ status: status === 'completed' ? 'todo' : 'completed' })}
                     className={clsx(
-                        'size-4 rounded-full border-2 flex items-center justify-center text-[9px] transition-all active:scale-95',
+                        'size-4 rounded-full border-2 flex items-center justify-center text-[9px] transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--success))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]',
                         status === 'completed'
                             ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white'
                             : 'border-[hsl(var(--border))] dark:border-white/20 text-transparent hover:border-[hsl(var(--success)/40%)] hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10'
@@ -242,9 +241,9 @@ function TaskRow({
 
             {/* More */}
             <div className="w-8 flex-shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="size-6 rounded flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors">
+                <span className="size-6 rounded flex items-center justify-center text-[hsl(var(--text-secondary))]">
                     <MoreHorizontal size={13} />
-                </button>
+                </span>
             </div>
         </motion.div>
     );
@@ -298,7 +297,8 @@ function StatusGroup({
             <div className={clsx('flex items-center gap-3 px-4 py-3', !isFirst && 'mt-3')}>
                 <button
                     onClick={() => setCollapsed(v => !v)}
-                    className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
+                    aria-label={collapsed ? 'Expandir grupo' : 'Contraer grupo'}
+                    className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
                     aria-expanded={!collapsed}
                 >
                     {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
@@ -553,7 +553,8 @@ function QuickAddBar({
             </button>
             <button
                 onClick={onQuickAddCancel}
-                className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors"
+                aria-label="Cancelar tarea rápida"
+                className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
             >
                 <X size={14} />
             </button>

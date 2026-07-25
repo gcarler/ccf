@@ -91,7 +91,7 @@ export default function TeamPage() {
                         </div>
                         <div className="flex items-center gap-3">
                             {!loading && team.length > 0 && (
-                                <div className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-md border border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm text-center">
+                                <div className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm text-center">
                                     <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cap. Prom.</p>
                                     <p className="text-sm font-semibold text-[hsl(var(--primary))]">
                                         {Math.round(team.reduce((a, m) => a + m.capacity_percent, 0) / team.length)}%
@@ -124,7 +124,7 @@ export default function TeamPage() {
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: idx * 0.05 }}
                                         onClick={() => handleSelect(persona)}
-                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/[0.06] p-3 shadow-sm hover:shadow-xl hover:shadow-black/10/60 dark:hover:shadow-black/30 transition-all cursor-pointer overflow-hidden active:scale-[0.99]"
+                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/[0.06] p-3 shadow-sm hover:shadow-xl hover:shadow-black/10/60 dark:hover:shadow-black/30 transition-all cursor-pointer overflow-hidden active:scale-[0.99]"
                                     >
                                         {/* Status bar */}
                                         <div className={clsx(

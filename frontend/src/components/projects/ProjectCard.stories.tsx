@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
 import ProjectCard from './ProjectCard';
+import { PROJECT_COLOR_OPTIONS } from '@/lib/projects/palette';
 import type { ProjectRecord } from '@/types/projects';
 
 const mockProject: ProjectRecord = {
@@ -7,7 +8,7 @@ const mockProject: ProjectRecord = {
     title: 'Campamento Juventud 2025',
     description: 'Organización del campamento anual para jóvenes del grupo pastoral.',
     status: 'active',
-    color: '#2563eb',
+    color: PROJECT_COLOR_OPTIONS[0].value,
     owner_id: 'user-1',
     created_at: '2025-06-15T10:00:00Z',
     tasks: [
@@ -41,7 +42,7 @@ export const WithColor: Story = {
     args: {
         project: {
             ...mockProject,
-            color: '#8b5cf6',
+            color: PROJECT_COLOR_OPTIONS[5].value,
             title: 'Retiro Pastoral',
             description: 'Planificación del retiro para líderes ministeriales.',
         },

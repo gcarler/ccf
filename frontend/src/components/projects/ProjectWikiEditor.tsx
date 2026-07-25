@@ -174,18 +174,18 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-xl overflow-hidden font-display relative">
             <div className="flex flex-wrap items-center gap-1 p-2 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-black/20">
-                <MenuButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} icon={Bold} />
-                <MenuButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} icon={Italic} />
+                <MenuButton label="Negrita" onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} icon={Bold} />
+                <MenuButton label="Cursiva" onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} icon={Italic} />
                 <div className="w-[1px] h-5 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
-                <MenuButton onClick={() => editor.chain().focus().toggleTaskList().run()} isActive={editor.isActive('taskList')} icon={CheckSquare} />
+                <MenuButton label="Lista de tareas" onClick={() => editor.chain().focus().toggleTaskList().run()} isActive={editor.isActive('taskList')} icon={CheckSquare} />
                 <div className="ml-auto flex items-center gap-3 px-2">
                     <div className="flex items-center gap-1.5">
                         {saveStatus === 'saving' && <><Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" /> <span className="text-[10px] font-bold uppercase text-[hsl(var(--primary))]">Guardando</span></>}
                         {saveStatus === 'saved' && <><Cloud size={12} className="text-[hsl(var(--success))]" /> <span className="text-[10px] font-bold uppercase text-[hsl(var(--success))]">Sincronizado</span></>}
                     </div>
                     <div className="flex items-center gap-0.5 border-l border-[hsl(var(--border))] dark:border-white/10 pl-2">
-                        <MenuButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} icon={Undo} />
-                        <MenuButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} icon={Redo} />
+                        <MenuButton label="Deshacer" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} icon={Undo} />
+                        <MenuButton label="Rehacer" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} icon={Redo} />
                     </div>
                 </div>
             </div>
@@ -198,17 +198,24 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
                 <div className="max-w-4xl mx-auto"><EditorContent editor={editor} /></div>
             </div>
             <style jsx global>{`
-                .is-editor-empty:first-child::before { color: #94a3b8; content: attr(data-placeholder); float: left; height: 0; pointer-events: none; }
+                .is-editor-empty:first-child::before { color: hsl(var(--text-secondary)); content: attr(data-placeholder); float: left; height: 0; pointer-events: none; }
                 ul[data-type="taskList"] { list-style: none; padding: 0; }
                 ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.5rem; }
-                ul[data-type="taskList"] input[type="checkbox"] { width: 1.25rem; height: 1.25rem; margin-top: 0.2rem; cursor: pointer; border-radius: 0.5rem; border: 2px solid #e2e8f0; }
+                ul[data-type="taskList"] input[type="checkbox"] { width: 1.25rem; height: 1.25rem; margin-top: 0.2rem; cursor: pointer; border-radius: 0.5rem; border: 2px solid hsl(var(--border)); }
             `}</style>
         </div>
     );
 }
 
-function MenuButton({ onClick, isActive, disabled, icon: Icon }: { onClick: () => void; isActive?: boolean; disabled?: boolean; icon: LucideIcon }) {
+function MenuButton({ onClick, isActive, disabled, icon: Icon, label }: { onClick: () => void; isActive?: boolean; disabled?: boolean; icon: LucideIcon; label: string }) {
     return (
-        <button onClick={onClick} disabled={disabled} className={`p-2 rounded-md transition-all ${isActive ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-sm ring-1 ring-[hsl(var(--border))] dark:ring-white/10' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-white'} ${disabled ? 'opacity-20' : ''}`}><Icon size={16} /></button>
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+            className={`p-2 rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))] ${isActive ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-sm ring-1 ring-[hsl(var(--border))] dark:ring-white/10' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-white'} ${disabled ? 'opacity-20' : ''}`}
+        >
+            <Icon size={16} />
+        </button>
     );
 }

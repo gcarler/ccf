@@ -44,3 +44,30 @@ export const EmptyState: Story = {
     emptyMessage: 'No hay registros para mostrar.',
   },
 };
+
+export const ServerSide: Story = {
+  args: {
+    data: [],
+    columns: sampleColumns,
+    idAccessor: 'id',
+    serverSide: {
+      getRows: async ({ offset, limit }) => {
+        const all = sampleData.slice(offset, offset + limit);
+        return { items: all, total: sampleData.length };
+      },
+      pageSize: 2,
+    },
+  },
+};
+
+export const Editable: Story = {
+  args: {
+    data: sampleData,
+    columns: sampleColumns,
+    idAccessor: 'id',
+    onChange: (rowId, columnId, value) => {
+      // eslint-disable-next-line no-console
+      console.log('onChange', { rowId, columnId, value });
+    },
+  },
+};

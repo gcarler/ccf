@@ -4,6 +4,7 @@ import { RightPanel } from '@/components/ui/RightPanel';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
+import { PHASE_COLOR_OPTIONS, DEFAULT_PHASE_COLOR } from '@/lib/projects/palette';
 import { GripVertical, Plus, Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useProjectUpdate, type PhaseDef } from '@/context/ProjectUpdateContext';
@@ -13,10 +14,7 @@ interface Props {
     onClose: () => void;
 }
 
-const COLOR_PRESETS = [
-    '#94a3b8', '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316',
-];
+const COLOR_PRESETS = PHASE_COLOR_OPTIONS.map((option) => option.value);
 
 /**
  * Drawer para gestionar fases de un proyecto. Self-sufficient desde 2026-07-16
@@ -116,7 +114,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
         setItems([...items, {
             slug: `phase-${Date.now()}`,
             name: `Fase ${count + 1}`,
-            color: COLOR_PRESETS[count % COLOR_PRESETS.length],
+            color: COLOR_PRESETS[count % COLOR_PRESETS.length] ?? DEFAULT_PHASE_COLOR,
             order_index: count,
         }]);
     };
@@ -263,8 +261,8 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                                     className="absolute inset-0 opacity-0 cursor-pointer"
                                     aria-label="Color de fase"
                                 >
-                                    {COLOR_PRESETS.map(c => (
-                                        <option key={c} value={c}>{c}</option>
+                                    {PHASE_COLOR_OPTIONS.map((option) => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
                                     ))}
                                 </select>
                             </div>

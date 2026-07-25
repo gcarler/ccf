@@ -32,6 +32,13 @@ export function useWhiteboardSave(
   // ``persistToApi`` to avoid setState-after-unmount warnings if a save lands
   // while the panel is being torn down.
   const canceledRef = useRef<boolean>(false);
+  // Use a ref for the title so callers can change it without causing the
+  // returned ``save``/``saveNow`` callbacks to be recreated. This keeps the
+  // canvas initialization effect in ``WhiteboardEditor`` stable.
+  const titleRef = useRef(title);
+  useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
 
   const clearTimers = useCallback(() => {
@@ -60,7 +67,7 @@ export function useWhiteboardSave(
           method: "POST",
           token,
           body: {
-            title,
+            title: titleRef.current,
             elements_json: JSON.stringify(canvas.toJSON()),
           },
         });
@@ -81,7 +88,7 @@ export function useWhiteboardSave(
         }, 3000);
       }
     },
-    [projectId, token, title]
+    [projectId, token]
   );
 
   const save = useCallback(

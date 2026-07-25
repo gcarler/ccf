@@ -66,12 +66,12 @@ const MOCK_MILESTONES: Record<string, ProjectMilestoneRecord[]> = {
 const SUPPLIES_BY_TASK: Record<string, TaskSupplyRecord[]> = {
   // task T1 (project 1)
   "11111111-1111-4111-8111-111111111001": [
-    { id: "11111111-aaaa-4000-8000-000000000001", task_id: "11111111-1111-4111-8111-111111111001", item_name: "Hosting mensual", quantity: 3, status: "purchased" },
+    { id: "11111111-aaaa-4000-8000-000000000001", task_id: "11111111-1111-4111-8111-111111111001", item_name: "Hosting mensual", quantity: 3, status: "ready" },
     { id: "11111111-aaaa-4000-8000-000000000002", task_id: "11111111-1111-4111-8111-111111111001", item_name: "Dominio .com", quantity: 1, status: "pending" },
   ],
   // task T3 (project 1)
   "11111111-1111-4111-8111-111111111003": [
-    { id: "11111111-aaaa-4000-8000-000000000003", task_id: "11111111-1111-4111-8111-111111111003", item_name: "Cuenta Figma Pro", quantity: 1, status: "purchased" },
+    { id: "11111111-aaaa-4000-8000-000000000003", task_id: "11111111-1111-4111-8111-111111111003", item_name: "Cuenta Figma Pro", quantity: 1, status: "ready" },
   ],
 };
 

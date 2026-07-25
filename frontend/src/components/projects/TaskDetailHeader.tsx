@@ -156,9 +156,8 @@ export default function TaskDetailHeader({
                 onChange={e => onTitleChange(e.target.value)}
                 onBlur={onSave}
                 rows={1}
-                className="w-full text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] pb-3"
+                className="w-full min-h-[28px] text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] pb-3"
                 placeholder="Nombre de la tarea..."
-                style={{ minHeight: 28 }}
                 onInput={e => {
                     const t = e.currentTarget;
                     t.style.height = 'auto';

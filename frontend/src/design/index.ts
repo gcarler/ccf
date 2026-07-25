@@ -1,4 +1,5 @@
 export * from './tokens-semantic';
+export * from './agGridTheme';
 export * from './components/DSBadge';
 export * from './components/DSButton';
 export * from './components/DSCard';

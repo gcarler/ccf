@@ -1,13 +1,10 @@
 "use client";
 
-import '@/lib/agGrid';
-import { useMemo, useRef, useEffect } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import { ColDef } from 'ag-grid-community';
+import { useMemo, useRef } from 'react';
+import AgGridTable, { ColDef, type AgGridTableRef } from '@/components/ui/AgGridTable';
 import clsx from 'clsx';
 import type { ProjectTaskRecord } from '@/types/projects';
 import { getStatusOption, getPriorityOption } from '@/lib/projects/constants';
-import { useIsDark, agGridCompactLightTheme, agGridCompactDarkTheme } from '@/lib/projects/agGridTheme';
 
 const STATUS_CLS: Record<string, string> = {
     completed:   'bg-success-soft border-[hsl(var(--success)/20%)] text-success-text',
@@ -64,8 +61,7 @@ function DateRenderer({ value }: { value: string }) {
 }
 
 export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[] }) {
-    const gridRef = useRef<AgGridReact>(null);
-    const isDark = useIsDark();
+    const gridRef = useRef<AgGridTableRef>(null);
 
     const colDefs = useMemo<ColDef[]>(() => [
         { field: 'title',    headerName: 'Tarea',        flex: 2, cellRenderer: TitleRenderer },
@@ -75,11 +71,15 @@ export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[]
         { field: 'priority', headerName: 'Prioridad',    width: 120, cellRenderer: PriorityRenderer },
     ], []);
 
+    // Inline height is dynamic (based on row count) and cannot be expressed with
+    // static Tailwind classes. It is intentionally kept as an inline style.
+    const height = Math.min(Math.max(tasks.length * 36 + 40, 200), 600);
+
     return (
-        <div className="min-w-0 rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 shadow-sm" style={{ height: Math.min(Math.max(tasks.length * 36 + 40, 200), 600) }}>
-            <AgGridReact
+        <div className="min-w-0 rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 shadow-sm" style={{ height }}>
+            <AgGridTable
                 ref={gridRef}
-                theme={isDark ? agGridCompactDarkTheme : agGridCompactLightTheme}
+                density="compact"
                 rowData={tasks}
                 columnDefs={colDefs}
                 defaultColDef={{ resizable: true, sortable: true, suppressMovable: false, minWidth: 96 }}
