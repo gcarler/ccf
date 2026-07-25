@@ -24,7 +24,8 @@
 | Hallazgos medios | 8 cerrados ✅ M-01..M-08 (0 pendientes 🔴) |
 | Hallazgos bajos (info) | 1 cerrado ✅ I-02 (widening completo `7033aa97`); 2 subsumidos 🟢 I-01/I-03 (0 pendientes 🔴) |
 | Funcionalidades | 2 (1 cerrado ✅ F-01; 1 deferido 🟢 F-02) |
-| **Total** | **27** (18 cerrados ✅ — I-02 ahora completo; 9 ya-cubiertos/subsumidos/deferidos 🟢; 0 pendientes 🔴) |
+| **Continuación de calidad (2026-07-25)** | 3 cerrados ✅ QC-01/QC-02/QC-03 (0 pendientes 🔴) |
+| **Total** | **30** (21 cerrados ✅; 9 ya-cubiertos/subsumidos/deferidos 🟢; 0 pendientes 🔴) |
 
 ---
 
@@ -375,7 +376,23 @@ Corrección estructural completa en 3 iteraciones (1-3) + refinamiento de cierre
 
 ---
 
-**Total pendientes:** 27 hallazgos → 18 cerrados ✅ (C-01..C-05, A-02, A-07, A-09, M-01..M-08, F-01, I-02 **COMPLETO** post-widening `7033aa97`) + 9 ya-cubiertos/subsumidos/deferidos 🟢 (A-01, A-03, A-04, A-05, A-06, A-08, I-01, I-03, F-02) + 0 pendientes 🔴. Suma: 18 + 9 = 27. Smoke CRM 138 passed + 33 RBAC verde (verificado 2026-07-25 tras reconciliación tracker + verificación A-01 + C-04 backfill probe DB + I-02 widening completo).
+## Continuación de calidad post-cierre (2026-07-25, sesión ses_065da89)
+
+Auditoría forense de calidad sobre el módulo tras el cierre declarado el 2026-07-25. Tres hallazgos nuevos en el árbol de trabajo (dirty-tree carry-over de una sesión anterior identificada por mensaje stash "AUDIT-FORENSE-CRM: dirty tree media-vía soft-delete CommunicationLog + colisión migración") más regeneración del tracker.
+
+| Estado | ID | Commit | Fecha | Nota |
+|---|---|---|---|---|
+| ✅ CERRADO | QC-01 | _pending commit_ | 2026-07-25 | `list_families` push-down del scope sede al CRUD `get_families(sede_id=user_sede)`: antes hacía post-fetch filter DESPUÉS de `.offset()/.limit()` → sedes minoritarias con familias en offsets globales las veían saltadas (paginación cross-sede rota). Ahora el JOIN `Persona.family_id + Persona.sede_id` se aplica ANTES de `.offset()/.limit()` → paginación scoped correcta. Además elimina N+1 query: `personas_count` ahora con `GROUP BY family_id` en una sola query (era un round-trip por family). Doctrina A-03 preservada (create_family sin sede_id por diseño). Validado con `test_list_families_scoped_by_sede` + 46 sede_isolation verde sin regresión. |
+| ✅ CERRADO | QC-02 | _pending commit_ + migración `20260725_0002` | 2026-07-25 | `CommunicationLog.deleted_at` — círculo vicioso latente: el CRUD `delete_communication_log` ya hacía `row.deleted_at = _utcnow()` (soft-delete) pero la columna `deleted_at` NO existía en el modelo ORM ni en la tabla prod. En Postgres el commit fallaría (`column does not exist`); en SQLite la asignación ORM se descarta silenciosamente y el log permanece "vivo" para siempre. Fix: (a) columna `deleted_at = Column(DateTime(timezone=True), nullable=True)` añadida al modelo `backend/models_crm.py:694`; (b) filtros `deleted_at.is_(None)` en `get_communication_logs` + `get_communication_log` (no retornar logs soft-deletados); (c) migración nueva `alembic/canonical_versions/20260725_0002_communication_logs_deleted_at.py` (chain from `20260725_0001`) — SQLite no-op (tests usan `Base.metadata.create_all`), Postgres idempotente `ALTER TABLE` con `_has_column` guard. 22 messaging tests verde. |
+| ✅ CERRADO | QC-03 | _pending commit_ | 2026-07-25 | `mark_all_notifications_read` ahora retorna `int` (rowcount), alineado con el caller `api/messaging.py::mark_all_read` que retorna `{"marked_count": count}` per A-06 contract. Previamente retornaba `None` implícito → el endpoint emitía `{"marked_count": null}` (JSON null) en el path normal y rompía el test `test_mark_all_read_returns_marked_count` (esperaba int). Early-exit con `return 0` si `notification_user_id is None`. 3 tests mark_all verde. |
+
+**Nota sobre baseline pre-existing:** Los 3 fallos `test_crm_extended_coverage.py::test_group_session_crud` / `test_resource_categorias_crud` / `test_resource_plantillas_crud` son drift de schemas (`description`/`nombre` extra_forbidden) causados por dirty-tree de **otras sesiones** (Evangelism/Plan sharing). Verificado vía `git stash` + re-run: los fallos persisten sin el dirty tree CRM — no son responsabilidad de este trabajo. Idem para los 2 fallos `test_crm_super_pro.py::test_ai_copilot_endpoint_success` / `test_combo_copilot_uses_timeline` (AI copilot, sin relación).
+
+Smoke final tras QC-01/02/03: 122 passed (sedes_isolation+remediation+rbac+m2+mentorship) + 46 sede_isolation + 22 messaging verde, sin regresión.
+
+---
+
+**Total pendientes:** 27 hallazgos originales → 18 cerrados ✅ + 9 ya-cubiertos/subsumidos/deferidos 🟢 + 0 pendientes 🔴. Más 3 hallazgos QC-01/QC-02/QC-03 cerrados ✅ en esta sesión de continuación de calidad. **Total:** 30 hallazgos → 21 ✅ CERRADO + 9 🟢 ya-cubiertos/subsumidos/deferidos + 0 pendientes 🔴.
 
 **Auditoría CRM 100% COMPLETA** — cero pendientes 🔴, cero deuda residual. I-02 widening cerró el SQLite-tz-info-loss-defense en todos los schemas CRM Response/Out (66 campos en base.py + 3 en resources.py migrados a AwareDateTime). El modulo CRM queda "lo más pro de lo pro" en tipado tz-defensivo, alineado con la sensibilidad del módulo (siguiendo el mismo standard que Evangelismo, identificado por el usuario como los dos módulos más sensibles de la plataforma CCF).
 

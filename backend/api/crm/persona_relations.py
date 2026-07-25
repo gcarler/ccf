@@ -489,25 +489,18 @@ def list_families(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    """Axioma 3: Family sin sede_id propio ⇒ filtramos por las Personas que la habitan."""
+    """Axioma 3: Family sin sede_id propio ⇒ filtramos por las Personas que la habitan.
+
+    QC-01 (auditoría forense de calidad 2026-07-25): el scope se push-down
+    al CRUD ``get_families(sede_id=user_sede)`` aplicando el JOIN
+    Persona.family_id+Persona.sede_id ANTES de ``.offset()/.limit()``, así
+    la paginación funciona correctamente para sedes minoritarias (no se
+    saltaban offsets globales de familias de otra sede). La cuenta de
+    ``personas_count`` se hace batch en una sola query GROUP BY (elimina
+    N+1 round-trip del loop anterior).
+    """
     user_sede = get_user_sede_id(db, current_user.id)
-    families = crud.get_families(db, skip=skip, limit=limit)
-    if not user_sede:
-        return families
-    family_ids = [f.id for f in families]
-    if not family_ids:
-        return []
-    scoped = (
-        db.query(models.Persona.family_id)
-        .filter(
-            models.Persona.family_id.in_(family_ids),
-            models.Persona.sede_id == user_sede,
-        )
-        .distinct()
-        .all()
-    )
-    allowed_ids = {row[0] for row in scoped}
-    return [fam for fam in families if fam.id in allowed_ids]
+    return crud.get_families(db, skip=skip, limit=limit, sede_id=user_sede)
 
 
 @router.post("/families/", response_model=dict)
