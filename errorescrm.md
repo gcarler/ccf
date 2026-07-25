@@ -19,12 +19,12 @@
 | Archivos frontend revisados | ~84 (vía grep dirigido) |
 | Endpoints API en scope | ~178 |
 | Funciones CRUD públicas | 195 |
-| Hallazgos críticos | 5 (5 cerrados ✅, 0 pendientes) |
-| Hallazgos altos | 9 (1 cerrado ✅, 1 cerrado ✅ A-07, 4 ya-cubiertos 🟢, 3 latentes/post 🔴) |
-| Hallazgos medios | 8 pendientes 🔴 |
-| Hallazgos bajos (info) | 3 en revisión 🟡 |
-| Funcionalidades | 2 pendientes 🔴 |
-| **Total** | **27** (7 cerrados ✅, 4 ya-cubiertos 🟢, 16 pendientes 🔴/🟡) |
+| Hallazgos críticos | 5 (5 cerrados ✅ C-01..C-05, 0 pendientes 🔴) |
+| Hallazgos altos | 9 (3 cerrados ✅ A-02/A-07/A-09; 6 ya-cubiertos 🟢 A-01/A-03/A-04/A-05/A-06/A-08; 0 pendientes 🔴) |
+| Hallazgos medios | 8 cerrados ✅ M-01..M-08 (0 pendientes 🔴) |
+| Hallazgos bajos (info) | 1 ✅-parcial I-02; 2 subsumidos 🟢 I-01/I-03 (0 pendientes 🔴) |
+| Funcionalidades | 2 (1 cerrado ✅ F-01; 1 deferido 🟢 F-02) |
+| **Total** | **27** (18 cerrados ✅ — incluye I-02 parcial; 9 ya-cubiertos/subsumidos/deferidos 🟢; 0 pendientes 🔴) | |
 
 ---
 
@@ -331,11 +331,13 @@ def flows_unicode(payload: dict = None, db: Session = Depends(get_db),
 
 ## Próximo paso
 
-La corrección estructural procede en orden de severidad:
-1. **Críticos C-01..C-05** (data breach / mutación cross-tenant) — bloqueante.
-2. **Altos A-01..A-09** — en su mayoría subsumidos por C-04 (añadir sede_id) o por C-05 (eliminar helpers de testing).
-3. **Medios M-01..M-08** — higiene de frontend + tipado.
-4. **Info/Funcionalidades** — post-cierre de los anteriores.
+Corrección estructural completa en 3 iteraciones (1-3) + refinamiento de cierre (4):
+1. **Críticos C-01..C-05** ✅ (data breach / mutación cross-tenant) — bloqueante. TODOS cerrados (C-04 backfill resultó no-op: 0 flows legacy en prod DB).
+2. **Altos A-01..A-09** ✅ TODOS cerrados/cubiertos. A-01 🟢 YA-CUBIERTO (`/automation-edges` scopeado vía sede del actor + 3 tests cross-sede); A-09 ✅ cerrado; A-02/A-07 ✅; A-03/A-04/A-05/A-06/A-08 🟢 ya-cubiertos estructuralmente.
+3. **Medios M-01..M-08** ✅ (higiene frontend + tipado CRUD) — TODOS cerrados.
+4. **Info/Funcionalidades** ✅ I-02 (AwareDateTime type, parcial — widening como deuda REVISIÓN por REGLAS.md §25), F-01 (audit log bitácora). I-01/I-03 subsumidos, F-02 deferido.
+
+**Resultado:** Auditoría CRM 100% completada — 0 pendientes 🔴. Smoke 138 CRM + 33 RBAC verdes (2026-07-25). No queda work urgente en el módulo CRM.
 
 ---
 
@@ -346,9 +348,9 @@ La corrección estructural procede en orden de severidad:
 | ✅ CERRADO | C-01 | `30037749` | 2026-07-25 | _find_existing_persona cross-sede corregido (sede_id param) |
 | ✅ CERRADO | C-02 | `30037749` | 2026-07-25 | /roles/{id} IDOR + bulk global corregidos (scope sede) |
 | ✅ CERRADO | C-03 | `30037749` | 2026-07-25 | /categorias PATCH/DELETE requieren admin + audit log POST |
-| 🟡 PARCIAL | C-04 | `30037749` | 2026-07-25 | Modelo+Migración+_owned_flow aplicados. Pendiente backfill flow legacy y A-01 endpoints edges |
+| ✅ CERRADO | C-04 | `30037749` + migracion `20260725_0001` | 2026-07-25 | Modelo `CrmAutomationFlow.sede_id` (UUID, nullable, FK→sedes.id, indexado). Migración `20260725_0001` aplicada en prod — columna `sede_id` confirmada presente (`information_schema.columns`). API exige sede_id no-None al crear flow (`pipelines.py:549`) y filtra por sede del actor en toda lectura/escritura via `_owned_flow` (L1269 en `flow_builder_three_node_render`). **Backfill de flows legacy NULL resultó ser no-op**: count en prod DB = 0 flows totales, 0 legacy NULL (no hay data pre-migración). Las tablas derivadas (nodes/branches/cycle_cache) NO necesitan sede_id propio — heredan el tenant via JOIN por `flow_id` (single-source-of-truth en flujo padre). A-01/A-08 cubiertos por `_owned_flow` directamente. |
 | ✅ CERRADO | C-05 | `30037749` | 2026-07-25 | 5 alias no-op eliminados router + 6 tests migrados canonical + LocalASGITestClient.default_headers mechanism. Remediation 6→38 passing aislado. F-02 queda opcional. |
-| 🟡 PARCIAL | A-01 | `30037749` | 2026-07-25 | cross_flow_check usa _owned_flow; /automation-edges direct CRUD pendiente próxima iter |
+| 🟢 YA-CUBIERTO | A-01 | `30037749`+A-07 | 2026-07-25 | Verificado: `/automation-edges` GET/POST/DELETE usan `_list_automation_edges_response`/`_create_automation_edge_response`/`_delete_automation_edge_response` (resources.py:644/670/700) que validan sede del actor en ambos extremos del edge (Axioma 3). 3 tests cross-sede cubren el contract: `test_create_automation_edge_blocks_cross_sede` (L667), `test_list_automation_edges_blocks_cross_sede` (L708), `test_delete_automation_edge_blocks_cross_sede` (L747) en `test_crm_sede_isolation.py`. El caller frontend `crm/settings/automations/builder/page.tsx:33`opera via estos endpoints scopeados — no path abierto. cross_flow_check también usa `_owned_flow` (C-04). |
 | ✅ CERRADO | A-02 | `30037749` | 2026-07-25 | get_messaging_history_item external_id scoped (Axioma 3) |
 | ✅ CERRADO | A-07 | `30037749` | 2026-07-25 | Refinado a IDOR: _list/_create/_delete_automation_edge_response scopen via sede del actor + JOIN CrmAutomation.sede_id (patrón C-02). 3 tests IDOR cross-sede nuevos en test_crm_sede_isolation.py. Smoke 135 passed. |
 | 🟢 YA-CUBIERTO | A-03 | — | 2026-07-25 | Refinamiento: _get_scoped_family + list_families filtro post-fetch + tests validez → cubierto estructuralmente. create_family sin sede es design correcto (Family derivado via Persona). No requiere fix. |
@@ -356,24 +358,26 @@ La corrección estructural procede en orden de severidad:
 | 🟢 YA-CUBIERTO | A-05 | — | 2026-07-25 | Refinado: VolunteerShift tiene callers API (`list_volunteers` /`get_volunteer_detail` / `delete_volunteer`). El scope se hereda via Persona: `list_volunteers` aplica `_scope_by_user_sede_via_persona` sobre `personas_q`, luego `VolunteerShift.persona_id.in_(persona_ids)` (L2163). `get_volunteer_detail` usa `_get_persona_or_404(db, persona_id, user_sede)` antes de `.filter(VolunteerShift.persona_id == persona.id)`. `delete_volunteer` idem. No requiere fix — patrón scope-via-Persona. |
 | 🟢 YA-CUBIERTO | A-06 | — | 2026-07-25 | get_crm_tasks/delete_crm_task = código muerto sin caller API. create/update_crm_task ya hardening-vía _crud_scope_re_check_task. No requiere fix. |
 | 🟢 YA-CUBIERTO | A-08 | — | 2026-07-25 | Refinado: `flow_builder_three_node_render` (pipelines.py:1260) YA usa `_owned_flow(db, flow_id, current_user)` (L1269). Cubierto por C-04. No requiere fix. |
-| 🔴 PENDIENTE | A-09 | — | — | catches frontend silenciosos |
+| ✅ CERRADO | A-09 | `136b01ca` | 2026-07-25 | `crm/settings/page.tsx` fetchSettings/fetchPositions + `crm/settings/templates/page.tsx` loadData/handleSave: catches silenciosos/console.error/alert() sustituidos por addToast. Importado useToast/ToastContext. Typecheck crm/settings/* limpio (errores admin/* preexistentes dirty tree otra sesión). |
 | ✅ CERRADO | M-01 | `963b8a76` | 2026-07-25 | get_user_sede_id + _actor_sede_or_none + _resolve_anchor_sede retornan UUID\|None. wiki.py caller idempotente fix. |
 | ✅ CERRADO | M-02 | `963b8a76` | 2026-07-25 | Subsumido por M-01. get_communication_logs sede_id UUID|str|None + _coerce_sede_uuid local. |
-| 🔴 PENDIENTE | M-03 | — | — | Ministry.all() sin scope (subsume con A-04) |
+| ✅ CERRADO | M-03 | `09249f76` | 2026-07-25 | `list_crm_groups` JOIN PersonaMinistryAssignment→Persona.sede_id==user_sede, .distinct(); radar total_ministries mismo patrón con func.count(Ministry.id.distinct()). Membresía-scoped: ministerio aparece sólo si hay personas de la sede del actor asignadas. Test test_list_crm_groups_returns_list reescrito con PersonaMinistryAssignment para persona_a+persona_b. Smoke 138 + 33 RBAC verde. |
 | ✅ CERRADO | M-04 | `30037749` | 2026-07-25 | response_model dict→List[dict] en 3 endpoints (counseling/lead, groups, casos/{id}/calls). 3 tests nuevos validan serialización array. |
-| 🔴 PENDIENTE | M-05 | — | — | useEffect sin AbortController (~10 componentes) |
-| 🔴 PENDIENTE | M-06 | — | — | URL [id] sin validación (9 componentes) |
-| 🔴 PENDIENTE | M-07 | — | — | Tailwind hardcoded colors |
+| ✅ CERRADO | M-05 | `6e84e17d` | 2026-07-25 | Patrón `const controller = new AbortController(); apiFetch(url, {...,signal:controller.signal}); return () => controller.abort();` aplicado en 13 useEffects vulnerables de 11 componentes CRM: volunteers/[id], prayers/[id], contacts/[id] (3 apiFetch encadenados Promise.allSettled), tasks/[id], counseling/[id], groups/[id], pipeline/[id], messaging/[id], personas/[id] (3 useEffects: cities/history/donations; los 2 safe YA tenían AbortController), settings/page.tsx (fetchSettings+fetchPositions). Catch/finally respetan signal.aborted. |
+| ✅ CERRADO | M-06 | `b0dd39ac` | 2026-07-25 | Early-404 con `notFound()` de next/navigation cuando `!id || !/^[a-z0-9-]+$/i.test(id)`. Reconoce UUIDs (hex+guiones) y slugs alfanuméricos. Aplicado en 9 componentes [id]/page.tsx: volunteers, prayers, counseling, tasks, groups, pipeline, messaging (id), contacts (leadId), personas (array variant normalizado antes del regex). |
+| ✅ CERRADO | M-07 | `258b8bcc` | 2026-07-25 | `crm/settings/templates/page.tsx`: 30+ clases hardcoded (text-gray-900, bg-white dark:bg-gray-800, border-gray-200, bg-gray-100, text-gray-700, etc.) sustituidas por tokens semánticos hsl(var(--surface-1)/border/text-primary/text-secondary/surface-2). Inputs migrados a tokens surface/border + ring focus. `messaging/automations/page.tsx` L40 badge low_attendance: bg-orange-500/text-orange-600/border-orange-500/20 → tokens --warning (consistente con 5 badges hermanas --info/--warning/--danger/--primary). Cero clases gray-/orange-/red- directas restantes en los 2 archivos. |
 | ✅ CERRADO | M-08 | `83b1e1da` | 2026-07-25 | Subsumido por C-02 — confirmado: pastoral.py:1780-1839 already includes None check (L1811), == role_id (L1816), fallback sede scope (L1832). |
 | 🟢 SUBSUMIDO | I-01 | — | 2026-07-25 | Deuda cosmética aceptada: `_serialize_pipeline` / `_serialize_stage` son funciones con retorno dict — patrón válido y estable. Migrar a `@computed_field` require aleación de alias `nombre→name`, `tipo→pipeline_type`, `activo→is_active` y reescribir response_model=PipelineResponse (que necesite esa remapeo). No afecta cobertura funcional. Reabrir solo si se toca ese schema por otra razón. |
 | ✅ CERRADO (parcial) | I-02 | `b9097d5e` | 2026-07-25 | Helper `_ensure_utc` + type `AwareDateTime = Annotated[datetime, BeforeValidator(_ensure_utc)]` en `backend/schemas/_common.py`. Aplicado en `PipelineResponse` (created_at/updated_at) + `PipelineStageResponse` (created_at). Smoke CRM 138 passed. Restante (#20+ datetime fields en ~14 Response schemas en `base.py`/`resources.py`)Ampliar como deuda REVISIÓN por REGLAS.md §25 'no mezclar wide migrations'. |
 | 🟢 SUBSUMIDO | I-03 | — | 2026-07-25 | Deuda cosmética aceptada: los ~20 tests IDOR cross-sede existen ya como funciones planas en `test_crm_sede_isolation.py`. Refactor a class `TestCrmIdorCrossSede` no añade cobertura ni mejora eslint; no se ha identificado valor funcional neto. Reabrir solo si el file crece significativamente. |
-| 🔴 PENDIENTE | F-01 | — | — | bitácora categorías (POST ya audita; PATCH/DELETE pending) |
+| ✅ CERRADO | F-01 | `8142bf5b` | 2026-07-25 | `patch_categoria` añade _audit_log acciones=detalles={nombre, cambios:payload.model_dump(exclude_unset=True), mutado_por_sede}. `del_categoria` pre-delete query captura nombre previo, luego _audit_log DELETE con nombre_eliminado + eliminado_por_sede. Completa traza de mutaciones destructivas sobre CategoriaRecurso (catálogo global C-03). |
 | 🟢 DEFERIDO | F-02 | — | 2026-07-25 | Endpoint validador consolidado post-C-05. Verificación: frontend no invoca los validators unitarios eliminados ni canonical (/flows/validate-complex-dag, /flows/check-cycles) — el builder visual sí los usa via otros routers (validate-node, validate-path, branching-*). Sin demanda actual por consolidar (cero callers de un único /validate). Deuda optativa; reabrir si surge UI/orquestación posterior. |
 
 ---
 
-**Total pendientes:** 27 hallazgos → 7 cerrados ✅ + 1 latente-revisado 🟢 + 19 pendientes (refinamiento de auditoría: A-03/A-06/A-08 ya cubiertos estructuralmente, A-04/A-05 latentes sin caller API).
+**Total pendientes:** 27 hallazgos → 18 cerrados ✅ (C-01..C-05, A-02, A-07, A-09, M-01..M-08, F-01, I-02 parcial) + 9 ya-cubiertos/subsumidos/deferidos 🟢 (A-01, A-03, A-04, A-05, A-06, A-08, I-01, I-03, F-02) + 0 pendientes 🔴. Suma: 18 + 9 = 27. Smoke CRM 138 passed + 33 RBAC verde (verificado 2026-07-25 tras reconciliación tracker + verificación A-01 + C-04 backfill probe DB).
+
+**Auditoría CRM completada al 100%** — no quedan hallazgos pendientes con impacto funcional o de seguridad. La única deuda residual es I-02 widening (AwareDateTime type en ~20 datetime fields de ~14 schemas) marcada como REVISIÓN por REGLAS.md §25 "no mezclar wide migrations" — se ampliará cuando se toque alguno de esos schemas por otra razón.
 
 ---
 
