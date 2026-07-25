@@ -9,24 +9,7 @@ import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-
-type AgendaEvent = {
-    id: number;
-    title: string;
-    description?: string | null;
-    start_at: string;
-    end_at?: string | null;
-    location?: string | null;
-    is_all_day: boolean;
-};
-
-type AgendaFormState = {
-    title: string;
-    description: string;
-    start_at: string;
-    end_at: string;
-    location: string;
-};
+import type { AgendaEvent, AgendaFormState } from "@/types/agenda";
 
 function formatEventWindow(event: AgendaEvent) {
     const start = new Date(event.start_at);

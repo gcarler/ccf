@@ -206,3 +206,24 @@ def update_reservation(
 def archive_reservation(db: Session, row: models.ReservaRecurso) -> None:
     row.deleted_at = _utcnow()
     db.commit()
+
+
+def check_reservation_conflict(
+    db: Session,
+    resource_id: UUID,
+    starts_at: datetime,
+    ends_at: datetime,
+    exclude_reservation_id: UUID | None = None,
+) -> models.ReservaRecurso | None:
+    query = (
+        db.query(models.ReservaRecurso)
+        .filter(
+            models.ReservaRecurso.recurso_id == resource_id,
+            models.ReservaRecurso.bloqueo_inicio < ends_at,
+            models.ReservaRecurso.bloqueo_fin > starts_at,
+            models.ReservaRecurso.deleted_at.is_(None),
+        )
+    )
+    if exclude_reservation_id is not None:
+        query = query.filter(models.ReservaRecurso.id != exclude_reservation_id)
+    return query.first()
