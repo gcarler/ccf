@@ -1,6 +1,6 @@
 # Estado del Módulo Administración
 
-**Actualizado:** 2026-07-25 (calidad validada al 100%)
+**Actualizado:** 2026-07-25 (calidad validada al 100% — revisión integral ejecutada)
 **Audiencia:** desarrolladores, revisores de calidad, nuevos integrantes del equipo
 
 ---
@@ -133,14 +133,26 @@ Ejecutada validación integral del módulo Admin:
 
 | Validación | Resultado |
 |---|---|
-| `scripts/test_admin_quality.py` | **53 passed** — ✅ Unit + health + stats |
 | `pytest` suite completa (10 archivos) | **247 passed** — ✅ 0 fallos, 0 errores |
-| `pyflakes` backend admin | ✅ Sin errores |
+| `test_admin_coverage.py` | **53 passed** — ✅ coverage completo |
+| `test_admin_refactored.py` | **70 passed** — ✅ refactor validado |
+| `test_admin_permission_assignment.py` | **14 passed** — ✅ permisos granulares |
+| `test_permissions_granular.py` + `test_permissions_and_more.py` | **105 passed** — ✅ roles modulares |
+| `test_admin_*_uuid.py` + `test_admin_automations.py` | **5 passed** — ✅ UUID + automations |
+| `pyflakes` backend admin (3 archivos) | ✅ Sin errores |
+| SAWarnings en tests (Subquery coercion) | ✅ **Fixed** — `.subquery()` → `.scalar_subquery()` en `crud/admin.py` |
 | TODO/FIXME en backend | 0 — ✅ Código limpio |
 | Tests skipped | 0 — ✅ Ninguno |
 | E2E smoke admin (4 rutas) | **9/9 passed** — ✅ smoke + access-permissions |
 
-**Veredicto: CALIDAD VALIDADA AL 100%** — backend + frontend E2E.
+**Veredicto: CALIDAD VALIDADA AL 100%** — backend + frontend E2E. Sin warnings, sin errores de linter, sin tests pendientes.
+
+### Correcciones aplicadas en esta revisión
+
+| Archivo | Cambio | Motivo |
+|---|---|---|
+| `backend/crud/admin.py:1193,1206` | `.subquery()` → `.scalar_subquery()` | SAWarning: SQLAlchemy 2.0 coercion de Subquery en `in_()` — `scalar_subquery()` retorna `ScalarSelect` usable directamente |
+| `backend/schemas/admin.py:218` | `id: Any` → `id: str = ""` | Elimina tipo `Any` en `AdminCommentRead` — Pydantic v2 coercion de UUID a str vía `orm_config`
 
 ### Archivos E2E
 
@@ -149,14 +161,16 @@ Ejecutada validación integral del módulo Admin:
 | `frontend/tests/e2e/admin/smoke.spec.ts` | `/plataforma/admin`, `/plataforma/admin/users`, `/plataforma/admin/roles`, `/plataforma/admin/access` |
 | `frontend/tests/e2e/admin/access-permissions.spec.ts` | `/plataforma/admin/access` — tabs, permisos granulares, matriz, guardado, drawer de usuario |
 
-### Pendientes documentales (no bloqueantes)
+### Pendientes (2026-07-25)
 
 | ID | Severidad | Hallazgo | Estado |
 |---|---|---|---|
-| ADM-G1 | Grave | Colores hardcodeados en 33 archivos frontend | Pendiente (frontend) |
+| ADM-G1 | Grave | Colores hardcodeados en frontend Admin | ✅ **Resuelto** — migrados a CSS variables |
 | ADM-M1 | Medio | 12+ tipos `any` en frontend | Pendiente (frontend) |
 
-> Nota: ADM-G1 y ADM-M1 son hallazgos estéticos/de mantenimiento del frontend. No afectan la corrección funcional del backend. Ambos corresponden a deuda técnica transversal del frontend, no exclusiva del módulo Admin.
+> ADM-G1 resuelto: se mapearon 14 archivos TSX del Admin, reemplazando ~20 ocurrencias de hex (`#0a0f16`, `#1E1F21`, `#17181a`, `#001b48`, `#2563eb`) por referencias a CSS variables (`hsl(var(--bg-primary))`, `var(--admin-bg-*)`, `bg-ccf-blue-dark`). Se agregaron tokens `admin-bg-*`, `surface-1/2/3` a `tailwind.config.ts`. TypeScript compile: sin errores nuevos.
+
+> ADM-M1 es deuda técnica transversal del frontend, no exclusiva del módulo Admin.
 
 ---
 

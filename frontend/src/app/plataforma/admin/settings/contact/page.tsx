@@ -180,7 +180,7 @@ export default function AdminSettingsContactPage() {
     addToast("Horario eliminado", "success");
   };
 
-  const updateContact = (id: string, field: keyof ContactItem, value: any) => {
+  const updateContact = (id: string, field: keyof ContactItem, value: string) => {
     setDraftContacts((prev) => prev.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
   };
 

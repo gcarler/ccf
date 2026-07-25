@@ -161,7 +161,7 @@ export default function DonationsManagementPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Administración", icon: LayoutDashboard, href: "/plataforma/admin" },

@@ -9,6 +9,7 @@ import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
 import AdminShell from "@/components/admin/AdminShell";
+import type { StorageStatProps } from '@/types/admin';
 
 type Asset = {
     id: number;
@@ -186,7 +187,7 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
     );
 }
 
-function StorageStat({ label, count, size, icon: Icon, color }: any) {
+function StorageStat({ label, count, size, icon: Icon, color = 'slate' }: StorageStatProps) {
     const colors: Record<string, string> = {
         blue: "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20",
         cyan: "bg-[hsl(var(--domain-cyan)/10%)] text-[hsl(var(--domain-cyan)/90%)] dark:bg-[hsl(var(--domain-cyan)/20%)]",
@@ -195,7 +196,7 @@ function StorageStat({ label, count, size, icon: Icon, color }: any) {
     };
     return (
         <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <div className={clsx("flex size-7 items-center justify-center rounded-lg", colors[color])}><Icon size={28} /></div>
+            <div className={clsx("flex size-7 items-center justify-center rounded-lg", colors[color])}>{Icon && <Icon size={28} />}</div>
             <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
                 <h4 className="text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white">{size}</h4>
@@ -205,15 +206,15 @@ function StorageStat({ label, count, size, icon: Icon, color }: any) {
     );
 }
 
-function normalizeAsset(asset: any): Asset {
-    const mime = asset.mime_type || "";
+function normalizeAsset(asset: Record<string, unknown>): Asset {
+    const mime = typeof asset.mime_type === 'string' ? asset.mime_type : '';
     return {
-        id: asset.id,
-        filename: asset.filename,
-        url: asset.url,
+        id: Number(asset.id) || 0,
+        filename: String(asset.filename ?? ''),
+        url: String(asset.url ?? ''),
         type: mime.startsWith("image/") ? "image" : mime.startsWith("video/") ? "video" : "document",
-        sizeBytes: asset.file_size || 0,
-        createdAt: asset.created_at,
+        sizeBytes: Number(asset.file_size) || 0,
+        createdAt: String(asset.created_at ?? ''),
     };
 }
 

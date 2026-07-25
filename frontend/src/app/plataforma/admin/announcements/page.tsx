@@ -24,6 +24,7 @@ import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import type { CSSAuraProperties } from '@/types/admin';
 
 const ANNOUNCEMENT_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -225,7 +226,7 @@ export default function AnnouncementsAdmin() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] font-display overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] font-display overflow-hidden">
             <style jsx global>{`
                 .ann-aura {
                     position: relative;
@@ -347,7 +348,7 @@ export default function AnnouncementsAdmin() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: i * 0.05 }}
                                                 className="ann-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden"
-                                                style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as any}
+                                                style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as CSSAuraProperties}
                                             >
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex flex-col gap-2">
@@ -387,7 +388,7 @@ export default function AnnouncementsAdmin() {
                                         onClick={() => router.push('/plataforma/admin/announcements/new')}
                                         className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 hover:border-[hsl(var(--info)/100%)]/50 hover:bg-info-soft/50 transition-all cursor-pointer group"
                                     >
-                                        <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] shadow-xl flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
+                                        <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] shadow-xl flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
                                             <Plus size={40} strokeWidth={1.5} />
                                         </div>
                                         <div>

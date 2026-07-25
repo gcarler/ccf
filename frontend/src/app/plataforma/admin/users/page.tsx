@@ -123,7 +123,7 @@ export default function AdminUsersPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden font-sans relative">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden font-sans relative">
             <WorkspaceToolbar 
                 breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Gestión de Accesos', icon: Users }]}
                 onSearch={setSearchTerm}

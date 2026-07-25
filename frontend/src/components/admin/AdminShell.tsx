@@ -28,7 +28,7 @@ export default function AdminShell({
     children
 }: AdminShellProps) {
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] overflow-hidden animate-fade-in">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] overflow-hidden animate-fade-in">
             <WorkspaceToolbar
                 breadcrumbs={breadcrumbs}
                 viewType={viewType as any}

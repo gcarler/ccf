@@ -21,6 +21,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import type { CandidateStatProps, CSSAuraProperties } from '@/types/admin';
 
 interface CandidateRaw {
     id: number;
@@ -206,8 +207,8 @@ export default function CandidatesDashboard() {
     );
 }
 
-function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
-    const colors: any = {
+function CandidateStat({ label, value, icon: Icon, color = 'emerald', auraColor }: CandidateStatProps) {
+    const colors: Record<string, string> = {
         emerald: 'text-success-text bg-success-soft dark:bg-[hsl(var(--success))]/20 border-[hsl(var(--success)/20%)] dark:border-[hsl(var(--success)/100%)]',
         blue: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20 border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]',
         amber: 'text-warning-text bg-warning-soft dark:bg-[hsl(var(--warning))]/20 border-[hsl(var(--warning)/20%)] dark:border-[hsl(var(--warning)/100%)]'
@@ -215,7 +216,7 @@ function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
     return (
         <div
             className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm flex items-center gap-3 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
-            style={{ '--aura-color': auraColor } as any}
+            style={{ '--aura-color': auraColor } as CSSAuraProperties}
         >
             <style jsx>{`
                 .aura::after {
@@ -225,7 +226,7 @@ function CandidateStat({ label, value, icon: Icon, color, auraColor }: any) {
                 .aura:hover::after { opacity: 1; }
             `}</style>
             <div className={clsx("aura size-8 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12 duration-500 border shadow-inner shrink-0", colors[color])}>
-                <Icon size={32} strokeWidth={1.5} />
+                {Icon && <Icon size={32} strokeWidth={1.5} />}
             </div>
             <div>
                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 leading-none">{label}</p>

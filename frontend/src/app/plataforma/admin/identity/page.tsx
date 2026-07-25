@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import clsx from 'clsx';
+import type { StatCardProps } from '@/types/admin';
 import {
 AlertTriangle,
 BookOpen,Briefcase,
@@ -269,7 +270,7 @@ export default function IdentityManagementPage() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden font-sans">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden font-sans">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Gestión de Identidad', icon: Users }]}
                 onSearch={setSearch}
@@ -683,11 +684,11 @@ export default function IdentityManagementPage() {
     );
 }
 
-function StatCard({ icon: Icon, label, value, color, bg }: any) {
+function StatCard({ icon: Icon, label, value, color, bg }: StatCardProps) {
     return (
         <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 flex items-center gap-3">
             <div className={clsx("size-10 rounded-lg flex items-center justify-center", bg)}>
-                <Icon size={20} className={color} />
+                {Icon && <Icon size={20} className={color} />}
             </div>
             <div>
                 <p className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>

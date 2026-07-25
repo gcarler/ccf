@@ -19,6 +19,7 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
+import type { GoalRowProps } from '@/types/admin';
 
 export default function NewCoursePage() {
     const router = useRouter();
@@ -187,7 +188,7 @@ export default function NewCoursePage() {
     );
 }
 
-function GoalRow({ label, value }: any) {
+function GoalRow({ label, value }: GoalRowProps) {
     return (
         <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] uppercase">{label}</span>

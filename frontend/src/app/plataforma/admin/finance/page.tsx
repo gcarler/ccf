@@ -21,6 +21,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { DSSkeleton } from '@/design';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import type { SummaryCardProps, BudgetItemProps, DrawerStatProps, TabButtonProps, CSSAuraProperties } from '@/types/admin';
 import type { ViewType } from '@/components/ViewSwitcher';
 
 const FINANCE_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
@@ -85,7 +86,7 @@ export default function FinanceAdminPage() {
         setIsDrawerOpen(true);
     };
 
-    const columns = useMemo<ColumnDef<any>[]>(() => [
+    const columns = useMemo<ColumnDef<FinanceTransaction>[]>(() => [
         { accessorKey: 'id', header: '#', size: 60, cell: info => <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">#{info.getValue() as number}</span> },
         {
             accessorKey: 'description',
@@ -100,8 +101,8 @@ export default function FinanceAdminPage() {
                         {row.original.type === 'income' ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
                     </div>
                     <div className="flex flex-col truncate">
-                        <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{row.original.description}</span>
-                        <span className="text-[10px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide leading-none mt-0.5">{row.original.category}</span>
+                        <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{String(row.original.description ?? '')}</span>
+                        <span className="text-[10px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide leading-none mt-0.5">{String(row.original.category ?? '')}</span>
                     </div>
                 </div>
             )
@@ -433,7 +434,7 @@ export default function FinanceAdminPage() {
     );
 }
 
-function FinanceTab({ label, active, onClick }: any) {
+function FinanceTab({ label, active, onClick }: TabButtonProps) {
     return (
         <button onClick={onClick} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative overflow-hidden shrink-0", active ? "text-[hsl(var(--primary))] border-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50")}>
             {active && <motion.div layoutId="finance-tab" className="absolute bottom-0 left-0 w-full h-[2.5px] bg-[hsl(var(--primary))]" />}
@@ -442,13 +443,13 @@ function FinanceTab({ label, active, onClick }: any) {
     );
 }
 
-function SummaryCard({ title, value, trend, icon: Icon, color, auraColor }: any) {
+function SummaryCard({ title, value, trend, icon: Icon, color, auraColor }: SummaryCardProps) {
     return (
         <div 
             className="aura-effect p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
-            style={{ '--aura-color': auraColor } as any}
+            style={{ '--aura-color': auraColor } as CSSAuraProperties}
         >
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-700"><Icon size={64} /></div>
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-700">{Icon && <Icon size={64} />}</div>
             <div className="space-y-5 relative z-10">
                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{title}</p>
                 <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">{value}</h3>
@@ -460,7 +461,7 @@ function SummaryCard({ title, value, trend, icon: Icon, color, auraColor }: any)
     );
 }
 
-function BudgetItem({ label, percent, color }: any) {
+function BudgetItem({ label, percent, color }: BudgetItemProps) {
     return (
         <div className="space-y-3 group/item">
             <div className="flex justify-between items-center text-[11px] font-semibold uppercase tracking-tight">
@@ -479,10 +480,10 @@ function BudgetItem({ label, percent, color }: any) {
     );
 }
 
-function DrawerStat({ label, value, icon: Icon }: any) {
+function DrawerStat({ label, value, icon: Icon }: DrawerStatProps) {
     return (
         <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg transition-all hover:bg-[hsl(var(--bg-primary))] hover:shadow-sm">
-            <div className="flex items-center gap-2 mb-1.5"><Icon size={14} className="text-[hsl(var(--text-secondary))]" /><span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{label}</span></div>
+            <div className="flex items-center gap-2 mb-1.5">{Icon && <Icon size={14} className="text-[hsl(var(--text-secondary))]" />}<span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{label}</span></div>
             <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white capitalize tracking-tight">{value}</p>
         </div>
     );

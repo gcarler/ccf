@@ -25,6 +25,7 @@ import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import type { CSSAuraProperties } from '@/types/admin';
 
 interface SocialChannel {
     id?: number;
@@ -119,7 +120,7 @@ export default function SocialMediaSettings() {
     const renderList = () => (
         <div className="space-y-4">
             {platformRows.map((row) => (
-                <div key={row.id} className="social-aura bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 p-3 rounded-lg flex items-center justify-between gap-3" style={{ '--aura-color': row.aura } as any}>
+                <div key={row.id} className="social-aura bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 p-3 rounded-lg flex items-center justify-between gap-3" style={{ '--aura-color': row.aura } as CSSAuraProperties}>
                     <div className="flex items-center gap-3 min-w-0">
                         <div className={clsx("size-7 rounded-lg flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-black/20", row.color)}>
                             <row.icon size={24} />
@@ -180,7 +181,7 @@ export default function SocialMediaSettings() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] font-display overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] font-display overflow-hidden">
             <style jsx global>{`
                 .social-aura {
                     position: relative;
@@ -267,7 +268,7 @@ export default function SocialMediaSettings() {
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: i * 0.05 }}
                                             className="social-aura bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 group hover:shadow-2xl transition-all duration-500"
-                                            style={{ '--aura-color': platform.aura } as any}
+                                            style={{ '--aura-color': platform.aura } as CSSAuraProperties}
                                         >
                                             <div className="flex items-center gap-3 flex-1">
                                                 <div className={clsx("size-8 rounded-lg flex items-center justify-center shadow-inner group-hover:scale-110 transition-all duration-500 bg-[hsl(var(--surface-1))] dark:bg-black/20", platform.color)}>

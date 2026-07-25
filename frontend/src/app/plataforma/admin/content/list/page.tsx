@@ -26,6 +26,7 @@ import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import type { TabButtonProps, CSSAuraProperties } from '@/types/admin';
 
 const CONTENT_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -110,14 +111,14 @@ export default function AdminContentList() {
         };
     });
 
-    const openItem = (item: any) => {
+    const openItem = (item: { id: number | string }) => {
         if (activeTab === 'courses') router.push(`/admin/content/courses/${item.id}`);
     };
 
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] font-display overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] font-display overflow-hidden">
             <style jsx global>{`
                 .content-aura {
                     position: relative;
@@ -274,7 +275,7 @@ export default function AdminContentList() {
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.05 }}
                                         className="content-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col md:flex-row md:items-center justify-between gap-3"
-                                        style={{ '--aura-color': item.is_published ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)' } as any}
+                                        style={{ '--aura-color': item.is_published ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)' } as CSSAuraProperties}
                                     >
                                         <div className="flex items-center gap-3 flex-1">
                                             <div className={clsx(
@@ -331,7 +332,7 @@ export default function AdminContentList() {
     );
 }
 
-function TabBtn({ label, active, onClick, icon: Icon }: any) {
+function TabBtn({ label, active, onClick, icon: Icon }: TabButtonProps) {
     return (
         <button 
             onClick={onClick}
@@ -340,7 +341,7 @@ function TabBtn({ label, active, onClick, icon: Icon }: any) {
                 active ? "text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]"
             )}
         >
-            <Icon size={14} className={clsx(active ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]")} />
+            {Icon && <Icon size={14} className={clsx(active ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]")} />}
             {label}
             {active && <motion.div layoutId="content-tab-active" className="absolute bottom-[-2px] left-0 right-0 h-1 bg-[hsl(var(--primary))] rounded-t-full shadow-[0_0_15px_rgba(37,99,235,0.4)]" />}
         </button>
