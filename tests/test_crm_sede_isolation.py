@@ -664,6 +664,111 @@ def test_get_messaging_history_item_blocks_cross_sede(client, db_session):
     )
 
 
+def test_create_automation_edge_blocks_cross_sede(client, db_session):
+    """POST /automation-edges y /automations/edges: crear un edge entre
+    automatizaciones de otra sede debe ser 404 (no 201). Axioma 3 — el edge
+    codifica el flujo de seguimiento pastoral de una sede y es confidencial.
+    """
+    (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
+    # Automatización propia de sede B (admin_a no debe poder enlazarla).
+    autom_b = models.CrmAutomation(
+        name="Seguimiento B",
+        trigger_event="new_persona",
+        action_type="send_whatsapp",
+        is_active=True,
+        sede_id=sede_b.id,
+    )
+    db_session.add(autom_b)
+    db_session.commit()
+
+    headers_a = auth_headers(client, email="aboxA@example.com")
+    # admin_a no tiene automatizaciones propias en este test; apuntamos ambos
+    # extremos del edge a la automatización de sede_b para forzar el cross-sede
+    # en ambas validaciones (source y target).
+    resp = client.post(
+        "/api/crm/resources/automation-edges",
+        headers=headers_a,
+        json={"source_id": str(autom_b.id), "target_id": str(autom_b.id)},
+    )
+    assert resp.status_code == 404, (
+        f"FUGA: admin_a creó edge hacia automatización de sede_b (status {resp.status_code}, body={resp.text})"
+    )
+
+    # El fallback /automations/edges también debe estar scoped (mismo helper).
+    resp_fb = client.post(
+        "/api/crm/resources/automations/edges",
+        headers=headers_a,
+        json={"source_id": str(autom_b.id), "target_id": str(autom_b.id)},
+    )
+    assert resp_fb.status_code == 404, (
+        f"FUGA fallback: admin_a creó edge cross-sede via /automations/edges (status {resp_fb.status_code})"
+    )
+
+
+def test_list_automation_edges_blocks_cross_sede(client, db_session):
+    """GET /automation-edges: un edge entre automatizaciones de sede_b no debe
+    aparecer en el listado de admin_a. Axioma 3 — el listado se scopea via
+    JOIN CrmAutomation.sede_id para source y target.
+    """
+    (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
+    # Automatización de sede_a (visible) y de sede_b (oculta).
+    autom_a = models.CrmAutomation(
+        name="Seguimiento A",
+        trigger_event="new_persona",
+        action_type="send_email",
+        is_active=True,
+        sede_id=sede_a.id,
+    )
+    autom_b = models.CrmAutomation(
+        name="Seguimiento B",
+        trigger_event="new_persona",
+        action_type="send_whatsapp",
+        is_active=True,
+        sede_id=sede_b.id,
+    )
+    db_session.add_all([autom_a, autom_b])
+    db_session.commit()
+    # Edge legítimo intra-sede_a y edge confidencial intra-sede_b.
+    edge_a = models.CrmAutomationEdge(source_id=autom_a.id, target_id=autom_a.id)
+    edge_b = models.CrmAutomationEdge(source_id=autom_b.id, target_id=autom_b.id)
+    db_session.add_all([edge_a, edge_b])
+    db_session.commit()
+
+    headers_a = auth_headers(client, email="aboxA@example.com")
+    resp = client.get("/api/crm/resources/automation-edges", headers=headers_a)
+    assert resp.status_code == 200
+    returned_ids = {e["id"] for e in resp.json()}
+    assert str(edge_a.id) in returned_ids, "El edge intra-sede_a debe listarse."
+    assert str(edge_b.id) not in returned_ids, (
+        f"FUGA: admin_a ve edge de sede_b en el listado. IDs retornados: {returned_ids}"
+    )
+
+
+def test_delete_automation_edge_blocks_cross_sede(client, db_session):
+    """DELETE /automation-edges/{edge_id}: borrar un edge de otra sede debe
+    ser 404 (no 204). Axioma 3 — el scope se valida via el source automation.
+    """
+    (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
+    autom_b = models.CrmAutomation(
+        name="Seguimiento B",
+        trigger_event="new_persona",
+        action_type="send_whatsapp",
+        is_active=True,
+        sede_id=sede_b.id,
+    )
+    db_session.add(autom_b)
+    db_session.commit()
+    edge_b = models.CrmAutomationEdge(source_id=autom_b.id, target_id=autom_b.id)
+    db_session.add(edge_b)
+    db_session.commit()
+
+    headers_a = auth_headers(client, email="aboxA@example.com")
+    resp = client.delete(f"/api/crm/resources/automation-edges/{edge_b.id}", headers=headers_a)
+    assert resp.status_code == 404, (
+        f"FUGA: admin_a borró edge de sede_b (status {resp.status_code}, body={resp.text})"
+    )
+
+
 def test_export_newsletter_leads_csv_blocks_cross_sede(client, db_session):
     """Axioma 3: el export de leads NO debe exponer casos de otra sede.
 
@@ -1987,4 +2092,107 @@ def test_create_prayer_request_no_user_sede_returns_400(client, db_session, monk
     assert leaks == 0, (
         f"FUGA: {leaks} prayer(s) creados pese al 400 "
         f"(el guard del API fue bypaseado)"
+    )
+
+
+# ── M-04: response_model drift dict → List[dict] ────────────────────────────────
+# Tests de smoke para confirmar que los 3 endpoints afectados por M-04
+# (response_model=dict con retorno list[dict], drift del contrato HTTP) se
+# serializan correctamente como arrays. La RL de FastAPI serializa
+# List[dict] validando campos JSON legibles; si alguien reintroduce
+# response_model=dict sobre retorno de array, el contrato cambiaría.
+
+def test_get_counseling_by_lead_returns_list(client, db_session):
+    """GET /counseling/lead/{lead_id}: response_model=List[dict] (M-04).
+    Antes el decorator decía dict pero retornaba list[dict] — drift.
+    """
+    (admin_a, persona, _), _ = _seed_two_sedes(db_session)
+    # Crear un CounselingTicket para que el array no esté vacío.
+    ticket = models.CounselingTicket(
+        persona_id=persona.id,
+        subject="M-04 smoke test",
+        notes="Notas del ticket.",
+        status="open",
+        priority_level="medium",
+    )
+    db_session.add(ticket)
+    db_session.commit()
+
+    headers = auth_headers(client, email="aboxA@example.com")
+    resp = client.get(f"/api/crm/counseling/lead/{persona.id}", headers=headers)
+    assert resp.status_code == 200
+    # Debe ser array (resp.json() es list), no dict — el drift anterior hubiera
+    # roto el parse al imponer dict schema sobre list.
+    assert isinstance(resp.json(), list), (
+        f"Drift regresado: got {type(resp.json()).__name__}, esperado list"
+    )
+
+
+def test_list_crm_groups_returns_list(client, db_session):
+    """GET /groups: response_model=List[dict] (M-04).
+
+    El endpoint lista grupos/ministerios para vistas comunitarias.
+    Drift dict → List[dict].
+    """
+    _seed_two_sedes(db_session)
+    # Crear un Ministry para que el array no esté vacío.
+    # Axioma — Ministry es catálogo global legítimo (doctrina C-03/A-04),
+    # no expuesto a mutación sede-scoped; sólo tiene `name`/`description`.
+    ministry = models.Ministry(name="Ministerio M-04 smoke")
+    db_session.add(ministry)
+    db_session.commit()
+
+    headers = auth_headers(client, email="aboxA@example.com")
+    resp = client.get("/api/crm/groups", headers=headers)
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), list), (
+        f"Drift regresado: got {type(resp.json()).__name__}, esperado list"
+    )
+    # Regression del contract: al menos el ministry creado.
+    names = {g["name"] for g in resp.json() if g.get("name")}
+    assert "Ministerio M-04 smoke" in names
+
+
+def test_list_caso_calls_returns_list(client, db_session):
+    """GET /casos/{case_id}/calls: response_model=List[dict] (M-04).
+
+    El endpoint lista llamadas de consolidación de un caso. Drift dict →
+    List[dict]. Requiere un CasoCRM válido (seed via PipelineCRM+EtapaPipeline).
+    """
+    (admin_a, persona, sede_a), _ = _seed_two_sedes(db_session)
+    pipeline = models.PipelineCRM(
+        id=_uuid.uuid4(),
+        sede_id=sede_a.id,
+        nombre="Pipeline M-04",
+        tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+        activo=True,
+    )
+    db_session.add(pipeline)
+    db_session.flush()
+    etapa = models.EtapaPipeline(
+        id=_uuid.uuid4(),
+        pipeline_id=pipeline.id,
+        nombre="Etapa 1",
+        orden=1,
+    )
+    db_session.add(etapa)
+    db_session.flush()
+    caso = models.CasoCRM(
+        id=_uuid.uuid4(),
+        persona_id=persona.id,
+        sede_id=sede_a.id,
+        pipeline_id=pipeline.id,
+        etapa_actual_id=etapa.id,
+        titulo_caso="Caso M-04 smoke",
+        origen_canal=CanalOrigenEnum.WEB_FORM,
+        estado=EstadoCasoEnum.ABIERTO,
+    )
+    db_session.add(caso)
+    db_session.commit()
+
+    headers = auth_headers(client, email="aboxA@example.com")
+    resp = client.get(f"/api/crm/casos/{caso.id}/calls", headers=headers)
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), list), (
+        f"Drift regresado: got {type(resp.json()).__name__}, esperado list"
     )

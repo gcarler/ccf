@@ -1,8 +1,34 @@
 import uuid
 
+import pytest
+
 from backend import models
 from backend.models_crm import CrmAutomationEdge, validate_three_node_path
 from tests.conftest import auth_headers, seed_admin
+
+
+@pytest.fixture(autouse=True)
+def _authed_client_for_router_endpoints(client, db_session):
+    """Todos los endpoints de este módulo requieren ``crm:edit`` o ``crm:read``.
+
+    Antes de la Iteración 2 (2026-07-25), 31/38 tests fallaban en aislamiento
+    porque invocaban endpoints sin ``seed_admin`` ni ``auth_headers`` — sólo
+    pasaban en la suite completa por contaminación cross-test del orden de
+    pytest. Esta fixture autouse resuelve el smell de raíz:
+
+    1. seed_admin(db_session) crea el admin Auth v3 con sede + permisos.
+    2. auth_headers(client) login para obtener bearer token.
+    3. ``client.default_headers`` almacena el Authorization por defecto — el
+       ``LocalASGITestClient`` lo inyecta en cada request automáticamente,
+       pero respeta headers explícitos que el caller pase (ver merge logic en
+       ``conftest.py:LocalASGITestClient._request``).
+
+    Tests que ya pasan ``headers=auth_headers(client)`` explícito no se ven
+    afectados porque su header explícito overridea el default.
+    """
+    seed_admin(db_session)
+    headers = auth_headers(client)
+    client.default_headers = dict(headers)
 
 
 # Test the genuine model validation function directly
@@ -353,9 +379,14 @@ def test_flows_validate_types(client):
 
 
 def test_flows_unicode(client):
-    response = client.post("/api/crm/automations/flows/unicode")
+    # Endpoint was a no-op alias (literal return {"status":"success"}).
+    # Removed in Iter2 2026-07-25 from router productivo — substituted por
+    # canonical /automations/flows/empty que valida el grafo vacío.
+    response = client.post("/api/crm/automations/flows/empty", json={"nodes": []})
     assert response.status_code == 200
     assert response.json()["status"] == "success"
+    # El endpoint empty ahora valida el grafo: vacío → "Flow is empty".
+    assert "message" in response.json()
 
 
 def test_validate_path_length_api(client):
@@ -445,6 +476,8 @@ def test_branching_unexpected_op(client):
 
 
 def test_cycle_deep(client):
+    # Alias deprecated (cycle-deep → check_cycles). Migrado a canonical
+    # /automations/flows/check-cycles en Iter2 2026-07-25.
     payload = {
         "nodes": ["n1", "n2", "n3", "n4", "n5"],
         "edges": [
@@ -455,12 +488,13 @@ def test_cycle_deep(client):
             {"source": "n5", "target": "n1"}
         ]
     }
-    response = client.post("/api/crm/automations/flows/cycle-deep", json=payload)
+    response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
     assert response.status_code == 200
     assert len(response.json()["cycles"]) > 0
 
 
 def test_multiple_cycles(client):
+    # Alias deprecated (multiple-cycles → check_cycles). Migrado a canonical.
     payload = {
         "nodes": ["n1", "n2", "n3", "n4"],
         "edges": [
@@ -470,12 +504,13 @@ def test_multiple_cycles(client):
             {"source": "n4", "target": "n3"}
         ]
     }
-    response = client.post("/api/crm/automations/flows/multiple-cycles", json=payload)
+    response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
     assert response.status_code == 200
     assert len(response.json()["cycles"]) > 0
 
 
 def test_disconnected_subgraph_cycles(client):
+    # Alias deprecated (disconnected-subgraph-cycles → check_cycles). Migrado.
     payload = {
         "nodes": ["n1", "n2", "n3", "n4"],
         "edges": [
@@ -484,7 +519,7 @@ def test_disconnected_subgraph_cycles(client):
             {"source": "n4", "target": "n3"}
         ]
     }
-    response = client.post("/api/crm/automations/flows/disconnected-subgraph-cycles", json=payload)
+    response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
     assert response.status_code == 200
     assert len(response.json()["cycles"]) > 0
 
@@ -496,7 +531,8 @@ def test_validate_complex_dag(client):
 
 
 def test_concurrent_cycle_checks(client):
-    response = client.post("/api/crm/automations/flows/concurrent-cycle-checks", json={})
+    # Alias deprecated (concurrent-cycle-checks → validate_complex_dag). Migrado.
+    response = client.post("/api/crm/automations/flows/validate-complex-dag", json={})
     assert response.status_code == 200
     assert response.json()["valid"] is True
 
@@ -521,7 +557,8 @@ def test_kanban_sync_reorder(client, db_session):
 
 def test_flow_builder_three_node_render(client, db_session):
     admin, persona, sede = seed_admin(db_session)
-    flow = models.CrmAutomationFlow(name="Test Flow", is_active=True)
+    # Iter2 2026-07-25: flow debe atribuir sede del admin (Axioma 3 via _owned_flow)
+    flow = models.CrmAutomationFlow(name="Test Flow", is_active=True, sede_id=sede.id)
     db_session.add(flow)
     db_session.commit()
     headers = auth_headers(client, email=admin.email)

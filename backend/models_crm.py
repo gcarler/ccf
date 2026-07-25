@@ -735,8 +735,19 @@ class CrmAutomation(Base):
 
 
 class CrmAutomationFlow(Base):
+    """Un flujo de automatización del CRM.
+
+    Axioma 3 — Aislamiento por Sede: ``sede_id`` atribuye el flujo a un tenant.
+    Es ``nullable=True`` para no romper rows pre-migración (backfill pendiente);
+    el contrato del API exige ``sede_id is not None`` al crear flujos nuevos y
+    filtra por sede del actor en toda lectura/escritura. Un flujo legacy con
+    ``sede_id IS NULL`` sólo es legible/modificable por un actor sin sede
+    (super administrador de plataforma).
+    """
+
     __tablename__ = "crm_automation_flows"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
     name = Column(String(100), nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)

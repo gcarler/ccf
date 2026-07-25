@@ -32,6 +32,28 @@ def _owned_pipeline(db: Session, pipeline_id: UUID, current_user: models.User) -
     return row
 
 
+def _owned_flow(db: Session, flow_id: UUID, current_user: models.User) -> models.CrmAutomationFlow:
+    """Axioma 3 — devuelve el flujo sólo si pertenece a la sede del actor.
+
+    Un flujo legacy con ``sede_id IS NULL`` sólo es legible por un actor sin
+    sede (super administrador); cualquier actor con sede vé 404 en flujos ajenos.
+    """
+    flow = db.query(models.CrmAutomationFlow).filter(models.CrmAutomationFlow.id == flow_id).first()
+    if flow is None:
+        raise HTTPException(status_code=404, detail="Flow no encontrado")
+    user_sede = require_user_sede_id(db, current_user)
+    if user_sede is None:
+        # Actor sin sede (superadmin plataforma): puede operar flujos legacy.
+        return flow
+    sede_id = UUID(str(user_sede))
+    if flow.sede_id is None:
+        # Flujo legacy sin tenant — sólo el superadmin (actor sin sede) lo toca.
+        raise HTTPException(status_code=404, detail="Flow no encontrado")
+    if flow.sede_id != sede_id:
+        raise HTTPException(status_code=404, detail="Flow no encontrado")
+    return flow
+
+
 def _serialize_pipeline(row: models.PipelineCRM) -> dict:
     return {
         "id": row.id,
@@ -550,16 +572,27 @@ def automations_palette(
 def automations_flows(
     payload: dict,
     db: Session = Depends(get_db),
-    _current_user: models.User = Depends(require_module_access("crm", "edit")),
+    current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    """Saves automation flow metadata into the database."""
+    """Saves automation flow metadata into the database.
+
+    Axioma 3 — el flujo se attribuye a la sede del actor server-side; el payload
+    no puede inyectar ``sede_id``. Un actor sin sede (REGLAS.md §4.1) recibe 409.
+    """
+    user_sede = require_user_sede_id(db, current_user)
+    if user_sede is None:
+        raise HTTPException(
+            status_code=409,
+            detail="El actor no tiene una sede atribuible; no puede crear flujos",
+        )
+    sede_id = UUID(str(user_sede))
     name = payload.get("name", "Unnamed Flow")
     is_active = payload.get("is_active", True)
-    flow = models.CrmAutomationFlow(name=name, is_active=is_active)
+    flow = models.CrmAutomationFlow(name=name, is_active=is_active, sede_id=sede_id)
     db.add(flow)
     db.commit()
     db.refresh(flow)
-    return {"id": str(flow.id), "name": flow.name, "is_active": flow.is_active}
+    return {"id": str(flow.id), "name": flow.name, "is_active": flow.is_active, "sede_id": str(sede_id)}
 
 
 @router.post("/automations/flows/validate-path")
@@ -1021,11 +1054,6 @@ def flows_validate_types(payload: dict = None, current_user: models.User = Depen
     return {"valid": True}
 
 
-@router.post("/automations/flows/unicode")
-def flows_unicode(payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))):
-    return {"status": "success"}
-
-
 @router.post("/automations/flows/validate-path-length")
 def validate_path_length_api(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
@@ -1080,6 +1108,11 @@ def cross_flow_check(payload: dict = None, db: Session = Depends(get_db), curren
     edges = payload.get("edges", [])
 
     if flow_id:
+        try:
+            flow_uuid = UUID(str(flow_id))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="flow_id invalido")
+        _owned_flow(db, flow_uuid, current_user)  # Axioma 3 — sede scope.
         node_ids = set()
         for e in edges:
             node_ids.add(e["source"])
@@ -1087,7 +1120,7 @@ def cross_flow_check(payload: dict = None, db: Session = Depends(get_db), curren
 
         owned_count = (
             db.query(models.CrmAutomationNode)
-            .filter(models.CrmAutomationNode.id.in_(list(node_ids)), models.CrmAutomationNode.flow_id == flow_id)
+            .filter(models.CrmAutomationNode.id.in_(list(node_ids)), models.CrmAutomationNode.flow_id == flow_uuid)
             .count()
         )
 
@@ -1188,32 +1221,12 @@ def branching_unexpected_op(payload: dict = None, current_user: models.User = De
     return {"status": "success"}
 
 
-@router.post("/automations/flows/cycle-deep")
-def cycle_deep(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
-    return check_cycles(payload, db)
-
-
-@router.post("/automations/flows/multiple-cycles")
-def multiple_cycles(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
-    return check_cycles(payload, db)
-
-
-@router.post("/automations/flows/disconnected-subgraph-cycles")
-def disconnected_subgraph_cycles(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
-    return check_cycles(payload, db)
-
-
 @router.post("/automations/flows/validate-complex-dag")
 def validate_complex_dag(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
     payload = payload or {}
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
     return {"valid": not has_cycle}
-
-
-@router.post("/automations/flows/concurrent-cycle-checks")
-def concurrent_cycle_checks(payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_module_access("crm", "edit"))):
-    return validate_complex_dag(payload, db)
 
 
 @router.post("/pipeline/kanban/sync-reorder")
@@ -1253,9 +1266,7 @@ def flow_builder_three_node_render(
         flow_id = UUID(payload["flow_id"])
     except (KeyError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=f"flow_id invalido: {exc}")
-    flow = db.query(models.CrmAutomationFlow).filter(models.CrmAutomationFlow.id == flow_id).first()
-    if not flow:
-        raise HTTPException(status_code=404, detail="Flow no encontrado")
+    flow = _owned_flow(db, flow_id, current_user)
 
     nodes = db.query(models.CrmAutomationNode).filter(models.CrmAutomationNode.flow_id == flow_id).all()
     return {
@@ -1392,6 +1403,7 @@ def cyclical_flow_resolution(
         flow_id = UUID(payload["flow_id"])
     except (KeyError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=f"flow_id invalido: {exc}")
+    _owned_flow(db, flow_id, current_user)  # Axioma 3 — sede scope.
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
 

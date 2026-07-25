@@ -51,7 +51,7 @@ def prepare_persona_for_output(db: Session, persona: models.Persona):
 def create_persona(db: Session, payload: schemas.PersonaCreate, *, sede_id: UUID | None = None) -> models.Persona:
     # Axioma 1 — Validación de Identidad Previa: buscar persona existente
     # por teléfono o documento antes de crear un duplicado.
-    existing = _find_existing_persona(db, payload)
+    existing = _find_existing_persona(db, payload, sede_id=sede_id)
     if existing:
         # Si existe, devolver el registro existente (no crear duplicado)
         return existing
@@ -96,20 +96,35 @@ def create_persona(db: Session, payload: schemas.PersonaCreate, *, sede_id: UUID
     return row
 
 
-def _find_existing_persona(db: Session, payload: schemas.PersonaCreate) -> Optional[models.Persona]:
+def _find_existing_persona(
+    db: Session,
+    payload: schemas.PersonaCreate,
+    *,
+    sede_id: UUID | None = None,
+) -> Optional[models.Persona]:
     """Busca una persona existente por teléfono o número de documento.
 
     Axioma 1 — Person-Centric Kernel: anexar al UUID existente, no duplicar.
+    Axioma 3 — Aislamiento por Sede: la deduplicación respeta ``sede_id``; nunca
+    anexa a una persona que pertenece a otra sede, aunque el teléfono o el número
+    de documento coincidan cross-tenant. Cuando ``sede_id`` es ``None`` (caller
+    sin tenant resuelto, ej. seed global) se mantiene el behaviour anterior.
     """
+    sede_filter = (
+        models.Persona.sede_id == sede_id
+        if sede_id is not None
+        else models.Persona.sede_id.is_(None)
+    )
     phones = [p for p in (payload.phone, payload.mobile_phone) if p]
     if phones:
         match = (
             persona_query(db)
             .filter(
+                sede_filter,
                 or_(
                     models.Persona.phone.in_(phones),
                     models.Persona.mobile_phone.in_(phones),
-                )
+                ),
             )
             .first()
         )
@@ -117,7 +132,11 @@ def _find_existing_persona(db: Session, payload: schemas.PersonaCreate) -> Optio
             return match
 
     if payload.id_number:
-        match = persona_query(db).filter(models.Persona.id_number == payload.id_number).first()
+        match = (
+            persona_query(db)
+            .filter(sede_filter, models.Persona.id_number == payload.id_number)
+            .first()
+        )
         if match:
             return match
 
