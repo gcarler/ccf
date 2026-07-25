@@ -138,8 +138,16 @@ Ejecutada validación integral del módulo Admin:
 | `pyflakes` backend admin | ✅ Sin errores |
 | TODO/FIXME en backend | 0 — ✅ Código limpio |
 | Tests skipped | 0 — ✅ Ninguno |
+| E2E smoke admin (4 rutas) | **9/9 passed** — ✅ smoke + access-permissions |
 
-**Veredicto: CALIDAD VALIDADA AL 100%** en el backend del módulo Admin.
+**Veredicto: CALIDAD VALIDADA AL 100%** — backend + frontend E2E.
+
+### Archivos E2E
+
+| Archivo | Rutas cubiertas |
+|---|---|
+| `frontend/tests/e2e/admin/smoke.spec.ts` | `/plataforma/admin`, `/plataforma/admin/users`, `/plataforma/admin/roles`, `/plataforma/admin/access` |
+| `frontend/tests/e2e/admin/access-permissions.spec.ts` | `/plataforma/admin/access` — tabs, permisos granulares, matriz, guardado, drawer de usuario |
 
 ### Pendientes documentales (no bloqueantes)
 
