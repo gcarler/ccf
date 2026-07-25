@@ -369,7 +369,7 @@ La corrección estructural procede en orden de severidad:
 | ✅ CERRADO (parcial) | I-02 | `b9097d5e` | 2026-07-25 | Helper `_ensure_utc` + type `AwareDateTime = Annotated[datetime, BeforeValidator(_ensure_utc)]` en `backend/schemas/_common.py`. Aplicado en `PipelineResponse` (created_at/updated_at) + `PipelineStageResponse` (created_at). Smoke CRM 138 passed. Restante (#20+ datetime fields en ~14 Response schemas en `base.py`/`resources.py`)Ampliar como deuda REVISIÓN por REGLAS.md §25 'no mezclar wide migrations'. |
 | 🟢 SUBSUMIDO | I-03 | — | 2026-07-25 | Deuda cosmética aceptada: los ~20 tests IDOR cross-sede existen ya como funciones planas en `test_crm_sede_isolation.py`. Refactor a class `TestCrmIdorCrossSede` no añade cobertura ni mejora eslint; no se ha identificado valor funcional neto. Reabrir solo si el file crece significativamente. |
 | 🔴 PENDIENTE | F-01 | — | — | bitácora categorías (POST ya audita; PATCH/DELETE pending) |
-| 🔴 PENDIENTE | F-02 | — | — | endpoint validador consolidado (post-C-05) |
+| 🟢 DEFERIDO | F-02 | — | 2026-07-25 | Endpoint validador consolidado post-C-05. Verificación: frontend no invoca los validators unitarios eliminados ni canonical (/flows/validate-complex-dag, /flows/check-cycles) — el builder visual sí los usa via otros routers (validate-node, validate-path, branching-*). Sin demanda actual por consolidar (cero callers de un único /validate). Deuda optativa; reabrir si surge UI/orquestación posterior. |
 
 ---
 
