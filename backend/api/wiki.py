@@ -41,9 +41,17 @@ def _normalize_page_key(value: str) -> str:
 
 
 def _resolve_sede(db: Session, current_user) -> UUID | None:
-    """Resolve the user's sede ID (None for cross-sede roles)."""
+    """Resolve the user's sede ID (None for cross-sede roles).
+
+    ``get_user_sede_id`` (reexportado vía ``backend.crud.crm``) retorna
+    ``uuid.UUID | None`` desde el fix M-01 (2026-07-25) — antes devolvía ``str``.
+    Idempotente: si el upstream cambia de vuelta a ``str`` o sigue retornando
+    ``UUID``, este helper sigue funcionando sin re-wrap incorrecto.
+    """
     result = get_user_sede_id(db, current_user.id)
-    return UUID(result) if result else None
+    if result is None:
+        return None
+    return result if isinstance(result, UUID) else UUID(str(result))
 
 
 def _resolve_persona(db: Session, current_user) -> UUID | None:

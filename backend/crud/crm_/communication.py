@@ -59,7 +59,7 @@ def _crud_scope_re_check_communication_log_create(
         )
 
     target_sede = _resolve_anchor_sede(db, "persona_id", persona_id)
-    if target_sede is None or target_sede != str(user_sede):
+    if target_sede is None or target_sede != user_sede:
         _logger.warning(
             "Axioma 3 scope violation: create_communication_log cross-sede "
             "(actor_sede=%s actor_user_id=%s persona_id=%s target_sede=%s)",
@@ -119,14 +119,18 @@ def create_communication_log(
 
 
 def get_communication_logs(
-    db: Session, limit: int = 50, sede_id: str | None = None
+    db: Session, limit: int = 50, sede_id: "uuid.UUID | str | None" = None
 ):
     """Lista los CommunicationLog más recientes, opcionalmente acotados a la sede indicada.
 
     Axioma 3 — Multi-Tenant: si ``sede_id`` está presente, agrega un JOIN con
-    ``models.Persona`` y filtra ``Persona.sede_id == sede_id``. CommunicationLog
-    NO tiene columna ``sede_id`` propia; el scope se obtiene vía la FK
-    ``persona_id → personas.id``. Si ``sede_id`` es ``None`` (superadmin /
+    ``models.Persona`` y filtra ``Persona.sede_id == sede_id``. ``Persona.sede_id``
+    está modelada como ``UUID(as_uuid=True)``; pasamos el valor a ``uuid.UUID``
+    antes de comparar para evitar mismatch ORM (en SQLite tolera str via coerción,
+    en PostgreSQL rompe).
+
+    CommunicationLog NO tiene columna ``sede_id`` propia; el scope se obtiene vía
+    la FK ``persona_id → personas.id``. Si ``sede_id`` es ``None`` (superadmin /
     caller sin scope), retorna el log global sin filtrar.
 
     Política READ-only: para hardening defensivo adicional, callers sensibles
@@ -134,12 +138,26 @@ def get_communication_logs(
     ``get_user_sede_id``.
     """
     query = db.query(models.CommunicationLog)
-    if sede_id:
-        query = query.join(
-            models.Persona,
-            models.CommunicationLog.persona_id == models.Persona.id,
-        ).filter(models.Persona.sede_id == sede_id)
+    if sede_id is not None:
+        sede_uuid = sede_id if isinstance(sede_id, uuid.UUID) else _coerce_sede_uuid(sede_id)
+        if sede_uuid is not None:
+            query = query.join(
+                models.Persona,
+                models.CommunicationLog.persona_id == models.Persona.id,
+            ).filter(models.Persona.sede_id == sede_uuid)
     return query.order_by(models.CommunicationLog.created_at.desc()).limit(limit).all()
+
+
+def _coerce_sede_uuid(value) -> "uuid.UUID | None":
+    """Coerce helper: acepta ``uuid.UUID`` | ``str`` | cualquier cosa ``uuid.UUID()``
+    pueda tragar; retorna ``None`` si el valor no es representable como UUID.
+    Aislado aquí para no añadir dependencias a ``crud._utils`` desde el módulo
+    CRUD de comunicación (que ya tiene su cadena de imports cerrada).
+    """
+    try:
+        return uuid.UUID(str(value))
+    except (TypeError, ValueError, AttributeError):
+        return None
 
 
 def get_communication_log(db: Session, log_id: str) -> Optional[models.CommunicationLog]:
