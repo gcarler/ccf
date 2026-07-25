@@ -68,8 +68,19 @@ export default function AcademyClient() {
         } catch (err: unknown) {
             // AbortError es esperado al desmontar; no se muestra al usuario.
             if (err instanceof DOMException && err.name === 'AbortError') return;
-            const candidate = err as { detail?: string; message?: string };
-            const message = candidate.detail || candidate.message || 'Error al cargar métricas de la Academia';
+            // I-06 (cierre 2026-07-24): error extraction type-safe sin cast frágil.
+            // ``err instanceof Error`` cubre ``Error`` estándar; el shape HTTP
+            // ``{detail: string}`` del backend se extrae con ``in`` narrowing.
+            let message = 'Error al cargar métricas de la Academia';
+            if (err instanceof Error && err.message) {
+                message = err.message;
+            } else if (
+                err && typeof err === 'object' &&
+                'detail' in err &&
+                typeof (err as { detail?: unknown }).detail === 'string'
+            ) {
+                message = (err as { detail: string }).detail;
+            }
             setError(message);
             toast.error(message);
         } finally {

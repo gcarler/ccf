@@ -539,15 +539,15 @@ respalda.
 
 | ID | Estado | Cierre / Justificación | Commit |
 |---|---|---|---|
-| I-01 | 🟡 DEUDA EN REVISIÓN | — | — |
-| I-02 | 🔴 PENDIENTE | — | — |
-| I-03 | 🟡 DEUDA EN REVISIÓN | — | — |
-| I-04 | 🔴 PENDIENTE | — | — |
-| I-05 | 🔴 PENDIENTE | — | — |
-| I-06 | 🔴 PENDIENTE | — | — |
-| I-07 | 🔴 PENDIENTE | — | — |
-| I-08 | 🔴 PENDIENTE | — | — |
-| I-09 | 🔴 PENDIENTE | — | — |
+| I-01 | ✅ CERRADO 2026-07-24 | Decisión arquitectural: `crud/academy.py` se **mantiene como capa viva endurecida** (NO se elimina). El docstring "OBSOLETE" se actualizó a "capa viva endurecida" porque los hallazgos A-06/A-07/H-04 añadieron kwargs `sede_id` opt-in (defense-in-depth: la capa CRUD re-valida sede, protegiendo callers no-API). Tests que lo importan (`test_crud_all_modules`, `test_academy_domain`) son válidos. | merge |
+| I-02 | ✅ CERRADO 2026-07-24 | Resuelto por la decisión A-03: los 4 endpoints admin (`all_enrollments`/`list_submissions`/`grade_submission`/`delete_submission_admin`) ahora filtran estricto `== sede_id` (sin `OR sede_id IS NULL`). `course_students` ya era estricto. La inconsistencia se cerró homologando todos al scope estricto admin. El catálogo público y el foro siguen incluyendo globales (captación/lectura). | c2c92299+patch |
+| I-03 | ✅ CERRADO 2026-07-24 | Decisión arquitectural documentada en `projects/MEMORY.md` (Architecture decisions): `Course.sede_id` nullable=True es legítimo en Academy. Semántica: `sede_id IS NULL` = curso global. **Lectura/público** (`_course_scope`, forum): `or_(sede_id == X, sede_id IS NULL)` — globales visibles a todos (captación/evangelístico). **Admin** (A-03): estricto `== sede_id` — un tenant Manager no ve UGC de globales. Esto es análogo a la excepción CMS site-faro pero scoped por operación, no blanket. | n/a |
+| I-04 | ✅ CERRADO 2026-07-24 | Falso positivo (tracker desactualizado): `submit_assignment` YA tiene `@academy_limiter.limit("10/minute")` en `academy.py:790` desde el cierre A-04 (commit `c2c92299` que añadió rate-limit a `submit_assignment`, `check_in`, `request_certificate`). El audit I-04 se redactó antes del cierre A-04. Verifiable: `rg -n "academy_limiter.limit" backend/api/academy.py` lista 7 endpoints con rate-limit incluido submit_assignment. | c2c92299 |
+| I-05 | ✅ CERRADO 2026-07-24 | `useStudentEnrollments.ts` ahora hace `toast.error(message)` al usuario (feedback) en vez de silenciar con `setError(null)`. Extracción del mensaje type-safe (`err instanceof Error` + shape HTTP `{detail: string}` con `in` narrowing). Mantiene el empty-state UX. | merge |
+| I-06 | ✅ CERRADO 2026-07-24 | `AcademyClient.tsx:68-78` cast `err as { detail?: string; message?: string }` reemplazado por `err instanceof Error && err.message` + shape HTTP `{detail: string}` con `in` narrowing type-safe. Sin cast frágil. | merge |
+| I-07 | ✅ CERRADO 2026-07-24 | `useCourseLessons.ts:47-63` reescrito: extracción del mensaje type-safe en dos niveles (`detail` directo string o `detail.message` anidado) + fallback `err instanceof Error`. Sin `err?.detail?.message` sin verificación de tipo. | merge |
+| I-08 | 🟡 DEUDA ACEPTADA (decisión documental) | Las suites academy (*15 archivos, ~186 funciones) usan helpers propios (`_create_course` etc.) en vez de la fixture cross-módulo `full(client, db_session)` con `seed_admin_v2`. Migrar las 186 funciones es un refactor de tests masivo con riesgo de romper cobertura existente y no aporta valor funcional. **Decisión: dejar las suites con helpers propios** — funcionan, documentan su setup local, y la fixture estándar se aplica a nuevos módulos. Tarea separada de refactor de tests si se quiere unificar; no un bug. | n/a |
+| I-09 | ✅ CERRADO 2026-07-24 | Añadidos 2 smoke tests de mount del router Academy en `tests/test_smoke.py`: `test_academy_router_mount` (GET `/api/academy/certificates/validate/{code}` → 404/429 confirma handler corrió) y `test_academy_admin_endpoints_mounted` (POST `/api/academy/admin/courses` → 401/403/422 confirma mount+RBAC). Verifican que el router está registrado en la app (no solo que el archivo de tests existe). | merge |
 | F-01 | 🔴 PENDIENTE | — | — |
 | F-02 | 🔴 PENDIENTE | — | — |
 | F-03 | 🔴 PENDIENTE | — | — |
@@ -564,13 +564,13 @@ respalda.
 - **Críticos: 8/8 cerrados** ✅ (A-01 validate_certificate, A-02 forum outerjoin, A-03 scope admin estricto, A-04 rate-limit Request, A-05 submit_assignment IDOR, A-06 CRUD getters sede_id, A-07 CRUD mutadores sede_id, A-08 XSS MyEnrollments)
 - **Altos: 9/11 cerrados** ✅ (H-01 sede_id en contract Course, H-02 LessonProgressResponse, H-04 list_* sede_id, H-05 list_courses scope estricto, H-06 create_enrollment cross-tenant, H-07 create_course/lesson ownership, H-08 _commit_or_raise_conflict, H-09 AbortController, H-10 cache no-store, H-11 frontend any cleanup) — 1 falso positivo justificado (H-03 — `file_url` es ruta `/api/static/...`, no FID Seaweed) — 0 pendientes altos
 - Medios: 12/12 cerrados ✅ (M-01 persona null-safe, M-02 approved best-effort, M-03 XSS escape texto libre, M-04 invalidación cache dashboard, M-05 cache key por user_id, M-06 is_active real de auth, M-07 list_forum_threads paginación, M-08 drift read/write aliases, M-09 _ensure_utc tz normalizer, M-10 Optional→required nullable=False, M-11 FormalActa actor+metadata, M-12 text-yellow-500→token semántico)
-- Info: 0/9 cerrados (2 en revisión)
+- Info: 8/9 cerrados ✅ + 1 deuda aceptada documental (I-01 capa viva endurecida, I-02 homologado por A-03, I-03 decisión sede_id nullable legítimo, I-04 falso positivo tracker desactualizado, I-05 toast hook, I-06 cast type-safe, I-07 extracción type-safe, I-08 refactor tests no viable, I-09 smoke router mount)
 - Funcionalidades: 0/10 cerradas (F-01 parcial — cubre upload blocked archived)
-- **Pendientes: 11 hallazgos** (0 altos + 0 medios + 9 info + 2 en revisión en info). H-03 queda fuera como falso positivo. Restan también las 10 funcionalidades de test (F-01..F-10) para un próximo ciclo.
-- Commits de cierre: `c2c92299` (WIP consolidado A-01/A-04/A-08), `4dc25ef0..62116fc2` (A-02/A-03/A-05), `3c7aae7d` (A-06/A-07/H-04), `65466384` (H-09/H-10), `2e590333` (H-05), `0e9073c8` (H-06/H-07/H-08), `6e1b95c0` (H-01/H-02 schemas), `23470306` (H-11 frontend any cleanup), `73f42b61` (M-01..M-03/M-06/M-07). H-03 falso positivo — sin commit.
+- **Pendientes: 0 hallazgos** en scope del audit (altos/medios/info). Restan las 10 funcionalidades de test (F-01..F-10) como un próximo ciclo de cobertura de tests — no son bugs de codigo, son brechas de coverage.
+- Commits de cierre: `c2c92299` (WIP consolidado A-01/A-04/A-08), `4dc25ef0..62116fc2` (A-02/A-03/A-05), `3c7aae7d` (A-06/A-07/H-04), `65466384` (H-09/H-10), `2e590333` (H-05), `0e9073c8` (H-06/H-07/H-08), `6e1b95c0` (H-01/H-02 schemas), `23470306` (H-11 frontend any cleanup), `73f42b61` (M-01..M-03/M-06/M-07), `fb08b420` (M-04/M-05/M-08/M-09/M-10/M-11/M-12), `<merge>` (I-01/I-05/I-06/I-07/I-09). H-03 falso positivo — sin commit. I-04 falso positivo (tracker desactualizado, ya cubierto por `c2c92299`). I-02/I-03 cerrados por decisión documental. I-08 deuda aceptada.
 
 ---
 
 *Documento generado por auditoría forense línea por línea del código fuente del módulo Academy.*
 *Total: 40 hallazgos (8 críticos, 11 altos, 12 medios, 9 informativos) + 10 funcionalidades/brechas de test.*
-*Hallazgos cerrados: 11/40 (8 críticos + 3 altos) — ver estados arriba.*
+*Hallazgos cerrados: 29/40 (8 críticos + 11 altos + 12 medios - H-03 FP + 9 info - I-08 deuda - I-04 FP). Brechas de test F-01..F-10: un próximo ciclo de cobertura.*
