@@ -157,6 +157,13 @@ class EventAttendance(Base):
     notes = Column(Text, nullable=True)
     scanned_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     attended = Column(Boolean, default=True)
+    # QC-07 (auditoría de calidad 2026-07-25): deleted_at ahora declarado en
+    # el modelo ORM + migración 20260725_0003 — antes el CRUD
+    # delete_event_attendance hacia ``row.deleted_at = _utcnow()`` pero la
+    # columna no existia (Postgres rompia / SQLite descartaba silenciosamente
+    # dejando la asistencia "viva" y contada en pastoral_health_score).
+    # Alineado al patrón soft-delete uniforme CCF (ver QC-02 CommunicationLog).
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     event = relationship("CrmEvent", back_populates="attendances")
     persona = relationship("Persona")
@@ -675,6 +682,26 @@ class PersonaMentorship(Base):
 
 
 class CommunicationLog(Base):
+    """Registro de comunicación interna o externa con una persona.
+
+    Tabla central del módulo de mensajería. Cada fila representa un mensaje
+    enviado o recibido a través de cualquier canal (internal, WhatsApp, SMS,
+    Email). No tiene ``sede_id`` propio; el scope multi-tenant se obtiene vía
+    JOIN con ``Persona`` (FK ``persona_id``).
+
+    Soft-delete: ``deleted_at`` (REGLAS.md §6). Las queries CRUD filtran
+    ``deleted_at IS NULL``. ``delete_communication_log()`` setting
+    ``deleted_at`` en vez de borrar la fila.
+
+    Campos añadidos en auditoría Fase 1:
+      - ``deleted_at`` (C-01): soft-delete column.
+      - ``campaign_name``, ``recipient_phone``, ``is_read``, ``external_id``
+        (A-03): ya existían en el modelo; schema de respuesta extenedido.
+
+    Relationships:
+      - ``persona``: Persona destinataria ( ``persona_id`` ).
+      - ``leader``: Persona que origina el mensaje ( ``leader_id`` ).
+    """
     __tablename__ = "communication_logs"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
@@ -912,6 +939,13 @@ class SupportTicket(Base):
     status = Column(String(20), default="open", index=True)  # open, in_progress, resolved, closed
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    # QC-06 (auditoría de calidad 2026-07-25): deleted_at ahora declarado en
+    # el modelo ORM y migracion 20260725_0003 — antes el CRUD
+    # delete_support_ticket hacia ``row.deleted_at = _utcnow()`` pero la
+    # columna no existia (Postgres rompia al commit / SQLite descartaba
+    # silenciosamente dejando el ticket "vivo"). Alineado al patrón
+    # soft-delete uniforme CCF (ver QC-02 CommunicationLog).
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     user = relationship("Persona")
 

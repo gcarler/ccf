@@ -299,9 +299,33 @@ def _get_scoped_plantilla(db: Session, user: models.User, plantilla_id: str):
 
 
 def _get_scoped_automation(db: Session, user: models.User, automation_id) -> models.CrmAutomation:
-    """CrmAutomation sin sede_id propio: el scope se aplica indirectamente
-    vía la plantilla referenciada en action_payload. Si la automatización
-    referencia una plantilla de otra sede, se considera fuera de scope.
+    """CrmAutomation con sede_id propio: scope directo vía ``auto.sede_id`` +
+    defense-in-depth vía plantilla referenciada en action_payload.
+
+    QC-11 (auditoría de calidad 2026-07-25): ahora aplica check directo
+    ``auto.sede_id != user_sede`` ANTES del proxy por plantilla. Antes el
+    scope se aplicaba SOLO indirectamente via ``action_payload.plantilla_id``
+    (chequeaba que la plantilla fuera de la sede del actor), pero
+    automatizaciones SIN plantilla en action_payload (action_types como
+    webhook, email_direct, transfer, scratch) bypasseaban el guard y
+    permitian cross-tenant read/write.
+
+    Política (consistente con doctrina ``_owned_flow`` C-04 + A-07):
+      - Actor sin sede (``user_sede`` is None / superadmin sin sede): bypass
+        sin check (legacy path).
+      - Actor con sede y ``auto.sede_id`` None (legacy global): fuera de
+        scope (alineado con QC-09 para ``/automations/{id}``).
+      - Actor con sede y ``auto.sede_id`` distinta a user_sede: fuera de scope.
+      - Match exacto de sede: OK. Adicionalmente, si la automatización
+        referencia una plantilla, se valida que esa plantilla también esté en
+        scope (defense-in-depth — nunca sobreescribe el OK del sede_id
+        directo, sólo añade otro 404 path si hay proxy-mismatch legacy).
+
+    El check de plantilla se conserva como defense-in-depth para
+    automatizaciones legacy con ``auto.sede_id is None`` creadas antes que
+    el modelo tuviera sede_id (backfill era no-op: C-04 confirmó 0 flows
+    legacy en prod, pero 0 automatizaciones legacy no fue verificado tan
+    explícitamente — este proxy protege el edge case).
     """
     from backend.crud.crm_.extended import get_crm_automation
     try:
@@ -313,6 +337,14 @@ def _get_scoped_automation(db: Session, user: models.User, automation_id) -> mod
         raise HTTPException(status_code=404, detail="Automatización no encontrada")
     user_sede = get_user_sede_id(db, user.id)
     if user_sede:
+        # QC-11: check directo sede_id primero (doctrina QC-09/_owned_flow).
+        # Las automatizaciones legacy con sede_id NULL se consideran globales
+        # y quedan FUERA de scope desde una sede concreta.
+        if auto.sede_id is None or str(auto.sede_id) != str(user_sede):
+            raise HTTPException(status_code=404, detail="Automatización no encontrada")
+        # Defense-in-depth: si la automatización referencia una plantilla,
+        # revalidar que también esté en scope (catch edge cases de backfill
+        # partial / migración de plantillas cross-sede).
         from backend.crud.crm_.resources import get_plantilla as _get_plantilla
         ap = auto.action_payload or {}
         plantilla_id = ap.get("plantilla_id")
