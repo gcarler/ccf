@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, notFound } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { 
@@ -22,6 +22,10 @@ import CrmDetailShell from '@/components/crm/CrmDetailShell';
 export default function LeadDetailPage() {
     const params = useParams();
     const id = params?.id as string;
+    // M-06 — validar formato (UUID o slug hex+guion); 404 otherwise.
+    if (!id || !/^[a-z0-9-]+$/i.test(id)) {
+        notFound();
+    }
     const { token } = useAuth();
     
     const [lead, setLead] = useState<any>(null);

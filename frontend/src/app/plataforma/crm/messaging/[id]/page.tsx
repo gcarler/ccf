@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import CrmShell from "@/components/crm/CrmShell";
@@ -30,6 +30,10 @@ type MessagingHistoryDetail = {
 export default function MessagingDetailPage() {
     const params = useParams();
     const id = params?.id as string;
+    // M-06 — validar formato (UUID o slug hex+guion); 404 otherwise.
+    if (!id || !/^[a-z0-9-]+$/i.test(id)) {
+        notFound();
+    }
     const { token, loading: authLoading } = useAuth();
     const [campaign, setCampaign] = useState<MessagingHistoryDetail | null>(null);
     const [loading, setLoading] = useState(true);

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, notFound } from 'next/navigation';
 import { 
     CheckCircle2, 
     Calendar, 
@@ -21,6 +21,11 @@ import clsx from 'clsx';
 export default function CrmTaskDetailPage() {
     const params = useParams();
     const id = params?.id as string;
+    // M-06 — validar formato de ID (UUID o slug hex+guion); 404 otherwise.
+    // Previene paths tipo /crm/tasks/<script>... de llamar al backend con input malicioso.
+    if (!id || !/^[a-z0-9-]+$/i.test(id)) {
+        notFound();
+    }
     const { token, loading: authLoading } = useAuth();
     
     const [task, setTask] = useState<any>(null);

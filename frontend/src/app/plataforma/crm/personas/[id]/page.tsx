@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, notFound } from 'next/navigation';
 import {
     User,
     Mail,
@@ -299,6 +299,10 @@ import { FormSection, SelectField, EditField, QuickStat, HealthIndicator, EmptyS
 export default function PersonaDetailPage() {
     const params = useParams();
     const id = Array.isArray(params?.id) ? params.id[0] : (params?.id ?? '');
+    // M-06 — validar formato (UUID o slug hex+guion); 404 otherwise.
+    if (!id || !/^[a-z0-9-]+$/i.test(id)) {
+        notFound();
+    }
     const router = useRouter();
     const { token } = useAuth();
     const { canEditCrm } = useCrmAccess();
