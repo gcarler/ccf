@@ -365,9 +365,9 @@ La corrección estructural procede en orden de severidad:
 | 🔴 PENDIENTE | M-06 | — | — | URL [id] sin validación (9 componentes) |
 | 🔴 PENDIENTE | M-07 | — | — | Tailwind hardcoded colors |
 | ✅ CERRADO | M-08 | `83b1e1da` | 2026-07-25 | Subsumido por C-02 — confirmado: pastoral.py:1780-1839 already includes None check (L1811), == role_id (L1816), fallback sede scope (L1832). |
-| 🟡 REVISIÓN | I-01 | — | — | @computed_field en pipeline serializers |
-| 🟡 REVISIÓN | I-02 | — | — | _ensure_utc en read schemas |
-| 🟡 REVISIÓN | I-03 | — | — | TestCrmIdorCrossSede refactor |
+| 🟢 SUBSUMIDO | I-01 | — | 2026-07-25 | Deuda cosmética aceptada: `_serialize_pipeline` / `_serialize_stage` son funciones con retorno dict — patrón válido y estable. Migrar a `@computed_field` require aleación de alias `nombre→name`, `tipo→pipeline_type`, `activo→is_active` y reescribir response_model=PipelineResponse (que necesite esa remapeo). No afecta cobertura funcional. Reabrir solo si se toca ese schema por otra razón. |
+| ✅ CERRADO (parcial) | I-02 | `b9097d5e` | 2026-07-25 | Helper `_ensure_utc` + type `AwareDateTime = Annotated[datetime, BeforeValidator(_ensure_utc)]` en `backend/schemas/_common.py`. Aplicado en `PipelineResponse` (created_at/updated_at) + `PipelineStageResponse` (created_at). Smoke CRM 138 passed. Restante (#20+ datetime fields en ~14 Response schemas en `base.py`/`resources.py`)Ampliar como deuda REVISIÓN por REGLAS.md §25 'no mezclar wide migrations'. |
+| 🟢 SUBSUMIDO | I-03 | — | 2026-07-25 | Deuda cosmética aceptada: los ~20 tests IDOR cross-sede existen ya como funciones planas en `test_crm_sede_isolation.py`. Refactor a class `TestCrmIdorCrossSede` no añade cobertura ni mejora eslint; no se ha identificado valor funcional neto. Reabrir solo si el file crece significativamente. |
 | 🔴 PENDIENTE | F-01 | — | — | bitácora categorías (POST ya audita; PATCH/DELETE pending) |
 | 🔴 PENDIENTE | F-02 | — | — | endpoint validador consolidado (post-C-05) |
 
