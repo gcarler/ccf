@@ -30,7 +30,6 @@ import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { DSSkeleton, DSTable } from '@/design';
 import { ColumnDef } from '@tanstack/react-table';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
-import { DataTable } from '@/components/ui/DataTable';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -249,7 +248,7 @@ export default function ConsolidationPipelinePage() {
     // Table columns with proper labels
     const columns = useMemo<ColumnDef<PipelineLead>[]>(() => [
         {
-            accessorKey: 'name',
+            accessorKey: 'nombre_completo',
             header: 'Prospecto',
             size: 280,
             cell: ({ row }) => {
@@ -709,7 +708,7 @@ export default function ConsolidationPipelinePage() {
                                         </div>
                                     )}
                                     <DSTable
-                                        data={filteredLeads as any[]}
+                                        data={filteredLeads}
                                         columns={columns}
                                         onRowClick={(l) => handleLeadSelect(l)}
                                         stickyHeader

@@ -11,18 +11,23 @@ type SmokeRoute = {
   id: string;
   path: string;
   expectedText: RegExp;
+  /** Optional patterns for console.error messages that are acceptable for this route. */
+  allowedConsolePatterns?: readonly RegExp[];
 };
 
 type AuthenticatedModuleSmokeOptions = {
   suiteName: string;
   tag: string;
   routes: readonly SmokeRoute[];
+  /** Optional extra hooks to run in beforeEach, after auth session is installed. */
+  onBeforeEach?: Array<(page: import('@playwright/test').Page) => Promise<void>>;
 };
 
 export function defineAuthenticatedModuleRouteSmoke({
   suiteName,
   tag,
   routes,
+  onBeforeEach,
 }: AuthenticatedModuleSmokeOptions) {
   test.describe(suiteName, () => {
     requirePlatformAuthE2E();
@@ -34,6 +39,11 @@ export function defineAuthenticatedModuleRouteSmoke({
 
     test.beforeEach(async ({ page }) => {
       await installPlatformAuthSession(page);
+      if (onBeforeEach) {
+        for (const hook of onBeforeEach) {
+          await hook(page);
+        }
+      }
     });
 
     for (const route of routes) {
@@ -46,7 +56,13 @@ export function defineAuthenticatedModuleRouteSmoke({
         expect(runtime.assetErrors, `${route.path} should not emit _next/static 4xx/5xx`).toEqual([]);
         expect(runtime.apiErrors, `${route.path} should not emit API 4xx/5xx`).toEqual([]);
         expect(runtime.pageErrors, `${route.path} should not emit page errors`).toEqual([]);
-        expect(runtime.consoleErrors, `${route.path} should not emit console.error`).toEqual([]);
+
+        // Filter console errors against allowed patterns (e.g., non-critical timeouts)
+        const allowed = route.allowedConsolePatterns || [];
+        const filteredErrors = runtime.consoleErrors.filter(
+          (err) => !allowed.some((pattern) => pattern.test(err)),
+        );
+        expect(filteredErrors, `${route.path} should not emit console.error`).toEqual([]);
       });
     }
   });
