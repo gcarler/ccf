@@ -36,7 +36,6 @@ La auditoría cubrió todos los archivos frontend que instancian `AgGridReact` o
 - `frontend/src/components/crm/CrmTableView.tsx`
 - `frontend/src/components/crm/CrmViews.tsx`
 - `frontend/src/lib/agGrid.ts`
-- `frontend/src/lib/projects/agGridTheme.ts`
 - `frontend/src/design/tokens-semantic.ts`
 
 ---
@@ -51,7 +50,7 @@ Se identificaron **cuatro (4) definiciones independientes** de `themeQuartz.with
 | --- | --- | --- |
 | `frontend/src/components/ui/TableView.tsx` | Tema inline para light/dark | Colores hardcodeados (`#ffffff`, `#1e293b`, `rgb(15 23 42)`, `#64748b`) |
 | `frontend/src/components/ui/UniversalTableView.tsx` | Tema inline para light/dark | Colores hardcodeados similares |
-| `frontend/src/components/projects/agGridTheme.ts` | Tema específico de Proyectos | Usaba CSS vars que `themeQuartz` no resuelve siempre |
+| `frontend/src/lib/projects/agGridTheme.ts` | Tema específico de Proyectos | Usaba CSS vars que `themeQuartz` no resuelve siempre |
 | `frontend/src/components/crm/CrmTableView.tsx` y `CrmViews.tsx` | Temas inline por módulo | Inconsistencia con tokens del design system |
 
 **Impacto:** Cualquier cambio de diseño requería editar múltiples archivos. Los colores hardcodeados rompían la coherencia en modo oscuro o con temas personalizados.
@@ -225,8 +224,12 @@ const gridRef = useRef<AgGridTableRef>(null);
 ### Archivos modificados de soporte
 | Archivo | Cambio |
 | --- | --- |
-| `frontend/src/lib/projects/agGridTheme.ts` | Deprecado; re-exporta desde `design/agGridTheme` |
 | `frontend/src/design/index.ts` | Exporta `agGridTheme` |
+
+### Archivos eliminados
+| Archivo | Motivo | Eliminado |
+| --- | --- | --- |
+| `frontend/src/lib/projects/agGridTheme.ts` | Re-exportador deprecado; ya no había imports y el tema canonical vive en `design/agGridTheme` | 2026-07-25 |
 
 ---
 
@@ -256,7 +259,7 @@ Estos deben abordarse en una auditoría transversal de TypeScript.
 2. **Auditar licenciamiento:** confirmar si se requiere `ag-grid-enterprise` en algún módulo futuro y centralizar la licencia en `frontend/src/lib/agGrid.ts`.
 3. **Tests de regresión visual:** agregar screenshots de Storybook o Playwright para las tablas en modo claro y oscuro.
 4. **Documentar Storybook:** crear stories de `AgGridTable` y `UniversalTableView` para el design system.
-5. **Eliminar re-exportador deprecado:** después de un ciclo de validación, borrar `frontend/src/lib/projects/agGridTheme.ts` y actualizar cualquier import residual.
+5. ~~**Eliminar re-exportador deprecado:**~~ ✅ Completado. Se eliminó `frontend/src/lib/projects/agGridTheme.ts` después de confirmar que no tenía imports activos; el tema canonical es `frontend/src/design/agGridTheme.ts`.
 6. **Auditar accesibilidad:** verificar que los renderers personalizados (`StatusCell`, `ProgressCell`, `CheckboxRenderer`, etc.) tengan `aria-label` o texto oculto adecuado para lectores de pantalla.
 
 ---
