@@ -129,6 +129,17 @@ def patch_categoria(
     obj = update_categoria(db, categoria_id, payload)
     if not obj:
         raise HTTPException(404, "Categoría no encontrada")
+    _audit_log(
+        db,
+        "crm_recurso_categorias",
+        str(obj.id),
+        "UPDATE",
+        detalles={
+            "nombre": obj.nombre,
+            "cambios": payload.model_dump(exclude_unset=True),
+            "mutado_por_sede": getattr(user, "sede_id", None),
+        },
+    )
     return CategoriaRecursoOut.from_orm_safe(obj)
 
 
@@ -138,8 +149,23 @@ def del_categoria(
     db: Session = Depends(get_db),
     user=Depends(require_admin),
 ):
+    # F-01 — capturamos el nombre previo al delete para el log de auditoría.
+    pre = db.query(CategoriaRecurso).filter(CategoriaRecurso.id == categoria_id).first()
+    if not pre:
+        raise HTTPException(404, "Categoría no encontrada")
+    nombre_previo = pre.nombre
     if not delete_categoria(db, categoria_id):
         raise HTTPException(404, "Categoría no encontrada")
+    _audit_log(
+        db,
+        "crm_recurso_categorias",
+        str(categoria_id),
+        "DELETE",
+        detalles={
+            "nombre_eliminado": nombre_previo,
+            "eliminado_por_sede": getattr(user, "sede_id", None),
+        },
+    )
 
 
 # ── Plantillas ────────────────────────────────────────────────────────────────
