@@ -104,7 +104,7 @@ function NotificationSection({
 }: {
     title: string;
     notifications: ReturnType<typeof useNotifications>['notifications'];
-    onOpen: (id: number) => Promise<void>;
+    onOpen: (id: string) => Promise<void>;
     faded?: boolean;
 }) {
     if (notifications.length === 0) return null;

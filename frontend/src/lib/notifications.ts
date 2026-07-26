@@ -1,7 +1,7 @@
 export type NotificationKind = 'mention' | 'comment' | 'task' | 'system' | 'ai' | 'reminder';
 
 export interface BackendNotification {
-    id: number;
+    id: string;
     persona_id?: string;
     title: string;
     content?: string | null;
@@ -10,7 +10,7 @@ export interface BackendNotification {
 }
 
 export interface UiNotification {
-    id: number;
+    id: string;
     title: string;
     body: string;
     read: boolean;

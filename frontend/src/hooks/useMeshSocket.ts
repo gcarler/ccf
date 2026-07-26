@@ -5,7 +5,7 @@ type MeshEvent = {
     [key: string]: any;
 };
 
-export const useMeshSocket = (clientId: string) => {
+export const useMeshSocket = (clientId: string, token?: string) => {
     const [lastEvent, setLastEvent] = useState<MeshEvent | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const ws = useRef<WebSocket | null>(null);
@@ -18,7 +18,10 @@ export const useMeshSocket = (clientId: string) => {
         if (isSyntheticAudit) return;
 
         const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
-        const socket = new WebSocket(`${wsBaseUrl}/mesh/ws/${clientId}`);
+        const url = token
+            ? `${wsBaseUrl}/mesh/ws/${clientId}?token=${token}`
+            : `${wsBaseUrl}/mesh/ws/${clientId}`;
+        const socket = new WebSocket(url);
 
         socket.onopen = () => {
             setIsConnected(true);
