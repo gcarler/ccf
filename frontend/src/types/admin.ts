@@ -578,7 +578,7 @@ export interface NormalizeAssetFn {
   (asset: unknown): Record<string, unknown>;
 }
 
-// ── Legacy / transitional types ───────────────────────────────────────────
+// ── Historical / transitional types ───────────────────────────────────────
 
 /** CSS custom properties for aura/glow effects — use instead of `as any` */
 export type CSSAuraProperties = React.CSSProperties & {
