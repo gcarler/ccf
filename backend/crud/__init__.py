@@ -286,7 +286,14 @@ from backend.crud.dashboard import (
 from backend.crud.evangelism import get_estrategias
 
 # ── Governance ─────────────────────────────────────────────────────────────
-from backend.crud.governance import get_automation_rules
+from backend.crud.governance import (
+    get_automation_rules,
+    get_automation_rule,
+    create_automation_rule,
+    update_automation_rule,
+    delete_automation_rule,
+    record_automation_run,
+)
 
 # ── Identity & auth ────────────────────────────────────────────────────────
 from backend.crud.identity import (
