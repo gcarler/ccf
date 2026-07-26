@@ -14,6 +14,7 @@ export default defineConfig({
       "src/design/**/*.test.tsx",
       "src/components/**/*.test.{ts,tsx}",
       "src/lib/**/*.test.{ts,tsx}",
+      "src/app/**/*.test.{ts,tsx}",
     ],
     setupFiles: ["./tests/setup.ts"],
     coverage: {

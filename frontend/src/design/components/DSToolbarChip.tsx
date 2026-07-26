@@ -2,7 +2,7 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import { LucideIcon } from 'lucide-react';
+import type { AppIcon } from '@/types/icons';
 
 type Variant = 'solid' | 'soft' | 'outline';
 type Tone = 'neutral' | 'dark';
@@ -12,7 +12,7 @@ interface DSToolbarChipProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     active?: boolean;
     variant?: Variant;
     size?: 'sm' | 'md';
-    icon?: LucideIcon;
+    icon?: AppIcon;
     tone?: Tone;
 }
 

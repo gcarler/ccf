@@ -2,14 +2,14 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import type { LucideIcon } from 'lucide-react';
+import type { AppIcon } from '@/types/icons';
 import { CornerDownLeft } from 'lucide-react';
 
 interface DSCommandEntryProps extends React.HTMLAttributes<HTMLDivElement> {
     label: string;
     description?: string;
     shortcut?: string;
-    icon?: LucideIcon;
+    icon?: AppIcon;
     active?: boolean;
 }
 

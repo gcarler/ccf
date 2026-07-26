@@ -2,12 +2,13 @@
 
 import React from 'react';
 import clsx from 'clsx';
+import type { AppIcon } from '@/types/icons';
 
 interface DSInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
     error?: string;
     helperText?: string;
-    icon?: React.ComponentType<{ className?: string }>;
+    icon?: AppIcon;
     loading?: boolean;
 }
 
