@@ -60,7 +60,7 @@ def delete_automation_rule(db: Session, rule_id: UUID) -> bool:
     )
     if not row:
         return False
-    row.deleted_at = _utcnow()
+    db.delete(row)
     db.commit()
     return True
 
