@@ -28,17 +28,17 @@ export async function preloadPlatformAccessTokens(request: APIRequestContext) {
   }
 
   try {
-    const response = await request.post(`${preflightApiBaseUrl}/v3/auth/login`, {
+    const response = await request.post(`${preflightApiBaseUrl}/api/v3/auth/login`, {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       data: { email, password },
       timeout: 10_000,
     });
-    test.skip(!response.ok(), `Preflight login failed against ${preflightApiBaseUrl}/v3/auth/login`);
+    test.skip(!response.ok(), `Preflight login failed against ${preflightApiBaseUrl}/api/v3/auth/login`);
     const payload = await response.json();
     cachedAccessToken = payload.access_token;
     cachedRefreshToken = payload.refresh_token ?? null;
   } catch {
-    test.skip(true, `Preflight login timeout/unreachable at ${preflightApiBaseUrl}/v3/auth/login`);
+    test.skip(true, `Preflight login timeout/unreachable at ${preflightApiBaseUrl}/api/v3/auth/login`);
   }
 }
 

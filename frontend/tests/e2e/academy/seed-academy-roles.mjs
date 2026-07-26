@@ -268,7 +268,7 @@ async function verifyLogin() {
   ];
   const failures = [];
   for (const probe of probes) {
-    const response = await fetch(`${apiBase}/v3/auth/login`, {
+    const response = await fetch(`${apiBase}/api/v3/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ email: probe.email, password }),

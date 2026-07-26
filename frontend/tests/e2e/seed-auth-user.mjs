@@ -3,7 +3,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 
-const apiBase = (process.env.E2E_API_URL || process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+const apiBase = (process.env.E2E_API_URL || process.env.NEXT_PUBLIC_API_URL || '')
+  .replace(/\/$/, '')
+  .replace(/\/api$/, '');
 const email = process.env.E2E_EMAIL || '';
 const password = process.env.E2E_PASSWORD || '';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -14,7 +16,7 @@ if (!apiBase || !email || !password) {
 }
 
 async function tryLogin() {
-  const response = await fetch(`${apiBase}/v3/auth/login`, {
+  const response = await fetch(`${apiBase}/api/v3/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -33,6 +35,9 @@ import uuid
 repo_root = os.environ["REPO_ROOT"]
 sys.path.insert(0, repo_root)
 
+# Import backend.app to ensure all models (including models_evangelism) are
+# registered with SQLAlchemy before any query touches relationships.
+import backend.app  # noqa: F401
 from backend import models as _models
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash
