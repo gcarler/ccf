@@ -1046,7 +1046,7 @@ function ToolbarButton({
             )}
         >
             <Icon size={20} />
-            <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg bg-[hsl(var(--bg-muted))] px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg bg-[hsl(var(--bg-muted))] px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white opacity-0 transition-opacity group-hover:opacity-100">
                 {label}
             </span>
         </button>

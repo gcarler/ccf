@@ -329,7 +329,7 @@ export default function AdminMaintenancePage() {
                                 </div>
                             </motion.div>
 
-                            <div className="bg-[hsl(var(--bg-muted))] p-4 rounded-lg text-white space-y-3 relative overflow-hidden group shadow-2xl">
+                            <div className="bg-[hsl(var(--bg-muted))] p-4 rounded-lg text-[hsl(var(--text-primary))] dark:text-white space-y-3 relative overflow-hidden group shadow-2xl">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Database size={80} /></div>
                                 <h3 className="text-xs font-semibold uppercase tracking-wide relative z-10">Data Integrity</h3>
                                 <p className="text-[13px] text-[hsl(var(--text-secondary))] font-medium leading-relaxed relative z-10 italic">

@@ -133,7 +133,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     return (
         <div className="space-y-4 pb-4 overflow-y-auto h-full pr-2 scrollbar-thin">
             {/* 1. Header de Misión con Pulso de Salud */}
-            <header className="relative p-4 rounded-lg bg-[hsl(var(--bg-muted))] text-white overflow-hidden shadow-2xl border border-white/5">
+            <header className="relative p-4 rounded-lg bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white overflow-hidden shadow-2xl border border-white/5">
                 <div className="absolute inset-0 bg-gradient-to-br to-[hsl(var(--info)/20%)] to-[hsl(var(--info)/20%)]" />
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                     <Radio size={220} />

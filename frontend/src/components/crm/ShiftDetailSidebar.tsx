@@ -150,7 +150,7 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
                 </section>
 
                 <div className="pt-4">
-                    <button className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-2xl shadow-[hsl(var(--info)/25%)] flex items-center justify-center gap-3 group transition-all active:scale-95">
+                    <button className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-2xl shadow-[hsl(var(--info)/25%)] flex items-center justify-center gap-3 group transition-all active:scale-95">
                         Registrar Asistencia <ChevronRight size={18} className="group-hover:translate-x-1.5 transition-all" />
                     </button>
                 </div>

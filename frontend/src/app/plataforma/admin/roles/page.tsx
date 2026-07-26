@@ -235,7 +235,7 @@ export default function RolesPage() {
                 title={editingRole.id ? "Editar Rol" : "Nuevo Rol"}
                 subtitle="Configura los alcances de este perfil"
                 actions={
-                    <button onClick={handleSaveRole} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--bg-muted))] text-white rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] active:scale-95 transition-all shadow-xl">
+                    <button onClick={handleSaveRole} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] active:scale-95 transition-all shadow-xl">
                         <Save size={14} /> Guardar Cambios
                     </button>
                 }

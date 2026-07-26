@@ -197,17 +197,17 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                         <button
                             onClick={() => setZoom('day')}
                             aria-pressed={zoom === 'day'}
-                            className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'day' ? "bg-[hsl(var(--bg-muted))] text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
+                            className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'day' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Día</button>
                         <button
                             onClick={() => setZoom('week')}
                             aria-pressed={zoom === 'week'}
-                            className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'week' ? "bg-[hsl(var(--bg-muted))] text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
+                            className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'week' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Semana</button>
                         <button
                             onClick={() => setZoom('month')}
                             aria-pressed={zoom === 'month'}
-                            className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'month' ? "bg-[hsl(var(--bg-muted))] text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
+                            className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'month' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Mes</button>
                     </div>
                     <div className="h-6 w-px bg-[hsl(var(--surface-3))] dark:bg-white/10" />
@@ -224,7 +224,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                     {onOptimize && (
                         <button
                             onClick={onOptimize}
-                            className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide flex items-center gap-2 shadow-xl shadow-[hsl(var(--info)/10%)] hover:scale-105 transition-all"
+                            className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white rounded-md text-[10px] font-semibold uppercase tracking-wide flex items-center gap-2 shadow-xl shadow-[hsl(var(--info)/10%)] hover:scale-105 transition-all"
                         >
                             <Zap size={14} /> Optimus Brain
                         </button>

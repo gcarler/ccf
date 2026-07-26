@@ -141,7 +141,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
 
                         {/* Header */}
                         <div className="mb-3 flex flex-col items-center relative z-10">
-                            <div className="size-8 bg-[hsl(var(--bg-muted))] text-white rounded-full flex items-center justify-center mb-3 shadow-2xl">
+                            <div className="size-8 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white rounded-full flex items-center justify-center mb-3 shadow-2xl">
                                 <Award size={44} />
                             </div>
                             <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">{SITE_NAME}</h3>

@@ -205,7 +205,7 @@ function HeaderAction({ icon: Icon, tooltip }: any) {
     return (
         <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all relative group/h">
             <Icon size={18} />
-            <div className="absolute top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-[hsl(var(--bg-muted))] text-white text-[8px] font-semibold uppercase tracking-wide rounded opacity-0 group-hover/h:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[200]">
+            <div className="absolute top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white text-[8px] font-semibold uppercase tracking-wide rounded opacity-0 group-hover/h:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[200]">
                 {tooltip}
             </div>
         </button>

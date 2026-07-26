@@ -57,7 +57,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
                 this.setState({ hasError: false, error: null });
                 window.location.reload();
               }}
-              className="inline-flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-[11px] font-bold hover:opacity-90 active:scale-95 transition-all"
+              className="inline-flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] dark:text-white rounded-md text-[11px] font-bold hover:opacity-90 active:scale-95 transition-all"
             >
               <RefreshCw size={14} />
               Reintentar

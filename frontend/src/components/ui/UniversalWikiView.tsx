@@ -152,7 +152,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                 <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-2))]/50 dark:bg-black/20">
                     <button
                         aria-label="Vincular recursos"
-                        className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:opacity-80 transition-all"
+                        className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:opacity-80 transition-all"
                         onClick={() => {/* future: open resource linker */}}
                     >
                         <Link2 size={14} /> Vincular Recursos

@@ -190,7 +190,7 @@ export default function NewWhiteboardPage() {
             </div>
           </div>
 
-          <div className="relative min-h-[420px] overflow-hidden bg-[hsl(var(--bg-muted))] p-4 text-white">
+          <div className="relative min-h-[420px] overflow-hidden bg-[hsl(var(--bg-muted))] p-4 text-[hsl(var(--text-primary))] dark:text-white">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.35),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(14,165,233,0.2),transparent_30%)]" />
             <div className="relative flex h-full flex-col justify-between rounded-lg border border-white/10 bg-white/10 p-3 backdrop-blur">
               <Sparkles className="text-info-text" size={36} />

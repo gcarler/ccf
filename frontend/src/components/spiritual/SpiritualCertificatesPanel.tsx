@@ -94,7 +94,7 @@ export default function SpiritualCertificatesPanel() {
                                         <code className="text-[10px] font-mono text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold tracking-tight">{cert.certificate_code}</code>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wider rounded-lg shadow-lg active:scale-95 transition-all flex items-center gap-2">
+                                        <button className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white text-[10px] font-semibold uppercase tracking-wider rounded-lg shadow-lg active:scale-95 transition-all flex items-center gap-2">
                                             <Download size={14} /> PDF
                                         </button>
                                         <button className="p-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-lg transition-all active:scale-90">

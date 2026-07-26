@@ -153,7 +153,7 @@ function ToolbarButton({ icon: Icon, onClick, tooltip, active }: { icon: AppIcon
             >
                 <Icon size={13} />
             </button>
-            <div className="absolute top-9 left-1/2 -translate-x-1/2 bg-[hsl(var(--bg-muted))] text-white text-[9px] font-semibold px-1.5 py-1 rounded opacity-0 group-hover/toolbar-btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100] shadow-xl border border-white/5 tracking-wider uppercase">
+            <div className="absolute top-9 left-1/2 -translate-x-1/2 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white text-[9px] font-semibold px-1.5 py-1 rounded opacity-0 group-hover/toolbar-btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100] shadow-xl border border-white/5 tracking-wider uppercase">
                 {tooltip}
             </div>
         </div>

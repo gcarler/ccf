@@ -185,7 +185,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                                 "px-3 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95 shadow-lg",
                                 editMode
                                     ? "bg-[hsl(var(--success))] text-white shadow-[hsl(var(--success)/20%)]"
-                                    : "bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white shadow-[hsl(var(--info)/25%)]"
+                                    : "bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white shadow-[hsl(var(--info)/25%)]"
                             )}
                         >
                             {editMode ? <Check size={14}/> : <PencilLine size={14}/>}
