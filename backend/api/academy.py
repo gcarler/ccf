@@ -252,7 +252,9 @@ def list_assessments(
 def get_assessment(assessment_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
     assessment = (
         db.query(models.Assessment)
-        .options(selectinload(models.Assessment.questions).selectinload(models.AssessmentQuestion.options))
+        .options(
+            joinedload(models.Assessment.questions).joinedload(models.AssessmentQuestion.options)
+        )
         .filter(models.Assessment.id == assessment_id, models.Assessment.deleted_at.is_(None))
         .first()
     )
@@ -278,7 +280,9 @@ def submit_assessment(
     # ownership estricto.
     assessment = (
         db.query(models.Assessment)
-        .options(selectinload(models.Assessment.questions).selectinload(models.AssessmentQuestion.options))
+        .options(
+            joinedload(models.Assessment.questions).joinedload(models.AssessmentQuestion.options)
+        )
         .filter(models.Assessment.id == assessment_id, models.Assessment.deleted_at.is_(None))
         .first()
     )
@@ -312,7 +316,7 @@ def submit_assessment(
         correct = False
         if submitted and submitted.selected_option_id:
             selected = next(
-                (option for option in question.options if str(option.id) == submitted.selected_option_id),
+                (option for option in question.options if option.id == submitted.selected_option_id),
                 None,
             )
             correct = bool(selected and selected.is_correct)
