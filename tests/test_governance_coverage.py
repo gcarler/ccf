@@ -10,10 +10,7 @@ from __future__ import annotations
 
 import uuid as _uuid
 
-import pytest
-
 from backend import models as _models
-from backend.models_shared import _utcnow
 from tests.conftest import (
     auth_headers as _auth_headers,
     seed_admin as _seed_admin,
@@ -118,7 +115,7 @@ def test_audit_logs_filter_by_resource_type(client, db_session):
 def test_audit_logs_response_shape(client, db_session):
     """GET /governance/audit-logs → cada entry tiene las claves del schema AdminAuditLog."""
     admin, persona, _ = _seed_admin(db_session)
-    log = _create_audit_log(db_session, persona_id=persona.id, action="test_shape")
+    _create_audit_log(db_session, persona_id=persona.id, action="test_shape")
     headers = _auth_headers(client, email=admin.email)
     resp = client.get("/api/governance/audit-logs?limit=1", headers=headers)
     assert resp.status_code == 200
@@ -210,11 +207,12 @@ def test_delete_automation_rule(client, db_session):
     rule = _create_automation_rule(db_session, name="To Delete")
     result = crud.delete_automation_rule(db_session, rule.id)
     assert result is True
-    # Verify the row was actually deleted
+    # Verify soft delete via is_active=False
     from backend import models
 
-    deleted = db_session.query(models.AutomationRule).filter(models.AutomationRule.id == rule.id).first()
-    assert deleted is None
+    deactivated = db_session.query(models.AutomationRule).filter(models.AutomationRule.id == rule.id).first()
+    assert deactivated is not None
+    assert deactivated.is_active is False
 
 
 def test_delete_automation_rule_not_found(client, db_session):

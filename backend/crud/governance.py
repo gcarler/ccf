@@ -60,7 +60,7 @@ def delete_automation_rule(db: Session, rule_id: UUID) -> bool:
     )
     if not row:
         return False
-    db.delete(row)
+    row.is_active = False
     db.commit()
     return True
 
