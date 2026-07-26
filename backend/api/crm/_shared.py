@@ -312,19 +312,19 @@ def _get_scoped_automation(db: Session, user: models.User, automation_id) -> mod
 
     Política (consistente con doctrina ``_owned_flow`` C-04 + A-07):
       - Actor sin sede (``user_sede`` is None / superadmin sin sede): bypass
-        sin check (legacy path).
-      - Actor con sede y ``auto.sede_id`` None (legacy global): fuera de
+        sin check (historical path).
+      - Actor con sede y ``auto.sede_id`` None (historical global): fuera de
         scope (alineado con QC-09 para ``/automations/{id}``).
       - Actor con sede y ``auto.sede_id`` distinta a user_sede: fuera de scope.
       - Match exacto de sede: OK. Adicionalmente, si la automatización
         referencia una plantilla, se valida que esa plantilla también esté en
         scope (defense-in-depth — nunca sobreescribe el OK del sede_id
-        directo, sólo añade otro 404 path si hay proxy-mismatch legacy).
+        directo, sólo añade otro 404 path si hay proxy-mismatch historical).
 
     El check de plantilla se conserva como defense-in-depth para
-    automatizaciones legacy con ``auto.sede_id is None`` creadas antes que
+    automatizaciones históricas con ``auto.sede_id is None`` creadas antes que
     el modelo tuviera sede_id (backfill era no-op: C-04 confirmó 0 flows
-    legacy en prod, pero 0 automatizaciones legacy no fue verificado tan
+    históricos en prod, pero 0 automatizaciones históricas no fue verificado tan
     explícitamente — este proxy protege el edge case).
     """
     from backend.crud.crm_.extended import get_crm_automation
@@ -338,7 +338,7 @@ def _get_scoped_automation(db: Session, user: models.User, automation_id) -> mod
     user_sede = get_user_sede_id(db, user.id)
     if user_sede:
         # QC-11: check directo sede_id primero (doctrina QC-09/_owned_flow).
-        # Las automatizaciones legacy con sede_id NULL se consideran globales
+        # Las automatizaciones históricas con sede_id NULL se consideran globales
         # y quedan FUERA de scope desde una sede concreta.
         if auto.sede_id is None or str(auto.sede_id) != str(user_sede):
             raise HTTPException(status_code=404, detail="Automatización no encontrada")

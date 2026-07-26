@@ -35,7 +35,7 @@ def _owned_pipeline(db: Session, pipeline_id: UUID, current_user: models.User) -
 def _owned_flow(db: Session, flow_id: UUID, current_user: models.User) -> models.CrmAutomationFlow:
     """Axioma 3 — devuelve el flujo sólo si pertenece a la sede del actor.
 
-    Un flujo legacy con ``sede_id IS NULL`` sólo es legible por un actor sin
+    Un flujo histórico con ``sede_id IS NULL`` sólo es legible por un actor sin
     sede (super administrador); cualquier actor con sede vé 404 en flujos ajenos.
     """
     flow = db.query(models.CrmAutomationFlow).filter(models.CrmAutomationFlow.id == flow_id).first()
@@ -43,11 +43,11 @@ def _owned_flow(db: Session, flow_id: UUID, current_user: models.User) -> models
         raise HTTPException(status_code=404, detail="Flow no encontrado")
     user_sede = require_user_sede_id(db, current_user)
     if user_sede is None:
-        # Actor sin sede (superadmin plataforma): puede operar flujos legacy.
+        # Actor sin sede (superadmin plataforma): puede operar flujos históricos.
         return flow
     sede_id = UUID(str(user_sede))
     if flow.sede_id is None:
-        # Flujo legacy sin tenant — sólo el superadmin (actor sin sede) lo toca.
+        # Flujo histórico sin tenant — sólo el superadmin (actor sin sede) lo toca.
         raise HTTPException(status_code=404, detail="Flow no encontrado")
     if flow.sede_id != sede_id:
         raise HTTPException(status_code=404, detail="Flow no encontrado")

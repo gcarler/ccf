@@ -64,7 +64,7 @@ def get_user_sede_id(db: Session, user_id: "str | uuid.UUID | Any") -> uuid.UUID
     try:
         return uuid.UUID(str(raw))
     except (TypeError, ValueError, AttributeError):
-        # Valor legacy no-UUID: preferimos None (scope desactivado para el
+        # Valor histórico no-UUID: preferimos None (scope desactivado para el
         # actor) en vez de propagate el str y romper comparaciones ORM.
         _logger.warning("get_user_sede_id: valor no-UUID descartado: %r", raw)
         return None

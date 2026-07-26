@@ -653,7 +653,7 @@ def _list_automation_edges_response(
         return [CrmAutomationEdgeOut.from_orm_safe(r) for r in rows]
     # Axioma 3 — un edge es visible para el actor SOLO si ambos extremos
     # (source/target automation) pertenecen a la sede del actor. Las
-    # automatizaciones legacy con sede_id NULL se consideran globales y
+    # automatizaciones históricas con sede_id NULL se consideran globales y
     # quedan fuera de scope desde una sede concreta (mismo criterio que
     # `_owned_flow` en pipelines.py y `/automations/{id}` en este archivo).
     allowed_ids: set[UUID] = set()
@@ -684,7 +684,7 @@ def _create_automation_edge_response(
 
     # Axioma 3 — un edge entre automatizaciones de otra sede sería un
     # cross-tenant write. Si el actor está asignado a una sede, ambos
-    # extremos deben pertenecer a esa sede (los legacy NULL quedan fuera
+    # extremos deben pertenecer a esa sede (los históricos NULL quedan fuera
     # de scope desde una sede concreta — idem `_owned_flow`).
     user_sede = get_user_sede_id(db, str(user.id))
     if user_sede:
@@ -702,7 +702,7 @@ def _delete_automation_edge_response(
     db: Session = Depends(get_db),
     user=Depends(require_module_access("crm", "edit")),
 ):
-    # Axioma 3 — antes de borrar, validar que el edge que pertenece a
+    # Axioma 3 — antes de borrar, validar que el edge pertenece a
     # automatizaciones de la sede del actor. Reuso `get_crm_automation_edge`
     # y valido scope via el source automation.
     edge = get_crm_automation_edge(db, edge_id)
@@ -785,10 +785,10 @@ def get_one_automation(
     sede_id = get_user_sede_id(db, str(user.id))
     # QC-09 (auditoría de calidad 2026-07-25): alineado con doctrina
     # ``_owned_flow`` (C-04) + ``_list_automation_edges_response`` (A-07) —
-    # las automatizaciones legacy con ``sede_id IS NULL`` se consideran
+    # las automatizaciones históricas con ``sede_id IS NULL`` se consideran
     # globales y quedan FUERA de scope desde una sede concreta (antes el
     # guard ``if sede_id and obj.sede_id and ...`` short-circuit-evaluaba
-    # cuando ``obj.sede_id`` era None, dejando operar sobre legacy NULL).
+    # cuando ``obj.sede_id`` era None, dejando operar sobre históricos NULL).
     if sede_id is not None and (obj.sede_id is None or str(obj.sede_id) != sede_id):
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     return CrmAutomationOut.from_orm_safe(obj)
@@ -805,7 +805,7 @@ def patch_automation(
     if not obj:
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
-    # QC-09: legacy NULL fuera-de-scope desde sede concreta.
+    # QC-09: históricos NULL fuera-de-scope desde sede concreta.
     if sede_id is not None and (obj.sede_id is None or str(obj.sede_id) != sede_id):
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     obj = update_crm_automation(db, automation_id, payload)
@@ -822,7 +822,7 @@ def del_automation(
     if not obj:
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     sede_id = get_user_sede_id(db, str(user.id))
-    # QC-09: legacy NULL fuera-de-scope desde sede concreta.
+    # QC-09: históricos NULL fuera-de-scope desde sede concreta.
     if sede_id is not None and (obj.sede_id is None or str(obj.sede_id) != sede_id):
         raise HTTPException(status_code=404, detail="Automatizacion no encontrada")
     if not delete_crm_automation(db, automation_id):
