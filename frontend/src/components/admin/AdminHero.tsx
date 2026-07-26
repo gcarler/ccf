@@ -100,14 +100,14 @@ export default function AdminHero({
             {commandBar && (
                 <div className="rounded-lg border border-[hsl(var(--border))] bg-white/80 dark:bg-white/5 px-3 py-1.5 space-y-3 shadow-[0_20px_70px_rgba(15,23,42,0.15)] relative z-10">
                     <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-md bg-[hsl(var(--bg-muted))] text-white flex items-center justify-center">
+                        <div className="size-9 rounded-md bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white flex items-center justify-center">
                             <Bot size={16} />
                         </div>
                         <div className="flex-1">
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{commandBar.title}</p>
                             <p className="text-sm text-[hsl(var(--text-primary))] dark:text-white font-semibold">{commandBar.description}</p>
                         </div>
-                        <button className="px-4 h-9 rounded-full bg-[hsl(var(--bg-muted))] text-white text-[10px] font-semibold uppercase tracking-wide">
+                        <button className="px-4 h-9 rounded-full bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white text-[10px] font-semibold uppercase tracking-wide">
                             {commandBar.ctaLabel}
                         </button>
                     </div>

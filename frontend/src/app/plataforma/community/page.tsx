@@ -863,7 +863,7 @@ export default function CommunityHubPage() {
                     <button className="p-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"><Filter size={10} /></button>
                     <button className="p-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"><Columns3 size={10} /></button>
                     <button className="p-1.5 rounded-full border border-[hsl(var(--text-primary))] text-[hsl(var(--text-primary))]"><SlidersHorizontal size={10} /></button>
-                    <button className="px-3 h-8 rounded-full bg-[hsl(var(--bg-muted))] text-white text-[9px] font-semibold uppercase tracking-wide">+ Nuevo</button>
+                    <button className="px-3 h-8 rounded-full bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white text-[9px] font-semibold uppercase tracking-wide">+ Nuevo</button>
                 </div>
             </div>
             <header className="rounded-lg border border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-1))] p-4 md:p-3 space-y-3">
@@ -1170,7 +1170,7 @@ export default function CommunityHubPage() {
                             <CommunityToolbarChip key={label} label={label} icon={icon} size="sm" />
                         ))}
                         <CommunityToolbarChip label="Personalizar" icon={SlidersHorizontal} size="sm" />
-                        <CommunityToolbarChip label="Add tarea" icon={Plus} variant="solid" className="bg-[hsl(var(--bg-muted))] text-white border-[hsl(var(--border))]" />
+                        <CommunityToolbarChip label="Add tarea" icon={Plus} variant="solid" className="bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white border-[hsl(var(--border))]" />
                     </div>
                 </div>
                     <p className="text-[11px] text-[hsl(var(--text-secondary))] flex items-center gap-3">

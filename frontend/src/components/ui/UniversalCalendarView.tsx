@@ -101,7 +101,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                     {onCreate && (
                         <button
                             onClick={onCreate}
-                            className="p-4 bg-[hsl(var(--bg-muted))] dark:bg-white/10 text-white rounded-lg shadow-xl shadow-black/20 hover:scale-105 transition-all"
+                            className="p-4 bg-[hsl(var(--bg-muted))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg shadow-xl shadow-black/20 hover:scale-105 transition-all"
                         >
                             <Plus size={20} />
                         </button>

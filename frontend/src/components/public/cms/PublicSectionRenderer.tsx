@@ -1703,7 +1703,7 @@ function CivicHeroSearchSection({ section }: { section: CmsSection }) {
         />
         <button
           type="submit"
-          className="px-6 py-4 font-black text-sm uppercase tracking-wide text-white bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--surface-2))] transition-colors flex items-center gap-2 whitespace-nowrap"
+          className="px-6 py-4 font-black text-sm uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--surface-2))] transition-colors flex items-center gap-2 whitespace-nowrap"
         >
           <Search size={16} /> Buscar
         </button>
