@@ -132,7 +132,11 @@ export default function FacturacionPage() {
       await apiFetch(`/finance-suite/invoices/${id}/send-electronic`, { token, method: "POST" });
       toast.success("Factura enviada");
       fetchData();
-    } catch (e) { console.error(e); toast.error("Error al enviar factura electrónica"); }
+    } catch (err: any) {
+      console.error(err);
+      const msg = err?.response?.data?.detail?.message || err?.response?.data?.detail || err?.detail?.message || err?.detail || err?.message || "Error al enviar factura electrónica";
+      toast.error(msg);
+    }
   };
 
   const fetchData = async () => {
@@ -241,9 +245,10 @@ export default function FacturacionPage() {
                     <div className="col-span-2">
                       <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide",
                         itemStatus === "paid" || itemStatus === "completed" ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" :
+                        itemStatus === "partial" ? "bg-blue-100 text-blue-800 border-blue-300" :
                         itemStatus === "overdue" || itemStatus === "cancelled" ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" :
                         "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]"
-                      )}>{itemStatus}</span>
+                      )}>{itemStatus === "partial" ? "Pago Parcial" : itemStatus}</span>
                     </div>
                     <div className="col-span-2 flex justify-end gap-1">
                       {isInvoice && itemStatus !== "paid" && (

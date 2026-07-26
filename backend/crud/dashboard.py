@@ -1215,7 +1215,7 @@ def get_dashboard_metrics(db: Session, sede_id=None) -> DashboardMetrics:
 
 def get_pastor_radar(db: Session, sede_id: Optional[str] = None):
     from sqlalchemy import text as sqlt
-    params = {"sede_id": sede_id} if sede_id else {}
+    params = {"sede_id": str(sede_id)} if sede_id else {}
     q = db.execute(
         sqlt(f"SELECT COUNT(*) FROM personas {'WHERE sede_id = :sede_id' if sede_id else ''}"),
         params,

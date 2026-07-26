@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 orm_config: ConfigDict = ConfigDict(from_attributes=True)
 forbid_config: ConfigDict = ConfigDict(extra='forbid')
@@ -453,6 +453,26 @@ class DocumentCreate(BaseModel):
     mime_type: str
     document_type: str = "other"
     tag_ids: List[UUID] = []
+
+    @field_validator("mime_type")
+    @classmethod
+    def validate_mime_type(cls, v: str) -> str:
+        allowed = {
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp",
+            "text/plain",
+            "text/csv",
+        }
+        if v not in allowed:
+            raise ValueError(f"MIME type '{v}' is not allowed")
+        return v
 
 
 class DocumentUpdate(BaseModel):

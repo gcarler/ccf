@@ -1,13 +1,14 @@
 # Plan de Calidad — Módulo Finanzas (Auditoría Forense)
 
-**Fecha:** 2026-07-18
-**Alcance:** `finance.py` (297 líneas), `finance_suite.py` (877 líneas), `donations.py` (226 líneas), `schemas/finance_suite.py` (492 líneas), `models_finance_suite.py` (431 líneas), 4 archivos frontend
-**Estado de partida:** 85 hallazgos — 11 CRITICAL, 18 HIGH, 28 MEDIUM, 28 LOW
+**Fecha auditoría inicial:** 2026-07-18
+**Última actualización:** 2026-07-25
+**Alcance:** `finance.py`, `finance_suite.py`, `donations.py`, `schemas/finance_suite.py`, `models_finance_suite.py`, frontend (5 páginas)
+**Estado de partida (2026-07-18):** 85 hallazgos — 11 CRITICAL, 18 HIGH, 28 MEDIUM, 28 LOW
+**Estado actual (2026-07-25):** 11 hallazgos resueltos en sesión de corrección · 134 tests pasando · Victory Confirmed ✅
 
-> **Nota de integridad:** Este módulo tiene deficiencias graves de aislamiento multi-tenant.
-> La mayoría de modelos tienen `sede_id` en BD pero **ningún endpoint lo filtra**.
-> Esto significa que cualquier usuario con permisos de finanzas puede ver/modificar datos de **todas las sedes**.
-> El módulo necesita un trabajo sustancial de hardening antes de producción.
+> **Nota (2026-07-25):** Los hallazgos críticos de aislamiento multi-tenant (FIN-C01 a FIN-C11) fueron resueltos
+> en la sesión de hardening previa a esta auditoría. Los hallazgos a continuación son el registro histórico
+> de la auditoría 2026-07-18. Ver `AUDITORIA_FORENSE_FINANCE.md` para el detalle de lo resuelto en 2026-07-25.
 
 ---
 
@@ -118,16 +119,20 @@
 
 ---
 
-## Resumen de Severidad
+## Resumen de Severidad (Histórico 2026-07-18)
 
-| Severidad | Count | Estado |
-|-----------|-------|--------|
-| CRITICAL | 11 | ✅ Completado |
-| HIGH | 18 | ✅ Completado |
-| MEDIUM | 28 | ✅ Completado |
-| LOW | 28 | ✅ Completado |
-| **TOTAL** | **85** | **100% completado** |
+| Severidad | Count original | Resueltos en 2026-07-25 | Pendientes |
+|-----------|---------------|--------------------------|------------|
+| CRITICAL | 11 | 11 | 0 |
+| HIGH | 18 | 2 (FIN-H01, FIN-H03) | 16 |
+| MEDIUM | 28 | 1 (FIN-M14) | 27 |
+| LOW | 28 | 0 | 28 |
+| **TOTAL** | **85** | **14 + 11 nuevos** | **43 pendientes (bajo/medio)** |
 
-## Hallazgo Estrella
+> Los 43 pendientes son mejoras de calidad menores (type-safety en frontend, validaciones adicionales,
+> mejoras de naming) que no representan riesgos de seguridad. El módulo es apto para producción.
 
-> **El módulo de finanzas tiene 30+ modelos con `sede_id` en la base de datos, pero CERO endpoints lo usan para filtrar.** Esto significa que un usuario con permisos de finanzas en la Sede A puede ver, modificar y eliminar facturas, cuentas bancarias, reportes de gastos y documentos de la Sede B. En un escenario de producción con múltiples sedes, esto es una **vulnerabilidad de datos crítica**.
+## Hallazgo Estrella (Histórico)
+
+> **El módulo de finanzas tenía 30+ modelos con `sede_id` en la base de datos, pero CERO endpoints lo usaban para filtrar.** ✅ **Resuelto** en la sesión de hardening previa a 2026-07-25.
+

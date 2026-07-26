@@ -18,6 +18,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
 import clsx from "clsx";
+import { toast } from "sonner";
 
 const SECTIONS = [
   {
@@ -59,7 +60,11 @@ export default function DocumentosPage() {
     setLoading(false);
   }, [token]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetchData();
+    return () => ctrl.abort();
+  }, [fetchData]);
 
   const filtered = documents.filter((d) => {
     const matchesSearch = d.title?.toLowerCase().includes(search.toLowerCase()) || d.description?.toLowerCase().includes(search.toLowerCase());
@@ -73,8 +78,9 @@ export default function DocumentosPage() {
       await apiFetch("/finance-suite/documents", { token, method: "POST", body: form });
       setShowCreate(false);
       setForm({ title: "", description: "", file_url: "", file_name: "", file_size: 0, mime_type: "", document_type: "other", tag_ids: [] });
+      toast.success("Documento creado exitosamente");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al crear documento"); }
   };
 
   const handleCreateTag = async () => {
@@ -83,16 +89,18 @@ export default function DocumentosPage() {
       await apiFetch("/finance-suite/document-tags", { token, method: "POST", body: tagForm });
       setShowTagCreate(false);
       setTagForm({ name: "", color: "#6B7280" });
+      toast.success("Etiqueta creada exitosamente");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al crear etiqueta"); }
   };
 
   const handleDelete = async (id: string) => {
     if (!token) return;
     try {
       await apiFetch(`/finance-suite/documents/${id}`, { token, method: "DELETE" });
+      toast.success("Documento eliminado exitosamente");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al eliminar documento"); }
   };
 
   const typeIcons: Record<string, React.ElementType> = { invoice: FileText, contract: FileText, receipt: FileText, report: FileText, other: FileText };

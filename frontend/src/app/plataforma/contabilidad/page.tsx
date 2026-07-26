@@ -52,6 +52,7 @@ export default function ContabilidadPage() {
   const [signRequests, setSignRequests] = useState<any[]>([]);
 
   useEffect(() => {
+    const ctrl = new AbortController();
     if (!token) { setLoading(false); return; }
     Promise.all([
       apiFetch<any[]>("/finance-suite/bank-accounts", { token, cache: "no-store" }),
@@ -68,6 +69,7 @@ export default function ContabilidadPage() {
       if (Array.isArray(doc)) setDocuments(doc);
       if (Array.isArray(sign)) setSignRequests(sign);
     }).catch(console.error).finally(() => setLoading(false));
+    return () => ctrl.abort();
   }, [token]);
 
   const totalBalance = useMemo(() => bankAccounts.reduce((s, a) => s + (Number(a.current_balance) || 0), 0), [bankAccounts]);
