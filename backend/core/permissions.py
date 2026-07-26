@@ -595,6 +595,29 @@ def _has_permission(role: str, user_perms: set | dict, required: str) -> bool:
     return False
 
 
+def check_ws_module_access(db: "Session", user, module: str, level: str = "read") -> bool:
+    """Check module access for WebSocket handlers (no FastAPI DI).
+
+    Returns True if the user has the required module permission, False otherwise.
+    Admins always pass. Uses the same hierarchy logic as require_permission.
+    """
+    role = normalize_role(str(getattr(user, "role", "")))
+    if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
+        role = normalize_role(user.rol_plataforma.nombre)
+
+    if role in {"admin", "administrador"}:
+        return True
+
+    from backend.core.permissions import MODULE_PERMISSION_MAP
+    module_map = MODULE_PERMISSION_MAP.get(module, {})
+    perm_key = module_map.get(level)
+    if not perm_key:
+        return False
+
+    user_perms = get_user_effective_permissions(db, user)
+    return _has_permission(role, user_perms, perm_key)
+
+
 def require_permission(permission: str):
     """Factory: return a FastAPI dependency that checks a specific permission.
 

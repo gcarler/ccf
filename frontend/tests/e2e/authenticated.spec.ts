@@ -20,17 +20,17 @@ test.describe('authenticated routes', () => {
       return;
     }
     try {
-      const response = await request.post(`${apiUrl.replace(/\/$/, '')}/v3/auth/login`, {
+      const response = await request.post(`${apiUrl.replace(/\/$/, '')}/api/v3/auth/login`, {
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         data: { email, password },
         timeout: 10_000,
       });
-      test.skip(!response.ok(), `Preflight login failed against ${apiUrl}/v3/auth/login`);
+      test.skip(!response.ok(), `Preflight login failed against ${apiUrl}/api/v3/auth/login`);
       const payload = await response.json();
       cachedAccessToken = payload.access_token;
       cachedRefreshToken = payload.refresh_token ?? null;
     } catch {
-      test.skip(true, `Preflight login timeout/unreachable at ${apiUrl}/v3/auth/login`);
+      test.skip(true, `Preflight login timeout/unreachable at ${apiUrl}/api/v3/auth/login`);
     }
   });
 

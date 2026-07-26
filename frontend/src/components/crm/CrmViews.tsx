@@ -1,19 +1,16 @@
 "use client";
 
-import '@/lib/agGrid';
-import { ColDef,themeQuartz } from 'ag-grid-community';
-import { AgGridReact } from 'ag-grid-react';
 import { motion } from 'framer-motion';
+import AgGridTable, { ColDef, type AgGridTableRef } from '@/components/ui/AgGridTable';
 import {
 Calendar,
 ChevronRight,
 GraduationCap,
 Heart,Mail,Phone,Star
 } from 'lucide-react';
-import { useEffect,useMemo,useRef,useState } from 'react';
+import { useMemo,useRef } from 'react';
 
-const _lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 44, headerHeight: 36, backgroundColor: '#ffffff', foregroundColor: '#1e293b', borderColor: '#e2e8f0', oddRowBackgroundColor: '#f8fafc', headerBackgroundColor: '#f1f5f9', headerTextColor: '#475569', selectedRowBackgroundColor: '#eef2ff', accentColor: '#6366f1', cellHorizontalPaddingScale: 1 });
-const _darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 44, headerHeight: 36, backgroundColor: 'rgb(15 23 42)', foregroundColor: '#e2e8f0', borderColor: 'rgba(255,255,255,0.08)', oddRowBackgroundColor: 'rgba(255,255,255,0.02)', headerBackgroundColor: 'rgba(255,255,255,0.04)', headerTextColor: '#94a3b8', selectedRowBackgroundColor: 'rgba(99,102,241,0.15)', accentColor: '#6366f1', cellHorizontalPaddingScale: 1 });
+
 
 interface Persona {
     id: string;
@@ -112,16 +109,7 @@ interface TableProps extends CrmViewProps {
 }
 
 export function CrmTableView({ personas, onSelect, isList = false }: TableProps) {
-    const gridRef = useRef<AgGridReact>(null);
-    const [isDark, setIsDark] = useState(false);
-
-    useEffect(() => {
-        const check = () => setIsDark(document.documentElement.classList.contains('dark'));
-        check();
-        const obs = new MutationObserver(check);
-        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        return () => obs.disconnect();
-    }, []);
+    const gridRef = useRef<AgGridTableRef>(null);
 
     const colDefs = useMemo<ColDef[]>(() => {
         const cols: ColDef[] = [
@@ -185,9 +173,8 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
 
     return (
         <div className="rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 shadow-sm animate-fade-in">
-            <AgGridReact
+            <AgGridTable
                 ref={gridRef}
-                theme={isDark ? _darkTheme : _lightTheme}
                 rowData={personas}
                 columnDefs={colDefs}
                 defaultColDef={{ resizable: true, sortable: true, filter: true }}

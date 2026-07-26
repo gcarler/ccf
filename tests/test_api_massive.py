@@ -493,7 +493,13 @@ class TestAnalytics:
     def test_radar(self, client_auth):
         client, headers, _ = client_auth
         resp = client.get("/api/analytics/radar", headers=headers)
-        assert resp.status_code < 500 or resp.status_code in (200, 201, 204, 422, 405, 404, 403, 401)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "membresia_viva" in data
+
+    def test_radar_no_auth(self, client):
+        resp = client.get("/api/analytics/radar")
+        assert resp.status_code in (401, 403)
 
     def test_events_summary(self, client_auth):
         client, headers, _ = client_auth

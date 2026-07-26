@@ -1,12 +1,9 @@
 "use client";
 
-import '@/lib/agGrid';
-import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import { themeQuartz, ColDef } from 'ag-grid-community';
+import { useMemo, useRef } from 'react';
+import AgGridTable, { ColDef, type AgGridTableRef } from '@/components/ui/AgGridTable';
 
-const lightTheme = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'hsl(var(--bg-primary))', foregroundColor: 'hsl(var(--text-primary))', borderColor: 'hsl(var(--border))', oddRowBackgroundColor: 'hsl(var(--surface-1))', headerBackgroundColor: 'hsl(var(--surface-2))', headerTextColor: 'hsl(var(--text-secondary))', selectedRowBackgroundColor: 'hsl(var(--primary)/0.1)', accentColor: 'hsl(var(--primary))', cellHorizontalPaddingScale: 0.8 });
-const darkTheme  = themeQuartz.withParams({ fontFamily: 'inherit', fontSize: 12, rowHeight: 40, headerHeight: 36, backgroundColor: 'hsl(var(--admin-bg-secondary))', foregroundColor: 'hsl(var(--text-secondary))', borderColor: 'hsla(0,0%,100%,0.08)', oddRowBackgroundColor: 'hsla(0,0%,100%,0.02)', headerBackgroundColor: 'hsla(0,0%,100%,0.04)', headerTextColor: 'hsl(var(--text-secondary))', selectedRowBackgroundColor: 'hsla(var(--primary-hsl),0.15)', accentColor: 'hsl(var(--primary))', cellHorizontalPaddingScale: 0.8 });
+
 
 interface Props {
     personas: any[];
@@ -40,16 +37,7 @@ function RoleRenderer({ value }: any) {
 }
 
 export default function CrmTableView({ personas, search, onRowClick, isList = false }: Props) {
-    const gridRef = useRef<AgGridReact>(null);
-    const [isDark, setIsDark] = useState(false);
-
-    useEffect(() => {
-        const check = () => setIsDark(document.documentElement.classList.contains('dark'));
-        check();
-        const obs = new MutationObserver(check);
-        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        return () => obs.disconnect();
-    }, []);
+    const gridRef = useRef<AgGridTableRef>(null);
 
     const filtered = useMemo(
         () => personas.filter((m) => (m.nombre_completo || '').toLowerCase().includes(search.toLowerCase())),
@@ -73,9 +61,8 @@ export default function CrmTableView({ personas, search, onRowClick, isList = fa
 
     return (
         <div className="h-full min-w-0 rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 shadow-sm">
-            <AgGridReact
+            <AgGridTable
                 ref={gridRef}
-                theme={isDark ? darkTheme : lightTheme}
                 rowData={filtered}
                 columnDefs={colDefs}
                 defaultColDef={{ resizable: true, sortable: true, filter: true, minWidth: 96 }}

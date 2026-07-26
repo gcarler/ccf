@@ -41,8 +41,21 @@ export function installRuntimeGuards(page: Page, apiBaseUrl?: string): RuntimeGu
   return { consoleErrors, pageErrors, assetErrors, apiErrors };
 }
 
+/**
+ * Navigates to a route and waits for it to become stable.
+ * 
+ * For authenticated routes the SPA may show a brief splash/loading state
+ * while the AuthContext bootstraps and data fetches complete. This helper
+ * waits for network idle, then for the CCF brand splash to disappear,
+ * then for a short render budget so elements settle before assertions.
+ */
 export async function waitForStableRoute(page: Page, path: string) {
   await page.goto(path, { waitUntil: 'domcontentloaded' });
+  // Wait for the initial RSC payload + auth/me + page data calls to complete.
   await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+  // Give React hydration + re-render time after network settles.
   await page.waitForTimeout(750);
+  // If the CCF brand splash is still visible, wait for it to disappear.
+  await page.locator('text=CCF').waitFor({ state: 'hidden', timeout: 10_000 })
+    .catch(() => {});
 }

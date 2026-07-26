@@ -191,11 +191,33 @@ class PreferenciaUI(Base):
 
 
 class NotificacionUsuario(Base):
+    """Notificación persistente para un usuario autenticado.
+
+    Cada fila representa un evento del sistema (tarea asignada, comentario,
+    recordatorio, etc.) que se muestra en la bandeja de notificaciones del
+    usuario. Alimentada por el backend (no por envíos ministeriales directos).
+
+    Multi-tenant:
+      - ``user_id`` → ``auth_users.id`` (Persona kernel id vía sinónimo
+        ``persona_id``).
+      - ``sede_id`` (M-06): columna nullable para filtrado directo sin JOIN.
+
+    Índices:
+      - ``ix_auth_notifications_user_id`` (A-05): acelera queries por usuario.
+      - ``ix_auth_notifications_sede_id`` (M-06): acelera queries por sede.
+
+    Seguridad: ``PATCH /messaging/notifications/{id}`` requiere ownership
+    (``user_id == caller_persona_id``). BOLA-style leak prevention.
+    """
     __tablename__ = "auth_notifications"
+    __table_args__ = (
+        Index("ix_auth_notifications_user_id", "user_id"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False)
     persona_id = synonym("user_id")
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False, nullable=False)
