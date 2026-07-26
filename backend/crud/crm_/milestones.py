@@ -1,5 +1,4 @@
 """Spiritual milestone CRUD."""
-import uuid
 from typing import List, Optional
 from uuid import UUID
 

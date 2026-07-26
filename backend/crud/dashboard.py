@@ -519,9 +519,9 @@ def get_finance_dashboard(db: Session) -> FinanceDashboard:
 # ═══════════════════════════════════════════════════════════════════
 
 def get_agenda_dashboard(db: Session) -> AgendaDashboard:
-    from backend.models_agenda import EventoAgenda, ReservaRecurso, RecursoFisico
-    from backend.models_agenda import ParticipanteEvento
     from sqlalchemy import func
+
+    from backend.models_agenda import EventoAgenda, ParticipanteEvento, RecursoFisico, ReservaRecurso
 
     now = _utcnow()
 
