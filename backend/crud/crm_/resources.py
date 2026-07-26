@@ -1,7 +1,6 @@
 """CRUD — Biblioteca de Recursos CRM (plantillas, adjuntos, bitácora de envíos)."""
 from __future__ import annotations
 
-import uuid as _uuid
 from typing import Dict, List, Optional
 
 from sqlalchemy import func

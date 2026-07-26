@@ -105,7 +105,6 @@ def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
     from backend.crud.cms import (
         capture_daily_seo_snapshots,
         cleanup_old_publish_logs,
-        cleanup_orphan_cms_media_scheduled,
         process_due_content,
     )
 

@@ -57,11 +57,16 @@ from sqlalchemy.orm import Session
 from backend import crud, models, schemas
 from backend.api.crm._shared import _get_scoped_persona
 from backend.core.database import get_db
-from backend.core.permissions import ALGORITHM, SECRET_KEY, check_ws_module_access, require_module_access, require_staff_or_admin
+from backend.core.permissions import (
+    ALGORITHM,
+    SECRET_KEY,
+    check_ws_module_access,
+    require_module_access,
+    require_staff_or_admin,
+)
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_for_user
 from backend.mesh_websockets import manager
 from backend.services.messaging import CommunicationOutcome
-
 
 # M-04: Allowlist de patrones de room name válidos.
 _VALID_ROOM_RE = re.compile(
@@ -121,6 +126,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
         return
     # C-03: Validar permiso messaging:read del módulo.
     from sqlalchemy.orm import Session as _Session
+
     from backend.core.database import SessionLocal
     _db: _Session = SessionLocal()
     try:
