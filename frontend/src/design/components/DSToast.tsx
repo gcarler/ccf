@@ -2,6 +2,7 @@
 
 import React from 'react';
 import clsx from 'clsx';
+import type { AppIcon } from '@/types/icons';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -17,7 +18,7 @@ interface DSToastProps {
 }
 
 const typeConfig: Record<ToastType, {
-    icon: React.ComponentType<{ className?: string }>;
+    icon: AppIcon;
     bgColor: string;
     borderColor: string;
     iconColor: string;

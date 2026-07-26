@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-webpack5';
-import AgGridTable, { ColDef, type AgGridTableProps } from './AgGridTable';
+import AgGridTable, { ColDef, type AgGridTableProps, type GridReadyEvent } from './AgGridTable';
 
 interface SampleRow {
   id: string;
@@ -18,13 +18,26 @@ const meta: Meta<typeof TypedAgGridTable> = {
   tags: ['autodocs'],
   title: 'UI/AgGridTable',
   component: TypedAgGridTable,
+  decorators: [
+    // Give the grid a stable, constrained height so visual snapshots are
+    // deterministic across browsers and runs.
+    (Story) => (
+      <div style={{ height: 420, width: '100%' }}>
+        <Story />
+      </div>
+    ),
+  ],
   parameters: {
-    layout: 'fullscreen',
+    layout: 'padded',
   },
 };
 
 export default meta;
 type Story = StoryObj<typeof TypedAgGridTable>;
+
+// Shared args for light/dark regression snapshots.
+// Note: for automated visual regression in CI, wire these stories to a
+// snapshot tool such as Chromatic (currently not installed in this project).
 
 const columns: ColDef<SampleRow>[] = [
   { field: 'name', headerName: 'Nombre', sortable: true, filter: true, flex: 1 },
@@ -41,38 +54,65 @@ const sampleData: SampleRow[] = [
   { id: '5', name: 'Luis Rodríguez', role: 'Admin', active: false, progress: 10 },
 ];
 
-export const Default: Story = {
-  args: {
-    rowData: sampleData,
-    columnDefs: columns,
-    density: 'default',
-  },
+const regressionArgs = {
+  rowData: sampleData,
+  columnDefs: columns,
+  density: 'default' as const,
 };
 
+export const Default: Story = {
+  args: regressionArgs,
+};
+
+function SelectedRowStory() {
+  const onGridReady = React.useCallback((event: GridReadyEvent<SampleRow>) => {
+    // Select the first row once the grid API is available.
+    event.api?.getRowNode?.(sampleData[0]?.id ?? '1')?.setSelected(true);
+  }, []);
+
+  return <TypedAgGridTable {...regressionArgs} onGridReady={onGridReady} />;
+}
+
+/**
+ * Snapshot story with the first row pre-selected.
+ * Useful to catch regressions in selection highlight styles.
+ */
+export const SelectedRow: Story = {
+  render: () => <SelectedRowStory />,
+};
+
+// The stories below are useful for manual exploration but excluded from
+// automated visual regression snapshots because they are variations of the same
+// component state. `parameters.chromatic` is only effective once a visual
+// regression tool (e.g. Chromatic) is installed and wired up.
 export const Compact: Story = {
+  parameters: { chromatic: { disableSnapshot: true } },
   args: {
-    ...Default.args,
+    ...regressionArgs,
     density: 'compact',
   },
 };
 
 export const Comfortable: Story = {
+  parameters: { chromatic: { disableSnapshot: true } },
   args: {
-    ...Default.args,
+    ...regressionArgs,
     density: 'comfortable',
   },
 };
 
 export const EmptyState: Story = {
+  parameters: { chromatic: { disableSnapshot: true } },
   args: {
+    ...regressionArgs,
     rowData: [],
-    columnDefs: columns,
-    density: 'default',
   },
 };
 
 export const ManyRows: Story = {
+  parameters: { chromatic: { disableSnapshot: true } },
   args: {
+    ...regressionArgs,
     rowData: Array.from({ length: 50 }, (_, i) => ({
       id: String(i + 1),
       name: `Usuario ${i + 1}`,
@@ -80,7 +120,32 @@ export const ManyRows: Story = {
       active: i % 2 === 0,
       progress: Math.round((i / 50) * 100),
     })),
-    columnDefs: columns,
     density: 'compact',
   },
+};
+
+/**
+ * Snapshot story that pins the global Storybook theme to "day".
+ * Use this story for visual regression in light mode.
+ */
+export const LightMode: Story = {
+  parameters: {
+    globals: {
+      theme: 'day',
+    },
+  },
+  args: regressionArgs,
+};
+
+/**
+ * Snapshot story that pins the global Storybook theme to "night".
+ * Use this story for visual regression in dark mode.
+ */
+export const DarkMode: Story = {
+  parameters: {
+    globals: {
+      theme: 'night',
+    },
+  },
+  args: regressionArgs,
 };

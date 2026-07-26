@@ -2,11 +2,12 @@
 
 import React, { useRef, useState, useCallback } from 'react';
 import clsx from 'clsx';
+import type { AppIcon } from '@/types/icons';
 
 interface Tab {
     id: string;
     label: string;
-    icon?: React.ComponentType<{ className?: string }>;
+    icon?: AppIcon;
     disabled?: boolean;
 }
 

@@ -19,6 +19,7 @@ export type {
   IGetRowsParams,
   ValueFormatterParams,
   ValueGetterParams,
+  GridReadyEvent,
 } from 'ag-grid-community';
 
 /** Ref type forwarded by the wrapper, avoids direct ag-grid-react imports. */

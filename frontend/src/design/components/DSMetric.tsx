@@ -2,13 +2,14 @@
 
 import React from 'react';
 import clsx from 'clsx';
+import type { AppIcon } from '@/types/icons';
 
 interface DSMetricProps {
     label: string;
     value: string;
     trend?: string;
     tone?: 'blue' | 'emerald' | 'amber';
-    icon?: React.ComponentType<{ className?: string }>;
+    icon?: AppIcon;
     onClick?: () => void;
     href?: string;
 }

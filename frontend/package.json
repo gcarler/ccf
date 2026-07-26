@@ -21,6 +21,7 @@
         "test:e2e:academy:multi-role": "node scripts/run-managed-playwright.mjs --academy-roles tests/e2e/academy/multi-role-flow.spec.ts",
         "test:e2e:projects": "playwright test tests/e2e/projects/smoke.spec.ts && node scripts/run-managed-playwright.mjs --auth tests/e2e/projects/detail.spec.ts",
         "test:e2e:projects:detail": "node scripts/run-managed-playwright.mjs --auth tests/e2e/projects/detail.spec.ts",
+        "test:e2e:projects:whiteboard": "node scripts/run-managed-playwright.mjs --auth tests/e2e/projects/whiteboard.spec.ts",
         "test:e2e:messaging": "playwright test tests/e2e/messaging/smoke.spec.ts && node scripts/run-managed-playwright.mjs tests/e2e/messaging/direct-messages.spec.ts",
         "test:e2e:messaging:deep": "node scripts/run-managed-playwright.mjs tests/e2e/messaging/direct-messages.spec.ts",
         "test:e2e:agenda": "playwright test tests/e2e/agenda/smoke.spec.ts && node scripts/run-managed-playwright.mjs tests/e2e/agenda/calendar-events.spec.ts",
@@ -38,6 +39,10 @@
         "test:e2e:seed-user": "node tests/e2e/seed-auth-user.mjs",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
+        "test:visual": "playwright test -c playwright.visual.config.ts",
+        "test:visual:update": "playwright test -c playwright.visual.config.ts --update-snapshots",
+        "test:visual:ci": "npm run build-storybook && npm run test:visual",
+        "test:visual:update:ci": "npm run build-storybook && npm run test:visual:update",
         "quality:gate": "node scripts/quality-gate.mjs"
     },
     "dependencies": {
@@ -115,6 +120,7 @@
         "storybook": "^10.3.3",
         "tailwindcss": "^3.4.19",
         "typescript": "^5",
+        "http-server": "^14.1.1",
         "vitest": "^1.5.0"
     }
 }
