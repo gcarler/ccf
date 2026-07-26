@@ -27,7 +27,9 @@ def test_presence_endpoint(client: TestClient):
     manager.rooms["room"].add("client-a")
     response = client.get("/api/messaging/presence/room")
     assert response.status_code == 200
-    assert "client-a" in response.json()["clients"]
+    clients = response.json()["clients"]
+    client_ids = [c["client_id"] for c in clients]
+    assert "client-a" in client_ids
 
 
 def test_notification_endpoint(client: TestClient):

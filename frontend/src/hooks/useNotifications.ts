@@ -44,7 +44,7 @@ export function useNotifications(limit = 50) {
         void refresh();
     }, [isAuthenticated, refresh]);
 
-    const markRead = useCallback(async (id: number) => {
+    const markRead = useCallback(async (id: string) => {
         if (!token) return;
         setNotifications((items) => {
             const current = items.find((item) => item.id === id);

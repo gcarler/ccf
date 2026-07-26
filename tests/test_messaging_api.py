@@ -91,7 +91,8 @@ def test_messaging_mark_all_read(client, db_session):
 
     resp = client.post("/api/messaging/notifications/mark-all-read", headers=headers)
     assert resp.status_code == 200
-    assert resp.json()["status"] == "success"
+    data = resp.json()
+    assert "marked_count" in data
 
 
 def test_messaging_history(client, db_session):

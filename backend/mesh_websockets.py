@@ -76,6 +76,16 @@ class RedisPubSubManager:
             client_id = payload.get("client_id")
             if client_id:
                 self._remove_client(client_id)
+        elif event_type == "presence_join":
+            # C-04: Sincronizar presencia cross-instancia.
+            # Cuando instancia B publica presence_join, instancia A debe
+            # agregar el client_id a las rooms indicadas para que
+            # list_room() y _send_local() lo incluyan.
+            client_id = payload.get("client_id")
+            rooms = payload.get("rooms", ["global"])
+            if client_id:
+                for room_name in rooms:
+                    self.rooms[room_name].add(client_id)
 
     async def connect(
         self, client_id: str, websocket: WebSocket, rooms: Optional[List[str]] = None
