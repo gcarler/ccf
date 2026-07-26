@@ -8,7 +8,7 @@ import uuid as _uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -26,7 +26,14 @@ router = APIRouter(prefix="/finance-suite", tags=["Finance Suite"])
 
 def _generate_number(prefix: str, db: Session) -> str:
     today = datetime.now(timezone.utc)
-    count = db.query(func.count(models.AccountingEntry.id)).scalar() or 0
+    mapping = {
+        "SO": models.SalesOrder,
+        "INV": models.Invoice,
+        "EXP": models.ExpenseReport,
+        "ENT": models.AccountingEntry,
+    }
+    model = mapping.get(prefix, models.AccountingEntry)
+    count = db.query(func.count(model.id)).scalar() or 0
     return f"{prefix}-{today.year}{today.month:02d}-{count + 1:05d}-{_uuid.uuid4().hex[:4]}"
 
 
@@ -75,6 +82,9 @@ def update_bank_account(
     account = db.query(models.BankAccount).filter(models.BankAccount.id == account_id).first()
     if not account:
         raise HTTPException(status_code=404, detail="Bank account not found")
+    user_sede_id = getattr(current_user, "sede_id", None) or _finance_sede_scope(db, current_user)
+    if user_sede_id and str(account.sede_id or "") != str(user_sede_id):
+        raise HTTPException(status_code=403, detail="Forbidden")
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(account, k, v)
     db.commit()
@@ -94,6 +104,15 @@ def create_bank_transaction(
 ):
     tx = models.BankTransaction(**payload.model_dump())
     db.add(tx)
+    db.flush()
+
+    account = db.query(models.BankAccount).filter_by(id=payload.bank_account_id).with_for_update().first()
+    if account:
+        if payload.transaction_type == "credit":
+            account.current_balance = (account.current_balance or 0) + payload.amount
+        elif payload.transaction_type == "debit":
+            account.current_balance = (account.current_balance or 0) - payload.amount
+
     db.commit()
     db.refresh(tx)
     return tx
@@ -442,12 +461,19 @@ def create_invoice(
         raise HTTPException(status_code=400, detail="At least one item is required")
     sede_id = _finance_sede_scope(db, current_user)
     subtotal = sum(item.quantity * item.unit_price for item in payload.items)
-    # FIN-M14: Use sede's country_code for tax lookup (was hardcoded "CO")
-    sede_country = "CO"
-    tax_config = db.query(models.TaxConfiguration).filter(
-        models.TaxConfiguration.country_code == sede_country,
-        models.TaxConfiguration.is_active == True,
-    ).first()
+    user_sede_id = getattr(current_user, "sede_id", None) or _finance_sede_scope(db, current_user)
+    tax_config = None
+    if user_sede_id:
+        tax_config = db.query(models.TaxConfiguration).filter(
+            models.TaxConfiguration.sede_id == user_sede_id,
+            models.TaxConfiguration.is_active == True,
+        ).first()
+    sede_country = tax_config.country_code if tax_config else "CO"
+    if not tax_config:
+        tax_config = db.query(models.TaxConfiguration).filter(
+            models.TaxConfiguration.country_code == sede_country,
+            models.TaxConfiguration.is_active == True,
+        ).first()
     tax_rate = tax_config.tax_rate if tax_config else 0
     tax_amount = subtotal * (tax_rate / 100) if tax_rate else 0
     total = subtotal + tax_amount
@@ -554,7 +580,13 @@ def send_electronic_invoice(
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
-    raise HTTPException(status_code=501, detail="Electronic invoicing integration not implemented")
+    raise HTTPException(
+        status_code=422,
+        detail={
+            "code": "ELECTRONIC_INVOICING_NOT_CONFIGURED",
+            "message": "La facturación electrónica no está habilitada para esta sede. Contacte al administrador.",
+        },
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -965,6 +997,7 @@ def sign_document(
     request_id: str,
     signer_id: str,
     payload: schemas.SignAction,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
@@ -977,10 +1010,11 @@ def sign_document(
     if signer.status != "sent":
         raise HTTPException(status_code=400, detail=f"Signer is in '{signer.status}' status, cannot sign")
 
+    client_ip = request.client.host if request.client else None
     if payload.action == "sign":
         signer.status = "signed"
         signer.signed_at = _utcnow()
-        signer.ip_address = payload.ip_address
+        signer.ip_address = payload.ip_address or client_ip
         signer.metadata_json = payload.metadata_json or {}
     elif payload.action == "decline":
         signer.status = "declined"

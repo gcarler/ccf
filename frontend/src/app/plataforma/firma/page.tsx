@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
 import clsx from "clsx";
+import { toast } from "sonner";
 
 const SECTIONS = [
   {
@@ -57,7 +58,11 @@ export default function FirmaPage() {
     setLoading(false);
   }, [token]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetchData();
+    return () => ctrl.abort();
+  }, [fetchData]);
 
   const handleCreate = async () => {
     if (!token) return;
@@ -70,26 +75,29 @@ export default function FirmaPage() {
       await apiFetch("/finance-suite/sign-requests", { token, method: "POST", body: payload });
       setShowCreate(false);
       setForm({ title: "", description: "", document_url: "", expiry_date: "", country_code: "CO", legal_framework: "eidas", signers: [{ email: "", full_name: "", role: "signer", signing_order: 0 }] });
+      toast.success("Solicitud de firma creada");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al crear solicitud de firma"); }
   };
 
   const handleSend = async (id: string) => {
     if (!token) return;
     try {
       await apiFetch(`/finance-suite/sign-requests/${id}/send`, { token, method: "POST" });
+      toast.success("Solicitud enviada a firmantes");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al enviar solicitud"); }
   };
 
   const handleSign = async (requestId: string, signerId: string) => {
     if (!token) return;
     try {
       await apiFetch(`/finance-suite/sign-requests/${requestId}/signers/${signerId}/sign`, {
-        token, method: "POST", body: { action: "sign", ip_address: "127.0.0.1" },
+        token, method: "POST", body: { action: "sign" },
       });
+      toast.success("Documento firmado exitosamente");
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); toast.error("Error al firmar documento"); }
   };
 
   const statusConfig: Record<string, { label: string; color: string }> = {

@@ -99,6 +99,68 @@ def test_bank_account_extra_forbid(client, db_session):
     assert resp.status_code == 422
 
 
+def test_update_bank_account_idor_forbidden(client, db_session):
+    _, _, sede1 = _seed_user_with_role(
+        db_session, role_name="finance_user1", email="user_sede1@example.com", permisos={"finance": "edit"}
+    )
+    _, _, sede2 = _seed_user_with_role(
+        db_session, role_name="finance_user2", email="user_sede2@example.com", sede_id=_uuid.uuid4(), permisos={"finance": "edit"}
+    )
+
+    acct = _seed_bank_account(db_session, sede_id=sede1.id)
+
+    headers2 = _auth_headers(client, email="user_sede2@example.com")
+    resp = client.patch(
+        f"/api/finance-suite/bank-accounts/{acct.id}",
+        json={"bank_name": "Unauthorized Update"},
+        headers=headers2,
+    )
+    assert resp.status_code == 403
+
+
+def test_create_bank_transaction_updates_account_balance(client, db_session):
+    _seed_admin(db_session)
+    headers = _auth_headers(client)
+
+    acct = _seed_bank_account(db_session)
+    initial_balance = float(acct.current_balance or 0)
+
+    # 1. Credit transaction (+150000)
+    resp_credit = client.post(
+        "/api/finance-suite/bank-transactions",
+        json={
+            "bank_account_id": str(acct.id),
+            "transaction_date": "2026-06-01",
+            "transaction_type": "credit",
+            "amount": "150000.00",
+            "description": "Abono cliente",
+        },
+        headers=headers,
+    )
+    assert resp_credit.status_code == 201
+
+    db_session.refresh(acct)
+    assert float(acct.current_balance) == initial_balance + 150000.0
+
+    # 2. Debit transaction (-50000)
+    resp_debit = client.post(
+        "/api/finance-suite/bank-transactions",
+        json={
+            "bank_account_id": str(acct.id),
+            "transaction_date": "2026-06-02",
+            "transaction_type": "debit",
+            "amount": "50000.00",
+            "description": "Pago proveedor",
+        },
+        headers=headers,
+    )
+    assert resp_debit.status_code == 201
+
+    db_session.refresh(acct)
+    assert float(acct.current_balance) == initial_balance + 100000.0
+
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # CHART OF ACCOUNTS
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -299,7 +361,7 @@ def test_create_invoice_empty_items(client, db_session):
     assert resp.status_code == 400
 
 
-def test_send_electronic_invoice_returns_501(client, db_session):
+def test_send_electronic_invoice_returns_422(client, db_session):
     _seed_admin(db_session)
     headers = _auth_headers(client)
 
@@ -312,7 +374,8 @@ def test_send_electronic_invoice_returns_501(client, db_session):
     inv_id = resp.json()["id"]
 
     resp2 = client.post(f"/api/finance-suite/invoices/{inv_id}/send-electronic", headers=headers)
-    assert resp2.status_code == 501
+    assert resp2.status_code == 422
+    assert resp2.json()["detail"]["code"] == "ELECTRONIC_INVOICING_NOT_CONFIGURED"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -522,3 +585,69 @@ def test_sign_document_wrong_status(client, db_session):
     resp2 = client.post(f"/api/finance-suite/sign-requests/{req_id}/signers/{signer_id}/sign",
                         json={"action": "sign"}, headers=headers)
     assert resp2.status_code == 400
+
+
+def test_document_invalid_mime_type(client, db_session):
+    _seed_admin(db_session)
+    headers = _auth_headers(client)
+
+    resp = client.post("/api/finance-suite/documents", json={
+        "title": "Malicious file",
+        "file_url": "https://storage.ccf.org/docs/malware.exe",
+        "file_name": "malware.exe",
+        "file_size": 1024,
+        "mime_type": "application/x-msdownload",
+        "document_type": "other",
+        "tag_ids": [],
+    }, headers=headers)
+    assert resp.status_code == 422
+
+
+def test_bank_transaction_updates_balance(client, db_session):
+    _seed_admin(db_session)
+    headers = _auth_headers(client)
+
+    # Create account
+    acct = _seed_bank_account(db_session)
+
+    # Credit transaction
+    resp = client.post("/api/finance-suite/bank-transactions", json={
+        "bank_account_id": str(acct.id),
+        "transaction_date": "2026-06-01",
+        "description": "Depósito inicial",
+        "amount": "100000",
+        "transaction_type": "credit",
+    }, headers=headers)
+    assert resp.status_code == 201
+
+    db_session.refresh(acct)
+    assert float(acct.current_balance) == 100000.0
+
+    # Debit transaction
+    resp2 = client.post("/api/finance-suite/bank-transactions", json={
+        "bank_account_id": str(acct.id),
+        "transaction_date": "2026-06-02",
+        "description": "Retiro",
+        "amount": "30000",
+        "transaction_type": "debit",
+    }, headers=headers)
+    assert resp2.status_code == 201
+
+    db_session.refresh(acct)
+    assert float(acct.current_balance) == 70000.0
+
+
+def test_update_bank_account_cross_sede_forbidden(client, db_session):
+    admin, persona, sede = _seed_admin(db_session)
+    sede2 = models.Sede(id=_uuid.uuid4(), nombre="Sede 2", ciudad="Cali", es_activa=True)
+    db_session.add(sede2)
+    db_session.flush()
+
+    acct_other_sede = _seed_bank_account(db_session, sede_id=sede2.id)
+
+    headers = _auth_headers(client)
+    resp = client.patch(f"/api/finance-suite/bank-accounts/{acct_other_sede.id}", json={
+        "bank_name": "Nombre Modificado",
+    }, headers=headers)
+    assert resp.status_code == 403
+    assert resp.json()["detail"] == "Forbidden"

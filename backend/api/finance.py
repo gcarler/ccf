@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
-from backend import models
+from backend import models, models_finance_suite
 from backend.core.database import get_db
 from backend.core.permissions import require_admin, require_module_access
 from backend.core.rate_limit import rate_limiter
@@ -35,31 +35,33 @@ def get_finance_summary(
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    total_income = (
-        db.query(func.sum(models.Donation.amount))
-        .filter(
-            models.Donation.created_at >= month_start,
-            models.Donation.sede_id == sede_id,
-            models.Donation.deleted_at.is_(None),
-        )
-        .scalar()
-        or 0
+    income_q = db.query(func.sum(models.Donation.amount)).filter(
+        models.Donation.created_at >= month_start,
+        models.Donation.deleted_at.is_(None),
     )
+    if sede_id:
+        income_q = income_q.filter(models.Donation.sede_id == sede_id)
+    total_income = income_q.scalar() or 0
 
-    # FIN-H01: Gastos estimados como 66% de ingresos (TODO: reemplazar con tabla real de expenses)
-    total_expense = round(float(total_income) * 0.66)
+    expense_q = db.query(func.sum(models_finance_suite.ExpenseReport.total_amount)).filter(
+        models_finance_suite.ExpenseReport.status == "reimbursed",
+        models_finance_suite.ExpenseReport.reimbursed_at >= month_start,
+    )
+    if sede_id:
+        expense_q = expense_q.filter(models_finance_suite.ExpenseReport.sede_id == sede_id)
+    total_expense = expense_q.scalar() or 0
 
     # Balance: fondos activos de la sede + ingresos del mes
     fund_q = db.query(func.sum(models.Fund.current_balance))
     if sede_id:
         fund_q = fund_q.filter(models.Fund.sede_id == sede_id)
     total_funds = fund_q.scalar() or 0
-    balance = round(float(total_funds) + float(total_income) * 0.34)
+    balance = round(float(total_income) - float(total_expense))
 
     return {
         "balance": balance,
         "total_income": round(total_income),
-        "total_expense": total_expense,
+        "total_expense": round(total_expense),
         "funds_total": round(total_funds),
     }
 
@@ -74,45 +76,44 @@ def get_ministerial_funds(
     now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    total_ingresos = (
-        db.query(func.sum(models.Donation.amount))
-        .filter(
-            models.Donation.created_at >= month_start,
-            models.Donation.sede_id == sede_id,
-            models.Donation.deleted_at.is_(None),
-        )
-        .scalar()
-        or 0
+    income_q = db.query(func.sum(models.Donation.amount)).filter(
+        models.Donation.created_at >= month_start,
+        models.Donation.deleted_at.is_(None),
     )
+    if sede_id:
+        income_q = income_q.filter(models.Donation.sede_id == sede_id)
+    total_ingresos = income_q.scalar() or 0
 
-    by_type = (
-        db.query(
-            models.Donation.donation_type,
-            func.sum(models.Donation.amount).label("total"),
-        )
-        .filter(
-            models.Donation.created_at >= month_start,
-            models.Donation.sede_id == sede_id,
-            models.Donation.deleted_at.is_(None),
-        )
-        .group_by(models.Donation.donation_type)
-        .all()
+    expense_q = db.query(func.sum(models_finance_suite.ExpenseReport.total_amount)).filter(
+        models_finance_suite.ExpenseReport.status == "reimbursed",
+        models_finance_suite.ExpenseReport.reimbursed_at >= month_start,
     )
+    if sede_id:
+        expense_q = expense_q.filter(models_finance_suite.ExpenseReport.sede_id == sede_id)
+    total_egresos = expense_q.scalar() or 0
 
-    total_all_time = (
-        db.query(func.sum(models.Donation.amount))
-        .filter(
-            models.Donation.sede_id == sede_id,
-            models.Donation.deleted_at.is_(None),
-        )
-        .scalar()
-        or 0
+    by_type_q = db.query(
+        models.Donation.donation_type,
+        func.sum(models.Donation.amount).label("total"),
+    ).filter(
+        models.Donation.created_at >= month_start,
+        models.Donation.deleted_at.is_(None),
     )
+    if sede_id:
+        by_type_q = by_type_q.filter(models.Donation.sede_id == sede_id)
+    by_type = by_type_q.group_by(models.Donation.donation_type).all()
+
+    all_time_q = db.query(func.sum(models.Donation.amount)).filter(
+        models.Donation.deleted_at.is_(None),
+    )
+    if sede_id:
+        all_time_q = all_time_q.filter(models.Donation.sede_id == sede_id)
+    total_all_time = all_time_q.scalar() or 0
 
     return {
         "ingresos_mes": round(total_ingresos),
-        "egresos_mes": round(float(total_ingresos) * 0.66),
-        "balance": round(float(total_ingresos) * 0.34),
+        "egresos_mes": round(total_egresos),
+        "balance": round(float(total_ingresos) - float(total_egresos)),
         # FIN-H15: Reserva = 10% del total histórico (política financiera CCF)
         "reserva": round(float(total_all_time) * 0.10),
         "total_historico": round(total_all_time),

@@ -109,6 +109,7 @@ class ReconciliationLine(Base):
 
 class ChartOfAccount(Base):
     __tablename__ = "chart_of_accounts"
+    __table_args__ = (UniqueConstraint("sede_id", "code", name="uq_chart_of_account_sede_code"),)
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     code = Column(String(20), nullable=False, index=True)
@@ -222,6 +223,7 @@ class SalesOrderItem(Base):
 
 
 class Invoice(Base):
+    """Invoice model — status values: draft, sent, paid, partial, overdue, cancelled."""
     __tablename__ = "invoices"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
@@ -234,7 +236,7 @@ class Invoice(Base):
     tax_amount = Column(Numeric(14, 2), default=0)
     total = Column(Numeric(14, 2), nullable=False)
     currency = Column(String(10), default="COP")
-    status = Column(String(20), default="draft", index=True)  # draft, sent, paid, overdue, cancelled
+    status = Column(String(20), default="draft", index=True)  # draft, sent, paid, partial, overdue, cancelled
     issue_date = Column(Date, nullable=False, index=True)
     due_date = Column(Date, nullable=True, index=True)
     electronic_id = Column(String(100), nullable=True, index=True)
