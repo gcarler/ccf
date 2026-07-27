@@ -16,6 +16,7 @@ except ImportError:
     sys.modules["openai"] = openai
 
 from backend import models
+from backend.crud.crm_ import health as health_module
 from backend.services import pastoral_health
 from tests.conftest import auth_headers, seed_admin
 
@@ -60,8 +61,6 @@ def scoring_engine_patches(monkeypatch):
     managers across the re-exported pastoral health module.
     """
     def _patched(*, canonical_available: bool = True):
-        from backend.crud.crm_ import health as health_module
-
         mock_canonical = MagicMock()
         mock_fallback = MagicMock()
         deprecated_mocks = {
