@@ -220,6 +220,7 @@ def add_groups_attendance(
                 .filter(
                     models.Asistencia.sesion_id == session_id,
                     models.Asistencia.persona_id == persona_id,
+                    models.Asistencia.deleted_at.is_(None),
                 )
                 .first()
             )

@@ -73,7 +73,7 @@ class TestSimpleCRUD:
         c, h = full["c"], full["h"]
         assert _ok(c.get("/api/admin/automations", headers=h).status_code)
 
-    def test_list_auth_role_definitions(self, full):
+    def test_list_roles_paginated(self, full):
         c, h = full["c"], full["h"]
         resp = c.get("/api/admin/roles", headers=h)
         assert _ok(resp.status_code)
@@ -127,7 +127,7 @@ class TestCRUDWithData:
         }, headers=h)
         assert _ok(resp.status_code)
 
-    def test_create_auth_role_definition(self, full):
+    def test_create_role(self, full):
         c, h = full["c"], full["h"]
         resp = c.post("/api/admin/roles", json={
             "name": f"Role_{uuid.uuid4().hex[:6]}",
@@ -232,7 +232,7 @@ class TestPermissionsRoles:
         assert "id" in data, f"Expected AdminRoleRead, got: {data}"
         assert "nombre" in data
 
-    def test_create_auth_role_definition_duplicate(self, full):
+    def test_create_role_duplicate(self, full):
         c, h = full["c"], full["h"]
         role_name = f"DupeRole_{uuid.uuid4().hex[:4]}"
         resp1 = c.post("/api/admin/roles", json={
@@ -459,7 +459,7 @@ class TestFullCoverage:
         data = resp.json()
         assert data.get("status") == "success"
 
-    def test_update_auth_role_definition(self, full):
+    def test_update_role(self, full):
         """PATCH /roles/{role_id}."""
         from backend.models_auth import RolPlataforma
 
@@ -476,7 +476,7 @@ class TestFullCoverage:
         assert "crm:read" in data.get("permisos", {})
         assert "crm:write" in data.get("permisos", {})
 
-    def test_delete_auth_role_definition(self, full):
+    def test_delete_role(self, full):
         """DELETE /roles/{role_id} sin asignaciones."""
         from backend.models_auth import RolPlataforma
 
@@ -488,7 +488,7 @@ class TestFullCoverage:
         resp = c.delete(f"/api/admin/roles/{rol.id}", headers=h)
         assert resp.status_code == 204
 
-    def test_delete_auth_role_definition_with_users_409(self, full):
+    def test_delete_role_with_users_409(self, full):
         """DELETE /roles/{role_id} con usuarios asignados."""
         c, h = full["c"], full["h"]
         admin = full["admin"]

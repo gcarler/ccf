@@ -1,10 +1,14 @@
 """Shared CRM helpers used across multiple subdomains."""
 import logging
+import threading
 import uuid
 
-from sqlalchemy.orm import Session
+from sqlalchemy import inspect
+from sqlalchemy.orm import Session, load_only, selectinload
+from sqlalchemy.sql import literal_column
 
 from backend import models
+from backend.schemas.crm.base import PersonaResponse
 
 _logger = logging.getLogger(__name__)
 
@@ -275,3 +279,143 @@ def _audit_log(
             usuario_id=_uuid.UUID(usuario_id) if usuario_id else None,
         )
     )
+
+
+# ── Dynamic schema introspection helpers (moved from api/crm/_shared.py)
+# Cache simple para nombres de columnas vivas. El schema no cambia en runtime,
+# por lo que cachear indefinidamente es seguro y evita introspection en cada request.
+_SCHEMA_COLUMN_CACHE: dict[str, set[str]] = {}
+_SCHEMA_COLUMN_LOCK = threading.Lock()
+
+_logger_schema = logging.getLogger(__name__)
+
+
+def _get_live_column_names(db: Session, table_name: str) -> set[str]:
+    """Devuelve los nombres de columnas de una tabla, cacheados por nombre."""
+    with _SCHEMA_COLUMN_LOCK:
+        cached = _SCHEMA_COLUMN_CACHE.get(table_name)
+        if cached is not None:
+            return cached
+    bind = db.get_bind()
+    if bind is None:
+        return set()
+    try:
+        columns = inspect(bind).get_columns(table_name)
+    except Exception as exc:
+        _logger_schema.debug("Failed to inspect %s columns: %s", table_name, exc)
+        return set()
+    result = {str(column.get("name")) for column in columns if column.get("name")}
+    with _SCHEMA_COLUMN_LOCK:
+        _SCHEMA_COLUMN_CACHE[table_name] = result
+    return result
+
+
+def _persona_live_column_names(db: Session) -> set[str]:
+    return _get_live_column_names(db, "personas")
+
+
+def _case_live_column_names(db: Session) -> set[str]:
+    return _get_live_column_names(db, "crm_casos")
+
+
+def _case_created_column(db: Session):
+    live_cols = _case_live_column_names(db)
+    if "fecha_creacion" in live_cols and hasattr(models.CasoCRM, "fecha_creacion"):
+        return models.CasoCRM.fecha_creacion
+    if "created_at" in live_cols:
+        return literal_column("crm_casos.created_at")
+    if "fecha_creacion" in live_cols:
+        return literal_column("crm_casos.fecha_creacion")
+    if hasattr(models.CasoCRM, "fecha_creacion"):
+        return models.CasoCRM.fecha_creacion
+    return None
+
+
+def _stage_live_column_names(db: Session) -> set[str]:
+    return _get_live_column_names(db, "crm_etapas_pipeline")
+
+
+def persona_query(db: Session):
+    live_cols = _persona_live_column_names(db)
+    live_attrs = [
+        getattr(models.Persona, name)
+        for name in live_cols
+        if hasattr(models.Persona, name)
+    ]
+    query = db.query(models.Persona)
+    if live_attrs:
+        query = query.options(load_only(*live_attrs))
+    return query
+
+
+def case_query(db: Session):
+    live_cols = _case_live_column_names(db)
+    live_attrs = [
+        getattr(models.CasoCRM, name)
+        for name in live_cols
+        if hasattr(models.CasoCRM, name)
+    ]
+    query = db.query(models.CasoCRM)
+    if live_attrs:
+        query = query.options(load_only(*live_attrs))
+
+    persona_live_cols = _persona_live_column_names(db)
+    persona_live_attrs = [
+        getattr(models.Persona, name)
+        for name in persona_live_cols
+        if hasattr(models.Persona, name)
+    ]
+    stage_live_cols = _stage_live_column_names(db)
+    stage_live_attrs = [
+        getattr(models.EtapaPipeline, name)
+        for name in stage_live_cols
+        if hasattr(models.EtapaPipeline, name)
+    ]
+
+    if persona_live_attrs:
+        query = query.options(
+            selectinload(models.CasoCRM.persona).load_only(*persona_live_attrs),
+            selectinload(models.CasoCRM.asignado_a).load_only(*persona_live_attrs),
+        )
+    if stage_live_attrs:
+        query = query.options(
+            selectinload(models.CasoCRM.etapa_actual).load_only(*stage_live_attrs)
+        )
+    return query
+
+
+def prepare_persona_for_output(db: Session, persona: models.Persona):
+    """Populate missing ORM-backed attributes with None to avoid lazy-loading
+    fields that are absent in the live table.
+    """
+    live_cols = _persona_live_column_names(db)
+    for field_name in PersonaResponse.model_fields:
+        if field_name == "nombre_completo" or field_name in live_cols:
+            continue
+        if hasattr(models.Persona, field_name):
+            try:
+                setattr(persona, field_name, None)
+            except Exception as exc:
+                _logger_schema.debug("Failed to set persona field %s to None: %s", field_name, exc)
+                persona.__dict__[field_name] = None
+    return persona
+
+
+def prepare_case_for_output(db: Session, case: models.CasoCRM):
+    live_cols = _case_live_column_names(db)
+    for field_name in models.CasoCRM.__table__.columns.keys():
+        if field_name in live_cols:
+            continue
+        if hasattr(models.CasoCRM, field_name):
+            try:
+                setattr(case, field_name, None)
+            except Exception as exc:
+                _logger_schema.debug("Failed to set case field %s to None: %s", field_name, exc)
+                case.__dict__[field_name] = None
+    persona = getattr(case, "persona", None)
+    if persona is not None:
+        prepare_persona_for_output(db, persona)
+    assigned = getattr(case, "asignado_a", None)
+    if assigned is not None:
+        prepare_persona_for_output(db, assigned)
+    return case

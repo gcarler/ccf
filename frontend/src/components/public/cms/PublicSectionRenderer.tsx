@@ -1,6 +1,11 @@
 "use client";
 
 import { CmsSection } from "@/types/cms-v2";
+import type {
+  HeroProps,
+  VideoHeroProps,
+  RichTextProps,
+} from "@/types/cms-section-props";
 import { AnimatePresence,motion } from "framer-motion";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { Calendar,CheckCircle2,ChevronDown,ChevronRight,ChevronUp,Download,FileText,MapPin,Search,Send,Star,Upload,X } from "lucide-react";
@@ -26,11 +31,19 @@ function asItems(props: Record<string, unknown>): Array<Record<string, unknown>>
   return cmsItems(props);
 }
 
+// Cast a narrow ``XxxProps`` interface to the ``Record<string, unknown>``
+// shape that ``val``/``asItems`` expect. TS refuses the assignment
+// directly because interfaces don't carry an implicit index signature,
+// but the cast is safe -- the backend sanitiser already dropped unknown
+// keys before persisting, so every field matches the typed interface.
+const asProps = (props: object): Record<string, unknown> =>
+  props as unknown as Record<string, unknown>;
+
 // ─── Hero ──────────────────────────────────────────────────────────────────────
 
-function HeroSection({ section }: { section: CmsSection }) {
-  const props = section.props_json || {};
-  const hero = normalizeHeroProps(props);
+function HeroSection({ section }: { section: CmsSection<"hero"> }) {
+  const props: HeroProps = section.props_json ?? {};
+  const hero = normalizeHeroProps(asProps(props));
 
   return (
     <PublicHeroWithSlides
@@ -49,13 +62,14 @@ function HeroSection({ section }: { section: CmsSection }) {
 
 // ─── Video Hero ────────────────────────────────────────────────────────────────
 
-function VideoHeroSection({ section }: { section: CmsSection }) {
-  const props = section.props_json || {};
-  const title = val(props, "title", "");
-  const body = val(props, "body", "");
-  const ctaLabel = val(props, "cta_label", "");
-  const ctaHref = val(props, "cta_href", "/");
-  const videoUrl = val(props, "video_url", "");
+function VideoHeroSection({ section }: { section: CmsSection<"video_hero"> }) {
+  const props: VideoHeroProps = section.props_json ?? {};
+  const p = asProps(props);
+  const title = val(p, "title", "");
+  const body = val(p, "body", "");
+  const ctaLabel = val(p, "cta_label", "");
+  const ctaHref = val(p, "cta_href", "/");
+  const videoUrl = val(p, "video_url", "");
 
   return (
     <section className="relative overflow-hidden rounded-2xl min-h-[480px] flex items-center">
@@ -86,12 +100,13 @@ function VideoHeroSection({ section }: { section: CmsSection }) {
 
 // ─── Rich Text ─────────────────────────────────────────────────────────────────
 
-function RichTextSection({ section }: { section: CmsSection }) {
-  const props = section.props_json || {};
-  const title = val(props, "title", "");
-  const body = val(props, "body", "");
-  const ctaLabel = val(props, "cta_label", "");
-  const ctaHref = val(props, "cta_href", "");
+function RichTextSection({ section }: { section: CmsSection<"rich_text"> }) {
+  const props: RichTextProps = section.props_json ?? {};
+  const p = asProps(props);
+  const title = val(p, "title", "");
+  const body = val(p, "body", "");
+  const ctaLabel = val(p, "cta_label", "");
+  const ctaHref = val(p, "cta_href", "/");
 
   return (
     <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
@@ -2024,13 +2039,22 @@ function MobileMenuConfigSection({ section }: { section: CmsSection }) {
   );
 }
 
+// Cast a generic CmsSection to its parameterised variant, narrowing
+// ``type`` to ``T`` and ``props_json`` to the matching interface. The cast
+// is type-only (no runtime effect) and safe because the backend
+// ``validate_section_props`` enforces the type->schema coupling on write,
+// so a persisted section with ``type: "hero"`` always carries HeroProps.
+function asTyped<T extends string>(section: CmsSection): CmsSection<T> {
+  return section as unknown as CmsSection<T>;
+}
+
 // ─── Main Dispatcher ───────────────────────────────────────────────────────────
 
 export default function PublicSectionRenderer({ section }: { section: CmsSection }) {
   switch (section.type) {
-    case "hero":             return <HeroSection section={section} />;
-    case "video_hero":       return <VideoHeroSection section={section} />;
-    case "rich_text":        return <RichTextSection section={section} />;
+    case "hero":             return <HeroSection section={asTyped<"hero">(section)} />;
+    case "video_hero":       return <VideoHeroSection section={asTyped<"video_hero">(section)} />;
+    case "rich_text":        return <RichTextSection section={asTyped<"rich_text">(section)} />;
     case "rich_text_columns":return <RichTextColumnsSection section={section} />;
     case "cards":            return <CardsSection section={section} />;
     case "cta_banner":       return <CtaBannerSection section={section} />;
@@ -2077,6 +2101,6 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
     case "policy_document":        return <PolicyDocumentSection section={section} />;
     case "footer_config":          return <FooterConfigSection section={section} />;
     case "mobile_menu_config":     return <MobileMenuConfigSection section={section} />;
-    default:                       return <RichTextSection section={section} />;
+    default:                       return <RichTextSection section={asTyped<"rich_text">(section)} />;
   }
 }

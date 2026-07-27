@@ -15,39 +15,17 @@ import { useCallback, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import type {
-  GroupDetailResponse,
-  SessionDetailResponse,
   SessionRow,
   Strategy,
   StrategyGroup,
   StrategyMetrics,
 } from '../../types';
 import type {
-  AttendancePersona,
   CustomRole,
   FollowUpRecord,
   SearchablePersona as SharedSearchablePersona,
 } from './strategyDetailShared';
-
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof Error && error.message ? error.message : fallback;
-
-const toAttendanceStatus = (value: string | undefined): AttendancePersona['status'] =>
-  value === 'absent' || value === 'first_time' ? value : 'present';
-
-type GroupActionForm = {
-  name: string;
-  zone: string;
-  address: string;
-  capacity: number;
-  day_of_week: string;
-  start_time: string;
-  end_time: string;
-};
-type RoleDrivenAssignments = {
-  fixed: { leader_id: string | null; assistant_id: string | null; host_id: string | null };
-  base_attendees_with_roles: Array<{ persona_id: string; role: string; rol_personalizado_id: string }>;
-};
+import { getErrorMessage } from '../../utils';
 
 // ── Hook: Estrategia ────────────────────────────────────────────────
 
@@ -300,77 +278,6 @@ export function useSessionActions(fetchSessions: () => void, token: string | nul
   return { toggleSessionHabilitacion, handleDeleteSession };
 }
 
-// ── Hook: Gestión de grupos (creación, eliminación) ─────────────────
-
-export function useGroupActions(
-  id: string,
-  fetchGroups: () => void,
-  fetchStrategy: () => void,
-  token: string | null,
-) {
-  const [isGroupDrawerOpen, setIsGroupDrawerOpen] = useState(false);
-  const [groupSaving, setGroupSaving] = useState(false);
-  const [roleResults, setRoleResults] = useState<Record<string, SharedSearchablePersona[]>>({});
-  const [roleLoading, setRoleLoading] = useState<Record<string, boolean>>({});
-
-  const handleCreateGroup = useCallback(async (
-    groupForm: GroupActionForm,
-    buildRoleDrivenAssignments: () => RoleDrivenAssignments,
-    resetForm: () => void,
-  ) => {
-    if (!groupForm.name.trim()) { toast.error('El nombre del grupo es obligatorio'); return; }
-    setGroupSaving(true);
-    try {
-      const roleDrivenAssignments = buildRoleDrivenAssignments();
-      await apiFetch('/evangelism/grupos', {
-        method: 'POST', token, silent: true,
-        body: {
-          name: groupForm.name.trim(), code: null,
-          zone: groupForm.zone || null, address: groupForm.address || null,
-          latitude: null, longitude: null, leader_name: null,
-          leader_id: roleDrivenAssignments.fixed.leader_id,
-          assistant_id: roleDrivenAssignments.fixed.assistant_id,
-          host_id: roleDrivenAssignments.fixed.host_id,
-          evangelism_strategy_id: id,
-          personas_count: 0, capacity: groupForm.capacity,
-          status: 'Activo',
-          day_of_week: groupForm.day_of_week || null,
-          start_time: groupForm.start_time || null,
-          end_time: groupForm.end_time || null,
-          base_attendees_with_roles: roleDrivenAssignments.base_attendees_with_roles,
-        },
-      });
-      toast.success('Grupo creado');
-      resetForm();
-      fetchGroups();
-      fetchStrategy();
-    } catch (error: unknown) {
-      toast.error('Error al crear: ' + getErrorMessage(error, 'Intente de nuevo'));
-    } finally {
-      setGroupSaving(false);
-    }
-  }, [id, token, fetchGroups, fetchStrategy]);
-
-  const handleDeleteGroup = useCallback(async (groupId: string) => {
-    try {
-      await apiFetch(`/evangelism/grupos/${groupId}`, { method: 'DELETE', token, silent: true });
-      toast.success('Grupo eliminado');
-      fetchGroups();
-      fetchStrategy();
-    } catch {
-      toast.error('Error al eliminar');
-    }
-  }, [token, fetchGroups, fetchStrategy]);
-
-  return {
-    isGroupDrawerOpen, setIsGroupDrawerOpen,
-    groupSaving, setGroupSaving,
-    roleResults, setRoleResults,
-    roleLoading, setRoleLoading,
-    handleCreateGroup, handleDeleteGroup,
-  };
-}
-
 // ── Hook: Persona search (remoto con debounce + AbortController) ─────
 // Este hook ya existía inline en page.tsx pero duplicado para
 // addPersona y visitorSearch. Se unifica aquí.
@@ -399,78 +306,4 @@ export function useRemotePersonaSearch(token: string | null) {
   }, []);
 
   return { search, cancel };
-}
-
-// ── Hook: Attendance drawer ─────────────────────────────────────────
-
-export function useAttendanceDrawer(id: string, token: string | null, fetchSessions: () => void) {
-  const [attendanceSession, setAttendanceSession] = useState<SessionRow | null>(null);
-  const [attendancePersonas, setAttendancePersonas] = useState<AttendancePersona[]>([]);
-  const [attendanceSaving, setAttendanceSaving] = useState(false);
-  const [isAttendanceDrawerOpen, setIsAttendanceDrawerOpen] = useState(false);
-
-  const openAttendanceDrawer = useCallback(async (session: SessionRow) => {
-    if (session.estado_habilitacion !== 'HABILITADO') {
-      toast.error('Habilita la sesión antes de registrar asistencia');
-      return;
-    }
-    setAttendanceSession(session);
-    setIsAttendanceDrawerOpen(true);
-    try {
-      const house = await apiFetch<GroupDetailResponse>(`/evangelism/grupos/${session.grupo_id}`, { token, silent: true });
-      const existing = await apiFetch<SessionDetailResponse>(`/evangelism/sessions/${session.id}`, { token, silent: true }).catch(() => null);
-      const existingMap: Record<string, { status: string; notes: string }> = {};
-      if (existing?.attendance) {
-        for (const a of existing.attendance) {
-          existingMap[a.persona_id] = { status: a.status, notes: a.notes || '' };
-        }
-      }
-      const personaList = house?.base_attendees?.map((a) => ({
-        persona_id: a.persona_id,
-        name: a.name || a.persona?.nombre_completo || '',
-        role: a.role || 'persona',
-        role_label: a.role_label,
-        status: toAttendanceStatus(existingMap[a.persona_id]?.status),
-        notes: existingMap[a.persona_id]?.notes || '',
-      })) || [];
-      setAttendancePersonas(personaList);
-    } catch {
-      setAttendancePersonas([]);
-    }
-  }, [token]);
-
-  const handleSaveAttendance = useCallback(async () => {
-    if (!attendanceSession) return;
-    if (attendanceSession.estado_habilitacion !== 'HABILITADO') {
-      toast.error('Habilita la sesión antes de registrar asistencia');
-      return;
-    }
-    setAttendanceSaving(true);
-    try {
-      await apiFetch(`/evangelism/sessions/${attendanceSession.id}/attendance`, {
-        method: 'POST', token,
-        body: attendancePersonas.map(m => ({
-          session_id: attendanceSession.id,
-          persona_id: m.persona_id,
-          status: m.status,
-          notes: m.notes || null,
-        })),
-      });
-      toast.success('Asistencia registrada');
-      setIsAttendanceDrawerOpen(false);
-      fetchSessions();
-    } catch (error: unknown) {
-      toast.error('Error: ' + getErrorMessage(error, 'Intente de nuevo'));
-    } finally {
-      setAttendanceSaving(false);
-    }
-  }, [attendanceSession, attendancePersonas, token, fetchSessions]);
-
-  return {
-    attendanceSession, setAttendanceSession,
-    attendancePersonas, setAttendancePersonas,
-    attendanceSaving,
-    isAttendanceDrawerOpen, setIsAttendanceDrawerOpen,
-    openAttendanceDrawer, handleSaveAttendance,
-  };
 }

@@ -64,7 +64,7 @@ from backend.crud.crm_.groups import (
 
 # health.py imports from backend.api.crm._shared — not imported here
 # to avoid circular dependency. Access directly:
-#   from backend.crud.crm_.health import calculate_health_score
+#   from backend.crud.crm_.health import recalculate_and_persist_pastoral_health
 from backend.crud.crm_.milestones import (
     create_milestone,
     delete_milestone,

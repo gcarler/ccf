@@ -7,6 +7,7 @@ import { useRemotePersonaSearch } from '../useStrategyDetail';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import type { AttendancePersona, SearchablePersona } from '../strategyDetailShared';
+import { getErrorMessage } from '../../../utils';
 
 export type NewVisitorForm = {
   first_name: string;
@@ -25,9 +26,6 @@ const EMPTY_VISITOR_FORM: NewVisitorForm = {
   email: '',
   address: '',
 };
-
-const getErrorMessage = (error: unknown, fallback: string) =>
-  error instanceof Error && error.message ? error.message : fallback;
 
 interface AttendanceDrawerProps {
   isOpen: boolean;

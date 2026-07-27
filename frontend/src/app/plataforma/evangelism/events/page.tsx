@@ -29,6 +29,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import React,{ useEffect,useState } from 'react';
 import { toast } from 'sonner';
 import TextPromptDrawer from '@/components/ui/TextPromptDrawer';
+import { getErrorMessage, formatLocalDate } from '../utils';
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
  PERMANENT: 'Semanal',
@@ -51,16 +52,6 @@ const EVENT_TYPE_COLOR: Record<string, string> = {
 };
 
 const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-
-const formatLocalDate = (date: Date) => {
- const year = date.getFullYear();
- const month = String(date.getMonth() + 1).padStart(2, '0');
- const day = String(date.getDate()).padStart(2, '0');
- return `${year}-${month}-${day}`;
-};
-
-const getErrorMessage = (error: unknown, fallback: string) =>
- error instanceof Error && error.message ? error.message : fallback;
 
 const normalizeMinistryEvent = (raw: MinistryEvent): MinistryEvent => ({
  ...raw,
@@ -1093,19 +1084,21 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  >
  <form id="create-event-form" onSubmit={handleCreateEvent} className="space-y-3">
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre del Evento *</label>
- <input
- required
- value={newEvent.name}
- onChange={e => setNewEvent({ ...newEvent, name: e.target.value })}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
- placeholder="Ej: Servicio Dominical"
- />
+  <label htmlFor="event-name" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre del Evento *</label>
+  <input
+   id="event-name"
+   required
+   value={newEvent.name}
+   onChange={e => setNewEvent({ ...newEvent, name: e.target.value })}
+   className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
+   placeholder="Ej: Servicio Dominical"
+  />
  </div>
 
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tipo de Evento *</label>
- <select
+  <label htmlFor="event-type" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tipo de Evento *</label>
+  <select
+   id="event-type"
  required
  value={newEvent.event_type}
  onChange={e => setNewEvent({ ...newEvent, event_type: e.target.value })}
@@ -1123,9 +1116,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo Esperado</label>
- <select
- value={newEvent.target_audience}
+  <label htmlFor="event-audience" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo Esperado</label>
+  <select
+  id="event-audience"
+  value={newEvent.target_audience}
  onChange={e => setNewEvent({
  ...newEvent,
  target_audience: e.target.value,
@@ -1141,10 +1135,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  </select>
  </div>
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Roles esperados</label>
- <select
- multiple
- disabled={newEvent.target_audience !== 'ROLE'}
+  <label htmlFor="event-roles" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Roles esperados</label>
+  <select
+  multiple
+  disabled={newEvent.target_audience !== 'ROLE'}
  value={newEvent.target_role_ids}
  onChange={e => {
  const selectedValues = Array.from(e.target.selectedOptions).map((option) => option.value);
@@ -1223,13 +1217,14 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  {newEvent.target_audience === 'MANUAL' && (
  <div className="space-y-3">
  <div className="flex items-center justify-between gap-3">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Personas esperadas</label>
+  <label htmlFor="event-personas" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Personas esperadas</label>
  <span className="rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info">
  {newEvent.target_persona_ids.length} seleccionadas
  </span>
  </div>
- <input
- value={createManualSearch}
+  <input
+  id="event-personas"
+  value={createManualSearch}
  onChange={e => setCreateManualSearch(e.target.value)}
  placeholder="Buscar por nombre, correo o rol..."
  className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-primary"
@@ -1272,20 +1267,22 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  <div className="grid grid-cols-2 gap-4">
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Hora de Inicio *</label>
- <input
- type="time"
- required
+  <label htmlFor="event-start-time" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Hora de Inicio *</label>
+  <input
+   type="time"
+   required
+   id="event-start-time"
  value={newEvent.start_time}
  onChange={e => setNewEvent({ ...newEvent, start_time: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
  />
  </div>
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Hora de Finalización *</label>
- <input
- type="time"
- required
+  <label htmlFor="event-end-time" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Hora de Finalización *</label>
+  <input
+   type="time"
+   required
+   id="event-end-time"
  value={newEvent.end_time}
  onChange={e => setNewEvent({ ...newEvent, end_time: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
@@ -1295,9 +1292,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  {['PERMANENT', 'GROUPS', 'ONLINE'].includes(newEvent.event_type) && (
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día de la Semana</label>
- <select
- value={newEvent.day_of_week}
+  <label htmlFor="event-day-of-week" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día de la Semana</label>
+  <select
+  id="event-day-of-week"
+  value={newEvent.day_of_week}
  onChange={e => setNewEvent({ ...newEvent, day_of_week: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm "
  >
@@ -1308,9 +1306,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  {['ONCE', 'SPECIAL'].includes(newEvent.event_type) && (
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Fecha Exacta</label>
- <input
- type="date"
+  <label htmlFor="event-fixed-date" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Fecha Exacta</label>
+  <input
+   type="date"
+   id="event-fixed-date"
  value={newEvent.fixed_date}
  onChange={e => setNewEvent({ ...newEvent, fixed_date: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm "
@@ -1320,9 +1319,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  {['ANNUAL', 'MONTHLY'].includes(newEvent.event_type) && (
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día(s) del Mes / Año</label>
- <input
- value={newEvent.month_day}
+  <label htmlFor="event-month-day" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día(s) del Mes / Año</label>
+  <input
+  id="event-month-day"
+  value={newEvent.month_day}
  onChange={e => setNewEvent({ ...newEvent, month_day: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm "
  placeholder="Ej: 15 de cada mes, o 24 Dic"
@@ -1331,11 +1331,12 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  )}
 
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción</label>
- <textarea
- value={newEvent.description}
- onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
- rows={3}
+  <label htmlFor="event-description" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción</label>
+  <textarea
+  id="event-description"
+  value={newEvent.description}
+  onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
+  rows={3}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm resize-none"
  placeholder="Breve descripción del evento..."
  />
@@ -1596,12 +1597,13 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  {editingEvent && (
  <div className="space-y-3">
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre</label>
- <input type="text" value={editingEvent.name} onChange={e => setEditingEvent({...editingEvent, name: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
+ <label htmlFor="edit-event-name" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre</label>
+ <input id="edit-event-name" type="text" value={editingEvent.name} onChange={e => setEditingEvent({...editingEvent, name: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
  </div>
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estado</label>
+ <label htmlFor="edit-event-status" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estado</label>
  <select 
+ id="edit-event-status"
  value={editingEvent.status || 'SCHEDULED'} 
  onChange={e => setEditingEvent({...editingEvent, status: e.target.value})} 
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
@@ -1613,9 +1615,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  </div>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo Esperado</label>
- <select
- value={editingEvent.target_audience || 'ALL'}
+  <label htmlFor="edit-event-audience" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo Esperado</label>
+  <select
+  id="edit-event-audience"
+  value={editingEvent.target_audience || 'ALL'}
  onChange={e => setEditingEvent({
  ...editingEvent,
  target_audience: e.target.value as EventAudience,
@@ -1631,10 +1634,11 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  </select>
  </div>
  <div className="space-y-1.5">
- <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Roles esperados</label>
- <select
- multiple
- disabled={(editingEvent.target_audience || 'ALL') !== 'ROLE'}
+  <label htmlFor="edit-event-roles" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Roles esperados</label>
+  <select
+  id="edit-event-roles"
+  multiple
+  disabled={(editingEvent.target_audience || 'ALL') !== 'ROLE'}
  value={(editingEvent.target_role_ids || getTargetRoleIds(editingEvent)).map((value: string) => String(value))}
  onChange={e => {
  const selectedValues = Array.from(e.target.selectedOptions).map((option) => option.value);
