@@ -6,8 +6,9 @@ import pytest
 from sqlalchemy import update
 
 from backend import models
+from backend.core.cache import get_redis
 from backend.crud.crm_.health import (
-    _health_cache,
+    _cache_key,
     calculate_health_score,
     calculate_pastoral_health,
     calculate_pastoral_health_score,
@@ -18,7 +19,19 @@ from tests.conftest import seed_admin
 
 
 def _clear_health_cache():
-    _health_cache.clear()
+    redis = get_redis()
+    try:
+        if hasattr(redis, "scan_iter"):
+            for k in redis.scan_iter(match="health_cache:*"):
+                redis.delete(k)
+            return
+        # MemoryRedis fallback: limpiar claves con prefijo desde el store interno
+        store = getattr(redis, "_store", {})
+        for k in list(store.keys()):
+            if k.startswith("health_cache:"):
+                redis.delete(k)
+    except Exception as exc:  # pragma: no cover - safety net
+        raise RuntimeError(f"Failed to clear health cache: {exc}") from exc
 
 
 @pytest.fixture(autouse=True)
@@ -274,7 +287,8 @@ def test_recalculate_and_persist_direct_does_not_use_or_set_cache(db_session):
         assert status == "EN_RIESGO"
         assert mock_compute.call_count == 1
 
-    assert persona.id not in _health_cache
+    cached = get_redis().get(_cache_key(persona.id))
+    assert cached is None
 
 
 def test_update_pastoral_health_cache_hit_does_not_commit(db_session):

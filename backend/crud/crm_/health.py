@@ -2,8 +2,8 @@
 
 import contextlib
 import contextvars
+import json
 import logging
-import threading
 import time
 import warnings
 from datetime import date
@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session, object_session
 from sqlalchemy.orm.attributes import get_history
 
 from backend import models
+from backend.core.cache import get_redis
 from backend.crud.crm_.shared import persona_query, prepare_persona_for_output
 
 # Caché simple en memoria con TTL de 5 minutos para evitar recalcular el
@@ -21,9 +22,6 @@ from backend.crud.crm_.shared import persona_query, prepare_persona_for_output
 # mediante eventos SQLAlchemy cuando los datos subyacentes se confirman en la
 # base de datos.
 _HEALTH_CACHE_TTL_SECONDS = 300
-_MAX_HEALTH_CACHE_ENTRIES = 1000
-_health_cache: dict[UUID, tuple[float, int, str]] = {}
-_health_cache_lock = threading.Lock()
 
 # Bandera de contexto para evitar que los eventos de invalidación borren el
 # caché mientras el propio módulo de salud está escribiendo resultados.
@@ -48,40 +46,42 @@ def _suppress_health_invalidation():
         _health_update_ctx.reset(token)
 
 
+def _cache_key(persona_id: UUID) -> str:
+    return f"health_cache:{persona_id}"
+
+
 def _get_cached_health(persona_id: UUID) -> tuple[int, str] | None:
     """Devuelve (score, status) si existe una entrada válida en caché."""
-    with _health_cache_lock:
-        entry = _health_cache.get(persona_id)
-        if entry is None:
-            return None
-        expires_at, score, status = entry
-        if time.time() < expires_at:
-            return score, status
-        del _health_cache[persona_id]
-        return None
+    try:
+        redis = get_redis()
+        val = redis.get(_cache_key(persona_id))
+        if val:
+            data = json.loads(val)
+            return int(data["score"]), data["status"]
+    except Exception as exc:
+        logger.warning("Error reading health cache from Redis", extra={"error": str(exc)})
+    return None
 
 
 def _set_cached_health(persona_id: UUID, score: int, status: str) -> None:
-    """Guarda (score, status) en caché bajo lock con límite FIFO."""
-    with _health_cache_lock:
-        if len(_health_cache) >= _MAX_HEALTH_CACHE_ENTRIES:
-            try:
-                _health_cache.pop(next(iter(_health_cache)))
-            except StopIteration:
-                pass
-        _health_cache[persona_id] = (
-            time.time() + _HEALTH_CACHE_TTL_SECONDS,
-            score,
-            status,
-        )
+    """Guarda (score, status) en caché con TTL."""
+    try:
+        redis = get_redis()
+        data = json.dumps({"score": score, "status": status})
+        redis.setex(_cache_key(persona_id), _HEALTH_CACHE_TTL_SECONDS, data)
+    except Exception as exc:
+        logger.warning("Error setting health cache in Redis", extra={"error": str(exc)})
 
 
 def _invalidate_health_cache(persona_id: UUID | None) -> None:
     """Invalida la entrada de caché para ``persona_id``."""
     if persona_id is None:
         return
-    with _health_cache_lock:
-        _health_cache.pop(persona_id, None)
+    try:
+        redis = get_redis()
+        redis.delete(_cache_key(persona_id))
+    except Exception as exc:
+        logger.warning("Error invalidating health cache in Redis", extra={"error": str(exc)})
 
 
 def _load_persona_for_health(db: Session, persona_id: UUID):
