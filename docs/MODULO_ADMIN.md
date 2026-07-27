@@ -353,19 +353,8 @@ Elimina una regla (soft delete: `deleted_at`).
 
 ### Roles Modulares Granulares
 
-#### `GET /api/admin/auth-role-definitions`
-Lista todas las definiciones de roles (`RolPlataforma`).
-
-#### `POST /api/admin/auth-role-definitions`
-Crea un nuevo rol.
-
-**Body:** `{ "nombre": "string", "permisos": {} }`
-
-#### `PATCH /api/admin/auth-role-definitions/{role_id}`
-Actualiza permisos o nombre de un rol.
-
-#### `DELETE /api/admin/auth-role-definitions/{role_id}`
-Elimina un rol (solo si no está asignado). Retorna 409 si tiene usuarios.
+> ⚠️ **Consolidado:** Los endpoints `/auth-role-definitions` fueron unificados en `/roles`.
+> Ver sección **Roles de Plataforma** más arriba para el API canónico.
 
 #### `GET /api/admin/user-module-roles`
 Lista asignaciones de roles modulares.
