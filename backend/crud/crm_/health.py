@@ -2,6 +2,7 @@
 
 import contextlib
 import contextvars
+import logging
 import threading
 import time
 import warnings
@@ -33,6 +34,8 @@ _health_update_ctx: contextvars.ContextVar[bool] = contextvars.ContextVar(
 # Guarda para evitar registrar los listeners más de una vez si el módulo se
 # importa múltiples veces (por ejemplo, recargas en desarrollo o tests).
 _LISTENERS_REGISTERED = False
+
+logger = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
@@ -298,6 +301,15 @@ def _persist_pastoral_health(
     ``SpiritualMilestone`` cuando el status cambia.
     """
     if previous_status is not None and previous_status != status:
+        logger.info(
+            "Health status transitioned",
+            extra={
+                "persona_id": str(persona_id),
+                "previous_status": previous_status,
+                "new_status": status,
+                "score": score,
+            },
+        )
         milestone = models.SpiritualMilestone(
             persona_id=persona_id,
             type=f"Health Status Change to {status}",
@@ -333,8 +345,20 @@ def recalculate_and_persist_pastoral_health(db: Session, persona_id: UUID) -> tu
             raise ValueError(f"Persona with ID {persona_id} not found")
 
         previous_status = getattr(persona, "health_status", None)
+        start_time = time.perf_counter()
         score, status, update_baptized = _compute_pastoral_health_score(db, persona)
         _persist_pastoral_health(db, persona_id, score, status, previous_status, update_baptized)
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        logger.info(
+            "Pastoral health recalculated",
+            extra={
+                "persona_id": str(persona_id),
+                "previous_status": previous_status,
+                "score": score,
+                "status": status,
+                "latency_ms": round(latency_ms, 2),
+            },
+        )
     return score, status
 
 
@@ -367,13 +391,23 @@ def update_pastoral_health(db: Session, persona_id: UUID) -> models.Persona | No
     with _suppress_health_invalidation():
         cached = _get_cached_health(persona_id)
         if cached is None:
+            logger.debug(
+                "Health cache miss",
+                extra={"persona_id": str(persona_id), "cache_status": "miss"},
+            )
             score, status = recalculate_and_persist_pastoral_health(db, persona_id)
             db.commit()
             _set_cached_health(persona_id, score, status)
         else:
-            # En cache hit no se hace commit; esto evita persistir cambios
-            # no relacionados que el caller pueda tener pendientes en la sesión.
-            pass
+            logger.debug(
+                "Health cache hit",
+                extra={
+                    "persona_id": str(persona_id),
+                    "cache_status": "hit",
+                    "cached_score": cached[0],
+                    "cached_status": cached[1],
+                },
+            )
 
     persona = persona_query(db).filter(models.Persona.id == persona_id).first()
     if persona:
