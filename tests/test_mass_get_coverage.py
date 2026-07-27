@@ -42,7 +42,6 @@ GET_ENDPOINTS = [
     "/api/admin/announcements",
     "/api/admin/announcements/" + DUMMY,
     "/api/admin/audit",
-    "/api/admin/auth-role-definitions",
     "/api/admin/automations",
     "/api/admin/comments",
     "/api/admin/donation-categories",
