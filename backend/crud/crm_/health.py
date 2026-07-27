@@ -8,7 +8,7 @@ import warnings
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import event, update
+from sqlalchemy import case, event, func, or_, update
 from sqlalchemy.orm import Session, object_session
 from sqlalchemy.orm.attributes import get_history
 
@@ -97,53 +97,87 @@ def _compute_pastoral_health_score(
     is_baptized = bool(getattr(persona, "is_baptized", False))
     persona_id = persona.id
 
-    # 1. Attendance score
-    opp_asistencias = (
-        db.query(models.Asistencia)
-        .filter(models.Asistencia.persona_id == persona_id, models.Asistencia.deleted_at.is_(None))
-        .all()
+    # 1. Attendance score (aggregate in DB to avoid N+1 / memory bloat)
+    attended_asistencias_count, opp_asistencias_count = (
+        db.query(
+            func.coalesce(
+                func.sum(
+                    case(
+                        (func.lower(func.trim(models.Asistencia.estado)).in_(
+                            {"asistio", "presente", "present", "primera_vez", "first_time"}
+                        ), 1),
+                        else_=0,
+                    )
+                ),
+                0,
+            ),
+            func.count(models.Asistencia.id),
+        )
+        .filter(
+            models.Asistencia.persona_id == persona_id,
+            models.Asistencia.deleted_at.is_(None),
+        )
+        .first()
     )
-    opp_asistencias_count = len(opp_asistencias)
-    attended_asistencias_count = sum(
-        1
-        for a in opp_asistencias
-        if a.estado and a.estado.strip().lower() in {"asistio", "presente", "present", "primera_vez", "first_time"}
-    )
+    attended_asistencias_count = int(attended_asistencias_count)
+    opp_asistencias_count = int(opp_asistencias_count)
 
-    event_attendances = (
-        db.query(models.EventAttendance)
+    attended_events_count, opp_events_count = (
+        db.query(
+            func.coalesce(func.sum(case((models.EventAttendance.attended.is_(True), 1), else_=0)), 0),
+            func.count(models.EventAttendance.id),
+        )
         .filter(
             models.EventAttendance.persona_id == persona_id,
             models.EventAttendance.deleted_at.is_(None),
         )
-        .all()
+        .first()
     )
-    opp_events_count = len(event_attendances)
-    attended_events_count = sum(1 for e in event_attendances if e.attended is True)
+    attended_events_count = int(attended_events_count)
+    opp_events_count = int(opp_events_count)
 
-    course_attendances = (
-        db.query(models.CourseAttendance)
+    attended_courses_count, opp_courses_count = (
+        db.query(
+            func.coalesce(
+                func.sum(
+                    case(
+                        (func.lower(func.trim(models.CourseAttendance.status)) == "present", 1),
+                        else_=0,
+                    )
+                ),
+                0,
+            ),
+            func.count(models.CourseAttendance.id),
+        )
         .join(models.Enrollment, models.CourseAttendance.enrollment_id == models.Enrollment.id)
-        .filter(models.Enrollment.persona_id == persona_id, models.Enrollment.deleted_at.is_(None))
-        .all()
+        .filter(
+            models.Enrollment.persona_id == persona_id,
+            models.Enrollment.deleted_at.is_(None),
+        )
+        .first()
     )
-    opp_courses_count = len(course_attendances)
-    attended_courses_count = sum(1 for c in course_attendances if c.status and c.status.strip().lower() == "present")
+    attended_courses_count = int(attended_courses_count)
+    opp_courses_count = int(opp_courses_count)
 
-    comm_logs = (
-        db.query(models.CommunicationLog)
+    # Communication logs: aggregate count and keyword-matched count in DB.
+    comm_log_keywords = ["attend", "asist", "session", "class", "culto", "grupo"]
+    keyword_filters = [
+        models.CommunicationLog.content.ilike(f"%{keyword}%")
+        for keyword in comm_log_keywords
+    ]
+    comm_log_attend_count, comm_logs_count = (
+        db.query(
+            func.coalesce(func.sum(case((or_(*keyword_filters), 1), else_=0)), 0),
+            func.count(models.CommunicationLog.id),
+        )
         .filter(
             models.CommunicationLog.persona_id == persona_id,
             models.CommunicationLog.deleted_at.is_(None),
         )
-        .all()
+        .first()
     )
-    comm_log_attend_count = 0
-    for log in comm_logs:
-        if log.content:
-            content_lower = log.content.lower()
-            if any(keyword in content_lower for keyword in ["attend", "asist", "session", "class", "culto", "grupo"]):
-                comm_log_attend_count += 1
+    comm_log_attend_count = int(comm_log_attend_count)
+    comm_logs_count = int(comm_logs_count)
 
     opportunities = opp_asistencias_count + opp_events_count + opp_courses_count + comm_log_attend_count
     attended = attended_asistencias_count + attended_events_count + attended_courses_count + comm_log_attend_count
@@ -170,18 +204,38 @@ def _compute_pastoral_health_score(
 
     attendance_score = max(attendance_score, recent_score)
 
-    # 2. Milestone score
-    all_milestones = (
-        db.query(models.SpiritualMilestone)
-        .filter(models.SpiritualMilestone.persona_id == persona_id, models.SpiritualMilestone.deleted_at.is_(None))
-        .all()
+    # 2. Milestone score (aggregated in DB)
+    milestones_count, has_bapt_milestone = (
+        db.query(
+            func.count(models.SpiritualMilestone.id),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            or_(
+                                models.SpiritualMilestone.type.ilike("%bapt%"),
+                                models.SpiritualMilestone.type.ilike("%baut%"),
+                            ),
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ),
+        )
+        .filter(
+            models.SpiritualMilestone.persona_id == persona_id,
+            models.SpiritualMilestone.deleted_at.is_(None),
+            or_(
+                models.SpiritualMilestone.type.is_(None),
+                ~models.SpiritualMilestone.type.like("Health Status Change to%"),
+            ),
+        )
+        .first()
     )
-    active_milestones = [m for m in all_milestones if not (m.type and m.type.startswith("Health Status Change to"))]
-    milestones_count = len(active_milestones)
-
-    has_bapt_milestone = bool(
-        any(m.type and any(kw in m.type.lower() for kw in ["bapt", "baut"]) for m in active_milestones)
-    )
+    milestones_count = int(milestones_count)
+    has_bapt_milestone = (has_bapt_milestone or 0) > 0
     update_baptized = has_bapt_milestone and not is_baptized and hasattr(models.Persona, "is_baptized")
 
     milestone_points = milestones_count
@@ -191,7 +245,7 @@ def _compute_pastoral_health_score(
     milestone_score = min(milestone_points * 10, 30)
 
     # 3. Communication score
-    comm_logs_count = len(comm_logs)
+    # comm_logs_count was already computed via the aggregate query above
 
     interactions_count = (
         db.query(models.InteraccionCRM)
