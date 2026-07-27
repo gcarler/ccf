@@ -151,7 +151,9 @@ def test_reorder_missing_etapa(client, db_session):
 
 
 # 5. Test flow validator with a massive graph
-def test_validate_extreme_nodes_edges(client):
+def test_validate_extreme_nodes_edges(client, db_session):
+    admin, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
     nodes = []
     edges = []
     # Create a complex graph of 100 nodes and 100 edges
@@ -161,13 +163,15 @@ def test_validate_extreme_nodes_edges(client):
         edges.append({"id": f"edge_{i}", "source": f"node_{i}", "target": f"node_{i+1}"})
         
     payload = {"flow_data": {"nodes": nodes, "edges": edges}}
-    response = client.post("/api/crm/automations/flows/validate", json=payload)
+    response = client.post("/api/crm/automations/flows/validate", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is True
 
 
 # 6. Test flow validator with highly cyclic graph
-def test_validate_highly_cyclic_graph(client):
+def test_validate_highly_cyclic_graph(client, db_session):
+    admin, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
     nodes = [{"id": "n1", "name": "N1"}, {"id": "n2", "name": "N2"}, {"id": "n3", "name": "N3"}]
     # n1 -> n2 -> n3 -> n1
     edges = [
@@ -176,19 +180,21 @@ def test_validate_highly_cyclic_graph(client):
         {"id": "e3", "source": "n3", "target": "n1"}
     ]
     payload = {"flow_data": {"nodes": nodes, "edges": edges}}
-    response = client.post("/api/crm/automations/flows/validate", json=payload)
+    response = client.post("/api/crm/automations/flows/validate", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is False
     assert "cycl" in response.json()["error"].lower() or "loop" in response.json()["error"].lower()
 
 
 # 7. Test infinite nesting stack overflow on extreme depth
-def test_infinite_nesting_massive_depth(client):
+def test_infinite_nesting_massive_depth(client, db_session):
+    admin, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
     # depth of 2500
     nodes = [f"n{i}" for i in range(2500)]
     edges = [{"source": f"n{i}", "target": f"n{i+1}"} for i in range(2499)]
     payload = {"nodes": nodes, "edges": edges}
-    response = client.post("/api/crm/automations/branching/infinite-nesting", json=payload)
+    response = client.post("/api/crm/automations/branching/infinite-nesting", json=payload, headers=headers)
     assert response.status_code == 400
     assert "depth" in response.json()["detail"].lower()
 
@@ -219,5 +225,5 @@ def test_cross_sede_template_deletion(client, db_session):
     
     headers_b = auth_headers(client, email=user_b.email)
     response = client.delete(f"/api/crm/resources/plantillas/{plantilla.id}", headers=headers_b)
-    # Should reject with 403 Forbidden
-    assert response.status_code == 403
+    # Should reject with 404 for cross-sede access (existence leak protection)
+    assert response.status_code == 404

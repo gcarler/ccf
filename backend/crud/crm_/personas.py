@@ -3,7 +3,7 @@ import datetime as dt
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import func, inspect, or_
+from sqlalchemy import func, inspect, or_, true
 from sqlalchemy.orm import Session, load_only, selectinload
 
 from backend import models, schemas
@@ -113,7 +113,7 @@ def _find_existing_persona(
     sede_filter = (
         models.Persona.sede_id == sede_id
         if sede_id is not None
-        else models.Persona.sede_id.is_(None)
+        else true()
     )
     phones = [p for p in (payload.phone, payload.mobile_phone) if p]
     if phones:

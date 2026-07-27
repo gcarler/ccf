@@ -1886,10 +1886,8 @@ def get_crm_analytics_summary(
         groups_q = groups_q.filter(models.GrupoEvangelismo.sede_id == user_sede)
     total_groups = groups_q.count()
 
-    total_families = (
-        db.query(models.Family)
-        .join(models.persona_familias, models.Family.id == models.persona_familias.c.family_id)
-        .join(models.Persona, models.persona_familias.c.persona_id == models.Persona.id)
+    total_families = db.query(models.Family).join(
+        models.Persona, models.Persona.family_id == models.Family.id
     )
     if user_sede:
         total_families = total_families.filter(models.Persona.sede_id == user_sede)
