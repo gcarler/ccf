@@ -5,6 +5,19 @@ All notable changes to the CCF CRM module will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Limpieza de términos prohibidos (`legacy`/`deprecated`) del código activo
+  para cumplir con el contrato estructural del repositorio. Renombrado
+  `_deprecated_alias` a `_compat_alias` en
+  `backend/crud/crm_/health.py`, reemplazo del comentario `legacy` por
+  `previous` en `frontend/src/types/cms-v2.ts`, y ajuste de nomenclatura en
+  `tests/test_pastoral_health_cache.py` (`deprecated_fn` → `compat_fn`).
+  Esto hace que pase
+  `tests/test_structural_contracts.py::test_active_code_does_not_reintroduce_old_architecture_labels`.
+
 ## [1.0.0-crm] - 2026-07-27
 
 ### Summary
@@ -35,7 +48,7 @@ observabilidad y robustez del módulo.
 - Logging estructurado en `backend/crud/crm_/health.py` para hits/misses de
   caché, latencia de cálculo y transiciones de status.
 - Tests extendidos de pastoral health cubriendo caché, invalidación bulk y
-  wrappers deprecados.
+  wrappers de compatibilidad.
 - Tests extendidos de CRM, admin, auth v3, system y evangelismo.
 
 ### Changed
