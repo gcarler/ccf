@@ -146,6 +146,7 @@ def test_reorder_cross_pipeline_leak_within_same_sede(client, db_session):
 
 # Adversarial Test 2: Validate Empty Graph Fallback to DB Cycles
 def test_validate_empty_graph_fallback_to_db_cycles(client, db_session):
+    admin, persona, sede = seed_admin(db_session)
     # Seed a cyclic automation in the database
     auto1 = CrmAutomation(
         id=uuid.uuid4(), name="Auto 1", trigger_event="birthday", action_type="send_email", is_active=True
@@ -161,8 +162,9 @@ def test_validate_empty_graph_fallback_to_db_cycles(client, db_session):
     db_session.add_all([edge1, edge2])
     db_session.commit()
 
+    headers = auth_headers(client, email=admin.email)
     payload = {"flow_data": {"nodes": [], "edges": []}}
-    response = client.post("/api/crm/automations/flows/validate", json=payload)
+    response = client.post("/api/crm/automations/flows/validate", json=payload, headers=headers)
     assert response.status_code == 200
     data = response.json()
     # Should be valid and not fall back to database
@@ -171,12 +173,14 @@ def test_validate_empty_graph_fallback_to_db_cycles(client, db_session):
 
 
 # Adversarial Test 3: Empty string cycle on malformed node IDs
-def test_malformed_node_ids_empty_string_cycle(client):
+def test_malformed_node_ids_empty_string_cycle(client, db_session):
+    admin, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
     payload = {
         "nodes": [{"name": "Missing ID Node 1"}, {"name": "Missing ID Node 2"}],
         "edges": [{"source": "", "target": ""}],
     }
-    response = client.post("/api/crm/automations/flows/validate", json=payload)
+    response = client.post("/api/crm/automations/flows/validate", json=payload, headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert data["valid"] is False
@@ -228,13 +232,15 @@ def test_long_path_false_cycle_detection(db_session):
 
 
 # Adversarial Test 5: Infinite nesting stack overflow on long acyclic paths
-def test_infinite_nesting_stack_overflow(client):
+def test_infinite_nesting_stack_overflow(client, db_session):
+    admin, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
     nodes = [f"n{i}" for i in range(1500)]
     edges = [{"source": f"n{i}", "target": f"n{i + 1}"} for i in range(1499)]
 
     payload = {"nodes": nodes, "edges": edges}
 
-    response = client.post("/api/crm/automations/branching/infinite-nesting", json=payload)
+    response = client.post("/api/crm/automations/branching/infinite-nesting", json=payload, headers=headers)
     assert response.status_code == 400
     assert "depth" in response.json()["detail"].lower()
 
@@ -481,9 +487,11 @@ def test_background_engine_simulated_actions(db_session):
 
 
 # Adversarial Test 11: KeyError in branching infinite-nesting due to missing source node in nodes list
-def test_infinite_nesting_missing_source_keyerror(client):
+def test_infinite_nesting_missing_source_keyerror(client, db_session):
+    admin, persona, sede = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
     payload = {"nodes": ["n1"], "edges": [{"source": "n2", "target": "n1"}]}
-    response = client.post("/api/crm/automations/branching/infinite-nesting", json=payload)
+    response = client.post("/api/crm/automations/branching/infinite-nesting", json=payload, headers=headers)
     assert response.status_code == 400
     assert "not found" in response.json()["detail"].lower()
 
@@ -520,6 +528,6 @@ def test_cross_sede_template_access_isolation_breach(client, db_session):
     # Authenticate as User B (Sede B)
     headers_b = auth_headers(client, email=user_b.email)
 
-    # User B should receive 403 Forbidden when trying to access Sede A's template
+    # User B should receive 404 for cross-sede access (existence leak protection)
     response = client.get(f"/api/crm/resources/plantillas/{plantilla.id}", headers=headers_b)
-    assert response.status_code == 403
+    assert response.status_code == 404

@@ -1,6 +1,8 @@
 import pytest
 from backend.api.crm.pipelines import check_for_cycles_dfs
 from backend.models_crm import validate_three_node_path
+from tests.conftest import auth_headers, seed_admin
+
 
 def test_check_for_cycles_dfs_direct():
     # 1. Empty graph
@@ -103,13 +105,22 @@ def test_validate_three_node_path_direct():
     assert validate_three_node_path(["n1", "n2", "n3", "n4"]) is True
 
 
-def test_validate_path_api_scenarios(client):
+@pytest.fixture
+def client_auth_for_automations(client, db_session):
+    """Authenticated client with admin headers for automation tests."""
+    seed_admin(db_session)
+    headers = auth_headers(client)
+    return client, headers
+
+
+def test_validate_path_api_scenarios(client_auth_for_automations):
+    client, headers = client_auth_for_automations
     # Less than 3 nodes
     payload = {
         "nodes": ["n1", "n2"],
         "edges": [{"source": "n1", "target": "n2"}]
     }
-    response = client.post("/api/crm/automations/flows/validate-path", json=payload)
+    response = client.post("/api/crm/automations/flows/validate-path", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is False
 
@@ -121,7 +132,7 @@ def test_validate_path_api_scenarios(client):
             {"source": "n2", "target": "n3"}
         ]
     }
-    response = client.post("/api/crm/automations/flows/validate-path", json=payload)
+    response = client.post("/api/crm/automations/flows/validate-path", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is True
     assert response.json()["max_path_length"] == 3
@@ -140,20 +151,21 @@ def test_validate_path_api_scenarios(client):
             {"source": "n3", "target": "n5"}
         ]
     }
-    response = client.post("/api/crm/automations/flows/validate-path", json=payload)
+    response = client.post("/api/crm/automations/flows/validate-path", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is True
     assert response.json()["max_path_length"] == 4
 
 
-def test_validate_node_api_scenarios(client):
+def test_validate_node_api_scenarios(client_auth_for_automations):
+    client, headers = client_auth_for_automations
     # Normal node without self-reference
     payload = {
         "nodes": ["n1", "n2"],
         "node_id": "n1",
         "edges": [{"source": "n1", "target": "n2"}]
     }
-    response = client.post("/api/crm/automations/flows/validate-node", json=payload)
+    response = client.post("/api/crm/automations/flows/validate-node", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is True
 
@@ -163,6 +175,6 @@ def test_validate_node_api_scenarios(client):
         "node_id": "n1",
         "edges": [{"source": "n1", "target": "n1"}]
     }
-    response = client.post("/api/crm/automations/flows/validate-node", json=payload)
+    response = client.post("/api/crm/automations/flows/validate-node", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is False

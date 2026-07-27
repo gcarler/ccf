@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import (
+    _case_created_column,
     _case_stage,
     _case_status,
     _enum_value,
@@ -26,13 +27,10 @@ from backend.api.crm._shared import (
     _serialize_case,
     _serialize_message_group,
     _serialize_task,
-    utc_now,
-)
-from backend.crud.crm_.shared import (
-    _case_created_column,
     case_query,
     persona_query,
     prepare_case_for_output,
+    utc_now,
 )
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
@@ -1888,9 +1886,8 @@ def get_crm_analytics_summary(
         groups_q = groups_q.filter(models.GrupoEvangelismo.sede_id == user_sede)
     total_groups = groups_q.count()
 
-    total_families = (
-        db.query(models.Family)
-        .join(models.Persona, models.Persona.family_id == models.Family.id)
+    total_families = db.query(models.Family).join(
+        models.Persona, models.Persona.family_id == models.Family.id
     )
     if user_sede:
         total_families = total_families.filter(models.Persona.sede_id == user_sede)
