@@ -176,6 +176,11 @@ class TestAdminFixed:
         resp = client.get("/api/admin/provision-accounts", headers=headers)
         assert resp.status_code in (200, 405)
 
+    def test_list_auth_role_definitions(self, client_auth):
+        client, headers, _ = client_auth
+        resp = client.get("/api/admin/roles", headers=headers)
+        assert resp.status_code == 200
+
     def test_list_user_module_roles(self, client_auth):
         client, headers, _ = client_auth
         resp = client.get("/api/admin/user-module-roles", headers=headers)

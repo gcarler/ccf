@@ -144,6 +144,11 @@ class TestAdminOther:
         resp = client.get("/api/admin/comments", headers=headers)
         assert resp.status_code < 500 or resp.status_code in (200, 201, 204, 422, 405, 404, 403, 401)
 
+    def test_list_auth_role_definitions(self, client_auth):
+        client, headers, _ = client_auth
+        resp = client.get("/api/admin/roles", headers=headers)
+        assert resp.status_code < 500 or resp.status_code in (200, 201, 204, 422, 405, 404, 403, 401)
+
     def test_list_user_module_roles(self, client_auth):
         client, headers, _ = client_auth
         resp = client.get("/api/admin/user-module-roles", headers=headers)
