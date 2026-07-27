@@ -105,8 +105,8 @@ def test_crm_automation_graph_migration_logic_sqlite(tmp_path):
         conn.execute(text("INSERT INTO crm_automations (id, name, trigger_event, action_type, is_active, next_automation_id) VALUES ('A', 'Auto A', 'event', 'action', 1, 'B')"))
         conn.commit()
 
-    # 2. Upgrade to head (runs 20260710_0002)
-    res = _run_alembic("upgrade", "head", database_url=db_url)
+    # 2. Upgrade to 20260710_0002 (the migration under test)
+    res = _run_alembic("upgrade", "20260710_0002", database_url=db_url)
     assert res.returncode == 0, res.stderr
 
     # 3. Verify upgraded structure and data migration
@@ -180,8 +180,8 @@ def test_crm_automation_graph_migration_logic_postgresql():
         )
         conn.commit()
 
-    # Upgrade to head
-    res = _run_alembic("upgrade", "head", database_url=pg_url)
+    # Upgrade to 20260710_0002 (the migration under test)
+    res = _run_alembic("upgrade", "20260710_0002", database_url=pg_url)
     assert res.returncode == 0, res.stderr
 
     # Verify upgrade

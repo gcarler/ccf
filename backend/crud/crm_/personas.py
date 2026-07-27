@@ -3,17 +3,49 @@ import datetime as dt
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import func, inspect, or_, true
+from sqlalchemy.orm import Session, load_only, selectinload
 
 from backend import models, schemas
 from backend.crud._utils import _to_uuid, _utcnow
-from backend.crud.crm_.shared import (
-    _audit_log,
-    _persona_live_column_names,
-    persona_query,
-    prepare_persona_for_output,
-)
+from backend.crud.crm_.shared import _audit_log
+
+
+def _persona_live_column_names(db: Session) -> set[str]:
+    bind = db.get_bind()
+    if bind is None:
+        return set()
+    try:
+        columns = inspect(bind).get_columns("personas")
+    except Exception:
+        return set()
+    return {str(column.get("name")) for column in columns if column.get("name")}
+
+
+def persona_query(db: Session):
+    live_cols = _persona_live_column_names(db)
+    live_attrs = [
+        getattr(models.Persona, name)
+        for name in live_cols
+        if hasattr(models.Persona, name)
+    ]
+    query = db.query(models.Persona)
+    if live_attrs:
+        query = query.options(load_only(*live_attrs))
+    return query
+
+
+def prepare_persona_for_output(db: Session, persona: models.Persona):
+    live_cols = _persona_live_column_names(db)
+    for field_name in schemas.PersonaResponse.model_fields:
+        if field_name == "nombre_completo" or field_name in live_cols:
+            continue
+        if hasattr(models.Persona, field_name):
+            try:
+                setattr(persona, field_name, None)
+            except Exception:
+                persona.__dict__[field_name] = None
+    return persona
 
 
 def create_persona(db: Session, payload: schemas.PersonaCreate, *, sede_id: UUID | None = None) -> models.Persona:
@@ -81,7 +113,7 @@ def _find_existing_persona(
     sede_filter = (
         models.Persona.sede_id == sede_id
         if sede_id is not None
-        else models.Persona.sede_id.is_(None)
+        else true()
     )
     phones = [p for p in (payload.phone, payload.mobile_phone) if p]
     if phones:
@@ -187,7 +219,7 @@ def search_personas(
     family_id: UUID | None = None,
     sede_id: UUID | None = None,
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 1000,
     sort_by: str | None = None,
     sort_dir: str = "asc",
 ):
@@ -613,9 +645,6 @@ def _volunteer_commitment_map(db: Session, persona_ids: List[UUID]) -> dict[UUID
         .filter(
             models.VolunteerShift.persona_id.in_(persona_ids),
             models.VolunteerShift.deleted_at.is_(None),
-            # Filtrar fechas en SQL, no en Python (P-05)
-            (models.VolunteerShift.shift_end >= cutoff)
-            | (models.VolunteerShift.shift_start >= cutoff),
         )
         .all()
     )

@@ -138,6 +138,11 @@ class TestAdminRolesFull:
         resp = client.post("/api/admin/roles", json={"name": f"role_{uuid.uuid4().hex[:6]}"}, headers=headers)
         assert resp.status_code in (200, 201)
 
+    def test_list_auth_role_definitions(self, client_auth):
+        client, headers, _ = client_auth
+        resp = client.get("/api/admin/roles", headers=headers)
+        assert resp.status_code == 200
+
     def test_list_user_module_roles(self, client_auth):
         client, headers, _ = client_auth
         resp = client.get("/api/admin/user-module-roles", headers=headers)
