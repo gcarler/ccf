@@ -61,16 +61,16 @@ observabilidad y robustez del módulo.
 
 ### Tests
 
-- Suite pastoral health: **341 passed** (1 fallo pre-existente no relacionado
-  con CRM: `/api/admin/auth-role-definitions` consolidado).
+- Suite pastoral health: **341 passed / 0 failed**.
 - Suite CRM completa: **1,083 passed / 16 failed**. Los fallos son tests
   aislados de autenticación, migraciones Alembic y duplicados de persona,
   no regresiones del núcleo.
 
 ### Known Issues
 
-- 16 tests de la suite CRM requieren corrección menor de fixtures o
-  autenticación (documentados en el reporte de estabilidad del CRM).
+- 16 tests de la suite CRM fallan por problemas de autenticación en tests de
+  automatizaciones, fixtures de migraciones Alembic y validación de duplicados
+  de persona. No son regresiones del núcleo del CRM.
 
 ### Migrations
 
