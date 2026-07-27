@@ -26,12 +26,14 @@ def _call_scoring_engine(db_session: Session, persona_id: uuid.UUID):
     """Locate and call the pastoral health scoring engine by its canonical name."""
     try:
         from backend.services import pastoral_health
+
         return pastoral_health.recalculate_and_persist_pastoral_health(db_session, persona_id)
     except (ImportError, AttributeError):
         pass
 
     try:
         import backend.crud.crm_.health as _crm_health
+
         return _crm_health.recalculate_and_persist_pastoral_health(db_session, persona_id)
     except (ImportError, AttributeError):
         pass
@@ -60,6 +62,7 @@ def scoring_engine_patches(monkeypatch):
     test, avoiding the state leaks observed with ``unittest.mock.patch`` + context
     managers across the re-exported pastoral health module.
     """
+
     def _patched(*, canonical_available: bool = True):
         mock_canonical = MagicMock()
         mock_fallback = MagicMock()
@@ -69,12 +72,8 @@ def scoring_engine_patches(monkeypatch):
             "calculate_health_score": MagicMock(),
         }
 
-        monkeypatch.setattr(
-            pastoral_health, "recalculate_and_persist_pastoral_health", mock_canonical
-        )
-        monkeypatch.setattr(
-            health_module, "recalculate_and_persist_pastoral_health", mock_fallback
-        )
+        monkeypatch.setattr(pastoral_health, "recalculate_and_persist_pastoral_health", mock_canonical)
+        monkeypatch.setattr(health_module, "recalculate_and_persist_pastoral_health", mock_fallback)
         for name, mock_obj in deprecated_mocks.items():
             monkeypatch.setattr(health_module, name, mock_obj)
 
@@ -165,6 +164,7 @@ def mock_openai_client(monkeypatch):
 
 # --- Feature A: Pastoral Health Score ---
 
+
 def test_health_score_initial_defaults(db_session: Session):
     """
     1. Verifies that the new columns 'health_score' and 'health_status' exist on the
@@ -173,11 +173,7 @@ def test_health_score_initial_defaults(db_session: Session):
     assert hasattr(models.Persona, "health_score"), "Persona model missing health_score column"
     assert hasattr(models.Persona, "health_status"), "Persona model missing health_status column"
 
-    persona = models.Persona(
-        first_name="John",
-        last_name="Doe",
-        email="john.doe.defaults@example.com"
-    )
+    persona = models.Persona(first_name="John", last_name="Doe", email="john.doe.defaults@example.com")
     db_session.add(persona)
     db_session.commit()
     db_session.refresh(persona)
@@ -193,12 +189,8 @@ def test_health_score_calc_no_activity(db_session: Session):
     """
     # Verify columns exist first
     assert hasattr(models.Persona, "health_score")
-    
-    persona = models.Persona(
-        first_name="Inactive",
-        last_name="Member",
-        email="inactive.member@example.com"
-    )
+
+    persona = models.Persona(first_name="Inactive", last_name="Member", email="inactive.member@example.com")
     db_session.add(persona)
     db_session.commit()
     db_session.refresh(persona)
@@ -217,7 +209,7 @@ def test_health_score_calc_high_activity(db_session: Session):
     is scored highly (71-100) with status COMPROMETIDO.
     """
     assert hasattr(models.Persona, "health_score")
-    
+
     # 1. Create Sede
     sede = models.Sede(nombre="High Sede", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
@@ -228,7 +220,7 @@ def test_health_score_calc_high_activity(db_session: Session):
         first_name="Active",
         last_name="Member",
         email="active.member@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -240,10 +232,10 @@ def test_health_score_calc_high_activity(db_session: Session):
             persona_id=persona.id,
             amount=100.0,
             donation_date=datetime.date.today() - datetime.timedelta(days=i),
-            status="completed"
+            status="completed",
         )
         db_session.add(donation)
-    
+
     db_session.commit()
     db_session.refresh(persona)
 
@@ -261,7 +253,7 @@ def test_health_score_calc_medium_activity(db_session: Session):
     and status ESTABLE.
     """
     assert hasattr(models.Persona, "health_score")
-    
+
     sede = models.Sede(nombre="Medium Sede", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.flush()
@@ -270,7 +262,7 @@ def test_health_score_calc_medium_activity(db_session: Session):
         first_name="Medium",
         last_name="Member",
         email="medium.member@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -280,7 +272,7 @@ def test_health_score_calc_medium_activity(db_session: Session):
         persona_id=persona.id,
         amount=50.0,
         donation_date=datetime.date.today(),
-        status="completed"
+        status="completed",
     )
     db_session.add(donation)
     db_session.commit()
@@ -300,12 +292,8 @@ def test_health_score_calc_db_update(db_session: Session):
     so they persist in subsequent database sessions.
     """
     assert hasattr(models.Persona, "health_score")
-    
-    persona = models.Persona(
-        first_name="Persist",
-        last_name="Test",
-        email="persist.test@example.com"
-    )
+
+    persona = models.Persona(first_name="Persist", last_name="Test", email="persist.test@example.com")
     db_session.add(persona)
     db_session.commit()
     persona_id = persona.id
@@ -321,6 +309,7 @@ def test_health_score_calc_db_update(db_session: Session):
 
 # --- Feature B: AI Copilot for Counseling ---
 
+
 def test_ai_copilot_endpoint_success(client, db_session: Session, mock_openai_client):
     """
     6. Verifies that requesting the copilot-draft endpoint returns a generated suggestion draft successfully.
@@ -332,7 +321,7 @@ def test_ai_copilot_endpoint_success(client, db_session: Session, mock_openai_cl
         first_name="Counselee",
         last_name="Doe",
         email="counselee@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -341,14 +330,14 @@ def test_ai_copilot_endpoint_success(client, db_session: Session, mock_openai_cl
         persona_id=persona.id,
         subject="Seeking spiritual guidance",
         notes="Feeling lost and seeking advice.",
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
 
     response = client.get(f"/api/crm/counseling/{ticket.id}/copilot-draft", headers=headers)
     assert response.status_code in (200, 201)
-    
+
     data = response.json()
     assert "draft" in data or "suggestion" in data
     draft_val = data.get("draft") or data.get("suggestion")
@@ -367,17 +356,12 @@ def test_ai_copilot_empty_history(client, db_session: Session, mock_openai_clien
         first_name="NoNotes",
         last_name="User",
         email="nonotes@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
 
-    ticket = models.CounselingTicket(
-        persona_id=persona.id,
-        subject="Empty notes case",
-        notes="",
-        status="open"
-    )
+    ticket = models.CounselingTicket(persona_id=persona.id, subject="Empty notes case", notes="", status="open")
     db_session.add(ticket)
     db_session.commit()
 
@@ -393,16 +377,11 @@ def test_ai_copilot_openai_missing_key(client, db_session: Session, monkeypatch)
     returning a warning or standard template message rather than throwing an internal server error.
     """
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    
+
     user, admin_persona, sede = seed_admin(db_session)
     headers = auth_headers(client, email=user.email)
 
-    persona = models.Persona(
-        first_name="NoKey",
-        last_name="User",
-        email="nokey@example.com",
-        sede_id=sede.id
-    )
+    persona = models.Persona(first_name="NoKey", last_name="User", email="nokey@example.com", sede_id=sede.id)
     db_session.add(persona)
     db_session.flush()
 
@@ -410,14 +389,18 @@ def test_ai_copilot_openai_missing_key(client, db_session: Session, monkeypatch)
         persona_id=persona.id,
         subject="Spiritual block",
         notes="Jane is undergoing a crisis of faith.",
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
 
     # Even without the key, the API must handle the exception gracefully
     response = client.get(f"/api/crm/counseling/{ticket.id}/copilot-draft", headers=headers)
-    assert response.status_code in (200, 400, 500) # Graceful error handling (standard code or customized message)
+    assert response.status_code in (
+        200,
+        400,
+        500,
+    )  # Graceful error handling (standard code or customized message)
     if response.status_code == 200:
         data = response.json()
         assert "draft" in data or "suggestion" in data
@@ -437,7 +420,7 @@ def test_ai_copilot_openai_error_propagation(client, db_session: Session):
         first_name="ErrProp",
         last_name="User",
         email="errprop@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -446,7 +429,7 @@ def test_ai_copilot_openai_error_propagation(client, db_session: Session):
         persona_id=persona.id,
         subject="Faith counseling",
         notes="Struggling with work/life balance.",
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
@@ -458,7 +441,7 @@ def test_ai_copilot_openai_error_propagation(client, db_session: Session):
         mock_client.chat.completions.create.side_effect = Exception("OpenAI Rate Limit Exceeded")
 
         response = client.get(f"/api/crm/counseling/{ticket.id}/copilot-draft", headers=headers)
-        assert response.status_code in (200, 429, 503, 500) # Should fail gracefully
+        assert response.status_code in (200, 429, 503, 500)  # Should fail gracefully
         # If it returns 200, it should be a fallback suggestion
         if response.status_code == 200:
             data = response.json()
@@ -476,7 +459,7 @@ def test_ai_copilot_response_payload_structure(client, db_session: Session, mock
         first_name="Schema",
         last_name="Check",
         email="schemacheck@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -485,20 +468,21 @@ def test_ai_copilot_response_payload_structure(client, db_session: Session, mock
         persona_id=persona.id,
         subject="Schema validation",
         notes="Notes for schema",
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
 
     response = client.get(f"/api/crm/counseling/{ticket.id}/copilot-draft", headers=headers)
     assert response.status_code in (200, 201)
-    
+
     data = response.json()
     assert isinstance(data, dict)
     assert "draft" in data or "suggestion" in data
 
 
 # --- Feature C: Omnichannel Inbox / Unified Timeline ---
+
 
 def test_timeline_unification_whatsapp(client, db_session: Session):
     """
@@ -511,7 +495,7 @@ def test_timeline_unification_whatsapp(client, db_session: Session):
         first_name="Timeline",
         last_name="WA",
         email="timeline.wa@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -520,14 +504,14 @@ def test_timeline_unification_whatsapp(client, db_session: Session):
         persona_id=persona.id,
         channel="whatsapp",
         content="Important outreach via WhatsApp",
-        created_at=datetime.datetime.now(datetime.timezone.utc)
+        created_at=datetime.datetime.now(datetime.timezone.utc),
     )
     db_session.add(log)
     db_session.commit()
 
     response = client.get(f"/api/crm/personas/{persona.id}/timeline", headers=headers)
     assert response.status_code == 200
-    
+
     timeline = response.json()
     # Check that a WhatsApp log is present in timeline
     wa_found = False
@@ -553,7 +537,7 @@ def test_timeline_unification_sms(client, db_session: Session):
         first_name="Timeline",
         last_name="SMS",
         email="timeline.sms@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -562,14 +546,14 @@ def test_timeline_unification_sms(client, db_session: Session):
         persona_id=persona.id,
         channel="sms",
         content="Welcome via SMS",
-        created_at=datetime.datetime.now(datetime.timezone.utc)
+        created_at=datetime.datetime.now(datetime.timezone.utc),
     )
     db_session.add(log)
     db_session.commit()
 
     response = client.get(f"/api/crm/personas/{persona.id}/timeline", headers=headers)
     assert response.status_code == 200
-    
+
     timeline = response.json()
     sms_found = False
     for item in timeline:
@@ -594,7 +578,7 @@ def test_timeline_unification_email(client, db_session: Session):
         first_name="Timeline",
         last_name="Email",
         email="timeline.email@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -603,14 +587,14 @@ def test_timeline_unification_email(client, db_session: Session):
         persona_id=persona.id,
         channel="email",
         content="Monthly bulletin via Email",
-        created_at=datetime.datetime.now(datetime.timezone.utc)
+        created_at=datetime.datetime.now(datetime.timezone.utc),
     )
     db_session.add(log)
     db_session.commit()
 
     response = client.get(f"/api/crm/personas/{persona.id}/timeline", headers=headers)
     assert response.status_code == 200
-    
+
     timeline = response.json()
     email_found = False
     for item in timeline:
@@ -636,7 +620,7 @@ def test_timeline_unification_spiritual_milestones(client, db_session: Session):
         first_name="Timeline",
         last_name="Milestone",
         email="timeline.milestone@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -646,14 +630,14 @@ def test_timeline_unification_spiritual_milestones(client, db_session: Session):
         persona_id=persona.id,
         type="Baptism",
         event_date=datetime.date.today(),
-        created_at=datetime.datetime.now(datetime.timezone.utc)
+        created_at=datetime.datetime.now(datetime.timezone.utc),
     )
     db_session.add(milestone)
     db_session.commit()
 
     response = client.get(f"/api/crm/personas/{persona.id}/timeline", headers=headers)
     assert response.status_code == 200
-    
+
     timeline = response.json()
     milestone_found = False
     for item in timeline:
@@ -663,7 +647,7 @@ def test_timeline_unification_spiritual_milestones(client, db_session: Session):
         if "baptism" in desc or "baptism" in title or t in ("spiritual_milestone", "milestone", "baptism"):
             milestone_found = True
             break
-            
+
     assert milestone_found, "SpiritualMilestone (Baptism) was not unified in timeline"
 
 
@@ -678,7 +662,7 @@ def test_timeline_sorting_order(client, db_session: Session):
         first_name="Timeline",
         last_name="Sorting",
         email="timeline.sorting@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -690,28 +674,28 @@ def test_timeline_sorting_order(client, db_session: Session):
         persona_id=persona.id,
         channel="whatsapp",
         content="Hello WA",
-        created_at=base_time - datetime.timedelta(days=10)
+        created_at=base_time - datetime.timedelta(days=10),
     )
     # 2. SMS
     log_sms = models.CommunicationLog(
         persona_id=persona.id,
         channel="sms",
         content="Hello SMS",
-        created_at=base_time - datetime.timedelta(days=5)
+        created_at=base_time - datetime.timedelta(days=5),
     )
     # 3. Email
     log_email = models.CommunicationLog(
         persona_id=persona.id,
         channel="email",
         content="Hello Email",
-        created_at=base_time - datetime.timedelta(days=2)
+        created_at=base_time - datetime.timedelta(days=2),
     )
     # 4. Milestone (newest)
     milestone = models.SpiritualMilestone(
         persona_id=persona.id,
         type="Leadership Assignment",
         event_date=(base_time - datetime.timedelta(days=1)).date(),
-        created_at=base_time - datetime.timedelta(days=1)
+        created_at=base_time - datetime.timedelta(days=1),
     )
 
     db_session.add_all([log_wa, log_sms, log_email, milestone])
@@ -723,7 +707,7 @@ def test_timeline_sorting_order(client, db_session: Session):
 
     assert len(timeline) >= 4
     dates = [item["date"] for item in timeline if "date" in item]
-    
+
     # Verify descending sort order
     sorted_dates = sorted(dates, reverse=True)
     assert dates == sorted_dates, "Timeline events are not sorted chronologically descending"
@@ -735,18 +719,15 @@ def test_timeline_sorting_order(client, db_session: Session):
 
 # --- Feature A: Pastoral Health Score ---
 
+
 def test_health_score_calc_exactly_zero_score(db_session: Session):
     """
     16. Verifies that the lowest bounds of metrics yields a score of exactly 0 and status EN_RIESGO.
     Checks division and bounds handling.
     """
     assert hasattr(models.Persona, "health_score")
-    
-    persona = models.Persona(
-        first_name="Zero",
-        last_name="Score",
-        email="zero.score@example.com"
-    )
+
+    persona = models.Persona(first_name="Zero", last_name="Score", email="zero.score@example.com")
     db_session.add(persona)
     db_session.commit()
 
@@ -763,7 +744,7 @@ def test_health_score_calc_exactly_hundred_score(db_session: Session):
     17. Verifies that extremely high activity caps the score at exactly 100 with COMPROMETIDO.
     """
     assert hasattr(models.Persona, "health_score")
-    
+
     sede = models.Sede(nombre="Max Sede", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.flush()
@@ -773,7 +754,7 @@ def test_health_score_calc_exactly_hundred_score(db_session: Session):
         last_name="Score",
         email="max.score@example.com",
         sede_id=sede.id,
-        is_baptized=True
+        is_baptized=True,
     )
     db_session.add(persona)
     db_session.flush()
@@ -784,10 +765,10 @@ def test_health_score_calc_exactly_hundred_score(db_session: Session):
             persona_id=persona.id,
             amount=500.0,
             donation_date=datetime.date.today() - datetime.timedelta(days=i),
-            status="completed"
+            status="completed",
         )
         db_session.add(donation)
-    
+
     db_session.commit()
 
     _call_scoring_engine(db_session, persona.id)
@@ -803,14 +784,14 @@ def test_health_score_calc_missing_data_fields(db_session: Session):
     (e.g., registration_date is None, last_group_attendance is None, etc.) without crashing.
     """
     assert hasattr(models.Persona, "health_score")
-    
+
     persona = models.Persona(
         first_name="Nulls",
         last_name="Everywhere",
         email="nulls@example.com",
         registration_date=None,
         last_group_attendance=None,
-        last_meeting_attendance=None
+        last_meeting_attendance=None,
     )
     db_session.add(persona)
     db_session.commit()
@@ -818,7 +799,7 @@ def test_health_score_calc_missing_data_fields(db_session: Session):
     # Call engine. Should not raise AttributeError or TypeError
     _call_scoring_engine(db_session, persona.id)
     db_session.refresh(persona)
-    
+
     assert persona.health_score is not None
 
 
@@ -828,12 +809,12 @@ def test_health_score_calc_inactive_persona(db_session: Session):
     or are handled according to policies (e.g. keeping their score at 0 or None).
     """
     assert hasattr(models.Persona, "health_score")
-    
+
     persona = models.Persona(
         first_name="Inactive",
         last_name="Member",
         email="inactive.status@example.com",
-        estado_vital="INACTIVO"
+        estado_vital="INACTIVO",
     )
     db_session.add(persona)
     db_session.commit()
@@ -851,12 +832,8 @@ def test_health_score_calc_extreme_activities(db_session: Session):
     do not overflow the calculation or lead to score values greater than 100.
     """
     assert hasattr(models.Persona, "health_score")
-    
-    persona = models.Persona(
-        first_name="Extreme",
-        last_name="Metrics",
-        email="extreme@example.com"
-    )
+
+    persona = models.Persona(first_name="Extreme", last_name="Metrics", email="extreme@example.com")
     db_session.add(persona)
     db_session.flush()
 
@@ -865,7 +842,7 @@ def test_health_score_calc_extreme_activities(db_session: Session):
         persona_id=persona.id,
         amount=1000000000.0,
         donation_date=datetime.date.today(),
-        status="completed"
+        status="completed",
     )
     db_session.add(donation)
     db_session.commit()
@@ -877,6 +854,7 @@ def test_health_score_calc_extreme_activities(db_session: Session):
 
 
 # --- Feature B: AI Copilot ---
+
 
 def test_ai_copilot_invalid_ticket_id(client, db_session: Session):
     """
@@ -904,7 +882,7 @@ def test_ai_copilot_unauthorized_user(client, db_session: Session):
         persona_id=persona.id,
         subject="Secret counseling",
         notes="Private note",
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
@@ -926,7 +904,7 @@ def test_ai_copilot_extremely_long_history(client, db_session: Session, mock_ope
         first_name="LongHistory",
         last_name="User",
         email="longhistory@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -937,7 +915,7 @@ def test_ai_copilot_extremely_long_history(client, db_session: Session, mock_ope
         persona_id=persona.id,
         subject="Heavy counseling case",
         notes=huge_notes,
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
@@ -958,7 +936,7 @@ def test_ai_copilot_non_ascii_characters(client, db_session: Session, mock_opena
         first_name="Unicode",
         last_name="Test",
         email="unicode@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -968,7 +946,7 @@ def test_ai_copilot_non_ascii_characters(client, db_session: Session, mock_opena
         persona_id=persona.id,
         subject="Unicode Support 🧐",
         notes=unicode_notes,
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
@@ -999,7 +977,7 @@ def test_ai_copilot_cross_sede_isolation(client, db_session: Session):
         first_name="Isolate",
         last_name="B",
         email="isolate.b@example.com",
-        sede_id=sede_b.id
+        sede_id=sede_b.id,
     )
     db_session.add(persona_b)
     db_session.flush()
@@ -1008,7 +986,7 @@ def test_ai_copilot_cross_sede_isolation(client, db_session: Session):
         persona_id=persona_b.id,
         subject="Cross-sede problem",
         notes="Sede B notes",
-        status="open"
+        status="open",
     )
     db_session.add(ticket_b)
     db_session.commit()
@@ -1016,12 +994,13 @@ def test_ai_copilot_cross_sede_isolation(client, db_session: Session):
     # Request with User A's auth headers
     headers_a = auth_headers(client, email=user_a.email)
     response = client.get(f"/api/crm/counseling/{ticket_b.id}/copilot-draft", headers=headers_a)
-    
+
     # Must fail with 404 (or 403) due to scope boundary
     assert response.status_code in (404, 403)
 
 
 # --- Feature C: Omnichannel Inbox ---
+
 
 def test_timeline_empty_events(client, db_session: Session):
     """
@@ -1035,7 +1014,7 @@ def test_timeline_empty_events(client, db_session: Session):
         first_name="NoEvents",
         last_name="User",
         email="noevents@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.commit()
@@ -1058,7 +1037,7 @@ def test_timeline_duplicate_timestamps(client, db_session: Session):
         first_name="Duplicate",
         last_name="Time",
         email="duplicate.time@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -1070,13 +1049,13 @@ def test_timeline_duplicate_timestamps(client, db_session: Session):
         persona_id=persona.id,
         channel="sms",
         content="SMS First",
-        created_at=shared_time
+        created_at=shared_time,
     )
     log2 = models.CommunicationLog(
         persona_id=persona.id,
         channel="email",
         content="Email Second",
-        created_at=shared_time
+        created_at=shared_time,
     )
     db_session.add_all([log1, log2])
     db_session.commit()
@@ -1105,7 +1084,7 @@ def test_timeline_cross_sede_leakage(client, db_session: Session):
         first_name="Leak",
         last_name="Target",
         email="leak.target@example.com",
-        sede_id=sede_b.id
+        sede_id=sede_b.id,
     )
     db_session.add(persona_b)
     db_session.commit()
@@ -1126,7 +1105,7 @@ def test_timeline_special_milestone_types(client, db_session: Session):
         first_name="Custom",
         last_name="Milestone",
         email="custom.milestone@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -1136,18 +1115,22 @@ def test_timeline_special_milestone_types(client, db_session: Session):
         persona_id=persona.id,
         type=custom_type,
         event_date=datetime.date.today(),
-        created_at=datetime.datetime.now(datetime.timezone.utc)
+        created_at=datetime.datetime.now(datetime.timezone.utc),
     )
     db_session.add(milestone)
     db_session.commit()
 
     response = client.get(f"/api/crm/personas/{persona.id}/timeline", headers=headers)
     assert response.status_code == 200
-    
+
     timeline = response.json()
     type_found = False
     for item in timeline:
-        if custom_type in item.get("description", "") or custom_type in item.get("title", "") or item.get("type") == custom_type:
+        if (
+            custom_type in item.get("description", "")
+            or custom_type in item.get("title", "")
+            or item.get("type") == custom_type
+        ):
             type_found = True
             break
     assert type_found
@@ -1165,7 +1148,7 @@ def test_timeline_html_or_injection_content(client, db_session: Session):
         first_name="Safe",
         last_name="Render",
         email="safe.render@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -1175,7 +1158,7 @@ def test_timeline_html_or_injection_content(client, db_session: Session):
         persona_id=persona.id,
         channel="email",
         content=injection_content,
-        created_at=datetime.datetime.now(datetime.timezone.utc)
+        created_at=datetime.datetime.now(datetime.timezone.utc),
     )
     db_session.add(log)
     db_session.commit()
@@ -1188,6 +1171,7 @@ def test_timeline_html_or_injection_content(client, db_session: Session):
 # TIER 3: CROSS-FEATURE COMBINATIONS (3 tests)
 # ══════════════════════════════════════════════════════════════════════
 
+
 def test_combo_scoring_affects_milestones(db_session: Session):
     """
     31. Pairwise: Pastoral Health Score + Omnichannel Inbox (Timeline).
@@ -1195,7 +1179,7 @@ def test_combo_scoring_affects_milestones(db_session: Session):
     indicating their transition (e.g., status changes to 'EN_RIESGO' or 'COMPROMETIDO').
     """
     assert hasattr(models.Persona, "health_score")
-    
+
     sede = models.Sede(nombre="Combo Sede 1", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.flush()
@@ -1204,7 +1188,7 @@ def test_combo_scoring_affects_milestones(db_session: Session):
         first_name="Combo",
         last_name="ScoringMilestone",
         email="combo1@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.commit()
@@ -1229,9 +1213,9 @@ def test_combo_scoring_affects_milestones(db_session: Session):
     db_session.commit()
 
     # Query milestones to check if the status change is logged as a milestone
-    milestones = db_session.query(models.SpiritualMilestone).filter(
-        models.SpiritualMilestone.persona_id == persona.id
-    ).all()
+    milestones = (
+        db_session.query(models.SpiritualMilestone).filter(models.SpiritualMilestone.persona_id == persona.id).all()
+    )
 
     # Assert that a milestone corresponding to health score / health status is recorded
     health_milestone_exists = any("health" in m.type.lower() or "riesgo" in m.type.lower() for m in milestones)
@@ -1251,7 +1235,7 @@ def test_combo_copilot_uses_timeline(client, db_session: Session, mock_openai_cl
         first_name="Combo",
         last_name="CopilotTimeline",
         email="combo2@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -1261,7 +1245,7 @@ def test_combo_copilot_uses_timeline(client, db_session: Session, mock_openai_cl
         persona_id=persona.id,
         channel="whatsapp",
         content="I am having a tough time with depression lately.",
-        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
+        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1),
     )
     db_session.add(log_wa)
     db_session.flush()
@@ -1270,7 +1254,7 @@ def test_combo_copilot_uses_timeline(client, db_session: Session, mock_openai_cl
         persona_id=persona.id,
         subject="Follow-up counseling",
         notes="Regular check-in.",
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
@@ -1285,7 +1269,7 @@ def test_combo_copilot_uses_timeline(client, db_session: Session, mock_openai_cl
     # Verify that the timeline context (depression) was passed to the mock OpenAI API call
     called_args, called_kwargs = mock_openai_client.chat.completions.create.call_args
     messages = called_kwargs.get("messages", [])
-    
+
     # Check if the depression log content is in the prompt messages
     timeline_content_passed = False
     for msg in messages:
@@ -1313,7 +1297,7 @@ def test_combo_milestone_triggers_scoring(db_session: Session):
         first_name="Combo",
         last_name="MilestoneScoring",
         email="combo3@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -1328,7 +1312,7 @@ def test_combo_milestone_triggers_scoring(db_session: Session):
         persona_id=persona.id,
         type="Baptism",
         event_date=datetime.date.today(),
-        created_at=datetime.datetime.now(datetime.timezone.utc)
+        created_at=datetime.datetime.now(datetime.timezone.utc),
     )
     db_session.add(milestone)
     db_session.commit()
@@ -1346,6 +1330,7 @@ def test_combo_milestone_triggers_scoring(db_session: Session):
 # TIER 4: REAL-WORLD APPLICATION SCENARIOS (5 tests)
 # ══════════════════════════════════════════════════════════════════════
 
+
 def test_scenario_new_convert_journey(client, db_session: Session, mock_openai_client):
     """
     34. Scenario: A new convert joins CCF, attends some groups, gets baptized, has a counseling session,
@@ -1360,7 +1345,7 @@ def test_scenario_new_convert_journey(client, db_session: Session, mock_openai_c
         first_name="New",
         last_name="Convert",
         email="new.convert@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -1376,7 +1361,7 @@ def test_scenario_new_convert_journey(client, db_session: Session, mock_openai_c
         persona_id=persona.id,
         channel="whatsapp",
         content="Attended group discipulado session 1",
-        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2)
+        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2),
     )
     db_session.add(log_group)
 
@@ -1385,7 +1370,7 @@ def test_scenario_new_convert_journey(client, db_session: Session, mock_openai_c
         persona_id=persona.id,
         type="Baptism",
         event_date=datetime.date.today(),
-        created_at=datetime.datetime.now(datetime.timezone.utc)
+        created_at=datetime.datetime.now(datetime.timezone.utc),
     )
     db_session.add(baptism)
     db_session.commit()
@@ -1401,7 +1386,7 @@ def test_scenario_new_convert_journey(client, db_session: Session, mock_openai_c
         persona_id=persona.id,
         subject="Post-baptism follow-up",
         notes="Convert is excited and seeking next steps.",
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
@@ -1410,11 +1395,16 @@ def test_scenario_new_convert_journey(client, db_session: Session, mock_openai_c
     response = client.get(f"/api/crm/personas/{persona.id}/timeline", headers=headers)
     assert response.status_code == 200
     timeline = response.json()
-    
+
     # Assert timeline includes Baptism, WhatsApp communication, and Counseling Ticket
-    has_baptism = any("baptism" in item.get("title", "").lower() or "baptism" in item.get("type", "").lower() for item in timeline)
+    has_baptism = any(
+        "baptism" in item.get("title", "").lower() or "baptism" in item.get("type", "").lower() for item in timeline
+    )
     has_counseling = any("counseling" in item.get("type", "").lower() for item in timeline)
-    has_wa = any("whatsapp" in item.get("description", "").lower() or "whatsapp" in item.get("channel", "").lower() for item in timeline)
+    has_wa = any(
+        "whatsapp" in item.get("description", "").lower() or "whatsapp" in item.get("channel", "").lower()
+        for item in timeline
+    )
 
     assert has_baptism
     assert has_counseling
@@ -1437,7 +1427,7 @@ def test_scenario_disengaged_member_recovery(client, db_session: Session, mock_o
         last_name="Member",
         email="disengaged@example.com",
         sede_id=sede.id,
-        last_meeting_attendance=datetime.date.today() - datetime.timedelta(days=120)
+        last_meeting_attendance=datetime.date.today() - datetime.timedelta(days=120),
     )
     db_session.add(persona)
     db_session.commit()
@@ -1452,7 +1442,7 @@ def test_scenario_disengaged_member_recovery(client, db_session: Session, mock_o
         persona_id=persona.id,
         subject="Disengaged Member Outreach",
         notes="Attempting recovery outreach.",
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
@@ -1466,7 +1456,7 @@ def test_scenario_disengaged_member_recovery(client, db_session: Session, mock_o
         persona_id=persona.id,
         channel="whatsapp",
         content="Hey! We missed you. Hope you are well. - Pastor",
-        created_at=datetime.datetime.now(datetime.timezone.utc)
+        created_at=datetime.datetime.now(datetime.timezone.utc),
     )
     db_session.add(log_outreach)
     db_session.commit()
@@ -1487,7 +1477,7 @@ def test_scenario_sede_isolation_full_flow(client, db_session: Session):
     and timelines are fully partitioned by Sede.
     """
     assert hasattr(models.Persona, "health_score")
-    
+
     sede_a = models.Sede(nombre="Sede A Isolation", ciudad="Bogota", es_activa=True)
     sede_b = models.Sede(nombre="Sede B Isolation", ciudad="Medellin", es_activa=True)
     db_session.add_all([sede_a, sede_b])
@@ -1504,7 +1494,7 @@ def test_scenario_sede_isolation_full_flow(client, db_session: Session):
         first_name="Sede B",
         last_name="Persona",
         email="sede.b.persona@example.com",
-        sede_id=sede_b.id
+        sede_id=sede_b.id,
     )
     db_session.add(persona_b)
     db_session.commit()
@@ -1528,7 +1518,7 @@ def test_scenario_copilot_rate_limiting_and_retry(client, db_session: Session, m
         first_name="Rate",
         last_name="Limit",
         email="ratelimit@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -1537,7 +1527,7 @@ def test_scenario_copilot_rate_limiting_and_retry(client, db_session: Session, m
         persona_id=persona.id,
         subject="Rate limit check",
         notes="High volume operations",
-        status="open"
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
@@ -1567,7 +1557,7 @@ def test_scenario_milestone_and_multichannel_campaign(client, db_session: Sessio
         first_name="Campaign",
         last_name="Holistic",
         email="campaign.holistic@example.com",
-        sede_id=sede.id
+        sede_id=sede.id,
     )
     db_session.add(persona)
     db_session.flush()
@@ -1578,21 +1568,21 @@ def test_scenario_milestone_and_multichannel_campaign(client, db_session: Sessio
         channel="email",
         content="Campaign Outreach: Join a small group",
         campaign_name="Group Campaign 2026",
-        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=3)
+        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=3),
     )
     log_sms = models.CommunicationLog(
         persona_id=persona.id,
         channel="sms",
         content="Campaign SMS reminder",
         campaign_name="Group Campaign 2026",
-        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2)
+        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2),
     )
     log_wa = models.CommunicationLog(
         persona_id=persona.id,
         channel="whatsapp",
         content="Campaign WA reminder",
         campaign_name="Group Campaign 2026",
-        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
+        created_at=datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1),
     )
     db_session.add_all([log_email, log_sms, log_wa])
     db_session.flush()
@@ -1602,7 +1592,7 @@ def test_scenario_milestone_and_multichannel_campaign(client, db_session: Sessio
         persona_id=persona.id,
         type="Joined Small Group",
         event_date=datetime.date.today(),
-        created_at=datetime.datetime.now(datetime.timezone.utc)
+        created_at=datetime.datetime.now(datetime.timezone.utc),
     )
     db_session.add(milestone)
     db_session.commit()
