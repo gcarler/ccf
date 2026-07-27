@@ -173,10 +173,9 @@ from backend.crud.cms import (
 )
 
 # ── CRM (consumed by pastoral, personas, donations, support, messaging …) ─
-# Note: calculate_health_score, calculate_pastoral_health, calculate_pastoral_health_score
-# live in crm_/health.py which imports from backend.api.crm._shared — importing them
-# eagerly here creates a circular import. Access via:
-#   from backend.crud.crm_.health import calculate_health_score
+# Note: recalculate_and_persist_pastoral_health lives in crm_/health.py which imports from
+# backend.api.crm._shared — importing it eagerly here creates a circular import. Access via:
+#   from backend.crud.crm_.health import recalculate_and_persist_pastoral_health
 from backend.crud.crm import (
     create_communication_log,
     create_community_card,

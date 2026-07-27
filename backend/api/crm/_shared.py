@@ -4,14 +4,12 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import inspect
-from sqlalchemy.orm import Session, load_only, selectinload
-from sqlalchemy.sql import literal_column
+from sqlalchemy.orm import Session
 
 from backend import models
 from backend.core.tenant import get_user_sede_id
 from backend.crud._utils import _to_uuid
-from backend.schemas.crm.base import PersonaResponse
+from backend.crud.crm_.shared import persona_query, prepare_persona_for_output
 from backend.services.messaging_outcomes import (
     DELIVERED_OUTCOMES,
     CommunicationOutcome,
@@ -26,141 +24,6 @@ def _payload_key(name: str) -> str:
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
-
-def _persona_live_column_names(db: Session) -> set[str]:
-    bind = db.get_bind()
-    if bind is None:
-        return set()
-    try:
-        columns = inspect(bind).get_columns("personas")
-    except Exception as exc:
-        logger.debug("Failed to inspect personas columns: %s", exc)
-        return set()
-    return {str(column.get("name")) for column in columns if column.get("name")}
-
-
-def _case_live_column_names(db: Session) -> set[str]:
-    bind = db.get_bind()
-    if bind is None:
-        return set()
-    try:
-        columns = inspect(bind).get_columns("crm_casos")
-    except Exception as exc:
-        logger.debug("Failed to inspect crm_casos columns: %s", exc)
-        return set()
-    return {str(column.get("name")) for column in columns if column.get("name")}
-
-
-def _case_created_column(db: Session):
-    live_cols = _case_live_column_names(db)
-    if "fecha_creacion" in live_cols and hasattr(models.CasoCRM, "fecha_creacion"):
-        return models.CasoCRM.fecha_creacion
-    if "created_at" in live_cols:
-        return literal_column("crm_casos.created_at")
-    if "fecha_creacion" in live_cols:
-        return literal_column("crm_casos.fecha_creacion")
-    if hasattr(models.CasoCRM, "fecha_creacion"):
-        return models.CasoCRM.fecha_creacion
-    return None
-
-
-def _stage_live_column_names(db: Session) -> set[str]:
-    bind = db.get_bind()
-    if bind is None:
-        return set()
-    try:
-        columns = inspect(bind).get_columns("crm_etapas_pipeline")
-    except Exception as exc:
-        logger.debug("Failed to inspect crm_etapas_pipeline columns: %s", exc)
-        return set()
-    return {str(column.get("name")) for column in columns if column.get("name")}
-
-
-def persona_query(db: Session):
-    live_cols = _persona_live_column_names(db)
-    live_attrs = [
-        getattr(models.Persona, name)
-        for name in live_cols
-        if hasattr(models.Persona, name)
-    ]
-    query = db.query(models.Persona)
-    if live_attrs:
-        query = query.options(load_only(*live_attrs))
-    return query
-
-
-def case_query(db: Session):
-    live_cols = _case_live_column_names(db)
-    live_attrs = [
-        getattr(models.CasoCRM, name)
-        for name in live_cols
-        if hasattr(models.CasoCRM, name)
-    ]
-    query = db.query(models.CasoCRM)
-    if live_attrs:
-        query = query.options(load_only(*live_attrs))
-
-    persona_live_cols = _persona_live_column_names(db)
-    persona_live_attrs = [
-        getattr(models.Persona, name)
-        for name in persona_live_cols
-        if hasattr(models.Persona, name)
-    ]
-    stage_live_cols = _stage_live_column_names(db)
-    stage_live_attrs = [
-        getattr(models.EtapaPipeline, name)
-        for name in stage_live_cols
-        if hasattr(models.EtapaPipeline, name)
-    ]
-
-    if persona_live_attrs:
-        query = query.options(
-            selectinload(models.CasoCRM.persona).load_only(*persona_live_attrs),
-            selectinload(models.CasoCRM.asignado_a).load_only(*persona_live_attrs),
-        )
-    if stage_live_attrs:
-        query = query.options(
-            selectinload(models.CasoCRM.etapa_actual).load_only(*stage_live_attrs)
-        )
-    return query
-
-
-def prepare_persona_for_output(db: Session, persona: models.Persona):
-    """Populate missing ORM-backed attributes with None to avoid lazy-loading
-    fields that are absent in the live table.
-    """
-    live_cols = _persona_live_column_names(db)
-    for field_name in PersonaResponse.model_fields:
-        if field_name == "nombre_completo" or field_name in live_cols:
-            continue
-        if hasattr(models.Persona, field_name):
-            try:
-                setattr(persona, field_name, None)
-            except Exception as exc:
-                logger.debug("Failed to set persona field %s to None: %s", field_name, exc)
-                persona.__dict__[field_name] = None
-    return persona
-
-
-def prepare_case_for_output(db: Session, case: models.CasoCRM):
-    live_cols = _case_live_column_names(db)
-    for field_name in models.CasoCRM.__table__.columns.keys():
-        if field_name in live_cols:
-            continue
-        if hasattr(models.CasoCRM, field_name):
-            try:
-                setattr(case, field_name, None)
-            except Exception as exc:
-                logger.debug("Failed to set case field %s to None: %s", field_name, exc)
-                case.__dict__[field_name] = None
-    persona = getattr(case, "persona", None)
-    if persona is not None:
-        prepare_persona_for_output(db, persona)
-    assigned = getattr(case, "asignado_a", None)
-    if assigned is not None:
-        prepare_persona_for_output(db, assigned)
-    return case
 
 
 # ── Axioma 3 — Multi-Tenant scope helpers (Axioma 3 pattern) ──────────────
@@ -185,7 +48,6 @@ def _scope_by_user_sede_via_persona(db: Session, user: models.User, query):
     if user_sede:
         query = query.filter(models.Persona.sede_id == user_sede)
     return query
-
 
 
 def _get_scoped_persona(db: Session, user: models.User, persona_id) -> models.Persona:

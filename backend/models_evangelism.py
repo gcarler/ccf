@@ -19,6 +19,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
@@ -42,6 +43,7 @@ class CampaignSeason(Base):
     end_date = Column(Date, nullable=False)
     periodicity = Column(String(20), default="SEMANAL", nullable=False)
     status = Column(String(20), default="Activa", index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
@@ -353,6 +355,7 @@ class ParticipanteGrupo(Base):
     __tablename__ = "grupo_participantes"
     __table_args__ = (
         UniqueConstraint("grupo_id", "persona_id", name="uq_participante_grupo_persona"),
+        Index("ix_participante_grupo_active", "grupo_id", "activo"),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -373,6 +376,9 @@ class ParticipanteGrupo(Base):
 
 class SesionGrupo(Base):
     __tablename__ = "sesiones_grupo"
+    __table_args__ = (
+        Index("ix_sesion_grupo_grupo_fecha", "grupo_id", "fecha_sesion"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)
@@ -431,6 +437,9 @@ class SesionGrupo(Base):
 
 class Asistencia(Base):
     __tablename__ = "asistencias"
+    __table_args__ = (
+        Index("ix_asistencia_sesion_persona", "sesion_id", "persona_id"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="CASCADE"), nullable=False)

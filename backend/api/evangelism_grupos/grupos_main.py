@@ -9,7 +9,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
 from backend.api.evangelism_shared import (
@@ -127,9 +128,16 @@ def list_grupos(
     current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
-    q = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.deleted_at.is_(None),
-        GrupoEvangelismo.sede_id == user_sede,
+    q = (
+        db.query(GrupoEvangelismo)
+        .options(
+            selectinload(GrupoEvangelismo.lider),
+            selectinload(GrupoEvangelismo.participantes),
+        )
+        .filter(
+            GrupoEvangelismo.deleted_at.is_(None),
+            GrupoEvangelismo.sede_id == user_sede,
+        )
     )
     if evangelism_strategy_id:
         q = q.filter(GrupoEvangelismo.estrategia_id == evangelism_strategy_id)
@@ -167,13 +175,28 @@ def list_my_grupos(
     current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
+    _eager = [
+        selectinload(GrupoEvangelismo.lider),
+        selectinload(GrupoEvangelismo.participantes),
+    ]
     if _is_crm_admin_or_pastor(current_user):
-        return [_serialize_grupo(g) for g in crud.get_grupos(db, sede_id=user_sede)]
+        rows = (
+            db.query(GrupoEvangelismo)
+            .options(*_eager)
+            .filter(
+                models.GrupoEvangelismo.deleted_at.is_(None),
+                models.GrupoEvangelismo.sede_id == user_sede,
+            )
+            .order_by(models.GrupoEvangelismo.nombre.asc())
+            .all()
+        )
+        return [_serialize_grupo(g) for g in rows]
     persona = _get_persona_for_user(db, current_user.id)
     if not persona:
         return []
     rows = (
         db.query(GrupoEvangelismo)
+        .options(*_eager)
         .filter(
             models.GrupoEvangelismo.deleted_at.is_(None),
             models.GrupoEvangelismo.sede_id == user_sede,
@@ -202,7 +225,13 @@ def get_groups_assignment_summary(
         .order_by(models.GrupoEvangelismo.nombre.asc())
     )
     houses = q.all()
-    personas = db.query(models.Persona).filter(models.Persona.sede_id == user_sede).all()
+
+    # Count total persons for the sede (single aggregate query)
+    personas_total = db.query(func.count(models.Persona.id)).filter(
+        models.Persona.sede_id == user_sede
+    ).scalar() or 0
+
+    # Collect assigned persona IDs from group participants
     assigned_persona_ids = {
         row[0]
         for row in (
@@ -230,14 +259,17 @@ def get_groups_assignment_summary(
     houses_with_personas = [house for house in houses if (house.personas_count or 0) > 0]
     houses_without_personas = [house for house in houses if (house.personas_count or 0) == 0]
 
+    # Query unassigned persons directly (no full table load)
+    unassigned_q = db.query(models.Persona).filter(
+        models.Persona.sede_id == user_sede,
+    )
+    if assigned_persona_ids:
+        unassigned_q = unassigned_q.filter(
+            models.Persona.id.notin_(list(assigned_persona_ids))
+        )
     unassigned_personas = [
-        {
-            "id": p.id,
-            "name": p.nombre_completo,
-            "church_role": p.church_role,
-        }
-        for p in personas
-        if p.id not in assigned_persona_ids
+        {"id": p.id, "name": p.nombre_completo, "church_role": p.church_role}
+        for p in unassigned_q.limit(100).all()
     ]
 
     return {
@@ -250,8 +282,8 @@ def get_groups_assignment_summary(
         "houses_without_host": len(houses_without_host),
         "houses_with_personas": len(houses_with_personas),
         "houses_without_personas": len(houses_without_personas),
-        "personas_total": len(personas),
-        "personas_unassigned": len(unassigned_personas),
+        "personas_total": personas_total,
+        "personas_unassigned": personas_total - len(assigned_persona_ids),
         "houses_needing_leader": [
             {
                 "id": house.id,
@@ -282,7 +314,7 @@ def get_groups_assignment_summary(
             }
             for house in houses_without_host
         ],
-        "unassigned_personas": unassigned_personas[:100],
+        "unassigned_personas": unassigned_personas,
     }
 
 
@@ -680,7 +712,16 @@ def list_campaign_seasons(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    seasons = db.query(models.CampaignSeason).order_by(models.CampaignSeason.start_date.desc()).all()
+    user_sede = require_user_sede_id(db, current_user)
+    seasons = (
+        db.query(models.CampaignSeason)
+        .filter(
+            (models.CampaignSeason.sede_id == user_sede)
+            | (models.CampaignSeason.sede_id.is_(None))
+        )
+        .order_by(models.CampaignSeason.start_date.desc())
+        .all()
+    )
     return [
         {
             "id": season.id,
@@ -718,12 +759,14 @@ def create_campaign_season(
     if end <= start:
         raise HTTPException(status_code=400, detail="end_date must be after start_date")
 
+    user_sede = require_user_sede_id(db, current_user)
     season = models.CampaignSeason(
         name=name,
         start_date=start,
         end_date=end,
         periodicity=payload.get("periodicity", "SEMANAL"),
         status="Activa",
+        sede_id=user_sede,
     )
     db.add(season)
     db.commit()
@@ -741,6 +784,9 @@ def update_campaign_season(
 ):
     season = db.query(models.CampaignSeason).filter(models.CampaignSeason.id == season_id).first()
     if not season:
+        raise HTTPException(status_code=404, detail="Season not found")
+    user_sede = require_user_sede_id(db, current_user)
+    if season.sede_id is not None and str(season.sede_id) != str(user_sede):
         raise HTTPException(status_code=404, detail="Season not found")
     for field in ["name", "status", "periodicity"]:
         if field in payload:
@@ -821,7 +867,11 @@ def get_macro_despliegue(
     if not season_id:
         active_season = (
             db.query(models.CampaignSeason)
-            .filter(models.CampaignSeason.status == "Activa")
+            .filter(
+                models.CampaignSeason.status == "Activa",
+                (models.CampaignSeason.sede_id == user_sede)
+                | (models.CampaignSeason.sede_id.is_(None)),
+            )
             .order_by(models.CampaignSeason.id.desc())
             .first()
         )
@@ -864,6 +914,7 @@ def get_macro_despliegue(
             models.Asistencia.sesion_id,
             func.count(models.Asistencia.id).label("cnt"),
         )
+        .filter(models.Asistencia.deleted_at.is_(None))
         .group_by(models.Asistencia.sesion_id)
         .all()
     )

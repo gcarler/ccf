@@ -213,9 +213,9 @@ de tenant.
 | Rol | Lectura segura |
 |---|---|
 | `ADMINISTRADOR` | acceso completo |
-| `GESTOR` con `evangelism:manage` | acceso completo en superficies canónicas del módulo |
-| `EDITOR` con `evangelism:edit` | lectura y operación, no gestión |
-| `LECTOR` con `evangelism:read` | solo lectura en superficies canónicas |
+| `GESTOR` | sin acceso a evangelismo por defecto; requiere `evangelism:manage` vía asignación explícita |
+| `EDITOR` | sin acceso a evangelismo por defecto; requiere `evangelism:edit` vía asignación explícita |
+| `LECTOR` | sin acceso a evangelismo por defecto; requiere `evangelism:read` vía asignación explícita |
 | `COORDINADOR` | lectura y edición por allowance, más acceso contextual de grupos propios |
 | `PASTOR` | acceso total por allowance |
 | `MIEMBRO` | solo donde exista flujo autenticado/contextual y el código lo permita |

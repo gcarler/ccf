@@ -35,6 +35,7 @@ import {
  useSessions,
  useStrategy,
 } from './useStrategyDetail';
+import { getErrorMessage, toAttendanceStatus } from '../../utils';
 
 const UniversalCalendarView = dynamic(() => import('@/components/ui/UniversalCalendarView'), { ssr: false });
 const UniversalGanttView = dynamic(() => import('@/components/ui/UniversalGanttView'), { ssr: false });
@@ -131,11 +132,6 @@ type SearchablePersona = {
 };
 
 type RoleSearchQuery = { limit: number; search?: string; sort_by?: string; sort_dir?: string };
-const getErrorMessage = (error: unknown, fallback: string) =>
- error instanceof Error && error.message ? error.message : fallback;
-
-const toAttendanceStatus = (value: string | undefined): AttendancePersona['status'] =>
- value === 'absent' || value === 'first_time' ? value : 'present';
 const isStrategyGroup = (value: unknown): value is StrategyGroup =>
  typeof value === 'object' && value !== null && 'id' in value && 'name' in value;
 const isSessionRow = (value: unknown): value is SessionRow =>
@@ -1858,10 +1854,10 @@ export default function StrategyDetailPage() {
  </>}>
  <div ref={personaSplitRef} className="flex flex-col" style={{ height: 'calc(100vh - 16rem)' }}>
  {/* Panel superior: personas asignadas */}
- <div className="overflow-y-auto shrink-0 pb-2" style={{ height: personaSplitHeight }}>
- <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-2">
- Personas ({groupPersonas.length})
- </label>
+ <div id="persona-list" className="overflow-y-auto shrink-0 pb-2" style={{ height: personaSplitHeight }}>
+  <label htmlFor="persona-list" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-2">
+   Personas ({groupPersonas.length})
+  </label>
  {groupPersonas.length === 0 ? (
  <p className="text-xs text-[hsl(var(--text-secondary))] italic py-2">Sin personas asignadas</p>
  ) : (
@@ -1898,12 +1894,12 @@ export default function StrategyDetailPage() {
 
  {/* Panel inferior: agregar personas */}
  <div className="flex-1 min-h-0 flex flex-col pt-3">
- <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block shrink-0">Agregar personas</label>
+  <label htmlFor="persona-search" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block shrink-0">Agregar personas</label>
  <div className="relative mb-2 shrink-0">
  {personaSearchLoading
  ? <Loader2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--primary))] animate-spin" />
  : <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />}
- <input value={personaSearch}
+  <input id="persona-search" value={personaSearch}
  onChange={e => setPersonaSearch(e.target.value)}
  placeholder="Filtrar por nombre..."
  className="w-full pl-9 pr-3 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
@@ -1951,33 +1947,33 @@ export default function StrategyDetailPage() {
  </>}>
  <div className="space-y-4">
  <div>
- <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Grupo *</label>
- <select value={sessionForm.grupo_id} onChange={e => setSessionForm(f => ({ ...f, grupo_id: e.target.value }))}
+  <label htmlFor="session-group" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Grupo *</label>
+  <select id="session-group" value={sessionForm.grupo_id} onChange={e => setSessionForm(f => ({ ...f, grupo_id: e.target.value }))}
  className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]">
  <option value="">Seleccionar grupo...</option>
  {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
  </select>
  </div>
  <div>
- <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Fecha de la sesión *</label>
- <input type="date" value={sessionForm.session_date} onChange={e => setSessionForm(f => ({ ...f, session_date: e.target.value }))}
+  <label htmlFor="session-date" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Fecha de la sesión *</label>
+  <input id="session-date" type="date" value={sessionForm.session_date} onChange={e => setSessionForm(f => ({ ...f, session_date: e.target.value }))}
  className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div>
- <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Tema de la sesión</label>
- <input value={sessionForm.topic} onChange={e => setSessionForm(f => ({ ...f, topic: e.target.value }))}
+  <label htmlFor="session-topic" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Tema de la sesión</label>
+  <input id="session-topic" value={sessionForm.topic} onChange={e => setSessionForm(f => ({ ...f, topic: e.target.value }))}
  placeholder="Ej: La fe que mueve montañas"
  className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div>
- <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Ofrenda recogida</label>
- <input type="number" value={sessionForm.offering_amount} onChange={e => setSessionForm(f => ({ ...f, offering_amount: e.target.value }))}
+  <label htmlFor="session-offering" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Ofrenda recogida</label>
+  <input id="session-offering" type="number" value={sessionForm.offering_amount} onChange={e => setSessionForm(f => ({ ...f, offering_amount: e.target.value }))}
  placeholder="0.00"
  className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div>
- <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Notas de la sesión</label>
- <textarea value={sessionForm.report_notes} onChange={e => setSessionForm(f => ({ ...f, report_notes: e.target.value }))} rows={3}
+  <label htmlFor="session-notes" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Notas de la sesión</label>
+  <textarea id="session-notes" value={sessionForm.report_notes} onChange={e => setSessionForm(f => ({ ...f, report_notes: e.target.value }))} rows={3}
  placeholder="Observaciones, peticiones de oración, novedades..."
  className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))] resize-none" />
  </div>

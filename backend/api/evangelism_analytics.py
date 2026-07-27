@@ -616,35 +616,80 @@ def strategy_alerts(
     group_map = {g.id: g for g in groups}
     alerts = []
 
-    # Alert type 1: Groups with N consecutive low-attendance sessions
-    for gid in group_ids:
-        recent_sessions = (
-            db.query(models.SesionGrupo)
-            .options(session_read_only_options(db))
-            .filter(
-                models.SesionGrupo.grupo_id == gid,
-                _func.lower(models.SesionGrupo.estado) == "realizada",
-                models.SesionGrupo.deleted_at.is_(None),
-            )
-            .order_by(models.SesionGrupo.fecha_sesion.desc())
-            .limit(consecutive_sessions + 2)
-            .all()
+    # ── Bulk-load data for alert types 1-3 (no N+1) ──────────────
+
+    # All realized sessions for these groups (for alerts 1 & 2)
+    all_sessions = (
+        db.query(models.SesionGrupo)
+        .options(session_read_only_options(db))
+        .filter(
+            models.SesionGrupo.grupo_id.in_(group_ids),
+            _func.lower(models.SesionGrupo.estado) == "realizada",
+            models.SesionGrupo.deleted_at.is_(None),
         )
-        if len(recent_sessions) < consecutive_sessions:
+        .order_by(models.SesionGrupo.fecha_sesion.desc())
+        .all()
+    )
+    sessions_by_group: dict = defaultdict(list)
+    for s in all_sessions:
+        sessions_by_group[s.grupo_id].append(s)
+
+    # All attendance for those sessions (for alert 1)
+    session_ids = [s.id for s in all_sessions]
+    att_rows = (
+        db.query(models.Asistencia.sesion_id, models.Asistencia.estado)
+        .filter(
+            models.Asistencia.sesion_id.in_(session_ids),
+            models.Asistencia.deleted_at.is_(None),
+        )
+        .all()
+    ) if session_ids else []
+    att_by_session: dict = defaultdict(list)
+    for sid, estado in att_rows:
+        att_by_session[sid].append(estado)
+
+    # MAX(fecha_sesion) per group (for alert 2)
+    max_date_rows = (
+        db.query(
+            models.SesionGrupo.grupo_id,
+            _func.max(models.SesionGrupo.fecha_sesion),
+        )
+        .filter(
+            models.SesionGrupo.grupo_id.in_(group_ids),
+            models.SesionGrupo.deleted_at.is_(None),
+        )
+        .group_by(models.SesionGrupo.grupo_id)
+        .all()
+    )
+    max_date_by_group = {gid: max_dt for gid, max_dt in max_date_rows}
+
+    # Active participant count per group (for alert 3)
+    persona_count_rows = (
+        db.query(
+            models.ParticipanteGrupo.grupo_id,
+            _func.count(models.ParticipanteGrupo.id),
+        )
+        .filter(
+            models.ParticipanteGrupo.grupo_id.in_(group_ids),
+            models.ParticipanteGrupo.activo.is_(True),
+            models.ParticipanteGrupo.deleted_at.is_(None),
+        )
+        .group_by(models.ParticipanteGrupo.grupo_id)
+        .all()
+    )
+    persona_count_by_group = {gid: cnt for gid, cnt in persona_count_rows}
+
+    # ── Alert type 1: Groups with N consecutive low-attendance sessions ──
+    for gid in group_ids:
+        recent = sessions_by_group.get(gid, [])[:consecutive_sessions + 2]
+        if len(recent) < consecutive_sessions:
             continue
 
         low_count = 0
-        for sess in recent_sessions[:consecutive_sessions]:
-            att = (
-                db.query(models.Asistencia.estado)
-                .filter(
-                    models.Asistencia.sesion_id == sess.id,
-                    models.Asistencia.deleted_at.is_(None),
-                )
-                .all()
-            )
-            t = len(att)
-            p = sum(1 for (e,) in att if e in ATTENDED_STATES)
+        for sess in recent[:consecutive_sessions]:
+            estados = att_by_session.get(sess.id, [])
+            t = len(estados)
+            p = sum(1 for e in estados if e in ATTENDED_STATES)
             pct = (p / t * 100) if t else 0
             if pct < threshold_pct:
                 low_count += 1
@@ -659,18 +704,10 @@ def strategy_alerts(
                 "message": f"{consecutive_sessions} sesiones consecutivas con asistencia bajo {threshold_pct}%",
             })
 
-    # Alert type 2: Groups without a session in 30+ days
+    # ── Alert type 2: Groups without a session in 30+ days ──
     cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=30)
     for gid in group_ids:
-        last = (
-            db.query(_func.max(models.SesionGrupo.fecha_sesion))
-            .filter(
-                models.SesionGrupo.grupo_id == gid,
-                models.SesionGrupo.deleted_at.is_(None),
-            )
-            .scalar()
-        )
-        # Normalize timezone for comparison
+        last = max_date_by_group.get(gid)
         if last is not None and hasattr(last, "tzinfo") and last.tzinfo is None:
             last = last.replace(tzinfo=_dt.timezone.utc)
         if last is None or last < cutoff:
@@ -685,17 +722,9 @@ def strategy_alerts(
                 "days_since_last": days_ago,
             })
 
-    # Alert type 3: Groups near capacity (ready to multiply)
+    # ── Alert type 3: Groups near capacity (ready to multiply) ──
     for g in groups:
-        persona_count = (
-            db.query(_func.count(models.ParticipanteGrupo.id))
-            .filter(
-                models.ParticipanteGrupo.grupo_id == g.id,
-                models.ParticipanteGrupo.activo.is_(True),
-                models.ParticipanteGrupo.deleted_at.is_(None),
-            )
-            .scalar() or 0
-        )
+        persona_count = persona_count_by_group.get(g.id, 0)
         capacity = g.capacidad or 15
         if persona_count >= int(capacity * 0.85):
             alerts.append({
@@ -898,12 +927,16 @@ def strategy_groups_detail(
         .all()
     )
 
-    def _group_att(gid, s, e):
+    # ── Bulk-load attendance for current + previous period (no N+1) ──
+    def _bulk_attendance(gids, s, e):
         rows = (
-            db.query(models.Asistencia.estado)
-            .join(models.SesionGrupo, models.Asistencia.sesion_id == models.SesionGrupo.id)
+            db.query(
+                models.SesionGrupo.grupo_id,
+                models.Asistencia.estado,
+            )
+            .join(models.Asistencia, models.Asistencia.sesion_id == models.SesionGrupo.id)
             .filter(
-                models.SesionGrupo.grupo_id == gid,
+                models.SesionGrupo.grupo_id.in_(gids),
                 models.SesionGrupo.fecha_sesion >= s,
                 models.SesionGrupo.fecha_sesion < e,
                 models.SesionGrupo.deleted_at.is_(None),
@@ -911,55 +944,76 @@ def strategy_groups_detail(
             )
             .all()
         )
-        present = sum(1 for (estado,) in rows if estado in ATTENDED_STATES)
-        return present, len(rows)
+        result = defaultdict(lambda: [0, 0])  # [present, total]
+        for gid, estado in rows:
+            result[gid][1] += 1
+            if estado in ATTENDED_STATES:
+                result[gid][0] += 1
+        return result
 
-    def _sparkline(gid) -> list[float]:
-        """Last 8 realized sessions attendance percentage."""
-        sessions = (
-            db.query(models.SesionGrupo)
-            .options(session_read_only_options(db))
-            .filter(
-                models.SesionGrupo.grupo_id == gid,
-                _func.lower(models.SesionGrupo.estado) == "realizada",
-                models.SesionGrupo.deleted_at.is_(None),
-            )
-            .order_by(models.SesionGrupo.fecha_sesion.desc())
-            .limit(8)
-            .all()
+    cur_att = _bulk_attendance(group_ids, start, end)
+    prev_att = _bulk_attendance(group_ids, prev_start, prev_end)
+
+    # ── Bulk-load new joiners (no N+1) ──
+    new_joiners_rows = (
+        db.query(models.ParticipanteGrupo.grupo_id, _func.count(models.ParticipanteGrupo.id))
+        .filter(
+            models.ParticipanteGrupo.grupo_id.in_(group_ids),
+            models.ParticipanteGrupo.fecha_ingreso >= start,
+            models.ParticipanteGrupo.fecha_ingreso < end,
+            models.ParticipanteGrupo.deleted_at.is_(None),
         )
+        .group_by(models.ParticipanteGrupo.grupo_id)
+        .all()
+    )
+    new_joiners_map = {gid: cnt for gid, cnt in new_joiners_rows}
+
+    # ── Bulk-load sparkline data (no N+1) ──
+    spark_sessions = (
+        db.query(models.SesionGrupo)
+        .options(session_read_only_options(db))
+        .filter(
+            models.SesionGrupo.grupo_id.in_(group_ids),
+            _func.lower(models.SesionGrupo.estado) == "realizada",
+            models.SesionGrupo.deleted_at.is_(None),
+        )
+        .order_by(models.SesionGrupo.fecha_sesion.desc())
+        .all()
+    )
+    # Keep only last 8 per group
+    spark_sessions_by_group: dict = defaultdict(list)
+    for s in spark_sessions:
+        if len(spark_sessions_by_group[s.grupo_id]) < 8:
+            spark_sessions_by_group[s.grupo_id].append(s)
+
+    spark_session_ids = [s.id for s in spark_sessions]
+    spark_att_rows = (
+        db.query(models.Asistencia.sesion_id, models.Asistencia.estado)
+        .filter(
+            models.Asistencia.sesion_id.in_(spark_session_ids),
+            models.Asistencia.deleted_at.is_(None),
+        )
+    ).all() if spark_session_ids else []
+    spark_att_by_session: dict = defaultdict(list)
+    for sid, estado in spark_att_rows:
+        spark_att_by_session[sid].append(estado)
+
+    def _compute_sparkline(gid) -> list[float]:
+        sessions = spark_sessions_by_group.get(gid, [])
         result = []
         for sess in reversed(sessions):
-            att = (
-                db.query(models.Asistencia.estado)
-                .filter(
-                    models.Asistencia.sesion_id == sess.id,
-                    models.Asistencia.deleted_at.is_(None),
-                )
-                .all()
-            )
-            t = len(att)
-            p = sum(1 for (e,) in att if e in ATTENDED_STATES)
+            estados = spark_att_by_session.get(sess.id, [])
+            t = len(estados)
+            p = sum(1 for e in estados if e in ATTENDED_STATES)
             result.append(round((p / t) * 100, 1) if t else 0.0)
         return result
 
     result = []
     for g in groups:
-        present, total = _group_att(g.id, start, end)
-        prev_present, prev_total = _group_att(g.id, prev_start, prev_end)
-        pct = round((present / total) * 100, 1) if total else 0.0
+        cur_present, cur_total = cur_att.get(g.id, [0, 0])
+        prev_present, prev_total = prev_att.get(g.id, [0, 0])
+        pct = round((cur_present / cur_total) * 100, 1) if cur_total else 0.0
         prev_pct = round((prev_present / prev_total) * 100, 1) if prev_total else 0.0
-
-        new_joiners = (
-            db.query(_func.count(models.ParticipanteGrupo.id))
-            .filter(
-                models.ParticipanteGrupo.grupo_id == g.id,
-                models.ParticipanteGrupo.fecha_ingreso >= start,
-                models.ParticipanteGrupo.fecha_ingreso < end,
-                models.ParticipanteGrupo.deleted_at.is_(None),
-            )
-            .scalar() or 0
-        )
 
         result.append({
             "id": g.id,
@@ -970,8 +1024,8 @@ def strategy_groups_detail(
             "attendance_pct": pct,
             "prev_attendance_pct": prev_pct,
             "attendance_delta": round(pct - prev_pct, 1),
-            "new_joiners": new_joiners,
-            "sparkline": _sparkline(g.id),
+            "new_joiners": new_joiners_map.get(g.id, 0),
+            "sparkline": _compute_sparkline(g.id),
             "capacity": g.capacidad or 15,
         })
 
@@ -1129,6 +1183,13 @@ def get_strategy_full_analytics(
     parts_by_group: dict = defaultdict(list)
     for p in participantes:
         parts_by_group[p.grupo_id].append(p)
+
+    # Reverse lookup: persona_id → group name (O(P) build, O(1) lookup)
+    persona_to_group_name: dict = {}
+    for g in grupos:
+        for p in parts_by_group.get(g.id, []):
+            if p.persona_id not in persona_to_group_name:
+                persona_to_group_name[p.persona_id] = g.nombre
 
     # Personas únicas (participantes + asistentes)
     persona_ids = list({p.persona_id for p in participantes} | {a.persona_id for a in asistencias})
@@ -1309,11 +1370,7 @@ def get_strategy_full_analytics(
 
         persona = personas_map.get(pid)
         nombre = persona.nombre_completo if persona else str(pid)[:8]
-        grupo_nombre = ""
-        for g in grupos:
-            if any(p.persona_id == pid for p in parts_by_group.get(g.id, [])):
-                grupo_nombre = g.nombre
-                break
+        grupo_nombre = persona_to_group_name.get(pid, "")
 
         personas_ica.append({"nombre": nombre, "ica": ica, "grupo": grupo_nombre, "consecutivos_falta": consecutivos})
 

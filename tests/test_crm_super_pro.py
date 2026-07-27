@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 import sys
 import uuid
+import warnings
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -15,37 +16,120 @@ except ImportError:
     sys.modules["openai"] = openai
 
 from backend import models
+from backend.services import pastoral_health
 from tests.conftest import auth_headers, seed_admin
 
 
 # ── Helper for calling the scoring engine ─────────────────────────────
 def _call_scoring_engine(db_session: Session, persona_id: uuid.UUID):
-    """
-    Tries to locate and call the pastoral health scoring engine.
-    Looks in backend.services.pastoral_health and backend.crud.crm.
-    """
+    """Locate and call the pastoral health scoring engine by its canonical name."""
     try:
         from backend.services import pastoral_health
-        if hasattr(pastoral_health, "calculate_pastoral_health_score"):
-            return pastoral_health.calculate_pastoral_health_score(db_session, persona_id)
-        elif hasattr(pastoral_health, "calculate_health_score"):
-            return pastoral_health.calculate_health_score(db_session, persona_id)
-    except ImportError:
+        return pastoral_health.recalculate_and_persist_pastoral_health(db_session, persona_id)
+    except (ImportError, AttributeError):
         pass
 
     try:
-        from backend.crud import crm
-        if hasattr(crm, "calculate_pastoral_health_score"):
-            return crm.calculate_pastoral_health_score(db_session, persona_id)
-        elif hasattr(crm, "calculate_health_score"):
-            return crm.calculate_health_score(db_session, persona_id)
+        import backend.crud.crm_.health as _crm_health
+        return _crm_health.recalculate_and_persist_pastoral_health(db_session, persona_id)
     except (ImportError, AttributeError):
         pass
 
     pytest.fail(
-        "Pastoral health scoring engine function (calculate_pastoral_health_score or calculate_health_score) "
-        "not found in backend.services.pastoral_health or backend.crud.crm"
+        "Pastoral health scoring engine function (recalculate_and_persist_pastoral_health) "
+        "not found in backend.services.pastoral_health or backend.crud.crm_.health"
     )
+
+
+@pytest.fixture
+def scoring_engine_patches(monkeypatch):
+    """Return a factory that patches the pastoral health scoring engine.
+
+    The factory accepts ``canonical_available`` and returns a tuple
+    ``(mock_canonical, mock_fallback, deprecated_mocks)``:
+
+    - ``mock_canonical``: mock for
+      ``backend.services.pastoral_health.recalculate_and_persist_pastoral_health``.
+    - ``mock_fallback``: mock for
+      ``backend.crud.crm_.health.recalculate_and_persist_pastoral_health``.
+    - ``deprecated_mocks``: dict of mocks for the deprecated wrapper functions in
+      ``backend.crud.crm_.health``.
+
+    ``pytest``'s ``monkeypatch`` fixture guarantees all changes are undone after the
+    test, avoiding the state leaks observed with ``unittest.mock.patch`` + context
+    managers across the re-exported pastoral health module.
+    """
+    def _patched(*, canonical_available: bool = True):
+        from backend.crud.crm_ import health as health_module
+
+        mock_canonical = MagicMock()
+        mock_fallback = MagicMock()
+        deprecated_mocks = {
+            "calculate_pastoral_health": MagicMock(),
+            "calculate_pastoral_health_score": MagicMock(),
+            "calculate_health_score": MagicMock(),
+        }
+
+        monkeypatch.setattr(
+            pastoral_health, "recalculate_and_persist_pastoral_health", mock_canonical
+        )
+        monkeypatch.setattr(
+            health_module, "recalculate_and_persist_pastoral_health", mock_fallback
+        )
+        for name, mock_obj in deprecated_mocks.items():
+            monkeypatch.setattr(health_module, name, mock_obj)
+
+        if not canonical_available:
+            mock_canonical.side_effect = AttributeError("pastoral_health is unavailable")
+
+        return mock_canonical, mock_fallback, deprecated_mocks
+
+    return _patched
+
+
+def test_call_scoring_engine_uses_canonical_function(db_session: Session, scoring_engine_patches):
+    """Verifies that the helper calls the canonical scoring engine and not deprecated wrappers."""
+    persona = models.Persona(
+        first_name="Engine",
+        last_name="Test",
+        email="engine.test@example.com",
+    )
+    db_session.add(persona)
+    db_session.commit()
+
+    mock_canonical, mock_fallback, deprecated_mocks = scoring_engine_patches(canonical_available=True)
+    mock_canonical.return_value = (75, "ESTABLE")
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter("always")
+        result = _call_scoring_engine(db_session, persona.id)
+
+    assert result == (75, "ESTABLE")
+    mock_canonical.assert_called_once_with(db_session, persona.id)
+    mock_fallback.assert_not_called()
+    for deprecated_mock in deprecated_mocks.values():
+        deprecated_mock.assert_not_called()
+    assert not any(issubclass(w.category, DeprecationWarning) for w in captured)
+
+
+def test_call_scoring_engine_fallback_to_crm_health(db_session: Session, scoring_engine_patches):
+    """Verifies that the helper falls back to backend.crud.crm_.health when backend.services.pastoral_health is unavailable."""
+    persona = models.Persona(
+        first_name="Fallback",
+        last_name="Test",
+        email="fallback.test@example.com",
+    )
+    db_session.add(persona)
+    db_session.commit()
+
+    mock_canonical, mock_fallback, deprecated_mocks = scoring_engine_patches(canonical_available=False)
+    mock_fallback.return_value = (42, "EN_RIESGO")
+    result = _call_scoring_engine(db_session, persona.id)
+
+    assert result == (42, "EN_RIESGO")
+    mock_canonical.assert_called_once_with(db_session, persona.id)
+    mock_fallback.assert_called_once_with(db_session, persona.id)
+    for deprecated_mock in deprecated_mocks.values():
+        deprecated_mock.assert_not_called()
 
 
 # ── OpenAI Mock Fixture ───────────────────────────────────────────────
@@ -1126,7 +1210,22 @@ def test_combo_scoring_affects_milestones(db_session: Session):
     db_session.add(persona)
     db_session.commit()
 
-    # Recalculate to set initial status
+    # Recalculate to set initial status (no previous status, so no milestone yet)
+    _call_scoring_engine(db_session, persona.id)
+    db_session.commit()
+
+    # Add enough activity to change status from EN_RIESGO to ESTABLE/COMPROMETIDO
+    for i in range(5):
+        donation = models.Donation(
+            persona_id=persona.id,
+            amount=100.0,
+            donation_date=datetime.date.today() - datetime.timedelta(days=i),
+            status="completed",
+        )
+        db_session.add(donation)
+    db_session.commit()
+
+    # Recalculate after status change
     _call_scoring_engine(db_session, persona.id)
     db_session.commit()
 
@@ -1134,7 +1233,7 @@ def test_combo_scoring_affects_milestones(db_session: Session):
     milestones = db_session.query(models.SpiritualMilestone).filter(
         models.SpiritualMilestone.persona_id == persona.id
     ).all()
-    
+
     # Assert that a milestone corresponding to health score / health status is recorded
     health_milestone_exists = any("health" in m.type.lower() or "riesgo" in m.type.lower() for m in milestones)
     assert health_milestone_exists, "Health status change did not generate a spiritual milestone record"

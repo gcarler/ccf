@@ -10,6 +10,7 @@ Endpoints:
 
 from __future__ import annotations
 
+import asyncio
 import io
 import logging
 from collections import defaultdict
@@ -224,7 +225,7 @@ def _generate_attendance_pdf(
 
 
 @router.get("/reports/group/{grupo_id}/attendance-pdf")
-def attendance_pdf(
+async def attendance_pdf(
     grupo_id: UUID,
     db: Session = Depends(get_db),
     current_user=Depends(require_evangelism_read),
@@ -237,7 +238,8 @@ def attendance_pdf(
     leader_name = _get_leader_name(db, grupo)
     rows = _build_session_rows(db, grupo_id)
 
-    buf = _generate_attendance_pdf(grupo, leader_name, rows)
+    loop = asyncio.get_event_loop()
+    buf = await loop.run_in_executor(None, lambda: _generate_attendance_pdf(grupo, leader_name, rows))
 
     filename = f"asistencia_grupo_{grupo_id}.pdf"
     return StreamingResponse(
@@ -333,7 +335,7 @@ def _generate_attendance_excel(
 
 
 @router.get("/reports/group/{grupo_id}/attendance-excel")
-def attendance_excel(
+async def attendance_excel(
     grupo_id: UUID,
     db: Session = Depends(get_db),
     current_user=Depends(require_evangelism_read),
@@ -346,7 +348,8 @@ def attendance_excel(
     leader_name = _get_leader_name(db, grupo)
     rows = _build_session_rows(db, grupo_id)
 
-    buf = _generate_attendance_excel(grupo, leader_name, rows)
+    loop = asyncio.get_event_loop()
+    buf = await loop.run_in_executor(None, lambda: _generate_attendance_excel(grupo, leader_name, rows))
 
     filename = f"asistencia_grupo_{grupo_id}.xlsx"
     return StreamingResponse(
