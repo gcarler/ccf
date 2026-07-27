@@ -3,7 +3,8 @@
 import React, { useState, Suspense, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { ApiError, apiFetch } from '@/lib/http';
+import { apiFetch } from '@/lib/http';
+import { getErrorMessage } from '../../utils';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
@@ -55,17 +56,6 @@ interface Grupo {
  start_time?: string;
  end_time?: string;
  status: string;
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
- if (error instanceof ApiError) {
-  const detail = error.detail;
-  if (typeof detail === 'string') return detail;
-  if (detail && typeof detail === 'object' && 'detail' in detail) {
-   return String((detail as { detail?: unknown }).detail || fallback);
-  }
- }
- return error instanceof Error ? error.message : fallback;
 }
 
 interface Persona {
@@ -957,10 +947,11 @@ if (!cancelled) setLoading(false);
  {/* Identidad */}
  <div className="space-y-4">
  <div>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor="group-code" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  Código del Grupo
  </label>
  <input
+ id="group-code"
  value={formData.code || ''}
  onChange={e =>
  setFormData({
@@ -973,10 +964,11 @@ if (!cancelled) setLoading(false);
  />
  </div>
  <div>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor="group-name" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  Nombre o Número del Grupo
  </label>
  <input
+ id="group-name"
  value={formData.name || ''}
  onChange={e =>
  setFormData({ ...formData, name: e.target.value })
@@ -987,10 +979,11 @@ if (!cancelled) setLoading(false);
  </div>
  <div className="grid grid-cols-2 gap-4">
  <div>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
+ <label htmlFor="group-zone" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
  <MapPin size={11} /> Zona/Barrio
  </label>
  <input
+ id="group-zone"
  value={formData.zone || ''}
  onChange={e =>
  setFormData({ ...formData, zone: e.target.value })
@@ -1000,10 +993,11 @@ if (!cancelled) setLoading(false);
  />
  </div>
  <div>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
+ <label htmlFor="group-address" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
  <MapPin size={11} /> Dirección
  </label>
  <input
+ id="group-address"
  value={formData.address || ''}
  onChange={e =>
  setFormData({ ...formData, address: e.target.value })
@@ -1028,10 +1022,11 @@ if (!cancelled) setLoading(false);
  { key: 'host_id', label: 'Anfitrión' },
  ].map(({ key, label }) => (
  <div key={key}>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor={`group-role-${key}`} className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  {label}
  </label>
  <select
+ id={`group-role-${key}`}
  value={
  formData[
  key as 'leader_id' | 'assistant_id' | 'host_id'
@@ -1064,10 +1059,11 @@ if (!cancelled) setLoading(false);
  </h3>
  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
  <div className="col-span-2">
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
+ <label htmlFor="group-day" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
  <Clock size={11} /> Día de Reunión
  </label>
  <select
+ id="group-day"
  value={formData.day_of_week || ''}
  onChange={e =>
  setFormData({
@@ -1094,10 +1090,11 @@ if (!cancelled) setLoading(false);
  </select>
  </div>
  <div>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor="group-start-time" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  Hora Inicio
  </label>
  <input
+ id="group-start-time"
  type="time"
  value={formData.start_time || ''}
  onChange={e =>
@@ -1110,10 +1107,11 @@ if (!cancelled) setLoading(false);
  />
  </div>
  <div>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor="group-end-time" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  Hora Fin
  </label>
  <input
+ id="group-end-time"
  type="time"
  value={formData.end_time || ''}
  onChange={e =>
@@ -1123,10 +1121,11 @@ if (!cancelled) setLoading(false);
  />
  </div>
  <div>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor="group-capacity" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  Capacidad
  </label>
  <input
+ id="group-capacity"
  type="number"
  value={formData.capacity || ''}
  onChange={e =>

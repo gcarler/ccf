@@ -99,9 +99,8 @@ class TestRolesEndpoints:
         rol = _make_role(full["db"], s.id)
         full["db"].commit()
         resp = c.delete(f"/api/evangelism/strategies/{s.id}/roles/{rol.id}", headers=h)
-        # May be 200/204 (success) or 500 (if CRUD has permission issues with test DB)
-        # The important thing is the endpoint was called and exercised the code
-        assert resp.status_code in (200, 204, 404, 500)
+        # 200/204 = success, 404 = already deleted or not found
+        assert resp.status_code in (200, 204, 404)
 
     def test_delete_role_not_found(self, full):
         c, h = full["c"], full["h"]

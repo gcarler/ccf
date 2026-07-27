@@ -112,6 +112,12 @@ def miembro_h(client, db_session):
     return auth_headers(client, email="rbac_miembro@ccf.test", password="testpass123")
 
 
+@pytest.fixture()
+def pastor_h(client, db_session):
+    _seed_user_with_crm_role(db_session, "pastor", CRM_MANAGE, "rbac_pastor@ccf.test")
+    return auth_headers(client, email="rbac_pastor@ccf.test", password="testpass123")
+
+
 # ─── Helpers ──────────────────────────────────────────────────────────────
 
 
@@ -213,6 +219,31 @@ class TestRBACPipeline:
     def test_post_admin_not_401_403(self, client, admin_h):
         resp = _post(client, "/api/crm/pipelines", json={"name": "Pipeline RBAC"}, h=admin_h)
         assert resp.status_code not in (401, 403), f"Admin should pass RBAC, got {resp.status_code}"
+
+    def test_pastor_can_list_pipelines(self, client, pastor_h):
+        assert _get(client, "/api/crm/pipelines", pastor_h).status_code == 200
+
+    def test_pastor_can_create_pipeline(self, client, pastor_h):
+        resp = _post(
+            client,
+            "/api/crm/pipelines",
+            json={"name": "Pastor Pipeline", "pipeline_type": "NUEVOS_VISITANTES"},
+            h=pastor_h,
+        )
+        assert resp.status_code in (200, 201)
+
+    def test_pastor_can_access_kanban(self, client, pastor_h):
+        assert _get(client, "/api/crm/pipeline/kanban/cards", pastor_h).status_code == 200
+
+    def test_pastor_can_access_scenario(self, client, pastor_h):
+        # Pastor must pass RBAC; the scenario itself 404s with a non-existent caso_id.
+        resp = _post(
+            client,
+            "/api/crm/scenarios/lead-qualification",
+            json={"caso_id": str(_uuid.uuid4()), "target_etapa_id": str(_uuid.uuid4())},
+            h=pastor_h,
+        )
+        assert resp.status_code not in (401, 403), f"Pastor was blocked by RBAC: {resp.status_code}"
 
 
 # ─── GRUPO 3: Automations ────────────────────────────────────────────────

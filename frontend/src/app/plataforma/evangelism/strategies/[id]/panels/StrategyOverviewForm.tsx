@@ -55,20 +55,20 @@ export default function StrategyOverviewForm({
   return (
     <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
       <div>
-        <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Nombre</label>
-        <input type="text" value={editName} onChange={e => setEditName(e.target.value)} readOnly={!canManage}
+        <label htmlFor="edit-name" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Nombre</label>
+        <input id="edit-name" type="text" value={editName} onChange={e => setEditName(e.target.value)} readOnly={!canManage}
           className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors" />
       </div>
       <div>
-        <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Descripción</label>
-        <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} readOnly={!canManage}
+        <label htmlFor="edit-description" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Descripción</label>
+        <textarea id="edit-description" value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} readOnly={!canManage}
           className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors resize-none"
           placeholder="Detalles sobre la estrategia..." />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Tipo</label>
-          <select value={editType} onChange={e => setEditType(e.target.value)} disabled={!canManage}
+          <label htmlFor="edit-strategy-type" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Tipo</label>
+          <select id="edit-strategy-type" value={editType} onChange={e => setEditType(e.target.value)} disabled={!canManage}
             className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors">
             <option value="">General</option>
             <option value="Geográfica">Geográfica</option>
@@ -79,8 +79,8 @@ export default function StrategyOverviewForm({
           </select>
         </div>
         <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Estado</label>
-          <select value={editStatus} onChange={e => { if (isStrategyStatus(e.target.value)) setEditStatus(e.target.value); }} disabled={!canManage}
+          <label htmlFor="edit-status" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Estado</label>
+          <select id="edit-status" value={editStatus} onChange={e => { if (isStrategyStatus(e.target.value)) setEditStatus(e.target.value); }} disabled={!canManage}
             className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors">
             <option value="pending">No iniciada</option>
             <option value="active">Iniciada</option>
@@ -90,8 +90,8 @@ export default function StrategyOverviewForm({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Clase Raíz</label>
-          <div className="flex gap-2">
+          <label htmlFor="edit-clase-raiz" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Clase Raíz</label>
+          <div id="edit-clase-raiz" className="flex gap-2">
             {['relacional', 'evento_masivo', 'sectorial'].map(c => (
               <button key={c} onClick={() => canManage && setEditClaseRaiz(c)} disabled={!canManage}
                 className={`flex-1 px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all capitalize ${
@@ -105,8 +105,8 @@ export default function StrategyOverviewForm({
           </div>
         </div>
         <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Activa</label>
-          <button onClick={() => canManage && setEditActiva(!editActiva)} disabled={!canManage}
+          <label htmlFor="edit-activa" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Activa</label>
+          <button id="edit-activa" onClick={() => canManage && setEditActiva(!editActiva)} disabled={!canManage}
             className={`w-full px-3 py-2 rounded-lg text-[12px] font-bold transition-all text-left ${
             editActiva
             ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/30 text-success-text dark:text-success-text border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]'
@@ -118,8 +118,8 @@ export default function StrategyOverviewForm({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Recurrencia</label>
-          <select value={editRecurrence || ''} onChange={e => setEditRecurrence(e.target.value || null)} disabled={!canManage}
+          <label htmlFor="edit-recurrence" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Recurrencia</label>
+          <select id="edit-recurrence" value={editRecurrence || ''} onChange={e => setEditRecurrence(e.target.value || null)} disabled={!canManage}
             className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors">
             <option value="">Sin recurrencia</option>
             <option value="SEMANAL">Semanal</option>
@@ -133,12 +133,13 @@ export default function StrategyOverviewForm({
           </select>
         </div>
         <div>
-          <input type="date" value={editStartDate} onChange={e => setEditStartDate(e.target.value)} readOnly={!canManage}
+          <label htmlFor="edit-start-date" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Fecha de inicio</label>
+          <input id="edit-start-date" type="date" value={editStartDate} onChange={e => setEditStartDate(e.target.value)} readOnly={!canManage}
             className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors" />
         </div>
         <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Fecha de fin</label>
-          <input type="date" value={editEndDate} onChange={e => setEditEndDate(e.target.value)} readOnly={!canManage}
+          <label htmlFor="edit-end-date" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Fecha de fin</label>
+          <input id="edit-end-date" type="date" value={editEndDate} onChange={e => setEditEndDate(e.target.value)} readOnly={!canManage}
             className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none transition-colors" />
         </div>
       </div>

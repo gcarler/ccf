@@ -1,3 +1,8 @@
+import type { CmsSectionTypeToProps } from "./cms-section-props";
+
+/** Discriminated union of every section variant (re-export for callers). */
+export type { CmsSectionDiscriminated } from "./cms-section-props";
+
 export interface CmsSite {
   id: string;
   site_key: string;
@@ -76,12 +81,35 @@ export interface CmsPage {
   updated_at: string;
 }
 
-export interface CmsSection {
+/**
+ * A CMS section row, optionally narrowed by ``type`` for typed ``props_json``.
+ *
+ * The default shape preserves the historical contract where ``type`` is an
+ * arbitrary ``string`` and ``props_json`` is an opaque ``Record<string,
+ * unknown>``. All existing consumers (the 275 call-sites that read
+ * ``section.props_json`` and pass it to ``val()`` / ``asItems()``) continue
+ * to typecheck unchanged — the generic defaults give them back the previous
+ * behaviour.
+ *
+ * For type-tight call-sites, pass an explicit section type — the props
+ * interface narrows automatically:
+ *
+ *   function HeroSection({ section }: { section: CmsSection<"hero"> }) {
+ *     section.props_json.title;        // string | undefined
+ *     section.props_json.image_alt;    // string | undefined
+ *   }
+ *
+ * The 44 recognised type strings and their contracts live in
+ * ``cms-section-props.ts`` (∷ CmsSectionTypeToProps). Discriminated union
+ * ``CmsSectionDiscriminated`` is also exported from that module for callers
+ * that iterate a heterogeneous section array.
+ */
+export interface CmsSection<T extends string = string> {
   id: string;
   page_id: string;
   section_key: string;
-  type: string;
-  props_json: Record<string, unknown>;
+  type: T;
+  props_json: T extends keyof CmsSectionTypeToProps ? CmsSectionTypeToProps[T] : Record<string, unknown>;
   sort_order: number;
   is_visible: boolean;
   status: "active" | "archived" | string;

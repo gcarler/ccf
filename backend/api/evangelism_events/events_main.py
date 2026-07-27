@@ -239,7 +239,7 @@ def get_global_event_analytics(
     period: str = Query("MONTH"),
     event_type: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_evangelism_manage),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     from sqlalchemy import func
 
@@ -329,7 +329,7 @@ def get_global_event_analytics(
 @static_router.get("/events/dashboard-stats")
 def get_events_dashboard_stats(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_evangelism_manage),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
     events = _active_events_query(db).filter(models.CrmEvent.sede_id == user_sede).all()

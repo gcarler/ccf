@@ -142,25 +142,6 @@ def _crud_scope_re_check_evangelism_update(
 # ESTRATEGIAS
 # ──────────────────────────────────────────────
 
-def _generate_codigo(db: Session) -> str:
-    """Genera un código EVG-XXX auto-incremental."""
-    last = (
-        db.query(EstrategiaEvangelismo.codigo)
-        .filter(EstrategiaEvangelismo.codigo.isnot(None))
-        .order_by(EstrategiaEvangelismo.codigo.desc())
-        .first()
-    )
-    if last and last.codigo:
-        try:
-            num = int(last.codigo.split("-")[1])
-            return f"EVG-{num + 1}"
-        except (IndexError, ValueError):
-            pass
-    # Fallback: timestamp-based
-    import time
-    return f"EVG-{int(time.time()) % 100000}"
-
-
 def get_estrategias(
     db: Session,
     skip: int = 0,
@@ -503,7 +484,10 @@ def actualizar_participante(
     actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(ParticipanteGrupo)
-        .filter(ParticipanteGrupo.id == participante_id)
+        .filter(
+            ParticipanteGrupo.id == participante_id,
+            ParticipanteGrupo.deleted_at.is_(None),
+        )
         .first()
     )
     if not db_obj:
@@ -544,7 +528,10 @@ def remover_participante(
     actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     db_obj = (
         db.query(ParticipanteGrupo)
-        .filter(ParticipanteGrupo.id == participante_id)
+        .filter(
+            ParticipanteGrupo.id == participante_id,
+            ParticipanteGrupo.deleted_at.is_(None),
+        )
         .first()
     )
     if not db_obj:
@@ -606,6 +593,7 @@ def submit_asistencia(
         .filter(
             Asistencia.sesion_id == data.sesion_id,
             Asistencia.persona_id == data.persona_id,
+            Asistencia.deleted_at.is_(None),
         )
         .first()
     )

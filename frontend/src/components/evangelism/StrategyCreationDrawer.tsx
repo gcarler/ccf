@@ -6,7 +6,8 @@ import {
     Users, Flame, Target, MapPin, Clock, Sparkles, Calendar, X
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ApiError, apiFetch } from '@/lib/http';
+import { apiFetch } from '@/lib/http';
+import { getErrorMessage } from '@/app/plataforma/evangelism/utils';
 import { useAuth } from '@/context/AuthContext';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
@@ -36,17 +37,6 @@ interface FormValues {
     strategyType: string;
     startDate: string;
     endDate: string;
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-    if (error instanceof ApiError) {
-        const detail = error.detail;
-        if (typeof detail === 'string') return detail;
-        if (detail && typeof detail === 'object' && 'detail' in detail) {
-            return String((detail as { detail?: unknown }).detail || fallback);
-        }
-    }
-    return error instanceof Error ? error.message : fallback;
 }
 
 const formatLocalDate = (date: Date) => {

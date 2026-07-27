@@ -1,7 +1,7 @@
 """Tests para permisos granulares sobre los modelos Auth v3.
 
 Cubre:
-1. RolPlataforma CRUD via /admin/auth-role-definitions
+1. RolPlataforma CRUD via /admin/roles (consolidated endpoint)
 2. UsuarioRolModulo CRUD via /admin/user-module-roles
 """
 
@@ -102,10 +102,10 @@ def _create_module_role(db_session: Session, module: str) -> str:
 # TESTS
 # ──────────────────────────────────────────────
 
-class TestAuthRoleDefinitions:
+class TestRoles:
     """CRUD de RolPlataforma via /admin/roles (consolidated endpoint)."""
 
-    def test_list_auth_roles(self, client: TestClient, db_session: Session):
+    def test_list_roles(self, client: TestClient, db_session: Session):
         _seed_auth_roles(db_session)
         token = _login_as_admin(client, db_session)
         resp = client.get("/api/admin/roles", headers={"Authorization": f"Bearer {token}"})
@@ -116,7 +116,7 @@ class TestAuthRoleDefinitions:
         assert "ADMINISTRADOR" in nombres
         assert "LECTOR" in nombres
 
-    def test_create_auth_role(self, client: TestClient, db_session: Session):
+    def test_create_role(self, client: TestClient, db_session: Session):
         token = _login_as_admin(client, db_session)
         resp = client.post(
             "/api/admin/roles",
@@ -128,7 +128,7 @@ class TestAuthRoleDefinitions:
         assert data["nombre"] == "TEST_ROL"
         assert data["permisos"] == {"crm:read": "allow"}
 
-    def test_create_duplicate_auth_role_fails(self, client: TestClient, db_session: Session):
+    def test_create_duplicate_role_fails(self, client: TestClient, db_session: Session):
         token = _login_as_admin(client, db_session)
         client.post(
             "/api/admin/roles",
@@ -142,7 +142,7 @@ class TestAuthRoleDefinitions:
         )
         assert resp.status_code == 409
 
-    def test_update_auth_role(self, client: TestClient, db_session: Session):
+    def test_update_role(self, client: TestClient, db_session: Session):
         token = _login_as_admin(client, db_session)
         # Create a role
         create_resp = client.post(
@@ -160,7 +160,7 @@ class TestAuthRoleDefinitions:
         assert resp.status_code == 200
         assert len(resp.json()["permisos"]) == 2
 
-    def test_delete_auth_role(self, client: TestClient, db_session: Session):
+    def test_delete_role(self, client: TestClient, db_session: Session):
         token = _login_as_admin(client, db_session)
         create_resp = client.post(
             "/api/admin/roles",

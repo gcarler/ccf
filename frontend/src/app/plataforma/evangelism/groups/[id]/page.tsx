@@ -667,19 +667,21 @@ setRemoteResults([]);
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Tema tratado</label>
- <input
- value={reportTopic}
- onChange={(e) => setReportTopic(e.target.value)}
+  <label htmlFor="session-topic" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Tema tratado</label>
+  <input
+  id="session-topic"
+  value={reportTopic}
+  onChange={(e) => setReportTopic(e.target.value)}
  className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="Unidad familiar, fe, oración..."
  />
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Ofrenda recibida</label>
- <input
- type="number"
- value={reportOfferingAmount}
+  <label htmlFor="session-offering" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Ofrenda recibida</label>
+  <input
+  type="number"
+  id="session-offering"
+  value={reportOfferingAmount}
  onChange={(e) => setReportOfferingAmount(e.target.value)}
  className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="0"
@@ -688,9 +690,10 @@ setRemoteResults([]);
  />
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Estado</label>
- <select
- value={reportStatus}
+  <label htmlFor="session-status" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Estado</label>
+  <select
+  id="session-status"
+  value={reportStatus}
  onChange={(e) => {
  const nextStatus =
  e.target.value === 'Cancelada' || e.target.value === 'No realizada' || e.target.value === 'Realizada'
@@ -706,9 +709,10 @@ setRemoteResults([]);
  </select>
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Novedad</label>
- <select
- value={reportNoveltyType}
+  <label htmlFor="session-novelty" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Novedad</label>
+  <select
+  id="session-novelty"
+  value={reportNoveltyType}
  onChange={(e) => setReportNoveltyType(e.target.value)}
  className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  >
@@ -724,18 +728,20 @@ setRemoteResults([]);
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Detalle de novedad</label>
- <textarea
- value={reportNoveltyDetail}
+  <label htmlFor="session-novelty-detail" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Detalle de novedad</label>
+  <textarea
+  id="session-novelty-detail"
+  value={reportNoveltyDetail}
  onChange={(e) => setReportNoveltyDetail(e.target.value)}
  className="w-full min-h-24 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="Explica la novedad o la razón del ajuste..."
  />
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Motivo de cancelación</label>
- <textarea
- value={reportCancellationReason}
+  <label htmlFor="session-cancellation-reason" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Motivo de cancelación</label>
+  <textarea
+  id="session-cancellation-reason"
+  value={reportCancellationReason}
  onChange={(e) => setReportCancellationReason(e.target.value)}
  className="w-full min-h-24 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="Si no se realizó, explica la causa..."
@@ -744,9 +750,10 @@ setRemoteResults([]);
  </div>
 
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Notas del reporte</label>
- <textarea
- value={reportNotes}
+  <label htmlFor="session-notes" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Notas del reporte</label>
+  <textarea
+  id="session-notes"
+  value={reportNotes}
  onChange={(e) => setReportNotes(e.target.value)}
  className="w-full min-h-28 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="Resumen pastoral, acuerdos, seguimiento..."
@@ -790,9 +797,10 @@ setRemoteResults([]);
  {!attended && (
  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Razón</label>
- <select
- value={row.absence_reason || 'other'}
+  <label htmlFor={`absence-reason-${row.persona_id}`} className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Razón</label>
+  <select
+  id={`absence-reason-${row.persona_id}`}
+  value={row.absence_reason || 'other'}
  onChange={(e) => setReportPersonas(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason: e.target.value as AttendanceReason } : item))}
  className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  >
@@ -800,9 +808,10 @@ setRemoteResults([]);
  </select>
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Detalle</label>
- <input
- value={row.absence_reason_detail || ''}
+  <label htmlFor={`absence-detail-${row.persona_id}`} className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Detalle</label>
+  <input
+  id={`absence-detail-${row.persona_id}`}
+  value={row.absence_reason_detail || ''}
  onChange={(e) => setReportPersonas(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason_detail: e.target.value } : item))}
  className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  placeholder="Especifica el motivo"
@@ -943,20 +952,20 @@ setRemoteResults([]);
  {isCreatingPersona ? (
  <div className="flex-1 overflow-y-auto pb-6 space-y-4 pt-2">
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Nombres *</label>
- <input value={newPersonaForm.first_name} onChange={e => setNewPersonaForm(p => ({ ...p, first_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Ej. Juan" />
+  <label htmlFor="persona-first-name" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Nombres *</label>
+  <input id="persona-first-name" value={newPersonaForm.first_name} onChange={e => setNewPersonaForm(p => ({ ...p, first_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Ej. Juan" />
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Apellidos *</label>
- <input value={newPersonaForm.last_name} onChange={e => setNewPersonaForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Ej. Pérez" />
+  <label htmlFor="persona-last-name" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Apellidos *</label>
+  <input id="persona-last-name" value={newPersonaForm.last_name} onChange={e => setNewPersonaForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Ej. Pérez" />
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Teléfono</label>
- <input value={newPersonaForm.phone} onChange={e => setNewPersonaForm(p => ({ ...p, phone: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Opcional" />
+  <label htmlFor="persona-phone" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Teléfono</label>
+  <input id="persona-phone" value={newPersonaForm.phone} onChange={e => setNewPersonaForm(p => ({ ...p, phone: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Opcional" />
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Correo Electrónico</label>
- <input type="email" value={newPersonaForm.email} onChange={e => setNewPersonaForm(p => ({ ...p, email: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Opcional" />
+  <label htmlFor="persona-email" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Correo Electrónico</label>
+  <input type="email" id="persona-email" value={newPersonaForm.email} onChange={e => setNewPersonaForm(p => ({ ...p, email: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Opcional" />
  </div>
  <div className="flex gap-3 pt-4">
  <button onClick={() => setIsCreatingPersona(false)} className="flex-1 py-1.5 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] rounded-lg text-sm font-bold hover:bg-[hsl(var(--bg-muted))] transition-all">Cancelar</button>

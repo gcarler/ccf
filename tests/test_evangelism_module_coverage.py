@@ -2539,7 +2539,7 @@ class TestEventScopeAndGranularPermissions:
             f"/api/evangelism/events/{event_id}/sessions/2026-09-20/export",
         ):
             response = full["c"].get(path, headers=reader_headers)
-            assert response.status_code == 403, response.text
+            assert response.status_code == 404, response.text
 
         manager, _, _ = _seed_user_with_role(
             db_session,
@@ -2554,13 +2554,13 @@ class TestEventScopeAndGranularPermissions:
             json={"target_audience": "ALL"},
             headers=manager_headers,
         )
-        assert response.status_code == 403, response.text
+        assert response.status_code == 404, response.text
         response = full["c"].post(
             f"/api/evangelism/events/{event_id}/assignments",
             json={"session_date": "2026-09-20", "assignments": []},
             headers=manager_headers,
         )
-        assert response.status_code == 403, response.text
+        assert response.status_code == 404, response.text
 
 
 class TestEvangelismPermissionMatrix:
