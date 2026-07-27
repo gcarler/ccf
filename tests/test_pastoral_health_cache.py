@@ -404,16 +404,16 @@ def test_cache_not_invalidated_on_unrelated_table_bulk_update(db_session):
 
 
 @pytest.mark.parametrize(
-    "deprecated_fn",
+    "compat_fn",
     [
         calculate_pastoral_health,
         calculate_pastoral_health_score,
         calculate_health_score,
     ],
 )
-def test_deprecated_wrapper_emits_deprecation_warning(db_session, deprecated_fn):
-    """Cada wrapper deprecado debe emitir DeprecationWarning al usarse."""
+def test_compat_wrapper_emits_deprecation_warning(db_session, compat_fn):
+    """Cada wrapper de compatibilidad debe emitir DeprecationWarning al usarse."""
     _, _, sede = seed_admin(db_session)
     persona = _create_persona(db_session, sede, is_baptized=True)
     with pytest.warns(DeprecationWarning, match="recalculate_and_persist_pastoral_health"):
-        deprecated_fn(db_session, persona.id)
+        compat_fn(db_session, persona.id)
