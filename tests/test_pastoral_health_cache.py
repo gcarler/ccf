@@ -3,12 +3,13 @@ from datetime import date, datetime, timezone
 from unittest.mock import patch
 
 import pytest
-from sqlalchemy import update
+from sqlalchemy import delete, text, update
 
 from backend import models
 from backend.core.cache import get_redis
 from backend.crud.crm_.health import (
     _cache_key,
+    _get_cached_health,
     calculate_health_score,
     calculate_pastoral_health,
     calculate_pastoral_health_score,
@@ -263,10 +264,9 @@ def test_update_pastoral_health_returns_db_values_on_cache_hit(db_session):
     update_pastoral_health(db_session, persona.id)
 
     # Simular que otra operación actualiz la DB por fuera del caché.
+    # Usamos SQL crudo para no disparar los listeners de invalidación.
     db_session.execute(
-        update(models.Persona)
-        .where(models.Persona.id == persona.id)
-        .values(health_score=99, health_status="COMPROMETIDO")
+        text("UPDATE personas SET health_score=99, health_status='COMPROMETIDO' WHERE id=:id").bindparams(id=persona.id)
     )
     db_session.commit()
 
@@ -321,6 +321,86 @@ def test_update_pastoral_health_cache_hit_does_not_commit(db_session):
         .count()
     )
     assert asist_count == 0
+
+
+def test_cache_invalidated_on_bulk_asistencia_update(db_session):
+    """Un bulk update de Asistencia invalida el caché de salud."""
+    _, _, sede = seed_admin(db_session)
+    persona = _create_persona(db_session, sede)
+
+    asist = models.Asistencia(
+        id=uuid.uuid4(),
+        persona_id=persona.id,
+        sesion_id=uuid.uuid4(),
+        estado="presente",
+    )
+    db_session.add(asist)
+    db_session.commit()
+
+    # Poblar caché con un score determinado
+    with patch("backend.crud.crm_.health._compute_pastoral_health_score") as mock_compute:
+        mock_compute.return_value = (50, "ESTABLE", False)
+        update_pastoral_health(db_session, persona.id)
+
+    assert _get_cached_health(persona.id) is not None
+
+    # Bulk update que bypass eventos de instancia
+    db_session.execute(
+        update(models.Asistencia)
+        .where(models.Asistencia.persona_id == persona.id)
+        .values(estado="ausente")
+    )
+    db_session.commit()
+
+    # El caché debe haber sido invalidado por el listener bulk
+    assert _get_cached_health(persona.id) is None
+
+
+def test_cache_invalidated_on_bulk_communication_log_delete(db_session):
+    """Un bulk delete de CommunicationLog invalida el caché de salud."""
+    _, _, sede = seed_admin(db_session)
+    persona = _create_persona(db_session, sede)
+
+    log = models.CommunicationLog(
+        id=uuid.uuid4(),
+        persona_id=persona.id,
+        channel="WhatsApp",
+        content="Hola",
+        outcome="sent",
+    )
+    db_session.add(log)
+    db_session.commit()
+
+    # Poblar caché
+    update_pastoral_health(db_session, persona.id)
+
+    assert _get_cached_health(persona.id) is not None
+
+    # Bulk delete que bypass eventos de instancia
+    db_session.execute(
+        delete(models.CommunicationLog).where(models.CommunicationLog.persona_id == persona.id)
+    )
+    db_session.commit()
+
+    assert _get_cached_health(persona.id) is None
+
+
+def test_cache_not_invalidated_on_unrelated_table_bulk_update(db_session):
+    """Un bulk update en una tabla no relacionada no toca el caché de salud."""
+    _, _, sede = seed_admin(db_session)
+    persona = _create_persona(db_session, sede, is_baptized=True)
+
+    update_pastoral_health(db_session, persona.id)
+    cached_before = _get_cached_health(persona.id)
+    assert cached_before is not None
+
+    # Bulk update sobre una tabla no relacionada (no disparado por un modelo de CRM pastoral)
+    db_session.execute(update(models.Sede).where(models.Sede.id == sede.id).values(nombre="Otra"))
+    db_session.commit()
+
+    cached_after = _get_cached_health(persona.id)
+    assert cached_after is not None
+    assert cached_after == cached_before
 
 
 @pytest.mark.parametrize(
