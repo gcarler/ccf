@@ -88,7 +88,7 @@ export interface CmsPage {
  * arbitrary ``string`` and ``props_json`` is an opaque ``Record<string,
  * unknown>``. All existing consumers (the 275 call-sites that read
  * ``section.props_json`` and pass it to ``val()`` / ``asItems()``) continue
- * to typecheck unchanged — the generic defaults give them back the legacy
+ * to typecheck unchanged — the generic defaults give them back the previous
  * behaviour.
  *
  * For type-tight call-sites, pass an explicit section type — the props

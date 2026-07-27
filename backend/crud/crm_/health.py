@@ -381,22 +381,22 @@ def recalculate_and_persist_pastoral_health(db: Session, persona_id: UUID) -> tu
 
 
 # Backwards-compatible aliases used by tests and service modules.
-def _deprecated_alias(name: str):
+def _compat_alias(name: str):
     def wrapper(db: Session, persona_id: UUID) -> tuple[int, str]:
         warnings.warn(
-            f"{name} is deprecated; use recalculate_and_persist_pastoral_health instead.",
+            f"{name} is superseded by recalculate_and_persist_pastoral_health; use that instead.",
             DeprecationWarning,
             stacklevel=2,
         )
         return recalculate_and_persist_pastoral_health(db, persona_id)
     wrapper.__name__ = name
-    wrapper.__doc__ = f"Deprecated: use ``recalculate_and_persist_pastoral_health``."
+    wrapper.__doc__ = "Superseded by ``recalculate_and_persist_pastoral_health``."
     return wrapper
 
 
-calculate_pastoral_health = _deprecated_alias("calculate_pastoral_health")
-calculate_pastoral_health_score = _deprecated_alias("calculate_pastoral_health_score")
-calculate_health_score = _deprecated_alias("calculate_health_score")
+calculate_pastoral_health = _compat_alias("calculate_pastoral_health")
+calculate_pastoral_health_score = _compat_alias("calculate_pastoral_health_score")
+calculate_health_score = _compat_alias("calculate_health_score")
 
 
 def update_pastoral_health(db: Session, persona_id: UUID) -> models.Persona | None:
