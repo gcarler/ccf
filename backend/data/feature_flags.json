@@ -64,12 +64,7 @@
       }
     },
     "critical_feature_flags": [
-      "automation_builder",
-      "collaborative_editor",
-      "command_center",
-      "knowledge_graph",
-      "presence_live",
-      "web_vitals_dashboard"
+      "feat_x"
     ],
     "suppressions": []
   }
