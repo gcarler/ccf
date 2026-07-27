@@ -9,7 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.api.crm._shared import case_query
+from backend.crud.crm_.shared import case_query
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access, require_pastor_or_admin
 from backend.core.tenant import require_user_sede_id
@@ -950,8 +950,7 @@ def drag_drop_concurrent(
 
     # Check if there is an active lock for stage (concurrency protection)
     # Clear old locks (>10s)
-    ten_seconds_ago = datetime.now(timezone.utc) - timedelta(seconds=10)
-    db.query(models.CrmReorderLock).filter(models.CrmReorderLock.locked_at < ten_seconds_ago).delete()
+    models.CrmReorderLock.cleanup_expired(db, ttl_seconds=10)
     db.commit()
 
     lock = (
@@ -984,8 +983,7 @@ def drag_drop_recovery(
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    ten_seconds_ago = datetime.now(timezone.utc) - timedelta(seconds=10)
-    db.query(models.CrmReorderLock).filter(models.CrmReorderLock.locked_at < ten_seconds_ago).delete()
+    models.CrmReorderLock.cleanup_expired(db, ttl_seconds=10)
     db.commit()
 
     caso_id = payload.get("caso_id")

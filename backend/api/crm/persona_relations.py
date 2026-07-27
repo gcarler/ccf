@@ -6,12 +6,14 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import (
-    _case_created_column,
     _get_scoped_family,
     _get_scoped_persona,
     _scope_by_user_sede_via_persona,
     _serialize_case,
     _serialize_task,
+)
+from backend.crud.crm_.shared import (
+    _case_created_column,
     case_query,
     prepare_case_for_output,
 )

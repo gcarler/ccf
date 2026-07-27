@@ -3,7 +3,7 @@
 
 # health functions live in crm_/health.py which imports from backend.api.crm._shared
 # — not re-exported here to avoid circular imports. Access via:
-#   from backend.crud.crm_.health import calculate_health_score
+#   from backend.crud.crm_.health import recalculate_and_persist_pastoral_health
 
 from backend.crud.crm_ import (
     assign_persona_mentor,

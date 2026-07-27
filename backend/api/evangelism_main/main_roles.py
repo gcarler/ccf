@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend.api.evangelism_shared import get_visible_strategy
 from backend.core.database import get_db
-from backend.core.permissions import require_evangelism_manage
+from backend.core.permissions import require_evangelism_manage, require_evangelism_read
 from backend.core.tenant import require_user_sede_id
 
 roles_router = APIRouter(tags=["Evangelismo - Roles y Excusas"])
@@ -37,7 +37,7 @@ def _require_visible_strategy(db: Session, strategy_id: UUID, user) -> models.Es
 def list_strategy_roles(
     strategy_id: UUID,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_evangelism_manage),
+    _user: models.User = Depends(require_evangelism_read),
 ):
     """Lista los roles personalizados de una estrategia."""
     from backend.crud.evangelism import get_roles_personalizados
@@ -101,7 +101,7 @@ def delete_strategy_role(
 def list_motivos_excusa(
     solo_activos: bool = True,
     db: Session = Depends(get_db),
-    _user: models.User = Depends(require_evangelism_manage),
+    _user: models.User = Depends(require_evangelism_read),
 ):
     """Lista el catálogo de motivos de excusa."""
     from backend.crud.evangelism import get_motivos_excusa

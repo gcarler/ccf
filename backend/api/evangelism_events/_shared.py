@@ -71,5 +71,5 @@ def require_event_access(db: Session, user: models.User, event_id: UUID | str) -
         raise HTTPException(status_code=404, detail="Event not found")
     user_sede = require_user_sede_id(db, user)
     if event.sede_id and str(event.sede_id) != str(user_sede):
-        raise HTTPException(status_code=403, detail="Evento no pertenece a tu sede")
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
     return event

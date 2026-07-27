@@ -2,11 +2,11 @@ import uuid
 from datetime import date, datetime, timezone
 
 from backend import models
-from backend.crud.crm_.health import calculate_pastoral_health, update_pastoral_health
+from backend.crud.crm_.health import recalculate_and_persist_pastoral_health, update_pastoral_health
 from tests.conftest import auth_headers, seed_admin
 
 
-def test_calculate_pastoral_health_attendance_details(db_session):
+def test_pastoral_health_attendance_details(db_session):
     """Test attendance score calculations with different opportunities and attendance types."""
     # Seed an admin to get a valid Sede
     _, admin_persona, sede = seed_admin(db_session)
@@ -24,7 +24,7 @@ def test_calculate_pastoral_health_attendance_details(db_session):
     db_session.commit()
 
     # Case A: 0 opportunities -> Attendance score should be 0
-    score, status = calculate_pastoral_health(db_session, persona.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona.id)
     assert score == 0
     assert status == "EN_RIESGO"
 
@@ -45,7 +45,7 @@ def test_calculate_pastoral_health_attendance_details(db_session):
     db_session.commit()
 
     # Opps = 2, Attended = 1. Attendance score = 1 / 2 * 50 = 25.0
-    score, status = calculate_pastoral_health(db_session, persona.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona.id)
     assert score == 25
     assert status == "EN_RIESGO"
 
@@ -73,7 +73,7 @@ def test_calculate_pastoral_health_attendance_details(db_session):
 
     # Previous Opps = 2, Attended = 1
     # New Opps = 4 (2 + 2), New Attended = 2 (1 + 1). Attendance score = 2 / 4 * 50 = 25.0
-    score, status = calculate_pastoral_health(db_session, persona.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona.id)
     assert score == 25
 
     # Case D: CourseAttendance opportunities via Enrollment
@@ -111,11 +111,11 @@ def test_calculate_pastoral_health_attendance_details(db_session):
     # Total Opps = 5 (2 Asistencia + 2 EventAttendance + 1 CourseAttendance)
     # Total Attended = 3 (1 Asistencia + 1 EventAttendance + 1 CourseAttendance)
     # Attendance score = 3 / 5 * 50 = 30.0
-    score, status = calculate_pastoral_health(db_session, persona.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona.id)
     assert score == 30
 
 
-def test_calculate_pastoral_health_milestone_and_communication(db_session):
+def test_pastoral_health_milestone_and_communication(db_session):
     """Test milestone and communication score calculations, caps, and boundaries."""
     _, admin_persona, sede = seed_admin(db_session)
 
@@ -148,7 +148,7 @@ def test_calculate_pastoral_health_milestone_and_communication(db_session):
     db_session.commit()
 
     # Milestones count = 1. is_baptized = True (+1). Total milestone points = 2 * 10 = 20 score points.
-    score, status = calculate_pastoral_health(db_session, persona.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona.id)
     assert score == 20  # attendance = 0, milestones = 20, comms = 0
 
     # Add 2 more milestones (total active = 3. points = 3 + 1 = 4 * 10 = 40, capped at 30).
@@ -161,7 +161,7 @@ def test_calculate_pastoral_health_milestone_and_communication(db_session):
     db_session.add_all([milestone3, milestone4])
     db_session.commit()
 
-    score, status = calculate_pastoral_health(db_session, persona.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona.id)
     assert score == 30
 
     # 2. Communication score testing
@@ -173,7 +173,7 @@ def test_calculate_pastoral_health_milestone_and_communication(db_session):
     db_session.commit()
 
     # Total comms = 1 * 5 = 5. Total score = 30 (milestones) + 5 = 35.
-    score, status = calculate_pastoral_health(db_session, persona.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona.id)
     assert score == 35
     assert status == "EN_RIESGO"
 
@@ -226,7 +226,7 @@ def test_calculate_pastoral_health_milestone_and_communication(db_session):
     # Total comms = 1 (comm_log) + 1 (interact1) = 2 * 5 = 10.
     # Total score = 30 (milestones) + 10 = 40.
     # Status boundaries: ESTABLE is 40 <= Score < 80.
-    score, status = calculate_pastoral_health(db_session, persona.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona.id)
     assert score == 40
     assert status == "ESTABLE"
 
@@ -245,7 +245,7 @@ def test_calculate_pastoral_health_milestone_and_communication(db_session):
 
     # Total comms = 5 (4 logs + 1 interaction) = 25 capped at 20.
     # Total score = 30 (milestones) + 20 = 50.
-    score, status = calculate_pastoral_health(db_session, persona.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona.id)
     assert score == 50
     assert status == "ESTABLE"
 
@@ -352,7 +352,7 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     db_session.add(persona_zero)
     db_session.commit()
 
-    score, status = calculate_pastoral_health(db_session, persona_zero.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona_zero.id)
     assert score == 0
     assert status == "EN_RIESGO"
 
@@ -403,7 +403,7 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     db_session.commit()
 
     # Total score should be 50 (attendance) + 30 (milestones) + 20 (comm) = 100
-    score, status = calculate_pastoral_health(db_session, persona_large.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona_large.id)
     assert score == 100
     assert status == "COMPROMETIDO"
 
@@ -498,7 +498,7 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     # CourseAttendance: 2 (course_att1, course_att2)
     # Total Attended = 5 + 1 + 2 = 8.
     # Attendance Score: 8 / 16 * 50 = 25.0
-    score, status = calculate_pastoral_health(db_session, persona_mixed.id)
+    score, status = recalculate_and_persist_pastoral_health(db_session, persona_mixed.id)
     assert score == 25
     assert status == "EN_RIESGO"
 
@@ -514,7 +514,7 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
             id=uuid.uuid4(), persona_id=persona_39.id, sesion_id=uuid.uuid4(), estado="presente" if i < 39 else "falto"
         ))
     db_session.commit()
-    score_39, status_39 = calculate_pastoral_health(db_session, persona_39.id)
+    score_39, status_39 = recalculate_and_persist_pastoral_health(db_session, persona_39.id)
     assert score_39 == 39
     assert status_39 == "EN_RIESGO"
 
@@ -529,7 +529,7 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
             id=uuid.uuid4(), persona_id=persona_40.id, sesion_id=uuid.uuid4(), estado="presente" if i < 40 else "falto"
         ))
     db_session.commit()
-    score_40, status_40 = calculate_pastoral_health(db_session, persona_40.id)
+    score_40, status_40 = recalculate_and_persist_pastoral_health(db_session, persona_40.id)
     assert score_40 == 40
     assert status_40 == "ESTABLE"
 
@@ -549,7 +549,7 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     for i in range(4):
         db_session.add(models.CommunicationLog(id=uuid.uuid4(), persona_id=persona_79.id, channel="Call", content=f"C{i}", outcome="sent"))
     db_session.commit()
-    score_79, status_79 = calculate_pastoral_health(db_session, persona_79.id)
+    score_79, status_79 = recalculate_and_persist_pastoral_health(db_session, persona_79.id)
     assert score_79 == 79
     assert status_79 == "ESTABLE"
 
@@ -569,7 +569,7 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     for i in range(4):
         db_session.add(models.CommunicationLog(id=uuid.uuid4(), persona_id=persona_80.id, channel="Call", content=f"C{i}", outcome="sent"))
     db_session.commit()
-    score_80, status_80 = calculate_pastoral_health(db_session, persona_80.id)
+    score_80, status_80 = recalculate_and_persist_pastoral_health(db_session, persona_80.id)
     assert score_80 == 80
     assert status_80 == "COMPROMETIDO"
 
@@ -588,7 +588,7 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     for _ in range(3):
         db_session.add(models.SpiritualMilestone(id=uuid.uuid4(), persona_id=persona_round_down.id, sede_id=sede_a.id, type="Milestone", event_date=date.today()))
     db_session.commit()
-    score_down, status_down = calculate_pastoral_health(db_session, persona_round_down.id)
+    score_down, status_down = recalculate_and_persist_pastoral_health(db_session, persona_round_down.id)
     assert score_down == 39
     assert status_down == "EN_RIESGO"
 
@@ -606,7 +606,7 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     for _ in range(3):
         db_session.add(models.SpiritualMilestone(id=uuid.uuid4(), persona_id=persona_round_up.id, sede_id=sede_a.id, type="Milestone", event_date=date.today()))
     db_session.commit()
-    score_up, status_up = calculate_pastoral_health(db_session, persona_round_up.id)
+    score_up, status_up = recalculate_and_persist_pastoral_health(db_session, persona_round_up.id)
     assert score_up == 40
     assert status_up == "ESTABLE"
 
@@ -645,11 +645,11 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     db_session.commit()
 
     # Calculate pastoral health for Persona A (should remain unaffected: 0)
-    score_a, status_a = calculate_pastoral_health(db_session, persona_a.id)
+    score_a, status_a = recalculate_and_persist_pastoral_health(db_session, persona_a.id)
     assert score_a == 0
     assert status_a == "EN_RIESGO"
 
     # Calculate pastoral health for Persona B (milestones capped at 30, comms capped at 20, attendance 50 -> 100)
-    score_b, status_b = calculate_pastoral_health(db_session, persona_b.id)
+    score_b, status_b = recalculate_and_persist_pastoral_health(db_session, persona_b.id)
     assert score_b == 100
     assert status_b == "COMPROMETIDO"

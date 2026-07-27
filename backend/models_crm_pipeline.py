@@ -6,7 +6,7 @@ trazabilidad de origen, y SLAs de tiempo de respuesta.
 
 import enum
 import uuid as _uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy import Enum as SAEnum
@@ -437,6 +437,16 @@ class CrmReorderLock(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     stage_id = Column(UUID(as_uuid=True), nullable=True)
     locked_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    @classmethod
+    def cleanup_expired(cls, db, ttl_seconds: int = 10):
+        """Elimina locks más antiguos que ``ttl_seconds``.
+
+        Debe ejecutarse antes de intentar adquirir un lock para evitar
+        que locks de procesos fallidos queden atascados indefinidamente (P-09).
+        """
+        cutoff = _utcnow() - timedelta(seconds=ttl_seconds)
+        db.query(cls).filter(cls.locked_at < cutoff).delete(synchronize_session=False)
 
 
 class CrmDragDropEvent(Base):

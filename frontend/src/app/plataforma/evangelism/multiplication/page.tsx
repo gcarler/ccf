@@ -12,7 +12,8 @@ import type {
   MultiplicationHistoryItem,
   SplitResponse,
 } from '@/app/plataforma/evangelism/types';
-import { ApiError, apiFetch } from '@/lib/http';
+import { apiFetch } from '@/lib/http';
+import { getErrorMessage } from '../utils';
 import {
   GitBranch,
   History,
@@ -73,17 +74,6 @@ function normalizeSplitResponse(res: unknown): SplitResponse {
     nuevo_grupo: normalizeGroupSummary(obj.nuevo_grupo),
     personas_transferidas,
   };
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) {
-    const detail = error.detail;
-    if (typeof detail === 'string') return detail;
-    if (detail && typeof detail === 'object' && 'detail' in detail) {
-      return String((detail as { detail?: unknown }).detail || fallback);
-    }
-  }
-  return error instanceof Error ? error.message : fallback;
 }
 
 export default function MultiplicationPage() {

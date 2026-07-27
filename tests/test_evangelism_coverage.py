@@ -17,7 +17,8 @@ from tests.conftest import seed_admin as _seed_admin
 
 
 def _ok(status):
-    return status in (200, 201, 400, 403, 404, 405, 422)
+    """Smoke-test: endpoint didn't crash (no 500). Accepts success + handled errors."""
+    return status in (200, 201, 400, 403, 404, 422)
 
 
 @pytest.fixture

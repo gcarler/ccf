@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { DSBadge,DSCard,DSMetric } from '@/design';
 import { MINIMAL_VIEWS,useViewType } from '@/hooks/useViewType';
 import { ApiError,apiFetch } from '@/lib/http';
+import { getErrorMessage } from '../utils';
 import clsx from 'clsx';
 import { Award,CheckCircle2,ChevronRight,Clock,FileText,Home,Loader2 } from 'lucide-react';
 
@@ -54,16 +55,6 @@ interface SessionCreatePayload {
  grupo_id?: string;
 }
 
-function getErrorMessage(error: unknown, fallback: string): string {
- if (error instanceof ApiError) {
-   const detail = error.detail;
-   if (typeof detail === 'string') return detail;
-   if (detail && typeof detail === 'object' && 'detail' in detail) {
-     return String((detail as { detail?: unknown }).detail || fallback);
-   }
- }
- return error instanceof Error ? error.message : fallback;
-}
 
 const PERIODICITY_LABEL: Record<string, string> = { SEMANAL: 'Semanal', MENSUAL: 'Mensual' };
 

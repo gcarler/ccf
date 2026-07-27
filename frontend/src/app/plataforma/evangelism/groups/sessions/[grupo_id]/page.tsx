@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch, ApiError } from '@/lib/http';
+import { getErrorMessage } from '../../../utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -65,17 +66,6 @@ interface AttendanceSaveResult {
 }
 
 interface SessionCreateResult { id: string; }
-
-function getErrorMessage(error: unknown, fallback: string): string {
- if (error instanceof ApiError) {
-  const detail = error.detail;
-  if (typeof detail === 'string') return detail;
-  if (detail && typeof detail === 'object' && 'detail' in detail) {
-   return String((detail as { detail?: unknown }).detail || fallback);
-  }
- }
- return error instanceof Error ? error.message : fallback;
-}
 
 export default function SessionReportPage() {
  const params = useParams();
