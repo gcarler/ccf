@@ -43,6 +43,8 @@ class TestAdminFast:
         c, h, s, p = ac; assert c.get("/api/admin/donation-categories", headers=h).status_code in OK
     def test_admin_user_module_roles(self, ac):
         c, h, s, p = ac; assert c.get("/api/admin/user-module-roles", headers=h).status_code in OK
+    def test_admin_auth_role_definitions(self, ac):
+        c, h, s, p = ac; assert c.get("/api/admin/roles", headers=h).status_code in OK
     def test_admin_users_with_roles(self, ac):
         c, h, s, p = ac; assert c.get("/api/admin/users-with-roles", headers=h).status_code in OK
 
