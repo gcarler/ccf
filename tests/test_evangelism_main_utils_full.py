@@ -3,8 +3,6 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
-
 from backend import models
 from backend.api.evangelism_main import main_utils as utils
 

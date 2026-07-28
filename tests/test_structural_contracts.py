@@ -876,6 +876,7 @@ def test_frontend_no_direct_fetch_calls():
         "frontend/src/components/projects/TaskDetailPanel.tsx",
         # Formularios públicos nativos del CMS (sin auth header)
         "frontend/src/components/public/cms/PublicSectionRenderer.tsx",
+        "frontend/src/components/public/cms/sections/forms-interactive.tsx",
     }
     violations = []
     for scan_root in scan_roots:
