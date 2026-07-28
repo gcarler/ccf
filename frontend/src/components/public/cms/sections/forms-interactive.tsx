@@ -35,6 +35,9 @@ export function NewsletterSection({ section }: { section: CmsSection<"newsletter
             silent: true,
           });
         } else {
+          // Direct fetch is intentional: external actionUrl may be a public
+          // third-party form endpoint (e.g., newsletter provider) that does not
+          // use our apiFetch auth headers. See AGENTS_FRONTEND §8 exceptions.
           const res = await fetch(actionUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
