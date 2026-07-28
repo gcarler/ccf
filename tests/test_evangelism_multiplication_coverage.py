@@ -2,21 +2,22 @@
 Coverage tests for evangelism_multiplication.py — target 90%+.
 """
 import uuid
-from datetime import datetime, timezone
 
 import pytest
 
 from backend import models
 from backend.api.evangelism_multiplication import (
-    _count_personas,
-    _serialize_grupo,
+    GrupoResumenMultiplicacion,
     MultiplicationCheckItem,
     MultiplicationHistoryItem,
     SplitRequest,
     SplitResponse,
-    GrupoResumenMultiplicacion,
+    _count_personas,
+    _serialize_grupo,
 )
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
+from tests.conftest import seed_user_with_role
 
 
 @pytest.fixture
@@ -200,3 +201,87 @@ class TestMultiplicationEndpoints:
         data = resp.json()
         assert data["ok"] is True
         assert data["personas_transferidas"] >= 1
+
+
+class TestMultiplicationRBACBoundary:
+    """F4-2: RBAC boundary tests for multiplication endpoints."""
+
+    def test_no_perms_403_on_check(self, client, db_session):
+        _seed_admin(db_session)
+        persona_user, _, _ = seed_user_with_role(
+            db_session,
+            role_name="persona",
+            email="noevmult@test.com",
+            permisos={"default": "allow"},
+        )
+        h = _auth_headers(client, email="noevmult@test.com")
+        resp = client.get("/api/evangelism/multiplication/check", headers=h)
+        assert resp.status_code == 403
+
+    def test_no_perms_403_on_split(self, client, db_session):
+        _seed_admin(db_session)
+        persona_user, _, _ = seed_user_with_role(
+            db_session,
+            role_name="persona",
+            email="noevsplit@test.com",
+            permisos={"default": "allow"},
+        )
+        h = _auth_headers(client, email="noevsplit@test.com")
+        resp = client.post("/api/evangelism/multiplication/split", headers=h, json={
+            "grupo_id": str(uuid.uuid4()),
+            "nuevo_nombre": "Test",
+            "nuevo_lider_id": str(uuid.uuid4()),
+        })
+        assert resp.status_code == 403
+
+    def test_no_perms_403_on_history(self, client, db_session):
+        _seed_admin(db_session)
+        persona_user, _, _ = seed_user_with_role(
+            db_session,
+            role_name="persona",
+            email="noevhist@test.com",
+            permisos={"default": "allow"},
+        )
+        h = _auth_headers(client, email="noevhist@test.com")
+        resp = client.get("/api/evangelism/multiplication/history", headers=h)
+        assert resp.status_code == 403
+
+    def test_read_only_200_on_check(self, client, db_session):
+        _seed_admin(db_session)
+        read_user, _, _ = seed_user_with_role(
+            db_session,
+            role_name="lector_evangelismo",
+            email="readmult@test.com",
+            permisos={"evangelism:read": "allow"},
+        )
+        h = _auth_headers(client, email="readmult@test.com")
+        resp = client.get("/api/evangelism/multiplication/check", headers=h)
+        assert resp.status_code == 200
+
+    def test_read_only_403_on_split(self, client, db_session):
+        _seed_admin(db_session)
+        read_user, _, _ = seed_user_with_role(
+            db_session,
+            role_name="lector_evangelismo",
+            email="readsplt@test.com",
+            permisos={"evangelism:read": "allow"},
+        )
+        h = _auth_headers(client, email="readsplt@test.com")
+        resp = client.post("/api/evangelism/multiplication/split", headers=h, json={
+            "grupo_id": str(uuid.uuid4()),
+            "nuevo_nombre": "Test",
+            "nuevo_lider_id": str(uuid.uuid4()),
+        })
+        assert resp.status_code == 403
+
+    def test_read_only_200_on_history(self, client, db_session):
+        _seed_admin(db_session)
+        read_user, _, _ = seed_user_with_role(
+            db_session,
+            role_name="lector_evangelismo",
+            email="readhist@test.com",
+            permisos={"evangelism:read": "allow"},
+        )
+        h = _auth_headers(client, email="readhist@test.com")
+        resp = client.get("/api/evangelism/multiplication/history", headers=h)
+        assert resp.status_code == 200

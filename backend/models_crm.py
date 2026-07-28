@@ -23,6 +23,7 @@ class Family(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(100), nullable=False)
     address = Column(Text, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     personas = relationship("Persona", back_populates="family")
 
@@ -216,6 +217,7 @@ class Ministry(Base):
         ForeignKey("personas.id"),
         nullable=True,
     )
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     personas = relationship(
@@ -531,6 +533,7 @@ class Position(Base):
     description = Column(Text, nullable=True)
     category = Column(String(50), nullable=True, index=True)
     is_active = Column(Boolean, default=True, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     persona_positions = relationship("PersonaPosition", back_populates="position", cascade="all, delete-orphan")
@@ -556,6 +559,7 @@ class PersonaPosition(Base):
     end_date = Column(DateTime(timezone=True), nullable=True, index=True)
     is_active = Column(Boolean, default=True, index=True)
     notes = Column(Text, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     persona = relationship("Persona", back_populates="positions")
@@ -627,6 +631,7 @@ class VolunteerSkill(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     name = Column(String(100), unique=True, nullable=False)
     category = Column(String(100))
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
 
 persona_volunteer_skills = Table(
@@ -912,6 +917,7 @@ class PersonaMinistryAssignment(Base):
     end_date = Column(Date, nullable=True)
     is_active = Column(Boolean, default=True, index=True)
     notes = Column(Text, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     persona = relationship("Persona", overlaps="persona,personas,ministries,ministry")
@@ -927,6 +933,7 @@ class Fund(Base):
     is_public = Column(Boolean, default=False)
     current_balance = Column(Numeric(14, 2), default=0)
     target_amount = Column(Numeric(14, 2), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 

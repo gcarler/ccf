@@ -15,10 +15,15 @@ repos:
         args: ["--maxkb=500"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.0
+    rev: v0.15.14
     hooks:
       - id: ruff
-        args: ["--select=E,W,F,I", "--fix"]
+        alias: ruff-import-sorting
+        name: ruff import sorting
+        args: ["--select", "I", "--fix"]
+      - id: ruff
+        name: ruff lint
+        args: ["--select=E,W,F", "--fix"]
       - id: ruff-format
 
   - repo: https://github.com/PyCQA/bandit

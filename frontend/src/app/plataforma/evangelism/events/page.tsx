@@ -29,7 +29,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import React,{ useEffect,useState } from 'react';
 import { toast } from 'sonner';
 import TextPromptDrawer from '@/components/ui/TextPromptDrawer';
-import { getErrorMessage, formatLocalDate } from '../utils';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
  PERMANENT: 'Semanal',
@@ -52,6 +52,15 @@ const EVENT_TYPE_COLOR: Record<string, string> = {
 };
 
 const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+const formatLocalDate = (date: Date) => {
+ const year = date.getFullYear();
+ const month = String(date.getMonth() + 1).padStart(2, '0');
+ const day = String(date.getDate()).padStart(2, '0');
+ return `${year}-${month}-${day}`;
+};
+
+import { getErrorMessage } from '../utils';
 
 const normalizeMinistryEvent = (raw: MinistryEvent): MinistryEvent => ({
  ...raw,
@@ -826,10 +835,11 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  onViewChange={(view) => setViewType(view as ViewType)}
  onAdd={canManageEvents ? () => setIsCreateDrawerOpen(true) : undefined}
  >
- <div className="p-4 space-y-3">
- {/* GRID VIEW */}
- {viewType === 'grid' && (
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div className="p-4 space-y-3">
+  <ErrorBoundary moduleName="Eventos - Listado">
+  {/* GRID VIEW */}
+  {viewType === 'grid' && (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
  {events.length === 0 ? (
  <div className="col-span-3 py-1.5 text-center text-[hsl(var(--text-secondary))] text-sm">
  No hay eventos registrados
@@ -838,11 +848,14 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  (() => {
  const attendanceStat = getEventAttendanceStat(ev);
  return (
- <div 
- key={ev.id} 
- onClick={() => router.push(`/plataforma/evangelism/events/${ev.id}`)}
- className="p-4 rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-surface-card hover:border-[hsl(var(--primary)/0.3)] hover:shadow-[0_8px_30px_hsl(var(--primary)/0.12)] transition-all group flex flex-col justify-between cursor-pointer"
- >
+  <div 
+  key={ev.id} 
+  tabIndex={0}
+  role="link"
+  onClick={() => router.push(`/plataforma/evangelism/events/${ev.id}`)}
+  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/evangelism/events/${ev.id}`); } }}
+  className="p-4 rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-surface-card hover:border-[hsl(var(--primary)/0.3)] hover:shadow-[0_8px_30px_hsl(var(--primary)/0.12)] transition-all group flex flex-col justify-between cursor-pointer"
+  >
  <div>
  <div className="flex justify-between items-start mb-4">
  <div className="flex gap-2 items-center">
@@ -925,10 +938,13 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <Calendar size={16} />
  </div>
  <div className="flex-1 min-w-0">
- <p 
- onClick={() => router.push(`/plataforma/evangelism/events/${ev.id}`)}
- className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] text-sm truncate cursor-pointer hover:text-[hsl(var(--primary))] transition-colors"
- >
+  <p 
+  tabIndex={0}
+  role="link"
+  onClick={() => router.push(`/plataforma/evangelism/events/${ev.id}`)}
+  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/evangelism/events/${ev.id}`); } }}
+  className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] text-sm truncate cursor-pointer hover:text-[hsl(var(--primary))] transition-colors"
+  >
  {ev.name}
  </p>
  <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{ev.description || 'Sin descripción'}</p>
@@ -1057,14 +1073,16 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  className="min-h-[360px] w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] p-4 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-primary dark:bg-black/20 "
  />
  </section>
- )}
- </div>
+  )}
+  </ErrorBoundary>
+  </div>
 
- {/* Drawer: Crear evento */}
- <WorkspaceDrawer
- isOpen={isCreateDrawerOpen && canManageEvents}
- onClose={() => setIsCreateDrawerOpen(false)}
- title="Nuevo Evento"
+  {/* Drawer: Crear evento */}
+  <ErrorBoundary moduleName="Eventos - Crear">
+  <WorkspaceDrawer
+  isOpen={isCreateDrawerOpen && canManageEvents}
+  onClose={() => setIsCreateDrawerOpen(false)}
+  title="Nuevo Evento"
  subtitle="Configura un evento de la iglesia"
  actions={
  <>
@@ -1084,21 +1102,21 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  >
  <form id="create-event-form" onSubmit={handleCreateEvent} className="space-y-3">
  <div className="space-y-1.5">
-  <label htmlFor="event-name" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre del Evento *</label>
-  <input
-   id="event-name"
-   required
-   value={newEvent.name}
-   onChange={e => setNewEvent({ ...newEvent, name: e.target.value })}
-   className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
-   placeholder="Ej: Servicio Dominical"
-  />
+ <label htmlFor="event-name" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre del Evento *</label>
+ <input
+ id="event-name"
+ required
+ value={newEvent.name}
+ onChange={e => setNewEvent({ ...newEvent, name: e.target.value })}
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
+ placeholder="Ej: Servicio Dominical"
+ />
  </div>
 
  <div className="space-y-1.5">
-  <label htmlFor="event-type" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tipo de Evento *</label>
-  <select
-   id="event-type"
+ <label htmlFor="event-type" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tipo de Evento *</label>
+ <select
+ id="event-type"
  required
  value={newEvent.event_type}
  onChange={e => setNewEvent({ ...newEvent, event_type: e.target.value })}
@@ -1116,10 +1134,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div className="space-y-1.5">
-  <label htmlFor="event-audience" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo Esperado</label>
-  <select
-  id="event-audience"
-  value={newEvent.target_audience}
+ <label htmlFor="event-audience" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo Esperado</label>
+ <select
+ id="event-audience"
+ value={newEvent.target_audience}
  onChange={e => setNewEvent({
  ...newEvent,
  target_audience: e.target.value,
@@ -1135,10 +1153,11 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  </select>
  </div>
  <div className="space-y-1.5">
-  <label htmlFor="event-roles" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Roles esperados</label>
-  <select
-  multiple
-  disabled={newEvent.target_audience !== 'ROLE'}
+ <label htmlFor="event-roles" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Roles esperados</label>
+ <select
+ id="event-roles"
+ multiple
+ disabled={newEvent.target_audience !== 'ROLE'}
  value={newEvent.target_role_ids}
  onChange={e => {
  const selectedValues = Array.from(e.target.selectedOptions).map((option) => option.value);
@@ -1222,9 +1241,9 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  {newEvent.target_persona_ids.length} seleccionadas
  </span>
  </div>
-  <input
-  id="event-personas"
-  value={createManualSearch}
+ <input
+ id="event-personas"
+ value={createManualSearch}
  onChange={e => setCreateManualSearch(e.target.value)}
  placeholder="Buscar por nombre, correo o rol..."
  className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-primary"
@@ -1267,22 +1286,22 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  <div className="grid grid-cols-2 gap-4">
  <div className="space-y-1.5">
-  <label htmlFor="event-start-time" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Hora de Inicio *</label>
-  <input
-   type="time"
-   required
-   id="event-start-time"
+ <label htmlFor="event-start-time" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Hora de Inicio *</label>
+ <input
+ id="event-start-time"
+ type="time"
+ required
  value={newEvent.start_time}
  onChange={e => setNewEvent({ ...newEvent, start_time: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
  />
  </div>
  <div className="space-y-1.5">
-  <label htmlFor="event-end-time" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Hora de Finalización *</label>
-  <input
-   type="time"
-   required
-   id="event-end-time"
+ <label htmlFor="event-end-time" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Hora de Finalización *</label>
+ <input
+ id="event-end-time"
+ type="time"
+ required
  value={newEvent.end_time}
  onChange={e => setNewEvent({ ...newEvent, end_time: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
@@ -1292,10 +1311,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  {['PERMANENT', 'GROUPS', 'ONLINE'].includes(newEvent.event_type) && (
  <div className="space-y-1.5">
-  <label htmlFor="event-day-of-week" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día de la Semana</label>
-  <select
-  id="event-day-of-week"
-  value={newEvent.day_of_week}
+ <label htmlFor="event-day-of-week" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día de la Semana</label>
+ <select
+ id="event-day-of-week"
+ value={newEvent.day_of_week}
  onChange={e => setNewEvent({ ...newEvent, day_of_week: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm "
  >
@@ -1306,10 +1325,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  {['ONCE', 'SPECIAL'].includes(newEvent.event_type) && (
  <div className="space-y-1.5">
-  <label htmlFor="event-fixed-date" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Fecha Exacta</label>
-  <input
-   type="date"
-   id="event-fixed-date"
+ <label htmlFor="event-fixed-date" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Fecha Exacta</label>
+ <input
+ id="event-fixed-date"
+ type="date"
  value={newEvent.fixed_date}
  onChange={e => setNewEvent({ ...newEvent, fixed_date: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm "
@@ -1319,10 +1338,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  {['ANNUAL', 'MONTHLY'].includes(newEvent.event_type) && (
  <div className="space-y-1.5">
-  <label htmlFor="event-month-day" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día(s) del Mes / Año</label>
-  <input
-  id="event-month-day"
-  value={newEvent.month_day}
+ <label htmlFor="event-month-day" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día(s) del Mes / Año</label>
+ <input
+ id="event-month-day"
+ value={newEvent.month_day}
  onChange={e => setNewEvent({ ...newEvent, month_day: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm "
  placeholder="Ej: 15 de cada mes, o 24 Dic"
@@ -1331,21 +1350,23 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  )}
 
  <div className="space-y-1.5">
-  <label htmlFor="event-description" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción</label>
-  <textarea
-  id="event-description"
-  value={newEvent.description}
-  onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
-  rows={3}
+ <label htmlFor="event-description" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción</label>
+ <textarea
+ id="event-description"
+ value={newEvent.description}
+ onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
+ rows={3}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm resize-none"
  placeholder="Breve descripción del evento..."
  />
  </div>
  </form>
- </WorkspaceDrawer>
+  </WorkspaceDrawer>
+  </ErrorBoundary>
 
- {/* Drawer: Registrar asistencia */}
- <WorkspaceDrawer
+  {/* Drawer: Registrar asistencia */}
+  <ErrorBoundary moduleName="Eventos - Asistencia">
+  <WorkspaceDrawer
  isOpen={isAttendanceDrawerOpen}
  onClose={() => setIsAttendanceDrawerOpen(false)}
  title="Registro de Asistencia"
@@ -1483,10 +1504,14 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  {attendanceLoading ? (
  <div className="py-1.5 text-center text-[hsl(var(--text-secondary))] text-sm">Cargando asistencia registrada...</div>
  ) : filteredPersonas.map(persona => (
- <div
- key={persona.id}
- onClick={() => toggleAttendance(persona.id)}
- className={`flex items-center p-4 rounded-lg cursor-pointer transition-all border ${attendedPersonaIds.includes(persona.id)
+  <div
+  key={persona.id}
+  tabIndex={0}
+  role="checkbox"
+  aria-checked={attendedPersonaIds.includes(persona.id)}
+  onClick={() => toggleAttendance(persona.id)}
+  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAttendance(persona.id); } }}
+  className={`flex items-center p-4 rounded-lg cursor-pointer transition-all border ${attendedPersonaIds.includes(persona.id)
  ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] border-success dark:border-success shadow-sm'
  : 'bg-[hsl(var(--bg-muted))] border-[hsl(var(--border-primary))] hover:border-[hsl(var(--border-primary))] dark:hover:border-white/10'
  }`}
@@ -1514,9 +1539,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  )}
  </div>
  </div>
- </WorkspaceDrawer>
+  </WorkspaceDrawer>
+  </ErrorBoundary>
 
- {/* Drawer: Generar QR */}
+  {/* Drawer: Generar QR */}
  <WorkspaceDrawer
  isOpen={isQrDrawerOpen}
  onClose={() => setIsQrDrawerOpen(false)}
@@ -1615,10 +1641,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  </div>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div className="space-y-1.5">
-  <label htmlFor="edit-event-audience" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo Esperado</label>
-  <select
-  id="edit-event-audience"
-  value={editingEvent.target_audience || 'ALL'}
+ <label htmlFor="edit-event-audience" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo Esperado</label>
+ <select
+ id="edit-event-audience"
+ value={editingEvent.target_audience || 'ALL'}
  onChange={e => setEditingEvent({
  ...editingEvent,
  target_audience: e.target.value as EventAudience,
@@ -1634,11 +1660,11 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  </select>
  </div>
  <div className="space-y-1.5">
-  <label htmlFor="edit-event-roles" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Roles esperados</label>
-  <select
-  id="edit-event-roles"
-  multiple
-  disabled={(editingEvent.target_audience || 'ALL') !== 'ROLE'}
+ <label htmlFor="edit-event-roles" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Roles esperados</label>
+ <select
+ id="edit-event-roles"
+ multiple
+ disabled={(editingEvent.target_audience || 'ALL') !== 'ROLE'}
  value={(editingEvent.target_role_ids || getTargetRoleIds(editingEvent)).map((value: string) => String(value))}
  onChange={e => {
  const selectedValues = Array.from(e.target.selectedOptions).map((option) => option.value);
@@ -1683,10 +1709,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  {editingEvent.target_audience === 'MANUAL' && (
  <div className="space-y-3">
  <div className="flex items-center justify-between gap-3">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Personas esperadas</label>
+  <label htmlFor="edit-event-personas" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Personas esperadas</label>
  <span className="rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info">{(editingEvent.target_persona_ids || []).length} seleccionadas</span>
  </div>
- <input value={editManualSearch} onChange={e => setEditManualSearch(e.target.value)} placeholder="Buscar por nombre, correo o rol..." className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
+   <input id="edit-event-personas" value={editManualSearch} onChange={e => setEditManualSearch(e.target.value)} placeholder="Buscar por nombre, correo o rol..." className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
  <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-3">
  {editManualPersonas.map((persona) => {
  const isSelected = (editingEvent.target_persona_ids || []).includes(persona.id);
@@ -1706,26 +1732,26 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  )}
  {editingEvent.status === 'CANCELLED' && (
  <div className="animate-in fade-in slide-in-from-top-2 space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">Razón de Cancelación *</label>
- <textarea value={editingEvent.cancellation_reason || ''} onChange={e => setEditingEvent({...editingEvent, cancellation_reason: e.target.value})} rows={3} placeholder="¿Por qué no se realizó este evento?" className="w-full px-4 py-1.5 rounded-lg border border-danger bg-[hsl(var(--danger-muted))] dark:bg-black/20 focus:ring-2 focus:ring-danger outline-none font-bold text-sm text-danger dark:text-danger resize-none placeholder:text-[hsl(var(--danger)/0.5)] dark:placeholder:text-[hsl(var(--destructive))]" />
+  <label htmlFor="edit-event-cancellation-reason" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">Razón de Cancelación *</label>
+  <textarea id="edit-event-cancellation-reason" value={editingEvent.cancellation_reason || ''} onChange={e => setEditingEvent({...editingEvent, cancellation_reason: e.target.value})} rows={3} placeholder="¿Por qué no se realizó este evento?" className="w-full px-4 py-1.5 rounded-lg border border-danger bg-[hsl(var(--danger-muted))] dark:bg-black/20 focus:ring-2 focus:ring-danger outline-none font-bold text-sm text-danger dark:text-danger resize-none placeholder:text-[hsl(var(--danger)/0.5)] dark:placeholder:text-[hsl(var(--destructive))]" />
  </div>
  )}
  <div className="space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</label>
- <textarea value={editingEvent.description || ''} onChange={e => setEditingEvent({...editingEvent, description: e.target.value})} rows={3} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] resize-none" />
+ <label htmlFor="edit-event-description" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</label>
+ <textarea id="edit-event-description" value={editingEvent.description || ''} onChange={e => setEditingEvent({...editingEvent, description: e.target.value})} rows={3} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] resize-none" />
  </div>
  <div className="space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
- <input type="text" value={editingEvent.location || ''} onChange={e => setEditingEvent({...editingEvent, location: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
+ <label htmlFor="edit-event-location" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
+ <input id="edit-event-location" type="text" value={editingEvent.location || ''} onChange={e => setEditingEvent({...editingEvent, location: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
  </div>
  <div className="grid grid-cols-2 gap-4">
  <div className="space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hora de Inicio</label>
- <input type="time" value={editingEvent.start_time || ''} onChange={e => setEditingEvent({...editingEvent, start_time: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
+ <label htmlFor="edit-event-start-time" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hora de Inicio</label>
+ <input id="edit-event-start-time" type="time" value={editingEvent.start_time || ''} onChange={e => setEditingEvent({...editingEvent, start_time: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
  </div>
  <div className="space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hora de Finalización</label>
- <input type="time" value={editingEvent.end_time || ''} onChange={e => setEditingEvent({...editingEvent, end_time: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
+ <label htmlFor="edit-event-end-time" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hora de Finalización</label>
+ <input id="edit-event-end-time" type="time" value={editingEvent.end_time || ''} onChange={e => setEditingEvent({...editingEvent, end_time: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
  </div>
  </div>
  </div>

@@ -42,7 +42,6 @@ from backend.schemas.crm.resources import (
     PlantillaMensajeUpdate,
 )
 
-
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 
 def _seed_sede(db: Session, name: str = "Sede QC-18.A") -> models.Sede:

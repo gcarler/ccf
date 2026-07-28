@@ -5,12 +5,11 @@ import uuid
 
 import pytest
 
-from backend import models, schemas
 from backend.api.evangelism_main.main_roles import (
     _require_visible_strategy,
-    _serialize_rol_personalizado,
 )
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture
@@ -24,8 +23,9 @@ def full(client, db_session):
 
 
 def _make_strategy(db, sede_id):
-    from backend.models_evangelism import EstrategiaEvangelismo, CategoriaEstrategia
     from datetime import datetime, timezone
+
+    from backend.models_evangelism import CategoriaEstrategia, EstrategiaEvangelismo
     # Create a category first
     cat = CategoriaEstrategia(id=uuid.uuid4(), nombre="Test Cat")
     db.add(cat)
@@ -79,7 +79,6 @@ class TestRolesEndpoints:
         full["db"].commit()
         resp = c.post(f"/api/evangelism/strategies/{s.id}/roles", headers=h, json={
             "nombre_rol": "Nuevo Rol",
-            "permisos": {"read": True},
         })
         assert resp.status_code in (200, 201), f"Expected 2xx, got {resp.status_code}: {resp.text[:200]}"
 
@@ -87,7 +86,6 @@ class TestRolesEndpoints:
         c, h = full["c"], full["h"]
         resp = c.post(f"/api/evangelism/strategies/{uuid.uuid4()}/roles", headers=h, json={
             "nombre_rol": "Rol",
-            "permisos": {},
         })
         assert resp.status_code == 404
 
@@ -99,8 +97,7 @@ class TestRolesEndpoints:
         rol = _make_role(full["db"], s.id)
         full["db"].commit()
         resp = c.delete(f"/api/evangelism/strategies/{s.id}/roles/{rol.id}", headers=h)
-        # 200/204 = success, 404 = already deleted or not found
-        assert resp.status_code in (200, 204, 404)
+        assert resp.status_code in (200, 204, 404), f"Unexpected {resp.status_code}"
 
     def test_delete_role_not_found(self, full):
         c, h = full["c"], full["h"]

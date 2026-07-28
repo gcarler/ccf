@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import (
-    _case_created_column,
     _case_stage,
     _case_status,
     _enum_value,
@@ -27,16 +26,19 @@ from backend.api.crm._shared import (
     _serialize_case,
     _serialize_message_group,
     _serialize_task,
-    case_query,
     persona_query,
-    prepare_case_for_output,
     utc_now,
 )
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
 from backend.core.tenant import get_user_sede_id
 from backend.crud._utils import _coerce_uuid_or_404, _to_uuid
-from backend.crud.crm_.shared import resolve_persona_id_for_user
+from backend.crud.crm_.shared import (
+    _case_created_column,
+    case_query,
+    prepare_case_for_output,
+    resolve_persona_id_for_user,
+)
 from backend.models_crm_pipeline import CanalOrigenEnum, EstadoCasoEnum, TipoInteraccionEnum
 from backend.schemas.crm.base import (
     CasoCreate,

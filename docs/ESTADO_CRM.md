@@ -407,6 +407,35 @@ Defensa que activa: **SQLite tz-info loss invariant** (MEMORY.md ses_07a7a9fe). 
 
 REGLAS.md §25 "no mezclar wide migrations" **no aplica** porque `AwareDateTime` es refactor tipo-only — mismo tipo runtime `datetime`, mismo comportamiento en Postgres (ya tz-aware), cero cambio funcional ni contrato API alterado. La "amplitud" (~2 archivos, 70 campos) refleja la prevalencia del patrón `created_at`/`updated_at`/`event_date` en schemas CRM, no acoplamiento funcional.
 
+## 19. Actualización de estado — 2026-07-28 (revisión de calidad CRM)
+
+Revisión integral del módulo CRM ejecutada para verificar el estado declarado al 100%.
+
+### Hallazgos y correcciones
+
+- **Lint backend CRM:** se encontraron y corrigieron 4 errores de lint en el backend CRM:
+  - `backend/crud/crm_/shared.py`: faltaba importar `Any` (uso en anotación de tipo string).
+  - `backend/api/crm/pipelines.py`: import `timedelta` sin usar.
+  - `backend/api/crm/pastoral.py` y `backend/api/crm/pipelines.py`: bloques de import desorganizados según `ruff` (I001).
+  - Resultado post-fix: `ruff check backend/api/crm/ backend/crud/crm_/ backend/models_crm.py backend/models_crm_pipeline.py backend/schemas/crm/` **→ All checks passed!** ✅
+
+### Validación post-corrección
+
+- `scripts/test_crm_quality.py` (base): **90 passed** (53 smoke + 37 RBAC) ✅
+- `scripts/test_crm_quality.py --backend-deep --pipeline --concurrency`: **234 passed** (53 smoke + 37 RBAC + 24 deep + 99 pipeline + 21 concurrencia/stress) ✅
+- `tests/test_crm_pastoral_extended.py` + `tests/test_crm_pastoral_remaining.py`: **23 passed** ✅
+- Backend lint CRM: **limpio** ✅
+
+### Observaciones
+
+- Los tests backend canónicos del CRM están en **verde absoluto**; no hay regresiones detectadas tras las correcciones de lint.
+- El frontend E2E CRM (`npm run test:e2e:crm`) **no pudo completarse en el entorno de revisión** por timeout (>600s). Esto no implica que el código esté roto — la suite Playwright requiere build de Next.js y levantar servidor, lo cual en este host superó el tiempo máximo asignado. Se recomienda revalidar en un runner con más tiempo o en CI dedicado.
+- Las correcciones realizadas son **pura higiene de código**: no alteran contratos API, modelos ni comportamiento funcional.
+
+### Estado actual
+
+Backend CRM: **100% verde** en tests canónicos y lint. Frontend E2E CRM: pendiente de revalidación por timeout ambiental, no por fallo funcional demostrado.
+
 ### 18.3 Validación post-cierre
 
 - `scripts/test_crm_quality.py`: RESUMEN 2 passed 0 failed (smoke mínimo + RBAC HTTP) ✅

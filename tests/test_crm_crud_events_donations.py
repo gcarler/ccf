@@ -21,13 +21,11 @@ from __future__ import annotations
 import uuid as _uuid
 from typing import Optional
 
-import pytest
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.crud.crm_ import donations as crud_donations
 from backend.crud.crm_ import events as crud_events
-
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 

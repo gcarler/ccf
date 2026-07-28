@@ -8,6 +8,8 @@ const authFlagIndex = args.indexOf('--auth');
 const authEnabled = authFlagIndex >= 0;
 const academyRolesFlagIndex = args.indexOf('--academy-roles');
 const academyRolesEnabled = academyRolesFlagIndex >= 0;
+const reuseBuildFlagIndex = args.indexOf('--reuse-build');
+const reuseBuild = reuseBuildFlagIndex >= 0;
 const hasWorkersFlag = args.includes('--workers');
 
 if (authEnabled) {
@@ -15,6 +17,9 @@ if (authEnabled) {
 }
 if (academyRolesEnabled) {
   args.splice(academyRolesFlagIndex, 1);
+}
+if (reuseBuild) {
+  args.splice(reuseBuildFlagIndex, 1);
 }
 
 async function resolveManagedPort() {
@@ -60,19 +65,22 @@ const env = {
 };
 
 const managedBuildDir = path.join(process.cwd(), '.next');
-fs.rmSync(managedBuildDir, { recursive: true, force: true });
 
-const buildResult = spawnSync('npm', ['run', 'build'], {
-  stdio: 'inherit',
-  env,
-});
+if (!reuseBuild) {
+  fs.rmSync(managedBuildDir, { recursive: true, force: true });
 
-if (buildResult.error) {
-  throw buildResult.error;
-}
+  const buildResult = spawnSync('npm', ['run', 'build'], {
+    stdio: 'inherit',
+    env,
+  });
 
-if ((buildResult.status ?? 1) !== 0) {
-  process.exit(buildResult.status ?? 1);
+  if (buildResult.error) {
+    throw buildResult.error;
+  }
+
+  if ((buildResult.status ?? 1) !== 0) {
+    process.exit(buildResult.status ?? 1);
+  }
 }
 
 if (authEnabled || academyRolesEnabled) {

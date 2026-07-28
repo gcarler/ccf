@@ -56,6 +56,20 @@ jobs:
         # Uses select/ignore/per-file-ignores from pyproject.toml
         run: ruff check backend/
 
+      - name: Lint CRM backend (import organization)
+        # Dedicated gate for CRM modules to catch import organization
+        # regressions before they reach main.
+        run: bash scripts/lint-crm.sh
+
+      - name: Lint Academy backend (import organization)
+        run: bash scripts/lint-academy.sh
+
+      - name: Lint Evangelism backend (import organization)
+        run: bash scripts/lint-evangelism.sh
+
+      - name: Lint CMS backend (import organization)
+        run: bash scripts/lint-cms.sh
+
       - name: Security scan with Bandit
         run: bandit -r backend/ -f json -o bandit-report.json || true
 
@@ -64,9 +78,10 @@ jobs:
           pip install mypy
           mypy backend/ --ignore-missing-imports || true
 
-      - name: Run tests with coverage
+      - name: Run non-CRM tests with coverage
+        # CRM tests have their own dedicated job to surface regressions quickly.
         run: |
-          pytest tests/ -v --cov=backend --cov-report=xml --cov-report=term
+          pytest tests/ -v --cov=backend --cov-report=xml --cov-report=term --ignore-glob='tests/test_crm_*.py'
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
           TEST_DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
@@ -202,10 +217,63 @@ jobs:
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
 
+  # ── CRM Tests Gate ───────────────────────────────────────────
+  crm-tests:
+    name: CRM Functional Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ccf_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 1
+          done
+
+      - name: Run CRM tests
+        run: |
+          pytest tests/test_crm_*.py -v --cov=backend --cov-report=xml --cov-report=term
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          TEST_DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+
+      - name: Upload CRM coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: crm
+          fail_ci_if_error: false
+
   # ── Deploy to Staging ────────────────────────────────────────
   deploy-staging:
     name: Deploy to Staging
-    needs: [backend-quality, frontend-quality, migrations-check]
+    needs: [backend-quality, frontend-quality, migrations-check, crm-tests]
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     environment: staging
@@ -219,7 +287,7 @@ jobs:
   # ── Deploy to Production ─────────────────────────────────────
   deploy-production:
     name: Deploy to Production
-    needs: [backend-quality, frontend-quality, migrations-check]
+    needs: [backend-quality, frontend-quality, migrations-check, crm-tests]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production

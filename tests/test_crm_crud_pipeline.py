@@ -16,16 +16,13 @@ Posture mirrors `tests/test_crm_crud_personas.py`: SQLite in-memory via the
 from __future__ import annotations
 
 import uuid as _uuid
-from typing import Optional
 
-import pytest
 from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud.crm_ import pipeline as crud_pipeline
 from backend.models_crm_pipeline import EtapaPipeline, PipelineCRM
 from backend.models_shared import _utcnow
-
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 

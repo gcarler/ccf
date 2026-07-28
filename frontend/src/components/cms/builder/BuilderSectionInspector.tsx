@@ -751,6 +751,767 @@ export default function BuilderSectionInspector({
                   </div>
                 )}
 
+                {/* ── Divider ───────────────────────────────────────────── */}
+                {activeSection.type === "divider" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Divisor</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Estilo de línea</label>
+                      <select
+                        value={safeString(activeSection.props_json?.style) || "solid"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), style: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("style", e.target.value); }}
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      >
+                        <option value="solid">Sólida</option>
+                        <option value="dashed">Discontinua</option>
+                        <option value="dotted">Punteada</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Ancho</label>
+                      <select
+                        value={safeString(activeSection.props_json?.width) || "full"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), width: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("width", e.target.value); }}
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      >
+                        <option value="full">Completo (full)</option>
+                        <option value="80%">80%</option>
+                        <option value="60%">60%</option>
+                        <option value="40%">40%</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Margen superior</label>
+                      <input
+                        type="number"
+                        value={safeString(activeSection.props_json?.margin_top) || "8"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), margin_top: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("margin_top", e.target.value)}
+                        placeholder="8"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Margen inferior</label>
+                      <input
+                        type="number"
+                        value={safeString(activeSection.props_json?.margin_bottom) || "8"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), margin_bottom: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("margin_bottom", e.target.value)}
+                        placeholder="8"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Spacer ────────────────────────────────────────────── */}
+                {activeSection.type === "spacer" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Espaciador</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Altura (px)</label>
+                      <input
+                        type="number"
+                        value={safeString(activeSection.props_json?.height) || "32"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), height: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("height", e.target.value)}
+                        placeholder="32"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Etiqueta (solo para editor)</label>
+                      <input
+                        value={safeString(activeSection.props_json?.label)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), label: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("label", e.target.value)}
+                        placeholder="Espacio"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Social Links ──────────────────────────────────────── */}
+                {activeSection.type === "social_links" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Redes sociales</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Disposición</label>
+                      <select
+                        value={safeString(activeSection.props_json?.layout) || "row"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), layout: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("layout", e.target.value); }}
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      >
+                        <option value="row">Fila horizontal</option>
+                        <option value="column">Columna vertical</option>
+                      </select>
+                    </div>
+                    <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                      <input
+                        type="checkbox"
+                        checked={activeSection.props_json?.show_labels !== false}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), show_labels: e.target.checked }; updateSectionPropsLocal(nextProps); saveSectionProps(nextProps); }}
+                      />
+                      Mostrar etiquetas de texto
+                    </label>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      return (
+                        <div key={`social-${index}`} className="space-y-2 rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/10 p-2">
+                          <select
+                            value={safeString(itemObject.platform) || "facebook"}
+                            onChange={(e) => { upsertArrayItem("items", index, { platform: e.target.value }); }}
+                            onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { platform: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
+                            className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          >
+                            <option value="facebook">Facebook</option>
+                            <option value="instagram">Instagram</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="tiktok">TikTok</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="twitter">Twitter / X</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="spotify">Spotify</option>
+                            <option value="apple-podcasts">Apple Podcasts</option>
+                          </select>
+                          <input
+                            value={safeString(itemObject.url)}
+                            onChange={(e) => upsertArrayItem("items", index, { url: e.target.value })}
+                            onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { url: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
+                            placeholder="https://..."
+                            className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          />
+                          <input
+                            value={safeString(itemObject.label)}
+                            onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })}
+                            onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
+                            placeholder="Etiqueta (opcional)"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          />
+                        </div>
+                      );
+                    })}
+                    <button
+                      onClick={() => { const nextProps = addArrayItem("items", { platform: "facebook", url: "https://", label: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }}
+                      className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+                    >
+                      + Añadir red social
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Button ────────────────────────────────────────────── */}
+                {activeSection.type === "button" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Botones</p>
+                    {(Array.isArray(activeSection.props_json?.buttons) ? activeSection.props_json.buttons : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      return (
+                        <div key={`btn-${index}`} className="space-y-2 rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/10 p-2">
+                          <input
+                            value={safeString(itemObject.label)}
+                            onChange={(e) => { upsertArrayItem("buttons", index, { label: e.target.value }); }}
+                            onBlur={(e) => { const nextProps = upsertArrayItem("buttons", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
+                            placeholder="Texto del botón"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          />
+                          <input
+                            value={safeString(itemObject.href)}
+                            onChange={(e) => upsertArrayItem("buttons", index, { href: e.target.value })}
+                            onBlur={(e) => { const nextProps = upsertArrayItem("buttons", index, { href: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
+                            placeholder="/ruta o https://..."
+                            className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                          />
+                          <div className="grid grid-cols-3 gap-2">
+                            <select
+                              value={safeString(itemObject.variant) || "primary"}
+                              onChange={(e) => { upsertArrayItem("buttons", index, { variant: e.target.value }); }}
+                              onBlur={(e) => { const nextProps = upsertArrayItem("buttons", index, { variant: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
+                              className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                            >
+                              <option value="primary">Primario</option>
+                              <option value="outline">Contorno</option>
+                              <option value="ghost">Fantasma</option>
+                            </select>
+                            <select
+                              value={safeString(itemObject.size) || "md"}
+                              onChange={(e) => { upsertArrayItem("buttons", index, { size: e.target.value }); }}
+                              onBlur={(e) => { const nextProps = upsertArrayItem("buttons", index, { size: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
+                              className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                            >
+                              <option value="sm">Pequeño</option>
+                              <option value="md">Mediano</option>
+                              <option value="lg">Grande</option>
+                            </select>
+                            <input
+                              value={safeString(itemObject.icon)}
+                              onChange={(e) => upsertArrayItem("buttons", index, { icon: e.target.value })}
+                              onBlur={(e) => { const nextProps = upsertArrayItem("buttons", index, { icon: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
+                              placeholder="🚀"
+                              className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <button
+                      onClick={() => { const nextProps = addArrayItem("buttons", { label: "Botón", href: "/", variant: "primary", size: "md", status: "published" }); if (nextProps) saveSectionProps(nextProps); }}
+                      className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+                    >
+                      + Añadir botón
+                    </button>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Alineación</label>
+                      <select
+                        value={safeString(activeSection.props_json?.align) || "center"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), align: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("align", e.target.value); }}
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      >
+                        <option value="left">Izquierda</option>
+                        <option value="center">Centro</option>
+                        <option value="right">Derecha</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Espaciado entre botones</label>
+                      <select
+                        value={safeString(activeSection.props_json?.gap) || "4"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), gap: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("gap", e.target.value); }}
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      >
+                        <option value="2">Pequeño (2)</option>
+                        <option value="4">Mediano (4)</option>
+                        <option value="6">Grande (6)</option>
+                        <option value="8">Muy grande (8)</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Mobile Menu Config ────────────────────────────────── */}
+                {activeSection.type === "mobile_menu_config" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Items del menú móvil</p>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`mmenu-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
+                          <input value={safeString(itemObject.label)} onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Etiqueta del item" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.href)} onChange={(e) => upsertArrayItem("items", index, { href: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { href: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="/ruta" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.icon)} onChange={(e) => upsertArrayItem("items", index, { icon: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { icon: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="🏠 emoji" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar" : "Archivar"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { label: "Nuevo item", href: "/", icon: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                      + Añadir item
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Events Calendar ──────────────────────────────────── */}
+                {activeSection.type === "events_calendar" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Calendario de eventos</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Título</label>
+                      <input
+                        value={safeString(activeSection.props_json?.title)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), title: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("title", e.target.value)}
+                        placeholder="Próximos Eventos"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Subtítulo</label>
+                      <input
+                        value={safeString(activeSection.props_json?.subtitle)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), subtitle: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("subtitle", e.target.value)}
+                        placeholder="(opcional)"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Máximo de eventos a mostrar</label>
+                      <input
+                        type="number"
+                        value={safeString(activeSection.props_json?.max_events) || "50"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), max_events: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("max_events", e.target.value)}
+                        placeholder="50"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                      <input
+                        type="checkbox"
+                        checked={activeSection.props_json?.show_filters !== false}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), show_filters: e.target.checked }; updateSectionPropsLocal(nextProps); saveSectionProps(nextProps); }}
+                      />
+                      Mostrar filtros de categoría
+                    </label>
+                    <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                      <input
+                        type="checkbox"
+                        checked={activeSection.props_json?.show_ics_export !== false}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), show_ics_export: e.target.checked }; updateSectionPropsLocal(nextProps); saveSectionProps(nextProps); }}
+                      />
+                      Permitir exportar a calendario (.ics)
+                    </label>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Mensaje sin eventos</label>
+                      <input
+                        value={safeString(activeSection.props_json?.empty_title)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), empty_title: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("empty_title", e.target.value)}
+                        placeholder="Sin eventos publicados"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Video Grid ────────────────────────────────────────── */}
+                {activeSection.type === "video_grid" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cuadrícula de videos</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Título</label>
+                      <input
+                        value={safeString(activeSection.props_json?.title)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), title: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("title", e.target.value)}
+                        placeholder="Prédicas & Mensajes"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Subtítulo</label>
+                      <input
+                        value={safeString(activeSection.props_json?.subtitle)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), subtitle: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("subtitle", e.target.value)}
+                        placeholder="(opcional)"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">URL del canal (YouTube)</label>
+                      <input
+                        value={safeString(activeSection.props_json?.channel_url)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), channel_url: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("channel_url", e.target.value)}
+                        placeholder="https://youtube.com/@canal"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Texto del botón del canal</label>
+                      <input
+                        value={safeString(activeSection.props_json?.channel_label) || "Ver canal"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), channel_label: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("channel_label", e.target.value)}
+                        placeholder="Ver canal"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Máximo de videos</label>
+                      <input
+                        type="number"
+                        value={safeString(activeSection.props_json?.max_videos) || "12"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), max_videos: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("max_videos", e.target.value)}
+                        placeholder="12"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Placeholder de búsqueda</label>
+                      <input
+                        value={safeString(activeSection.props_json?.search_placeholder)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), search_placeholder: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("search_placeholder", e.target.value)}
+                        placeholder="Buscar por título o predicador…"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Map ──────────────────────────────────────────────── */}
+                {activeSection.type === "map" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Mapa</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Título</label>
+                      <input
+                        value={safeString(activeSection.props_json?.title)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), title: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("title", e.target.value)}
+                        placeholder="Encuéntranos"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">URL de embed (Google Maps)</label>
+                      <input
+                        value={safeString(activeSection.props_json?.embed_url)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), embed_url: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("embed_url", e.target.value)}
+                        placeholder="https://www.google.com/maps/embed?..."
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Dirección (texto)</label>
+                      <input
+                        value={safeString(activeSection.props_json?.address)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), address: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("address", e.target.value)}
+                        placeholder="Calle 123, Ciudad"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Altura (px)</label>
+                      <input
+                        type="number"
+                        value={safeString(activeSection.props_json?.height) || "400"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), height: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("height", e.target.value)}
+                        placeholder="400"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                      <input
+                        type="checkbox"
+                        checked={activeSection.props_json?.show_directions_link !== false}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), show_directions_link: e.target.checked }; updateSectionPropsLocal(nextProps); saveSectionProps(nextProps); }}
+                      />
+                      Mostrar enlace "Cómo llegar"
+                    </label>
+                  </div>
+                )}
+
+                {/* ── Accordion ───────────────────────────────────────── */}
+                {activeSection.type === "accordion" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acordeón</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Subtítulo</label>
+                      <input
+                        value={safeString(activeSection.props_json?.subtitle)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), subtitle: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("subtitle", e.target.value)}
+                        placeholder="(opcional)"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`acc-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
+                          <input value={safeString(itemObject.question)} onChange={(e) => upsertArrayItem("items", index, { question: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { question: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Pregunta / Título de la pestaña" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <textarea value={safeString(itemObject.answer)} onChange={(e) => upsertArrayItem("items", index, { answer: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { answer: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Respuesta / Contenido" className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar" : "Archivar"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { question: "Nueva pregunta", answer: "Respuesta", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                      + Añadir pestaña
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Calendar ─────────────────────────────────────────── */}
+                {activeSection.type === "calendar" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Calendario de eventos</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Vista</label>
+                      <select
+                        value={safeString(activeSection.props_json?.view) || "list"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), view: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("view", e.target.value); }}
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      >
+                        <option value="list">Lista</option>
+                        <option value="month">Mensual</option>
+                        <option value="week">Semanal</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Máximo de eventos</label>
+                      <input
+                        type="number"
+                        value={safeString(activeSection.props_json?.max_events) || "10"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), max_events: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("max_events", e.target.value)}
+                        placeholder="10"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                      <input type="checkbox" checked={activeSection.props_json?.show_time !== false} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), show_time: e.target.checked }; updateSectionPropsLocal(nextProps); saveSectionProps(nextProps); }} />
+                      Mostrar la hora
+                    </label>
+                    <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                      <input type="checkbox" checked={activeSection.props_json?.show_location !== false} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), show_location: e.target.checked }; updateSectionPropsLocal(nextProps); saveSectionProps(nextProps); }} />
+                      Mostrar la ubicación
+                    </label>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] pt-1">Eventos manuales</p>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`cal-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
+                          <input value={safeString(itemObject.title)} onChange={(e) => upsertArrayItem("items", index, { title: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { title: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Título del evento" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.date)} onChange={(e) => upsertArrayItem("items", index, { date: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { date: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="2026-12-31" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.time)} onChange={(e) => upsertArrayItem("items", index, { time: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { time: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="19:00" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.location)} onChange={(e) => upsertArrayItem("items", index, { location: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { location: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Sede principal" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar" : "Archivar"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { title: "Nuevo evento", date: "", time: "", location: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                      + Añadir evento
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Content Blocks ───────────────────────────────────── */}
+                {activeSection.type === "content_blocks" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Bloques de contenido</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Disposición</label>
+                      <select
+                        value={safeString(activeSection.props_json?.layout) || "grid"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), layout: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("layout", e.target.value); }}
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      >
+                        <option value="grid">Cuadrícula</option>
+                        <option value="masonry">Mosaico (masonry)</option>
+                        <option value="stack">Apilado</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Columnas</label>
+                      <select
+                        value={safeString(activeSection.props_json?.columns) || "2"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), columns: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("columns", e.target.value); }}
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      >
+                        <option value="2">2 columnas</option>
+                        <option value="3">3 columnas</option>
+                        <option value="4">4 columnas</option>
+                      </select>
+                    </div>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] pt-1">Bloques</p>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`cb-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
+                          <select value={safeString(itemObject.type) || "text"} onChange={(e) => { upsertArrayItem("items", index, { type: e.target.value }); }} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { type: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs">
+                            <option value="text">Texto</option>
+                            <option value="image">Imagen</option>
+                            <option value="video">Video</option>
+                            <option value="quote">Cita</option>
+                            <option value="divider">Separador</option>
+                            <option value="spacer">Espacio</option>
+                            <option value="list">Lista</option>
+                          </select>
+                          {["text", "quote", "list"].includes(safeString(itemObject.type) || "text") && (
+                            <textarea value={safeString(itemObject.content)} onChange={(e) => upsertArrayItem("items", index, { content: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { content: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Contenido de texto" className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          )}
+                          {safeString(itemObject.type) === "video" && (
+                            <input value={safeString(itemObject.content)} onChange={(e) => upsertArrayItem("items", index, { content: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { content: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL del video" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          )}
+                          {["image", "video", "quote"].includes(safeString(itemObject.type) || "text") && (
+                            <>
+                              <input value={safeString(itemObject.image_url)} onChange={(e) => upsertArrayItem("items", index, { image_url: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { image_url: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL de imagen (si aplica)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                              <input value={safeString(itemObject.alt)} onChange={(e) => upsertArrayItem("items", index, { alt: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { alt: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Texto alternativo" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                              <input value={safeString(itemObject.caption)} onChange={(e) => upsertArrayItem("items", index, { caption: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { caption: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Leyenda (opcional)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                            </>
+                          )}
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar" : "Archivar"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { type: "text", content: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                      + Añadir bloque
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Locations List ───────────────────────────────────── */}
+                {activeSection.type === "locations_list" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Lista de sedes</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Placeholder de búsqueda</label>
+                      <input value={safeString(activeSection.props_json?.search_placeholder)} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), search_placeholder: e.target.value }; updateSectionPropsLocal(nextProps); }} onBlur={(e) => saveSectionField("search_placeholder", e.target.value)} placeholder="Buscar ciudad o dirección..." className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs" />
+                    </div>
+                    <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                      <input type="checkbox" checked={activeSection.props_json?.show_map !== false} onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), show_map: e.target.checked }; updateSectionPropsLocal(nextProps); saveSectionProps(nextProps); }} />
+                      Mostrar mini-mapa por sede
+                    </label>
+                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] pt-1">Sedes</p>
+                    {(Array.isArray(activeSection.props_json?.locations) ? activeSection.props_json.locations : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`loc-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
+                          <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("locations", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("locations", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre de la sede" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.address)} onChange={(e) => upsertArrayItem("locations", index, { address: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("locations", index, { address: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Dirección" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.city)} onChange={(e) => upsertArrayItem("locations", index, { city: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("locations", index, { city: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Ciudad" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.phone)} onChange={(e) => upsertArrayItem("locations", index, { phone: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("locations", index, { phone: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Teléfono" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.schedule)} onChange={(e) => upsertArrayItem("locations", index, { schedule: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("locations", index, { schedule: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Horario" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.embed_url)} onChange={(e) => upsertArrayItem("locations", index, { embed_url: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("locations", index, { embed_url: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL de embed de Google Maps" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <input type="checkbox" checked={itemObject.is_main === true} onChange={(e) => upsertArrayItem("locations", index, { is_main: e.target.checked })} onBlur={(e) => { const nextProps = upsertArrayItem("locations", index, { is_main: e.target.checked }); if (nextProps) saveSectionProps(nextProps); }} />
+                            Sede principal
+                          </label>
+                          <button onClick={() => { const nextProps = upsertArrayItem("locations", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar" : "Archivar"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("locations", { name: "Nueva sede", address: "", city: "", phone: "", schedule: "", embed_url: "", is_main: false, status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                      + Añadir sede
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Civic File Downloads ─────────────────────────────── */}
+                {activeSection.type === "civic_file_downloads" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Documentos para descarga</p>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`cfd-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
+                          <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre del documento" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.file_url)} onChange={(e) => upsertArrayItem("items", index, { file_url: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { file_url: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL del archivo (PDF, DOC, etc.)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <div className="grid grid-cols-3 gap-2">
+                            <input value={safeString(itemObject.format)} onChange={(e) => upsertArrayItem("items", index, { format: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { format: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="PDF" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                            <input value={safeString(itemObject.size_label)} onChange={(e) => upsertArrayItem("items", index, { size_label: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { size_label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="2.4MB" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                            <input value={safeString(itemObject.description)} onChange={(e) => upsertArrayItem("items", index, { description: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { description: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción corta" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          </div>
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar" : "Archivar"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { name: "Nuevo documento", file_url: "", format: "PDF", size_label: "", description: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                      + Añadir documento
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Civic Convocatoria Cards ─────────────────────────── */}
+                {activeSection.type === "civic_convocatoria_cards" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Convocatorias</p>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`ccc-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
+                          <input value={safeString(itemObject.title)} onChange={(e) => upsertArrayItem("items", index, { title: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { title: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Título de la convocatoria" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <textarea value={safeString(itemObject.description)} onChange={(e) => upsertArrayItem("items", index, { description: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { description: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción" className="w-full min-h-[48px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.status)} onChange={(e) => upsertArrayItem("items", index, { status: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { status: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Abierta / Cerrada / Próximamente" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.deadline)} onChange={(e) => upsertArrayItem("items", index, { deadline: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { deadline: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Fecha límite (2026-12-31)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.category)} onChange={(e) => upsertArrayItem("items", index, { category: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { category: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Categoría" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.href)} onChange={(e) => upsertArrayItem("items", index, { href: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { href: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="/convocatoria/detalle" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar" : "Archivar"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { title: "Nueva convocatoria", description: "", status: "published", deadline: "", category: "", href: "" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                      + Añadir convocatoria
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Civic Quick Links ───────────────────────────────── */}
+                {activeSection.type === "civic_quick_links" && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Accesos rápidos</p>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Número de columnas</label>
+                      <select
+                        value={safeString(activeSection.props_json?.columns) || "4"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), columns: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionField("columns", e.target.value); }}
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      >
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                      </select>
+                    </div>
+                    {(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).map((item, index) => {
+                      const itemObject = asObject(item);
+                      const isItemArchived = safeString(itemObject.status) === "archived";
+                      return (
+                        <div key={`cql-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-warning-text">Archivado</p>}
+                          <input value={safeString(itemObject.label)} onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Etiqueta del acceso" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.href)} onChange={(e) => upsertArrayItem("items", index, { href: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { href: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="/ruta" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.icon)} onChange={(e) => upsertArrayItem("items", index, { icon: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { icon: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="🏛 emoji" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.description)} onChange={(e) => upsertArrayItem("items", index, { description: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { description: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción corta" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <input value={safeString(itemObject.color)} onChange={(e) => upsertArrayItem("items", index, { color: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { color: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Color de acento (opcional, hex)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
+                          <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
+                            {isItemArchived ? <RotateCcw size={11} /> : <Archive size={11} />}
+                            {isItemArchived ? "Restaurar" : "Archivar"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <button onClick={() => { const nextProps = addArrayItem("items", { icon: "🔗", label: "Nuevo acceso", href: "#", description: "", color: "", status: "published" }); if (nextProps) saveSectionProps(nextProps); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                      + Añadir acceso
+                    </button>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={() => setSectionVisibility(!activeSection.is_visible)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
                     {activeSection.is_visible ? <EyeOff size={11} /> : <Eye size={11} />} {activeSection.is_visible ? "Ocultar" : "Mostrar"}

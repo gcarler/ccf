@@ -671,7 +671,7 @@ class CmsPostReadWithTaxonomies(CmsPostRead):
 
 
 class CmsPublicPostRead(BaseModel):
-    site_key: str
+    site_key: Optional[str] = None
     slug: str
     title: str
     excerpt: Optional[str] = None
@@ -684,6 +684,14 @@ class CmsPublicPostRead(BaseModel):
     tags: List[CmsTagRead] = Field(default_factory=list)
     json_ld: Optional[Dict[str, Any]] = None
     canonical_url: Optional[str] = None
+    # NOTE (MEMORY §79 + Fase 3.1 fix 2026-07-28): ``from_attributes=True``
+    # permite ``model_validate(post)`` desde el ORM ``CmsPost``. Los campos
+    # ``site_key``, ``author_name``, ``canonical_url`` no existen en el ORM
+    # — los endpoints publicos los rellenan manualmente despues de
+    # ``model_validate`` (patron consistente dentro del schema CmsPublicPostRead).
+    # ``seo_json`` en el ORM es JSON default={}; Pydantic lo accepta porque
+    # ``from_attributes`` lee el valor via getattr, no via __init__.
+    model_config = orm_config
 
 
 # ── SEO Audit (faro CMS — global, sin scope por sede) ───────────────────────────
