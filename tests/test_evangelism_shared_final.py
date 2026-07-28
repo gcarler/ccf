@@ -3,8 +3,6 @@ from __future__ import annotations
 
 import uuid
 
-import pytest
-
 from backend.api import evangelism_shared as shared
 
 

@@ -41,9 +41,8 @@ from backend.crud.cms import (
     cleanup_orphan_cms_media,
     cleanup_orphan_cms_media_scheduled,
 )
-from backend.scheduler import _maybe_run_orphan_media_cleanup, _run_scheduling_pass
+from backend.scheduler import _run_scheduling_pass
 from tests.conftest import auth_headers, seed_admin
-
 
 # ── Fixtures locales ────────────────────────────────────────────────
 

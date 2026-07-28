@@ -7,8 +7,8 @@ import uuid
 
 import pytest
 
-from backend.api.crm import _shared as shared
 from backend import models
+from backend.api.crm import _shared as shared
 
 
 class TestPersonaLiveColumnNames:

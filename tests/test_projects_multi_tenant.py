@@ -18,20 +18,15 @@ from __future__ import annotations
 import uuid as _uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import text as _sql_text
-
 import pytest
 
 from backend import models as _models
-from backend.models_crm import Persona
-from backend.models_projects import Project
 from tests.conftest import auth_headers, seed_admin
 from tests.factories_projects import (
     create_project_factory,
     create_subtask_factory,
     create_task_factory,
 )
-
 
 # ── Helper: seed TWO admins in DIFFERENT sedes ───────────────────────────
 
@@ -223,6 +218,7 @@ class TestMultiTenantCRUDDefenseInDepth:
         cross-tenant UGC.
         """
         import pytest
+
         from backend import crud
         from backend.schemas.projects import ProjectCreate
 
@@ -294,8 +290,8 @@ class TestNotifyTaskAssignedAtomicity:
         # (single source of truth; CommunicationLog is not on
         # models_operational — that import would silently fail and mask the
         # assertion).
-        from backend.models import NotificacionUsuario as _Notif
         from backend.models import CommunicationLog as _CL
+        from backend.models import NotificacionUsuario as _Notif
 
         pre_notif = db_session.query(_Notif).count()
         pre_comm = db_session.query(_CL).count()
@@ -324,7 +320,7 @@ class TestNotifyTaskAssignedAtomicity:
         )
         # Audit row must reflect the email failure
         assert delta_comm >= 1, (
-            f"send_email failed but no CommunicationLog audit row was written"
+            "send_email failed but no CommunicationLog audit row was written"
         )
         newest_cl = (
             db_session.query(_CL)

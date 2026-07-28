@@ -1,10 +1,11 @@
 import uuid
-from datetime import datetime, timezone, timedelta
-import pytest
+from datetime import datetime, timedelta, timezone
+
 from backend import models
-from backend.models_crm_pipeline import CasoCRM, EtapaPipeline, PipelineCRM, CrmReorderLock
-from tests.conftest import auth_headers, seed_admin, seed_user_with_role
+from backend.models_crm_pipeline import CrmReorderLock, EtapaPipeline, PipelineCRM
+from tests.conftest import auth_headers
 from tests.test_crm_visual import _automation_headers, _seed_test_data
+
 
 def test_concurrency_same_stage_bypass_reorder_lock(client, db_session):
     """

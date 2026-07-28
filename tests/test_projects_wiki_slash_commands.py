@@ -21,7 +21,6 @@ Targets (Sprint 2 of the roadmap):
 """
 from __future__ import annotations
 
-import uuid as _uuid
 from datetime import datetime, timezone
 
 from backend.models_projects import ProjectDocument
@@ -30,7 +29,6 @@ from tests.factories_projects import (
     create_project_factory,
     create_wiki_factory,
 )
-
 
 # ── HTML fixtures mirroring what the Tiptap editor produces ──────────────
 

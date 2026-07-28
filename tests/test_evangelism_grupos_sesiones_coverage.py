@@ -10,7 +10,8 @@ from backend import models
 from backend.api.evangelism_grupos.grupos_sesiones import (
     _session_read_options,
 )
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture

@@ -317,8 +317,8 @@ class TestAcademyCrudMassive:
 
 class TestCrmExtendedMassive:
     def test_extended_crud(self, db_session, full):
-        from backend.crud import crm_extended
         from backend import models
+        from backend.crud import crm_extended
         db = db_session
         pid = str(full["personas"][0].id)
         _call(crm_extended.get_positions, db)

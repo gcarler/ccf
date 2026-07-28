@@ -10,7 +10,6 @@ Covers:
 - Automation flows (lines 35-54, 400+)
 """
 import uuid
-from typing import Optional
 
 import pytest
 

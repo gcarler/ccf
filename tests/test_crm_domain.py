@@ -1,6 +1,7 @@
+import uuid
+
 from backend import crud, schemas
 from tests.conftest import auth_headers, seed_admin
-import uuid
 
 
 def test_persona_filtering_and_update(db_session):
@@ -74,8 +75,15 @@ def test_persona_search(db_session):
 
 def test_crm_schema_validation(db_session):
     from backend.schemas.crm.base import (
-        RoleCreate, RoleUpdate, VolunteerCreate, CounselingTicketUpdate,
-        PrayerRequestCreate, CrmSettingsUpdate, GrupoUpdate, CasoCreate, MessagingSend,
+        CasoCreate,
+        CounselingTicketUpdate,
+        CrmSettingsUpdate,
+        GrupoUpdate,
+        MessagingSend,
+        PrayerRequestCreate,
+        RoleCreate,
+        RoleUpdate,
+        VolunteerCreate,
     )
     role = RoleCreate(name="Test", color="red")
     assert role.name == "Test"

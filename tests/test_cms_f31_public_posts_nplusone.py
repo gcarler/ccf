@@ -26,11 +26,8 @@ Test pattern:
 import uuid
 from datetime import datetime, timezone
 
-import pytest
-
 from backend import models
-from tests.conftest import auth_headers, seed_admin
-
+from tests.conftest import seed_admin
 
 # ── Setup helpers ─────────────────────────────────────────────────────────
 

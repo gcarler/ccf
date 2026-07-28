@@ -9,9 +9,9 @@ import pytest
 
 from backend import models
 from backend.api.chat import (
-    _persona_display_name,
-    _get_persona_id,
     _get_persona,
+    _get_persona_id,
+    _persona_display_name,
 )
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin

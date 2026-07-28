@@ -7,7 +7,7 @@ import uuid
 
 import pytest
 
-from tests.conftest import seed_admin, seed_user_with_role, auth_headers
+from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 
 class TestSeedAdmin:

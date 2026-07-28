@@ -8,13 +8,12 @@ import asyncio
 import uuid
 from unittest.mock import patch
 
-from backend.models_knowledge_base import AgentKnowledgeBase
-from backend.models_crm import Persona
 from backend.models_academy_core import Course
+from backend.models_crm import Persona
 from backend.models_evangelism import EstrategiaEvangelismo
-from backend.models_projects import Project
+from backend.models_knowledge_base import AgentKnowledgeBase
 from backend.models_ops import SystemVariable
-from tests.conftest import auth_headers, seed_admin, seed_user_with_role
+from backend.models_projects import Project
 
 
 def _ensure_kb_entry(db_session, **overrides):
@@ -136,8 +135,8 @@ class TestKnowledgeIndexer:
 
     def test_index_evangelism(self, db_session):
         """_index_evangelism must index active strategies."""
-        from backend.services.knowledge_base import KnowledgeIndexer
         from backend.models_evangelism import CategoriaEstrategia
+        from backend.services.knowledge_base import KnowledgeIndexer
 
         sede = self._ensure_sede(db_session)
         cat = CategoriaEstrategia(id=uuid.uuid4(), nombre="Test Cat")
@@ -271,8 +270,8 @@ class TestSearchKnowledgeBaseReal:
 
     def test_relevance_ordering(self, db_session):
         """Results must be ordered by relevance_score desc, then updated_at desc."""
+
         from backend.services.knowledge_base import search_knowledge_base_real
-        from datetime import datetime, timezone
 
         _ensure_kb_entry(db_session, title="High Relevance", content="term", relevance_score=5.0)
         _ensure_kb_entry(db_session, title="Low Relevance", content="term", relevance_score=1.0)
@@ -377,9 +376,9 @@ class TestMessagingGateway:
 
     def test_send_email_no_smtp_config(self, db_session):
         """Without SMTP config, send_email must log with PENDING_SMTP_CONFIG."""
+        from backend.core.config import get_settings
         from backend.services.messaging import MessagingGateway
         from backend.services.messaging_outcomes import CommunicationOutcome
-        from backend.core.config import get_settings
 
         gateway = MessagingGateway()
         p = Persona(id=uuid.uuid4(), first_name="Test", last_name="User", email="test@example.com")
@@ -403,8 +402,8 @@ class TestMessagingGateway:
 
     def test_send_email_with_html(self, db_session):
         """send_email with html param must log successfully."""
-        from backend.services.messaging import MessagingGateway
         from backend.core.config import get_settings
+        from backend.services.messaging import MessagingGateway
 
         gateway = MessagingGateway()
         p = Persona(id=uuid.uuid4(), first_name="HTML", last_name="Test", email="html@test.com")
@@ -506,9 +505,9 @@ class TestStubMessagingGateway:
 
     def test_stub_email_override(self, db_session):
         """TEST_EMAIL_OVERRIDE must delegate to real gateway."""
+        from backend.core.config import get_settings
         from backend.services.messaging import StubMessagingGateway
         from backend.services.messaging_outcomes import CommunicationOutcome
-        from backend.core.config import get_settings
 
         settings = get_settings()
         with patch.object(settings, "test_email_override", "override@test.com"):
@@ -530,9 +529,9 @@ class TestStubMessagingGateway:
 
     def test_stub_email_override_no_match(self, db_session):
         """If TEST_EMAIL_OVERRIDE doesn't match, stub must log."""
+        from backend.core.config import get_settings
         from backend.services.messaging import StubMessagingGateway
         from backend.services.messaging_outcomes import CommunicationOutcome
-        from backend.core.config import get_settings
 
         settings = get_settings()
         with patch.object(settings, "test_email_override", "different@test.com"):
@@ -633,8 +632,8 @@ class TestGetMessagingGateway:
 
     def test_get_messaging_gateway_stub_mode(self):
         """get_messaging_gateway with stub_comms must return StubMessagingGateway (lines 364-366)."""
-        from backend.services.messaging import get_messaging_gateway, reset_gateway_singleton, StubMessagingGateway
         from backend.core.config import get_settings
+        from backend.services.messaging import StubMessagingGateway, get_messaging_gateway, reset_gateway_singleton
 
         reset_gateway_singleton()
         settings = get_settings()
@@ -644,9 +643,9 @@ class TestGetMessagingGateway:
 
     def test_gateway_smtp_failure(self, db_session):
         """SMTP connection failure must result in SMTP_FAILED outcome."""
+        from backend.core.config import get_settings
         from backend.services.messaging import MessagingGateway
         from backend.services.messaging_outcomes import CommunicationOutcome
-        from backend.core.config import get_settings
 
         gateway = MessagingGateway()
         p = Persona(id=uuid.uuid4(), first_name="SMTP", last_name="Fail", email="smtp@test.com")
@@ -666,10 +665,10 @@ class TestGetMessagingGateway:
 
     def test_gateway_smtp_success_with_html(self, db_session):
         """SMTP success with HTML must execute MIMEMultipart path (lines 190, 193-198)."""
+
+        from backend.core.config import get_settings
         from backend.services.messaging import MessagingGateway
         from backend.services.messaging_outcomes import CommunicationOutcome
-        from backend.core.config import get_settings
-        import smtplib
 
         gateway = MessagingGateway()
         p = Persona(id=uuid.uuid4(), first_name="SMTP", last_name="HTML", email="html@test.com")

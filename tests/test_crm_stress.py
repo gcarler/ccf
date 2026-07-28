@@ -1,9 +1,11 @@
 import uuid
+
 import pytest
-from backend.core.database import Base
+
 from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
 from tests.conftest import auth_headers, seed_admin
 from tests.test_crm_visual import _seed_test_data
+
 
 def _seed_massive_data(db_session, num_cases=500):
     admin, persona, sede = seed_admin(db_session)
@@ -160,11 +162,12 @@ def test_stress_transaction_rollback_and_lock_states(client, db_session):
 
 
 def test_stress_recursion_depth_limit(db_session):
-    from backend.services.automation_engine import AutomationEngine
+    import uuid as _uuid
+
     from backend.models_crm import CrmAutomation, CrmAutomationEdge, PendingCrmAction
     from backend.models_shared import _utcnow
+    from backend.services.automation_engine import AutomationEngine
     from tests.test_crm_visual import _seed_test_data
-    import uuid as _uuid
 
     # Seed basic admin / persona / database elements to have a target persona
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)

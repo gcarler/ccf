@@ -3,37 +3,38 @@ Comprehensive tests for evangelism_analytics.py — target 90%+.
 Covers all 9 analytics endpoints + helper functions.
 """
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from backend import models
 from backend.api.evangelism_analytics import (
-    _normalize_rol,
-    _rol_to_funnel_stage,
-    _parse_period,
-    _date_range,
-    _prev_range,
-    _delta,
-    _bucket_label,
-    _semaforo_tof,
-    _semaforo_ics,
-    _semaforo_icd,
-    _classify_group,
-    _shannon_entropy,
     _age_bucket,
     _attended,
+    _bucket_label,
+    _classify_group,
+    _date_range,
+    _delta,
     _is_primera_vez,
+    _normalize_rol,
+    _parse_period,
+    _prev_range,
+    _rol_to_funnel_stage,
+    _semaforo_icd,
+    _semaforo_ics,
+    _semaforo_tof,
+    _shannon_entropy,
 )
 from backend.models_evangelism import (
-    EstrategiaEvangelismo,
-    CategoriaEstrategia,
-    GrupoEvangelismo,
-    SesionGrupo,
-    ParticipanteGrupo,
     Asistencia,
+    CategoriaEstrategia,
+    EstrategiaEvangelismo,
+    GrupoEvangelismo,
+    ParticipanteGrupo,
+    SesionGrupo,
 )
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers, seed_user_with_role
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
+from tests.conftest import seed_user_with_role
 
 
 def _make_strategy(db, sede_id):

@@ -16,7 +16,6 @@ from backend import models
 from backend.core.permissions import check_ws_module_access
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
-
 # ── C-01/C-02: Soft-delete CommunicationLog ──────────────────────────────
 
 

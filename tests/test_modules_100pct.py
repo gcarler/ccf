@@ -1,7 +1,6 @@
 """
 Tests to bring wiki.py (api), wiki.py (crud), governance.py, prayer.py, config.py to 100%.
 """
-import uuid
 
 import pytest
 
@@ -67,7 +66,6 @@ class TestConfigCoverage:
 
     def test_config_invalid_settings(self):
         """Covers config.py validation lines."""
-        import os
         # Test settings loading with invalid values
         with pytest.raises(Exception):
             get_settings(_env_file="/nonexistent/.env")

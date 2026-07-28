@@ -1,6 +1,6 @@
 """
 CRM + PROJECTS FINAL — Targeted tests for the most uncovered functions.
-crm.py: create_grupo, update_grupo, create_persona duplicate, delete_persona, 
+crm.py: create_grupo, update_grupo, create_persona duplicate, delete_persona,
   search_personas_paginated, persona timeline with enrollments.
 projects.py: project CRUD, task CRUD with assignee, comments CRUD, supplies CRUD,
   milestones CRUD, wiki/whiteboard, inbox, messages, subtasks, update/delete project.

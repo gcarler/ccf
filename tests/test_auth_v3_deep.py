@@ -3,13 +3,11 @@ Deep tests for auth_v3.py — login edge cases, reset, sessions.
 """
 from __future__ import annotations
 
-import uuid
-
 import pytest
 
+from backend.core.security import get_password_hash
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
-from backend.core.security import get_password_hash
 
 
 @pytest.fixture

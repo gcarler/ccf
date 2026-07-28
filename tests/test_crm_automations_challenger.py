@@ -1,4 +1,5 @@
 import pytest
+
 from backend.api.crm.pipelines import check_for_cycles_dfs
 from backend.models_crm import validate_three_node_path
 from tests.conftest import auth_headers, seed_admin

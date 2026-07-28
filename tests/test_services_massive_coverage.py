@@ -8,10 +8,14 @@ from unittest.mock import patch
 import pytest
 
 from backend import models
-from backend.services.calculo_sesiones import _a_utc, _stringify_uuid_payload, _generar_fechas, _provider_para_frecuencia
-from backend.services.conversation_memory import create_conversation as _create_conv
-from backend.services.email import send_email, _build_message, _brand_wrap, resolve_brand_colors
-from backend.services.email_block_renderer import render_blocks_to_html, is_blocks_json
+from backend.services.calculo_sesiones import (
+    _a_utc,
+    _generar_fechas,
+    _provider_para_frecuencia,
+    _stringify_uuid_payload,
+)
+from backend.services.email import _brand_wrap, _build_message, resolve_brand_colors, send_email
+from backend.services.email_block_renderer import is_blocks_json, render_blocks_to_html
 from tests.conftest import seed_admin as _seed_admin
 
 

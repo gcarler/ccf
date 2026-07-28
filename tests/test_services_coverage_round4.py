@@ -1,14 +1,12 @@
 """
 Coverage for automation_engine, knowledge_base, email, conversation_memory.
 """
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import patch
 
 from backend.services.automation_engine import AutomationEngine
-from backend.services.email import send_email, _build_message, _brand_wrap, resolve_brand_colors
-from backend.services.email_templates import _safe, _cta_button
+from backend.services.email import _brand_wrap, _build_message, resolve_brand_colors, send_email
 from backend.services.email_block_renderer import is_blocks_json, render_blocks_to_html
+from backend.services.email_templates import _cta_button, _safe
 
 
 class TestAutomationEngineCoverage:

@@ -3,37 +3,36 @@ Comprehensive tests for evangelism_shared.py — target 90%+.
 Covers session helpers, attendance normalization, visible resolvers, triggers.
 """
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from backend import models
 from backend.api.evangelism_shared import (
-    normalize_attendance_status,
-    is_attended_status,
-    is_absent_status,
-    is_excused_status,
-    _is_crm_admin_or_pastor,
-    _get_persona_for_user,
-    _can_manage_grupo,
-    session_read_value,
-    session_estado_habilitacion,
-    get_visible_strategy,
-    get_visible_group,
-    get_visible_session,
-    ATTENDED_STATES,
     ABSENT_STATES,
+    ATTENDED_STATES,
     EXCUSED_STATES,
     FIRST_TIME_STATES,
+    _can_manage_grupo,
+    _get_persona_for_user,
+    _is_crm_admin_or_pastor,
+    get_visible_group,
+    get_visible_session,
+    get_visible_strategy,
+    is_absent_status,
+    is_attended_status,
+    is_excused_status,
+    normalize_attendance_status,
+    session_estado_habilitacion,
+    session_read_value,
 )
 from backend.models_evangelism import (
-    EstrategiaEvangelismo,
     CategoriaEstrategia,
+    EstrategiaEvangelismo,
     GrupoEvangelismo,
     SesionGrupo,
-    ParticipanteGrupo,
 )
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 def _make_strategy(db, sede_id):

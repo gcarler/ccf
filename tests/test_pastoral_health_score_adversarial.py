@@ -1,9 +1,10 @@
 import uuid
 from datetime import date, datetime, timezone
-import pytest
+
 from backend import models
-from backend.crud.crm_.health import recalculate_and_persist_pastoral_health, update_pastoral_health
+from backend.crud.crm_.health import recalculate_and_persist_pastoral_health
 from tests.conftest import seed_admin
+
 
 def test_zero_attendance_opportunities(db_session):
     """Verify health score when a persona has 0 attendance opportunities but various milestone and communication inputs."""

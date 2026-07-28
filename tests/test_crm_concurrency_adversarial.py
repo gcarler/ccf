@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime, timezone, timedelta
-import pytest
-from backend import models
-from backend.models_crm_pipeline import CasoCRM, EtapaPipeline, PipelineCRM, CrmReorderLock
+from datetime import datetime, timedelta, timezone
+
+from backend.models_crm_pipeline import CasoCRM, CrmReorderLock, EtapaPipeline, PipelineCRM
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
+
 
 def _seed_test_data(db_session):
     admin, persona, sede = seed_admin(db_session)

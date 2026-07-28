@@ -1,7 +1,6 @@
 """
 Dashboard Coverage Tests.
 """
-import uuid
 
 import pytest
 

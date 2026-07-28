@@ -124,7 +124,7 @@ def test_get_communication_logs_scoped_by_sede_via_persona_join(db_session):
     _commit(db_session)
 
     out_a = crud_comm.get_communication_logs(db_session, sede_id=sede_a.id)
-    ids = {l.id for l in out_a}
+    ids = {entry.id for entry in out_a}
     assert log_a.id in ids
     assert log_b.id not in ids, "get_communication_logs leaked cross-tenant via Persona JOIN"
 
@@ -135,7 +135,7 @@ def test_get_communication_logs_returns_all_when_no_sede(db_session):
     p = _seed_persona(db_session, sede_id=sede.id)
     log = _seed_comm_log(db_session, persona=p)
     _commit(db_session)
-    assert any(l.id == log.id for l in crud_comm.get_communication_logs(db_session, sede_id=None))
+    assert any(entry.id == log.id for entry in crud_comm.get_communication_logs(db_session, sede_id=None))
 
 
 def test_get_communication_logs_excludes_soft_deleted(db_session):
@@ -144,7 +144,7 @@ def test_get_communication_logs_excludes_soft_deleted(db_session):
     log_live = _seed_comm_log(db_session, persona=p)
     log_dead = _seed_comm_log(db_session, persona=p, deleted_at=crud_comm._utcnow())
     _commit(db_session)
-    ids = {l.id for l in crud_comm.get_communication_logs(db_session, sede_id=sede.id)}
+    ids = {entry.id for entry in crud_comm.get_communication_logs(db_session, sede_id=sede.id)}
     assert log_live.id in ids and log_dead.id not in ids
 
 

@@ -2,10 +2,11 @@ import os
 import subprocess
 import uuid
 from pathlib import Path
+
 import pytest
-from sqlalchemy import text
+
 from backend.models import Sede
-from backend.models_crm_pipeline import PipelineCRM, EtapaPipeline, TipoPipelineEnum
+from backend.models_crm_pipeline import EtapaPipeline, PipelineCRM, TipoPipelineEnum
 
 ROOT = Path(__file__).resolve().parents[1]
 

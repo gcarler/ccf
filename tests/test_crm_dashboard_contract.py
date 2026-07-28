@@ -12,8 +12,6 @@ Valida que GET /api/dashboard/crm devuelve la shape documentada:
 
 from __future__ import annotations
 
-import pytest
-
 from tests.conftest import auth_headers, seed_admin
 
 

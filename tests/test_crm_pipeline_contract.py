@@ -8,8 +8,6 @@ Valida que los endpoints de pipeline devuelven shapes consistentes:
 
 from __future__ import annotations
 
-import pytest
-
 from tests.conftest import auth_headers, seed_admin
 
 

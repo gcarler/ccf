@@ -3,9 +3,7 @@ Final coverage push — target 40%.
 """
 from unittest.mock import patch
 
-import pytest
-
-from backend.services.email import _brand_wrap, send_email, render_verify_email, render_reset_password
+from backend.services.email import _brand_wrap, render_reset_password, render_verify_email, send_email
 from backend.services.knowledge_graph import _has_model
 
 

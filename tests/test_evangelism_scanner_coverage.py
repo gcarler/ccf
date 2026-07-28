@@ -2,17 +2,15 @@
 Coverage tests for evangelism.py — target 90%+.
 """
 import uuid
-import hashlib
-import secrets
 
 import pytest
 
-from backend import models
 from backend.api.evangelism import (
-    _get_scoped_scanner_persona,
     _generate_scanner_token,
+    _get_scoped_scanner_persona,
 )
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture

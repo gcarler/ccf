@@ -3,13 +3,10 @@ Tests for auth_v3.py — authentication endpoints.
 """
 from __future__ import annotations
 
-import uuid
-
 import pytest
 
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
-from backend import models
 
 
 def _ok(status):

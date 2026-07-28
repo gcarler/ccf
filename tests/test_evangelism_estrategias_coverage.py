@@ -6,14 +6,14 @@ from datetime import datetime, timezone
 
 import pytest
 
-from backend import models
 from backend.api.evangelism_main.main_estrategias import (
-    _hydrate_strategy_synonyms,
     _count_strategy_groups,
+    _hydrate_strategy_synonyms,
     _load_visible_strategy,
 )
 from backend.schemas.crm.base import EvangelismStrategy
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture

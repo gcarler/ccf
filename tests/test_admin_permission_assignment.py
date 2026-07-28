@@ -18,10 +18,8 @@ from backend.core.permissions import (
     expand_module_permissions,
     get_user_effective_permissions,
 )
-from backend.models_auth import RolPlataforma
-from backend.models_auth import UsuarioPermisoOverride
+from backend.models_auth import RolPlataforma, UsuarioPermisoOverride
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
-
 
 # ──────────────────────────────────────────────
 # HELPERS

@@ -49,8 +49,7 @@ from fastapi import HTTPException
 
 from backend import crud, models
 from backend.management.seed_user_permissions import seed_rol_plataforma
-from tests.conftest import auth_headers, seed_admin
-from tests.conftest import seed_user_with_role
+from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 # ── Helpers (re-usan patrón de test_crm_sede_isolation.py) ────────────────
 

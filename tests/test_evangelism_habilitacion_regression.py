@@ -24,6 +24,8 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from backend import models
+from backend.api.evangelism_shared import utc_now
+from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
 from backend.models_evangelism import (
     Asistencia,
     CategoriaEstrategia,
@@ -32,12 +34,8 @@ from backend.models_evangelism import (
     GrupoEvangelismo,
     HabilitacionSesionEnum,
     ParticipanteGrupo,
-    RolPersonalizadoEstrategia,
     SesionGrupo,
 )
-from backend.models_crm_pipeline import CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
-from backend.models_crm_pipeline import CanalOrigenEnum
-from backend.api.evangelism_shared import utc_now
 from tests.conftest import TestingSessionLocal, auth_headers, seed_admin, seed_user_with_role
 
 
@@ -995,7 +993,6 @@ class TestEvangelismSendReminders:
 
     def test_deduplication_prevents_duplicate_reminders(self, client, db_session):
         """Calling send-reminders twice on the same day does not create duplicates."""
-        from backend.models_auth import NotificacionUsuario
 
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)

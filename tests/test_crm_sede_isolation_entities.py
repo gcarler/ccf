@@ -5,14 +5,7 @@ Covers VolunteerShift, Donation and the canonical IDOR scenario for personas.
 
 from datetime import datetime, timezone
 
-import pytest
-
 from backend import models
-from backend.models_crm_pipeline import (
-    CanalOrigenEnum,
-    EstadoCasoEnum,
-    TipoPipelineEnum,
-)
 from tests.conftest import auth_headers, seed_admin
 
 

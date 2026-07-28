@@ -355,7 +355,6 @@ class TestCRMAllFunctions:
 
     def test_community_cards(self, rich_data):
         from backend.crud.crm import get_community_cards
-        from backend import models
         db = rich_data["db"]
         for kw in [dict(), dict(column_id="test")]:
             result = _c(get_community_cards, db, **kw)

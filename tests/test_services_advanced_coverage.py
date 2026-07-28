@@ -1,10 +1,9 @@
 """
 Coverage tests for backend services — unit tests for pure-logic functions.
 """
-import pytest
 
 from backend.services.automation_engine import AutomationEngine
-from backend.services.email_block_renderer import render_blocks_to_html, is_blocks_json
+from backend.services.email_block_renderer import is_blocks_json, render_blocks_to_html
 
 
 class TestEmailBlockRenderer:

@@ -2,17 +2,18 @@
 Tests for evangelism_events/_shared.py — covers require_event_access, is_event_reader_role.
 """
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from backend import models
 from backend.api.evangelism_events._shared import (
-    is_event_reader_role,
     is_event_manager_role,
+    is_event_reader_role,
     require_event_access,
 )
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers, seed_user_with_role
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture

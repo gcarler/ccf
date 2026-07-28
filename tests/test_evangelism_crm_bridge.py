@@ -1,6 +1,6 @@
 import uuid
-from types import SimpleNamespace
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 from backend import models
 from backend.models_crm_pipeline import (
