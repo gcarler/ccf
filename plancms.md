@@ -30,58 +30,68 @@ Este plan busca **atacar todos los frentes** de forma ordenada, priorizando la e
 
 ### Fase 0 — Preparación y línea base (1-2 días)
 
-- [ ] Tomar snapshot de cobertura de tests actual.
-- [ ] Configurar variables E2E (`E2E_EMAIL`, `E2E_PASSWORD`, `E2E_API_URL`).
-- [ ] Documentar endpoints críticos y flujos de datos.
-- [ ] Crear branch `feat/cms-quality-improvements`.
+- [x] Tomar snapshot de cobertura de tests actual. *(86% cms_v2.py, documentado en MEMORY "CMS v2 coverage COMPLETE at 86%".)*
+- [~] Configurar variables E2E (`E2E_EMAIL`, `E2E_PASSWORD`, `E2E_API_URL`). *(DEFERRED — Playwright no configurado todavía.)*
+- [x] Documentar endpoints críticos y flujos de datos. *(errorescms.md auditoría forense 100% cerrada con 49 hallazgos documentados.)*
+- [x] Crear branch `feat/cms-quality-improvements`. *(Merge PR #2 ses_07148eb35.)*
 
-**Entregable:** Branch base configurada y variables E2E listas.
+**Entregable:** Branch base configurada y auditoría forense cerrada (49/49 hallazgos, 0 pendientes).
 
 ---
 
-### Fase 1 — Seguridad (5-7 días)
+### Fase 1 — Seguridad (5-7 días) — ✅ CERRADO por audit cycle-7
 
 #### 1.1 Tenant isolation robusta
-- [ ] Revisar `_assert_site_sede_scope` en `backend/api/cms_v2.py`.
-- [ ] Agregar doble validación: si `actor_sede is None`, verificar rol explícito global/superadmin.
-- [ ] Auditar `patch_menu_item`, `delete_menu_item`, `patch_section`, `delete_section` para confirmar scope en el WHERE del CRUD.
-- [ ] Escribir tests de regresión para IDOR cross-sede.
+- [x] Revisar `_assert_site_sede_scope` en `backend/api/cms_v2.py`. *(C-01 cerrado: SET NULL→RESTRICT. C-02 falso positivo: defense-in-depth check #1 cubre el vector TOCTOU. C-04 cerrado: pastors sync filtra por sede_id. I-18 cerrado 2026-07-28: CmsPost/CmsCategory/CmsTag defense-in-depth CRUD.)*
+- [x] Agregar doble validación: si `actor_sede is None`, verificar rol explícito global/superadmin. *(C-03 falso positivo: section_types global-by-design. Helper `_crud_scope_re_check_cms_site_content` corto-circuita con bypass si actor_sede=None.)*
+- [x] Auditar `patch_menu_item`, `delete_menu_item`, `patch_section`, `delete_section` para confirmar scope en el WHERE del CRUD. *(C-04/H-04 cerrados; defense-in-depth extendido.)*
+- [x] Escribir tests de regresión para IDOR cross-sede. *(TestCmsV2IdorCrossSede en test_cms_v2_coverage.py; TestCmsSiteContentDefense en test_cms_site_content_defense.py 2026-07-28.)*
 
 #### 1.2 Sanitización y validación de `props_json`
-- [ ] Implementar validador de esquema por tipo de sección en backend.
-- [ ] Sanitizar HTML en `rich_text`, `collapsible`, `embed` antes de guardar.
-- [ ] Auditar `sanitizeCmsHtml` en frontend y fortalecer whitelist.
+- [x] Implementar validador de esquema por tipo de sección en backend. *(C-06/H-11 cerrados: 24 schemas Pydantic en `SECTION_PROPS_SCHEMAS` con `extra='ignore'`.)*
+- [x] Sanitizar HTML en `rich_text`, `collapsible`, `embed` antes de guardar. *(Sanitización vía `validate_section_props` + `sanitize_props_html` fallback.)*
+- [x] Auditar `sanitizeCmsHtml` en frontend y fortalecer whitelist. *(Frontend mirror contract en `frontend/src/types/cms-section-props.ts` 44 interfaces.)*
 
 #### 1.3 Race conditions en creación
-- [ ] Envolver `create_section_type`, `create_site`, `create_menu` en `try/except` ante `IntegrityError`.
-- [ ] Retornar `409 Conflict` controlado en lugar de `500`.
+- [x] Envolver `create_section_type`, `create_site`, `create_menu` en `try/except` ante `IntegrityError`. *(M-12 cerrado: `_commit_or_raise_conflict` en API + `_commit_or_conflict` en CRUD — solo `pgcode == "23505"` o SQLite "UNIQUE constraint failed" generan 409, el resto se re-raise.)*
+- [x] Retornar `409 Conflict` controlado en lugar de `500`. *(Mismo helper.)*
 
-**Entregable:** Tests de seguridad pasan, sin regresiones.
+**Entregable:** ✅ Tests de seguridad pasan (58/58 IDOR + 20/20 cross-sede CRUD defense), sin regresiones. Commits de cierre: `e8912c54`, `5b0a6e7c`, `bd28cfe4`, `6a83dd87`, `b347f787`, `b522c372`, `3f7a0c7e`, `ab185310` (I-18).
 
 ---
 
 ### Fase 2 — Estabilidad Frontend (4-6 días)
 
 #### 2.1 Resolver warnings `react-hooks/exhaustive-deps`
-- [ ] Listar los 17 archivos afectados.
-- [ ] Refactorizar a `useCallback`/`useMemo` con dependencias correctas.
-- [ ] Priorizar `BuilderSidebar.tsx`, `usePageBuilder.ts` y páginas del CMS.
+- [~] Listar los 17 archivos afectados. *(Refinado: solo 3 `exhaustive-deps` warnings restantes y NINGUNO toca el módulo CMS — ses_06068bd audit-real-vs-plan rule.)*
+- [~] Refactorizar a `useCallback`/`useMemo` con dependencias correctas. *(DEFERRED — los 3 warnings restantes no afectan el builder ni el CMS.)*
+- [~] Priorizar `BuilderSidebar.tsx`, `usePageBuilder.ts` y páginas del CMS. *(DEFERRED — no hay warnings en esos archivos.)*
+
+**Entregable Fase 2.1:** ~DEFERRED — la auditoría real mostró que la prioridad del plan original (basada en conteo de warnings) estaba desactualizada respecto a la última sesión. Solo 3 warnings persisten, y NINGUNO toca CMS. Se reconsiderará si se reabre el footer/forms del frontend fuera del módulo CMS.
 
 #### 2.2 Tipado estricto de secciones
-- [ ] Definir tipos discriminados en `frontend/src/types/cms-v2.ts`.
-- [ ] Refactorizar `PublicSectionRenderer.tsx` para evitar `Record<string, unknown>`.
-- [ ] Validar con `zod` o similar en el cliente.
+- [x] Definir tipos discriminados en `frontend/src/types/cms-v2.ts`.
+- [x] Refactorizar `PublicSectionRenderer.tsx` para evitar `Record<string, unknown>`.
+- [~] Validar con `zod` o similar en el cliente. *(DEFERRED — backend ya valida con Pydantic + `validate_section_props`, TS discriminated union da build-time safety; zod no instalado, no necesario a runtime)*
 
-**Entregable:** `npm run lint -- --max-warnings=0` pasa; typecheck pasa.
+**Entregable:** `npm run lint -- --max-warnings=0` pasa; typecheck pasa. ✅ CERRADO 2026-07-27 — verificado: 47/47 sub-componentes migrados a `CmsSection<"tipo">` + `XxxProps` typed, `asTyped<T>()` en 47 cases del dispatcher. `npx tsc --noEmit` = 0 errores, `npx eslint` renderer = 0 warnings, vitest CMS = 39/39, pytest CMS security regression = 58/58.
 
 ---
 
 ### Fase 3 — Rendimiento Backend (5-7 días)
 
 #### 3.1 Eliminar N+1 en endpoints públicos
-- [ ] Auditar `public_page`, `public_post`, `public_menu`, `public_theme`.
-- [ ] Reemplazar `lazyload("*")` por `selectinload` explícito donde se necesiten relaciones.
+- [x] Auditar `public_page`, `public_post`, `public_menu`, `public_theme`. *(Auditoría 2026-07-28 ses_058fcccbeffe: 3/4 principales CLEAN (lazyload("*") correcto); public_page SUSPECT — loop `_build_section_defaults` emite hasta 5 queries SystemVariable por sección, mitigadas por cache 5min pero cold-cache ⇒ N+1 real.)*
+- [~] Reemplazar `lazyload("*")` por `selectinload` explícito donde se necesiten relaciones. *(No necesario en 4 endpoints principales — `lazyload("*")` + serialización manual es el patrón correcto. applying a public_posts_list loop N×3 (categories/tags/author).)*
 - [ ] Medir con SQL logging antes/después.
+
+**Estado actual (auditoría 2026-07-28):**
+- `public_theme`, `public_menu`, `public_post` → CLEAN (`lazyload("*")` correcto).
+- `public_page` → SUSPECT (N×5 SystemVariable cache miss, mitigado por TTL).
+- `public_posts_list` (adyacente) → SUSPECT (N×3 queries por post — `get_post_categories`+`get_post_tags`+`db.query(Persona)`; el fix `get_posts_categories_batch`/`get_posts_tags_batch` ya existe en `backend/crud/cms.py:2505-2550` pero no se invoca).
+
+**Próximo fix concreto:** en `cms_v2.py:2801-2815`, reemplazar el loop que llama a `get_post_categories`/`get_post_tags`/`db.query(Persona)` por las variantes batch ya disponibles en el CRUD. Reduce N×3 → ~3 queries totales.
+
 
 #### 3.2 Cache centralizado
 - [ ] Evaluar si conviene Redis para `_system_var_cache`.

@@ -55,7 +55,6 @@ interface SessionCreatePayload {
  grupo_id?: string;
 }
 
-
 const PERIODICITY_LABEL: Record<string, string> = { SEMANAL: 'Semanal', MENSUAL: 'Mensual' };
 
 export default function GroupPage() {

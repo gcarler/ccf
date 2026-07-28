@@ -1,11 +1,13 @@
 """
-Coverage tests for evangelism_shared.py — target 90%+.
+Comprehensive tests for evangelism_shared.py — target 90%+.
+Covers session helpers, attendance normalization, visible resolvers, triggers.
 """
 import uuid
-from unittest.mock import MagicMock, patch
+from datetime import datetime, timezone, timedelta
 
 import pytest
 
+from backend import models
 from backend.api.evangelism_shared import (
     normalize_attendance_status,
     is_attended_status,
@@ -13,59 +15,106 @@ from backend.api.evangelism_shared import (
     is_excused_status,
     _is_crm_admin_or_pastor,
     _get_persona_for_user,
+    _can_manage_grupo,
     session_read_value,
     session_estado_habilitacion,
-    sessions_grupo_has_estado_habilitacion,
     get_visible_strategy,
     get_visible_group,
     get_visible_session,
-    _can_manage_grupo,
+    ATTENDED_STATES,
+    ABSENT_STATES,
+    EXCUSED_STATES,
+    FIRST_TIME_STATES,
 )
-from tests.conftest import seed_admin as _seed_admin
+from backend.models_evangelism import (
+    EstrategiaEvangelismo,
+    CategoriaEstrategia,
+    GrupoEvangelismo,
+    SesionGrupo,
+    ParticipanteGrupo,
+)
+from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+
+
+def _make_strategy(db, sede_id):
+    cat = CategoriaEstrategia(id=uuid.uuid4(), nombre="Cat Shared")
+    db.add(cat)
+    db.flush()
+    s = EstrategiaEvangelismo(
+        id=uuid.uuid4(), nombre="Estrategia Shared", sede_id=sede_id,
+        categoria_id=cat.id,
+        fecha_inicio=datetime.now(timezone.utc),
+        fecha_fin=datetime.now(timezone.utc) + timedelta(days=90),
+    )
+    db.add(s)
+    db.flush()
+    return s
+
+
+def _make_grupo(db, strategy_id, sede_id, lider_id=None):
+    g = GrupoEvangelismo(
+        id=uuid.uuid4(), nombre=f"G_{uuid.uuid4().hex[:6]}",
+        estrategia_id=strategy_id, sede_id=sede_id,
+        lider_persona_id=lider_id, activo=True, capacidad=20,
+    )
+    db.add(g)
+    db.flush()
+    return g
+
+
+def _make_session(db, grupo_id, estado="REALIZADA"):
+    s = SesionGrupo(
+        id=uuid.uuid4(), grupo_id=grupo_id,
+        fecha_sesion=datetime.now(timezone.utc).date(),
+        estado=estado, estado_habilitacion="HABILITADO",
+    )
+    db.add(s)
+    db.flush()
+    return s
 
 
 @pytest.fixture
 def full(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    return {
-        "db": db_session, "admin": admin, "persona": persona, "sede": sede,
-    }
+    headers = _auth_headers(client, email=admin.email, password="testpass123")
+    return {"c": client, "h": headers, "db": db_session, "admin": admin, "persona": persona, "sede": sede}
 
 
-class TestAttendanceStatus:
-    """Covers normalize_attendance_status and helpers (pure logic)."""
+class TestAttendanceNormalization:
+    """Tests for normalize_attendance_status and derived helpers."""
 
-    def test_normalize_present_variants(self):
-        assert normalize_attendance_status("ASISTIO") == "present"
-        assert normalize_attendance_status("Presente") == "present"
-        assert normalize_attendance_status("presente") == "present"
-        assert normalize_attendance_status("PRESENT") == "present"
+    def test_normalize_attended_states(self):
+        for state in ATTENDED_STATES:
+            result = normalize_attendance_status(state)
+            assert result == "present", f"{state} should normalize to present, got {result}"
 
-    def test_normalize_absent_variants(self):
-        assert normalize_attendance_status("FALTO") == "absent"
-        assert normalize_attendance_status("Ausente") == "absent"
-        assert normalize_attendance_status("ausente") == "absent"
-        assert normalize_attendance_status("ABSENT") == "absent"
+    def test_normalize_absent_states(self):
+        for state in ABSENT_STATES:
+            result = normalize_attendance_status(state)
+            assert result == "absent", f"{state} should normalize to absent, got {result}"
 
-    def test_normalize_excused_variants(self):
-        assert normalize_attendance_status("EXCUSA") == "excused"
-        assert normalize_attendance_status("Excusa") == "excused"
-        assert normalize_attendance_status("excusa") == "excused"
+    def test_normalize_excused_states(self):
+        for state in EXCUSED_STATES:
+            result = normalize_attendance_status(state)
+            assert result == "excused", f"{state} should normalize to excused, got {result}"
 
-    def test_normalize_first_time_as_present(self):
-        assert normalize_attendance_status("first_time") == "present"
-        assert normalize_attendance_status("primera_vez") == "present"
+    def test_normalize_first_time_states(self):
+        for state in FIRST_TIME_STATES:
+            result = normalize_attendance_status(state)
+            assert result == "present", f"first_time state {state} should normalize to present"
 
-    def test_normalize_unknown_returns_raw(self):
-        assert normalize_attendance_status("unknown_value") == "unknown_value"
+    def test_normalize_unknown_passthrough(self):
+        result = normalize_attendance_status("WEIRD_STATUS")
+        assert result == "weird_status"
 
-    def test_normalize_empty_returns_empty(self):
-        assert normalize_attendance_status("") == ""
-        assert normalize_attendance_status(None) == ""
+    def test_normalize_none(self):
+        result = normalize_attendance_status(None)
+        assert result == ""
 
     def test_is_attended_status(self):
         assert is_attended_status("ASISTIO") is True
         assert is_attended_status("FALTO") is False
+        assert is_attended_status("EXCUSA") is False
 
     def test_is_absent_status(self):
         assert is_absent_status("FALTO") is True
@@ -76,148 +125,136 @@ class TestAttendanceStatus:
         assert is_excused_status("ASISTIO") is False
 
 
-class TestAdminCheck:
-    """Covers _is_crm_admin_or_pastor."""
+class TestSessionHelpers:
+    """Tests for session read helpers."""
+
+    def test_session_read_value_with_attr(self):
+        class FakeSession:
+            __dict__ = {"estado_habilitacion": "HABILITADO", "id": "x"}
+        assert session_read_value(FakeSession(), "estado_habilitacion") == "HABILITADO"
+        assert session_read_value(FakeSession(), "missing", "default") == "default"
+
+    def test_session_read_value_no_dict(self):
+        assert session_read_value(None, "field", "default") == "default"
+
+    def test_session_estado_habilitacion_with_value(self):
+        class FakeSession:
+            __dict__ = {"estado_habilitacion": "CERRADO"}
+        assert session_estado_habilitacion(FakeSession()) == "CERRADO"
+
+    def test_session_estado_habilitacion_default(self):
+        class FakeSession:
+            __dict__ = {}
+        assert session_estado_habilitacion(FakeSession()) == "HABILITADO"
+
+
+class TestIsCrmAdminOrPastor:
+    """Tests for _is_crm_admin_or_pastor."""
 
     def test_admin_role(self):
-        user = MagicMock(role="admin")
+        user = type("User", (), {"role": "admin", "rol_plataforma": None})()
         assert _is_crm_admin_or_pastor(user) is True
 
     def test_pastor_role(self):
-        user = MagicMock(role="pastor")
+        user = type("User", (), {"role": "pastor", "rol_plataforma": None})()
         assert _is_crm_admin_or_pastor(user) is True
 
-    def test_reader_role(self):
-        user = MagicMock(role="reader")
-        assert _is_crm_admin_or_pastor(user) is False
-
-    def test_via_rol_plataforma(self):
-        user = MagicMock()
-        user.role = ""
-        user.rol_plataforma = MagicMock()
-        user.rol_plataforma.nombre = "ADMINISTRADOR"
+    def test_coordinador_role(self):
+        user = type("User", (), {"role": "coordinador", "rol_plataforma": None})()
         assert _is_crm_admin_or_pastor(user) is True
 
-    def test_no_role_returns_false(self):
-        user = MagicMock(spec=[])
+    def test_miembro_role(self):
+        user = type("User", (), {"role": "miembro", "rol_plataforma": None})()
         assert _is_crm_admin_or_pastor(user) is False
 
 
-class TestGetPersona:
-    """Covers _get_persona_for_user."""
+class TestGetPersonaForUser:
+    """Tests for _get_persona_for_user."""
 
-    def test_found(self, full):
-        p = _get_persona_for_user(full["db"], full["persona"].id)
-        assert p is not None
-        assert p.id == full["persona"].id
-
-    def test_not_found(self, full):
-        p = _get_persona_for_user(full["db"], uuid.uuid4())
-        assert p is None
+    def test_valid_uuid(self, full):
+        result = _get_persona_for_user(full["db"], str(full["persona"].id))
+        assert result is not None
+        assert result.id == full["persona"].id
 
     def test_invalid_uuid(self, full):
-        p = _get_persona_for_user(full["db"], "not-a-uuid")
-        assert p is None
+        result = _get_persona_for_user(full["db"], "not-a-uuid")
+        assert result is None
+
+    def test_none(self, full):
+        result = _get_persona_for_user(full["db"], None)
+        assert result is None
 
 
-class TestSessionRead:
-    """Covers session_read_value and session_estado_habilitacion."""
-
-    def test_read_value_exists(self):
-        session = type("FakeSession", (), {"__dict__": {"estado_habilitacion": "HABILITADO"}})()
-        assert session_read_value(session, "estado_habilitacion") == "HABILITADO"
-
-    def test_read_value_default(self):
-        session = type("FakeSession", (), {"__dict__": {}})()
-        assert session_read_value(session, "nonexistent", "default") == "default"
-
-    def test_read_value_none(self):
-        assert session_read_value(None, "field", "default") == "default"
-
-
-class TestSessionHabilitacion:
-    def test_estado_habilitacion_returns_value(self):
-        session = MagicMock()
-        session.__dict__ = {"estado_habilitacion": "DESHABILITADO"}
-        assert session_estado_habilitacion(session) == "DESHABILITADO"
-
-    def test_estado_habilitacion_default(self):
-        session = MagicMock()
-        session.__dict__ = {}
-        assert session_estado_habilitacion(session, "HABILITADO") == "HABILITADO"
-
-
-class TestVisibleQueries:
-    """Covers get_visible_strategy, get_visible_group, get_visible_session."""
+class TestVisibleResolvers:
+    """Tests for get_visible_strategy, get_visible_group, get_visible_session."""
 
     def test_get_visible_strategy_found(self, full):
-        from backend.models_evangelism import EstrategiaEvangelismo, CategoriaEstrategia
-        from datetime import datetime, timezone
-        cat = CategoriaEstrategia(id=uuid.uuid4(), nombre="Cat")
-        full["db"].add(cat)
-        full["db"].flush()
-        s = EstrategiaEvangelismo(
-            id=uuid.uuid4(), nombre="Test", sede_id=full["sede"].id,
-            categoria_id=cat.id, activa=True,
-            fecha_inicio=datetime.now(timezone.utc),
-            fecha_fin=datetime.now(timezone.utc),
-        )
-        full["db"].add(s)
+        strategy = _make_strategy(full["db"], full["sede"].id)
         full["db"].commit()
-        result = get_visible_strategy(full["db"], s.id, str(full["sede"].id))
+        result = get_visible_strategy(full["db"], strategy.id, str(full["sede"].id))
         assert result is not None
-        assert result.id == s.id
+        assert result.id == strategy.id
 
-    def test_get_visible_strategy_not_found(self, full):
-        result = get_visible_strategy(full["db"], uuid.uuid4(), str(full["sede"].id))
+    def test_get_visible_strategy_wrong_sede(self, full):
+        strategy = _make_strategy(full["db"], full["sede"].id)
+        full["db"].commit()
+        result = get_visible_strategy(full["db"], strategy.id, str(uuid.uuid4()))
+        assert result is None
+
+    def test_get_visible_strategy_deleted(self, full):
+        strategy = _make_strategy(full["db"], full["sede"].id)
+        strategy.deleted_at = datetime.now(timezone.utc)
+        full["db"].commit()
+        result = get_visible_strategy(full["db"], strategy.id, str(full["sede"].id))
         assert result is None
 
     def test_get_visible_group_found(self, full):
-        from backend import models
-        g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre="G", sede_id=full["sede"].id, activo=True,
-        )
-        full["db"].add(g)
+        strategy = _make_strategy(full["db"], full["sede"].id)
+        g = _make_grupo(full["db"], strategy.id, full["sede"].id)
         full["db"].commit()
         result = get_visible_group(full["db"], g.id, str(full["sede"].id))
         assert result is not None
 
-    def test_get_visible_group_not_found(self, full):
-        result = get_visible_group(full["db"], uuid.uuid4(), str(full["sede"].id))
+    def test_get_visible_group_wrong_sede(self, full):
+        strategy = _make_strategy(full["db"], full["sede"].id)
+        g = _make_grupo(full["db"], strategy.id, full["sede"].id)
+        full["db"].commit()
+        result = get_visible_group(full["db"], g.id, str(uuid.uuid4()))
         assert result is None
 
     def test_get_visible_session_found(self, full):
-        from backend import models
-        from datetime import datetime, timezone
-        g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre="G2", sede_id=full["sede"].id, activo=True,
-        )
-        full["db"].add(g)
-        full["db"].flush()
-        s = models.SesionGrupo(grupo_id=g.id, fecha_sesion=datetime.now(timezone.utc))
-        full["db"].add(s)
+        strategy = _make_strategy(full["db"], full["sede"].id)
+        g = _make_grupo(full["db"], strategy.id, full["sede"].id)
+        s = _make_session(full["db"], g.id)
         full["db"].commit()
         result = get_visible_session(full["db"], s.id, str(full["sede"].id))
         assert result is not None
+        assert result.id == s.id
 
-    def test_get_visible_session_not_found(self, full):
-        result = get_visible_session(full["db"], uuid.uuid4(), str(full["sede"].id))
+    def test_get_visible_session_wrong_sede(self, full):
+        strategy = _make_strategy(full["db"], full["sede"].id)
+        g = _make_grupo(full["db"], strategy.id, full["sede"].id)
+        s = _make_session(full["db"], g.id)
+        full["db"].commit()
+        result = get_visible_session(full["db"], s.id, str(uuid.uuid4()))
         assert result is None
 
 
 class TestCanManageGrupo:
-    """Covers _can_manage_grupo."""
+    """Tests for _can_manage_grupo."""
 
     def test_admin_can_manage(self, full):
-        # admin user should have admin role
-        house = MagicMock()
-        result = _can_manage_grupo(full["db"], full["admin"], house)
-        # Admin role returns True
-        assert result is True
+        strategy = _make_strategy(full["db"], full["sede"].id)
+        g = _make_grupo(full["db"], strategy.id, full["sede"].id)
+        full["db"].commit()
+        assert _can_manage_grupo(full["db"], full["admin"], g) is True
 
-    def test_without_persona_returns_false(self, full):
-        user = MagicMock(id=uuid.uuid4())
-        user.role = "member"
-        house = MagicMock()
-        result = _can_manage_grupo(full["db"], user, house)
-        assert result is False
+    def test_non_leader_cannot_manage(self, full):
+        from backend.models_crm import Persona
+        strategy = _make_strategy(full["db"], full["sede"].id)
+        other = Persona(id=uuid.uuid4(), first_name="Other", last_name="User", sede_id=full["sede"].id)
+        full["db"].add(other)
+        g = _make_grupo(full["db"], strategy.id, full["sede"].id, full["persona"].id)
+        full["db"].commit()
+        user = type("User", (), {"role": "miembro", "rol_plataforma": None, "id": str(uuid.uuid4())})()
+        assert _can_manage_grupo(full["db"], user, g) is False

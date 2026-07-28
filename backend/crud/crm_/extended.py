@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -54,7 +54,7 @@ class PersonaPositionUpdate(BaseModel):
 class EventAssignmentCreate(BaseModel):
     event_id: UUID
     persona_id: str
-    session_date: datetime
+    session_date: date
     role: str
 
 
@@ -190,7 +190,7 @@ def get_positions(
     category: str | None = None,
     only_active: bool = True,
 ) -> List[models.Position]:
-    q = db.query(models.Position)
+    q = db.query(models.Position).filter(models.Position.deleted_at.is_(None))
     if category:
         q = q.filter(models.Position.category == category)
     if only_active:
@@ -199,7 +199,14 @@ def get_positions(
 
 
 def get_position(db: Session, position_id: UUID) -> Optional[models.Position]:
-    return db.query(models.Position).filter(models.Position.id == position_id).first()
+    return (
+        db.query(models.Position)
+        .filter(
+            models.Position.id == position_id,
+            models.Position.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 def create_position(db: Session, payload: PositionCreate) -> models.Position:
@@ -240,7 +247,7 @@ def get_persona_positions(
     persona_id: str | None = None,
     only_active: bool = False,
 ) -> List[models.PersonaPosition]:
-    q = db.query(models.PersonaPosition)
+    q = db.query(models.PersonaPosition).filter(models.PersonaPosition.deleted_at.is_(None))
     if persona_id is not None:
         q = q.filter(models.PersonaPosition.persona_id == persona_id)
     if only_active:
@@ -251,7 +258,10 @@ def get_persona_positions(
 def get_persona_position(db: Session, mp_id: UUID) -> Optional[models.PersonaPosition]:
     return (
         db.query(models.PersonaPosition)
-        .filter(models.PersonaPosition.id == mp_id)
+        .filter(
+            models.PersonaPosition.id == mp_id,
+            models.PersonaPosition.deleted_at.is_(None),
+        )
         .first()
     )
 
@@ -376,11 +386,23 @@ def delete_event_assignment(db: Session, ea_id: UUID) -> bool:
 
 
 def get_ministries(db: Session) -> List[models.Ministry]:
-    return db.query(models.Ministry).order_by(models.Ministry.name).all()
+    return (
+        db.query(models.Ministry)
+        .filter(models.Ministry.deleted_at.is_(None))
+        .order_by(models.Ministry.name)
+        .all()
+    )
 
 
 def get_ministry(db: Session, ministry_id: UUID) -> Optional[models.Ministry]:
-    return db.query(models.Ministry).filter(models.Ministry.id == ministry_id).first()
+    return (
+        db.query(models.Ministry)
+        .filter(
+            models.Ministry.id == ministry_id,
+            models.Ministry.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 def create_ministry(db: Session, payload: MinistryCreate) -> models.Ministry:
@@ -422,7 +444,7 @@ def get_persona_ministry_assignments(
     ministry_id: UUID | None = None,
     only_active: bool = False,
 ) -> List[models.PersonaMinistryAssignment]:
-    q = db.query(models.PersonaMinistryAssignment)
+    q = db.query(models.PersonaMinistryAssignment).filter(models.PersonaMinistryAssignment.deleted_at.is_(None))
     if persona_id is not None:
         q = q.filter(models.PersonaMinistryAssignment.persona_id == persona_id)
     if ministry_id is not None:
@@ -435,7 +457,10 @@ def get_persona_ministry_assignments(
 def get_persona_ministry_assignment(db: Session, mm_id: UUID) -> Optional[models.PersonaMinistryAssignment]:
     return (
         db.query(models.PersonaMinistryAssignment)
-        .filter(models.PersonaMinistryAssignment.id == mm_id)
+        .filter(
+            models.PersonaMinistryAssignment.id == mm_id,
+            models.PersonaMinistryAssignment.deleted_at.is_(None),
+        )
         .first()
     )
 
@@ -565,7 +590,7 @@ def get_crm_automation_edges(
     source_id: UUID | None = None,
     target_id: UUID | None = None,
 ) -> List[models.CrmAutomationEdge]:
-    q = db.query(models.CrmAutomationEdge)
+    q = db.query(models.CrmAutomationEdge).filter(models.CrmAutomationEdge.deleted_at.is_(None))
     if source_id is not None:
         q = q.filter(models.CrmAutomationEdge.source_id == source_id)
     if target_id is not None:
@@ -576,7 +601,10 @@ def get_crm_automation_edges(
 def get_crm_automation_edge(db: Session, edge_id: UUID) -> Optional[models.CrmAutomationEdge]:
     return (
         db.query(models.CrmAutomationEdge)
-        .filter(models.CrmAutomationEdge.id == edge_id)
+        .filter(
+            models.CrmAutomationEdge.id == edge_id,
+            models.CrmAutomationEdge.deleted_at.is_(None),
+        )
         .first()
     )
 
@@ -629,7 +657,7 @@ def delete_crm_automation_edge(db: Session, edge_id: UUID) -> bool:
 def get_role_definitions(
     db: Session, only_leadership: bool = False
 ) -> List[models.RoleDefinition]:
-    q = db.query(models.RoleDefinition)
+    q = db.query(models.RoleDefinition).filter(models.RoleDefinition.deleted_at.is_(None))
     if only_leadership:
         q = q.filter(models.RoleDefinition.is_leadership)
     return q.order_by(models.RoleDefinition.name).all()
@@ -638,7 +666,10 @@ def get_role_definitions(
 def get_role_definition(db: Session, role_id: UUID) -> Optional[models.RoleDefinition]:
     return (
         db.query(models.RoleDefinition)
-        .filter(models.RoleDefinition.id == role_id)
+        .filter(
+            models.RoleDefinition.id == role_id,
+            models.RoleDefinition.deleted_at.is_(None),
+        )
         .first()
     )
 
@@ -691,7 +722,7 @@ def get_persona_role_links(
     persona_id: str | None = None,
     role_id: UUID | None = None,
 ) -> List[models.PersonaRoleLink]:
-    q = db.query(models.PersonaRoleLink)
+    q = db.query(models.PersonaRoleLink).filter(models.PersonaRoleLink.deleted_at.is_(None))
     if persona_id is not None:
         q = q.filter(models.PersonaRoleLink.persona_id == persona_id)
     if role_id is not None:
@@ -720,14 +751,21 @@ def delete_persona_role_link(db: Session, mr_id: UUID) -> bool:
 
 
 def get_funds(db: Session, only_public: bool = False) -> List[models.Fund]:
-    q = db.query(models.Fund)
+    q = db.query(models.Fund).filter(models.Fund.deleted_at.is_(None))
     if only_public:
         q = q.filter(models.Fund.is_public)
     return q.order_by(models.Fund.name).all()
 
 
 def get_fund(db: Session, fund_id: UUID) -> Optional[models.Fund]:
-    return db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
+    return (
+        db.query(models.Fund)
+        .filter(
+            models.Fund.fund_id == fund_id,
+            models.Fund.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 def create_fund(db: Session, payload: FundCreate) -> models.Fund:
@@ -766,7 +804,7 @@ def delete_fund(db: Session, fund_id: UUID) -> bool:
 def get_volunteer_skills(
     db: Session, category: str | None = None
 ) -> List[models.VolunteerSkill]:
-    q = db.query(models.VolunteerSkill)
+    q = db.query(models.VolunteerSkill).filter(models.VolunteerSkill.deleted_at.is_(None))
     if category:
         q = q.filter(models.VolunteerSkill.category == category)
     return q.order_by(models.VolunteerSkill.name).all()
@@ -775,7 +813,10 @@ def get_volunteer_skills(
 def get_volunteer_skill(db: Session, skill_id: UUID) -> Optional[models.VolunteerSkill]:
     return (
         db.query(models.VolunteerSkill)
-        .filter(models.VolunteerSkill.id == skill_id)
+        .filter(
+            models.VolunteerSkill.id == skill_id,
+            models.VolunteerSkill.deleted_at.is_(None),
+        )
         .first()
     )
 

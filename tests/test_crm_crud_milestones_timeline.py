@@ -34,7 +34,6 @@ from backend import models
 from backend.crud.crm_ import milestones as crud_milestones
 from backend.crud.crm_ import timeline as crud_timeline
 
-
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 
 def _seed_sede(db: Session, name: str = "Sede QC-18.D") -> models.Sede:

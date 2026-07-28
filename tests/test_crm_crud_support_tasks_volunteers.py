@@ -6,11 +6,8 @@ QC-18 closure (errorescrm.md): all three modules had 0 direct tests.
   * tasks.py (4 funcs): TareaCRM CRUD with Axioma-3 defense-in-depth scope
     re-check (CREATE pre-flush + UPDATE pre-mutation) and audit-log
     persistence (Axioma 1).
-  * volunteers.py (5 funcs): VolunteerShift CRUD. NOTE: this module is
-    `LATENTE` (A-05) — `get_volunteer_shifts` and `get_volunteer_shift` do
-    NOT filter `deleted_at IS NULL` (asymmetry vs the rest of the module).
-    We DOCUMENT this as a contract test (not fix it — no API caller touches
-    VolunteerShift, no leak surface).
+  * volunteers.py (5 funcs): VolunteerShift CRUD. Soft-delete on reads is
+    now consistent with the rest of the CRM CRUD.
 
 Posture mirrors `tests/test_crm_crud_personas.py`: SQLite in-memory via
 `db_session`, direct row inserts, no HTTP layer. We exercise:
@@ -35,7 +32,6 @@ from backend.crud.crm_ import support as crud_support
 from backend.crud.crm_ import tasks as crud_tasks
 from backend.crud.crm_ import volunteers as crud_volunteers
 from backend.schemas.crm.base import CrmTaskPriority, CrmTaskStatus
-
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 
@@ -462,30 +458,19 @@ def test_delete_volunteer_shift_returns_false_for_missing(db_session):
     assert crud_volunteers.delete_volunteer_shift(db_session, _uuid.uuid4()) is False
 
 
-def test_get_volunteer_shifts_returns_soft_deleted_asymmetry_documented(db_session):
-    """CONTRACT test documenting module asymmetry (A-05 LATENTE, errorescrm.md):
-    `get_volunteer_shifts` and `get_volunteer_shift` do NOT filter
-    `deleted_at IS NULL`, unlike the rest of the CRM CRUD. The module is
-    `LATENTE` (0 API callers reference VolunteerShift) so no live leak
-    surface exists today. We pin the asymmetry here as a regression guard:
-    if anyone fixes the asymmetry (adds the filter), this test will start
-    failing and they should update both the docs AND this assertion.
+def test_get_volunteer_shifts_excludes_soft_deleted(db_session):
+    """Soft-delete guard: get_volunteer_shifts and get_volunteer_shift
+    now filter `deleted_at IS NULL`, consistent with the rest of the
+    CRM CRUD. The previous A-05 LATENTE asymmetry has been closed.
     """
     sede = _seed_sede(db_session)
     p = _seed_persona(db_session, sede_id=sede.id)
+    s_live = _seed_shift(db_session, persona=p)
     s_dead = _seed_shift(db_session, persona=p, deleted_at=crud_volunteers._utcnow())
     _commit(db_session)
 
-    # The two read paths impact: get_volunteer_shifts INCLUDES soft-deleted rows
-    # (no filter), get_volunteer_shift too. This assertion pins the asymmetry
-    # so the eventual fix is intentional, not accidental.
     out_by_persona = crud_volunteers.get_volunteer_shifts(db_session, persona_id=str(p.id))
     by_id = crud_volunteers.get_volunteer_shift(db_session, s_dead.id)
-    assert any(x.id == s_dead.id for x in out_by_persona), (
-        "get_volunteer_shifts started filtering deleted_at — update this test + "
-        "the A-05 LATENTE marker in errorescrm.md if the asymmetry was fixed"
-    )
-    assert by_id is not None, (
-        "get_volunteer_shift started filtering deleted_at — update this test + "
-        "the A-05 LATENTE marker in errorescrm.md if the asymmetry was fixed"
-    )
+    assert s_live.id in {x.id for x in out_by_persona}
+    assert s_dead.id not in {x.id for x in out_by_persona}
+    assert by_id is None

@@ -12,14 +12,14 @@ from backend.api.crm._shared import (
     _serialize_case,
     _serialize_task,
 )
+from backend.core.database import get_db
+from backend.core.permissions import require_module_access
+from backend.core.tenant import get_user_sede_id
 from backend.crud.crm_.shared import (
     _case_created_column,
     case_query,
     prepare_case_for_output,
 )
-from backend.core.database import get_db
-from backend.core.permissions import require_module_access
-from backend.core.tenant import get_user_sede_id
 
 router = APIRouter(tags=["CRM"])
 

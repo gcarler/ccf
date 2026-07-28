@@ -20,11 +20,9 @@ Posture mirrors `tests/test_crm_crud_personas.py`: SQLite in-memory via
 """
 from __future__ import annotations
 
-import datetime as dt
 import uuid as _uuid
 from typing import Optional
 
-import pytest
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
@@ -33,7 +31,6 @@ from backend.crud.crm_ import community as crud_community
 from backend.crud.crm_ import counseling as crud_counseling
 from backend.crud.crm_ import prayer as crud_prayer
 from backend.schemas.operational import CommunityBoardCardUpdate
-
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 

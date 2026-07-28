@@ -9,11 +9,11 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.crud.crm_.shared import case_query
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access, require_pastor_or_admin
 from backend.core.tenant import require_user_sede_id
 from backend.crud.crm_ import pipeline as crm_pipeline
+from backend.crud.crm_.shared import case_query
 from backend.schemas.crm.pipeline import (
     PipelineCreate,
     PipelineResponse,
@@ -252,7 +252,7 @@ def reorder_casos(
 
 # --- GENUINE DATABASE-BACKED LOGIC FOR KANBAN & AUTOMATIONS ---
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 
 class DragDropEventCreate(BaseModel):

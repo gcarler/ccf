@@ -9,6 +9,7 @@ import type {
  SessionRow,
  StrategyGroup,
 } from '../../types';
+import { getErrorMessage, toAttendanceStatus } from '../../utils';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import dynamic from 'next/dynamic';
 import {
@@ -35,7 +36,6 @@ import {
  useSessions,
  useStrategy,
 } from './useStrategyDetail';
-import { getErrorMessage, toAttendanceStatus } from '../../utils';
 
 const UniversalCalendarView = dynamic(() => import('@/components/ui/UniversalCalendarView'), { ssr: false });
 const UniversalGanttView = dynamic(() => import('@/components/ui/UniversalGanttView'), { ssr: false });
@@ -75,6 +75,7 @@ X
 import { ChevronDown } from 'lucide-react';
 import { useParams,useRouter } from 'next/navigation';
 import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { toast } from 'sonner';
 
 function RoleSelect({ value, options, colorClass, onChange }: {
@@ -94,22 +95,30 @@ function RoleSelect({ value, options, colorClass, onChange }: {
  return () => document.removeEventListener('mousedown', handler);
  }, [open]);
 
+ const handleKeyDown = (e: React.KeyboardEvent) => {
+   if (e.key === 'Escape') setOpen(false);
+ };
+
  return (
- <div ref={ref} className="relative">
+ <div ref={ref} className="relative" onKeyDown={handleKeyDown}>
  <button
  type="button"
  onClick={() => setOpen(o => !o)}
+ aria-expanded={open}
+ aria-haspopup="listbox"
  className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded cursor-pointer ${colorClass}`}
  >
  {current?.label ?? value}
  <ChevronDown size={10} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
  </button>
  {open && (
- <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 overflow-hidden">
+ <div role="listbox" className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 overflow-hidden">
  {options.map(opt => (
  <button
  key={opt.value}
  type="button"
+ role="option"
+ aria-selected={value === opt.value}
  onClick={() => { onChange(opt.value); setOpen(false); }}
  className={`w-full text-left px-3 py-1.5 text-[11px] font-semibold hover:bg-[hsl(var(--bg-muted))] transition-colors ${value === opt.value ? 'opacity-60' : ''}`}
  >
@@ -886,9 +895,21 @@ export default function StrategyDetailPage() {
  />
 
  {/* Tabs */}
- <div className="flex items-center gap-1 border-b border-[hsl(var(--border-primary))]">
+ <div
+ role="tablist"
+ className="flex items-center gap-1 border-b border-[hsl(var(--border-primary))]"
+ onKeyDown={(e) => {
+   const tabs = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]'));
+   const idx = tabs.indexOf(document.activeElement as HTMLElement);
+   if (idx === -1) return;
+   if (e.key === 'ArrowRight') { e.preventDefault(); tabs[(idx + 1) % tabs.length]?.focus(); }
+   if (e.key === 'ArrowLeft') { e.preventDefault(); tabs[(idx - 1 + tabs.length) % tabs.length]?.focus(); }
+ }}
+ >
  {TABS.map(tab => (
  <button key={tab.id}
+ role="tab"
+ aria-selected={activeTab === tab.id}
  onClick={() => tab.id === 'metrics' ? router.push(`/plataforma/evangelism/strategies/${id}/analytics`) : setActiveTab(tab.id)}
  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${
  activeTab === tab.id
@@ -1276,6 +1297,7 @@ export default function StrategyDetailPage() {
  </div>
  )}
 
+ <ErrorBoundary moduleName="Estrategia - Contenido">
  {/* ── Overview ── */}
  {viewType === 'dashboard' && activeTab === 'overview' && (
    <StrategyOverviewForm
@@ -1323,8 +1345,11 @@ export default function StrategyDetailPage() {
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
  {groups.map(g => (
  <div key={g.id}
+ role="button"
+ tabIndex={0}
  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg p-4 hover:border-[hsl(var(--primary)/0.3)] dark:hover:border-[hsl(var(--primary)/0.5)] transition-all cursor-pointer relative"
- onClick={() => canManageStrategySurface ? openPersonaDrawer(g) : router.push(`/plataforma/evangelism/groups/${g.id}`)}>
+ onClick={() => canManageStrategySurface ? openPersonaDrawer(g) : router.push(`/plataforma/evangelism/groups/${g.id}`)}
+ onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
  {canManageStrategySurface ? (
  <button onClick={e => { e.stopPropagation(); requestDeleteGroup(g.id, g.name); }}
  className="absolute top-2 right-2 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.15)] opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
@@ -1388,6 +1413,7 @@ export default function StrategyDetailPage() {
 
  {/* ── Sesiones ── */}
  {viewType === 'dashboard' && activeTab === 'sessions' && (
+ <ErrorBoundary moduleName="Estrategia - Sesiones">
  <div className="space-y-3">
  <div className="flex items-center justify-between flex-wrap gap-2">
  <h2 className="text-sm font-bold text-[hsl(var(--text-primary))]">Registro de sesiones</h2>
@@ -1595,6 +1621,7 @@ export default function StrategyDetailPage() {
  </div>
  )}
  </div>
+ </ErrorBoundary>
  )}
 
  {/* ── Asistencia ── */}
@@ -1704,6 +1731,7 @@ export default function StrategyDetailPage() {
 
  {/* ── Métricas ── */}
  {viewType === 'dashboard' && activeTab === 'metrics' && (
+ <ErrorBoundary moduleName="Estrategia - Metricas">
  <div className="space-y-4">
  <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-8 flex flex-col items-center text-center gap-4">
  <div className="p-4 rounded-2xl bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)]">
@@ -1739,6 +1767,7 @@ export default function StrategyDetailPage() {
  </div>
  )}
  </div>
+ </ErrorBoundary>
  )}
 
  {/* Metadata */}
@@ -1816,6 +1845,7 @@ export default function StrategyDetailPage() {
  </div>
  </>
  )}
+ </ErrorBoundary>
  </div>
 
  {/* ── Group Creation Drawer ── */}
@@ -1885,7 +1915,11 @@ export default function StrategyDetailPage() {
 
  {/* Divisor arrastrable */}
  <div
+ tabIndex={0}
+ role="separator"
+ aria-label="Ajustar tamaño del panel"
  onMouseDown={handlePersonaSplitDrag}
+ onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); }}
  className="shrink-0 h-4 flex items-center justify-center cursor-row-resize group select-none border-y border-[hsl(var(--border-primary))] hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]/40 transition-colors"
  title="Arrastra para ajustar el espacio"
  >

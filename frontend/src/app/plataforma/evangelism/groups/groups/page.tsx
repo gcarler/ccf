@@ -691,6 +691,8 @@ if (!cancelled) setLoading(false);
  {items.map(h => (
  <tr
  key={h.id}
+ tabIndex={0}
+ role="button"
  onClick={async () => {
  setIsCreating(false);
  try {
@@ -699,6 +701,12 @@ if (!cancelled) setLoading(false);
  setSelectedPersonaIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
  } catch {
  setSelectedHouse(h); setFormData(h); setSelectedPersonaIds(new Set());
+ }
+ }}
+ onKeyDown={(e) => {
+ if (e.key === 'Enter' || e.key === ' ') {
+ e.preventDefault();
+ (e.currentTarget as HTMLElement).click();
  }
  }}
  className="border-b border-[hsl(var(--border-primary))] hover:bg-info-soft/50 dark:hover:bg-[hsl(var(--info)/0.05)] transition-colors cursor-pointer"

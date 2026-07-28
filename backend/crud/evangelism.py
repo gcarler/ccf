@@ -142,6 +142,7 @@ def _crud_scope_re_check_evangelism_update(
 # ESTRATEGIAS
 # ──────────────────────────────────────────────
 
+
 def get_estrategias(
     db: Session,
     skip: int = 0,
@@ -576,7 +577,7 @@ def submit_asistencia(
     sesion_row = (
         db.query(SesionGrupo.id, GrupoEvangelismo.sede_id)
         .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
-        .filter(SesionGrupo.id == sesion_uuid)
+        .filter(SesionGrupo.id == sesion_uuid, SesionGrupo.deleted_at.is_(None))
         .first()
     )
     sesion_sede = str(sesion_row[1]) if sesion_row and sesion_row[1] else None
@@ -729,7 +730,7 @@ def update_seguimiento(
         db.query(Asistencia.id, GrupoEvangelismo.sede_id)
         .join(SesionGrupo, SesionGrupo.id == Asistencia.sesion_id)
         .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
-        .filter(Asistencia.id == db_obj.asistencia_id)
+        .filter(Asistencia.id == db_obj.asistencia_id, Asistencia.deleted_at.is_(None))
         .first()
     )
     current_sede = str(asist_row[1]) if asist_row and asist_row[1] else None
@@ -825,7 +826,7 @@ def delete_seguimiento(
         db.query(Asistencia.id, GrupoEvangelismo.sede_id)
         .join(SesionGrupo, SesionGrupo.id == Asistencia.sesion_id)
         .join(GrupoEvangelismo, GrupoEvangelismo.id == SesionGrupo.grupo_id)
-        .filter(Asistencia.id == db_obj.asistencia_id)
+        .filter(Asistencia.id == db_obj.asistencia_id, Asistencia.deleted_at.is_(None))
         .first()
     )
     current_sede = str(asist_row[1]) if asist_row and asist_row[1] else None

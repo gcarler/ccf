@@ -9,7 +9,7 @@ from backend.crud._utils import _utcnow
 
 
 def get_volunteer_shifts(db: Session, persona_id: Optional[str] = None) -> List[models.VolunteerShift]:
-    query = db.query(models.VolunteerShift)
+    query = db.query(models.VolunteerShift).filter(models.VolunteerShift.deleted_at.is_(None))
     if persona_id:
         query = query.filter(models.VolunteerShift.persona_id == persona_id)
     return query.order_by(models.VolunteerShift.shift_start.asc()).all()
@@ -24,7 +24,14 @@ def create_volunteer_shift(db: Session, payload: schemas.VolunteerShiftCreate) -
 
 
 def get_volunteer_shift(db: Session, shift_id: UUID) -> Optional[models.VolunteerShift]:
-    return db.query(models.VolunteerShift).filter(models.VolunteerShift.id == shift_id).first()
+    return (
+        db.query(models.VolunteerShift)
+        .filter(
+            models.VolunteerShift.id == shift_id,
+            models.VolunteerShift.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 def update_volunteer_shift(

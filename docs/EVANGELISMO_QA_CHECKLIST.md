@@ -170,6 +170,15 @@ Si el comportamiento real difiere, actualizar `EVANGELISMO_API_CONTRACTS.md`, `E
 - Probar split con precondicion invalida.
 - Confirmar historial.
 
+### Soft-delete y cross-sede (auditoria forense 2026-07-26)
+
+- Validar que `actualizar_participante`, `submit_asistencia`, `remover_participante` excluyen registros eliminados.
+- Validar que `add_groups_attendance` (asistencia masiva) excluye personas eliminadas en la branch `persona_ids`.
+- Validar que `_count_personas` y `split_group` en multiplicacion excluyen registros eliminados.
+- Validar que la sesion en `submit_asistencia` usa `SesionGrupo.deleted_at.is_(None)`.
+- Validar que endpoints GET de multiplicacion (`check`, `history`) usan `require_evangelism_read`, no `manage`.
+- Validar que eventos cross-sede retornan 404 (no 403) para usuarios de otra sede.
+
 ## 10. Criterio de cierre
 
 Una tarea de evangelismo queda cerrada cuando:

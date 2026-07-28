@@ -2798,19 +2798,32 @@ def public_posts_list(
         query = query.join(models.CmsPostTag).join(models.CmsTag).filter(models.CmsTag.slug == tag_slug)
     total = query.count()
     items = query.order_by(models.CmsPost.published_at.desc().nullslast()).offset(skip).limit(limit).all()
+    # ── Fase 3.1 — N+1 fix: reemplazar N×3 queries del loop per-post por
+    # 3 queries batch + 1 query batch para authors. Antes: get_post_categories
+    # + get_post_tags + db.query(Persona) por cada post => 3N queries.
+    # Ahora: get_posts_categories_batch + get_posts_tags_batch + una sola
+    # query de Persona por IN clausula => 3 queries totales.
+    post_ids = [post.id for post in items]
+    categories_by_post = crud.get_posts_categories_batch(db, post_ids)
+    tags_by_post = crud.get_posts_tags_batch(db, post_ids)
+    # Batch fetch de autores: una sola query por IN en vez de N queries.
+    author_ids = {post.author_persona_id for post in items if post.author_persona_id is not None}
+    authors_by_id: dict = {}
+    if author_ids:
+        for row in db.query(models.Persona).filter(models.Persona.id.in_(author_ids)).all():
+            authors_by_id[row.id] = row.nombre_completo
+    settings = get_settings()
+    base_url = settings.frontend_url.rstrip("/")
     enriched = []
     for post in items:
+        # Fase 3.1 (MEMORY §79): CmsPublicPostRead.model_validate(post) ahora
+        # funciona gracias a ``model_config = orm_config`` añadido al schema
+        # (Pydantic v2 requiere from_attributes=True para aceptar ORM rows).
         p = schemas.CmsPublicPostRead.model_validate(post)
-        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, post.id)]
-        p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, post.id)]
-        author_name = None
-        if post.author_persona_id:
-            author = db.query(models.Persona).filter(models.Persona.id == post.author_persona_id).first()
-            if author:
-                author_name = author.nombre_completo
-        p.author_name = author_name
-        settings = get_settings()
-        base_url = settings.frontend_url.rstrip("/")
+        p.site_key = site_key
+        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in categories_by_post.get(str(post.id), [])]
+        p.tags = [schemas.CmsTagRead.model_validate(t) for t in tags_by_post.get(str(post.id), [])]
+        p.author_name = authors_by_id.get(post.author_persona_id) if post.author_persona_id else None
         p.canonical_url = f"{base_url}/blog/{post.slug}"
         enriched.append(p)
     return PaginatedResponse[schemas.CmsPublicPostRead](items=enriched, total=total, skip=skip, limit=limit)
@@ -2840,7 +2853,10 @@ def public_post(
     )
     if not post:
         raise HTTPException(status_code=404, detail="published post not found")
+    # Fase 3.1 (MEMORY §79): CmsPublicPostRead.model_validate(post) ahora
+    # funciona gracias a ``model_config = orm_config`` añadido al schema.
     p = schemas.CmsPublicPostRead.model_validate(post)
+    p.site_key = site_key
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, post.id)]
     p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, post.id)]
     author_name = None

@@ -28,10 +28,9 @@ from __future__ import annotations
 import uuid as _uuid
 from typing import Optional
 
-import pytest
 from sqlalchemy.orm import Session
 
-from backend import crud, models, schemas
+from backend import models, schemas
 from backend.crud.crm_.personas import (
     _find_existing_persona,
     _persona_live_column_names,
@@ -39,7 +38,6 @@ from backend.crud.crm_.personas import (
     persona_query,
     prepare_persona_for_output,
 )
-
 
 # ─── Fixtures local — re-uses conftest.db_session + seed_admin via _seed_sede ──
 

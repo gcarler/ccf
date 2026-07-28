@@ -178,9 +178,9 @@ Archivo: `backend/api/evangelism_multiplication.py`
 
 | Superficie | Guard real |
 |---|---|
-| check | `require_evangelism_manage` |
+| check | `require_evangelism_read` |
 | split | `require_evangelism_manage` |
-| history | `require_evangelism_manage` |
+| history | `require_evangelism_read` |
 
 ### 5.9 Notificaciones
 
@@ -212,13 +212,12 @@ de tenant.
 
 | Rol | Lectura segura |
 |---|---|
-| `ADMINISTRADOR` | acceso completo |
-| `GESTOR` | sin acceso a evangelismo por defecto; requiere `evangelism:manage` vía asignación explícita |
-| `EDITOR` | sin acceso a evangelismo por defecto; requiere `evangelism:edit` vía asignación explícita |
-| `LECTOR` | sin acceso a evangelismo por defecto; requiere `evangelism:read` vía asignación explícita |
+| `ADMINISTRADOR` / `SUPER ADMINISTRADOR` | acceso completo (bypass admin) |
 | `COORDINADOR` | lectura y edición por allowance, más acceso contextual de grupos propios |
 | `PASTOR` | acceso total por allowance |
 | `MIEMBRO` | solo donde exista flujo autenticado/contextual y el código lo permita |
+
+> **Nota:** Los roles `GESTOR`, `EDITOR` y `LECTOR` **no** existen en `DEFAULT_ROLES` con permisos `evangelism:*`. No asignar permisos de evangelismo a estos roles salvo que se agreguen explícitamente al diccionario `DEFAULT_ROLES` en `permissions.py`.
 
 ## 7. Riesgos de drift que esta matriz evita
 

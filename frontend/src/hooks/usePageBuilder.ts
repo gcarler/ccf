@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useReducer } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   createCmsPage,
@@ -17,12 +17,17 @@ import {
   workflowCmsPage,
 } from "@/lib/cms/v2";
 import { PAGE_TEMPLATES } from "@/components/cms/builder/constants";
-import type { CmsPage, CmsPageVersion, CmsPublishLog, CmsSection, CmsTheme } from "@/types/cms-v2";
+import type { CmsSection, CmsTheme } from "@/types/cms-v2";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
-import { safeString, asObject, CANVAS_PREVIEW_TOKENS } from "@/components/cms/builder/utils";
+import { safeString, asObject } from "@/components/cms/builder/utils";
 import { toast } from "sonner";
 import { notifyPreviewSync } from "@/lib/cms/preview-sync";
+import {
+  createSetters,
+  initialPageBuilderState,
+  pageBuilderReducer,
+} from "./pageBuilderReducer";
 
 export type CanvasMode = "esquema" | "render";
 export type PreviewDevice = "desktop" | "mobile";
@@ -51,50 +56,69 @@ export type PageBuilderState = ReturnType<typeof usePageBuilder>;
 
 export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOptions) {
   const searchParams = useSearchParams();
-  const [siteKey, setSiteKey] = useState(SITE_KEY);
-  const [sites, setSites] = useState<Array<{ site_key: string; name: string; base_path: string }>>([]);
-  const [pages, setPages] = useState<CmsPage[]>([]);
-  const [activeSlug, setActiveSlug] = useState("");
-  const [sections, setSections] = useState<CmsSection[]>([]);
-  const [versions, setVersions] = useState<CmsPageVersion[]>([]);
-  const [publishLogs, setPublishLogs] = useState<CmsPublishLog[]>([]);
-  const [newPageTitle, setNewPageTitle] = useState("");
-  const [newSectionType, setNewSectionType] = useState("rich_text");
-  const [pageTemplateKey, setPageTemplateKey] = useState("simple");
-  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [note, setNote] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
-  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("desktop");
-  const [canvasMode, setCanvasMode] = useState<CanvasMode>("esquema");
-  const [pageTitleDraft, setPageTitleDraft] = useState("");
-  const [pageSlugDraft, setPageSlugDraft] = useState("");
-  const [seoTitleDraft, setSeoTitleDraft] = useState("");
-  const [seoDescriptionDraft, setSeoDescriptionDraft] = useState("");
-  const [seoImageDraft, setSeoImageDraft] = useState("");
-  const [seoCanonicalDraft, setSeoCanonicalDraft] = useState("");
-  const [seoRobotsDraft, setSeoRobotsDraft] = useState("");
-  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
-  const [mediaPickerTarget, setMediaPickerTarget] = useState<"section" | "seo">("section");
-  const [activeRightTab, setActiveRightTab] = useState<RightTab>("config");
-  const [seoKeyword, setSeoKeyword] = useState("");
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiGenerating, setAiGenerating] = useState(false);
-  const [aiOutput, setAiOutput] = useState("");
-  const [showHeatmap, setShowHeatmap] = useState(false);
-  const [timeframe, setTimeframe] = useState<Timeframe>("7d");
-  const [heatmapType, setHeatmapType] = useState<HeatmapType>("clicks");
-  const [abTestingActive, setAbTestingActive] = useState(false);
-  const [abTrafficSplit, setAbTrafficSplit] = useState(50);
-  const [serpPreviewDevice, setSerpPreviewDevice] = useState<PreviewDevice>("desktop");
-  const [aiTone, setAiTone] = useState<AiTone>("warm");
-  const [aiTemplate, setAiTemplate] = useState<AiTemplate>("aida");
-  const [aiImagePrompt, setAiImagePrompt] = useState("");
-  const [aiImageResult, setAiImageResult] = useState("");
-  const [aiImageGenerating, setAiImageGenerating] = useState(false);
-  const [canvasTokens, setCanvasTokens] = useState<React.CSSProperties>(CANVAS_PREVIEW_TOKENS);
-  const [canvasThemeName, setCanvasThemeName] = useState<string>("Por defecto");
-  const [themeLoading, setThemeLoading] = useState(false);
+
+  // ── Centralized state via reducer ────────────────────────────────────────
+  const [state, dispatch] = useReducer(pageBuilderReducer, {
+    ...initialPageBuilderState,
+    siteKey: SITE_KEY,
+  });
+  const { setters } = useMemo(() => createSetters(dispatch), []);
+
+  // Destructure for ergonomic access (same names as before)
+  const {
+    siteKey, sites, pages, activeSlug, sections, versions, publishLogs,
+    newPageTitle, newSectionType, pageTemplateKey, activeSectionId, note,
+    saving, draggedSectionId, previewDevice, canvasMode,
+    pageTitleDraft, pageSlugDraft,
+    seoTitleDraft, seoDescriptionDraft, seoImageDraft, seoCanonicalDraft, seoRobotsDraft,
+    mediaPickerOpen, mediaPickerTarget, activeRightTab, seoKeyword,
+    aiPrompt, aiGenerating, aiOutput,
+    showHeatmap, timeframe, heatmapType, abTestingActive, abTrafficSplit, serpPreviewDevice,
+    aiTone, aiTemplate, aiImagePrompt, aiImageResult, aiImageGenerating,
+    canvasTokens, canvasThemeName, themeLoading,
+  } = state;
+
+  // Stable setter aliases (identical API to the old useState setters)
+  const setSiteKey = setters.siteKey;
+  const setActiveSlug = setters.activeSlug;
+  const setSections = setters.sections;
+  const setNewPageTitle = setters.newPageTitle;
+  const setNewSectionType = setters.newSectionType;
+  const setPageTemplateKey = setters.pageTemplateKey;
+  const setActiveSectionId = setters.activeSectionId;
+  const setNote = setters.note;
+  const setSaving = setters.saving;
+  const setDraggedSectionId = setters.draggedSectionId;
+  const setPreviewDevice = setters.previewDevice;
+  const setCanvasMode = setters.canvasMode;
+  const setPageTitleDraft = setters.pageTitleDraft;
+  const setPageSlugDraft = setters.pageSlugDraft;
+  const setSeoTitleDraft = setters.seoTitleDraft;
+  const setSeoDescriptionDraft = setters.seoDescriptionDraft;
+  const setSeoImageDraft = setters.seoImageDraft;
+  const setSeoCanonicalDraft = setters.seoCanonicalDraft;
+  const setSeoRobotsDraft = setters.seoRobotsDraft;
+  const setMediaPickerOpen = setters.mediaPickerOpen;
+  const setMediaPickerTarget = setters.mediaPickerTarget;
+  const setActiveRightTab = setters.activeRightTab;
+  const setSeoKeyword = setters.seoKeyword;
+  const setAiPrompt = setters.aiPrompt;
+  const setAiGenerating = setters.aiGenerating;
+  const setAiOutput = setters.aiOutput;
+  const setShowHeatmap = setters.showHeatmap;
+  const setTimeframe = setters.timeframe;
+  const setHeatmapType = setters.heatmapType;
+  const setAbTestingActive = setters.abTestingActive;
+  const setAbTrafficSplit = setters.abTrafficSplit;
+  const setSerpPreviewDevice = setters.serpPreviewDevice;
+  const setAiTone = setters.aiTone;
+  const setAiTemplate = setters.aiTemplate;
+  const setAiImagePrompt = setters.aiImagePrompt;
+  const setAiImageResult = setters.aiImageResult;
+  const setAiImageGenerating = setters.aiImageGenerating;
+  const setThemeLoading = setters.themeLoading;
+  const setCanvasThemeName = setters.canvasThemeName;
+
   const themeLoadingRef = useRef(false);
   const isMountedRef = useRef(true);
   const pendingLocalChangesRef = useRef(false);
@@ -112,16 +136,16 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
       listCmsSites(token),
       listCmsPages(targetSite, token),
     ]);
-    setSites((nextSites || []).map((site) => ({
-      site_key: site.site_key,
-      name: site.name,
-      base_path: site.base_path,
-    })));
-    setPages(nextPages || []);
-    if ((nextPages || []).length > 0 && !activeSlug) {
-      setActiveSlug(nextPages[0].slug);
-    }
-  }, [token, activeSlug]);
+    dispatch({
+      type: "SET_SITES",
+      sites: (nextSites || []).map((site) => ({
+        site_key: site.site_key,
+        name: site.name,
+        base_path: site.base_path,
+      })),
+    });
+    dispatch({ type: "SET_PAGES", pages: nextPages || [], autoSelectSlug: "auto" });
+  }, [token]);
 
   const loadSectionsAndVersions = useCallback(async (slug: string) => {
     if (!token || !slug) return;
@@ -130,18 +154,12 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
       listCmsPageVersions(siteKey, slug, token),
       listCmsPagePublishLog(siteKey, slug, token),
     ]);
-    const ordered = (nextSections || []).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-    setSections(ordered);
-    setVersions(nextVersions || []);
-    setPublishLogs(nextPublishLogs || []);
-    if (ordered.length > 0) {
-      setActiveSectionId((prev) => {
-        if (!prev || !ordered.some((item) => item.id === prev)) {
-          return ordered[0].id;
-        }
-        return prev;
-      });
-    }
+    dispatch({
+      type: "LOAD_SECTIONS",
+      sections: nextSections || [],
+      versions: nextVersions || [],
+      publishLogs: nextPublishLogs || [],
+    });
   }, [token, siteKey]);
 
   // ── Effects ──────────────────────────────────────────────────────────────
@@ -150,16 +168,12 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     const queryPage = searchParams?.get("page");
     if (querySite) setSiteKey(querySite);
     if (queryPage) setActiveSlug(queryPage);
-  }, [searchParams]);
+  }, [searchParams, setSiteKey, setActiveSlug]);
 
   useEffect(() => {
-    setPageTitleDraft(activePage?.title || "");
-    setPageSlugDraft(activePage?.slug || "");
-    setSeoTitleDraft(safeString(activePage?.seo_json?.meta_title));
-    setSeoDescriptionDraft(safeString(activePage?.seo_json?.meta_description));
-    setSeoImageDraft(safeString(activePage?.seo_json?.meta_image));
-    setSeoCanonicalDraft(safeString(activePage?.seo_json?.canonical_url));
-    setSeoRobotsDraft(safeString(activePage?.seo_json?.robots_meta));
+    if (activePage) {
+      dispatch({ type: "SYNC_PAGE_DRAFTS", page: activePage });
+    }
   }, [activePage]);
 
   useEffect(() => {
@@ -183,18 +197,18 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
         Object.entries(theme.tokens_json).forEach(([k, v]) => {
           vars[`--site-${k}`] = v;
         });
-        setCanvasTokens({ ...CANVAS_PREVIEW_TOKENS, ...vars } as React.CSSProperties);
+        dispatch({ type: "SET_THEME", tokens: vars as React.CSSProperties, name: theme?.name || "Por defecto" });
+      } else {
+        setCanvasThemeName(theme?.name || "Por defecto");
       }
-      const themeName = theme?.name || "Por defecto";
-      setCanvasThemeName(themeName);
-      toast.success(`Tema "${themeName}" cargado`);
+      toast.success(`Tema "${theme?.name || "Por defecto"}" cargado`);
     } catch {
       toast.error("No se pudo recargar el tema");
     } finally {
       themeLoadingRef.current = false;
       if (isMountedRef.current) setThemeLoading(false);
     }
-  }, [siteKey]);
+  }, [siteKey, setThemeLoading, setCanvasThemeName]);
 
   useEffect(() => {
     reloadTheme().catch(() => undefined);
@@ -365,7 +379,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     setNewPageTitle("");
     await loadPages(siteKey);
     setActiveSlug(row.slug);
-  }, [token, newPageTitle, canEdit, siteKey, loadPages]);
+  }, [token, newPageTitle, canEdit, siteKey, loadPages, setNewPageTitle, setActiveSlug]);
 
   const createPageFromTemplate = useCallback(async () => {
     if (!token || !newPageTitle.trim() || !canEdit) return;
@@ -386,7 +400,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     await loadPages(siteKey);
     setActiveSlug(page.slug);
     await loadSectionsAndVersions(page.slug);
-  }, [token, newPageTitle, canEdit, siteKey, pageTemplateKey, loadPages, loadSectionsAndVersions]);
+  }, [token, newPageTitle, canEdit, siteKey, pageTemplateKey, loadPages, loadSectionsAndVersions, setNewPageTitle, setActiveSlug]);
 
   const addTemplateSection = useCallback(async (template: { type: string; props_json: Record<string, unknown> }) => {
     if (!token || !activeSlug || !canEdit) return;
@@ -421,7 +435,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     } finally {
       setSaving(false);
     }
-  }, [token, activeSection, activeSlug, canEdit, siteKey, loadSectionsAndVersions]);
+  }, [token, activeSection, activeSlug, canEdit, siteKey, loadSectionsAndVersions, setSaving]);
 
   const saveSectionProps = useCallback(async (nextProps: Record<string, unknown>) => {
     if (!token || !activeSection || !activeSlug || !canEdit) return;
@@ -433,10 +447,10 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     } finally {
       setSaving(false);
     }
-  }, [token, activeSection, activeSlug, canEdit, siteKey, loadSectionsAndVersions]);
+  }, [token, activeSection, activeSlug, canEdit, siteKey, loadSectionsAndVersions, setSaving]);
 
   const upsertArrayItem = useCallback((
-    key: "items",
+    key: string,
     index: number,
     patch: Record<string, unknown>,
   ) => {
@@ -447,20 +461,20 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     currentItems[index] = { ...currentItem, ...patch };
     const nextProps = { ...currentProps, [key]: currentItems };
     const updated = { ...activeSection, props_json: nextProps };
-    setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: nextProps } : s));
+    dispatch({ type: "UPDATE_SECTION_PROPS", sectionId: activeSection.id, props: nextProps });
     pendingLocalChangesRef.current = true;
     autoSaveSectionRef.current = updated;
     return nextProps;
   }, [activeSection]);
 
-  const addArrayItem = useCallback((key: "items", template: Record<string, unknown>) => {
+  const addArrayItem = useCallback((key: string, template: Record<string, unknown>) => {
     if (!activeSection) return;
     const currentProps = asObject(activeSection.props_json);
     const currentItems = Array.isArray(currentProps[key]) ? [...(currentProps[key] as Array<Record<string, unknown>>)] : [];
     const nextItems = [...currentItems, template];
     const nextProps = { ...currentProps, [key]: nextItems };
     const updated = { ...activeSection, props_json: nextProps };
-    setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: nextProps } : s));
+    dispatch({ type: "UPDATE_SECTION_PROPS", sectionId: activeSection.id, props: nextProps });
     pendingLocalChangesRef.current = true;
     autoSaveSectionRef.current = updated;
     return nextProps;
@@ -475,7 +489,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
 
   const updateSectionPropsLocal = useCallback((nextProps: Record<string, unknown>) => {
     if (!activeSection) return;
-    setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: nextProps } : s));
+    dispatch({ type: "UPDATE_SECTION_PROPS", sectionId: activeSection.id, props: nextProps });
   }, [activeSection]);
 
   const moveSection = useCallback(async (sectionId: string, direction: "up" | "down") => {
@@ -489,7 +503,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     next[idx] = next[targetIdx];
     next[targetIdx] = temp;
     const payload = next.map((item, index) => ({ id: item.id, sort_order: index }));
-    setSections(next.map((item, index) => ({ ...item, sort_order: index })));
+    dispatch({ type: "REORDER_SECTIONS", sections: next });
     if (!token || !activeSlug) return;
     await reorderCmsSections(siteKey, activeSlug, payload, token);
     await loadSectionsAndVersions(activeSlug);
@@ -505,7 +519,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     const [moved] = next.splice(sourceIndex, 1);
     next.splice(targetIndex, 0, moved);
     const payload = next.map((item, index) => ({ id: item.id, sort_order: index }));
-    setSections(next.map((item, index) => ({ ...item, sort_order: index })));
+    dispatch({ type: "REORDER_SECTIONS", sections: next });
     if (!token || !activeSlug) return;
     await reorderCmsSections(siteKey, activeSlug, payload, token);
     await loadSectionsAndVersions(activeSlug);
@@ -538,7 +552,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     await loadSectionsAndVersions(activeSlug);
     notifyPreviewSync({ type: "section-saved", siteKey, slug: activeSlug });
     setNote("");
-  }, [token, activeSlug, canPublish, canEdit, siteKey, note, loadPages, loadSectionsAndVersions]);
+  }, [token, activeSlug, canPublish, canEdit, siteKey, note, loadPages, loadSectionsAndVersions, setNote]);
 
   const rollback = useCallback(async (versionId: string) => {
     if (!token || !activeSlug || !canPublish) return;
@@ -562,7 +576,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     const updated = await patchCmsPage(siteKey, activePage.slug, { title: pageTitleDraft || activePage.title, slug, seo_json }, token);
     await loadPages(siteKey);
     setActiveSlug(updated.slug);
-  }, [token, activePage, canEdit, siteKey, pageSlugDraft, pageTitleDraft, seoTitleDraft, seoDescriptionDraft, seoImageDraft, seoCanonicalDraft, seoRobotsDraft, loadPages]);
+  }, [token, activePage, canEdit, siteKey, pageSlugDraft, pageTitleDraft, seoTitleDraft, seoDescriptionDraft, seoImageDraft, seoCanonicalDraft, seoRobotsDraft, loadPages, setActiveSlug]);
 
   const togglePageArchive = useCallback(async () => {
     if (!token || !activePage || !canEdit) return;
@@ -571,7 +585,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     await workflowCmsPage(siteKey, activePage.slug, action, notes, token);
     await loadPages(siteKey);
     setActiveSlug(activePage.slug);
-  }, [token, activePage, canEdit, siteKey, loadPages]);
+  }, [token, activePage, canEdit, siteKey, loadPages, setActiveSlug]);
 
   // ── AI ───────────────────────────────────────────────────────────────────
   const handleAiGenerate = useCallback(async () => {
@@ -658,7 +672,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     } finally {
       setAiGenerating(false);
     }
-  }, [aiPrompt, aiTone, aiTemplate, pageTitleDraft, activePage?.title, token]);
+  }, [aiPrompt, aiTone, aiTemplate, pageTitleDraft, activePage?.title, token, setAiGenerating, setAiOutput]);
 
   const handleAiImageGenerate = useCallback(() => {
     if (!aiImagePrompt.trim()) return;
@@ -697,7 +711,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     const url = pool[Math.floor(Math.random() * pool.length)];
     setAiImageResult(url);
     setAiImageGenerating(false);
-  }, [aiImagePrompt]);
+  }, [aiImagePrompt, setAiImageGenerating, setAiImageResult]);
 
   const handleInsertAiAsSection = useCallback(async () => {
     if (!aiOutput || !token || !activeSlug || !canEdit) return;
@@ -718,7 +732,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     } finally {
       setSaving(false);
     }
-  }, [aiOutput, token, activeSlug, canEdit, siteKey, sections.length, loadSectionsAndVersions]);
+  }, [aiOutput, token, activeSlug, canEdit, siteKey, sections.length, loadSectionsAndVersions, setActiveRightTab, setSaving]);
 
   const handleReplaceActiveSectionWithAi = useCallback(async () => {
     if (!aiOutput || !activeSection || !token || !activeSlug || !canEdit) return;
@@ -735,7 +749,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     } finally {
       setSaving(false);
     }
-  }, [aiOutput, activeSection, token, activeSlug, canEdit, siteKey, loadSectionsAndVersions]);
+  }, [aiOutput, activeSection, token, activeSlug, canEdit, siteKey, loadSectionsAndVersions, setSaving]);
 
   // ── Return ───────────────────────────────────────────────────────────────
   return {

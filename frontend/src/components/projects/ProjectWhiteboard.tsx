@@ -8,10 +8,7 @@ import {
     X,
     PencilRuler,
     Sparkles,
-    Download,
-    Eraser,
 } from "lucide-react";
-import clsx from "clsx";
 import { useAuth } from "@/context/AuthContext";
 import WhiteboardEditor from "@/components/whiteboard/WhiteboardEditor";
 

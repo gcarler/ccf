@@ -4,12 +4,20 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException
+from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
 from backend import models
 from backend.core.tenant import get_user_sede_id
 from backend.crud._utils import _to_uuid
-from backend.crud.crm_.shared import persona_query, prepare_persona_for_output
+from backend.crud.crm_.shared import (
+    _case_created_column,  # noqa: F401 — re-exported for pastoral.py, persona_relations.py
+    case_query,  # noqa: F401 — re-exported
+    persona_query,
+    prepare_case_for_output,  # noqa: F401 — re-exported
+    prepare_persona_for_output,
+)
+from backend.models_crm_pipeline import CasoCRM, EtapaPipeline
 from backend.services.messaging_outcomes import (
     DELIVERED_OUTCOMES,
     CommunicationOutcome,
@@ -20,6 +28,21 @@ logger = logging.getLogger(__name__)
 
 def _payload_key(name: str) -> str:
     return name
+
+
+def _persona_live_column_names(db_session=None) -> set[str]:
+    """Return live (non-soft-deleted) column names for Persona."""
+    return {c.name for c in inspect(models.Persona).columns if c.name != "deleted_at"}
+
+
+def _case_live_column_names(db_session=None) -> set[str]:
+    """Return live (non-soft-deleted) column names for CasoCRM."""
+    return {c.name for c in inspect(CasoCRM).columns if c.name != "deleted_at"}
+
+
+def _stage_live_column_names(db_session=None) -> set[str]:
+    """Return live (non-soft-deleted) column names for EtapaPipeline."""
+    return {c.name for c in inspect(EtapaPipeline).columns if c.name != "deleted_at"}
 
 
 def utc_now() -> datetime:

@@ -33,7 +33,6 @@ from backend.crud.crm_ import communication as crud_comm
 from backend.crud.crm_ import notifications as crud_notif
 from backend.schemas.notifications import CommunicationLogUpdate
 
-
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 
 def _seed_sede(db: Session, name: str = "Sede QC-18.E") -> models.Sede:

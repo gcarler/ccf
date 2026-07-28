@@ -37,10 +37,6 @@ interface FormValues {
     color: string;
 }
 
-/** Paleta curada para usar como color semilla del proyecto.
- *  Equivale a la paleta categórica permitida por AGENTS_FRONTEND.md §4. */
-const COLOR_OPTIONS = PROJECT_COLOR_OPTIONS;
-
 const STATUS_OPTIONS = [
     { value: 'planning', label: 'Planificación', dot: 'bg-[hsl(var(--warning))]' },
     { value: 'active', label: 'En Marcha', dot: 'bg-[hsl(var(--success))]' },

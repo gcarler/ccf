@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch, ApiError } from '@/lib/http';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 import {
  Home, MapPin, Users, Calendar, CheckCircle2, Clock,
@@ -533,6 +534,7 @@ setRemoteResults([]);
 
  <div className="p-4">
  {/* ATTENDANCE PANEL */}
+ <ErrorBoundary moduleName="Grupo - Asistencia">
  <div className="w-full">
  {!activeSession ? (
  <div className="h-full flex items-center justify-center py-1.5 text-[hsl(var(--text-secondary))]">
@@ -578,6 +580,7 @@ setRemoteResults([]);
  </div>
  </div>
 
+ <ErrorBoundary moduleName="Grupo - Monitoreo">
  <div className="bg-[hsl(var(--bg-primary))] rounded-md border border-[hsl(var(--border-primary))] p-4 shadow-sm space-y-2">
  <div className="flex items-center justify-between gap-4">
  <h3 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] flex items-center gap-2">
@@ -840,11 +843,12 @@ setRemoteResults([]);
  {savingReport ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />}
  Guardar reporte
  </button>
- )}
- </div>
- </div>
+  )}
+  </div>
+  </div>
+  </ErrorBoundary>
 
- {/* Attendee list */}
+  {/* Attendee list */}
  {loadingAtt ? (
  <div className="flex items-center justify-center py-1.5"><Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} /></div>
  ) : !attendance || attendance.attendees.length === 0 ? (
@@ -880,11 +884,13 @@ setRemoteResults([]);
  </div>
  )}
  </div>
+ </ErrorBoundary>
  </div>
  </main>
 
  {/* ADD ATTENDEES INLINE SECTION */}
  {showAddAttendee && (
+ <ErrorBoundary moduleName="Grupo - Participantes">
  <div className="mx-8 mb-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30 rounded-lg p-4 shadow-sm animate-in slide-in-from-top-2 fade-in duration-200">
  <div className="flex items-center justify-between mb-4 pb-4 border-b border-[hsl(var(--border-primary))]">
  <div>
@@ -1002,9 +1008,10 @@ setRemoteResults([]);
  })}
  </div>
  )}
- </div>
- </div>
- )}
- </EvangelismShell>
+  </div>
+  </div>
+  </ErrorBoundary>
+  )}
+  </EvangelismShell>
  );
 }
