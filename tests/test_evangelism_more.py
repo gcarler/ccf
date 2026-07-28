@@ -9,7 +9,6 @@ from backend.api import evangelism_analytics as analytics
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
 
-
 # ── UNIT TESTS ──────────────────────────────────────────────────────────────────
 
 class TestAnalyticsHelpers:

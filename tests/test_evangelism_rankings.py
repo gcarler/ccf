@@ -1,8 +1,6 @@
 """Tests for evangelism_rankings.py."""
 from __future__ import annotations
 
-import uuid
-
 import pytest
 
 from tests.conftest import auth_headers as _auth_headers

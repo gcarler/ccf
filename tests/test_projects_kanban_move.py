@@ -16,11 +16,9 @@ Targets (Sprint 1/2 of the Projects-node debt roadmap):
 """
 from __future__ import annotations
 
-import uuid as _uuid
 from datetime import datetime, timezone
 
 from backend import models as _models
-from backend.models_projects import ProjectTask
 from tests.conftest import auth_headers, seed_admin
 from tests.factories_projects import (
     _ensure_persona,

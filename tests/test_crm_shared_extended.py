@@ -8,8 +8,6 @@ import uuid
 import pytest
 
 from backend.api.crm import _shared as shared
-from backend import models
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # BASIC HELPERS — no DB required

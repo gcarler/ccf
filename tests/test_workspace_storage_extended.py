@@ -8,8 +8,6 @@ import json
 import uuid
 from pathlib import Path
 
-import pytest
-
 from backend.api.workspace_shared import _storage as storage
 
 

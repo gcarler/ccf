@@ -32,11 +32,9 @@ import sys
 import uuid as _uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 from unittest import mock
 
 import pytest
-
 
 # ── Project bootstrap (matches the script under test) ──────────────────
 _HERE = Path(__file__).resolve()
@@ -49,11 +47,11 @@ for path in (_PROJECT_ROOT, _CCF_ROOT, _SCRIPTS_DIR):
         sys.path.insert(0, p)
 
 
-from backend import models  # noqa: E402  — directory is on sys.path above
 # ``ccf/scripts`` is a flat directory (no ``__init__.py``) so the
 # cleanup module is imported by its file name, not as ``scripts.<x>``.
 import cleanup_pastor_media_orphans as cleanup  # noqa: E402
 
+from backend import models  # noqa: E402  — directory is on sys.path above
 
 # ── Constants & helpers ─────────────────────────────────────────────────
 
@@ -205,8 +203,8 @@ def patched_main_env(db_session, tmp_uploads, monkeypatch):
     Returns the bare ``tmp_uploads`` for assertions on disk.
     """
     # The conftest's ``Settings`` instance is bound to ENGINE we want.
-    from tests.conftest import engine as test_engine
     from tests.conftest import TestingSessionLocal as test_session_factory
+    from tests.conftest import engine as test_engine
     # The conftest engine talks SQLite + the conftest's in-memory schema
     # which the autouse ``_reset_caches_between_tests`` does not touch
     # (no Redis interference).

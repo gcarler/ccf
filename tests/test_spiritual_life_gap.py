@@ -3,7 +3,6 @@ API tests for backend.api.spiritual_life.
 """
 from __future__ import annotations
 
-from datetime import date
 import uuid
 
 import pytest

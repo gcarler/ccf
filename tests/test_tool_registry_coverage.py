@@ -2,7 +2,9 @@
 Coverage for tool_registry module.
 """
 from backend.services.tool_registry import (
-    ToolRegistry, ToolDefinition, ToolParameter,
+    ToolDefinition,
+    ToolParameter,
+    ToolRegistry,
     register_all_tools,
 )
 

@@ -10,22 +10,18 @@ These tests verify the logic that prevents data corruption.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
-
-import pytest
+from datetime import datetime, timezone
 
 from backend import models
 from backend.models_evangelism import (
-    Asistencia,
     CategoriaEstrategia,
-    EstadoAsistenciaEnum,
     EstrategiaEvangelismo,
     GrupoEvangelismo,
     HabilitacionSesionEnum,
     ParticipanteGrupo,
     SesionGrupo,
 )
-from tests.conftest import TestingSessionLocal, auth_headers, seed_admin
+from tests.conftest import auth_headers, seed_admin
 
 
 def _setup_group_with_sessions(db_session):

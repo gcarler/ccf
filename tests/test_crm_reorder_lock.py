@@ -2,8 +2,6 @@
 
 from datetime import datetime, timezone
 
-import pytest
-
 from backend import models
 from backend.models_crm_pipeline import (
     CanalOrigenEnum,

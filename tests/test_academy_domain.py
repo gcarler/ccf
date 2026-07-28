@@ -325,7 +325,6 @@ def test_h07_create_lesson_blocks_cross_sede(db_session):
     """H-07: ``create_lesson(db, course_id_otra_sede, {...}, sede_id=mia)``
     levanta ``ValueError`` — el actor no puede añadir lecciones a un curso
     de otra sede. Sin ``sede_id`` (caller no-API) preserva comportamiento."""
-    import uuid as _uuid
 
     sede_a, course_a, sede_b, course_b = _seed_two_sedes(db_session)
     # Sin sede_id: crea normalmente (compatibilidad).
@@ -360,9 +359,10 @@ def test_h08_commit_or_raise_conflict_unique_violation_returns_409(db_session):
     """H-08: una IntegrityError por UNIQUE (23505 en Postgres / 'UNIQUE
     constraint failed' en SQLite) se traduce a HTTPException 409. Una
     IntegrityError por otra constraint (NOT NULL) se re-raise (no False-409)."""
+    from unittest.mock import MagicMock
+
     from fastapi import HTTPException
     from sqlalchemy.exc import IntegrityError
-    from unittest.mock import MagicMock
 
     # Simulamos un db.commit() que lanza UNIQUE violation (SQLite).
     db = MagicMock()
@@ -383,8 +383,9 @@ def test_h08_commit_or_raise_conflict_non_unique_reraises(db_session):
     """H-08: una IntegrityError que NO es unique-violation (e.g. NOT NULL,
     FK, check) se re-raise post-rollback — NO se enmascara como falso 409.
     Evita bugs silenciados (lo que M-12 corrigió en CMS)."""
-    from sqlalchemy.exc import IntegrityError
     from unittest.mock import MagicMock
+
+    from sqlalchemy.exc import IntegrityError
 
     db = MagicMock()
     orig = MagicMock()

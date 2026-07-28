@@ -3,14 +3,18 @@ Coverage push — targeting 40%.
 """
 import pytest
 
-from backend.services.email import resolve_brand_colors, _brand_wrap, render_verify_email
+from backend.services.email import _brand_wrap, render_verify_email, resolve_brand_colors
 from backend.services.email_templates import (
-    _safe, _cta_button,
-    render_welcome, render_birthday, render_event_invitation,
-    render_welcome_guide, render_pastoral_followup,
-    render_counseling_reminder, render_pastoral_close,
+    _cta_button,
+    _safe,
+    render_birthday,
+    render_counseling_reminder,
+    render_event_invitation,
+    render_pastoral_close,
+    render_pastoral_followup,
+    render_welcome,
+    render_welcome_guide,
 )
-
 
 FULL_BRAND = {
     "primary": "#1a73e8", "secondary": "#34a853", "accent": "#fbbc04",

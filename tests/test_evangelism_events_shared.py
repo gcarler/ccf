@@ -8,10 +8,10 @@ from fastapi import HTTPException
 
 from backend import models
 from backend.api.evangelism_events._shared import (
-    _get_user_role,
-    is_event_reader_role,
-    is_event_manager_role,
     _get_persona_for_user,
+    _get_user_role,
+    is_event_manager_role,
+    is_event_reader_role,
 )
 
 

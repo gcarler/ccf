@@ -7,9 +7,7 @@ from __future__ import annotations
 
 import uuid as _uuid
 
-import pytest
-
-from tests.conftest import auth_headers, seed_admin, seed_user_with_role
+from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_user_with_crm(db_session, permisos, email="crm@test.com"):

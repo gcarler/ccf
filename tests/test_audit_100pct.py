@@ -99,6 +99,7 @@ class TestCoreAudit:
     def test_record_admin_action_no_actor_id(self, full):
         """Covers lines 21-22 — return early if actor has no id."""
         from unittest.mock import MagicMock
+
         from backend.core.audit import record_admin_action
         # Actor without id should return silently
         fake_actor = MagicMock(spec=[])  # No 'id' attribute

@@ -48,7 +48,7 @@ class TestAdminVariables:
             json={"key": f"k_{uuid.uuid4().hex[:6]}", "value": "test"},
             headers=full["h"]).status_code)
     def test_delete_not_found(self, full):
-        assert full["c"].delete(f"/api/admin/variables/nonexistent", headers=full["h"]).status_code == 404
+        assert full["c"].delete("/api/admin/variables/nonexistent", headers=full["h"]).status_code == 404
 
 
 class TestAdminUsers:

@@ -2,17 +2,17 @@
 Tests for crud/evangelism.py — covers missing CRUD operations.
 """
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from backend import models, crud
+from backend import crud
 from backend.models_evangelism import (
-    EstrategiaEvangelismo,
+    Asistencia,
     CategoriaEstrategia,
+    EstrategiaEvangelismo,
     GrupoEvangelismo,
     SesionGrupo,
-    Asistencia,
 )
 from backend.schemas.evangelism import RegistroSeguimientoCreate, RegistroSeguimientoUpdate
 from tests.conftest import seed_admin as _seed_admin

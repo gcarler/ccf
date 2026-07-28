@@ -13,10 +13,9 @@ import uuid as _uuid
 
 import pytest
 
-from tests.conftest import auth_headers, seed_admin
-
 from backend import models as _models
 from backend.models_auth import Usuario
+from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_role(db_session, nombre, permisos):

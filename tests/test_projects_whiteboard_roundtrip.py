@@ -16,10 +16,6 @@ Targets (Sprint 2 of the Projects-node debt roadmap):
 from __future__ import annotations
 
 import json as _json
-import uuid as _uuid
-
-import pytest
-from sqlalchemy import text as _text
 
 from backend.models_projects import ProjectWhiteboard
 from tests.conftest import auth_headers, seed_admin

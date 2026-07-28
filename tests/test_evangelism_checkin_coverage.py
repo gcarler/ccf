@@ -5,7 +5,8 @@ import uuid
 
 import pytest
 
-from tests.conftest import seed_admin as _seed_admin, auth_headers as _auth_headers
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture
@@ -19,8 +20,9 @@ def full(client, db_session):
 
 
 def _make_event(db, sede_id):
-    from backend import models
     from datetime import datetime, timezone
+
+    from backend import models
     e = models.CrmEvent(
         id=uuid.uuid4(), name="Test Event",
         description="Desc", event_type="service",

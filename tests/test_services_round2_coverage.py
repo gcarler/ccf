@@ -1,24 +1,15 @@
 """
 Additional coverage tests — round 2 for services with 0-30%.
 """
-from datetime import datetime, timezone
-from unittest.mock import patch, MagicMock
 
 import pytest
 
-from backend import models
-from backend.services.conversation_memory import (
-    create_conversation,
-    get_user_conversations,
-    save_conversation_turn,
-)
 from backend.services.email_templates import render_email
 from backend.services.knowledge_graph import (
+    _course_nodes,
     _has_model,
     _person_nodes,
-    _course_nodes,
 )
-from backend.services.task_notifications import notify_task_assigned, _display_name, _format_due_date
 from tests.conftest import seed_admin as _seed_admin
 
 

@@ -1,7 +1,6 @@
 """
 Enterprise CMS Coverage Tests.
 """
-import uuid
 
 import pytest
 

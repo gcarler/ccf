@@ -25,7 +25,6 @@ Cobertura del test:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 
 import pytest
 from sqlalchemy.orm import object_session as _sa_object_session
@@ -37,10 +36,8 @@ from backend.models_evangelism import (
     ParticipanteGrupo,
     RolPersonalizadoEstrategia,
 )
-
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
-
 
 # ──────────────────────────────────────────────────────────────
 # Fixture local: replica compacta del fixture ``full`` pero

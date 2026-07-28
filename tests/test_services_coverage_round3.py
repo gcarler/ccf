@@ -2,15 +2,19 @@
 Coverage push — round 3, focused on pure-logic services.
 """
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from backend.services.calculo_sesiones import (
-    _normalizar_frecuencia, _provider_para_frecuencia, _a_utc,
-    _generar_fechas, _IncProvider, _stringify_uuid_payload,
-)
 from backend.services.automation_engine import AutomationEngine
+from backend.services.calculo_sesiones import (
+    _a_utc,
+    _generar_fechas,
+    _IncProvider,
+    _normalizar_frecuencia,
+    _provider_para_frecuencia,
+    _stringify_uuid_payload,
+)
 
 
 class TestCalculoSesionesExtra:

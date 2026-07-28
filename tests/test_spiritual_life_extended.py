@@ -8,12 +8,12 @@ from datetime import date
 
 import pytest
 
-from backend.api.spiritual_life import (
-    _get_user_sede_id,
-    _assert_persona_in_sede,
-    _assert_milestone_in_sede,
-)
 from backend import models
+from backend.api.spiritual_life import (
+    _assert_milestone_in_sede,
+    _assert_persona_in_sede,
+    _get_user_sede_id,
+)
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
 

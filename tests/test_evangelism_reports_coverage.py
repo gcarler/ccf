@@ -8,10 +8,10 @@ import pytest
 
 from backend import models
 from backend.api.evangelism_reports import (
+    _build_session_rows,
+    _count_participants,
     _get_group_or_404,
     _get_leader_name,
-    _count_participants,
-    _build_session_rows,
 )
 from tests.conftest import seed_admin as _seed_admin
 

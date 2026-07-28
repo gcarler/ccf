@@ -108,8 +108,9 @@ class TestLoggingCoverage:
     """Covers core/logging.py lines 28, 30."""
 
     def test_json_formatter_with_request_id(self):
-        from backend.core.logging import JSONFormatter, request_id_ctx
         import logging
+
+        from backend.core.logging import JSONFormatter, request_id_ctx
         token = request_id_ctx.set("test-request-id")
         try:
             record = logging.LogRecord(
@@ -126,9 +127,10 @@ class TestLoggingCoverage:
             request_id_ctx.reset(token)
 
     def test_json_formatter_with_exception(self):
-        from backend.core.logging import JSONFormatter
         import logging
         import sys
+
+        from backend.core.logging import JSONFormatter
         try:
             raise ValueError("test error")
         except ValueError:

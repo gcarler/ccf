@@ -12,10 +12,9 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timedelta, timezone
 
-import pytest
-
 from backend import models
 from backend.api.evangelism_shared import utc_now
+from backend.models_auth import NotificacionUsuario
 from backend.models_evangelism import (
     CategoriaEstrategia,
     EstrategiaEvangelismo,
@@ -23,8 +22,7 @@ from backend.models_evangelism import (
     HabilitacionSesionEnum,
     SesionGrupo,
 )
-from backend.models_auth import NotificacionUsuario
-from tests.conftest import TestingSessionLocal, auth_headers, seed_admin, seed_user_with_role
+from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 
 def _create_other_sede_event(client, db_session, sede, headers=None):
@@ -58,7 +56,7 @@ def _create_other_sede_event(client, db_session, sede, headers=None):
         first_name="Other",
         last_name="Leader",
         email=f"other_{uuid.uuid4().hex[:4]}@ccf.test",
-        phone=f"+573009999999",
+        phone="+573009999999",
         sede_id=sede.id,
         church_role="Miembro",
     )

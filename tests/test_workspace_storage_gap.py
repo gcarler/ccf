@@ -3,8 +3,8 @@ Direct unit tests for backend.api.workspace_shared._storage.
 """
 from __future__ import annotations
 
-from backend.api.workspace_shared import _storage as storage
 from backend.api.workspace_shared import DATA_DIR
+from backend.api.workspace_shared import _storage as storage
 
 
 class TestNowIso:

@@ -20,7 +20,6 @@ from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
 from tests.conftest import seed_user_with_role as _seed_user_with_role
 
-
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -860,7 +859,6 @@ def test_document_list_by_type(client, db_session):
 
 def test_expense_receipt_upload_and_ocr(client, db_session):
     """Upload receipt and update OCR data (L705-711, L722-733)."""
-    from backend import models
 
     headers = _admin_client(client, db_session)
 

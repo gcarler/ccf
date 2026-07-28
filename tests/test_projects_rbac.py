@@ -37,7 +37,6 @@ from fastapi import status
 
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 

@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-import pytest
-
 from backend.api.workspace_shared import _incidents as incidents
 
 

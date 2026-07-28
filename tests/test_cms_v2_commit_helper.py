@@ -23,8 +23,8 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
-from backend.api.cms_v2 import _commit_or_raise_conflict
 from backend import models
+from backend.api.cms_v2 import _commit_or_raise_conflict
 from backend.models_cms import Base
 
 

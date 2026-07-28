@@ -28,7 +28,7 @@ export default defineConfig({
         functions: 40,
         statements: 40,
       },
-      include: ["src/design/**/*.{ts,tsx}"],
+      include: ["src/design/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
       exclude: [
         "src/**/*.d.ts",
         "src/**/*.stories.tsx",

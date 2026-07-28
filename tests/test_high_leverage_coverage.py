@@ -51,7 +51,6 @@ from backend.crud._utils import (
     analyze_pastoral_sentiment,
 )
 
-
 # ── _coerce_uuid_or_404 ────────────────────────────────────────────────
 
 
@@ -407,7 +406,6 @@ def test_start_background_scheduler_creates_daemon_thread(mock_thread_cls):
 # ── backend/core/events.py ──────────────────────────────────────────────────
 import json  # noqa: E402
 
-from backend.core import events as events_module  # noqa: E402
 from backend.core.events import (  # noqa: E402
     DomainEvent,
     EventBus,

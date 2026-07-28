@@ -3,11 +3,7 @@ validadores de schemas, aislamiento por sede, RBAC HTTP y soft-delete."""
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-import pytest
-from fastapi.testclient import TestClient
-
 from tests.conftest import auth_headers, seed_admin
-
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
 

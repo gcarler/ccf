@@ -8,7 +8,7 @@ from __future__ import annotations
 import uuid as _uuid
 
 from backend.models_wiki import WikiPage
-from tests.conftest import auth_headers, seed_admin, seed_user_with_role
+from tests.conftest import auth_headers, seed_admin
 
 
 def _ensure_sede_and_persona(db_session):

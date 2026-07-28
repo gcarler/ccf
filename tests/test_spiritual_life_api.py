@@ -1,5 +1,5 @@
 """Tests for the Spiritual Life module."""
-from datetime import date, timedelta
+from datetime import date
 
 import pytest
 
@@ -187,8 +187,8 @@ class TestMilestoneValidation:
 
     def test_cross_sede_persona_returns_404(self, manager_client):
         client, headers, sede, persona = manager_client
-        from tests.conftest import TestingSessionLocal
         from backend import models as _models
+        from tests.conftest import TestingSessionLocal
 
         other_sede = _models.Sede(
             id=__import__("uuid").uuid4(),

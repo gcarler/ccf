@@ -162,7 +162,6 @@ class TestProjectsCRUD:
 
     def test_delete_project(self, client, db_session):
         """DELETE /api/projects/{id} soft-deletes the project."""
-        from backend.models_projects import Project
 
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
@@ -808,8 +807,8 @@ class TestInbox:
     # Cobertura de los huecos de soft delete y validación de item_id.
     def test_inbox_excludes_comments_from_soft_deleted_project(self, client, db_session):
         """Comentarios de proyectos soft-deleted NO deben llegar al feed."""
-        from backend.models_projects import Project
         from datetime import datetime, timezone
+
 
         user, persona, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)

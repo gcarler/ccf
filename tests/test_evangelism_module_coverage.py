@@ -1723,9 +1723,10 @@ class TestFollowUp:
         assert resp.status_code == 404
 
     def test_seguimiento_create_rechaza_asistencia_soft_deleted(self, full, db_session):
+        from fastapi import HTTPException
+
         from backend.crud.evangelism import create_seguimiento as create_follow_up
         from backend.schemas.evangelism import RegistroSeguimientoCreate
-        from fastapi import HTTPException
 
         asistencia = db_session.query(MAsistencia).first()
         asistencia.deleted_at = datetime.now(timezone.utc)

@@ -15,7 +15,7 @@ from tests.conftest import seed_admin as _seed_admin
 
 def _c(fn, *a, **kw):
     try: return fn(*a, **kw)
-    except: return None
+    except Exception: return None
 
 
 @pytest.fixture

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 SYSTEM_API_PATH = Path("/root/ccf/backend/api/system.py")
 
 

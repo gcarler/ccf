@@ -24,8 +24,6 @@ from __future__ import annotations
 import datetime as dt
 import uuid as _uuid
 
-import pytest
-
 from backend import models
 from backend.crud.cms import cleanup_old_publish_logs
 from backend.scheduler import _run_scheduling_pass

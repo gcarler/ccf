@@ -1,11 +1,14 @@
 import uuid
+
 import pytest
+
 from backend import models
 from backend.models_crm import CrmAutomation, CrmAutomationEdge, PendingCrmAction
 from backend.models_crm_pipeline import CasoCRM, EtapaPipeline, PipelineCRM
-from backend.services.automation_engine import engine
 from backend.models_shared import _utcnow as models_shared_utcnow
+from backend.services.automation_engine import engine
 from tests.conftest import seed_admin
+
 
 def test_atomic_sort_reorder_empty_payload(db_session):
     admin_a, persona_a, sede_a = seed_admin(db_session, email="chal_admin_a@example.com")

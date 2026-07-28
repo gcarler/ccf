@@ -5,12 +5,9 @@ Targets: lines 93, 120, 239, 274, 424, 520, 599, 603, 709, 711,
 1220-1221, 1242-1243, 1250-1251, 1275-1279.
 """
 import uuid
+from unittest import mock as _mock
 
 import pytest
-from sqlalchemy.orm import Session
-
-from backend import models
-from unittest import mock as _mock
 
 from backend.crud.admin import (
     _assign_role_by_name,
@@ -46,7 +43,6 @@ from backend.crud.admin import (
 )
 from backend.models_auth import (
     Medalla,
-    MedallaUsuario,
     RolPlataforma,
     Usuario,
     UsuarioRolModulo,
@@ -586,9 +582,9 @@ def test_award_milestone_already_awarded(db_session, admin_user):
 
 def test_provision_personas_sin_cuenta_basic(db_session):
     """Lines 1275-1279: total_remaining and truncated logic."""
-    from backend.models_evangelism import Sede
     from backend.models_auth import RolPlataforma
     from backend.models_crm import Persona
+    from backend.models_evangelism import Sede
 
     rol = db_session.query(RolPlataforma).filter(RolPlataforma.nombre == "MIEMBRO").first()
     if not rol:

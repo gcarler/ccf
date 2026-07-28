@@ -2,14 +2,12 @@
 Coverage tests for services requiring DB fixtures.
 knowledge_base, conversation_memory, cms crud.
 """
-import uuid
 
 import pytest
 
 from backend import models
-from backend.models_knowledge_base import AgentKnowledgeBase
-from backend.services.knowledge_base import KnowledgeIndexer
 from backend.services.image_optimizer import ImageOptimizer
+from backend.services.knowledge_base import KnowledgeIndexer
 from tests.conftest import seed_admin as _seed_admin
 
 

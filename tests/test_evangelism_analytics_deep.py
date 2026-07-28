@@ -10,8 +10,8 @@ import pytest
 
 from backend import models
 from backend.api.evangelism_analytics import (
-    _group_ids_for_strategy,
     _attendance_stats,
+    _group_ids_for_strategy,
     _sessions_done_count,
     _sessions_total_count,
 )

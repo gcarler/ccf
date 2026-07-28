@@ -1,7 +1,6 @@
-import uuid
-import pytest
 import json
-from datetime import datetime, timezone
+import uuid
+
 from sqlalchemy.dialects.postgresql import ARRAY
 
 # Patch ARRAY for SQLite
@@ -37,6 +36,7 @@ ARRAY.result_processor = patched_array_result
 
 from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
+
 
 def _seed_test_data_for_stress(db_session, num_cases=5):
     admin, persona, sede = seed_admin(db_session)
@@ -204,7 +204,7 @@ def test_cross_sede_template_deletion(client, db_session):
     admin_a, persona_a, sede_a = seed_admin(db_session)
     user_b, persona_b, sede_b = seed_user_with_role(db_session, role_name="ADMIN", email="admin_b_del_stress@example.com", sede_id=uuid.uuid4())
     
-    from backend.models_crm import PlantillaMensaje, CategoriaRecurso, CanalEnvio
+    from backend.models_crm import CanalEnvio, CategoriaRecurso, PlantillaMensaje
     
     cat = CategoriaRecurso(id=uuid.uuid4(), nombre="Cat A Stress", activo=True)
     db_session.add(cat)
