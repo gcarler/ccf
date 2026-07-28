@@ -30,7 +30,7 @@ from backend.models_cms import Base
 
 def _seed_site(db_session):
     """Crea una CmsSite mínima para que los INSERT de CmsPost no fallen por FK."""
-    sede = models.Sede(name="sede-test-commit", slug="sede-test-commit")
+    sede = models.Sede(nombre="sede-test-commit", es_activa=True)
     db_session.add(sede)
     db_session.flush()
     site = models.CmsSite(
@@ -59,7 +59,6 @@ def test_commit_or_raise_unique_conflict_returns_409(db_session):
     name = "unique_test_section"
     st1 = models.CmsSectionType(
         name=name,
-        display_name="Section Type 1",
         is_active=True,
     )
     db_session.add(st1)
@@ -68,7 +67,6 @@ def test_commit_or_raise_unique_conflict_returns_409(db_session):
     # Segunda inserción con mismo nombre → UNIQUE violation.
     st2 = models.CmsSectionType(
         name=name,
-        display_name="Section Type 2",
         is_active=True,
     )
     db_session.add(st2)

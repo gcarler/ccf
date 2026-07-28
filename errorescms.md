@@ -14,8 +14,8 @@
 | Hallazgos críticos | 6 |
 | Hallazgos altos | 11 |
 | Hallazgos medios | 14 |
-| Hallazgos bajos (info) | 17 |
-| **Total** | **48** |
+| Hallazgos bajos (info) | 18 |
+| **Total** | **49** |
 
 ---
 
@@ -444,9 +444,9 @@ Esto significa que props_json para estos tipos no pasa por `validate_section_pro
 | CmsMenuItem | ❌ (vía menu→site) | ✅ (vía site) | ❌ | OK by proxy |
 | CmsPage | ❌ (vía site) | ✅ (vía site) | ❌ | OK by proxy |
 | CmsSection | ❌ (vía page→site) | ✅ (vía site) | ❌ | OK by proxy |
-| CmsPost | ❌ (vía site) | ❌ | ❌ | ⚠️ Sin filtros |
-| CmsCategory | ❌ (vía site) | ❌ | ❌ | ⚠️ Sin filtros |
-| CmsTag | ❌ (vía site) | ❌ | ❌ | ⚠️ Sin filtros |
+| CmsPost | ❌ (vía site) | ✅ (vía site) | ✅ (defense-in-depth) | OK by proxy + CRUD re-check (I-18) |
+| CmsCategory | ❌ (vía site) | ✅ (vía site) | ✅ (defense-in-depth) | OK by proxy + CRUD re-check (I-18) |
+| CmsTag | ❌ (vía site) | ✅ (vía site) | ✅ (defense-in-depth) | OK by proxy + CRUD re-check (I-18) |
 | CmsPageVersion | ❌ (vía page→site) | ✅ (vía site) | ❌ | OK by proxy |
 | CmsPublishLog | ❌ (vía site/page) | ❌ | ❌ | ⚠️ Sin filtro directo |
 | CmsSeoSnapshot | ✅ (denormalizado) | ✅ | ✅ | OK |
@@ -611,17 +611,18 @@ tags, menus, sites) mantienen su patrón que es semanticamente distinto
 | I-15 | ✅ CERRADO (resuelto implícitamente, doc stale) | La auditoría catalogó como deuda el contract drift entre `Button.validate_variant` (que decía permitir `{primary, secondary, ghost}`) y el frontend. **Verificado el 2026-07-23**: `backend/schemas/cms_v2_sections.py:21` ahora permite `{primary, outline, ghost}` — `secondary` fue reemplazado por `outline`. El drift se resolvió implícitamente al alinear el backend al frontend, pero la bitácora seguía describiendo valores stale. Cierre documental: el contract ya está alineado. | (decisión documental) |
 | I-16 | ✅ CERRADO (no-bug) | `CmsSectionType.description` max_length=255 en schema y modelo String(255) — el finding dice "bien". No-bug confirmado. Consistencia ya alineada. | (decisión documental) |
 | I-17 | ✅ DEUDA ACEPTADA (duplicado de M-09) | `SavedView` no es CMS pero está en `models_cms.py` — duplicado de M-09 (mismo análisis, misma decisión: mover rompe imports, riesgo/beneficio bajo). | (decisión documental) |
+| I-18 | ✅ CERRADO | Defense-in-depth Axioma 3 añadido en CRUD layer para `CmsPost` / `CmsCategory` / `CmsTag` — las 3 entidades marcadas "⚠️ Sin filtros" en la tabla de brechas arriba. Helper nuevo `_crud_scope_re_check_cms_site_content` en `crud/cms.py` re-valida `site.sede_id vs actor_sede` (igual que el pattern existente para UGC `Testimonial`/`Announcement`/`MediaItem`); los 9 endpoints admin en `cms_v2.py` (`create/patch/delete` para category, tag, post) ahora pasan `actor_user_id=str(current_user.id)` al CRUD. Política: (a) actor sin sede → bypass; (b) site sin sede (orphan) → bypass (sin tenancy que aplicar, consistente con "OK by proxy"); (c) cross-sede → REJECT 404. 20 tests de regresión cross-sede en `tests/test_cms_site_content_defense.py` cubren: 9 cross-sede blocked (3 entidades × 3 ops), 6 same-sede ok, 1 no-actor backwards-compat, 3 superadmin bypass via monkeypatch (`get_user_sede_id → None`). Misma suite CMS completa: 648 passed + 2 commit-helper fix (previo fallo por schema drift `display_name` en `CmsSectionType`, alineado en el mismo commit) = 650 passed, 1 skipped. | (pending commit) |
 
-### Resumen de cierre al 2026-07-23
+### Resumen de cierre al 2026-07-28 (actualizado)
 
 - Críticos: 6/6 cerrados (4 fix, 2 falso positivo)
 - Altos: 11/11 cerrados (H-05/H-11 fix, H-02/H-04/H-06/H-07 fix, H-01/H-03/H-08/H-09/H-10 falso positivo)
 - Funcionalidades: 10/10 cerradas (F-01 falso positivo, F-02, F-03, F-04, F-05, F-06, F-07, F-08, F-09, F-10)
 - Medios: 14/14 cerrados (M-01/M-02/M-03/M-05/M-06/M-13 fix, M-04/M-07..M-12/M-14 deuda aceptada)
-- Info: 17/17 cerrados (I-01/I-03/I-07/I-16 fix, I-02/I-04..I-06/I-08..I-15/I-17 deuda aceptada)
+- Info: 18/18 cerrados (I-01/I-03/I-07/I-16/I-18 fix, I-02/I-04..I-06/I-08..I-15/I-17 deuda aceptada)
 - Pendientes: **0 hallazgos** — auditoría forense del módulo CMS 100% cerrada.
 
 ---
 
 *Documento generado por auditoría forense línea por línea del código fuente del módulo CMS.*
-*Total: 48 hallazgos (6 críticos, 11 altos, 14 medios, 17 informativos) + 10 funcionalidades faltantes.*
+*Total: 49 hallazgos (6 críticos, 11 altos, 14 medios, 18 informativos) + 10 funcionalidades faltantes.*

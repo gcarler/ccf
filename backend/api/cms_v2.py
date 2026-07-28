@@ -2523,7 +2523,7 @@ def create_category(
     if crud.get_cms_category(db, site.id, payload.slug):
         raise HTTPException(status_code=409, detail="category slug already exists")
     try:
-        return crud.create_cms_category(db, site.id, payload)
+        return crud.create_cms_category(db, site.id, payload, actor_user_id=str(current_user.id))
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
 
@@ -2551,7 +2551,7 @@ def patch_category(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_category_or_404(db, site.id, slug)
     try:
-        return crud.update_cms_category(db, row, payload)
+        return crud.update_cms_category(db, row, payload, actor_user_id=str(current_user.id))
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
 
@@ -2566,7 +2566,7 @@ def delete_category(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_category_or_404(db, site.id, slug)
-    crud.delete_cms_category(db, row)
+    crud.delete_cms_category(db, row, actor_user_id=str(current_user.id))
 
 
 # ── Tags ──────────────────────────────────────────────────────────────────
@@ -2596,7 +2596,7 @@ def create_tag(
         raise HTTPException(status_code=422, detail="slug is required")
     if crud.get_cms_tag(db, site.id, payload.slug):
         raise HTTPException(status_code=409, detail="tag slug already exists")
-    return crud.create_cms_tag(db, site.id, payload)
+    return crud.create_cms_tag(db, site.id, payload, actor_user_id=str(current_user.id))
 
 
 @router.get("/sites/{site_key}/tags/{slug}", response_model=schemas.CmsTagRead)
@@ -2621,7 +2621,7 @@ def patch_tag(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_tag_or_404(db, site.id, slug)
-    return crud.update_cms_tag(db, row, payload)
+    return crud.update_cms_tag(db, row, payload, actor_user_id=str(current_user.id))
 
 
 @router.delete("/sites/{site_key}/tags/{slug}", status_code=204)
@@ -2634,7 +2634,7 @@ def delete_tag(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_tag_or_404(db, site.id, slug)
-    crud.delete_cms_tag(db, row)
+    crud.delete_cms_tag(db, row, actor_user_id=str(current_user.id))
 
 
 # ── Posts (Admin) ─────────────────────────────────────────────────────────
@@ -2694,7 +2694,7 @@ def create_post(
     if crud.get_cms_post(db, site.id, payload.slug):
         raise HTTPException(status_code=409, detail="slug already exists")
     try:
-        row = crud.create_cms_post(db, site.id, payload, current_user.id)
+        row = crud.create_cms_post(db, site.id, payload, current_user.id, actor_user_id=str(current_user.id))
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
@@ -2742,7 +2742,7 @@ def patch_post(
     # cubre callers no-API) resolviendo los valores efectivos contra el
     # estado actual del row; aquí solo mapeamos ValueError -> 422.
     try:
-        updated = crud.update_cms_post(db, row, payload, current_user.id)
+        updated = crud.update_cms_post(db, row, payload, current_user.id, actor_user_id=str(current_user.id))
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     p = schemas.CmsPostReadWithTaxonomies.model_validate(updated)
@@ -2761,7 +2761,7 @@ def delete_post(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_post_or_404(db, site.id, slug)
-    crud.delete_cms_post(db, row)
+    crud.delete_cms_post(db, row, actor_user_id=str(current_user.id))
 
 
 # ── Posts (Public) ────────────────────────────────────────────────────────
