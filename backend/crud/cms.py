@@ -225,6 +225,76 @@ def _crud_scope_re_check_cms_content_update(
             )
 
 
+def _resolve_site_sede(db: Session, site_id) -> str | None:
+    """Resuelve la ``sede_id`` de un ``CmsSite`` (UUID) o None.
+
+    Helper usado por defense-in-depth de CMS site-scoped content
+    (CmsPost, CmsCategory, CmsTag). Retorna None si el site no existe
+    o no tiene sede asignada (orphan).
+    """
+    if site_id is None:
+        return None
+    try:
+        site_uuid = uuid.UUID(str(site_id))
+    except (TypeError, ValueError, AttributeError):
+        return None
+    row = (
+        db.query(models.CmsSite.sede_id)
+        .filter(models.CmsSite.id == site_uuid)
+        .first()
+    )
+    if not row or row[0] is None:
+        return None
+    return str(row[0])
+
+
+def _crud_scope_re_check_cms_site_content(
+    db: Session,
+    actor_user_id,
+    *,
+    actor_sede: str | None,
+    site_id,
+) -> None:
+    """Defense in depth para CMS site-scoped content (CmsPost / CmsCategory / CmsTag).
+
+    Estas entidades no tienen ``sede_id`` propio — se scopean via
+    ``site_id`` → ``CmsSite.sede_id``. El API layer ya valida el site
+    via ``_get_scoped_site_or_404``, pero este helper re-valida para
+    proteger callers no-API (workers, scripts, tests directos).
+
+    Política:
+      - Actor sin sede (superadmin): bypass.
+      - Site no existe o no tiene sede (orphan): bypass (sin tenancy que
+        aplicar; consistente con la tabla de Axioma 3 en ``errorescms.md``
+        que marca CmsPost/CmsCategory/CmsTag como "OK by proxy" via
+        ``site_id`` — si el site no sede, no hay filtro que aplicar).
+      - Site.sede_id != actor_sede: REJECT 404 (cross-sede).
+      - Match: OK.
+    """
+    from fastapi import HTTPException as _HTTPException
+
+    if not actor_sede:
+        return  # superadmin / anterior path
+
+    site_sede = _resolve_site_sede(db, site_id)
+    if site_sede is None:
+        # Orphan site: sin tenancy — bypass, igual que un site global.
+        # No hay sede_id que comparar, así que no puede haber cross-sede.
+        return
+    if site_sede != str(actor_sede):
+        _logger.warning(
+            "Axioma 3 scope violation: CMS site-scoped content cross-sede "
+            "(actor_sede=%s actor_user_id=%s site_id=%s site_sede=%s)",
+            actor_sede,
+            actor_user_id,
+            site_id,
+            site_sede,
+        )
+        raise _HTTPException(
+            status_code=404, detail="CMS site content blocked"
+        )
+
+
 def _crud_scope_re_check_pastoral_profile(
     db: Session,
     actor_user_id,
@@ -2081,8 +2151,15 @@ def get_cms_category(db: Session, site_id: uuid.UUID, slug: str):
 
 
 def create_cms_category(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsCategoryCreate
+    db: Session, site_id: uuid.UUID, payload: schemas.CmsCategoryCreate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ):
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(
+            db, actor_user_id, actor_sede=actor_sede, site_id=site_id,
+        )
     _assert_parent_category_same_site(db, site_id, payload.parent_id)
     row = models.CmsCategory(
         site_id=site_id,
@@ -2099,8 +2176,15 @@ def create_cms_category(
 
 
 def update_cms_category(
-    db: Session, row: models.CmsCategory, payload: schemas.CmsCategoryUpdate
+    db: Session, row: models.CmsCategory, payload: schemas.CmsCategoryUpdate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ):
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(
+            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+        )
     data = payload.model_dump(exclude_unset=True)
     if "slug" in data and data["slug"] is not None:
         row.slug = str(data["slug"]).strip().lower()
@@ -2118,7 +2202,16 @@ def update_cms_category(
     return row
 
 
-def delete_cms_category(db: Session, row: models.CmsCategory) -> bool:
+def delete_cms_category(
+    db: Session, row: models.CmsCategory,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
+) -> bool:
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(
+            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+        )
     row.is_active = False
     db.commit()
     return True
@@ -2142,8 +2235,15 @@ def get_cms_tag(db: Session, site_id: uuid.UUID, slug: str):
 
 
 def create_cms_tag(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsTagCreate
+    db: Session, site_id: uuid.UUID, payload: schemas.CmsTagCreate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ):
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(
+            db, actor_user_id, actor_sede=actor_sede, site_id=site_id,
+        )
     row = models.CmsTag(
         site_id=site_id,
         slug=payload.slug.strip().lower(),
@@ -2157,8 +2257,15 @@ def create_cms_tag(
 
 
 def update_cms_tag(
-    db: Session, row: models.CmsTag, payload: schemas.CmsTagUpdate
+    db: Session, row: models.CmsTag, payload: schemas.CmsTagUpdate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ):
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(
+            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+        )
     data = payload.model_dump(exclude_unset=True)
     if "slug" in data and data["slug"] is not None:
         row.slug = str(data["slug"]).strip().lower()
@@ -2171,7 +2278,16 @@ def update_cms_tag(
     return row
 
 
-def delete_cms_tag(db: Session, row: models.CmsTag) -> bool:
+def delete_cms_tag(
+    db: Session, row: models.CmsTag,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
+) -> bool:
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(
+            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+        )
     row.is_active = False
     db.commit()
     return True
@@ -2265,7 +2381,14 @@ def create_cms_post(
     site_id: uuid.UUID,
     payload: schemas.CmsPostCreate,
     user_id: uuid.UUID | None,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ):
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(
+            db, actor_user_id, actor_sede=actor_sede, site_id=site_id,
+        )
     _assert_post_published_before_expires(payload.published_at, payload.expires_at)
     row = models.CmsPost(
         site_id=site_id,
@@ -2299,7 +2422,14 @@ def update_cms_post(
     row: models.CmsPost,
     payload: schemas.CmsPostUpdate,
     user_id: uuid.UUID | None,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ):
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(
+            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+        )
     data = payload.model_dump(exclude_unset=True)
     if "slug" in data and data["slug"] is not None:
         row.slug = str(data["slug"]).strip().lower()
@@ -2339,7 +2469,16 @@ def update_cms_post(
     return row
 
 
-def delete_cms_post(db: Session, row: models.CmsPost) -> bool:
+def delete_cms_post(
+    db: Session, row: models.CmsPost,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
+) -> bool:
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(
+            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+        )
     row.status = "archived"
     db.commit()
     return True
