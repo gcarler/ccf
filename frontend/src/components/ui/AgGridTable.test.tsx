@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
-import AgGridTable from './AgGridTable';
+import AgGridTable, { ColDef } from './AgGridTable';
 
 vi.mock('ag-grid-react', () => ({
   AgGridReact: (props: any) => (
@@ -17,7 +17,7 @@ describe('AgGridTable component', () => {
       { id: 2, name: 'Item 2' },
     ];
 
-    const columnDefs = [
+    const columnDefs: ColDef<{ id: number; name: string }>[] = [
       { field: 'id', headerName: 'ID' },
       { field: 'name', headerName: 'Name' },
     ];
