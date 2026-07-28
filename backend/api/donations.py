@@ -192,7 +192,8 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
                 amount=result.amount,
                 donation_type="Diezmo",
                 donor_name=result.donor_name or result.email or "Web - MercadoPago",
-                notes=f"MercadoPago payment #{result.payment_id}",
+                reference_code=f"MP-{result.payment_id}",
+                payment_method="MercadoPago",
                 sede_id=None,
             )
             db.add(donation)
