@@ -59,8 +59,10 @@ function RightPanel({
         onEscape: handleClose,
     });
 
+    const PanelContainer = isOverlay ? motion.div : motion.aside;
+
     const panel = (
-        <motion.aside
+        <PanelContainer
             ref={panelRef}
             key="right-panel"
             initial={{ x: width, opacity: 0 }}
@@ -99,7 +101,7 @@ function RightPanel({
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 {children}
             </div>
-        </motion.aside>
+        </PanelContainer>
     );
 
     if (isControlled || rightMode === 'overlay') {
