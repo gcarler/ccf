@@ -3,7 +3,7 @@
 > ⚠️ **Nota:** este reporte se genera automáticamente. No edites los valores a mano.
 > Regenerarlo con: `cd /root/ccf/frontend && npm run test:cms:coverage`
 
-**Fecha:** 2026-07-29  
+**Fecha:** 2026-07-29 (regenerado a las 17:50 UTC)  
 **Configuración:** `frontend/vitest.cms.config.ts`  
 **Comando para reproducir:**
 
