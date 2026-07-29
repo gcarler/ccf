@@ -159,4 +159,112 @@ describe("BuilderSectionInspector", () => {
     expect(screen.getByPlaceholderText(/título/i)).toBeDisabled();
     expect(screen.getByPlaceholderText(/contenido/i)).toBeDisabled();
   });
+
+  it("calls updateSectionPropsLocal and saveSectionField for countdown target_date", () => {
+    const updateSectionPropsLocal = vi.fn();
+    const saveSectionField = vi.fn();
+    const section = createMockCmsSection("countdown", {
+      props_json: { target_date: "2024-12-31T23:59" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.updateSectionPropsLocal = updateSectionPropsLocal;
+    builder.saveSectionField = saveSectionField;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("2024-12-31T23:59");
+    fireEvent.change(input, { target: { value: "2025-01-01T00:00" } });
+    expect(updateSectionPropsLocal).toHaveBeenCalledWith(
+      expect.objectContaining({ target_date: "2025-01-01T00:00" })
+    );
+
+    fireEvent.blur(input, { target: { value: "2025-01-01T00:00" } });
+    expect(saveSectionField).toHaveBeenCalledWith("target_date", "2025-01-01T00:00");
+  });
+
+  it("parses and saves popup_banner show_on_paths on blur", () => {
+    const updateSectionPropsLocal = vi.fn();
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("popup_banner", {
+      props_json: { show_on_paths: ["/"] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.updateSectionPropsLocal = updateSectionPropsLocal;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const textarea = screen.getByTestId("popup-show-on-paths");
+    fireEvent.change(textarea, { target: { value: "/\n/nosotros\n/cursos" } });
+    expect(updateSectionPropsLocal).toHaveBeenCalledWith(
+      expect.objectContaining({ show_on_paths: ["/", "/nosotros", "/cursos"] })
+    );
+
+    fireEvent.blur(textarea, { target: { value: "/\n/nosotros\n/cursos" } });
+    expect(saveSectionProps).toHaveBeenCalledWith(
+      expect.objectContaining({ show_on_paths: ["/", "/nosotros", "/cursos"] })
+    );
+  });
+
+  it("calls upsertArrayItem and saveSectionProps when archiving a team member", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("team", {
+      props_json: {
+        items: [{ name: "Ana", role: "Pastor" }],
+      },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /archivar persona/i }));
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { status: "archived" });
+    expect(saveSectionProps).toHaveBeenCalled();
+  });
+
+  it("calls updateSectionPropsLocal and saveSectionField when image_side changes", () => {
+    const updateSectionPropsLocal = vi.fn();
+    const saveSectionField = vi.fn();
+    const section = createMockCmsSection("image_text", {
+      props_json: { image_side: "right" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.updateSectionPropsLocal = updateSectionPropsLocal;
+    builder.saveSectionField = saveSectionField;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const select = screen.getByDisplayValue("Imagen a la derecha");
+    fireEvent.change(select, { target: { value: "left" } });
+    expect(updateSectionPropsLocal).toHaveBeenCalledWith(
+      expect.objectContaining({ image_side: "left" })
+    );
+    expect(saveSectionField).toHaveBeenCalledWith("image_side", "left");
+  });
+
+  it("calls upsertArrayItem and saveSectionProps when editing a pricing plan price", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("pricing", {
+      props_json: {
+        items: [{ name: "Plan", price: "$10" }],
+      },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("$10");
+    fireEvent.change(input, { target: { value: "$20" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { price: "$20" });
+
+    fireEvent.blur(input, { target: { value: "$20" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { price: "$20" });
+    expect(saveSectionProps).toHaveBeenCalled();
+  });
 });

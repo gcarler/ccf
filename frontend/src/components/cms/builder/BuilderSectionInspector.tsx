@@ -454,6 +454,7 @@ export default function BuilderSectionInspector({
                       className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
                     />
                     <textarea
+                      data-testid="popup-show-on-paths"
                       value={Array.isArray(activeSection.props_json?.show_on_paths) ? activeSection.props_json.show_on_paths.join("\n") : safeString(activeSection.props_json?.show_on_paths)}
                       onChange={(e) => {
                         const nextProps = { ...asObject(activeSection.props_json), show_on_paths: e.target.value.split(/\n|,/).map((item) => item.trim()).filter(Boolean) };
