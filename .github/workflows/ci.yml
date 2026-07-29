@@ -13,6 +13,36 @@ env:
   TEST_DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/ccf_test"
 
 jobs:
+  # ── Checkout Benchmark (temporal) ────────────────────────────
+  # Mide y reporta el tiempo de checkout con fetch-depth 0 vs 1.
+  # TODO: remover este job una vez recolectados los datos.
+  checkout-benchmark:
+    name: "Checkout Benchmark (depth=${{ matrix.fetch-depth }})"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        fetch-depth: [0, 1]
+    steps:
+      - name: "Start timer"
+        run: echo "START=$(date +%s%N)" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ matrix.fetch-depth }}
+
+      - name: "End timer and report"
+        run: |
+          END=$(date +%s%N)
+          DURATION=$(( (END - START) / 1000000 ))
+          echo "fetch-depth=${{ matrix.fetch-depth }} took ${DURATION}ms"
+          {
+            echo "### Checkout Benchmark (fetch-depth=${{ matrix.fetch-depth }}) ⏱️"
+            echo ""
+            echo "| Fetch Depth | Duration |"
+            echo "| :--- | :--- |"
+            echo "| **${{ matrix.fetch-depth }}** | ${DURATION} ms |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   # ── Quality Gate ─────────────────────────────────────────────
   backend-quality:
     name: Backend Quality Gate

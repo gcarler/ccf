@@ -54,7 +54,51 @@ Los demás jobs del workflow (`backend-quality`, `migrations-check`, `crm-tests`
 
 Esto reduce el tiempo de checkout en builds de push y PR para todos los jobs que no necesitan historial completo.
 
+### Benchmark temporal de checkout
+
+Para medir el impacto real de la optimización, existe un job temporal `checkout-benchmark` en `.github/workflows/ci.yml`. Usa una matriz para correr dos jobs independientes con `fetch-depth: 0` y `fetch-depth: 1` y reporta la duración de cada uno en el job summary:
+
+```yaml
+checkout-benchmark:
+  name: "Checkout Benchmark (depth=${{ matrix.fetch-depth }})"
+  runs-on: ubuntu-latest
+  strategy:
+    matrix:
+      fetch-depth: [0, 1]
+```
+
+Cada ejecución escribe su duración en el job summary (`GITHUB_STEP_SUMMARY`), por lo que se puede comparar directamente en la UI de GitHub Actions. Una vez recolectados los datos, este job puede eliminarse (ver el comentario `TODO` en el archivo).
+
+## Monitoreo post-merge: Codecov con `fetch-depth: 1`
+
+Los jobs `backend-quality` y `crm-tests` suben cobertura a Codecov v4 después de correr los tests. Tras cambiar sus checkouts a `fetch-depth: 1`, se debe verificar que Codecov sigue pudiendo resolver el commit base en pull requests. Según la documentación de Codecov, `fetch-depth: 1` es muy probable que cause problemas en PRs porque Codecov necesita historial para identificar el base commit.
+
+### Indicadores a revisar tras el primer PR/push
+
+1. **Mensajes de error en el step "Upload coverage" o "Upload CRM coverage":**
+   - Warnings del tipo `Missing base report`.
+   - Errores como `Could not find a usable base commit`.
+2. **Comentario de Codecov en el PR:**
+   - ¿Muestra "Diff" / "Patch" coverage?
+   - ¿Aparece la comparación contra la rama base?
+3. **Dashboard de Codecov:**
+   - ¿Se asoció correctamente el reporte al SHA del commit?
+   - ¿Se calculó el delta de cobertura en el PR?
+
+### Fallback si hay problemas
+
+Si Codecov no puede resolver el base commit con `fetch-depth: 1`, cambiar los jobs que suben cobertura a una profundidad condicional:
+
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 1 }}
+```
+
+O, si se prefiere una solución más robusta, usar `fetch-depth: 0` solo para PRs en esos jobs, igual que en `frontend-quality`.
+
 ### Referencias
 
 - `.github/workflows/ci.yml` – jobs `frontend-quality`, `backend-quality`, `migrations-check`, `crm-tests`, `deploy-staging`, `deploy-production`.
 - `scripts/check-frontend-test-any.py` – lógica de detección de `any` en tests.
+- [Codecov Docs: Environment Specific Requirements](https://docs.codecov.com/docs/environment-specific-requirements)
