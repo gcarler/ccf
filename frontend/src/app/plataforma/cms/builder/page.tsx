@@ -18,10 +18,10 @@ export default function CmsBuilderPage() {
   const builder = usePageBuilder({ token, canEdit, canPublish });
 
   return (
-    <div className="space-y-3 p-3">
+    <main aria-label="Constructor visual CMS" className="space-y-3 p-3">
       <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-3 flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS V2 Builder</p>
+          <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS V2 Builder</p>
           <h1 className="mt-2 text-lg font-semibold">Constructor visual multisitio</h1>
         </div>
         <div className="rounded-md bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wide inline-flex items-center gap-2">
@@ -58,6 +58,6 @@ export default function CmsBuilderPage() {
           }}
         />
       )}
-    </div>
+    </main>
   );
 }
