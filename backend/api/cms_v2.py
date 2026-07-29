@@ -1795,6 +1795,58 @@ def _get_system_var(db, site_key: str, var_key: str, default: str = "") -> str:
     return val
 
 
+def _get_system_vars_batch(
+    db, site_key: str, var_keys: tuple[str, ...]
+) -> dict[str, str]:
+    """Batch-read multiple SystemVariable rows for a site in one query (N+1 fix).
+
+    Same semantics and cache as :func:`_get_system_var`, but any requested keys
+    whose cache entry is stale or missing are fetched via a single ``IN`` query
+    against ``SystemVariable`` instead of one query per key. Cache hits are
+    returned from the in-memory TTL without touching the DB.
+
+    Returns ``{var_key: value}`` for every requested key — missing rows are
+    absent from the dict, so callers should use ``.get(key, default)``.
+
+    Rationale (plancms.md Fase 3.1, ``public_page`` SUSPECT): ``_build_section_defaults``
+    used to call ``_get_system_var`` up to 5+ times per section in cold cache,
+    emitting N×5 ``SystemVariable`` queries per page load. This batch helper
+    collapses the cold-miss case to a single query for the whole page.
+    """
+    now = time.monotonic()
+    cached: dict[str, str] = {}
+    missing: list[str] = []
+    for var_key in var_keys:
+        cache_key = f"{site_key}:{var_key}"
+        hit = _system_var_cache.get(cache_key)
+        if hit is not None and now - hit[0] < _SYSTEM_VAR_TTL:
+            cached[var_key] = hit[1]
+        else:
+            missing.append(var_key)
+    if missing:
+        db_keys = [f"{site_key}_{k}" for k in missing]
+        rows = (
+            db.query(models.SystemVariable.key, models.SystemVariable.value)
+            .filter(
+                models.SystemVariable.key.in_(db_keys),
+                models.SystemVariable.deleted_at.is_(None),
+            )
+            .all()
+        )
+        found: dict[str, str] = {}
+        for row in rows:
+            # row.key has the form ``{site_key}_{var_key}`` → strip the prefix
+            suffix = row.key[len(f"{site_key}_"):] if row.key.startswith(f"{site_key}_") else row.key
+            found[suffix] = row.value
+        now_mono = time.monotonic()
+        for var_key in missing:
+            cache_key = f"{site_key}:{var_key}"
+            value = found.get(var_key, "")
+            _system_var_cache[cache_key] = (now_mono, value)
+            cached[var_key] = value
+    return cached
+
+
 def _build_section_defaults(
     db: Session, site_key: str, section_type: str, props: dict[str, Any] | None = None
 ) -> dict[str, Any]:
@@ -1823,6 +1875,27 @@ def _build_section_defaults(
     ):
         return props or {}
 
+    # ── Fase 3.1 N+1 fix: batch-prefetch all possible SystemVariables for this
+    # site in a single ``IN`` query. Subsequent ``_get_system_var`` calls below
+    # (cta_title, cta_description, welcome_title, cta_text, cta_link) become
+    # pure cache hits — zero extra DB round-trips. Before: up to 5+N queries per
+    # section in cold cache; now: exactly 1 query per ``public_page`` request.
+    _get_system_vars_batch(
+        db,
+        site_key,
+        (
+            "church_name",
+            "mission_statement",
+            "service_time",
+            "address",
+            "map_embed_url",
+            "welcome_title",
+            "cta_text",
+            "cta_link",
+            "cta_title",
+            "cta_description",
+        ),
+    )
     church_name = _get_system_var(db, site_key, "church_name", "Nuestra Iglesia")
     mission = _get_system_var(db, site_key, "mission_statement", "Compartir el amor de Dios y hacer discípulos")
     service_time = _get_system_var(db, site_key, "service_time", "Domingos 10:00 AM")
