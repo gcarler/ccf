@@ -30,6 +30,41 @@ import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { useAuth } from '@/context/AuthContext';
 import { canAccessWorkspaceHref } from '@/lib/workspaceAccess';
 
+interface NavItemProps {
+    id: string;
+    icon: React.ElementType;
+    href: string;
+    label: string;
+    badge?: number;
+    pathname: string | null;
+    onClick: () => void;
+}
+
+function NavItem({ icon: Icon, href, label, badge, pathname, onClick }: NavItemProps) {
+    const isActive = href === '/' ? (pathname === '/' || !pathname) : pathname?.startsWith(href) ?? false;
+    return (
+        <DSTooltip content={label} side="right">
+            <Link href={href} prefetch={false} className="relative" onClick={onClick}>
+                <div
+                    className={clsx(
+                        "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer sidebar-nav-item",
+                        isActive
+                            ? "bg-[hsl(var(--info))]/10 dark:bg-white/10 text-[hsl(var(--primary))] dark:text-white shadow-inner"
+                            : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
+                    )}
+                >
+                    <Icon size={19} className={clsx(isActive && "text-[hsl(var(--primary))]")} />
+                    {badge && (
+                        <span className="absolute -top-0.5 -right-0.5 size-4 rounded-full bg-[hsl(var(--danger))] text-white font-semibold flex items-center justify-center border-2 border-white dark:border-black">
+                            {badge}
+                        </span>
+                    )}
+                </div>
+            </Link>
+        </DSTooltip>
+    );
+}
+
 export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void }) {
     const pathname = usePathname();
     const { hasModuleAccess, hasPermission } = useAuth();
@@ -62,31 +97,6 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
         canAccessWorkspaceHref(item.href, { hasModuleAccess, hasPermission })
     );
 
-    const NavItem = ({ id, icon: Icon, href, label, badge }: any) => {
-        const isActive = href === '/' ? (pathname === '/' || !pathname) : pathname?.startsWith(href);
-        return (
-            <DSTooltip key={id} content={label} side="right">
-                <Link href={href} prefetch={false} className="relative" onClick={() => resetSidebarStack()}>
-                    <div
-                        className={clsx(
-                            "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer sidebar-nav-item",
-                            isActive
-                                ? "bg-[hsl(var(--info))]/10 dark:bg-white/10 text-[hsl(var(--primary))] dark:text-white shadow-inner"
-                                : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
-                        )}
-                    >
-                        <Icon size={19} className={clsx(isActive && "text-[hsl(var(--primary))]")} />
-                        {badge && (
-                            <span className="absolute -top-0.5 -right-0.5 size-4 rounded-full bg-[hsl(var(--danger))] text-white font-semibold flex items-center justify-center border-2 border-white dark:border-black">
-                                {badge}
-                            </span>
-                        )}
-                    </div>
-                </Link>
-            </DSTooltip>
-        );
-    };
-
     return (
         <aside className="w-16 h-full bg-[hsl(var(--bg-primary))] dark:bg-black border-r border-[hsl(var(--border))] dark:border-white/5 rounded-lg flex flex-col items-center py-2 gap-1 shadow-2xl relative overflow-hidden" style={{ paddingBottom: '2.5rem' }}>
             {/* Global Add Button */}
@@ -101,20 +111,20 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             </button>
 
             {/* Primary workspace items */}
-            {visiblePrimaryItems.map(item => <NavItem key={item.id} {...item} />)}
+            {visiblePrimaryItems.map(item => <NavItem key={item.id} {...item} pathname={pathname} onClick={resetSidebarStack} />)}
 
             {/* Separator */}
             <div className="w-6 h-px bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
 
             {/* Module items */}
-            {visibleModuleItems.map(item => <NavItem key={item.id} {...item} />)}
+            {visibleModuleItems.map(item => <NavItem key={item.id} {...item} pathname={pathname} onClick={resetSidebarStack} />)}
 
             {/* Separator */}
             <div className="w-6 h-px bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
 
             {/* Inbox with badge */}
             {canAccessWorkspaceHref('/plataforma/inbox', { hasModuleAccess, hasPermission }) && (
-                <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} />
+                <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} pathname={pathname} onClick={resetSidebarStack} />
             )}
 
             {/* ── Footer: solo Settings + Collapse (SIN ThemeToggle — ya está en el header) */}

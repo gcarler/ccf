@@ -23,9 +23,48 @@ function GroupFlame({ size = 16 }: { size?: number }) {
     );
 }
 
-// ─── Pantalla de bloqueo ──────────────────────────────────────────────────────
+// ─── Icono del candado para la pantalla de bloqueo ───────────────────────────
 
 type GateVariant = 'lock' | 'shield' | 'key';
+
+function GateLockIcon({ variant }: { variant: GateVariant }) {
+    const isWarning = variant !== 'lock';
+    const accentColor = isWarning ? 'hsl(var(--warning))' : 'hsl(var(--primary))';
+    const gradId = React.useId();
+    return (
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
+            <defs>
+                <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor={isWarning ? 'hsl(var(--warning))' : 'hsl(var(--info))'} />
+                    <stop offset="100%" stopColor={accentColor} />
+                </linearGradient>
+            </defs>
+            {variant === 'lock' && (
+                <>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke={`url(#${gradId})`} strokeWidth="1.5" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke={`url(#${gradId})`} strokeWidth="1.5" />
+                    <circle cx="12" cy="16" r="1.2" fill={`url(#${gradId})`} />
+                </>
+            )}
+            {variant === 'shield' && (
+                <>
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke={`url(#${gradId})`} strokeWidth="1.5" />
+                    <line x1="12" y1="9" x2="12" y2="13" stroke={`url(#${gradId})`} strokeWidth="1.5" />
+                    <circle cx="12" cy="16" r="0.8" fill={`url(#${gradId})`} />
+                </>
+            )}
+            {variant === 'key' && (
+                <>
+                    <circle cx="8" cy="8" r="5" stroke={`url(#${gradId})`} strokeWidth="1.5" />
+                    <path d="M21 21l-9.1-9.1" stroke={`url(#${gradId})`} strokeWidth="1.5" />
+                    <path d="M15 17l2 2 2-2" stroke={`url(#${gradId})`} strokeWidth="1.5" />
+                </>
+            )}
+        </svg>
+    );
+}
+
+// ─── Pantalla de bloqueo ──────────────────────────────────────────────────────
 
 function GateScreen({
     variant = 'lock',
@@ -41,44 +80,6 @@ function GateScreen({
     cta: string;
 }) {
     const isWarning = variant !== 'lock';
-
-    // Colores del brand CCF
-    const teal = 'hsl(var(--primary))';
-    const warnColor = 'hsl(var(--warning))';
-
-    const accentColor = isWarning ? warnColor : teal;
-
-    const LockIcon = () => (
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
-            <defs>
-                <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor={isWarning ? 'hsl(var(--warning))' : 'hsl(var(--info))'} />
-                    <stop offset="100%" stopColor={accentColor} />
-                </linearGradient>
-            </defs>
-            {variant === 'lock' && (
-                <>
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="url(#iconGrad)" strokeWidth="1.5" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="url(#iconGrad)" strokeWidth="1.5" />
-                    <circle cx="12" cy="16" r="1.2" fill="url(#iconGrad)" />
-                </>
-            )}
-            {variant === 'shield' && (
-                <>
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="url(#iconGrad)" strokeWidth="1.5" />
-                    <line x1="12" y1="9" x2="12" y2="13" stroke="url(#iconGrad)" strokeWidth="1.5" />
-                    <circle cx="12" cy="16" r="0.8" fill="url(#iconGrad)" />
-                </>
-            )}
-            {variant === 'key' && (
-                <>
-                    <circle cx="8" cy="8" r="5" stroke="url(#iconGrad)" strokeWidth="1.5" />
-                    <path d="M21 21l-9.1-9.1" stroke="url(#iconGrad)" strokeWidth="1.5" />
-                    <path d="M15 17l2 2 2-2" stroke="url(#iconGrad)" strokeWidth="1.5" />
-                </>
-            )}
-        </svg>
-    );
 
     return (
         <div
@@ -147,7 +148,7 @@ function GateScreen({
                                 : `0 0 40px hsl(var(--primary)/0.25), 0 0 80px hsl(var(--primary)/0.1), inset 0 1px 0 rgba(255,255,255,0.08)`,
                         }}
                     >
-                        <LockIcon />
+                        <GateLockIcon variant={variant} />
                     </div>
                 </div>
 
