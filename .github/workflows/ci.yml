@@ -30,11 +30,12 @@ jobs:
         with:
           fetch-depth: ${{ matrix.fetch-depth }}
 
-      - name: "End timer and report"
+      - name: "End timer, report and save result"
         run: |
           END=$(date +%s%N)
           DURATION=$(( (END - START) / 1000000 ))
           echo "fetch-depth=${{ matrix.fetch-depth }} took ${DURATION}ms"
+          echo "$DURATION" > "duration-${{ matrix.fetch-depth }}.txt"
           {
             echo "### Checkout Benchmark (fetch-depth=${{ matrix.fetch-depth }}) ⏱️"
             echo ""
@@ -42,6 +43,44 @@ jobs:
             echo "| :--- | :--- |"
             echo "| **${{ matrix.fetch-depth }}** | ${DURATION} ms |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "Upload duration artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkout-duration-${{ matrix.fetch-depth }}
+          path: duration-${{ matrix.fetch-depth }}.txt
+          retention-days: 1
+
+  # ── Checkout Benchmark Report (temporal) ─────────────────────
+  # Agrega los resultados de checkout-benchmark en una sola tabla.
+  # TODO: remover este job junto con checkout-benchmark una vez recolectados los datos.
+  checkout-benchmark-report:
+    name: "Checkout Benchmark Report"
+    needs: checkout-benchmark
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Download duration artifacts"
+        uses: actions/download-artifact@v4
+        with:
+          pattern: checkout-duration-*
+          merge-multiple: true
+          path: benchmark-results
+
+      - name: "Aggregate and report"
+        run: |
+          echo "### Checkout Benchmark Comparison ⏱️" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Fetch Depth | Duration |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| :--- | :--- |" >> "$GITHUB_STEP_SUMMARY"
+          for depth in 0 1; do
+            if [ -f "benchmark-results/duration-${depth}.txt" ]; then
+              DURATION=$(cat "benchmark-results/duration-${depth}.txt")
+              echo "| **${depth}** | ${DURATION} ms |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| **${depth}** | *No disponible* |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
 
   # ── Quality Gate ─────────────────────────────────────────────
   backend-quality:
