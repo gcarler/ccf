@@ -73,7 +73,7 @@ export default function SessionsPage() {
         {loading ? <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Cargando...</div> : sessions.length === 0 ? (
           <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Sin sesiones</div>
         ) : sessions.map(s => {
-          const ua = parseUA(s.browser || s.os);
+          const ua = s.browser && s.os ? { browser: s.browser, os: s.os } : parseUA(s.browser || s.os);
           return (
             <div key={s.id} className="flex items-center gap-4 p-4 border rounded-xl bg-[hsl(var(--bg-primary))]">
               <div className="w-10 h-10 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center">
@@ -104,7 +104,7 @@ export default function SessionsPage() {
           <p className="text-sm text-[hsl(var(--text-secondary))]">Esta accion cerrara el acceso de la sesion indicada.</p>
           <div className="flex gap-2">
             <button onClick={() => setPendingAction(null)} className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium">Cancelar</button>
-            <button onClick={confirmPendingAction} className="flex-1 rounded-lg bg-[hsl(var(--destructive))] px-3 py-2 text-sm font-medium text-white hover:bg-[hsl(var(--destructive))]">Revocar</button>
+            <button onClick={confirmPendingAction} className="flex-1 rounded-lg bg-[hsl(var(--destructive))] px-3 py-2 text-sm font-medium text-white hover:bg-[hsl(var(--destructive))]">Confirmar revocación</button>
           </div>
         </div>
       </SidePanel>

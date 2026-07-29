@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
+import { SITE_KEY } from "@/lib/site-config";
 import { AlertTriangle, CheckCircle, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
+
 
 interface BrokenLink { id: string; source_url: string; target_url: string; status_code: number | null; error_message: string | null; is_broken: boolean; resolved_at: string | null; checked_at: string; }
 
@@ -70,5 +73,3 @@ export default function BrokenLinksPage() {
     </div>
   );
 }
-import { SITE_KEY } from "@/lib/site-config";
-import { toast } from "sonner";

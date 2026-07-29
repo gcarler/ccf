@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
+import { SITE_KEY } from "@/lib/site-config";
 import {Search, Star, Plus, TrendingUp} from "lucide-react";
+import { toast } from "sonner";
+
 
 interface SearchResult { entity_type: string; entity_id: string; entity_slug: string; title: string; category: string | null; boost_score: number; }
 interface Promotion { id: string; query_text: string; entity_type: string; entity_id: string; entity_slug: string | null; title: string | null; boost_score: number; is_active: boolean; }
@@ -112,5 +115,3 @@ export default function SearchAdminPage() {
     </div>
   );
 }
-import { SITE_KEY } from "@/lib/site-config";
-import { toast } from "sonner";

@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
+import { SITE_KEY } from "@/lib/site-config";
 import { FolderTree, Plus, ChevronRight, ChevronDown } from "lucide-react";
+import { toast } from "sonner";
+
 
 interface MediaFolder { id: string; name: string; slug: string; path: string; parent_id: string | null; }
 
@@ -95,5 +98,3 @@ export default function MediaFoldersPage() {
     </div>
   );
 }
-import { SITE_KEY } from "@/lib/site-config";
-import { toast } from "sonner";
