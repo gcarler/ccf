@@ -448,6 +448,23 @@ Backend CRM: **100% verde** en tests canónicos y lint. Frontend E2E CRM: pendie
 ### 18.4 Notas para sesiones futuras (CRM)
 
 - **No tocar el tracker `errorescrm.md` para reabrir hallazgos ya ✅**: si un nuevo test o cambio expone un regression, abrir un nuevo hallazgo D-N en `errorescrm.md` con fecha, no desmarcar existentes. Los commits hash en la tabla de cierre son el ledger de inmutabilidad.
+
+### 18.5 Gaps de cobertura y documentación identificados (2026-07-29)
+
+Aunque el módulo CRM está cerrado funcionalmente, quedan los siguientes gaps técnicos a cubrir para mantener el standard de calidad de la plataforma:
+
+| # | Gap | Prioridad | Archivo(s) afectado(s) |
+|---|---|---|---|
+| 1 | **Servicios sin cobertura de tests**: `backend/services/automation_engine.py` (0%), `backend/services/evangelism_crm_bridge.py` (14%), `backend/services/task_notifications.py` (21%), `backend/services/conversation_memory.py` (23%). | Alta | `backend/services/*.py` |
+| 2 | **E2E frontend CRM timeout**: `npm run test:e2e:crm` supera los 600s en el entorno de revisión. Requiere investigar si es por build lento, servidor no arranca, o tests bloqueantes. | Alta | `frontend/tests/e2e/crm/`, `frontend/scripts/run-managed-playwright.mjs` |
+| 3 | **Docs desactualizadas**: `CRM_QA_CHECKLIST.md` y `PLAN_CRM_CALIDAD.md` declaran cierre al 100% sin mencionar los gaps de cobertura ni el timeout E2E. | Media | `docs/CRM_QA_CHECKLIST.md`, `docs/PLAN_CRM_CALIDAD.md` |
+| 4 | **`backend/services/pastoral_health.py`**: es un módulo trivial de re-exportación (2 líneas), no requiere tests propios. | Baja | `backend/services/pastoral_health.py` |
+
+**Plan sugerido:**
+1. Escribir tests unitarios para `task_notifications.py` y `conversation_memory.py` (módulos acotados, alto impacto).
+2. Investigar y documentar la causa del timeout E2E CRM.
+3. Escribir tests para `evangelism_crm_bridge.py` (bridge crítico con evangelismo).
+4. Dejar `automation_engine.py` para una sesión dedicada dada su complejidad (threads, async, gateway de mensajería).
 - **Wide propane refactor pattern (canonizar en CRM)**: para todo wide refactor tipo-only en CCF, el patrón de validación es: stash branch → correr suite → emerge → correr suite → comparar deltas. Si deltas == 0, el refactor es zero-regression. Reutilizable para futuros widenings de tipo (e.g., extender `AwareDateTime` a Academy/Evangelism/CMS).
 - **Bug ORM `ConversationParticipant.Usuario`** (preexistence, NO CRM scope, paralelo): al inicializar mappers se levanta `InvalidRequestError: 'Usuario' failed to locate a name`. No introducido por la auditoría CRM. Antes de cualquier probe ORM directo vía `SessionLocal + Query(MODEL)`, usar SQL bruto `text()` para bypassear este bug. A futuro: `grep "conversation_participants" + "Usuario"` para localizar el `relationship()` roto y decidir (código muerto vs runtime).
 - **CRM y Evangelismo = módulos más sensibles** (user directive 2026-07-25): mantener al standard más alto de tipado/scope/defensive-programming. Cualquier cambio futuro en CRM debe pasar smoke canónico 138 + RBAC 33 verdes antes de commitear.
