@@ -59,16 +59,11 @@ export function SectionRenderPreview({
   );
 }
 
-// ── Schema preview (shows a type-specific placeholder) ──────────────────────
+// ── Type badge used across all section preview variants ─────────────────────
 
-export function SectionPreview({ section }: { section: CmsSection }) {
-  const title = safeString(section.props_json?.title);
-  const body = safeString(section.props_json?.body);
-  const imageUrl = safeString(section.props_json?.image_url);
-  const ctaLabel = safeString(section.props_json?.cta_label);
-  const typeLabel = SECTION_TYPE_LABEL[section.type] ?? section.type;
-
-  const TypeBadge = () => (
+function TypeBadge({ type }: { type: string }) {
+  const typeLabel = SECTION_TYPE_LABEL[type] ?? type;
+  return (
     <span
       className="inline-flex items-center px-2 py-0.5 rounded-md text-2xs font-semibold uppercase tracking-wide"
       style={{ backgroundColor: 'var(--site-primary)', color: 'var(--site-on-primary)' }}
@@ -76,11 +71,21 @@ export function SectionPreview({ section }: { section: CmsSection }) {
       {typeLabel}
     </span>
   );
+}
+
+// ── Schema preview (shows a type-specific placeholder) ──────────────────────
+
+export function SectionPreview({ section }: { section: CmsSection }) {
+  const title = safeString(section.props_json?.title);
+  const body = safeString(section.props_json?.body);
+  const imageUrl = safeString(section.props_json?.image_url);
+  const ctaLabel = safeString(section.props_json?.cta_label);
+  const typeBadge = <TypeBadge type={section.type} />;
 
   if (section.type === "hero" || section.type === "video_hero") {
     return (
       <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/20 p-4 space-y-2">
-        <TypeBadge />
+        {typeBadge}
         <h3 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-tight">
           {title || "Título hero"}
         </h3>
@@ -104,7 +109,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
       : [];
     return (
       <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/20 p-4 space-y-2">
-        <TypeBadge />
+        {typeBadge}
         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Bloque de tarjetas"}
         </p>
@@ -131,7 +136,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   if (section.type === "gallery") {
     return (
       <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/20 p-4 space-y-2">
-        <TypeBadge />
+        {typeBadge}
         {imageUrl ? (
           <OptimizedImage
             src={imageUrl}
@@ -151,7 +156,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   if (section.type === "cta_banner") {
     return (
       <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-primary)', backgroundColor: 'var(--site-primary-container)' }}>
-        <TypeBadge />
+        {typeBadge}
         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Llamado a la Acción"}
         </p>
@@ -167,7 +172,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   if (section.type === "testimonials") {
     return (
       <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-outline-variant)' }}>
-        <TypeBadge />
+        {typeBadge}
         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Sección de Testimonios"}
         </p>
@@ -188,7 +193,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
       : [];
     return (
       <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-primary)' }}>
-        <TypeBadge />
+        {typeBadge}
         <div className="grid grid-cols-3 gap-2">
           {(stats.length > 0 ? stats : [{ value: "—", label: "Métrica" }])
             .slice(0, 3)
@@ -209,7 +214,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   if (section.type === "team") {
     return (
       <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-secondary)' }}>
-        <TypeBadge />
+        {typeBadge}
         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Nuestro Equipo"}
         </p>
@@ -229,7 +234,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
     const target = safeString(section.props_json?.target_date);
     return (
       <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-primary)' }}>
-        <TypeBadge />
+        {typeBadge}
         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Cuenta Regresiva"}
         </p>
@@ -259,7 +264,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
       : [];
     return (
       <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-secondary)' }}>
-        <TypeBadge />
+        {typeBadge}
         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
           {title || "Preguntas Frecuentes"}
         </p>
@@ -278,7 +283,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
     const embedUrl = safeString(section.props_json?.embed_url);
     return (
       <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-primary)' }}>
-        <TypeBadge />
+        {typeBadge}
         {embedUrl ? (
           <p className="text-2xs text-[hsl(var(--text-secondary))] font-mono truncate">
             {embedUrl}
@@ -294,7 +299,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
   // rich_text, rich_text_columns, and default fallback
   return (
     <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/20 p-4 space-y-2">
-      <TypeBadge />
+      <TypeBadge type={section.type} />
       <h4 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
         {title || "Título"}
       </h4>
