@@ -87,10 +87,10 @@ Este plan busca **atacar todos los frentes** de forma ordenada, priorizando la e
 
 **Estado actual (auditoría 2026-07-28):**
 - `public_theme`, `public_menu`, `public_post` → CLEAN (`lazyload("*")` correcto).
-- `public_page` → SUSPECT (N×5 SystemVariable cache miss, mitigado por TTL).
-- `public_posts_list` (adyacente) → SUSPECT (N×3 queries por post — `get_post_categories`+`get_post_tags`+`db.query(Persona)`; el fix `get_posts_categories_batch`/`get_posts_tags_batch` ya existe en `backend/crud/cms.py:2505-2550` pero no se invoca).
+- `public_page` → ✅ CERRADO 2026-07-28 (ses_05523c98). N×5 SystemVariable queries colapsadas a 1 query batch vía `_get_system_vars_batch` + prefetch en `_build_section_defaults`. Las llamadas subsiguientes a `_get_system_var` son cache hits.
+- `public_posts_list` (adyacente) → ✅ CERRADO (sesión previa). Loop N×3 reemplazado por `get_posts_categories_batch`/`get_posts_tags_batch` + batch fetch de autores via `.in_()`. Reduce N×3 → ~3 queries totales.
 
-**Próximo fix concreto:** en `cms_v2.py:2801-2815`, reemplazar el loop que llama a `get_post_categories`/`get_post_tags`/`db.query(Persona)` por las variantes batch ya disponibles en el CRUD. Reduce N×3 → ~3 queries totales.
+**Próximo fix concreto (Fase 3.1 restante):** medir con SQL logging antes/después para documentar la reducción de queries (item pendiente de la tabla de entregables).
 
 
 #### 3.2 Cache centralizado
