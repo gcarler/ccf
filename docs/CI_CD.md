@@ -54,21 +54,6 @@ Los demás jobs del workflow (`backend-quality`, `migrations-check`, `crm-tests`
 
 Esto reduce el tiempo de checkout en builds de push y PR para todos los jobs que no necesitan historial completo.
 
-### Benchmark temporal de checkout
-
-Para medir el impacto real de la optimización, existe un job temporal `checkout-benchmark` en `.github/workflows/ci.yml`. Usa una matriz para correr dos jobs independientes con `fetch-depth: 0` y `fetch-depth: 1` y reporta la duración de cada uno en el job summary:
-
-```yaml
-checkout-benchmark:
-  name: "Checkout Benchmark (depth=${{ matrix.fetch-depth }})"
-  runs-on: ubuntu-latest
-  strategy:
-    matrix:
-      fetch-depth: [0, 1]
-```
-
-Cada ejecución escribe su duración en el job summary (`GITHUB_STEP_SUMMARY`), por lo que se puede comparar directamente en la UI de GitHub Actions. Además, un segundo job temporal `checkout-benchmark-report` depende del anterior, descarga los artefactos `checkout-duration-*` y genera una tabla única comparando ambos fetch-depth. Una vez recolectados los datos, ambos jobs pueden eliminarse (ver los comentarios `TODO` en el archivo).
-
 ## Monitoreo post-merge: Codecov con `fetch-depth: 1`
 
 Los jobs `backend-quality` y `crm-tests` suben cobertura a Codecov v4 después de correr los tests. Tras cambiar sus checkouts a `fetch-depth: 1`, se debe verificar que Codecov sigue pudiendo resolver el commit base en pull requests. Según la documentación de Codecov, `fetch-depth: 1` es muy probable que cause problemas en PRs porque Codecov necesita historial para identificar el base commit.
