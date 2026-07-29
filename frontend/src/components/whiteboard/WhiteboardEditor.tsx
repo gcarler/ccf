@@ -367,53 +367,70 @@ export default function WhiteboardEditor({
         }
     };
 
+    /** Return the center of the currently visible canvas viewport. */
+    const getViewportCenter = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return { cx: 200, cy: 200 };
+        const vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0];
+        const zoom = canvas.getZoom() || 1;
+        const cx = (-vpt[4] + (canvas.width ?? 800) / 2) / zoom;
+        const cy = (-vpt[5] + (canvas.height ?? 600) / 2) / zoom;
+        return { cx, cy };
+    };
+
     const addRect = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
         const rect = new fabric.Rect({
-            left: 120,
-            top: 120,
+            left: cx - 90,
+            top: cy - 55,
             width: 180,
             height: 110,
             rx: 18,
             ry: 18,
-            fill: WHITEBOARD_COLORS.primaryLight,
+            fill: "rgba(37, 99, 235, 0.25)",
             stroke: WHITEBOARD_COLORS.primary,
             strokeWidth: 2,
         });
         canvas.add(rect);
         canvas.setActiveObject(rect);
+        canvas.requestRenderAll();
         activateTool("select");
     };
 
     const addCircle = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
         const circle = new fabric.Circle({
-            left: 140,
-            top: 150,
+            left: cx - 54,
+            top: cy - 54,
             radius: 54,
-            fill: WHITEBOARD_COLORS.successLight,
+            fill: "rgba(16, 185, 129, 0.25)",
             stroke: WHITEBOARD_COLORS.success,
             strokeWidth: 2,
         });
         canvas.add(circle);
         canvas.setActiveObject(circle);
+        canvas.requestRenderAll();
         activateTool("select");
     };
 
     const addText = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
         const text = new fabric.IText("Nuevo texto", {
-            left: 160,
-            top: 170,
+            left: cx - 60,
+            top: cy - 14,
             fontSize: 24,
-            fill: WHITEBOARD_COLORS.textPrimary,
+            fill: isDark ? "#e2e8f0" : WHITEBOARD_COLORS.textPrimary,
             fontFamily: "Manrope",
         });
         canvas.add(text);
         canvas.setActiveObject(text);
+        canvas.requestRenderAll();
         text.enterEditing();
         text.selectAll();
         activateTool("select");
