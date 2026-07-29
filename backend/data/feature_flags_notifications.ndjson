@@ -7,3 +7,5 @@
 {"timestamp": "2026-06-21T00:48:47.899777+00:00", "type": "compliance_drift_alert", "severity": "critical", "risk_score": 85, "from_snapshot_id": "ccd5bf22e24ff4f4", "to_snapshot_id": "f86c2f53af6e9daf", "reasons": ["Se desactivaron flags criticos"], "critical_disabled": 1, "critical_feature_changes": 1, "suppressed": {"severity": false, "feature_changes": [], "metric_alerts": []}}
 {"timestamp": "2026-07-29T00:09:02.232233+00:00", "type": "test"}
 {"timestamp": "2026-07-29T02:58:15.437618+00:00", "type": "test"}
+{"timestamp": "2026-07-29T19:39:53.320950+00:00", "type": "test"}
+{"timestamp": "2026-07-29T20:31:06.336541+00:00", "type": "test"}
