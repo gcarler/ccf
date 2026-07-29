@@ -44,7 +44,7 @@ export default function TalentSearchPage() {
     return (
         <div className="p-4 space-y-3 animate-in fade-in duration-700">
             <div className="flex flex-col gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] rounded-full text-2xs font-semibold uppercase tracking-wide w-fit">
                     <Award size={12} /> Gestion de Talento Humano
                 </div>
                 <h1 className="text-lg font-bold tracking-tighter text-white uppercase italic">
@@ -82,10 +82,10 @@ export default function TalentSearchPage() {
                                 </div>
                                 <div className="space-y-1">
                                     <h4 className="font-bold text-white uppercase">{talent.nombre_completo || `${talent.first_name ?? ''} ${talent.last_name ?? ''}`.trim()}</h4>
-                                    <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide">{talent.email}</div>
+                                    <div className="text-2xs text-muted-foreground font-bold uppercase tracking-wide">{talent.email}</div>
                                     <div className="flex flex-wrap gap-1 mt-2">
                                         {talent.skills?.map((s: { name: string }, idx: number) => (
-                                            <span key={idx} className="text-[8px] bg-white/5 text-white/60 px-2 py-0.5 rounded-full border border-white/5 uppercase">
+                                            <span key={idx} className="text-2xs bg-white/5 text-white/60 px-2 py-0.5 rounded-full border border-white/5 uppercase">
                                                 {s.name}
                                             </span>
                                         ))}

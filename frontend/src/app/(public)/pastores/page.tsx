@@ -116,7 +116,7 @@ export default function PastoresIndexPage() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--surface-2))/0.9] via-black/30 to-transparent" />
                                 {pastor.is_main_pastor && principalLabel && (
                                     <div className="absolute top-3 left-3 z-20">
-                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--primary))] text-white text-[9px] font-bold uppercase tracking-wider shadow-lg">
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wider shadow-lg">
                                             <Sparkles size={8} /> {principalLabel}
                                         </span>
                                     </div>

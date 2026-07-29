@@ -89,7 +89,7 @@ export default function CrmViewPlaceholder({
       <p className="mt-3 text-sm font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-sm mx-auto leading-relaxed">
         {moduleName}: esta perspectiva aun no tiene una implementacion de datos reales conectada. Usa las vistas operativas disponibles.
       </p>
-      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+      <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
         <Sparkles size={12} className="text-[hsl(var(--primary))]" /> Sin datos simulados
       </div>
     </div>

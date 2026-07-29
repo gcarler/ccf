@@ -39,9 +39,9 @@ export default function DashboardTabs({
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={clsx(
-                            'flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold rounded-t-lg transition-all border-b-2 -mb-[1px]',
+                            'flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 -mb-[1px]',
                             activeTab === tab.id
-                                ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border-[hsl(var(--primary))] bg-[hsl(var(--bg-primary))] dark:bg-[#16171a]'
+                                ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border-[hsl(var(--primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))]'
                                 : 'text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]'
                         )}
                     >

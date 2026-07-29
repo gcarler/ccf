@@ -114,12 +114,12 @@ export default function CoordinationConsole() {
                         <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => router.push('/plataforma/academy/coordination/courses/new')}
-                                className="inline-flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
+                                className="inline-flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
                             >
                                 <Plus size={14} /> Nuevo Programa
                             </button>
                             <div className="h-4 w-px bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 Alistamiento: {readinessPerc}%
                             </span>
                         </div>
@@ -139,7 +139,7 @@ export default function CoordinationConsole() {
                         <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)]">
                             <header className="flex items-center justify-between mb-3">
                                 <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-2">Checklist de alistamiento</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-2">Checklist de alistamiento</p>
                                     <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Piloto Academia CCF</h2>
                                 </div>
                                 <div className="text-right">
@@ -167,7 +167,7 @@ export default function CoordinationConsole() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{item.label}</p>
-                                            <p className={clsx("text-[10px] font-bold uppercase tracking-wide mt-1", item.completed ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--text-secondary))]')}>
+                                            <p className={clsx("text-2xs font-bold uppercase tracking-wide mt-1", item.completed ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--text-secondary))]')}>
                                                 {item.completed ? 'Verificado por IA' : 'Acción Requerida'}
                                             </p>
                                         </div>
@@ -202,7 +202,7 @@ export default function CoordinationConsole() {
                                     </div>
                                     <button 
                                         onClick={downloadSnapshot}
-                                        className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide px-3 py-2.5 rounded-md border-2 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all active:scale-95"
+                                        className="inline-flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide px-3 py-2.5 rounded-md border-2 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all active:scale-95"
                                     >
                                         <Download size={14} /> Exportar Auditoría
                                     </button>
@@ -225,7 +225,7 @@ export default function CoordinationConsole() {
                                                     key={m}
                                                     onClick={() => setModalityFilter(m)}
                                                     className={clsx(
-                                                        "px-4 py-2 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
+                                                        "px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all",
                                                         modalityFilter === m 
                                                             ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]" 
                                                             : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
@@ -242,7 +242,7 @@ export default function CoordinationConsole() {
                             {filteredCourses.length > 0 ? (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
-                                        <thead className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02] text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                        <thead className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             <tr>
                                                 <th className="px-4 py-1.5">Curso / Programa</th>
                                                 <th className="px-4 py-1.5">Cohorte Activa</th>
@@ -261,7 +261,7 @@ export default function CoordinationConsole() {
                                                         >
                                                             {course.title}
                                                         </div>
-                                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">ID: {course.id}</div>
+                                                        <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">ID: {course.id}</div>
                                                     </td>
                                                     <td className="px-4 py-2">
                                                         <span className="px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wide">
@@ -284,13 +284,13 @@ export default function CoordinationConsole() {
                                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                                             <button
                                                                 onClick={() => router.push(`/plataforma/academy/courses/${course.id}/lessons`)}
-                                                                className="px-4 py-2 rounded-md text-[9px] font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
+                                                                className="px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
                                                             >
                                                                 Lecciones
                                                             </button>
                                                             <button
                                                                 onClick={() => router.push(`/plataforma/academy/courses/${course.id}/edit`)}
-                                                                className="px-4 py-2 rounded-md text-[9px] font-semibold uppercase tracking-wide border-2 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all active:scale-95"
+                                                                className="px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide border-2 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all active:scale-95"
                                                             >
                                                                 Config
                                                             </button>

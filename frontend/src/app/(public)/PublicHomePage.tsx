@@ -190,7 +190,7 @@ export default function PublicHomePage() {
                     />
                     {scrollIndicator && (
                         <div className="ccf-container -mt-10 flex justify-center">
-                            <span className="text-[9px] uppercase tracking-[0.35em]" style={{ color: "var(--site-on-surface-variant)" }}>
+                            <span className="text-2xs uppercase tracking-[0.35em]" style={{ color: "var(--site-on-surface-variant)" }}>
                                 {scrollIndicator}
                             </span>
                         </div>
@@ -400,7 +400,7 @@ export default function PublicHomePage() {
                                 </div>
                                 <div className="flex gap-3 mb-3 items-center">
                                     <span
-                                        className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                                        className="px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wider"
                                         style={{
                                             background: "var(--site-secondary-container)",
                                             color: "var(--site-on-secondary-container)",
@@ -409,7 +409,7 @@ export default function PublicHomePage() {
                                         {tag}
                                     </span>
                                     <span
-                                        className="text-[10px] font-bold uppercase tracking-wider"
+                                        className="text-2xs font-bold uppercase tracking-wider"
                                         style={{ color: "var(--site-on-surface-variant)" }}
                                     >
                                         {date}

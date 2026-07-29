@@ -76,19 +76,19 @@ function InitPasswordContent() {
                 {/* Header */}
                 <div className="bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] px-6 py-5">
                     <h1 className="text-lg font-bold text-white">Configurar Contraseña</h1>
-                    <p className="text-[hsl(var(--info))] text-[12px] mt-1">CCF Plataforma</p>
+                    <p className="text-[hsl(var(--info))] text-sm mt-1">CCF Plataforma</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {error && (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-[12px] text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-sm text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
                             <XCircle size={14} />
                             {error}
                         </div>
                     )}
 
                     <div>
-                        <label className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5 block">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5 block">
                             Nueva Contraseña
                         </label>
                         <div className="relative">
@@ -97,7 +97,7 @@ function InitPasswordContent() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Mínimo 8 caracteres"
-                                className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
+                                className="w-full px-3 py-2.5 text-base bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                                 required
                                 minLength={8}
                             />
@@ -112,7 +112,7 @@ function InitPasswordContent() {
                     </div>
 
                     <div>
-                        <label className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5 block">
+                        <label className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5 block">
                             Confirmar Contraseña
                         </label>
                         <input
@@ -120,7 +120,7 @@ function InitPasswordContent() {
                             value={confirm}
                             onChange={(e) => setConfirm(e.target.value)}
                             placeholder="Repite la contraseña"
-                            className="w-full px-3 py-2.5 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
+                            className="w-full px-3 py-2.5 text-base bg-[hsl(var(--bg-primary))] dark:bg-[#0f1116] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                             required
                         />
                     </div>
@@ -128,7 +128,7 @@ function InitPasswordContent() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-2.5 bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] hover:from-[hsl(var(--info))] hover:to-[hsl(var(--info))] text-white text-[13px] font-bold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full py-2.5 bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] hover:from-[hsl(var(--info))] hover:to-[hsl(var(--info))] text-white text-base font-bold rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {loading ? <Loader2 className="animate-spin" size={16} /> : null}
                         {loading ? 'Configurando...' : 'Configurar Contraseña'}

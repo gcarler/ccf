@@ -50,7 +50,7 @@ export default function MyCardPage() {
         return (
             <div className="min-h-screen bg-[hsl(var(--bg-primary))] flex flex-col items-center justify-center space-y-4">
                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} />
-                <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px]">Generando Credencial...</p>
+                <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-2xs">Generando Credencial...</p>
             </div>
         );
     }
@@ -63,7 +63,7 @@ export default function MyCardPage() {
                 </div>
                 <h1 className="text-lg font-bold text-white">Perfil no Encontrado</h1>
                 <p className="text-[hsl(var(--text-secondary))] max-w-sm">No hemos podido encontrar tu perfil de persona vinculado a este usuario. Contacta con administración.</p>
-                <button onClick={() => router.back()} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold uppercase tracking-wide text-[10px] transition-all">
+                <button onClick={() => router.back()} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold uppercase tracking-wide text-2xs transition-all">
                     Volver
                 </button>
             </div>
@@ -126,7 +126,7 @@ export default function MyCardPage() {
         <CrmShell
             breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'Consolidación', icon: Users }, { label: 'Mi carnet', icon: QrCode }]}
             rightActions={
-                <button className="flex items-center gap-2 bg-[hsl(var(--surface-1))] px-4 py-2 rounded-lg text-[11px] font-bold text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-primary))] transition-all">
+                <button className="flex items-center gap-2 bg-[hsl(var(--surface-1))] px-4 py-2 rounded-lg text-xs font-bold text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-primary))] transition-all">
                     <Share2 size={16} /> Compartir
                 </button>
             }
@@ -153,7 +153,7 @@ export default function MyCardPage() {
                 {/* Card Header */}
                 <div className="flex justify-between items-start relative z-10 mb-3">
                     <Church className="text-white/80" size={32} />
-                    <div className={`${theme.badge} px-3 py-1 rounded-full text-[8px] font-bold text-white uppercase tracking-wide`}>
+                    <div className={`${theme.badge} px-3 py-1 rounded-full text-2xs font-bold text-white uppercase tracking-wide`}>
                         {theme.name}
                     </div>
                 </div>
@@ -170,7 +170,7 @@ export default function MyCardPage() {
                         <h1 className="text-lg font-bold text-white tracking-tight leading-tight">
                             {persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}
                         </h1>
-                        <p className={`text-[10px] font-bold uppercase tracking-wide mt-2 ${theme.accent}`}>
+                        <p className={`text-2xs font-bold uppercase tracking-wide mt-2 ${theme.accent}`}>
                             {persona.church_role} • ID: CCF-{persona.id.toString().padStart(4, '0')}
                         </p>
                     </div>
@@ -194,7 +194,7 @@ export default function MyCardPage() {
                             }}
                         />
                     </div>
-                    <p className="text-[8px] font-bold text-white/40 uppercase tracking-wide mt-3">
+                    <p className="text-2xs font-bold text-white/40 uppercase tracking-wide mt-3">
                         Escanea para validar asistencia
                     </p>
                 </div>
@@ -202,12 +202,12 @@ export default function MyCardPage() {
                 {/* Bottom Bar */}
                 <div className="mt-3 pt-6 border-t border-white/10 relative z-10 flex justify-between items-end">
                     <div className="space-y-1">
-                        <p className="text-[7px] font-bold text-white/50 uppercase tracking-wide">Persona Desde</p>
-                        <p className="text-[10px] font-bold text-white">{new Date(persona.join_date).toLocaleDateString()}</p>
+                        <p className="text-2xs font-bold text-white/50 uppercase tracking-wide">Persona Desde</p>
+                        <p className="text-2xs font-bold text-white">{new Date(persona.join_date).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-[7px] font-bold text-white/50 uppercase tracking-wide">Vigencia</p>
-                        <p className="text-[10px] font-bold text-white">2026-2027</p>
+                        <p className="text-2xs font-bold text-white/50 uppercase tracking-wide">Vigencia</p>
+                        <p className="text-2xs font-bold text-white">2026-2027</p>
                     </div>
                 </div>
             </div>
@@ -215,19 +215,19 @@ export default function MyCardPage() {
             <div className="grid grid-cols-2 gap-4 w-full max-w-sm relative z-10">
                 <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-md transition-all active:scale-95 group">
                     <Share2 size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-primary transition-colors" />
-                    <span className="text-[10px] font-bold uppercase tracking-wide">Compartir</span>
+                    <span className="text-2xs font-bold uppercase tracking-wide">Compartir</span>
                 </button>
                 <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-md transition-all active:scale-95 group">
                     <Download size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--success))] transition-colors" />
-                    <span className="text-[10px] font-bold uppercase tracking-wide">Descargar</span>
+                    <span className="text-2xs font-bold uppercase tracking-wide">Descargar</span>
                 </button>
-                <button className="col-span-2 flex items-center justify-center gap-3 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] p-3 rounded-md font-bold uppercase tracking-wide text-[11px] shadow-2xl hover:scale-105 transition-all active:scale-95">
+                <button className="col-span-2 flex items-center justify-center gap-3 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] p-3 rounded-md font-bold uppercase tracking-wide text-xs shadow-2xl hover:scale-105 transition-all active:scale-95">
                     <Sparkles size={20} className="text-[hsl(var(--warning))]" /> Añadir a Google Wallet
                 </button>
             </div>
 
             <div className="w-full max-w-[340px] text-center px-3 relative z-10">
-                <p className="text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide leading-relaxed">
+                <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide leading-relaxed">
                     Esta credencial es personal e intransferible. El uso indebido será reportado a la administración del ministerio.
                 </p>
             </div>

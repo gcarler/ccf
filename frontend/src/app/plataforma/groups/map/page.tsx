@@ -66,7 +66,7 @@ export default function GroupsMapPage() {
                 rightActions={
                     <Link
                         href="/groups"
-                        className="rounded-md border border-[hsl(var(--border))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
+                        className="rounded-md border border-[hsl(var(--border))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
                     >
                         Ver dashboard
                     </Link>
@@ -76,15 +76,15 @@ export default function GroupsMapPage() {
             <main className="flex-1 space-y-3 overflow-y-auto p-4 lg:p-4">
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Total casas</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Total casas</p>
                         <p className="mt-2 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{groups.length}</p>
                     </article>
                     <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Con coordenadas</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Con coordenadas</p>
                         <p className="mt-2 text-xl font-bold text-[hsl(var(--success))]">{geolocated.length}</p>
                     </article>
                     <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin coordenadas</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin coordenadas</p>
                         <p className="mt-2 text-xl font-bold text-[hsl(var(--warning))]">{Math.max(0, groups.length - geolocated.length)}</p>
                     </article>
                 </section>
@@ -101,7 +101,7 @@ export default function GroupsMapPage() {
                         <button
                             type="button"
                             onClick={() => void loadGroups()}
-                            className="mt-4 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--destructive)/0.3)] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition hover:bg-[hsl(var(--destructive)/0.08)]"
+                            className="mt-4 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--destructive)/0.3)] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition hover:bg-[hsl(var(--destructive)/0.08)]"
                         >
                             <RefreshCw size={12} /> Reintentar
                         </button>
@@ -133,31 +133,31 @@ export default function GroupsMapPage() {
                                             </h2>
                                             <p className="mt-1 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{group.address || "Direccion pendiente"}</p>
                                         </div>
-                                        <span className="rounded-full bg-[hsl(var(--info-muted))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--info))]">
+                                        <span className="rounded-full bg-[hsl(var(--info-muted))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--info))]">
                                             {group.zone || "Zona sin definir"}
                                         </span>
                                     </div>
 
-                                    <div className="mt-5 grid grid-cols-2 gap-3 text-[11px]">
+                                    <div className="mt-5 grid grid-cols-2 gap-3 text-xs">
                                         <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2 dark:border-white/10">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Latitud</p>
+                                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Latitud</p>
                                             <p className="mt-1 font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{group.latitude}</p>
                                         </div>
                                         <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2 dark:border-white/10">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Longitud</p>
+                                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Longitud</p>
                                             <p className="mt-1 font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{group.longitude}</p>
                                         </div>
                                     </div>
 
                                     <div className="mt-5 flex items-center justify-between">
-                                        <p className="text-[11px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                             Lider: <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{group.leader_name || "No asignado"}</span>
                                         </p>
                                         <a
                                             href={mapUrl}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
+                                            className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
                                         >
                                             <Navigation size={12} /> Abrir mapa
                                         </a>

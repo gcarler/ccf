@@ -73,7 +73,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 400 }}
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                        className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] w-full max-w-[480px] bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-[-20px_0_60px_rgba(0,0,0,0.1)] border-l border-[hsl(var(--border))] dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
+                        className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] w-full max-w-[480px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-[-20px_0_60px_rgba(0,0,0,0.1)] border-l border-[hsl(var(--border))] dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
                     >
                         {/* Header */}
                         <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between px-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
@@ -85,7 +85,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className={clsx(
-                                    'text-[10px] font-bold uppercase tracking-wide flex items-center gap-1',
+                                    'text-2xs font-bold uppercase tracking-wide flex items-center gap-1',
                                     socketStatus === 'open'
                                         ? 'text-[hsl(var(--success))]'
                                         : socketStatus === 'connecting'
@@ -113,7 +113,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={14} />
                                 <input 
                                     type="text" placeholder="Buscar en notificaciones..." 
-                                    className="w-full h-9 bg-[hsl(var(--surface-2))] dark:bg-black/20 border-transparent rounded-md pl-10 pr-4 text-[12px] font-medium focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-black/40 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all outline-none"
+                                    className="w-full h-9 bg-[hsl(var(--surface-2))] dark:bg-black/20 border-transparent rounded-md pl-10 pr-4 text-sm font-medium focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-black/40 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all outline-none"
                                 />
                             </div>
                             <div className="flex gap-1">
@@ -169,14 +169,14 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                             <div className="flex-1 space-y-1 overflow-hidden">
                                                 <div className="flex justify-between items-start gap-2">
                                                     <h4 className="font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate tracking-tight">{notif.title}</h4>
-                                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] whitespace-nowrap">{new Date(notif.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] whitespace-nowrap">{new Date(notif.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                                 </div>
-                                                <p className="text-[13px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed line-clamp-2">{notif.content}</p>
+                                                <p className="text-base text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed line-clamp-2">{notif.content}</p>
                                                 
                                                 {/* Inline Actions */}
                                                 <div className="pt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleClear(notif.id); }} className="px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">Archivar</button>
-                                                    <button className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info))]/20 active:scale-95 transition-all">Ver</button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleClear(notif.id); }} className="px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">Archivar</button>
+                                                    <button className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info))]/20 active:scale-95 transition-all">Ver</button>
                                                 </div>
                                             </div>
                                             {!notif.is_read && (
@@ -190,7 +190,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
 
                         {/* Multi-action footer */}
                         <footer className="p-4 border-t border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 flex justify-center">
-                            <button className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors">
+                            <button className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors">
                                 <Archive size={14} /> Ver archivo de notificaciones
                             </button>
                         </footer>
@@ -205,7 +205,7 @@ function HeaderAction({ icon: Icon, tooltip }: any) {
     return (
         <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all relative group/h">
             <Icon size={18} />
-            <div className="absolute top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white text-[8px] font-semibold uppercase tracking-wide rounded opacity-0 group-hover/h:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[200]">
+            <div className="absolute top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white text-2xs font-semibold uppercase tracking-wide rounded opacity-0 group-hover/h:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[200]">
                 {tooltip}
             </div>
         </button>
@@ -217,12 +217,12 @@ function Tab({ active, label, count, onClick }: any) {
         <button 
             onClick={onClick}
             className={clsx(
-                "px-4 py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide transition-all flex items-center gap-2",
+                "px-4 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2",
                 active ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info))]/20" : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-secondary))]"
             )}
         >
             {label}
-            {count !== undefined && <span className={clsx("size-4 rounded-full flex items-center justify-center text-[9px]", active ? "bg-white/20 text-white" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))]")}>{count}</span>}
+            {count !== undefined && <span className={clsx("size-4 rounded-full flex items-center justify-center text-2xs", active ? "bg-white/20 text-white" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))]")}>{count}</span>}
         </button>
     );
 }

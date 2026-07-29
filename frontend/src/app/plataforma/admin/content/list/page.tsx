@@ -147,7 +147,7 @@ export default function AdminContentList() {
                 rightActions={
                     <button 
                         onClick={() => router.push('/plataforma/admin/content/courses/new')}
-                        className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
+                        className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
                     >
                         <Plus size={18} /> Crear Nuevo
                     </button>
@@ -196,8 +196,8 @@ export default function AdminContentList() {
                                             <BookOpen size={30} strokeWidth={1.5} />
                                         </div>
                                         <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight line-clamp-2">{item.title}</h3>
-                                        <p className="mt-3 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.code || activeTab} · {item.duration_hours || 0} horas</p>
-                                        <span className={clsx("inline-flex mt-3 px-3 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide", item.is_published ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{item.is_published ? 'Publicado' : 'Borrador'}</span>
+                                        <p className="mt-3 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.code || activeTab} · {item.duration_hours || 0} horas</p>
+                                        <span className={clsx("inline-flex mt-3 px-3 py-1 rounded-md text-2xs font-semibold uppercase tracking-wide", item.is_published ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{item.is_published ? 'Publicado' : 'Borrador'}</span>
                                     </motion.button>
                                 ))}
                             </motion.div>
@@ -206,18 +206,18 @@ export default function AdminContentList() {
                                 <table className="w-full text-left min-w-[480px]">
                                     <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                                         <tr>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contenido</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Código</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
-                                            <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar</th>
+                                            <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contenido</th>
+                                            <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Código</th>
+                                            <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
+                                            <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                         {filteredItems.map(item => (
                                             <tr key={item.id} onClick={() => openItem(item)} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] cursor-pointer">
                                                 <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.title}</td>
-                                                <td className="px-3 py-1.5 hidden md:table-cell text-[11px] font-mono text-[hsl(var(--text-secondary))]">{item.code || '—'}</td>
-                                                <td className="px-3 py-1.5 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", item.is_published ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{item.is_published ? 'Publicado' : 'Borrador'}</span></td>
+                                                <td className="px-3 py-1.5 hidden md:table-cell text-xs font-mono text-[hsl(var(--text-secondary))]">{item.code || '—'}</td>
+                                                <td className="px-3 py-1.5 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", item.is_published ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{item.is_published ? 'Publicado' : 'Borrador'}</span></td>
                                                 <td className="px-3 py-1.5"><Edit3 size={16} className="text-[hsl(var(--primary))]" /></td>
                                             </tr>
                                         ))}
@@ -229,14 +229,14 @@ export default function AdminContentList() {
                                 {groupedItems.map(group => (
                                     <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                                         <div className="flex items-center justify-between mb-5">
-                                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
                                         </div>
                                         <div className="space-y-4">
                                             {group.items.map(item => (
                                                 <button key={item.id} onClick={() => openItem(item)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 hover:border-[hsl(var(--info)/30%)] transition-all">
                                                     <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{item.title}</p>
-                                                    <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.code || item.modality || activeTab}</p>
+                                                    <p className="mt-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.code || item.modality || activeTab}</p>
                                                 </button>
                                             ))}
                                         </div>
@@ -289,7 +289,7 @@ export default function AdminContentList() {
                                                     <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{item.title}</h3>
                                                     <span className="px-2 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.code}</span>
                                                 </div>
-                                                <div className="flex items-center gap-3 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                                                <div className="flex items-center gap-3 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                                     <span className="flex items-center gap-1.5"><Clock size={12} /> {item.duration_hours} Horas</span>
                                                     <span className="flex items-center gap-1.5"><Globe size={12} /> {item.modality}</span>
                                                     <span className="flex items-center gap-1.5 text-[hsl(var(--primary))]"><CheckCircle2 size={12} /> {item.certificate_type}</span>
@@ -299,7 +299,7 @@ export default function AdminContentList() {
 
                                         <div className="flex items-center gap-4 shrink-0">
                                             <div className={clsx(
-                                                "px-4 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wide border",
+                                                "px-4 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border",
                                                 item.is_published ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] border-[hsl(var(--success)/0.3)]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)]"
                                             )}>
                                                 {item.is_published ? 'Publicado' : 'Borrador'}
@@ -337,7 +337,7 @@ function TabBtn({ label, active, onClick, icon: Icon }: TabButtonProps) {
         <button 
             onClick={onClick}
             className={clsx(
-                "px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all relative flex items-center gap-3 shrink-0 border-b-2",
+                "px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all relative flex items-center gap-3 shrink-0 border-b-2",
                 active ? "text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]"
             )}
         >

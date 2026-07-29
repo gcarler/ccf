@@ -155,14 +155,14 @@ export default function CertificateView({ data }: CertificateProps) {
 
                     <div className="flex flex-col items-center gap-2">
                         <div className="relative px-4 py-2 border-2 border-[hsl(var(--border))] dark:border-white/10 rounded-lg overflow-hidden bg-[hsl(var(--bg-primary))]">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
+                            <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                                 Codigo de validacion
                             </p>
-                            <code className="font-mono text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-white break-all">
+                            <code className="font-mono text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white break-all">
                                 {data.certificate_code}
                             </code>
                         </div>
-                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-tighter text-[10px]">
+                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-tighter text-2xs">
                             Validar en:{' '}
                             <span className="text-[hsl(var(--primary))]">
                                 {validationPath}
@@ -185,19 +185,19 @@ export default function CertificateView({ data }: CertificateProps) {
             <div className="flex items-center justify-center gap-3 flex-wrap">
                 <button
                     onClick={handleDownload}
-                    className="px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-black text-[11px] uppercase tracking-wide flex items-center gap-2 shadow-xl active:scale-95 transition-all"
+                    className="px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 shadow-xl active:scale-95 transition-all"
                 >
                     <Download size={16} /> Descargar
                 </button>
                 <button
                     onClick={handleShare}
-                    className="px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg font-black text-[11px] uppercase tracking-wide flex items-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95"
+                    className="px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95"
                 >
                     <Share2 size={16} /> Compartir Logro
                 </button>
                 <button
                     onClick={handleCopy}
-                    className="px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg font-black text-[11px] uppercase tracking-wide flex items-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95"
+                    className="px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95"
                 >
                     {copyState === 'copied' ? (
                         <>

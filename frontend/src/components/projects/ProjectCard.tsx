@@ -92,14 +92,14 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                         value={project.description || ''}
                         onChange={(v) => onUpdate?.(project.id, { description: v })}
                         placeholder="Agregar descripción"
-                        className="text-[12px] text-[hsl(var(--text-secondary))] font-medium mt-1 min-h-[32px]"
-                        inputClassName="text-[12px]"
+                        className="text-sm text-[hsl(var(--text-secondary))] font-medium mt-1 min-h-[32px]"
+                        inputClassName="text-sm"
                     />
                 </div>
 
                 {/* Task stats */}
                 {tasks.length > 0 && (
-                    <div className="flex items-center gap-3 text-[11px] font-medium">
+                    <div className="flex items-center gap-3 text-xs font-medium">
                         <span className="flex items-center gap-1 text-success-text dark:text-[hsl(var(--success))]">
                             <span className="size-1.5 rounded-full bg-[hsl(var(--success))] inline-block" />
                             {completed} completadas
@@ -116,7 +116,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
 
                 {/* Progress bar */}
                 <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-[hsl(var(--text-secondary))]">
+                    <div className="flex items-center justify-between text-2xs font-bold text-[hsl(var(--text-secondary))]">
                         <span>Progreso</span>
                         <span style={{ color }}>{progress}%</span>
                     </div>
@@ -141,7 +141,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                             />
                         </span>
                         {project.created_at && (
-                            <span className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] shrink-0">
+                            <span className="text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] shrink-0">
                                 {new Date(project.created_at).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' })}
                             </span>
                         )}

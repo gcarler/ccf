@@ -78,12 +78,12 @@ export default function DonationDetailPage() {
                         <div className="space-y-3">
                             <header className="flex flex-col gap-4 border-b border-[hsl(var(--border))] pb-6 dark:border-white/10 md:flex-row md:items-start md:justify-between">
                                 <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Detalle de aporte</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Detalle de aporte</p>
                                     <h1 className="mt-2 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{donation.donor || "Donante"}</h1>
                                     <p className="mt-2 text-sm font-semibold text-[hsl(var(--text-secondary))]">Referencia: {donation.reference_code || `DON-${donationId}`}</p>
                                 </div>
                                 <div className="rounded-lg bg-info-soft px-3 py-1.5 text-right dark:bg-[hsl(var(--info))]/10">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Monto</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Monto</p>
                                     <p className="text-xl font-bold text-[hsl(var(--primary))] dark:text-info-text">${amount.toLocaleString()}</p>
                                 </div>
                             </header>
@@ -96,7 +96,7 @@ export default function DonationDetailPage() {
                             </div>
 
                             <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-black/20">
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Notas internas</p>
+                                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Notas internas</p>
                                 <p className="mt-2 text-sm font-semibold leading-6 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                     {donation.notes || "Sin notas registradas para esta donacion."}
                                 </p>
@@ -118,7 +118,7 @@ export default function DonationDetailPage() {
 function Info({ label, value }: { label: string; value: string }) {
     return (
         <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-black/20">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
             <p className="mt-2 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
         </div>
     );

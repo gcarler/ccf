@@ -103,7 +103,7 @@ export default function PastorRadarPage() {
                 <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit border border-[hsl(var(--info)/100%)]/20"
+                    className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide w-fit border border-[hsl(var(--info)/100%)]/20"
                 >
                     <Shield size={12} className="animate-pulse" /> Inteligencia Ministerial Optimus v3.9
                 </motion.div>
@@ -133,7 +133,7 @@ export default function PastorRadarPage() {
                 <div className="p-4 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/30%)] rounded-lg text-danger-text text-center space-y-4">
                     <Zap size={40} className="mx-auto" />
                     <p className="font-semibold uppercase tracking-wide">Error de Sincronización: {error}</p>
-                    <button onClick={() => fetchRadar()} className="px-4 py-3 bg-[hsl(var(--danger))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-xl">Reintentar</button>
+                    <button onClick={() => fetchRadar()} className="px-4 py-3 bg-[hsl(var(--danger))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-xl">Reintentar</button>
                 </div>
             ) : (
                 <>
@@ -160,7 +160,7 @@ export default function PastorRadarPage() {
                                 <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter uppercase flex items-center gap-3">
                                     <BarChart3 className="text-[hsl(var(--primary))]" /> Crecimiento Orgánico
                                 </h2>
-                                <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Métricas consolidadas semestrales</p>
+                                <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Métricas consolidadas semestrales</p>
                             </div>
                             <span className="font-semibold text-[hsl(var(--primary))] bg-info-soft px-4 py-1.5 rounded-full tracking-wide border border-[hsl(var(--info)/20%)] uppercase">Live BI</span>
                         </div>
@@ -207,7 +207,7 @@ export default function PastorRadarPage() {
                                 <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-xl shadow-[hsl(var(--primary)/0.2)]"><Zap size={24} fill="currentColor" /></div>
                                 <div>
                                     <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sugerencia IA</p>
-                                    <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-tight">Potenciar el ministerio de Hospitalidad para el próximo servicio.</p>
+                                    <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-tight">Potenciar el ministerio de Hospitalidad para el próximo servicio.</p>
                                 </div>
                             </div>
                         </div>
@@ -252,7 +252,7 @@ function GoalItem({ label, target, current, color }: GoalItemProps) {
     const pct = Math.min(100, (current / target) * 100);
     return (
         <div className="space-y-3 group/goal">
-            <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
+            <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide">
                 <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover/goal:text-[hsl(var(--primary))] transition-colors">{label}</span>
                 <span className="text-[hsl(var(--text-primary))] dark:text-white">{current} / {target}</span>
             </div>

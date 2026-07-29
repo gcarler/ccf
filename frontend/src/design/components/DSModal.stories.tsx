@@ -81,7 +81,7 @@ export const WithForm: Story = {
         <ModalWithState title="Crear Usuario" size="md">
             <div className="space-y-3">
                 <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">
+                    <label className="block text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">
                         Nombre
                     </label>
                     <input 
@@ -91,7 +91,7 @@ export const WithForm: Story = {
                     />
                 </div>
                 <div>
-                    <label className="block text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">
+                    <label className="block text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">
                         Email
                     </label>
                     <input 

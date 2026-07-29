@@ -39,7 +39,7 @@ export function InlinePriorityPicker({ value, onChange, disabled, size = "md" }:
           onClick={(e) => e.stopPropagation()}
           className={clsx(
             "flex items-center gap-1.5 rounded-lg font-semibold transition-all",
-            size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]",
+            size === "sm" ? "px-2 py-0.5 text-2xs" : "px-2.5 py-1 text-xs",
             "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5",
             disabled && "opacity-50 cursor-not-allowed"
           )}
@@ -57,7 +57,7 @@ export function InlinePriorityPicker({ value, onChange, disabled, size = "md" }:
           align="start"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">
+          <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">
             Prioridad
           </p>
           {PRIORITY_OPTIONS.map((p) => (
@@ -70,7 +70,7 @@ export function InlinePriorityPicker({ value, onChange, disabled, size = "md" }:
               className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
             >
               <FlagIcon fill={p.fill} size={12} />
-              <span className={clsx("text-[12px] font-semibold flex-1 text-left", p.color)}>{p.label}</span>
+              <span className={clsx("text-sm font-semibold flex-1 text-left", p.color)}>{p.label}</span>
               {value === p.value && <Check size={12} className="text-[hsl(var(--primary))]" />}
             </button>
           ))}

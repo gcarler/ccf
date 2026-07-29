@@ -149,7 +149,7 @@ export default function MinistryProfilePage() {
             <div className="p-4 space-y-3 animate-in fade-in duration-1000">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                 <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] rounded-full text-2xs font-semibold uppercase tracking-wide w-fit">
                         <Crown size={12} /> Mi Identidad en el Reino
                     </div>
                     <h1 className="text-lg font-bold tracking-tighter text-white uppercase italic">
@@ -160,7 +160,7 @@ export default function MinistryProfilePage() {
                     </p>
                 </div>
 
-                <button className="px-3 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all flex items-center gap-2">
+                <button className="px-3 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all flex items-center gap-2">
                     <Edit3 size={16} /> Editar Perfil
                 </button>
             </div>
@@ -174,7 +174,7 @@ export default function MinistryProfilePage() {
                             </div>
                             <div className="space-y-1">
                                 <h2 className="text-xl font-bold text-white tracking-tight uppercase italic">{fullName}</h2>
-                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">
+                                <div className="flex items-center gap-2 text-2xs text-muted-foreground font-semibold uppercase tracking-wide">
                                     <Shield size={12} className="text-[hsl(var(--warning))]" /> {statusLabel}
                                     {sinceYear && <><span className="opacity-20">•</span> Desde {sinceYear}</>}
                                 </div>
@@ -188,7 +188,7 @@ export default function MinistryProfilePage() {
                                 </h3>
                                 <div className="space-y-2">
                                     {positions.length === 0 ? (
-                                        <p className="text-[10px] text-muted-foreground italic">Sin oficios registrados</p>
+                                        <p className="text-2xs text-muted-foreground italic">Sin oficios registrados</p>
                                     ) : positions.filter(p => p.is_active).map((pos) => (
                                         <div key={pos.id} className="flex items-center gap-3 bg-white/5 p-3 rounded-md border border-white/5">
                                             <div className="w-2 h-2 rounded-full bg-[hsl(var(--warning))] shadow-[0_0_10px_hsl(var(--warning))]" />
@@ -203,9 +203,9 @@ export default function MinistryProfilePage() {
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
                                     {skills.length === 0 ? (
-                                        <p className="text-[10px] text-muted-foreground italic">Sin habilidades registradas</p>
+                                        <p className="text-2xs text-muted-foreground italic">Sin habilidades registradas</p>
                                     ) : skills.map((skill, i) => (
-                                        <span key={i} className="px-3 py-1.5 bg-white/5 rounded-lg text-[10px] font-bold text-muted-foreground border border-white/5 uppercase tracking-wider">
+                                        <span key={i} className="px-3 py-1.5 bg-white/5 rounded-lg text-2xs font-bold text-muted-foreground border border-white/5 uppercase tracking-wider">
                                             {skill}
                                         </span>
                                     ))}
@@ -218,7 +218,7 @@ export default function MinistryProfilePage() {
                         <h3 className="text-xl font-bold text-white tracking-tight uppercase italic">Mis <span className="text-[hsl(var(--warning))]">Logros</span></h3>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {badges.length === 0 ? (
-                                <p className="col-span-full text-[10px] text-muted-foreground italic">Aún no has obtenido insignias</p>
+                                <p className="col-span-full text-2xs text-muted-foreground italic">Aún no has obtenido insignias</p>
                             ) : badges.map((badge) => {
                                 const Icon = badgeIcon(badge.icon_key);
                                 return (
@@ -226,7 +226,7 @@ export default function MinistryProfilePage() {
                                         <div className="w-12 h-8 bg-white/5 rounded-lg flex items-center justify-center text-[hsl(var(--warning))] group-hover:scale-110 transition-transform">
                                             <Icon size={24} />
                                         </div>
-                                        <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">{badge.name}</span>
+                                        <span className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">{badge.name}</span>
                                     </div>
                                 );
                             })}
@@ -241,7 +241,7 @@ export default function MinistryProfilePage() {
                             <Zap size={24} className="text-[hsl(var(--warning))] animate-pulse" />
                         </div>
                         <div className="space-y-2">
-                            <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
+                            <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide">
                                 <span className="text-white/60">Experiencia Ministerial</span>
                                 <span className="text-white">{xpCurrent} / {xpMax} XP</span>
                             </div>
@@ -250,7 +250,7 @@ export default function MinistryProfilePage() {
                             </div>
                         </div>
                         {xpRemaining > 0 && (
-                            <p className="text-[10px] text-muted-foreground font-medium leading-relaxed italic">
+                            <p className="text-2xs text-muted-foreground font-medium leading-relaxed italic">
                                 &quot;Te faltan {xpRemaining} XP para alcanzar el nivel de {nextLevelTitle}.&quot;
                             </p>
                         )}
@@ -268,7 +268,7 @@ export default function MinistryProfilePage() {
                                         <span className="text-xs font-bold text-white uppercase">{call.title}</span>
                                         <ChevronRight size={14} className="text-muted-foreground group-hover:text-[hsl(var(--warning))] transition-all" />
                                     </div>
-                                    <p className="text-[10px] text-muted-foreground leading-relaxed">{call.desc}</p>
+                                    <p className="text-2xs text-muted-foreground leading-relaxed">{call.desc}</p>
                                 </div>
                             ))}
                         </div>

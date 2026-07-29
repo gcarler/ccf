@@ -231,7 +231,7 @@ export default function CrmGroupsPage() {
                 {groupsError && (
                     <div className="mx-3 mb-3 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
+                            <p className="text-xs font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                                 No se pudo cargar la lista de grupos
                             </p>
                             <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
@@ -240,7 +240,7 @@ export default function CrmGroupsPage() {
                         </div>
                         <button
                             onClick={loadGroups}
-                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                         >
                             Reintentar
                         </button>
@@ -260,7 +260,7 @@ export default function CrmGroupsPage() {
                                 <s.icon size={18} />
                             </div>
                             <div className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{loading ? '—' : s.value}</div>
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">{s.label}</p>
+                            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">{s.label}</p>
                         </div>
                     ))}
                 </div>
@@ -323,7 +323,7 @@ export default function CrmGroupsPage() {
                                                     <Home size={22} />
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${isActive ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]'}`}>
+                                                    <span className={`px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wide ${isActive ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]'}`}>
                                                         {isActive ? 'Activo' : group.status}
                                                     </span>
                                                     <button onClick={e => { e.stopPropagation(); }} className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors" aria-label="Más opciones">
@@ -340,25 +340,25 @@ export default function CrmGroupsPage() {
                                                 {group.address && (
                                                     <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <MapPin size={11} className="shrink-0" />
-                                                        <span className="text-[11px] font-medium truncate">{group.address}</span>
+                                                        <span className="text-xs font-medium truncate">{group.address}</span>
                                                     </div>
                                                 )}
                                                 {group.zone && (
                                                     <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <Star size={11} className="shrink-0" />
-                                                        <span className="text-[11px] font-medium">Zona: {group.zone}</span>
+                                                        <span className="text-xs font-medium">Zona: {group.zone}</span>
                                                     </div>
                                                 )}
                                                 {group.leader_name && (
                                                     <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <Shield size={11} className="shrink-0" />
-                                                        <span className="text-[11px] font-medium">Líder: {group.leader_name}</span>
+                                                        <span className="text-xs font-medium">Líder: {group.leader_name}</span>
                                                     </div>
                                                 )}
                                                 {group.schedule && (
                                                     <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <Calendar size={11} className="shrink-0" />
-                                                        <span className="text-[11px] font-medium">{group.schedule}</span>
+                                                        <span className="text-xs font-medium">{group.schedule}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -366,8 +366,8 @@ export default function CrmGroupsPage() {
                                             {/* Occupancy bar */}
                                             <div className="space-y-1.5">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ocupación</span>
-                                                    <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ocupación</span>
+                                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                         {group.personas_count || 0}/{group.capacity || '—'}
                                                     </span>
                                                 </div>
@@ -384,7 +384,7 @@ export default function CrmGroupsPage() {
                                             <div className="flex items-center justify-between mt-4 pt-4 border-t border-[hsl(var(--border))] dark:border-white/5">
                                                 <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))]">
                                                     <Users size={13} />
-                                                    <span className="text-[11px] font-bold">{group.personas_count || 0} integrantes</span>
+                                                    <span className="text-xs font-bold">{group.personas_count || 0} integrantes</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-[hsl(var(--text-secondary))] hover:text-success-text hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/20 rounded-md transition-colors" aria-label="Agregar">
@@ -425,12 +425,12 @@ export default function CrmGroupsPage() {
                             <div key={persona.id} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10">
                                 <div>
                                     <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}</p>
-                                    <p className="text-[11px] text-[hsl(var(--text-secondary))]">{persona.church_role || 'Persona'}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">{persona.church_role || 'Persona'}</p>
                                 </div>
                                 <button
                                     onClick={() => handleInvitePersona(persona.id)}
                                     disabled={assigningPersonaId === persona.id}
-                                    className="flex items-center gap-2 rounded-md bg-[hsl(var(--success))] px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
+                                    className="flex items-center gap-2 rounded-md bg-[hsl(var(--success))] px-4 py-2 text-2xs font-bold uppercase tracking-wide text-white disabled:opacity-60"
                                 >
                                     {assigningPersonaId === persona.id ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
                                     Agregar
@@ -439,7 +439,7 @@ export default function CrmGroupsPage() {
                         ))}
                         {personasError && (
                             <div className="rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 text-left">
-                                <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
+                                <p className="text-xs font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                                     No se pudo cargar la lista de personas
                                 </p>
                                 <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
@@ -449,7 +449,7 @@ export default function CrmGroupsPage() {
                                     onClick={() => {
                                         setInviteGroup(current => (current ? { ...current } : current));
                                     }}
-                                    className="mt-3 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
+                                    className="mt-3 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                                 >
                                     Reintentar
                                 </button>

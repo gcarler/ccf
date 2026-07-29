@@ -143,7 +143,7 @@ export default function WebhooksPage() {
                 </div>
                 <p className="text-xs text-[hsl(var(--text-secondary))] mt-1 truncate font-mono">{wh.url}</p>
                 <div className="flex gap-1 mt-2 flex-wrap">
-                  {wh.events.map(ev => <span key={ev} className="text-[10px] bg-[hsl(var(--surface-2))] px-1.5 py-0.5 rounded">{ev}</span>)}
+                  {wh.events.map(ev => <span key={ev} className="text-2xs bg-[hsl(var(--surface-2))] px-1.5 py-0.5 rounded">{ev}</span>)}
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0 ml-3">

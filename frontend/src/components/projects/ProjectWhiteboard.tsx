@@ -45,29 +45,29 @@ export default function ProjectWhiteboard({
                             <div className="size-7 rounded-md bg-orange-500 flex items-center justify-center text-white">
                                 <PencilRuler size={14} />
                             </div>
-                            <span className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide">
+                            <span className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide">
                                 {title || "Pizarra del Proyecto"}
                             </span>
                             <div className="flex items-center gap-1.5 ml-2">
                                 {saveStatus === "saving" ? (
                                     <>
                                         <Loader2 size={10} className="animate-spin text-[hsl(var(--primary))]" />
-                                        <span className="text-[9px] font-semibold uppercase text-[hsl(var(--primary))]">Guardando...</span>
+                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--primary))]">Guardando...</span>
                                     </>
                                 ) : saveStatus === "error" ? (
                                     <>
                                         <Cloud size={10} className="text-[hsl(var(--danger))]" />
-                                        <span className="text-[9px] font-semibold uppercase text-[hsl(var(--danger))]">Error</span>
+                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--danger))]">Error</span>
                                     </>
                                 ) : saveStatus === "saved" ? (
                                     <>
                                         <Cloud size={10} className="text-[hsl(var(--success))]" />
-                                        <span className="text-[9px] font-semibold uppercase text-[hsl(var(--success))]">Guardado</span>
+                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--success))]">Guardado</span>
                                     </>
                                 ) : (
                                     <>
                                         <Cloud size={10} className="text-[hsl(var(--success))]" />
-                                        <span className="text-[9px] font-semibold uppercase text-[hsl(var(--success))]">Listo</span>
+                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--success))]">Listo</span>
                                     </>
                                 )}
                             </div>
@@ -75,7 +75,7 @@ export default function ProjectWhiteboard({
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={saveNow}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide hover:opacity-90 transition-opacity shadow-md"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide hover:opacity-90 transition-opacity shadow-md"
                             >
                                 <Sparkles size={11} /> Guardar
                             </button>

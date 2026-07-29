@@ -92,12 +92,12 @@ export default function NotificationsPage() {
           <div key={n.id} className={`flex items-start gap-4 p-4 rounded-xl border transition-colors ${!n.is_read ? "bg-info-soft/50 border-[hsl(var(--info)/25%)]" : "bg-[hsl(var(--bg-primary))]"}`}>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeColors[n.type] || "bg-[hsl(var(--surface-2))]"}`}>{n.type}</span>
+                <span className={`text-2xs font-bold px-2 py-0.5 rounded-full ${typeColors[n.type] || "bg-[hsl(var(--surface-2))]"}`}>{n.type}</span>
                 {!n.is_read && <span className="w-2 h-2 rounded-full bg-[hsl(var(--primary))]" />}
               </div>
               <p className="text-sm font-medium">{n.title}</p>
               {n.body && <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{n.body}</p>}
-              <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-2">{new Date(n.created_at).toLocaleString("es")}</p>
+              <p className="text-2xs text-[hsl(var(--text-secondary))] mt-2">{new Date(n.created_at).toLocaleString("es")}</p>
             </div>
             <div className="flex gap-1 shrink-0">
               {!n.is_read && (

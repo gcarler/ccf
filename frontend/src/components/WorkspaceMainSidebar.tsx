@@ -60,7 +60,7 @@ function SidebarSection({
                     onClick={() => setOpen(v => !v)}
                     className="flex items-center justify-between px-2.5 py-0.5 cursor-pointer group/hdr"
                 >
-                    <span className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] group-hover/hdr:text-[hsl(var(--text-secondary))] dark:group-hover/hdr:text-[hsl(var(--text-secondary))] transition-colors select-none">
+                    <span className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] group-hover/hdr:text-[hsl(var(--text-secondary))] dark:group-hover/hdr:text-[hsl(var(--text-secondary))] transition-colors select-none">
                         {title}
                     </span>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover/hdr:opacity-100 transition-opacity">
@@ -127,7 +127,7 @@ function NavRow({
                 )}
                 {item.color ? (
                     <span
-                        className="size-5 rounded shrink-0 flex items-center justify-center text-[9px] font-bold text-white"
+                        className="size-5 rounded shrink-0 flex items-center justify-center text-2xs font-bold text-white"
                         style={{ backgroundColor: item.color }}
                     >
                         {item.label.charAt(0)}
@@ -146,7 +146,7 @@ function NavRow({
                         )}>{item.label}</span>
                         {item.count !== undefined && (
                             <span className={clsx(
-                                'px-1 py-px rounded text-[9px] font-bold leading-none shrink-0',
+                                'px-1 py-px rounded text-2xs font-bold leading-none shrink-0',
                                 isActive
                                     ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] dark:text-info-text'
                                     : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
@@ -213,10 +213,10 @@ export default function WorkspaceMainSidebar({ sections, isMini, onToggle, isCol
     }, [pathname, sections]);
 
     return (
-        <aside className="h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] transition-colors duration-500 ease-in-out relative overflow-hidden">
+        <aside className="h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] transition-colors duration-500 ease-in-out relative overflow-hidden">
             {/* Header: Botón de retroceso en drill-down */}
             {!isMini && isDrillDown && (
-                <div className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[#0f1113]/80 backdrop-blur-xl">
+                <div className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[hsl(var(--surface-2))]/80 backdrop-blur-xl">
                     <div className="h-8 flex items-center px-3">
                         <motion.button
                             initial={{ opacity: 0, x: -10 }}
@@ -288,7 +288,7 @@ export default function WorkspaceMainSidebar({ sections, isMini, onToggle, isCol
                                 {!sections?.length && !isMini && (
                                     <div className="px-3 py-1.5 text-center space-y-3 opacity-40">
                                         <Circle size={40} className="mx-auto text-[hsl(var(--text-secondary))]" />
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin contenido</p>
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin contenido</p>
                                     </div>
                                 )}
                             </>

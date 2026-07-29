@@ -175,7 +175,7 @@ const PRIORITY_MAP: Record<string, { label: string; color: string; bg: string }>
 function StatusCell({ value }: { value: unknown }) {
   const st = getStatus(String(value ?? ''));
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11px] font-semibold leading-none', st.bg, st.text)}>
+    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-xs font-semibold leading-none', st.bg, st.text)}>
       <span className={clsx('size-1.5 rounded-full shrink-0', st.dot)} aria-hidden="true" />
       {st.label}
     </span>
@@ -184,7 +184,7 @@ function StatusCell({ value }: { value: unknown }) {
 function PriorityCell({ value }: { value: unknown }) {
   const p = PRIORITY_MAP[String(value ?? '').toLowerCase()] ?? PRIORITY_MAP.normal;
   return (
-    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-[11px] font-semibold', p.bg, p.color)}>
+    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-xs font-semibold', p.bg, p.color)}>
       <Flag size={9} aria-hidden="true" /> {p.label}
     </span>
   );
@@ -196,28 +196,28 @@ function DateCell({ value }: { value: unknown }) {
   return (
     <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
       <Calendar size={11} className="shrink-0" aria-hidden="true" />
-      <span className="text-[12px] font-medium tabular-nums whitespace-nowrap">
+      <span className="text-sm font-medium tabular-nums whitespace-nowrap">
         {d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' })}
       </span>
     </div>
   );
 }
 function UserCell({ value }: { value: unknown }) {
-  if (!value) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-[12px]">—</span>;
+  if (!value) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm">—</span>;
   const words = String(value).split(/\s+/).filter(Boolean);
   const initials = words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
   return (
     <div className="flex items-center gap-2 h-full">
-      <div className="size-6 rounded-full bg-[hsl(var(--primary)/0.12)] dark:bg-[hsl(var(--primary)/0.25)] flex items-center justify-center font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-[9px] shrink-0 leading-none" aria-hidden="true">
+      <div className="size-6 rounded-full bg-[hsl(var(--primary)/0.12)] dark:bg-[hsl(var(--primary)/0.25)] flex items-center justify-center font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-2xs shrink-0 leading-none" aria-hidden="true">
         {initials || <User size={10} className="text-[hsl(var(--text-secondary))]" />}
       </div>
-      <span className="text-[12px] text-[hsl(var(--text-primary))] font-medium truncate">{String(value)}</span>
+      <span className="text-sm text-[hsl(var(--text-primary))] font-medium truncate">{String(value)}</span>
     </div>
   );
 }
 function IdCell({ value }: { value: unknown }) {
   return (
-    <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+    <div className="flex items-center gap-1 text-xs font-mono font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
       <Hash size={9} aria-hidden="true" />{String(value ?? '').substring(0, 8)}
     </div>
   );
@@ -239,7 +239,7 @@ function ProgressCell({ value }: { value: unknown }) {
       <div className="flex-1 h-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
         <div className={clsx('h-full rounded-full transition-all', color)} style={{ width: `${pct}%` }} />
       </div>
-      <span className="font-semibold text-[hsl(var(--text-secondary))] tabular-nums text-[11px] w-7 text-right shrink-0">{pct}%</span>
+      <span className="font-semibold text-[hsl(var(--text-secondary))] tabular-nums text-xs w-7 text-right shrink-0">{pct}%</span>
     </div>
   );
 }
@@ -262,11 +262,11 @@ function FilterRow({
   const colType = filterableCols.find(c => c.key === filter.field)?.type ?? 'text';
   const ops = OPERATORS_BY_TYPE[colType] ?? OPERATORS_BY_TYPE.text;
   const needsValue = !['isEmpty', 'isNotEmpty'].includes(filter.operator);
-  const selectCls = 'h-7 px-2 text-[11px] font-medium rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)] cursor-pointer';
+  const selectCls = 'h-7 px-2 text-xs font-medium rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)] cursor-pointer';
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] w-10 text-right shrink-0 uppercase tracking-wide">
+      <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] w-10 text-right shrink-0 uppercase tracking-wide">
         {filterIdx === 0 ? 'Donde' : 'Y'}
       </span>
       <select
@@ -293,7 +293,7 @@ function FilterRow({
           value={filter.value}
           onChange={e => onChange({ ...filter, value: e.target.value })}
           placeholder="Valor…"
-          className="h-7 px-2.5 text-[11px] rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)] min-w-[100px] max-w-[160px]"
+          className="h-7 px-2.5 text-xs rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)] min-w-[100px] max-w-[160px]"
         />
       )}
       <button
@@ -323,7 +323,7 @@ function SkeletonRow({ cols }: { cols: number }) {
 
 const GROUP_ROW_ID_PREFIX = '__group__';
 
-const BTN_BASE = 'flex items-center gap-1.5 h-8 text-[11px] font-semibold rounded-lg transition-all border';
+const BTN_BASE = 'flex items-center gap-1.5 h-8 text-xs font-semibold rounded-lg transition-all border';
 const BTN_IDLE = 'px-2.5 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border-primary))] hover:bg-[hsl(var(--bg-muted))] hover:text-[hsl(var(--text-primary))]';
 const BTN_ICON = 'px-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border-primary))] hover:bg-[hsl(var(--bg-muted))] hover:text-[hsl(var(--text-primary))]';
 const BTN_ACTIVE = 'px-2.5 bg-[hsl(var(--primary)/0.06)] dark:bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.2)] dark:border-[hsl(var(--primary)/0.3)]';
@@ -509,13 +509,13 @@ export default function UniversalTableView<T extends { id: string | number }>({
   const fullWidthCellRenderer = useCallback(({ data: row }: { data: { __groupKey: string; __groupCount: number } }) => (
     <div className="flex items-center gap-2.5 px-4 h-full border-b border-[hsl(var(--border-primary))] bg-[hsl(var(--surface-1))]/80 dark:bg-white/[0.02]">
       <div className="w-1 h-4 rounded-full bg-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.06)]0 shrink-0" />
-      <span className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{row.__groupKey}</span>
-      <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full px-2 py-0.5 ml-0.5">
+      <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{row.__groupKey}</span>
+      <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full px-2 py-0.5 ml-0.5">
         {row.__groupCount}
       </span>
       {onAddItem && (
         <button onClick={(e) => { e.stopPropagation(); onAddItem(row.__groupKey); }}
-          className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:opacity-70 transition-opacity">
+          className="ml-auto flex items-center gap-1 text-2xs font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:opacity-70 transition-opacity">
           <Plus size={10} /> Agregar
         </button>
       )}
@@ -558,7 +558,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
             value={quickFilter}
             onChange={e => setQuickFilter(e.target.value)}
             placeholder="Buscar…"
-            className="w-full h-8 pl-7 pr-7 text-[11px] border border-[hsl(var(--border-primary))] rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)] transition-shadow"
+            className="w-full h-8 pl-7 pr-7 text-xs border border-[hsl(var(--border-primary))] rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)] transition-shadow"
           />
           {quickFilter && (
             <button onClick={() => setQuickFilter('')}
@@ -578,7 +578,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
           <Filter size={12} />
           Filtros
           {activeFilters.length > 0 && (
-            <span className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[hsl(var(--primary))] text-white text-[9px] font-bold leading-4 text-center">
+            <span className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[hsl(var(--primary))] text-white text-2xs font-bold leading-4 text-center">
               {activeFilters.length}
             </span>
           )}
@@ -604,12 +604,12 @@ export default function UniversalTableView<T extends { id: string | number }>({
                   transition={{ duration: 0.12 }}
                   className="absolute top-full left-0 mt-1.5 z-50 w-48 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 py-1.5 overflow-hidden"
                 >
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] px-3 py-1.5">Agrupar por</p>
+                  <p className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] px-3 py-1.5">Agrupar por</p>
                   {[{ key: null, label: 'Sin agrupar' }, ...groupableCols.map(c => ({ key: String(c.key), label: c.label }))].map(opt => (
                     <button
                       key={opt.key ?? '__none'}
                       onClick={() => { setActiveGroupBy(opt.key); setShowGroupPanel(false); }}
-                      className={clsx('w-full text-left px-3 py-2 text-[12px] transition-colors hover:bg-[hsl(var(--bg-muted))]',
+                      className={clsx('w-full text-left px-3 py-2 text-sm transition-colors hover:bg-[hsl(var(--bg-muted))]',
                         activeGroupBy === opt.key ? 'text-[hsl(var(--primary))] font-semibold' : 'text-[hsl(var(--text-primary))] font-medium')}
                     >
                       {opt.label}
@@ -624,7 +624,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
         {/* Right actions */}
         <div className="flex min-w-0 items-center gap-1.5 ml-0 sm:ml-auto overflow-x-auto">
           {!isLoading && hasData && (
-            <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] tabular-nums hidden sm:block pr-1">
+            <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] tabular-nums hidden sm:block pr-1">
               {isFiltered ? `${filteredData.length} / ${data.length}` : data.length}
             </span>
           )}
@@ -638,7 +638,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
             >
               <ColumnsIcon size={13} />
               {hiddenCols.size > 0 && (
-                <span className="min-w-[14px] h-3.5 px-1 rounded-full bg-[hsl(var(--primary))] text-white text-[8px] font-bold leading-[14px] text-center">
+                <span className="min-w-[14px] h-3.5 px-1 rounded-full bg-[hsl(var(--primary))] text-white text-2xs font-bold leading-[14px] text-center">
                   {hiddenCols.size}
                 </span>
               )}
@@ -653,10 +653,10 @@ export default function UniversalTableView<T extends { id: string | number }>({
                   className="absolute top-full right-0 mt-1.5 z-50 w-52 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 p-2"
                 >
                   <div className="flex items-center justify-between px-1.5 pb-1.5">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">Columnas visibles</p>
+                    <p className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">Columnas visibles</p>
                     {hiddenCols.size > 0 && (
                       <button onClick={() => setHiddenCols(new Set())}
-                        className="text-[9px] font-semibold text-[hsl(var(--primary))] hover:opacity-75 transition-opacity">
+                        className="text-2xs font-semibold text-[hsl(var(--primary))] hover:opacity-75 transition-opacity">
                         Mostrar todo
                       </button>
                     )}
@@ -670,10 +670,10 @@ export default function UniversalTableView<T extends { id: string | number }>({
                         onClick={() => setHiddenCols(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; })}
                         className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-[hsl(var(--bg-muted))] transition-colors"
                       >
-                        <span className="text-[12px] font-medium text-[hsl(var(--text-primary))]">{col.label || key}</span>
+                        <span className="text-sm font-medium text-[hsl(var(--text-primary))]">{col.label || key}</span>
                         <div className={clsx('size-4 rounded-md border-2 flex items-center justify-center transition-colors',
                           !isHidden ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]' : 'border-[hsl(var(--border))] dark:border-white/20')}>
-                          {!isHidden && <span className="text-white text-[8px] font-bold leading-none">✓</span>}
+                          {!isHidden && <span className="text-white text-2xs font-bold leading-none">✓</span>}
                         </div>
                       </button>
                     );
@@ -694,7 +694,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
           {onAddItem && (
             <button
               onClick={() => onAddItem()}
-              className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors shadow-sm shadow-[hsl(var(--primary)/0.2)]"
+              className="flex items-center gap-1.5 h-8 px-3 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors shadow-sm shadow-[hsl(var(--primary)/0.2)]"
             >
               <Plus size={13} /> Agregar
             </button>
@@ -714,9 +714,9 @@ export default function UniversalTableView<T extends { id: string | number }>({
           >
             <div className="flex flex-col gap-2 p-3 rounded-xl border border-[hsl(var(--primary)/0.1)] dark:border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.06)] dark:bg-[hsl(var(--primary)/0.15)]">
               {filterableCols.length === 0 ? (
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">No hay columnas filtrables.</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] italic">No hay columnas filtrables.</p>
               ) : activeFilters.length === 0 ? (
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Sin filtros activos. Agrega uno para filtrar los datos.</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin filtros activos. Agrega uno para filtrar los datos.</p>
               ) : (
                 activeFilters.map((f, idx) => (
                   <FilterRow
@@ -733,17 +733,17 @@ export default function UniversalTableView<T extends { id: string | number }>({
                 <button
                   onClick={addFilter}
                   disabled={filterableCols.length === 0}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:opacity-75 disabled:opacity-40 transition-opacity"
+                  className="flex items-center gap-1 text-xs font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:opacity-75 disabled:opacity-40 transition-opacity"
                 >
                   <Plus size={12} /> Agregar filtro
                 </button>
                 {activeFilters.length > 0 && (
                   <button onClick={() => setActiveFilters([])}
-                    className="text-[11px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors">
+                    className="text-xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors">
                     Limpiar todo
                   </button>
                 )}
-                <span className="ml-auto text-[10px] font-medium text-[hsl(var(--text-secondary))]">
+                <span className="ml-auto text-2xs font-medium text-[hsl(var(--text-secondary))]">
                   {filteredData.length} de {data.length} registro{data.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -774,12 +774,12 @@ export default function UniversalTableView<T extends { id: string | number }>({
             <div className="text-center">
               <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{emptyMessage}</p>
               {onAddItem && (
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-0.5">Agrega el primer registro para comenzar</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">Agrega el primer registro para comenzar</p>
               )}
             </div>
             {onAddItem && (
               <button onClick={() => onAddItem()}
-                className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors mt-1">
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors mt-1">
                 <Plus size={13} /> Agregar
               </button>
             )}
@@ -789,9 +789,9 @@ export default function UniversalTableView<T extends { id: string | number }>({
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[hsl(var(--bg-primary))]">
             <Search size={20} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
             <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">Sin resultados</p>
-            <p className="text-[11px] text-[hsl(var(--text-secondary))]">Prueba con otro término o limpia los filtros</p>
+            <p className="text-xs text-[hsl(var(--text-secondary))]">Prueba con otro término o limpia los filtros</p>
             <button onClick={() => { setQuickFilter(''); setActiveFilters([]); }}
-              className="text-[11px] font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:opacity-75 mt-1 transition-opacity">
+              className="text-xs font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:opacity-75 mt-1 transition-opacity">
               Limpiar filtros
             </button>
           </div>

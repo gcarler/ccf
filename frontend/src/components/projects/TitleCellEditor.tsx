@@ -40,7 +40,7 @@ const TitleCellEditor = forwardRef<TitleCellEditorRef, ICellEditorParams>((props
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={() => props.stopEditing()}
-            className="w-full h-full px-2 text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--primary))] outline-none rounded-sm"
+            className="w-full h-full px-2 text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--primary))] outline-none rounded-sm"
             aria-label="Editar título de tarea"
         />
     );

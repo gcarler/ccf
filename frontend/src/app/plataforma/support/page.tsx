@@ -177,8 +177,8 @@ export default function SupportPage() {
                                 width: '400px',
                                 render: (val, ticket) => (
                                     <div className="flex flex-col pr-4">
-                                        <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{ticket.subject}</span>
-                                        <span className="text-[10px] text-[hsl(var(--text-secondary))] font-medium truncate">{ticket.description}</span>
+                                        <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{ticket.subject}</span>
+                                        <span className="text-2xs text-[hsl(var(--text-secondary))] font-medium truncate">{ticket.description}</span>
                                     </div>
                                 )
                             },
@@ -188,7 +188,7 @@ export default function SupportPage() {
                                 type: 'text', 
                                 width: '150px',
                                 render: (val: any) => (
-                                    <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))] flex items-center gap-2">
                                         <Book size={12} className="text-[hsl(var(--text-secondary))]" />
                                         {val}
                                     </span>
@@ -210,7 +210,7 @@ export default function SupportPage() {
                                         <p className="truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{ticket.subject}</p>
                                         <p className="truncate text-xs font-medium text-[hsl(var(--text-secondary))]">{ticket.description}</p>
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/10">{ticket.status || 'abierto'}</span>
+                                    <span className="shrink-0 rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/10">{ticket.status || 'abierto'}</span>
                                 </div>
                             </button>
                         ))}
@@ -221,17 +221,17 @@ export default function SupportPage() {
                         {groupedTickets.map((column) => (
                             <section key={column.status} className="w-80 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                                 <div className="mb-3 flex items-center justify-between px-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.status}</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.status}</p>
                                     <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.tickets.length}</span>
                                 </div>
                                 <div className="space-y-2">
                                     {column.tickets.map((ticket) => (
                                         <button key={ticket.id} onClick={() => handleOpenTicket(ticket)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 text-left shadow-sm dark:border-white/10 dark:bg-white/5">
                                             <p className="line-clamp-2 text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{ticket.subject}</p>
-                                            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{ticket.category || 'General'}</p>
+                                            <p className="mt-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{ticket.category || 'General'}</p>
                                         </button>
                                     ))}
-                                    {column.tickets.length === 0 && <div className="rounded-md border border-dashed border-[hsl(var(--border))] py-8 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">Vacio</div>}
+                                    {column.tickets.length === 0 && <div className="rounded-md border border-dashed border-[hsl(var(--border))] py-8 text-center text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">Vacio</div>}
                                 </div>
                             </section>
                         ))}
@@ -299,7 +299,7 @@ export default function SupportPage() {
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <div className={clsx(
-                                            "px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-tight",
+                                            "px-3 py-1 rounded-full text-2xs font-semibold uppercase tracking-tight",
                                             ticket.status === 'abierto' ? "bg-info-soft text-[hsl(var(--primary))]" : "bg-success-soft text-success-text"
                                         )}>{ticket.status}</div>
                                         <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />
@@ -318,8 +318,8 @@ export default function SupportPage() {
                 subtitle={`${selectedTicket?.category || 'Soporte'} • #${selectedTicket?.id}`}
                 actions={
                     <>
-                        <button className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))]" onClick={() => setIsDrawerOpen(false)}>Cerrar</button>
-                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold shadow-lg shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">Enviar Mensaje</button>
+                        <button className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))]" onClick={() => setIsDrawerOpen(false)}>Cerrar</button>
+                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-bold shadow-lg shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">Enviar Mensaje</button>
                     </>
                 }
             >
@@ -336,7 +336,7 @@ export default function SupportPage() {
                             <FileText size={14} className="text-[hsl(var(--text-secondary))]" />
                             <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción del Problema</h4>
                         </div>
-                        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[13px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
+                        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-base text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
                             {selectedTicket?.description}
                         </div>
                     </section>
@@ -348,7 +348,7 @@ export default function SupportPage() {
                         <div className="space-y-3">
                             <div className="flex gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border border-[hsl(var(--border))] dark:border-white/5">
                                 <div className="w-8 h-8 rounded-lg bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 flex items-center justify-center text-[hsl(var(--primary))] shrink-0"><Send size={14} /></div>
-                                <div><p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Ticket Recibido</p><p className="text-[10px] text-[hsl(var(--text-secondary))]">Asignado automáticamente al departamento correspondiente.</p></div>
+                                <div><p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Ticket Recibido</p><p className="text-2xs text-[hsl(var(--text-secondary))]">Asignado automáticamente al departamento correspondiente.</p></div>
                             </div>
                         </div>
                     </section>
@@ -363,14 +363,14 @@ export default function SupportPage() {
                 subtitle="Reportar un incidente o solicitar ayuda"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsCreateDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+                        <button type="button" onClick={() => setIsCreateDrawerOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
                         <button
                             form="create-ticket-form"
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
                             Enviar Solicitud
@@ -426,7 +426,7 @@ function DrawerStat({ label, value, icon: Icon }: any) {
                 <Icon size={12} className="text-[hsl(var(--text-secondary))]" />
                 <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{label}</span>
             </div>
-            <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] capitalize">{value || 'N/A'}</p>
+            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] capitalize">{value || 'N/A'}</p>
         </div>
     );
 }

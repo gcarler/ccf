@@ -61,12 +61,12 @@ export default function TaskDetailHeader({
         <header className="shrink-0 px-4 pt-3 pb-0 border-b border-[hsl(var(--border))] dark:border-white/[0.06]">
             {error && (
                 <div className="mb-2 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-2 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                    <p className="text-[10px] font-bold uppercase tracking-wide">{error}</p>
+                    <p className="text-2xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
 
             <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--text-secondary))] min-w-0">
+                <div className="flex items-center gap-1 text-xs text-[hsl(var(--text-secondary))] min-w-0">
                     <Home size={11} className="shrink-0" />
                     <ChevronRight size={10} className="text-[hsl(var(--text-secondary))] shrink-0" />
                     <FolderOpen size={11} className="shrink-0" />
@@ -83,7 +83,7 @@ export default function TaskDetailHeader({
                     <button
                         onClick={onVerRutaClick}
                         title="Ver ruta jerárquica"
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10 hover:bg-[hsl(var(--info-muted))] dark:hover:bg-[hsl(var(--info))]/20 transition-all border border-[hsl(var(--info)/25%)]/50 dark:border-[hsl(var(--info)/100%)]/20"
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs font-bold text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10 hover:bg-[hsl(var(--info-muted))] dark:hover:bg-[hsl(var(--info))]/20 transition-all border border-[hsl(var(--info)/25%)]/50 dark:border-[hsl(var(--info)/100%)]/20"
                     >
                         <GitBranch size={11} />
                         Ver Ruta
@@ -142,7 +142,7 @@ export default function TaskDetailHeader({
                     onClick={onStatusCycle}
                     title="Click para cambiar estado"
                     className={clsx(
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border border-current/15 transition-all hover:border-current/30 cursor-pointer',
+                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border border-current/15 transition-all hover:border-current/30 cursor-pointer',
                         status.color, status.bg
                     )}>
                     <StatusIcon size={11} strokeWidth={2.5}
@@ -165,7 +165,7 @@ export default function TaskDetailHeader({
                 }}
             />
             {saving && (
-                <p className="pb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
+                <p className="pb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
                     Guardando cambios...
                 </p>
             )}

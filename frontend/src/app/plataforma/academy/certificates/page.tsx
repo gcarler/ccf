@@ -132,11 +132,11 @@ export default function StudentCertificates() {
                                                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/15 via-transparent to-transparent opacity-80"></div>
                                                     <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center transform group-hover:scale-105 transition-transform duration-500">
                                                         <Award className="text-[hsl(var(--warning))] mb-3" size={48} />
-                                                        <p className="text-[9px] uppercase tracking-wide text-[hsl(var(--warning))] font-bold">{certificate.certificate_type || 'Certificado'}</p>
+                                                        <p className="text-2xs uppercase tracking-wide text-[hsl(var(--warning))] font-bold">{certificate.certificate_type || 'Certificado'}</p>
                                                         <h3 className="text-base font-bold mt-2 text-white">
                                                             {enrollment?.course.title || 'Curso completado'}
                                                         </h3>
-                                                        <p className="text-[10px] text-[hsl(var(--text-secondary))] italic mt-2">
+                                                        <p className="text-2xs text-[hsl(var(--text-secondary))] italic mt-2">
                                                             Emitido el {new Date(certificate.issued_at).toLocaleDateString()}
                                                         </p>
                                                     </div>
@@ -176,7 +176,7 @@ export default function StudentCertificates() {
                                                 <div className="flex gap-3">
                                                     <button
                                                         onClick={() => setActiveCertificate(certificate)}
-                                                        className="flex-1 bg-white/5 hover:bg-primary/20 text-white py-2 rounded-md text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-3 transition-all border border-white/10 hover:border-primary/50"
+                                                        className="flex-1 bg-white/5 hover:bg-primary/20 text-white py-2 rounded-md text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-3 transition-all border border-white/10 hover:border-primary/50"
                                                     >
                                                         <Download size={18} className="text-primary" />
                                                         Ver / Descargar

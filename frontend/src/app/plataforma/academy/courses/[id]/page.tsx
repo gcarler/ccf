@@ -109,7 +109,7 @@ export default function CourseCoordinationPage() {
                     <div className="flex items-center gap-3">
                         <button 
                             onClick={() => router.push(`/plataforma/academy/courses/${id}/manage`)}
-                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all"
                         >
                             Gestionar Cohorte
                         </button>
@@ -140,7 +140,7 @@ export default function CourseCoordinationPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Alistamiento Académico</h3>
+                            <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Alistamiento Académico</h3>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
@@ -149,7 +149,7 @@ export default function CourseCoordinationPage() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Periodo de Inscripción</p>
-                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{course.is_published ? 'Visible para estudiantes' : 'Borrador interno'}</p>
+                                            <p className="text-xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{course.is_published ? 'Visible para estudiantes' : 'Borrador interno'}</p>
                                         </div>
                                     </div>
                                     <DSBadge tone={course.is_published ? 'emerald' : 'amber'} label={course.is_published ? 'PUBLICADO' : 'BORRADOR'} />
@@ -164,7 +164,7 @@ export default function CourseCoordinationPage() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Malla Curricular</p>
-                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{course.lesson_count} lecciones registradas</p>
+                                            <p className="text-xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{course.lesson_count} lecciones registradas</p>
                                         </div>
                                     </div>
                                     <DSBadge tone="amber" label="REVISIÓN" />
@@ -173,11 +173,11 @@ export default function CourseCoordinationPage() {
                         </DSCard>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Actas y Certificación</h3>
+                            <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Actas y Certificación</h3>
                             <div className="p-4 text-center bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/10">
                                 <ShieldCheck size={48} className="mx-auto text-[hsl(var(--text-secondary))] mb-4" />
                                 <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide">Sin actas de cierre emitidas</h4>
-                                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-2 font-medium">Las actas se generan automáticamente al finalizar el periodo académico del programa formal.</p>
+                                <p className="text-xs text-[hsl(var(--text-secondary))] mt-2 font-medium">Las actas se generan automáticamente al finalizar el periodo académico del programa formal.</p>
                             </div>
                         </DSCard>
                     </div>

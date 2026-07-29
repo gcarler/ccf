@@ -69,7 +69,7 @@ export default function CmsSitesPage() {
     <div className="space-y-3 p-3">
       <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-3 flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS V2</p>
+          <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS V2</p>
           <h1 className="mt-2 text-lg font-semibold">Gestión de sitios</h1>
         </div>
         <div className="rounded-md bg-primary/10 px-3 py-2 text-primary text-xs font-semibold uppercase tracking-wide inline-flex items-center gap-2">
@@ -101,9 +101,9 @@ export default function CmsSitesPage() {
                 <div key={site.id} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-3 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-bold">{site.name}</p>
-                    <p className="text-[10px] uppercase tracking-wide text-[hsl(var(--text-secondary))]">{site.site_key} · {site.base_path}</p>
+                    <p className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">{site.site_key} · {site.base_path}</p>
                   </div>
-                  <button onClick={() => toggle(site)} disabled={!canManage} className={`rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide ${site.is_active ? "bg-[hsl(var(--success-muted))] text-success-text" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"} disabled:opacity-50`}>
+                  <button onClick={() => toggle(site)} disabled={!canManage} className={`rounded-lg px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide ${site.is_active ? "bg-[hsl(var(--success-muted))] text-success-text" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"} disabled:opacity-50`}>
                     {site.is_active ? "Activo" : "Inactivo"}
                   </button>
                 </div>

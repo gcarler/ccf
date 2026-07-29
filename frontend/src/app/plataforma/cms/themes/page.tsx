@@ -273,10 +273,10 @@ export default function CmsThemesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
+            <span className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
               CMS V2
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+            <span className="text-2xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/10 text-primary">
               {usedTokensCount} tokens
             </span>
           </div>
@@ -288,7 +288,7 @@ export default function CmsThemesPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setShowPreview((p) => !p)}
-            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-all ${
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
               showPreview
                 ? "border-primary/30 bg-primary/10 text-primary"
                 : "border-[hsl(var(--border))] dark:border-white/10"
@@ -299,14 +299,14 @@ export default function CmsThemesPage() {
           </button>
           <button
             onClick={exportJson}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
           >
             <Download size={13} />
             Exportar
           </button>
           <button
             onClick={() => fileRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
           >
             <Upload size={13} />
             Importar
@@ -314,7 +314,7 @@ export default function CmsThemesPage() {
           <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleFileUpload} />
           <button
             onClick={copyToClipboard}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
           >
             <Copy size={13} />
             Copiar
@@ -376,7 +376,7 @@ export default function CmsThemesPage() {
                 />
               </div>
               <p className="text-xs font-bold">{preset.name}</p>
-              <p className="text-[10px] opacity-60 mt-0.5 line-clamp-2">{preset.description}</p>
+              <p className="text-2xs opacity-60 mt-0.5 line-clamp-2">{preset.description}</p>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Sparkles size={12} className="text-primary" />
               </div>
@@ -393,7 +393,7 @@ export default function CmsThemesPage() {
           <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
+                <label className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
                   Sitio
                 </label>
                 <select
@@ -410,7 +410,7 @@ export default function CmsThemesPage() {
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
+                <label className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
                   Nombre del tema
                 </label>
                 <input
@@ -430,14 +430,14 @@ export default function CmsThemesPage() {
                   setMessage({ text: "Nuevo tema iniciado.", type: "info" });
                 }}
                 disabled={!canEdit}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors disabled:opacity-50"
               >
                 <Layers size={11} />
                 Nuevo
               </button>
               <button
                 onClick={() => setImportOpen((p) => !p)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
               >
                 <FileJson size={11} />
                 {importOpen ? "Cerrar" : "Importar JSON"}
@@ -452,11 +452,11 @@ export default function CmsThemesPage() {
                   onChange={(e) => setImportText(e.target.value)}
                   placeholder='{"name": "Mi tema", "tokens_json": {"--site-primary": "#ff0000", ...}}'
                   rows={4}
-                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-secondary))] px-3 py-2 text-[11px] font-mono outline-none focus:ring-1 focus:ring-primary/50 resize-none"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-secondary))] px-3 py-2 text-xs font-mono outline-none focus:ring-1 focus:ring-primary/50 resize-none"
                 />
                 <button
                   onClick={importJson}
-                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-primary/90 transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-primary/90 transition-colors"
                 >
                   <Upload size={12} />
                   Aplicar JSON
@@ -471,7 +471,7 @@ export default function CmsThemesPage() {
               <h2 className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
                 Tokens de diseño
               </h2>
-              <span className="text-[10px] opacity-50">{usedTokensCount} / {ALL_TOKEN_KEYS.length}</span>
+              <span className="text-2xs opacity-50">{usedTokensCount} / {ALL_TOKEN_KEYS.length}</span>
             </div>
             <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
               {TOKEN_CATEGORIES.map((cat) => {
@@ -484,7 +484,7 @@ export default function CmsThemesPage() {
                     >
                       <div className="text-left">
                         <p className="text-xs font-bold">{cat.label}</p>
-                        <p className="text-[10px] opacity-50">{cat.description}</p>
+                        <p className="text-2xs opacity-50">{cat.description}</p>
                       </div>
                       <ChevronDown
                         size={14}
@@ -499,20 +499,20 @@ export default function CmsThemesPage() {
                           return (
                             <div key={tokenDef.key} className="group">
                               <div className="flex items-center justify-between mb-1">
-                                <label className="text-[10px] font-semibold uppercase tracking-wider">
+                                <label className="text-2xs font-semibold uppercase tracking-wider">
                                   {tokenDef.label}
                                 </label>
                                 <button
                                   onClick={() =>
                                     setTokens((prev) => updateTokenValue(prev, tokenDef.key, tokenDef.defaultValue))
                                   }
-                                  className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity text-[10px]"
+                                  className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity text-2xs"
                                   title="Restaurar default"
                                 >
                                   <RotateCcw size={10} />
                                 </button>
                               </div>
-                              <p className="text-[10px] opacity-40 mb-1.5">{tokenDef.description}</p>
+                              <p className="text-2xs opacity-40 mb-1.5">{tokenDef.description}</p>
                               <div className="flex items-center gap-2">
                                 {isColor && value.startsWith("#") && (
                                   <div className="relative shrink-0">
@@ -544,7 +544,7 @@ export default function CmsThemesPage() {
                                     setTokens((prev) => updateTokenValue(prev, tokenDef.key, e.target.value))
                                   }
                                   disabled={!canEdit}
-                                  className="flex-1 min-w-0 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-[11px] font-mono outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-50"
+                                  className="flex-1 min-w-0 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs font-mono outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-50"
                                 />
                               </div>
                             </div>
@@ -570,7 +570,7 @@ export default function CmsThemesPage() {
                     Preview en vivo
                   </h2>
                 </div>
-                <span className="text-[10px] opacity-50">Actualiza en tiempo real</span>
+                <span className="text-2xs opacity-50">Actualiza en tiempo real</span>
               </div>
               <ThemePreview tokens={tokens} />
             </div>
@@ -587,7 +587,7 @@ export default function CmsThemesPage() {
               Temas guardados
             </h2>
           </div>
-          <span className="text-[10px] opacity-50">{themes.length} temas</span>
+          <span className="text-2xs opacity-50">{themes.length} temas</span>
         </div>
 
         <div className="space-y-2">
@@ -619,17 +619,17 @@ export default function CmsThemesPage() {
                     <p className="text-sm font-bold flex items-center gap-2">
                       {theme.name}
                       {theme.is_active && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.2)]">
+                        <span className="text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.2)]">
                           Activo
                         </span>
                       )}
                       {isArchived && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.2)]">
+                        <span className="text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.2)]">
                           Archivado
                         </span>
                       )}
                     </p>
-                    <p className="text-[10px] opacity-50">
+                    <p className="text-2xs opacity-50">
                       {Object.keys(theme.tokens_json || {}).length} tokens ·{" "}
                       {theme.tokens_json ? "Custom" : "Default"}
                     </p>
@@ -646,7 +646,7 @@ export default function CmsThemesPage() {
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
                     disabled={!canEdit || isArchived}
-                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-2xs font-bold uppercase tracking-wider transition-colors ${
                       isEditing
                         ? "border-primary/30 bg-primary/10 text-primary"
                         : "border-[hsl(var(--border))] dark:border-white/10 hover:bg-[hsl(var(--bg-secondary))]"
@@ -659,7 +659,7 @@ export default function CmsThemesPage() {
                     <button
                       onClick={() => activate(theme.id)}
                       disabled={!canPublish}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--success)/0.2)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] transition-colors disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--success)/0.2)] px-3 py-1.5 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.1)] transition-colors disabled:opacity-40"
                     >
                       <CheckCircle2 size={11} />
                       Activar
@@ -669,7 +669,7 @@ export default function CmsThemesPage() {
                     <button
                       onClick={() => archive(theme.id)}
                       disabled={!canPublish}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--warning)/0.2)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)] transition-colors disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--warning)/0.2)] px-3 py-1.5 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/0.1)] transition-colors disabled:opacity-40"
                     >
                       <Archive size={11} />
                       Archivar
@@ -679,7 +679,7 @@ export default function CmsThemesPage() {
                     <button
                       onClick={() => restore(theme.id)}
                       disabled={!canEdit}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 px-3 py-1.5 text-2xs font-bold uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors disabled:opacity-40"
                     >
                       <RotateCcw size={11} />
                       Restaurar
@@ -702,7 +702,7 @@ export default function CmsThemesPage() {
         <div className="inline-flex items-center gap-3 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))]/95 backdrop-blur-xl px-5 py-3 shadow-xl">
           <div className="text-xs">
             <p className="font-bold">{editingThemeId ? `Editando: ${name}` : name}</p>
-            <p className="text-[10px] opacity-50">{usedTokensCount} tokens configurados</p>
+            <p className="text-2xs opacity-50">{usedTokensCount} tokens configurados</p>
           </div>
           <div className="w-px h-8 bg-[hsl(var(--border))] dark:bg-white/10" />
           <button

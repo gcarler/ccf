@@ -77,7 +77,7 @@ export default function PrayerDetailPage() {
                 <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
                 >
                     Reintentar
                 </button>
@@ -95,7 +95,7 @@ export default function PrayerDetailPage() {
                 <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No se pudo cargar la peticion.</p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
                 >
                     Reintentar
                 </button>
@@ -125,7 +125,7 @@ export default function PrayerDetailPage() {
                             <Calendar size={18} className="text-[hsl(var(--primary))]" /> Recibida el {prayer.created_at ? new Date(prayer.created_at).toLocaleDateString() : "Sin fecha"}
                         </p>
                     </div>
-                    <button className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/30%)] hover:scale-105 transition-all flex items-center gap-2">
+                    <button className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/30%)] hover:scale-105 transition-all flex items-center gap-2">
                         <HandHelping size={16} /> Marcar como Respondida
                     </button>
                 </header>
@@ -133,7 +133,7 @@ export default function PrayerDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Motivo de Oracion</h3>
+                            <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Motivo de Oracion</h3>
                             <p className="text-base font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] italic leading-relaxed">
                                 &quot;{prayer.request_text}&quot;
                             </p>
@@ -142,10 +142,10 @@ export default function PrayerDetailPage() {
 
                     <aside className="space-y-3">
                         <div className="p-4 bg-[hsl(var(--surface-1))] rounded-md text-[hsl(var(--text-primary))] space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
+                            <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
                                 <Sparkles size={14} /> AI Context
                             </div>
-                            <p className="text-[11px] font-bold leading-relaxed opacity-90">
+                            <p className="text-xs font-bold leading-relaxed opacity-90">
                                 Esta es una peticion pastoral cargada desde el backend. Se puede agregar seguimiento y clasificacion despues.
                             </p>
                         </div>

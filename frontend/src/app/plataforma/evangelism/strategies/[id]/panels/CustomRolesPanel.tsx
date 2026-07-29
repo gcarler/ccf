@@ -36,17 +36,17 @@ export default function CustomRolesPanel({
   return (
     <div className="bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Roles Personalizados</h3>
+        <h3 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Roles Personalizados</h3>
         {canManage ? (
           <button onClick={() => setShowRoleForm(!showRoleForm)}
-          className="text-[11px] font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] flex items-center gap-1">
+          className="text-xs font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] flex items-center gap-1">
           <Plus size={12} />{showRoleForm ? 'Cancelar' : 'Agregar'}
           </button>
         ) : null}
       </div>
 
       <div className="mb-3">
-        <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Rol por defecto</label>
+        <label className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Rol por defecto</label>
         <select
           value={editDefaultRoleId ?? ''}
           onChange={e => setEditDefaultRoleId(e.target.value || null)}
@@ -60,7 +60,7 @@ export default function CustomRolesPanel({
             </option>
           ))}
         </select>
-        <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))]">
+        <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">
           Este rol se usa como base al agregar personas al grupo.
         </p>
       </div>
@@ -69,35 +69,35 @@ export default function CustomRolesPanel({
         <div className="mb-3 p-3 bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] rounded-lg space-y-2">
           <input value={newRoleName} onChange={e => setNewRoleName(e.target.value)}
           placeholder="Nombre del rol (ej: Coordinador de zona)"
-          className="w-full px-2.5 py-1.5 text-[12px] bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
+          className="w-full px-2.5 py-1.5 text-sm bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
           <input value={newRoleDesc} onChange={e => setNewRoleDesc(e.target.value)}
           placeholder="Descripción (opcional)"
-          className="w-full px-2.5 py-1.5 text-[12px] bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
+          className="w-full px-2.5 py-1.5 text-sm bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
           <button onClick={onCreateRole} disabled={!newRoleName.trim()}
-          className="px-3 py-1.5 text-[11px] font-bold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-lg transition-colors">
+          className="px-3 py-1.5 text-xs font-bold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-lg transition-colors">
           Crear Rol
           </button>
         </div>
       )}
 
       {loadingRoles ? (
-        <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Cargando...</p>
+        <p className="text-xs text-[hsl(var(--text-secondary))] italic">Cargando...</p>
       ) : customRoles.length === 0 ? (
-        <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Sin roles personalizados</p>
+        <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin roles personalizados</p>
       ) : (
         <div className="space-y-1.5">
           {customRoles.map(r => (
             <div key={r.id} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))]">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[12px] font-semibold text-[hsl(var(--text-primary))] ">{r.nombre_rol}</span>
+                  <span className="text-sm font-semibold text-[hsl(var(--text-primary))] ">{r.nombre_rol}</span>
                   {editDefaultRoleId === r.id && (
-                  <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--info-muted))] text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-info-text">
+                  <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--info-muted))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-info-text">
                   Defecto
                   </span>
                   )}
                 </div>
-                {r.descripcion && <p className="text-[10px] text-[hsl(var(--text-secondary))]">{r.descripcion}</p>}
+                {r.descripcion && <p className="text-2xs text-[hsl(var(--text-secondary))]">{r.descripcion}</p>}
               </div>
               {canManage ? (
                 <button onClick={() => onRequestDeleteRole(r)} className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">

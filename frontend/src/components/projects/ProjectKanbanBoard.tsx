@@ -125,10 +125,10 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
                         className="rotate-1 opacity-90 cursor-grabbing bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] rounded-md shadow-2xl border border-[hsl(var(--info)/100%)] p-3 w-[260px]"
                     >
                         <div className="h-[3px] w-full mb-2 bg-[hsl(var(--primary))] rounded-full" />
-                        <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2">
+                        <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2">
                             {activeTask.title || 'Tarea'}
                         </p>
-                        <div className="flex items-center gap-3 mt-2 text-[10px] text-[hsl(var(--text-secondary))]">
+                        <div className="flex items-center gap-3 mt-2 text-2xs text-[hsl(var(--text-secondary))]">
                             {activeTask.priority && (
                                 <span className="font-bold uppercase tracking-wide">{activeTask.priority}</span>
                             )}

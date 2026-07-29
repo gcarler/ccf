@@ -54,7 +54,7 @@ export default function WorkspaceToolbar({
     onAddOption
 }: WorkspaceToolbarProps) {
     return (
-        <div className="min-h-10 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border-b border-[#e8eaed] dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-1.5 px-2 py-1 sticky top-0 z-50 transition-colors duration-300 sm:flex-nowrap sm:gap-2 sm:py-0">
+        <div className="min-h-10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-1.5 px-2 py-1 sticky top-0 z-50 transition-colors duration-300 sm:flex-nowrap sm:gap-2 sm:py-0">
             {/* Left: leftActions + Breadcrumbs + View Switcher */}
             <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden sm:gap-2">
                 {leftActions && <>{leftActions}<div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" /></>}
@@ -111,7 +111,7 @@ export default function WorkspaceToolbar({
                         type="text"
                         placeholder="Buscar en esta vista..."
                         onChange={(e) => onSearch?.(e.target.value)}
-                        className="h-8 w-44 lg:w-56 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-md pl-8 pr-3 text-xs font-medium placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-1 focus:ring-[hsl(var(--primary))]/30 focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-[#252528] focus:w-64 outline-none transition-all duration-200"
+                        className="h-8 w-44 lg:w-56 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-md pl-8 pr-3 text-xs font-medium placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-1 focus:ring-[hsl(var(--primary))]/30 focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-[hsl(var(--surface-2))] focus:w-64 outline-none transition-all duration-200"
                     />
                 </div>
 
@@ -153,7 +153,7 @@ function ToolbarButton({ icon: Icon, onClick, tooltip, active }: { icon: AppIcon
             >
                 <Icon size={13} />
             </button>
-            <div className="absolute top-9 left-1/2 -translate-x-1/2 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white text-[9px] font-semibold px-1.5 py-1 rounded opacity-0 group-hover/toolbar-btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100] shadow-xl border border-white/5 tracking-wider uppercase">
+            <div className="absolute top-9 left-1/2 -translate-x-1/2 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white text-2xs font-semibold px-1.5 py-1 rounded opacity-0 group-hover/toolbar-btn:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100] shadow-xl border border-white/5 tracking-wider uppercase">
                 {tooltip}
             </div>
         </div>

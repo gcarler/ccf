@@ -147,9 +147,9 @@ export default function WikiDocEditPage() {
                         <ChevronLeft size={20} />
                     </button>
                     <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10" />
-                    <h1 className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate max-w-[300px]">
+                    <h1 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate max-w-[300px]">
                         {doc.title}
-                        {isReadonly && <span className="ml-2 text-[10px] text-[hsl(var(--text-secondary))] font-normal">(solo lectura)</span>}
+                        {isReadonly && <span className="ml-2 text-2xs text-[hsl(var(--text-secondary))] font-normal">(solo lectura)</span>}
                     </h1>
                 </div>
 

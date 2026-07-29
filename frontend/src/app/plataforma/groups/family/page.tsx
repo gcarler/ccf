@@ -19,7 +19,7 @@ export default function FamilyNucleusPage() {
         <div className="p-4 space-y-3 animate-in slide-in-from-right-4 duration-700">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] rounded-full text-2xs font-semibold uppercase tracking-wide w-fit">
                         <Heart size={12} /> Gestion Familiar Ministerial
                     </div>
                     <h1 className="text-lg font-bold tracking-tighter text-white uppercase italic">
@@ -49,7 +49,7 @@ export default function FamilyNucleusPage() {
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-bold text-white tracking-tight uppercase italic">Familia <span className="text-[hsl(var(--destructive))]">Gomez Sanchez</span></h2>
-                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide flex items-center gap-2">
+                                    <p className="text-2xs text-muted-foreground font-bold uppercase tracking-wide flex items-center gap-2">
                                         <Shield size={12} className="text-[hsl(var(--destructive))]" /> Personas Activos: 4
                                     </p>
                                 </div>
@@ -69,7 +69,7 @@ export default function FamilyNucleusPage() {
                                             </div>
                                             <div>
                                                 <div className="text-sm font-bold text-white group-hover/item:text-[hsl(var(--destructive))] transition-colors">{persona.name}</div>
-                                                <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">{persona.role}</div>
+                                                <div className="text-2xs text-muted-foreground font-bold uppercase tracking-tighter">{persona.role}</div>
                                             </div>
                                         </div>
                                         <button className="p-2 text-muted-foreground hover:text-white transition-colors">
@@ -86,10 +86,10 @@ export default function FamilyNucleusPage() {
                             <h3 className="text-xs font-semibold text-white uppercase tracking-wide flex items-center gap-2">
                                 <MessageCircle size={14} className="text-[hsl(var(--destructive))]" /> Consejería Familiar
                             </h3>
-                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            <p className="text-xs text-muted-foreground leading-relaxed">
                                 Accede a recursos especializados para matrimonios y crianza de hijos según principios bíblicos.
                             </p>
-                            <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md transition-all border border-white/5">
+                            <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-2xs font-semibold uppercase tracking-wide rounded-md transition-all border border-white/5">
                                 Ver Recursos
                             </button>
                         </div>
@@ -97,10 +97,10 @@ export default function FamilyNucleusPage() {
                             <h3 className="text-xs font-semibold text-white uppercase tracking-wide flex items-center gap-2">
                                 <Users size={14} className="text-[hsl(var(--destructive))]" /> Grupo en Casa
                             </h3>
-                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            <p className="text-xs text-muted-foreground leading-relaxed">
                                 Su familia está vinculada a la <span className="text-white font-bold">Grupo en Casa &quot;Norte 1&quot;</span> dirigida por Juan y Paula.
                             </p>
-                            <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md transition-all border border-white/5">
+                            <button className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-2xs font-semibold uppercase tracking-wide rounded-md transition-all border border-white/5">
                                 Contactar Líder
                             </button>
                         </div>
@@ -117,7 +117,7 @@ export default function FamilyNucleusPage() {
                                 { label: 'Servicio Voluntario', value: '100%', color: 'bg-[hsl(var(--success))]' },
                             ].map((stat, i) => (
                                 <div key={i} className="space-y-2">
-                                    <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
+                                    <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide">
                                         <span className="text-white/60">{stat.label}</span>
                                         <span className="text-white">{stat.value}</span>
                                     </div>
@@ -142,7 +142,7 @@ export default function FamilyNucleusPage() {
                                     </div>
                                     <div>
                                         <div className="text-xs font-bold text-white uppercase tracking-tight">{ev.title}</div>
-                                        <div className="text-[10px] text-muted-foreground font-bold">{ev.date}</div>
+                                        <div className="text-2xs text-muted-foreground font-bold">{ev.date}</div>
                                     </div>
                                 </div>
                             ))}

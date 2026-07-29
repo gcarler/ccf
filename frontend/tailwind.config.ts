@@ -93,11 +93,29 @@ const config: Config = {
                 "site-on-secondary-fixed": "var(--site-on-secondary-fixed)"
             },
             fontFamily: {
-                "display": ["Space Grotesk", "Plus Jakarta Sans", "Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-                "sans": ["Space Grotesk", "Plus Jakarta Sans", "Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-                "headline": ["Space Grotesk", "Plus Jakarta Sans", "Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-                "body": ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-                "label": ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"]
+                // ── Connected to next/font/google CSS variables (see layout.tsx) ──
+                // var(--font-*) is injected into <html> by Next.js at build time.
+                // Static fallback strings ensure prerender/SSR correctness.
+                "display":  ["var(--font-space-grotesk)", "Space Grotesk", "var(--font-plus-jakarta)", "Plus Jakarta Sans", "var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
+                "sans":     ["var(--font-space-grotesk)", "Space Grotesk", "var(--font-plus-jakarta)", "Plus Jakarta Sans", "var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
+                "headline": ["var(--font-space-grotesk)", "Space Grotesk", "var(--font-plus-jakarta)", "Plus Jakarta Sans", "-apple-system", "sans-serif"],
+                "body":     ["var(--font-inter)", "Inter", "var(--font-space-grotesk)", "Space Grotesk", "-apple-system", "sans-serif"],
+                "label":    ["var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
+                "mono":     ["JetBrains Mono", "Fira Code", "ui-monospace", "monospace"],
+            },
+            fontSize: {
+                // ── Semantic type scale (maps to --text-* CSS tokens) ──
+                // Use class names: text-2xs, text-xs, text-sm, text-base, etc.
+                "2xs":  ["var(--text-2xs)",  { lineHeight: "var(--leading-tight)" }],
+                "xs":   ["var(--text-xs)",   { lineHeight: "var(--leading-normal)" }],
+                "sm":   ["var(--text-sm)",   { lineHeight: "var(--leading-normal)" }],
+                "base": ["var(--text-base)", { lineHeight: "var(--leading-normal)" }],
+                "md":   ["var(--text-md)",   { lineHeight: "var(--leading-normal)" }],
+                "lg":   ["var(--text-lg)",   { lineHeight: "var(--leading-snug)" }],
+                "xl":   ["var(--text-xl)",   { lineHeight: "var(--leading-tight)" }],
+                "2xl":  ["var(--text-2xl)",  { lineHeight: "var(--leading-tight)" }],
+                "3xl":  ["var(--text-3xl)",  { lineHeight: "var(--leading-tight)" }],
+                "4xl":  ["var(--text-4xl)",  { lineHeight: "1.1" }],
             },
             borderRadius: {
                 "DEFAULT": "0.25rem",

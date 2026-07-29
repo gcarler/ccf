@@ -161,7 +161,7 @@ export default function ContactsPage() {
             rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nuevo Contacto
                 </button>
@@ -171,7 +171,7 @@ export default function ContactsPage() {
                 {leadsError && (
                     <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
+                            <p className="text-xs font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                                 No se pudo cargar el pipeline de contactos
                             </p>
                             <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
@@ -180,7 +180,7 @@ export default function ContactsPage() {
                         </div>
                         <button
                             onClick={fetchLeads}
-                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                         >
                             Reintentar
                         </button>
@@ -201,7 +201,7 @@ export default function ContactsPage() {
                     <div className="flex gap-2 overflow-x-auto pb-1">
                         <button
                             onClick={() => setActiveFilter('all')}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--info)/100%)]' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10'}`}
+                            className={`px-4 py-1.5 rounded-full text-2xs font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--info)/100%)]' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10'}`}
                         >
                             Todos ({leads.length})
                         </button>
@@ -209,7 +209,7 @@ export default function ContactsPage() {
                             <button
                                 key={s}
                                 onClick={() => setActiveFilter(s)}
-                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--info)/100%)]' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10'}`}
+                                className={`px-4 py-1.5 rounded-full text-2xs font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--info)/100%)]' : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10'}`}
                             >
                                 {STAGE_LABELS[s]} ({leads.filter(l => l.stage === s).length})
                             </button>
@@ -257,19 +257,19 @@ export default function ContactsPage() {
                                         <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-base tracking-tight group-hover:text-[hsl(var(--primary))] transition-colors">
                                             {lead.nombre_completo || ''}
                                         </h3>
-                                        <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">
                                             {lead.source || 'Sin fuente'} · {(lead.telefono ?? lead.phone) || 'Sin teléfono'}
                                         </p>
                                     </div>
                                 </div>
-                                <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border ${getStatusStyles(stage)}`}>
+                                <span className={`px-3 py-1 rounded-lg text-2xs font-bold uppercase tracking-wide border ${getStatusStyles(stage)}`}>
                                     {STAGE_LABELS[stage] || stage}
                                 </span>
                             </div>
                             <div className="flex items-center justify-between pt-4 border-t border-[hsl(var(--border))] dark:border-white/5">
                                 <button
                                     onClick={e => { e.stopPropagation(); router.push('/plataforma/crm/pipeline'); }}
-                                    className="text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-wide flex items-center gap-2 hover:text-[hsl(var(--primary))] transition-colors"
+                                    className="text-[hsl(var(--primary))] text-2xs font-bold uppercase tracking-wide flex items-center gap-2 hover:text-[hsl(var(--primary))] transition-colors"
                                 >
                                     <div className="size-5 rounded-lg bg-[hsl(var(--info))]/10 flex items-center justify-center">
                                         <Link2 size={11} />
@@ -301,20 +301,20 @@ export default function ContactsPage() {
                             {PIPELINE_STAGES.map(stage => (
                                 <div key={stage} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))]/60 dark:bg-white/[0.03] p-3">
                                     <div className="mb-3 flex items-center justify-between">
-                                        <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{STAGE_LABELS[stage]}</span>
-                                        <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{groupedByStage[stage]?.length ?? 0}</span>
+                                        <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{STAGE_LABELS[stage]}</span>
+                                        <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{groupedByStage[stage]?.length ?? 0}</span>
                                     </div>
                                     <div className="space-y-2">
                                         {(groupedByStage[stage] ?? []).map(lead => {
                                             return (
                                             <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all">
                                                 <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
-                                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
+                                                <p className="text-2xs text-[hsl(var(--text-secondary))]">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
                                             </button>
                                             );
                                         })}
                                         {(groupedByStage[stage] ?? []).length === 0 && (
-                                            <div className="py-2 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vacío</div>
+                                            <div className="py-2 text-center text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vacío</div>
                                         )}
                                     </div>
                                 </div>
@@ -329,14 +329,14 @@ export default function ContactsPage() {
                                 </div>
                             ) : groupedByDate.map(([dateKey, payload]) => (
                                 <div key={dateKey} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
-                                    <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{payload.label}</p>
+                                    <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{payload.label}</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {payload.items.map(lead => {
                                             const stage = lead.stage ?? 'new';
                                             return (
                                             <button key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all">
                                                 <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
-                                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{STAGE_LABELS[stage] || stage}</p>
+                                                <p className="text-2xs text-[hsl(var(--text-secondary))]">{STAGE_LABELS[stage] || stage}</p>
                                             </button>
                                             );
                                         })}
@@ -346,12 +346,12 @@ export default function ContactsPage() {
                         </div>
                     ) : viewType === 'gantt' ? (
                         <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"><BarChart3 size={12} /> Progreso por contacto</div>
+                            <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"><BarChart3 size={12} /> Progreso por contacto</div>
                             {filtered.map(lead => {
                                 const stage = lead.stage ?? 'new';
                                 return (
                                 <div key={lead.id} className="space-y-1">
-                                    <div className="flex items-center justify-between text-[11px]">
+                                    <div className="flex items-center justify-between text-xs">
                                         <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</span>
                                         <span className="font-bold text-[hsl(var(--text-secondary))]">{STAGE_PROGRESS[stage] ?? 0}%</span>
                                     </div>
@@ -361,17 +361,17 @@ export default function ContactsPage() {
                                 </div>
                                 );
                             })}
-                            {!leadsError && filtered.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin datos</div>}
+                            {!leadsError && filtered.length === 0 && <div className="py-1.5 text-center text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin datos</div>}
                         </div>
                     ) : viewType === 'table' ? (
                         <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto">
                             <table className="w-full text-left min-w-[520px]">
                                 <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                                     <tr>
-                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre</th>
-                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</th>
-                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Telefono</th>
-                                        <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Etapa</th>
+                                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre</th>
+                                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</th>
+                                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Telefono</th>
+                                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Etapa</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -391,7 +391,7 @@ export default function ContactsPage() {
                         </div>
                     ) : viewType === 'wiki' ? (
                         <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"><BookOpen size={12} /> Wiki de contactos</div>
+                            <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"><BookOpen size={12} /> Wiki de contactos</div>
                             <textarea
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
@@ -413,14 +413,14 @@ export default function ContactsPage() {
                 subtitle="Registrar prospecto en el pipeline pastoral"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
+                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
                             Cancelar
                         </button>
                         <button
                             form="create-contact-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
@@ -431,7 +431,7 @@ export default function ContactsPage() {
                 <form id="create-contact-form" onSubmit={handleCreate} className="space-y-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre *</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre *</label>
                             <input
                                 required
                                 value={newLead.first_name}
@@ -441,7 +441,7 @@ export default function ContactsPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Apellido</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Apellido</label>
                             <input
                                 value={newLead.last_name}
                                 onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
@@ -451,7 +451,7 @@ export default function ContactsPage() {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Teléfono</label>
+                        <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Teléfono</label>
                         <input
                             value={newLead.phone}
                             onChange={e => setNewLead({ ...newLead, phone: e.target.value })}
@@ -461,7 +461,7 @@ export default function ContactsPage() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Fuente</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Fuente</label>
                             <select
                                 value={newLead.source}
                                 onChange={e => setNewLead({ ...newLead, source: e.target.value })}
@@ -471,7 +471,7 @@ export default function ContactsPage() {
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Etapa inicial</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Etapa inicial</label>
                             <select
                                 value={newLead.stage}
                                 onChange={e => setNewLead({ ...newLead, stage: e.target.value })}
@@ -482,7 +482,7 @@ export default function ContactsPage() {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Notas</label>
+                        <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Notas</label>
                         <textarea
                             value={newLead.notes}
                             onChange={e => setNewLead({ ...newLead, notes: e.target.value })}

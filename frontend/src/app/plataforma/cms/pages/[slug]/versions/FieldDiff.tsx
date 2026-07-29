@@ -33,12 +33,12 @@ export function FieldDiffRow({
 
   return (
     <div className="grid gap-3 md:grid-cols-[160px_1fr]">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+      <div className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
         {label}
       </div>
       <div className="min-w-0">
         {diff.kind === "unchanged" && (
-          <span className="text-[12px] text-[hsl(var(--text-secondary))]">
+          <span className="text-sm text-[hsl(var(--text-secondary))]">
             {isString ? (diff.after as string) || emptyText : JSON.stringify(diff.after) || emptyText}
           </span>
         )}
@@ -47,11 +47,11 @@ export function FieldDiffRow({
             role="note"
             aria-label="Valor añadido en la versión B"
             className={clsx(
-              "block text-[12px] text-success-text dark:text-success-text bg-success-soft dark:bg-[hsl(var(--success))]/10 border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30 rounded-md px-2.5 py-1.5",
+              "block text-sm text-success-text dark:text-success-text bg-success-soft dark:bg-[hsl(var(--success))]/10 border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30 rounded-md px-2.5 py-1.5",
               multiline && "whitespace-pre-wrap break-words",
             )}
           >
-            <span aria-hidden="true" className="mr-1 text-[10px] font-semibold uppercase tracking-wider">+ Añadido</span>
+            <span aria-hidden="true" className="mr-1 text-2xs font-semibold uppercase tracking-wider">+ Añadido</span>
             {renderValue(diff.after, emptyText)}
           </span>
         )}
@@ -60,11 +60,11 @@ export function FieldDiffRow({
             role="note"
             aria-label="Valor eliminado en la versión B"
             className={clsx(
-              "block text-[12px] text-danger-text dark:text-danger-text bg-danger-soft dark:bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 rounded-md px-2.5 py-1.5 line-through",
+              "block text-sm text-danger-text dark:text-danger-text bg-danger-soft dark:bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 rounded-md px-2.5 py-1.5 line-through",
               multiline && "whitespace-pre-wrap break-words",
             )}
           >
-            <span aria-hidden="true" className="mr-1 text-[10px] font-semibold uppercase tracking-wider no-underline">− Eliminado</span>
+            <span aria-hidden="true" className="mr-1 text-2xs font-semibold uppercase tracking-wider no-underline">− Eliminado</span>
             {renderValue(diff.before, emptyText)}
           </span>
         )}
@@ -72,7 +72,7 @@ export function FieldDiffRow({
           layout === "inline" ? (
             <span
               className={clsx(
-                "block text-[12px] text-[hsl(var(--text-primary))] dark:text-white",
+                "block text-sm text-[hsl(var(--text-primary))] dark:text-white",
                 multiline && "whitespace-pre-wrap break-words",
               )}
             >
@@ -175,7 +175,7 @@ function DiffColumn({
   return (
     <div
       className={clsx(
-        "rounded-md border px-2.5 py-1.5 text-[12px]",
+        "rounded-md border px-2.5 py-1.5 text-sm",
         isBefore
           ? "bg-danger-soft/60 dark:bg-[hsl(var(--danger))]/5 border-[hsl(var(--danger)/25%)]/70 dark:border-[hsl(var(--danger)/100%)]/20"
           : "bg-success-soft/60 dark:bg-[hsl(var(--success))]/5 border-[hsl(var(--success)/25%)]/70 dark:border-[hsl(var(--success)/100%)]/20",
@@ -201,5 +201,5 @@ function renderValue(v: unknown, emptyText: string): React.ReactNode {
   if (v == null) return <span className="text-[hsl(var(--text-secondary))]">{emptyText}</span>;
   if (typeof v === "string") return v || <span className="text-[hsl(var(--text-secondary))]">{emptyText}</span>;
   if (typeof v === "number" || typeof v === "boolean") return String(v);
-  return <code className="text-[11px]">{JSON.stringify(v)}</code>;
+  return <code className="text-xs">{JSON.stringify(v)}</code>;
 }

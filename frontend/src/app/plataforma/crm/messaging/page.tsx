@@ -170,7 +170,7 @@ export default function MessagingCampaignCenter() {
             viewType={viewType}
             onViewChange={setViewType}
             rightActions={canEditCrm ? (
-                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 shadow-sm transition-all active:scale-95">
+                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 shadow-sm transition-all active:scale-95">
                     <History size={14} /> Historial Detallado
                 </button>
             ) : undefined}
@@ -179,7 +179,7 @@ export default function MessagingCampaignCenter() {
                 {historyError && (
                     <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
+                            <p className="text-xs font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                                 No se pudo cargar la mensajería
                             </p>
                             <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
@@ -188,7 +188,7 @@ export default function MessagingCampaignCenter() {
                         </div>
                         <button
                             onClick={fetchHistory}
-                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                         >
                             Reintentar
                         </button>
@@ -220,9 +220,9 @@ export default function MessagingCampaignCenter() {
                             >
                                 <div>
                                     <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
-                                    <p className="text-[11px] text-[hsl(var(--text-secondary))]">{item.channel} · {item.date} · {item.count} contactos</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">{item.channel} · {item.date} · {item.count} contactos</p>
                                 </div>
-                                <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.status}</span>
+                                <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.status}</span>
                             </div>
                         ))}
                         {!historyError && history.length === 0 && <div className="py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Sin campañas recientes</div>}
@@ -234,11 +234,11 @@ export default function MessagingCampaignCenter() {
                         <table className="w-full min-w-[480px] text-left">
                             <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                                 <tr>
-                                    <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Campaña</th>
-                                    <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Canal</th>
-                                    <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha</th>
-                                    <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
-                                    <th className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Volumen</th>
+                                    <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Campaña</th>
+                                    <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Canal</th>
+                                    <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha</th>
+                                    <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
+                                    <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Volumen</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -291,8 +291,8 @@ export default function MessagingCampaignCenter() {
                         ) : groupedByChannel.map(col => (
                             <div key={col.key} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-3">
                                 <div className="mb-3 flex items-center justify-between">
-                                    <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{col.label}</p>
-                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{col.items.length}</span>
+                                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{col.label}</p>
+                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{col.items.length}</span>
                                 </div>
                                 <div className="space-y-2">
                                     {col.items.map((item: any) => (
@@ -305,7 +305,7 @@ export default function MessagingCampaignCenter() {
                                             className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3 hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer"
                                         >
                                             <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
-                                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">{item.date} · {item.target_count} envíos</p>
+                                            <p className="text-2xs text-[hsl(var(--text-secondary))]">{item.date} · {item.target_count} envíos</p>
                                         </div>
                                     ))}
                                 </div>
@@ -332,7 +332,7 @@ export default function MessagingCampaignCenter() {
                                 ))
                             ) : !historyError && groupedByDate.map(([label, items]) => (
                             <div key={label} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
-                                <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
+                                <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {items.map((item: any) => (
                                         <div 
@@ -344,7 +344,7 @@ export default function MessagingCampaignCenter() {
                                             className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-3 hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
                                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
-                                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">{item.channel} · {item.status} · {item.target_count}</p>
+                                            <p className="text-2xs text-[hsl(var(--text-secondary))]">{item.channel} · {item.status} · {item.target_count}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -355,7 +355,7 @@ export default function MessagingCampaignCenter() {
 
                 {viewType === 'gantt' && (
  <div className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Avance de entrega</p>
+                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Avance de entrega</p>
                         {loadingHistory ? (
                             [...Array(3)].map((_, i) => (
                                 <div key={i} className="space-y-1 p-2 animate-pulse">
@@ -375,7 +375,7 @@ export default function MessagingCampaignCenter() {
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
                                 className="space-y-1 cursor-pointer group p-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-md transition-all"
                             >
-                                <div className="flex items-center justify-between text-[11px]">
+                                <div className="flex items-center justify-between text-xs">
                                     <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</span>
                                     <span className="font-bold text-[hsl(var(--text-secondary))]">{STATUS_PROGRESS[item.status] ?? 0}%</span>
                                 </div>
@@ -389,7 +389,7 @@ export default function MessagingCampaignCenter() {
 
                 {viewType === 'wiki' && (
  <div className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki de mensajería</p>
+                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki de mensajería</p>
                         <textarea
                             value={wikiNotes}
                             onChange={(e) => setWikiNotes(e.target.value)}
@@ -410,7 +410,7 @@ export default function MessagingCampaignCenter() {
                             <div className="relative z-10 flex justify-between items-center">
                                 <div>
                                     <h2 className="text-lg font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none mb-2 uppercase">Campaign Composer</h2>
-                                    <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Crea mensajes de alto impacto</p>
+                                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Crea mensajes de alto impacto</p>
                                 </div>
                                 <div className="flex bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
                                     <ChannelButton active={channel === 'whatsapp'} onClick={() => canEditCrm && setChannel('whatsapp')} icon={MessageSquare} label="WhatsApp" disabled={!canEditCrm} />
@@ -421,7 +421,7 @@ export default function MessagingCampaignCenter() {
 
                             <div className="space-y-3">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Nombre de la Campaña</label>
+                                    <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Nombre de la Campaña</label>
                                         <input 
                                             required
                                             disabled={!canEditCrm}
@@ -435,7 +435,7 @@ export default function MessagingCampaignCenter() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Mensaje (Personalización con {`{nombre}`})</label>
+                                    <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Mensaje (Personalización con {`{nombre}`})</label>
                                     <div className="relative">
                                         <textarea 
                                             required
@@ -458,13 +458,13 @@ export default function MessagingCampaignCenter() {
 
                             <div className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
                                 <div className="flex gap-2">
-                                    <button disabled={!canEditCrm} className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors disabled:opacity-50">
+                                    <button disabled={!canEditCrm} className="flex items-center gap-2 px-4 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors disabled:opacity-50">
                                         <FileText size={14} /> Guardar Borrador
                                     </button>
                                 </div>
                                 <button 
                                     onClick={handleSendCampaign} disabled={isSending || !canEditCrm}
-                                    className="flex items-center gap-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50"
+                                    className="flex items-center gap-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50"
                                 >
                                     {isSending ? <Clock size={18} className="animate-spin" /> : <Zap size={18} fill="currentColor" />}
                                     Lanzar Campaña
@@ -475,7 +475,7 @@ export default function MessagingCampaignCenter() {
                         <section className="bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-lg p-3 border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20 space-y-3">
                             <div className="flex items-center gap-3 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
                                 <Sparkles size={20} />
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide">IA Copywriting Helper</h3>
+                                <h3 className="text-xs font-bold uppercase tracking-wide">IA Copywriting Helper</h3>
                             </div>
                             <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium italic">
                                 &ldquo;Optimus sugiere: Los mensajes enviados por WhatsApp entre las 10:00 AM y 11:30 AM tienen un 25% más de tasa de respuesta en el segmento de Líderes.&rdquo;
@@ -502,8 +502,8 @@ export default function MessagingCampaignCenter() {
                                 <div className="flex items-center gap-4">
                                     <div className="size-8 rounded-md bg-[hsl(var(--info-muted))] flex items-center justify-center text-[hsl(var(--primary))]"><Users size={20} /></div>
                                     <div>
-                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-0.5">Segmentos Seleccionados</p>
-                                        <h4 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{segments.length} <span className="text-[10px] text-[hsl(var(--text-secondary))] font-bold tracking-normal uppercase">Segmentos</span></h4>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-0.5">Segmentos Seleccionados</p>
+                                        <h4 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{segments.length} <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold tracking-normal uppercase">Segmentos</span></h4>
                                     </div>
                                 </div>
                                 <Target size={20} className="text-[hsl(var(--primary))]" />
@@ -537,9 +537,9 @@ export default function MessagingCampaignCenter() {
                                             <div>
                                                 <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase leading-tight mb-1">{item.name}</h4>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.date}</span>
+                                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.date}</span>
                                                     <div className="size-1 rounded-full bg-[hsl(var(--surface-2))]" />
-                                                    <span className="text-[9px] font-bold text-[hsl(var(--primary))] uppercase">{item.count} envíos</span>
+                                                    <span className="text-2xs font-bold text-[hsl(var(--primary))] uppercase">{item.count} envíos</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -552,7 +552,7 @@ export default function MessagingCampaignCenter() {
                                     </div>
                                 ))}
                             </div>
-                            <button className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all">
+                            <button className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-white rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all">
                                 Ver Reporte Completo
                             </button>
                         </section>

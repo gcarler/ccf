@@ -115,7 +115,7 @@ export default function EnrollmentWizard() {
                                             <BookOpen size={160} strokeWidth={1} />
                                         </div>
                                         <div className="relative z-10">
-                                            <span className="inline-block px-3 py-1 rounded-full bg-white/10 border border-white/10 text-[9px] font-semibold uppercase tracking-wide text-white mb-4">
+                                            <span className="inline-block px-3 py-1 rounded-full bg-white/10 border border-white/10 text-2xs font-semibold uppercase tracking-wide text-white mb-4">
                                                 {course.modality === 'formal' ? 'Ruta Formal' : 'Ruta No Formal'}
                                             </span>
                                             <h1 className="text-xl font-bold text-white leading-none tracking-tighter mb-2">{course.title}</h1>
@@ -128,7 +128,7 @@ export default function EnrollmentWizard() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-3 rounded-md bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                                         <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Carga Horaria</p>
-                                        <p className="text-sm font-semibold">{course.duration_hours}h <span className="text-[10px] text-[hsl(var(--text-secondary))]">Estimadas</span></p>
+                                        <p className="text-sm font-semibold">{course.duration_hours}h <span className="text-2xs text-[hsl(var(--text-secondary))]">Estimadas</span></p>
                                     </div>
                                     <div className="p-3 rounded-md bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                                         <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Modalidad</p>
@@ -154,14 +154,14 @@ export default function EnrollmentWizard() {
                                                 <button className="w-full group flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)] transition-all">
                                                     <div className="flex items-center gap-3">
                                                         <CreditCard size={18} className="text-[hsl(var(--text-secondary))]" />
-                                                        <span className="text-[11px] font-bold">Identificación Oficial</span>
+                                                        <span className="text-xs font-bold">Identificación Oficial</span>
                                                     </div>
                                                     <Upload size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                                                 </button>
                                                 <button className="w-full group flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)] transition-all">
                                                     <div className="flex items-center gap-3">
                                                         <BookOpen size={18} className="text-[hsl(var(--text-secondary))]" />
-                                                        <span className="text-[11px] font-bold">Registro de Calificaciones</span>
+                                                        <span className="text-xs font-bold">Registro de Calificaciones</span>
                                                     </div>
                                                     <Upload size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                                                 </button>
@@ -199,7 +199,7 @@ export default function EnrollmentWizard() {
                                             <span className="font-semibold">$50.00 USD</span>
                                         </div>
                                         <div className="flex justify-between items-center bg-[hsl(var(--surface-3))] p-4 rounded-lg">
-                                            <span className="text-[11px] font-semibold uppercase tracking-wide">Inversión Total</span>
+                                            <span className="text-xs font-semibold uppercase tracking-wide">Inversión Total</span>
                                             <span className="text-lg font-bold text-[hsl(var(--primary))] tracking-tighter">$250.00</span>
                                         </div>
                                     </div>
@@ -218,7 +218,7 @@ export default function EnrollmentWizard() {
                                                 </div>
                                                 <div className="flex-1">
                                                     <p className="text-xs font-semibold uppercase tracking-wider">{id === 'card' ? 'Tarjeta de Crédito' : id === 'paypal' ? 'PayPal Checkout' : 'Depósito Directo'}</p>
-                                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{id === 'card' ? 'Mastercard / Visa' : 'Transferencia Segura'}</p>
+                                                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{id === 'card' ? 'Mastercard / Visa' : 'Transferencia Segura'}</p>
                                                 </div>
                                                 {paymentMethod === id && <CheckCircle2 size={20} className="text-[hsl(var(--primary))]" />}
                                             </label>
@@ -264,7 +264,7 @@ export default function EnrollmentWizard() {
                                 else if (step === 2) handleEnrollment();
                             }}
                             disabled={enrolling}
-                            className="w-full h-8 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-semibold uppercase tracking-wide text-[11px] shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:brightness-110 disabled:opacity-50"
+                            className="w-full h-8 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-semibold uppercase tracking-wide text-xs shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:brightness-110 disabled:opacity-50"
                         >
                             {enrolling ? (
                                 <><Loader2 className="animate-spin w-5 h-5" /> Encriptando...</>
@@ -278,7 +278,7 @@ export default function EnrollmentWizard() {
                         {step === 2 && (
                              <div className="flex items-center justify-center gap-2 mt-3">
                                 <Lock size={12} className="text-[hsl(var(--success))]" />
-                                <p className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Transacción Encriptada 256-bit SSL</p>
+                                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Transacción Encriptada 256-bit SSL</p>
                              </div>
                         )}
                     </div>

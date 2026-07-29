@@ -80,7 +80,7 @@ export default function InboxPage() {
     return (
         <div className="h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] overflow-hidden font-display">
             <div className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-[hsl(var(--surface-1))]/50 dark:bg-[#1E1F21]">
-                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                <h1 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-2">
                     <Bell size={13} />
                     Bandeja de Entrada
                     {unreadCount > 0 && (
@@ -98,7 +98,7 @@ export default function InboxPage() {
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Buscar..."
-                        className="pl-8 pr-3 py-1.5 text-[11px] bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-48 transition-all"
+                        className="pl-8 pr-3 py-1.5 text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-48 transition-all"
                     />
                 </div>
 
@@ -108,7 +108,7 @@ export default function InboxPage() {
                             key={item}
                             onClick={() => setFilter(item)}
                             className={clsx(
-                                'px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors',
+                                'px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide transition-colors',
                                 filter === item
                                     ? 'bg-[hsl(var(--primary))] text-white'
                                     : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]',
@@ -138,7 +138,7 @@ export default function InboxPage() {
                 )}
             </div>
 
-            <div className="px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+            <div className="px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                 {FILTER_LABEL[filter]}
             </div>
 
@@ -198,7 +198,7 @@ export default function InboxPage() {
                                             <div className="flex items-center gap-2 mb-0.5">
                                                 <p
                                                     className={clsx(
-                                                        'text-[13px] font-semibold truncate flex-1',
+                                                        'text-base font-semibold truncate flex-1',
                                                         notification.read
                                                             ? 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
                                                             : 'text-[hsl(var(--text-primary))] dark:text-white font-bold',
@@ -206,15 +206,15 @@ export default function InboxPage() {
                                                 >
                                                     {notification.title}
                                                 </p>
-                                                <span className="text-[10px] text-[hsl(var(--text-secondary))] shrink-0 font-medium">
+                                                <span className="text-2xs text-[hsl(var(--text-secondary))] shrink-0 font-medium">
                                                     {formatNotificationTime(notification.createdAt)}
                                                 </span>
                                             </div>
-                                            <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-snug line-clamp-2">
+                                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-snug line-clamp-2">
                                                 {notification.body || 'Sin detalle adicional.'}
                                             </p>
                                             <div className="flex items-center gap-3 mt-2">
-                                                <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] flex items-center gap-1">
+                                                <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] flex items-center gap-1">
                                                     <Layout size={10} />
                                                     {notification.module}
                                                 </span>

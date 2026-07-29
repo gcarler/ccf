@@ -373,7 +373,7 @@ def get_messaging_gateway() -> MessagingGateway:
         if not isinstance(_gateway_instance, StubMessagingGateway):
             _gateway_instance = StubMessagingGateway(settings)
         return _gateway_instance
-    if not isinstance(_gateway_instance, MessagingGateway):
+    if type(_gateway_instance) is not MessagingGateway:
         _gateway_instance = MessagingGateway(settings)
     return _gateway_instance
 

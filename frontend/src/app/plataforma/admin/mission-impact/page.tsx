@@ -108,7 +108,7 @@ export default function AdminMissionImpactPage() {
                         </div>
                         <div>
                             <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{item.title}</h3>
-                            <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{item.place} · {item.date}</p>
+                            <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{item.place} · {item.date}</p>
                         </div>
                     </div>
                     <div className="text-sm font-semibold text-[hsl(var(--primary))] italic">{item.metric}</div>
@@ -122,19 +122,19 @@ export default function AdminMissionImpactPage() {
             <table className="w-full min-w-[480px] text-left">
                 <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <tr>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hito</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Lugar</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Métrica</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hito</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Lugar</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Métrica</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                     {IMPACT_ITEMS.map((item) => (
                         <tr key={item.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.title}</td>
-                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{item.place}</td>
-                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-[hsl(var(--primary))] font-bold">{item.metric}</td>
-                            <td className="px-3 py-1.5"><span className="px-2 py-0.5 rounded-full bg-info-soft text-[hsl(var(--primary))] text-[9px] font-semibold uppercase">{item.status}</span></td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{item.place}</td>
+                            <td className="px-3 py-1.5 hidden lg:table-cell text-xs text-[hsl(var(--primary))] font-bold">{item.metric}</td>
+                            <td className="px-3 py-1.5"><span className="px-2 py-0.5 rounded-full bg-info-soft text-[hsl(var(--primary))] text-2xs font-semibold uppercase">{item.status}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -147,14 +147,14 @@ export default function AdminMissionImpactPage() {
             {groupedItems.map((group) => (
                 <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                        <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
                     </div>
                     <div className="space-y-4">
                         {group.items.map((item) => (
                             <div key={item.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3">
                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{item.title}</p>
-                                <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.place}</p>
+                                <p className="mt-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.place}</p>
                                 <p className="mt-4 text-xs font-semibold text-[hsl(var(--primary))] italic">{item.metric}</p>
                             </div>
                         ))}
@@ -191,7 +191,7 @@ export default function AdminMissionImpactPage() {
                 setViewType={setViewType}
                 availableViews={MISSION_VIEWS}
                 rightActions={
-                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
                         <Plus size={14} /> Registrar Hito
                     </button>
                 }
@@ -207,7 +207,7 @@ export default function AdminMissionImpactPage() {
                         <div className="space-y-4">
                             <motion.div 
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                             >
                                 <Sparkles size={12} className="animate-pulse" /> Expansión del Reino 2026
                             </motion.div>
@@ -265,7 +265,7 @@ export default function AdminMissionImpactPage() {
                                                 </div>
                                                 <div>
                                                     <h4 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight leading-none mb-2">{item.title}</h4>
-                                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide flex items-center gap-2">
+                                                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide flex items-center gap-2">
                                                         {item.place} • {item.date}
                                                     </p>
                                                 </div>
@@ -301,7 +301,7 @@ export default function AdminMissionImpactPage() {
                                 <div className="pt-10 border-t border-white/10 relative z-10">
                                     <div className="p-3 bg-white/5 rounded-lg border border-white/10 flex items-start gap-4">
                                         <Zap size={20} className="text-[hsl(var(--warning))] animate-pulse shrink-0" fill="currentColor" />
-                                        <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] leading-relaxed uppercase tracking-wider">
+                                        <p className="text-xs font-bold text-[hsl(var(--text-secondary))] leading-relaxed uppercase tracking-wider">
                                             Optimus AI: &ldquo;El crecimiento en familias alcanzadas proyecta un cumplimiento de meta del 100% para el tercer trimestre.&rdquo;
                                         </p>
                                     </div>
@@ -310,10 +310,10 @@ export default function AdminMissionImpactPage() {
 
                             <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 p-4 rounded-lg shadow-sm space-y-3">
                                 <h3 className="text-xs font-semibold uppercase tracking-wide dark:text-white">Acciones de Misión</h3>
-                                <button className="w-full py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] dark:text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center gap-3 active:scale-95">
+                                <button className="w-full py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] dark:text-white text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center gap-3 active:scale-95">
                                     <FileText size={16} /> Generar Reporte PDF
                                 </button>
-                                <button className="w-full py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-transparent text-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)] flex items-center justify-center gap-3 hover:bg-info-soft">
+                                <button className="w-full py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-transparent text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)] flex items-center justify-center gap-3 hover:bg-info-soft">
                                     <ArrowUpRight size={16} /> Compartir Avance
                                 </button>
                             </div>
@@ -348,7 +348,7 @@ function GoalProgress({ label, current, target, color }: GoalProgressProps) {
     const pct = Math.min(100, (current / target) * 100);
     return (
         <div className="space-y-3 group/goal">
-            <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
+            <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide">
                 <span className="text-[hsl(var(--text-secondary))] group-hover/goal:text-[hsl(var(--primary))] transition-colors">{label}</span>
                 <span className="text-white">{Math.round(pct)}%</span>
             </div>
@@ -361,7 +361,7 @@ function GoalProgress({ label, current, target, color }: GoalProgressProps) {
                     <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] animate-[shimmer_2s_infinite] -skew-x-12" />
                 </motion.div>
             </div>
-            <div className="text-[9px] font-bold text-[hsl(var(--text-secondary))] text-right uppercase tracking-wide">{current.toLocaleString()} / {target.toLocaleString()}</div>
+            <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] text-right uppercase tracking-wide">{current.toLocaleString()} / {target.toLocaleString()}</div>
         </div>
     );
 }

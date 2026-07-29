@@ -141,10 +141,10 @@ export default function AnnouncementsAdmin() {
                 <div key={ann.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide">{ann.category}</span>
-                            {ann.featured && <span className="px-2 py-0.5 rounded-full bg-info-soft text-[hsl(var(--primary))] text-[9px] font-semibold uppercase">Destacado</span>}
+                            <span className="text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide">{ann.category}</span>
+                            {ann.featured && <span className="px-2 py-0.5 rounded-full bg-info-soft text-[hsl(var(--primary))] text-2xs font-semibold uppercase">Destacado</span>}
                             <span className={clsx(
-                                "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase",
+                                "px-2 py-0.5 rounded-full text-2xs font-semibold uppercase",
                                 ann.status === 'published' ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : ann.status === 'draft' ? "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                             )}>{STATUS_LABELS[ann.status]}</span>
                         </div>
@@ -174,21 +174,21 @@ export default function AnnouncementsAdmin() {
             <table className="w-full min-w-[480px] text-left">
                 <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <tr>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comunicado</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Categoría</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Fecha</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comunicado</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Categoría</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Fecha</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                     {announcements.map((ann) => (
                         <tr key={ann.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{ann.title}</td>
-                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{ann.category}</td>
-                            <td className="px-3 py-1.5 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{new Date(ann.date).toLocaleDateString('es-ES')}</td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{ann.category}</td>
+                            <td className="px-3 py-1.5 hidden lg:table-cell text-xs text-[hsl(var(--text-secondary))]">{new Date(ann.date).toLocaleDateString('es-ES')}</td>
                             <td className="px-3 py-1.5">
                                 <span className={clsx(
-                                    "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase",
+                                    "px-2 py-0.5 rounded-full text-2xs font-semibold uppercase",
                                     ann.status === 'published' ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : ann.status === 'draft' ? "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                                 )}>
                                     {STATUS_LABELS[ann.status]}
@@ -206,14 +206,14 @@ export default function AnnouncementsAdmin() {
             {groupedAnnouncements.map((group) => (
                 <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                        <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
                     </div>
                     <div className="space-y-4">
                         {group.items.map((ann) => (
                             <div key={ann.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3">
                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{ann.title}</p>
-                                <p className="mt-2 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{ann.category} · {STATUS_LABELS[ann.status]}</p>
+                                <p className="mt-2 text-2xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{ann.category} · {STATUS_LABELS[ann.status]}</p>
                                 <p className="mt-4 text-xs text-[hsl(var(--text-secondary))] line-clamp-3">{ann.content}</p>
                             </div>
                         ))}
@@ -254,7 +254,7 @@ export default function AnnouncementsAdmin() {
                 rightActions={
                     <button 
                         onClick={() => router.push('/plataforma/admin/announcements/new')}
-                        className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
+                        className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
                     >
                         <Plus size={18} /> Nuevo Comunicado
                     </button>
@@ -270,7 +270,7 @@ export default function AnnouncementsAdmin() {
                     <header className="space-y-4 text-center md:text-left">
                         <motion.div 
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
+                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                         >
                             <Sparkles size={12} className="animate-pulse" /> Difusión de Visión CCF
                         </motion.div>
@@ -318,8 +318,8 @@ export default function AnnouncementsAdmin() {
                                     
                                     <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-4 flex flex-col items-start gap-3 relative z-10">
                                         <div className="flex items-center gap-4">
-                                            <span className="px-3 py-2 bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-full shadow-2xl shadow-[hsl(var(--info)/40%)]">Noticia Destacada</span>
-                                            <span className="px-3 py-2 bg-white/10 backdrop-blur-xl text-white text-[10px] font-semibold uppercase tracking-wide rounded-full border border-white/10">{featuredAnn.category}</span>
+                                            <span className="px-3 py-2 bg-[hsl(var(--primary))] text-white text-2xs font-semibold uppercase tracking-wide rounded-full shadow-2xl shadow-[hsl(var(--info)/40%)]">Noticia Destacada</span>
+                                            <span className="px-3 py-2 bg-white/10 backdrop-blur-xl text-white text-2xs font-semibold uppercase tracking-wide rounded-full border border-white/10">{featuredAnn.category}</span>
                                         </div>
                                         <h2 className="text-white text-lg lg:text-xl font-bold leading-tight tracking-tighter uppercase max-w-4xl">{featuredAnn.title}</h2>
                                         <p className="text-[hsl(var(--text-secondary))] text-lg font-medium line-clamp-2 max-w-2xl leading-relaxed italic">&ldquo;{featuredAnn.content.substring(0, 150)}...&rdquo;</p>
@@ -352,7 +352,7 @@ export default function AnnouncementsAdmin() {
                                             >
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex flex-col gap-2">
-                                                        <span className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide">{ann.category}</span>
+                                                        <span className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide">{ann.category}</span>
                                                         <h4 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter uppercase leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{ann.title}</h4>
                                                     </div>
                                                     <div className="size-7 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-all">
@@ -367,7 +367,7 @@ export default function AnnouncementsAdmin() {
                                                 <div className="flex items-center justify-between pt-8 border-t border-[hsl(var(--border))] dark:border-white/5">
                                                     <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <Calendar size={14} />
-                                                        <span className="text-[10px] font-semibold uppercase tracking-wide">{new Date(ann.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</span>
+                                                        <span className="text-2xs font-semibold uppercase tracking-wide">{new Date(ann.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</span>
                                                     </div>
                                                     <div className="flex gap-2">
                                                         {ann.status !== 'published' && (
@@ -393,7 +393,7 @@ export default function AnnouncementsAdmin() {
                                         </div>
                                         <div>
                                             <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Nuevo Mensaje</p>
-                                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">Impactar a toda la congregación</p>
+                                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">Impactar a toda la congregación</p>
                                         </div>
                                     </div>
                                 </div>

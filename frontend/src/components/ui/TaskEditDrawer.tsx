@@ -257,7 +257,7 @@ export default function TaskEditDrawer({
                                             id="status-trigger"
                                             onClick={() => { setShowStatusPicker(v => !v); setShowPriorityPicker(false); }}
                                             className={clsx(
-                                                'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border',
+                                                'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border',
                                                 cs.color, cs.bg,
                                                 'border-current/20 hover:border-current/40'
                                             )}
@@ -279,7 +279,7 @@ export default function TaskEditDrawer({
                                                         <button key={opt.value}
                                                             onClick={() => { updateField('status', opt.value); setShowStatusPicker(false); }}
                                                             className={clsx(
-                                                                'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-semibold transition-colors',
+                                                                'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold transition-colors',
                                                                 form.status === opt.value
                                                                     ? `${opt.color} ${opt.bg}`
                                                                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
@@ -306,18 +306,18 @@ export default function TaskEditDrawer({
                                     <AnimatePresence mode="wait">
                                         {saving ? (
                                             <motion.div key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-[hsl(var(--primary))] bg-info-soft">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[hsl(var(--primary))] bg-info-soft">
                                                 <Loader2 size={11} className="animate-spin" /> Guardando...
                                             </motion.div>
                                         ) : saved ? (
                                             <motion.div key="saved" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-success-text bg-success-soft dark:text-success">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-success-text bg-success-soft dark:text-success">
                                                 <CheckCheck size={11} /> Guardado
                                             </motion.div>
                                         ) : dirty ? (
                                             <motion.button key="save" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                                                 onClick={handleSave}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[hsl(var(--primary))] text-white shadow-md shadow-primary active:scale-95 transition-all">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-white shadow-md shadow-primary active:scale-95 transition-all">
                                                 <Save size={11} /> Guardar
                                             </motion.button>
                                         ) : null}
@@ -339,7 +339,7 @@ export default function TaskEditDrawer({
                                 onChange={e => updateField('title', e.target.value)}
                                 rows={1}
                                 placeholder="Nombre de la tarea..."
-                                className="w-full text-[19px] font-bold text-[hsl(var(--text-primary))] dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-0 -mx-0.5"
+                                className="w-full text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-0 -mx-0.5"
                             />
                         </header>
 
@@ -355,7 +355,7 @@ export default function TaskEditDrawer({
                                         <button
                                             onClick={() => { setShowPriorityPicker(v => !v); setShowStatusPicker(false); }}
                                             className={clsx(
-                                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-bold border transition-all',
+                                                'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold border transition-all',
                                                 cp.color, cp.bg, cp.border, 'hover:shadow-md', cp.glow
                                             )}
                                         >
@@ -370,13 +370,13 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[#222326] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {PRIORITY_OPTIONS.map(opt => (
                                                         <button key={opt.value}
                                                             onClick={() => { updateField('priority', opt.value); setShowPriorityPicker(false); }}
                                                             className={clsx(
-                                                                'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-semibold transition-colors',
+                                                                'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold transition-colors',
                                                                 form.priority === opt.value
                                                                     ? `${opt.color} ${opt.bg}`
                                                                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
@@ -401,7 +401,7 @@ export default function TaskEditDrawer({
                                             aria-label="Fecha límite"
                                             value={form.due_date ? form.due_date.split('T')[0] : ''}
                                             onChange={e => updateField('due_date', e.target.value || null)}
-                                            className="h-8 px-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.08] text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                            className="h-8 px-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.08] text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                                         />
                                     </div>
                                 </MetaRow>
@@ -409,7 +409,7 @@ export default function TaskEditDrawer({
                                 {/* Project row */}
                                 <MetaRow label="Proyecto" icon={<FolderOpen size={13} className="text-[hsl(var(--text-secondary))]" />}>
                                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.08] max-w-[220px]">
-                                        <span className="text-[12px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate">
+                                        <span className="text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate">
                                             {form.project_title || `Proyecto #${form.project_id}`}
                                         </span>
                                         <ExternalLink size={11} className="ml-auto text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] shrink-0" />
@@ -419,7 +419,7 @@ export default function TaskEditDrawer({
 
                             {/* ─ DESCRIPTION ─ */}
                             <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1.5">
+                                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1.5">
                                     <AlignLeft size={11} /> Descripción
                                 </p>
                                 <textarea
@@ -427,7 +427,7 @@ export default function TaskEditDrawer({
                                     onChange={e => updateField('description', e.target.value || null)}
                                     rows={3}
                                     placeholder="Añade contexto o detalles sobre esta tarea..."
-                                    className="w-full px-3 py-2.5 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.07] text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 resize-none transition-all leading-relaxed"
+                                    className="w-full px-3 py-2.5 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.07] text-base font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 resize-none transition-all leading-relaxed"
                                 />
                             </div>
 
@@ -446,7 +446,7 @@ export default function TaskEditDrawer({
                                         <button
                                             onClick={handleAiSuggest}
                                             disabled={aiLoading}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--info))] text-white text-[10px] font-bold shadow-md shadow-primary hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--info))] text-white text-2xs font-bold shadow-md shadow-primary hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                                         >
                                             {aiLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
                                             {aiLoading ? 'Analizando...' : 'Sugerir'}
@@ -459,7 +459,7 @@ export default function TaskEditDrawer({
                                             {aiSuggestion ? (
                                                 <motion.p key="ai-text"
                                                     initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                                                    className="text-[13px] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium italic"
+                                                    className="text-base text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium italic"
                                                 >
                                                     &ldquo;{aiSuggestion}&rdquo;
                                                 </motion.p>
@@ -467,11 +467,11 @@ export default function TaskEditDrawer({
                                                 <motion.div key="ai-loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                                                     className="flex items-center gap-2 text-[hsl(var(--primary))]">
                                                     <Loader2 size={14} className="animate-spin" />
-                                                    <span className="text-[12px] font-medium">Analizando la tarea...</span>
+                                                    <span className="text-sm font-medium">Analizando la tarea...</span>
                                                 </motion.div>
                                             ) : (
                                                 <motion.p key="ai-placeholder" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                    className="text-[12px] text-info-text/70 dark:text-info/50 font-medium">
+                                                    className="text-sm text-info-text/70 dark:text-info/50 font-medium">
                                                     Haz clic en &quot;Sugerir&quot; para recibir orientación contextual de MESH sobre esta tarea.
                                                 </motion.p>
                                             )}
@@ -482,7 +482,7 @@ export default function TaskEditDrawer({
 
                             {/* ─ QUICK ACTIONS ─ */}
                             <div className="px-3 py-1.5">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Acciones</p>
+                                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Acciones</p>
                                 <div className="grid grid-cols-2 gap-2">
                                     <QuickBtn icon={MessageSquare} label="Comentar" />
                                     <QuickBtn icon={Link2} label="Adjuntar" />
@@ -499,17 +499,17 @@ export default function TaskEditDrawer({
                                             className="overflow-hidden mt-3"
                                         >
                                             <div className="p-4 rounded-lg bg-danger-soft border border-danger-muted dark:border-danger/30 space-y-3">
-                                                <p className="text-[12px] font-bold text-danger-text dark:text-danger">
+                                                <p className="text-sm font-bold text-danger-text dark:text-danger">
                                                     ¿Eliminar &ldquo;{form.title.slice(0, 40)}{form.title.length > 40 ? '...' : ''}&rdquo;?
                                                 </p>
-                                                <p className="text-[11px] text-danger-text/80 dark:text-danger/60">Esta acción no se puede deshacer.</p>
+                                                <p className="text-xs text-danger-text/80 dark:text-danger/60">Esta acción no se puede deshacer.</p>
                                                 <div className="flex gap-2">
                                                     <button onClick={handleDelete}
-                                                        className="flex-1 py-2.5 bg-danger text-white rounded-md text-[11px] font-bold hover:bg-[hsl(var(--danger)/0.85)] active:scale-95 transition-all shadow-md shadow-danger">
+                                                        className="flex-1 py-2.5 bg-danger text-white rounded-md text-xs font-bold hover:bg-[hsl(var(--danger)/0.85)] active:scale-95 transition-all shadow-md shadow-danger">
                                                         Sí, eliminar
                                                     </button>
                                                     <button onClick={() => setShowDeleteConfirm(false)}
-                                                        className="flex-1 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[11px] font-bold hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/8 transition-all">
+                                                        className="flex-1 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-xs font-bold hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/8 transition-all">
                                                         Cancelar
                                                     </button>
                                                 </div>
@@ -525,23 +525,23 @@ export default function TaskEditDrawer({
                         <footer className="shrink-0 px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/[0.06] bg-[hsl(var(--surface-1))]/70 dark:bg-white/[0.02] flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className={clsx('size-2 rounded-full shrink-0', cp.dot)} />
-                                <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                     {cp.label}
                                 </span>
                                 <span className="text-[hsl(var(--text-secondary))] dark:text-white/10">·</span>
-                                <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                     {cs.label}
                                 </span>
                                 {form.due_date && (
                                     <>
                                         <span className="text-[hsl(var(--text-secondary))] dark:text-white/10">·</span>
-                                        <span className="flex items-center gap-1 text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                        <span className="flex items-center gap-1 text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                             <CalendarDays size={10} />
                                             {new Date(form.due_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                                         </span>
                                     </>
                                 )}
-                                <span className="ml-1 flex items-center gap-0.5 text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-mono">
+                                <span className="ml-1 flex items-center gap-0.5 text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-mono">
                                     <Hash size={9} />
                                     {form.id}
                                 </span>
@@ -551,7 +551,7 @@ export default function TaskEditDrawer({
                                 onClick={handleSave}
                                 disabled={!dirty || saving}
                                 className={clsx(
-                                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all',
+                                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
                                     dirty
                                         ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-primary active:scale-95'
                                         : saved
@@ -579,7 +579,7 @@ function MetaRow({ label, icon, children }: { label: string; icon?: React.ReactN
         <div className="flex items-center gap-0">
             <div className="w-[110px] shrink-0 flex items-center gap-1.5">
                 {icon}
-                <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
+                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
             </div>
             {children}
         </div>
@@ -591,7 +591,7 @@ function QuickBtn({ icon: Icon, label, onClick, danger = false }: { icon: any; l
         <button
             onClick={onClick}
             className={clsx(
-                'flex items-center gap-2 px-3 py-2.5 rounded-md text-[11px] font-semibold border transition-all group hover:-translate-y-[1px] hover:shadow-sm active:scale-95',
+                'flex items-center gap-2 px-3 py-2.5 rounded-md text-xs font-semibold border transition-all group hover:-translate-y-[1px] hover:shadow-sm active:scale-95',
                 danger
                     ? 'text-danger bg-transparent border-danger-muted dark:border-danger/30 hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger)/0.1)]'
                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border-[hsl(var(--border))] dark:border-white/[0.07] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.06] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]'

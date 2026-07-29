@@ -13,7 +13,7 @@ interface HealthIndicatorProps {
 export default function HealthIndicator({ label, value, color }: HealthIndicatorProps) {
   return (
     <div className="space-y-2">
-      <div className="flex justify-between text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+      <div className="flex justify-between text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
         <span>{label}</span>
         <span className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}%</span>
       </div>

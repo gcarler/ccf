@@ -86,7 +86,7 @@ export default function ProjectsMorePage() {
             <main className="flex-1 overflow-y-auto p-3">
                 {error && (
                     <div className="mb-3 rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                        <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                        <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
                     </div>
                 )}
                 {loading ? (
@@ -100,9 +100,9 @@ export default function ProjectsMorePage() {
                 ) : viewType === 'list' ? (
                     <div className="space-y-3">{summary.map((row) => <article key={row.project_status} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5"><h3 className="font-bold uppercase">{row.project_status}</h3><p className="text-sm text-[hsl(var(--text-secondary))] mt-1">{row.total_projects} proyectos · {row.total_tasks} tareas · {row.completed_tasks} completadas</p></article>)}</div>
                 ) : viewType === 'table' ? (
-                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Proyectos</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tareas</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{summary.map((row) => <tr key={row.project_status}><td className="px-3 py-2 text-sm font-medium">{row.project_status}</td><td className="px-3 py-2 text-[11px] text-[hsl(var(--text-secondary))]">{row.total_projects}</td><td className="px-3 py-2 text-[11px] text-[hsl(var(--text-secondary))]">{row.total_tasks}</td></tr>)}</tbody></table></div>
+                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Proyectos</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tareas</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{summary.map((row) => <tr key={row.project_status}><td className="px-3 py-2 text-sm font-medium">{row.project_status}</td><td className="px-3 py-2 text-xs text-[hsl(var(--text-secondary))]">{row.total_projects}</td><td className="px-3 py-2 text-xs text-[hsl(var(--text-secondary))]">{row.total_tasks}</td></tr>)}</tbody></table></div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">{summary.map((row) => <section key={row.project_status} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{row.project_status}</p><p className="text-xl font-bold mt-2">{row.total_projects}</p><p className="text-sm text-[hsl(var(--text-secondary))] mt-1">{row.total_tasks} tareas</p></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">{summary.map((row) => <section key={row.project_status} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{row.project_status}</p><p className="text-xl font-bold mt-2">{row.total_projects}</p><p className="text-sm text-[hsl(var(--text-secondary))] mt-1">{row.total_tasks} tareas</p></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario de carga" />
                 ) : viewType === 'gantt' ? (
@@ -131,7 +131,7 @@ export default function ProjectsMorePage() {
 function MetricCard({ label, value }: { label: string; value: number }) {
     return (
         <article className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
+            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
             <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">{value}</p>
         </article>
     );

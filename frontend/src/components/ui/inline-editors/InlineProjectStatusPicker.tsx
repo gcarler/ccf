@@ -77,7 +77,7 @@ export function InlineProjectStatusPicker({ value, onChange, disabled, size = "m
           onClick={(e) => e.stopPropagation()}
           className={clsx(
             "flex items-center gap-1.5 rounded-md border font-semibold transition-all",
-            size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]",
+            size === "sm" ? "px-2 py-0.5 text-2xs" : "px-2.5 py-1 text-xs",
             cfg.bg,
             cfg.text,
             cfg.border,
@@ -98,7 +98,7 @@ export function InlineProjectStatusPicker({ value, onChange, disabled, size = "m
           align="start"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">
+          <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">
             Estado del proyecto
           </p>
           {PROJECT_STATUS_OPTIONS.map((s) => {
@@ -113,7 +113,7 @@ export function InlineProjectStatusPicker({ value, onChange, disabled, size = "m
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
               >
                 <span className={clsx("size-2 rounded-full shrink-0", style.dot)} />
-                <span className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1 text-left">
+                <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1 text-left">
                   {PROJECT_STATUS_LABELS[s]}
                 </span>
                 {status === s && <Check size={12} className="text-[hsl(var(--primary))]" />}

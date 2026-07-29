@@ -180,8 +180,8 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
                 <MenuButton label="Lista de tareas" onClick={() => editor.chain().focus().toggleTaskList().run()} isActive={editor.isActive('taskList')} icon={CheckSquare} />
                 <div className="ml-auto flex items-center gap-3 px-2">
                     <div className="flex items-center gap-1.5">
-                        {saveStatus === 'saving' && <><Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" /> <span className="text-[10px] font-bold uppercase text-[hsl(var(--primary))]">Guardando</span></>}
-                        {saveStatus === 'saved' && <><Cloud size={12} className="text-[hsl(var(--success))]" /> <span className="text-[10px] font-bold uppercase text-[hsl(var(--success))]">Sincronizado</span></>}
+                        {saveStatus === 'saving' && <><Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" /> <span className="text-2xs font-bold uppercase text-[hsl(var(--primary))]">Guardando</span></>}
+                        {saveStatus === 'saved' && <><Cloud size={12} className="text-[hsl(var(--success))]" /> <span className="text-2xs font-bold uppercase text-[hsl(var(--success))]">Sincronizado</span></>}
                     </div>
                     <div className="flex items-center gap-0.5 border-l border-[hsl(var(--border))] dark:border-white/10 pl-2">
                         <MenuButton label="Deshacer" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} icon={Undo} />
@@ -191,7 +191,7 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
             </div>
             {loadError && (
                 <div className="mx-4 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                    <p className="text-[11px] font-bold uppercase tracking-wide">{loadError}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide">{loadError}</p>
                 </div>
             )}
             <div className="flex-1 overflow-y-auto scrollbar-thin p-4 bg-[hsl(var(--bg-primary))] dark:bg-transparent">

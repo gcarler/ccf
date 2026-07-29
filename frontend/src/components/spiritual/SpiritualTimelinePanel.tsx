@@ -41,7 +41,7 @@ export default function SpiritualTimelinePanel() {
         return (
             <div className="flex flex-col items-center justify-center h-40 gap-3">
                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} />
-                <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cargando cronograma...</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cargando cronograma...</p>
             </div>
         );
     }
@@ -88,10 +88,10 @@ export default function SpiritualTimelinePanel() {
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
                                             <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-tight uppercase tracking-tight">{def.label}</p>
-                                            {m.notes && <p className="text-[11px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1 leading-relaxed italic">&quot;{m.notes}&quot;</p>}
+                                            {m.notes && <p className="text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1 leading-relaxed italic">&quot;{m.notes}&quot;</p>}
                                         </div>
                                         <div className="shrink-0 flex flex-col items-end gap-1">
-                                            <span className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] opacity-60">
+                                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] opacity-60">
                                                 {new Date(m.event_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                                             </span>
                                             <Zap size={10} className="text-[hsl(var(--primary))] opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -106,7 +106,7 @@ export default function SpiritualTimelinePanel() {
 
             {/* Upcoming preview */}
             <div className="pt-8 border-t border-[hsl(var(--border))] dark:border-white/[0.04]">
-                <h2 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5 ml-2">Próximos Desafíos</h2>
+                <h2 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5 ml-2">Próximos Desafíos</h2>
                 <div className="grid grid-cols-1 gap-3">
                     {Object.entries(MILESTONE_DEFS)
                         .filter(([key]) => !milestones.some(m => m.type === key))

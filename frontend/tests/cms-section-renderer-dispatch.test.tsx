@@ -15,7 +15,7 @@
  */
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
-import type { CmsSection } from "@/types/cms-v2";
+import { createMockCmsSection } from "@/test-utils/factories";
 
 // ── Mock the sections barrel ─────────────────────────────────────────────────
 // vi.mock is hoisted by vitest to the TOP of the file — before any const
@@ -126,19 +126,12 @@ const ALL_SECTION_TYPES = Object.keys(TYPE_TO_COMPONENT);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function makeSection(type: string): CmsSection {
-  return {
+function makeSection(type: string) {
+  return createMockCmsSection(type, {
     id: `test-${type}`,
     page_id: "test-page",
     section_key: `key-${type}`,
-    type: type as CmsSection["type"],
-    props_json: {},
-    sort_order: 0,
-    is_visible: true,
-    status: "active",
-    created_at: "2026-01-01T00:00:00Z",
-    updated_at: "2026-01-01T00:00:00Z",
-  };
+  });
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────

@@ -1,29 +1,31 @@
 import { describe, expect, it } from 'vitest';
 
 import { flattenProjectTasks, isTaskOverdue } from '@/app/plataforma/projects/tasks/taskList';
+import type { ProjectRecord } from '@/types/projects';
 
 describe('project tasks data helpers', () => {
     it('flattens tasks from multiple projects with project titles attached', () => {
-        const rows = flattenProjectTasks([
+        const projects: ProjectRecord[] = [
             {
                 id: 'p1',
                 title: 'Proyecto Uno',
                 status: 'active',
                 created_at: '2026-07-01T10:00:00Z',
                 tasks: [
-                    { id: 't1', project_id: 'p1', title: 'Tarea A', status: 'todo', priority: 'medium', created_at: '2026-07-01T12:00:00Z' } as any,
+                    { id: 't1', project_id: 'p1', title: 'Tarea A', status: 'todo', priority: 'medium', created_at: '2026-07-01T12:00:00Z' },
                 ],
-            } as any,
+            },
             {
                 id: 'p2',
                 title: 'Proyecto Dos',
                 status: 'active',
                 created_at: '2026-07-02T10:00:00Z',
                 tasks: [
-                    { id: 't2', project_id: 'p2', title: 'Tarea B', status: 'completed', priority: 'high', created_at: '2026-07-02T12:00:00Z' } as any,
+                    { id: 't2', project_id: 'p2', title: 'Tarea B', status: 'completed', priority: 'high', created_at: '2026-07-02T12:00:00Z' },
                 ],
-            } as any,
-        ]);
+            },
+        ];
+        const rows = flattenProjectTasks(projects);
 
         expect(rows).toHaveLength(2);
         expect(rows[0].project_title).toBe('Proyecto Dos');

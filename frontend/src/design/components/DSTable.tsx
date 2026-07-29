@@ -239,7 +239,7 @@ export function DSTable<T>({
                                         key={header.id}
                                         onClick={header.column.getToggleSortingHandler()}
                                         className={clsx(
-                                            'text-[9px] font-semibold uppercase tracking-wide',
+                                            'text-2xs font-semibold uppercase tracking-wide',
                                             'text-[hsl(var(--text-secondary))]',
                                             'border-b border-[hsl(var(--border))] dark:border-white/5',
                                             'bg-[hsl(var(--surface-1))] dark:bg-black/20',

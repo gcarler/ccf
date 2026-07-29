@@ -26,7 +26,7 @@ const meta: Meta<typeof CommandCenter> = {
         });
       }
       return (
-        <div className="w-full h-[600px] bg-[hsl(var(--bg-primary))] dark:bg-[#0a0f16] flex items-center justify-center">
+        <div className="w-full h-[600px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] flex items-center justify-center">
           <p className="text-xs text-[hsl(var(--text-secondary))]">Presiona Ctrl+K para abrir la paleta de comandos</p>
           <Story />
         </div>

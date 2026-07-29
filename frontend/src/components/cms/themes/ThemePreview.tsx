@@ -94,7 +94,7 @@ export default function ThemePreview({ tokens }: Props) {
 
         <div className="relative z-10 max-w-lg mx-auto space-y-4">
           <div
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wider"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-2xs font-semibold uppercase tracking-wider"
             style={{
               background: t("--site-hero-badge-bg", "rgba(165,200,255,0.05)"),
               border: `1px solid ${t("--site-hero-badge-border", "rgba(165,200,255,0.3)")}`,
@@ -151,7 +151,7 @@ export default function ThemePreview({ tokens }: Props) {
           >
             <stat.icon size={16} style={{ color: t("--site-primary", "#a5c8ff") }} className="mb-1" />
             <p className="text-sm font-bold">{stat.value}</p>
-            <p className="text-[10px] uppercase tracking-wider opacity-60">{stat.label}</p>
+            <p className="text-2xs uppercase tracking-wider opacity-60">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -160,7 +160,7 @@ export default function ThemePreview({ tokens }: Props) {
       <div className="px-4 py-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-wider">Próximos eventos</h2>
-          <span className="text-[10px] font-semibold uppercase tracking-wider opacity-50 flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
+          <span className="text-2xs font-semibold uppercase tracking-wider opacity-50 flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
             Ver todo <ChevronRight size={10} />
           </span>
         </div>
@@ -197,7 +197,7 @@ export default function ThemePreview({ tokens }: Props) {
             >
               <div className="flex items-start justify-between mb-3">
                 <span
-                  className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                  className="text-2xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
                   style={{
                     background: t("--site-hero-badge-bg", "rgba(165,200,255,0.05)"),
                     color: t("--site-primary", "#a5c8ff"),
@@ -208,7 +208,7 @@ export default function ThemePreview({ tokens }: Props) {
                 {evt.highlight && <Heart size={12} style={{ color: t("--site-primary", "#a5c8ff") }} />}
               </div>
               <h3 className="text-sm font-bold mb-2">{evt.title}</h3>
-              <div className="space-y-1.5 text-[11px] opacity-70">
+              <div className="space-y-1.5 text-xs opacity-70">
                 <div className="flex items-center gap-1.5">
                   <Calendar size={10} /> {evt.date}
                 </div>
@@ -220,7 +220,7 @@ export default function ThemePreview({ tokens }: Props) {
                 </div>
               </div>
               <button
-                className="mt-3 w-full py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all hover:opacity-90"
+                className="mt-3 w-full py-2 rounded-lg text-2xs font-bold uppercase tracking-wider transition-all hover:opacity-90"
                 style={{
                   background: t("--site-cta-gradient", "linear-gradient(to right,#004581,#018abd,#004581)"),
                   boxShadow: t("--site-cta-shadow", "0 4px 20px rgba(1,138,189,0.5)"),
@@ -268,7 +268,7 @@ export default function ThemePreview({ tokens }: Props) {
             </div>
             <div>
               <p className="text-xs font-bold">Juan Díaz</p>
-              <p className="text-[10px] opacity-60">Persona desde 2023</p>
+              <p className="text-2xs opacity-60">Persona desde 2023</p>
             </div>
             <div className="ml-auto flex gap-0.5">
               {[1, 2, 3, 4, 5].map((s) => (
@@ -284,7 +284,7 @@ export default function ThemePreview({ tokens }: Props) {
         <h2 className="text-sm font-bold uppercase tracking-wider">Formulario de contacto</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold uppercase tracking-wider opacity-70">Nombre</label>
+            <label className="text-2xs font-semibold uppercase tracking-wider opacity-70">Nombre</label>
             <input
               readOnly
               value="María González"
@@ -297,7 +297,7 @@ export default function ThemePreview({ tokens }: Props) {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold uppercase tracking-wider opacity-70">Email</label>
+            <label className="text-2xs font-semibold uppercase tracking-wider opacity-70">Email</label>
             <input
               readOnly
               value="maria@email.com"
@@ -311,7 +311,7 @@ export default function ThemePreview({ tokens }: Props) {
           </div>
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-semibold uppercase tracking-wider opacity-70">Mensaje</label>
+          <label className="text-2xs font-semibold uppercase tracking-wider opacity-70">Mensaje</label>
           <textarea
             readOnly
             rows={2}
@@ -334,7 +334,7 @@ export default function ThemePreview({ tokens }: Props) {
               accentColor: t("--site-primary", "#a5c8ff"),
             }}
           />
-          <span className="text-[11px] opacity-70">Acepto recibir noticias y eventos</span>
+          <span className="text-xs opacity-70">Acepto recibir noticias y eventos</span>
         </div>
         <button
           className="w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all hover:scale-[1.01] active:scale-[0.99]"
@@ -353,7 +353,7 @@ export default function ThemePreview({ tokens }: Props) {
         <h2 className="text-sm font-bold uppercase tracking-wider">Estados y alertas</h2>
         <div className="flex flex-wrap gap-2">
           <span
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-2xs font-bold uppercase tracking-wider"
             style={{
               background: t("--site-primary-container", "#004581"),
               color: t("--site-primary", "#a5c8ff"),
@@ -362,7 +362,7 @@ export default function ThemePreview({ tokens }: Props) {
             <CheckCircle2 size={10} /> Confirmado
           </span>
           <span
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-2xs font-bold uppercase tracking-wider"
             style={{
               background: t("--site-surface-container-high", "#1d3361"),
               color: t("--site-on-surface-variant", "#c2c6d1"),
@@ -371,7 +371,7 @@ export default function ThemePreview({ tokens }: Props) {
             <Clock size={10} /> Pendiente
           </span>
           <span
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-2xs font-bold uppercase tracking-wider"
             style={{
               background: `${t("--site-error", "#ffb4ab")}20`,
               color: t("--site-error", "#ffb4ab"),
@@ -381,7 +381,7 @@ export default function ThemePreview({ tokens }: Props) {
             <X size={10} /> Cancelado
           </span>
           <span
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-2xs font-bold uppercase tracking-wider"
             style={{
               background: t("--site-hero-badge-bg", "rgba(165,200,255,0.05)"),
               border: `1px solid ${t("--site-hero-badge-border", "rgba(165,200,255,0.3)")}`,
@@ -415,7 +415,7 @@ export default function ThemePreview({ tokens }: Props) {
             </div>
           ))}
         </div>
-        <p className="text-[10px] opacity-50 uppercase tracking-wider">
+        <p className="text-2xs opacity-50 uppercase tracking-wider">
           Preview generado en tiempo real
         </p>
       </footer>

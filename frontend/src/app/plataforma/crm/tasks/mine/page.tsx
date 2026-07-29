@@ -89,12 +89,12 @@ export default function MyTasks() {
         {error && (
             <div className="mb-4 flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] p-4 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
                 <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wide">No se pudieron cargar las tareas</p>
+                    <p className="text-xs font-bold uppercase tracking-wide">No se pudieron cargar las tareas</p>
                     <p className="text-xs">{error}</p>
                 </div>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
+                    className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
                 >
                     Reintentar
                 </button>
@@ -158,10 +158,10 @@ export default function MyTasks() {
                     <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
                     <div className="flex items-center gap-3 mb-3 relative z-10">
                         <div className="p-2 bg-white/10 rounded-md backdrop-blur-md border border-white/10"><CheckCircle2 size={18} /></div>
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--info))]">Tareas Pendientes</span>
+                        <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--info))]">Tareas Pendientes</span>
                     </div>
                     <h3 className="text-xl font-bold mb-2 relative z-10 tracking-tighter">{stats.pending}</h3>
-                    <p className="text-[10px] font-bold text-[hsl(var(--info)/60%)] uppercase tracking-wide relative z-10">Compromisos activos</p>
+                    <p className="text-2xs font-bold text-[hsl(var(--info)/60%)] uppercase tracking-wide relative z-10">Compromisos activos</p>
                 </motion.div>
 
                 <motion.div 
@@ -173,10 +173,10 @@ export default function MyTasks() {
                 >
                     <div className="flex items-center gap-3 mb-3">
                         <div className="p-2 bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.2)] rounded-md text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.1)] dark:border-[hsl(var(--destructive)/0.8)]"><AlertCircle size={18} /></div>
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vencidas</span>
+                        <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vencidas</span>
                     </div>
                     <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2 tracking-tighter">{stats.overdue}</h3>
-                    <p className="text-[10px] font-bold text-[hsl(var(--destructive))] uppercase tracking-wide">Requiere atención</p>
+                    <p className="text-2xs font-bold text-[hsl(var(--destructive))] uppercase tracking-wide">Requiere atención</p>
                 </motion.div>
             </section>
 
@@ -192,7 +192,7 @@ export default function MyTasks() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={clsx(
-                                    "px-4 py-2 rounded-md text-[11px] font-bold uppercase tracking-wide transition-all",
+                                    "px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all",
                                     activeTab === tab.id ? "bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                                 )}
                             >
@@ -215,18 +215,18 @@ export default function MyTasks() {
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-1.5 gap-4">
                             <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={32} />
-                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizando tareas pastorales...</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizando tareas pastorales...</p>
                         </div>
                     ) : filteredTasks.length > 0 ? (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-[hsl(var(--surface-1))]/80 dark:bg-white/5 border-b border-[hsl(var(--border))] dark:border-white/5">
-                                        <th className="px-3 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Actividad</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Contacto Vinc.</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Límite</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Prioridad</th>
-                                        <th className="px-3 py-2 text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-right">Estado</th>
+                                        <th className="px-3 py-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Actividad</th>
+                                        <th className="px-3 py-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Contacto Vinc.</th>
+                                        <th className="px-3 py-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Límite</th>
+                                        <th className="px-3 py-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Prioridad</th>
+                                        <th className="px-3 py-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-right">Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5 bg-[hsl(var(--surface-1))] dark:bg-transparent">
@@ -245,7 +245,7 @@ export default function MyTasks() {
                                                         <div className="size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_hsl(var(--primary)/0.5)]"></div>
                                                         <div>
                                                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] tracking-tight uppercase">{task.title}</p>
-                                                            <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold line-clamp-1">{task.description || 'Sin descripción adicional'}</p>
+                                                            <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold line-clamp-1">{task.description || 'Sin descripción adicional'}</p>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -254,20 +254,20 @@ export default function MyTasks() {
                                                         <div className="size-7 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-500">
                                                             <Users size={14} />
                                                         </div>
-                                                        <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">{task.contact_name}</span>
+                                                        <span className="text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">{task.contact_name}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-3 py-2">
-                                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{task.due_date ? formatDueLabel(task.due_date) : 'Abierto'}</span>
+                                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{task.due_date ? formatDueLabel(task.due_date) : 'Abierto'}</span>
                                                 </td>
                                                 <td className="px-3 py-2">
-                                                    <span className={clsx("px-3 py-1 rounded-lg text-[8px] font-bold uppercase tracking-wide border", priorityTone[task.priority.toLowerCase()] || priorityTone.normal)}>
+                                                    <span className={clsx("px-3 py-1 rounded-lg text-2xs font-bold uppercase tracking-wide border", priorityTone[task.priority.toLowerCase()] || priorityTone.normal)}>
                                                         {task.priority}
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2 text-right">
                                                     <div className="flex items-center justify-end gap-3">
-                                                        <span className={clsx("px-3 py-1 rounded-lg text-[8px] font-bold uppercase tracking-wide", statusTone[task.status] || statusTone.todo)}>
+                                                        <span className={clsx("px-3 py-1 rounded-lg text-2xs font-bold uppercase tracking-wide", statusTone[task.status] || statusTone.todo)}>
                                                             {task.status === 'done' ? 'Completada' : 'Pendiente'}
                                                         </span>
                                                         <button className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] transition-all" aria-label="Más opciones"><MoreHorizontal size={16} /></button>
@@ -284,7 +284,7 @@ export default function MyTasks() {
                             <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]"><CheckCircle2 size={32} strokeWidth={1} /></div>
                             <div className="space-y-1">
                                 <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">Todo al día</p>
-                                <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-loose">No tienes tareas pendientes en esta categoría.</p>
+                                <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-loose">No tienes tareas pendientes en esta categoría.</p>
                             </div>
                         </div>
                     )}

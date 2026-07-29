@@ -146,12 +146,12 @@ export default function TaskAssignment() {
         {error && (
             <div className="mb-4 flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] p-4 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
                 <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wide">No se pudo cargar la asignación</p>
+                    <p className="text-xs font-bold uppercase tracking-wide">No se pudo cargar la asignación</p>
                     <p className="text-xs">{error}</p>
                 </div>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
+                    className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
                 >
                     Reintentar
                 </button>
@@ -205,15 +205,15 @@ export default function TaskAssignment() {
 
                 <div className="bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Resultados de Búsqueda</h3>
-                        <span className="px-3 py-1 bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] rounded-full text-[9px] font-bold uppercase">{filteredPersonas.length} Personas</span>
+                        <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Resultados de Búsqueda</h3>
+                        <span className="px-3 py-1 bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] rounded-full text-2xs font-bold uppercase">{filteredPersonas.length} Personas</span>
                     </div>
 
                     <div className="space-y-4">
                         {loading ? (
                             <div className="py-1.5 flex flex-col items-center gap-4">
                                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={32} />
-                                <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Cargando congregación...</p>
+                                <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Cargando congregación...</p>
                             </div>
                         ) : filteredPersonas.map((m, idx) => (
                             <motion.div 
@@ -236,7 +236,7 @@ export default function TaskAssignment() {
                                     </div>
                                     <div>
                                         <p className="font-bold uppercase tracking-tight text-sm leading-none mb-1">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</p>
-                                        <p className={clsx("text-[10px] font-bold uppercase tracking-wide", selectedPersonaId === m.id ? "text-[hsl(var(--info))]" : "text-[hsl(var(--text-secondary))]")}>{m.church_role} · {m.spiritual_status}</p>
+                                        <p className={clsx("text-2xs font-bold uppercase tracking-wide", selectedPersonaId === m.id ? "text-[hsl(var(--info))]" : "text-[hsl(var(--text-secondary))]")}>{m.church_role} · {m.spiritual_status}</p>
                                     </div>
                                 </div>
                                 <div className={clsx(
@@ -263,7 +263,7 @@ export default function TaskAssignment() {
                             className="glass-panel p-3 rounded-lg shadow-2xl space-y-4 sticky top-5"
                         >
                             <div className="space-y-4">
-                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] rounded-full text-[10px] font-bold uppercase tracking-wide">
+                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] rounded-full text-2xs font-bold uppercase tracking-wide">
                                     <ShieldCheck size={14} /> Asignación Inteligente
                                 </div>
                                 <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
@@ -274,7 +274,7 @@ export default function TaskAssignment() {
 
                             <div className="space-y-3">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2">Líder Responsable</label>
+                                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2">Líder Responsable</label>
                                     <select
                                         value={selectedLeaderId}
                                         onChange={(e) => setSelectedLeaderId(e.target.value)}
@@ -288,14 +288,14 @@ export default function TaskAssignment() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2">Actividad de Consolidación</label>
+                                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2">Actividad de Consolidación</label>
                                     <div className="grid grid-cols-2 gap-2">
                                         {['Llamada', 'Visita', 'Consejería', 'Bienvenida'].map(type => (
                                             <button 
                                                 key={type}
                                                 onClick={() => setTaskTitle(`Seguimiento: ${type}`)}
                                                 className={clsx(
-                                                    "py-1.5 px-4 rounded-md text-[10px] font-bold uppercase tracking-wide border transition-all",
+                                                    "py-1.5 px-4 rounded-md text-2xs font-bold uppercase tracking-wide border transition-all",
                                                     taskTitle.includes(type) ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-lg" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]"
                                                 )}
                                             >
@@ -306,7 +306,7 @@ export default function TaskAssignment() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2">Nota de Contexto</label>
+                                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2">Nota de Contexto</label>
                                     <textarea
                                         rows={4}
                                         placeholder="Ej: Dar bienvenida, preguntar por su familia..."

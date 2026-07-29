@@ -24,8 +24,8 @@ export default function SupportHistoryPage() {
         <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
             <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
                 <History size={16} className="text-[hsl(var(--text-secondary))]" />
-                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Historial de Soporte</h1>
-                <span className="ml-auto text-[10px] text-[hsl(var(--text-secondary))] font-bold">{HISTORY.length} conversaciones</span>
+                <h1 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Historial de Soporte</h1>
+                <span className="ml-auto text-2xs text-[hsl(var(--text-secondary))] font-bold">{HISTORY.length} conversaciones</span>
             </header>
 
             <div className="flex-1 overflow-y-auto p-3">
@@ -60,22 +60,22 @@ export default function SupportHistoryPage() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-0.5">
                                                 <span className="font-semibold text-[hsl(var(--text-secondary))] font-mono uppercase tracking-wide">{item.id}</span>
-                                                <span className="text-[9px] text-[hsl(var(--text-secondary))]">·</span>
-                                                <span className="text-[9px] text-[hsl(var(--text-secondary))] font-bold">{item.category}</span>
+                                                <span className="text-2xs text-[hsl(var(--text-secondary))]">·</span>
+                                                <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold">{item.category}</span>
                                             </div>
-                                            <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{item.title}</p>
+                                            <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{item.title}</p>
                                             <div className="flex items-center gap-3 mt-0.5">
-                                                <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                                                <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
                                                     <Calendar size={9} /> {item.date}
                                                 </span>
                                                 {item.closedDate && (
                                                     <>
-                                                        <span className="text-[hsl(var(--text-secondary))] text-[10px]">→</span>
-                                                        <span className="text-[10px] text-[hsl(var(--text-secondary))]">Cerrado: {item.closedDate}</span>
+                                                        <span className="text-[hsl(var(--text-secondary))] text-2xs">→</span>
+                                                        <span className="text-2xs text-[hsl(var(--text-secondary))]">Cerrado: {item.closedDate}</span>
                                                     </>
                                                 )}
                                                 {item.rating && (
-                                                    <span className="text-[10px] text-[hsl(var(--warning))] font-bold">{'★'.repeat(item.rating)}</span>
+                                                    <span className="text-2xs text-[hsl(var(--warning))] font-bold">{'★'.repeat(item.rating)}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -94,11 +94,11 @@ export default function SupportHistoryPage() {
                                                     <MessageSquare size={14} className="text-[hsl(var(--success))] shrink-0 mt-0.5" />
                                                     <div>
                                                         <p className="font-semibold text-success-text uppercase tracking-wide mb-1">Resolución</p>
-                                                        <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{item.resolution}</p>
+                                                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{item.resolution}</p>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <p className="text-[12px] text-[hsl(var(--text-secondary))] italic">Ticket en proceso de resolución...</p>
+                                                <p className="text-sm text-[hsl(var(--text-secondary))] italic">Ticket en proceso de resolución...</p>
                                             )}
                                             {item.status === 'closed' && (
                                                 <button className="flex items-center gap-2 font-semibold text-[hsl(var(--primary))] hover:opacity-70 transition-opacity uppercase tracking-wide">

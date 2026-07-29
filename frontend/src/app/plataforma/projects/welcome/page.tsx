@@ -86,7 +86,7 @@ export default function ProjectsWelcomePage() {
                 {viewType === 'table' && (
                     <div className="max-w-4xl overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full text-left">
-                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 <tr><th className="px-3 py-2">Recurso</th><th className="px-3 py-2">Descripción</th></tr>
                             </thead>
                             <tbody>
@@ -102,7 +102,7 @@ export default function ProjectsWelcomePage() {
                 )}
                 {viewType === 'grid' && (
                 <section className="max-w-3xl rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-gradient-to-br from-[hsl(var(--info))] to-white dark:from-[hsl(var(--info)/20%)] dark:to-transparent">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">Workspace de proyectos</p>
+                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">Workspace de proyectos</p>
                     <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-2 tracking-tight">Bienvenido al espacio de coordinacion</h1>
                     <p className="text-[hsl(var(--text-secondary))] mt-2">Desde aqui puedes crear proyectos, mover tareas en Kanban y monitorear respuestas del equipo en un solo flujo.</p>
                     <button

@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
                             <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round"/>
                             <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
                         </svg>
-                        <span className="text-white font-bold uppercase tracking-wide text-[10px]">
+                        <span className="text-white font-bold uppercase tracking-wide text-2xs">
                             Ministerio Internacional
                         </span>
                     </div>
@@ -123,7 +123,7 @@ export default function ForgotPasswordPage() {
                             className="inline-flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-ccf-blue-dark transition-colors no-underline group"
                         >
                             <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-                            <span className="text-[9px] font-bold uppercase tracking-wider">Volver al acceso</span>
+                            <span className="text-2xs font-bold uppercase tracking-wider">Volver al acceso</span>
                         </Link>
                     </motion.div>
 
@@ -137,7 +137,7 @@ export default function ForgotPasswordPage() {
                         <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] font-extrabold text-ccf-blue-dark tracking-[-0.02em] leading-none m-0 mb-3">
                             Recuperar acceso
                         </h2>
-                        <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px] m-0">
+                        <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-2xs m-0">
                             Restablece tu contraseña por correo
                         </p>
                     </motion.div>
@@ -158,14 +158,14 @@ export default function ForgotPasswordPage() {
                                     <p className="text-ccf-blue-dark font-extrabold text-base m-0 mb-1">
                                         Revisa tu correo
                                     </p>
-                                    <p className="text-[hsl(var(--text-secondary))] text-[11px] leading-relaxed m-0">
+                                    <p className="text-[hsl(var(--text-secondary))] text-xs leading-relaxed m-0">
                                         Te enviamos las instrucciones a <strong className="text-ccf-blue-dark">{email}</strong>.
                                         Si no lo ves, revisa la carpeta de spam.
                                     </p>
                                 </div>
                                 <Link
                                     href="/login"
-                                    className="text-ccf-blue-light font-bold text-[10px] uppercase tracking-wider no-underline"
+                                    className="text-ccf-blue-light font-bold text-2xs uppercase tracking-wider no-underline"
                                 >
                                     Volver al inicio de sesión
                                 </Link>
@@ -184,7 +184,7 @@ export default function ForgotPasswordPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.5 }}
                                 >
-                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
+                                    <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
                                         Correo electrónico
                                     </label>
                                     <input
@@ -203,7 +203,7 @@ export default function ForgotPasswordPage() {
                                             initial={{ opacity: 0, scale: 0.96 }}
                                             animate={{ opacity: 1, scale: 1 }}
                                             exit={{ opacity: 0, scale: 0.96 }}
-                                            className="px-3 py-1.5 bg-danger-soft border-2 border-[hsl(var(--danger)/25%)] rounded-lg text-danger-text text-[11px] font-bold text-center uppercase tracking-wider"
+                                            className="px-3 py-1.5 bg-danger-soft border-2 border-[hsl(var(--danger)/25%)] rounded-lg text-danger-text text-xs font-bold text-center uppercase tracking-wider"
                                         >
                                             {error}
                                         </motion.div>
@@ -236,12 +236,12 @@ export default function ForgotPasswordPage() {
                                     transition={{ delay: 0.7 }}
                                     className="text-center"
                                 >
-                                    <p className="text-[hsl(var(--text-secondary))] text-[10px] font-bold tracking-wider uppercase mb-2">
+                                    <p className="text-[hsl(var(--text-secondary))] text-2xs font-bold tracking-wider uppercase mb-2">
                                         ¿Recordaste tu clave?
                                     </p>
                                     <Link
                                         href="/login"
-                                        className="text-ccf-blue-light font-bold text-[10px] uppercase tracking-wider no-underline"
+                                        className="text-ccf-blue-light font-bold text-2xs uppercase tracking-wider no-underline"
                                     >
                                         Inicia sesión
                                     </Link>

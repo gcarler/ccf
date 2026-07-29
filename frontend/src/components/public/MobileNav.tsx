@@ -127,7 +127,7 @@ export default function MobileNav() {
               }
             >
               <Icon size={22} strokeWidth={2} aria-hidden="true" />
-              <span className="font-body text-[11px] font-medium tracking-wide mt-1">{label}</span>
+              <span className="font-body text-xs font-medium tracking-wide mt-1">{label}</span>
             </Link>
           );
         })}

@@ -275,7 +275,7 @@ export default function IdentityManagementPage() {
                 breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Gestión de Identidad', icon: Users }]}
                 onSearch={setSearch}
                 rightActions={
-                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]">
+                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]">
                         <UserPlus size={14} /> Nuevo Usuario
                     </button>
                 }
@@ -315,7 +315,7 @@ export default function IdentityManagementPage() {
                         ) : (
                             <table className="w-full min-w-[520px] text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                    <tr className="bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         <th className="px-4 py-2">Persona</th>
                                         <th className="px-4 py-2">Email</th>
                                         <th className="px-4 py-2">Rol Plataforma</th>
@@ -341,7 +341,7 @@ export default function IdentityManagementPage() {
                                             <td className="px-4 py-2 text-xs text-[hsl(var(--text-secondary))]">{user.email}</td>
                                             <td className="px-4 py-2">
                                                 <span className={clsx(
-                                                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase",
+                                                    "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-semibold uppercase",
                                                     user.role === 'admin' ? "bg-info-soft text-info-text dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--info))]" :
                                                     user.role === 'pastor' ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]" :
                                                     "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]"
@@ -352,7 +352,7 @@ export default function IdentityManagementPage() {
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-2">
                                                     <div className={clsx("size-2 rounded-full", user.is_active ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--surface-2))]")} />
-                                                    <span className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))]">{user.is_active ? 'Activo' : 'Inactivo'}</span>
+                                                    <span className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))]">{user.is_active ? 'Activo' : 'Inactivo'}</span>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-2 text-right">
@@ -382,10 +382,10 @@ export default function IdentityManagementPage() {
                 subtitle={`Gestión integral de ${selectedUser?.username || 'la persona'}`}
                 actions={
                     <>
-                        <button className="px-3 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors" onClick={() => setIsDrawerOpen(false)}>Cancelar</button>
+                        <button className="px-3 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors" onClick={() => setIsDrawerOpen(false)}>Cancelar</button>
                         <button
                             disabled={saving || profileLoading}
-                            className="px-4 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleSaveProfile}
                         >
                             {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
@@ -444,7 +444,7 @@ export default function IdentityManagementPage() {
                                                 : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--border))]"
                                         )}
                                     >
-                                        <span className={clsx("px-2 py-0.5 rounded text-[10px] font-semibold uppercase", r.color)}>{r.label}</span>
+                                        <span className={clsx("px-2 py-0.5 rounded text-2xs font-semibold uppercase", r.color)}>{r.label}</span>
                                         {churchRole === r.value && <UserCheck size={14} className="text-[hsl(var(--primary))]" />}
                                     </button>
                                 ))}
@@ -459,9 +459,9 @@ export default function IdentityManagementPage() {
                             )}
                             {churchRoleHistory && churchRoleHistory.length > 0 && (
                                 <div className="mt-3 space-y-1">
-                                    <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase">Historial:</p>
+                                    <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase">Historial:</p>
                                     {churchRoleHistory.slice(0, 3).map((h, i) => (
-                                        <div key={i} className="flex items-center gap-2 text-[10px] text-[hsl(var(--text-secondary))]">
+                                        <div key={i} className="flex items-center gap-2 text-2xs text-[hsl(var(--text-secondary))]">
                                             <Clock size={10} />
                                             <span>{h.role}</span>
                                             <span className="text-[hsl(var(--text-secondary))]">→</span>
@@ -498,7 +498,7 @@ export default function IdentityManagementPage() {
                             </div>
                             {ministries.length > 1 && (
                                 <div className="mt-2">
-                                    <label className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase">Oficio principal:</label>
+                                    <label className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase">Oficio principal:</label>
                                     <select
                                         value={primaryMinistry}
                                         onChange={e => setPrimaryMinistry(e.target.value)}
@@ -528,7 +528,7 @@ export default function IdentityManagementPage() {
                                                 : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--border))]"
                                         )}
                                     >
-                                        <span className="text-[10px] font-semibold uppercase">{r}</span>
+                                        <span className="text-2xs font-semibold uppercase">{r}</span>
                                         {platformRole === r && <UserCheck size={12} className="text-[hsl(var(--primary))] ml-auto" />}
                                     </button>
                                 ))}
@@ -543,7 +543,7 @@ export default function IdentityManagementPage() {
                             <button
                                 onClick={handleResetPassword}
                                 disabled={saving}
-                                className="w-full p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                className="w-full p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                             >
                                 <Zap size={16} className="text-[hsl(var(--warning))]" /> Resetear Contraseña
                             </button>
@@ -557,7 +557,7 @@ export default function IdentityManagementPage() {
                                 </h4>
                                 <div className="flex flex-wrap gap-1">
                                     {Object.entries(profile.permisos_efectivos).map(([key, val]) => (
-                                        <span key={key} className="px-2 py-0.5 bg-info-soft dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded text-[9px] font-semibold uppercase">
+                                        <span key={key} className="px-2 py-0.5 bg-info-soft dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded text-2xs font-semibold uppercase">
                                             {key}: {val}
                                         </span>
                                     ))}
@@ -576,10 +576,10 @@ export default function IdentityManagementPage() {
                 subtitle="Crear acceso ministerial"
                 actions={
                     <>
-                        <button className="px-3 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors" onClick={() => setIsCreateOpen(false)}>Cancelar</button>
+                        <button className="px-3 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors" onClick={() => setIsCreateOpen(false)}>Cancelar</button>
                         <button
                             disabled={saving}
-                            className="px-4 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleCreateUser}
                         >
                             {saving ? <Loader2 className="animate-spin" size={14} /> : <UserPlus size={14} />}
@@ -590,7 +590,7 @@ export default function IdentityManagementPage() {
             >
                 <div className="space-y-4 p-2">
                     <div>
-                        <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 block">Nombre de usuario</label>
+                        <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 block">Nombre de usuario</label>
                         <input
                             value={newUsername}
                             onChange={e => setNewUsername(e.target.value)}
@@ -599,7 +599,7 @@ export default function IdentityManagementPage() {
                         />
                     </div>
                     <div>
-                        <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 block">Email</label>
+                        <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 block">Email</label>
                         <input
                             type="email"
                             value={newEmail}
@@ -609,7 +609,7 @@ export default function IdentityManagementPage() {
                         />
                     </div>
                     <div>
-                        <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 block">Contraseña</label>
+                        <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 block">Contraseña</label>
                         <input
                             type="password"
                             value={newPassword}
@@ -619,7 +619,7 @@ export default function IdentityManagementPage() {
                         />
                     </div>
                     <div>
-                        <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 block">Rol de plataforma</label>
+                        <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 block">Rol de plataforma</label>
                         <div className="grid grid-cols-2 gap-1.5">
                             {PLATFORM_ROLES.map(r => (
                                 <button
@@ -632,7 +632,7 @@ export default function IdentityManagementPage() {
                                             : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--border))]"
                                     )}
                                 >
-                                    <span className="text-[10px] font-semibold uppercase">{r}</span>
+                                    <span className="text-2xs font-semibold uppercase">{r}</span>
                                     {newRole === r && <UserCheck size={12} className="text-[hsl(var(--primary))] ml-auto" />}
                                 </button>
                             ))}
@@ -664,14 +664,14 @@ export default function IdentityManagementPage() {
                         <div className="flex justify-end gap-2">
                             <button
                                 onClick={() => setShowResetModal(false)}
-                                className="px-3 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
+                                className="px-3 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 disabled={saving || !resetPassword || resetPassword.length < 6}
                                 onClick={submitResetPassword}
-                                className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {saving ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
                                 {saving ? 'Guardando...' : 'Confirmar'}
@@ -692,7 +692,7 @@ function StatCard({ icon: Icon, label, value, color, bg }: StatCardProps) {
             </div>
             <div>
                 <p className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
-                <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase">{label}</p>
+                <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase">{label}</p>
             </div>
         </div>
     );

@@ -139,7 +139,7 @@ export default function SupportKBPage() {
             <>
               {/* Categories */}
               <section>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">
                   Explorar por Categoría
                 </p>
                 {categories.length === 0 ? (
@@ -176,10 +176,10 @@ export default function SupportKBPage() {
                             <Icon size={20} />
                           </div>
                           <div>
-                            <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                            <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                               {cat.label}
                             </p>
-                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+                            <p className="text-2xs text-[hsl(var(--text-secondary))]">
                               {cat.count} artículos
                             </p>
                           </div>
@@ -194,7 +194,7 @@ export default function SupportKBPage() {
               <section>
                 <div className="flex items-center gap-2 mb-5">
                   <Star size={14} className="text-[hsl(var(--warning))]" />
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                  <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     {selectedCat ? "Artículos" : "Artículos más Populares"}
                   </p>
                 </div>
@@ -216,20 +216,20 @@ export default function SupportKBPage() {
                           {i + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
+                          <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                             {article.title}
                           </p>
                           <div className="flex items-center gap-3 mt-0.5">
-                            <span className="text-[10px] text-[hsl(var(--text-secondary))]">
+                            <span className="text-2xs text-[hsl(var(--text-secondary))]">
                               {article.category}
                             </span>
-                            <span className="text-[10px] text-[hsl(var(--text-secondary))]">
+                            <span className="text-2xs text-[hsl(var(--text-secondary))]">
                               ·
                             </span>
-                            <span className="text-[10px] text-[hsl(var(--text-secondary))]">
+                            <span className="text-2xs text-[hsl(var(--text-secondary))]">
                               {article.views} vistas
                             </span>
-                            <span className="text-[10px] text-[hsl(var(--success))] font-bold">
+                            <span className="text-2xs text-[hsl(var(--success))] font-bold">
                               {article.helpful}% útil
                             </span>
                           </div>

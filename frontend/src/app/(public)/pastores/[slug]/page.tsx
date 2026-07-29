@@ -146,7 +146,7 @@ export default function PastorDetailPage() {
                                 {/* Badge */}
                                 <div>
                                     {getString(cms, "badge_label") && (
-                                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.05] border border-[hsl(var(--primary))/0.15] text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-[0.2em] mb-5 shadow-lg shadow-[hsl(var(--primary))/0.03]">
+                                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.05] border border-[hsl(var(--primary))/0.15] text-[hsl(var(--primary))] text-2xs font-bold uppercase tracking-[0.2em] mb-5 shadow-lg shadow-[hsl(var(--primary))/0.03]">
                                             <Sparkles size={11} className="animate-pulse" /> {getString(cms, "badge_label")}
                                         </div>
                                     )}
@@ -168,7 +168,7 @@ export default function PastorDetailPage() {
                                     <div className="flex items-center gap-3 mt-5 pl-1">
                                         <div className="h-px flex-1 bg-gradient-to-r from-[hsl(var(--primary))/0.3] to-transparent max-w-[80px]" />
                                         {getString(cms, "quote_subtitle") && (
-                                            <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{getString(cms, "quote_subtitle")}</span>
+                                            <span className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{getString(cms, "quote_subtitle")}</span>
                                         )}
                                     </div>
                                 </div>
@@ -187,7 +187,7 @@ export default function PastorDetailPage() {
                                             {tagLabels.map((label, i) => (
                                                 <span
                                                     key={i}
-                                                    className={`px-3 py-1.5 rounded-lg bg-gradient-to-r ${tagColors[i % tagColors.length]} border text-[10px] font-bold uppercase tracking-wider`}
+                                                    className={`px-3 py-1.5 rounded-lg bg-gradient-to-r ${tagColors[i % tagColors.length]} border text-2xs font-bold uppercase tracking-wider`}
                                                 >
                                                     {label}
                                                 </span>
@@ -198,7 +198,7 @@ export default function PastorDetailPage() {
 
                                 {/* ── Redes Sociales ── siempre visibles, monocromáticas */}
                                 <div className="flex items-center gap-3">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Síguelo en</span>
+                                    <span className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Síguelo en</span>
                                     <div className="flex items-center gap-2">
                                         {/* Instagram */}
                                         {pastor.social_instagram ? (
@@ -246,7 +246,7 @@ export default function PastorDetailPage() {
                                     </div>
                                     <div>
                                         {getString(cms, "motto_label") && (
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1.5">{getString(cms, "motto_label")}</p>
+                                            <p className="text-2xs font-bold uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1.5">{getString(cms, "motto_label")}</p>
                                         )}
                                         <p className="text-base md:text-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed">
                                             {pastor.bio_short || pastor.story || ''}
@@ -331,7 +331,7 @@ export default function PastorDetailPage() {
                     <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
                         <div className="max-w-2xl mx-auto text-center">
                             {getString(cms, "cta_eyebrow") && (
-                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(var(--primary))/0.06] border border-[hsl(var(--primary))/0.1] text-[hsl(var(--primary))] text-[10px] font-bold uppercase tracking-[0.2em] mb-5">
+                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(var(--primary))/0.06] border border-[hsl(var(--primary))/0.1] text-[hsl(var(--primary))] text-2xs font-bold uppercase tracking-[0.2em] mb-5">
                                     <Heart size={11} /> {getString(cms, "cta_eyebrow")}
                                 </div>
                             )}

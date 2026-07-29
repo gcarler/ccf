@@ -130,7 +130,7 @@ export default function AccountSettingsPage() {
                 rightActions={
                     <button 
                         onClick={handleSave} disabled={isSaving}
-                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isSaving ? <><Sparkles size={14} className="animate-spin" /> Guardando</> : <><Save size={14} /> Guardar Cambios</>}
                     </button>
@@ -159,7 +159,7 @@ export default function AccountSettingsPage() {
                 <main className="flex-1 overflow-y-auto p-4">
                     <div className="mx-auto max-w-4xl overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full min-w-[480px] text-left">
-                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 <tr><th className="px-3 py-1.5">Sección</th><th className="px-3 py-1.5">Estado</th><th className="px-3 py-1.5">Acción</th></tr>
                             </thead>
                             <tbody>
@@ -231,8 +231,8 @@ export default function AccountSettingsPage() {
                                             <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">Tu Perfil Público</h3>
                                             <p className="text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-sm">Esta es tu identidad dentro de la comunidad CCF.</p>
                                             <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-4">
-                    <div className="px-3 py-1 bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--primary))/0.2] dark:border-[hsl(var(--info)/0.4)] flex items-center gap-2"><ShieldCheck size={12} /> {user?.role || 'Persona'}</div>
-                                                <div className="px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10 flex items-center gap-2"><Globe size={12} /> Sede Central</div>
+                    <div className="px-3 py-1 bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--primary))/0.2] dark:border-[hsl(var(--info)/0.4)] flex items-center gap-2"><ShieldCheck size={12} /> {user?.role || 'Persona'}</div>
+                                                <div className="px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10 flex items-center gap-2"><Globe size={12} /> Sede Central</div>
                                             </div>
                                         </div>
                                     </section>
@@ -281,7 +281,7 @@ export default function AccountSettingsPage() {
                                                 <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Verifica tu número para habilitar alertas pastorales por WhatsApp.</p>
                                             </div>
                                         </div>
-                                        <button className="relative z-10 px-4 py-1.5 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg font-black text-[11px] uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl">Verificar Ahora</button>
+                                        <button className="relative z-10 px-4 py-1.5 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl">Verificar Ahora</button>
                                     </section>
                                 </motion.div>
                             )}
@@ -336,7 +336,7 @@ export default function AccountSettingsPage() {
                                                     }
                                                 }}
                                                 disabled={isChangingPassword}
-                                                className="mt-3 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
+                                                className="mt-3 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
                                             >
                                                 {isChangingPassword ? 'Guardando...' : 'Cambiar Contraseña'}
                                             </button>
@@ -376,7 +376,7 @@ export default function AccountSettingsPage() {
                                                 <Globe size={24} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                                                 <div>
                                                     <p className="text-sm font-bold tracking-tight">Español (Latinoamérica)</p>
-                                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide mt-0.5">Predeterminado</p>
+                                                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide mt-0.5">Predeterminado</p>
                                                 </div>
                                             </div>
                                             <ChevronRight size={20} className="text-[hsl(var(--text-secondary))] group-hover:translate-x-1 transition-transform" />
@@ -428,7 +428,7 @@ function ThemeCard({ label, icon: Icon, active }: any) {
             )}>
                 <Icon size={32} />
             </div>
-            <span className={clsx("text-[11px] font-semibold uppercase tracking-wide", active ? "text-[hsl(var(--primary))] dark:text-white" : "text-[hsl(var(--text-secondary))]")}>{label}</span>
+            <span className={clsx("text-xs font-semibold uppercase tracking-wide", active ? "text-[hsl(var(--primary))] dark:text-white" : "text-[hsl(var(--text-secondary))]")}>{label}</span>
         </div>
     );
 }

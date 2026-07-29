@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import ProjectsGanttView from './ProjectsGanttView';
-import type { ProjectRecord } from '@/types/projects';
+import { createMockProject } from '@/test-utils/factories';
 
 vi.mock('@/components/ui/UniversalGanttView', () => ({
     default: ({ items, moduleName, onItemClick }: { items: Array<{ id: string; title: string }>; moduleName: string; onItemClick?: (item: { id: string; title: string }) => void }) => (
@@ -19,8 +19,8 @@ vi.mock('@/components/ui/UniversalGanttView', () => ({
     ),
 }));
 
-const projects: ProjectRecord[] = [
-    {
+const projects = [
+    createMockProject({
         id: 'p1',
         title: 'Campamento Juventud',
         description: 'Organización del campamento',
@@ -30,7 +30,7 @@ const projects: ProjectRecord[] = [
         created_at: '2025-06-15T10:00:00Z',
         updated_at: '2025-06-15T10:00:00Z',
         tasks: [],
-    } as ProjectRecord,
+    }),
 ];
 
 describe('ProjectsGanttView', () => {

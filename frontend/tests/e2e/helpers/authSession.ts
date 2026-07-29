@@ -3,12 +3,15 @@ import { test, type Page, type APIRequestContext } from '@playwright/test';
 const email = process.env.E2E_EMAIL || '';
 const password = process.env.E2E_PASSWORD || '';
 const browserApiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || '/api').replace(/\/$/, '');
-const preflightApiBaseUrl = (
+const rawPreflightApiBaseUrl = (
   process.env.E2E_API_URL ||
   process.env.API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   ''
 ).replace(/\/$/, '');
+// Normalize the preflight base to the host root: callers often set API_BASE_URL to
+// the /api prefix, but the login endpoint needs /api/v3/auth/login.
+const preflightApiBaseUrl = rawPreflightApiBaseUrl.replace(/\/api$/, '');
 const authE2eEnabled = process.env.E2E_AUTH_ENABLED === '1';
 
 let cachedAccessToken = '';

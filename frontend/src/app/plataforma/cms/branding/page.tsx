@@ -138,7 +138,7 @@ export default function CmsBrandingPage() {
             Gestiona el logo y nombre que aparece en navbar, sidebar y footer del sitio público.
           </p>
           {!canEdit && (
-            <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-warning-text">
+            <p className="mt-2 text-2xs font-semibold uppercase tracking-wide text-warning-text">
               Solo lectura: este rol no puede guardar branding.
             </p>
           )}
@@ -175,7 +175,7 @@ export default function CmsBrandingPage() {
               ) : (
                 <div className="flex flex-col items-center gap-2 text-[hsl(var(--text-secondary))]">
                   <Church size={32} />
-                  <span className="text-[10px] font-medium">Sin logo</span>
+                  <span className="text-2xs font-medium">Sin logo</span>
                 </div>
               )}
             </div>
@@ -239,7 +239,7 @@ export default function CmsBrandingPage() {
                 disabled={!canEdit}
                 className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/50"
               />
-              <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))]">
+              <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">
                 URL relativa (/api/...) o absoluta (https://...)
               </p>
             </div>
@@ -257,7 +257,7 @@ export default function CmsBrandingPage() {
                 disabled={!canEdit}
                 className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/50"
               />
-              <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))]">
+              <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">
                 Texto que acompaña al logo en la navegación
               </p>
             </div>
@@ -279,13 +279,13 @@ export default function CmsBrandingPage() {
               {logoUrl ? (
                 <OptimizedImage src={logoUrl} alt={logoName || "Logo"} width={32} height={32} className="size-8 rounded-lg object-contain" />
               ) : (
-                <div className="size-8 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white text-[10px] font-bold">CCF</div>
+                <div className="size-8 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white text-2xs font-bold">CCF</div>
               )}
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-900">
+                <p className="text-2xs font-black uppercase tracking-[0.25em] text-gray-900">
                   {logoName || "Comunidad Cristiana El Faro"}
                 </p>
-                <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-gray-500">
+                <p className="text-2xs font-semibold uppercase tracking-[0.2em] text-gray-500">
                   Plataforma
                 </p>
               </div>
@@ -299,7 +299,7 @@ export default function CmsBrandingPage() {
                 {logoUrl ? (
                   <OptimizedImage src={logoUrl} alt={logoName || "Logo"} width={24} height={24} className="size-6 rounded object-contain" />
                 ) : (
-                  <span className="text-[10px] font-bold text-[hsl(var(--primary))]">CCF</span>
+                  <span className="text-2xs font-bold text-[hsl(var(--primary))]">CCF</span>
                 )}
               </div>
             </div>
@@ -308,13 +308,13 @@ export default function CmsBrandingPage() {
                 {logoUrl ? (
                   <OptimizedImage src={logoUrl} alt={logoName || "Logo"} width={28} height={28} className="size-7 rounded object-contain" />
                 ) : (
-                  <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white text-[10px] font-bold">CCF</div>
+                  <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white text-2xs font-bold">CCF</div>
                 )}
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-900">
+                  <p className="text-2xs font-black uppercase tracking-[0.25em] text-gray-900">
                     {logoName || "El Faro"}
                   </p>
-                  <p className="text-[9px] text-gray-500">Plataforma</p>
+                  <p className="text-2xs text-gray-500">Plataforma</p>
                 </div>
               </div>
             </div>

@@ -96,7 +96,7 @@ const iconList = [
 export const Grid: StoryObj = {
     render: () => (
         <div className="p-6 bg-[hsl(var(--bg-primary))]">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">
                 Iconos disponibles en el design system ({iconList.length})
             </p>
             <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
@@ -106,7 +106,7 @@ export const Grid: StoryObj = {
                         className="flex flex-col items-center gap-1.5 p-2 rounded-lg border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]/40 hover:bg-[hsl(var(--primary))]/5 transition-colors"
                     >
                         <Icon size={20} className="text-[hsl(var(--text-primary))]" />
-                        <span className="text-[8px] font-mono text-[hsl(var(--text-secondary))] truncate w-full text-center">
+                        <span className="text-2xs font-mono text-[hsl(var(--text-secondary))] truncate w-full text-center">
                             {name}
                         </span>
                     </div>
@@ -120,14 +120,14 @@ export const Grid: StoryObj = {
 export const Tamaños: StoryObj = {
     render: () => (
         <div className="p-6 bg-[hsl(var(--bg-primary))] space-y-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">
                 Escala de tamaños con Home icon
             </p>
             <div className="flex items-end gap-4">
                 {[12, 14, 16, 18, 20, 24, 28, 32, 40].map((size) => (
                     <div key={size} className="flex flex-col items-center gap-1">
                         <Home size={size} className="text-[hsl(var(--text-primary))]" />
-                        <span className="text-[8px] font-mono text-[hsl(var(--text-secondary))]">{size}px</span>
+                        <span className="text-2xs font-mono text-[hsl(var(--text-secondary))]">{size}px</span>
                     </div>
                 ))}
             </div>
@@ -139,12 +139,12 @@ export const Tamaños: StoryObj = {
 export const UsoConComponentesDS: StoryObj = {
     render: () => (
         <div className="p-6 bg-[hsl(var(--bg-primary))] space-y-6">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">
                 Componentes DS con iconos (vía AppIcon)
             </p>
             <div className="space-y-3">
                 <div>
-                    <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] mb-1">DSMetric</p>
+                    <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] mb-1">DSMetric</p>
                     <div className="grid grid-cols-3 gap-2">
                         <DSMetric label="Miembros" value="1,234" icon={Users} tone="blue" />
                         <DSMetric label="Donaciones" value="$12K" icon={Heart} tone="emerald" />
@@ -152,7 +152,7 @@ export const UsoConComponentesDS: StoryObj = {
                     </div>
                 </div>
                 <div>
-                    <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] mb-1">DSInput</p>
+                    <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] mb-1">DSInput</p>
                     <div className="flex gap-2">
                         <DSInput placeholder="Buscar..." icon={Search} />
                         <DSInput placeholder="correo@ejemplo.com" icon={Mail} />

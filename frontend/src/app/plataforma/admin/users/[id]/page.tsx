@@ -185,7 +185,7 @@ export default function UserDetailPage() {
                             <button 
                                 onClick={toggleStatus}
                                 disabled={isSubmitting}
-                                className={`px-3 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all shadow-sm border ${
+                                className={`px-3 py-2.5 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all shadow-sm border ${
                                     user.is_active 
                                     ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--destructive))/0.3] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]' 
                                     : 'bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)] text-[hsl(var(--success))] hover:bg-[hsl(var(--success))/0.15]'
@@ -216,7 +216,7 @@ export default function UserDetailPage() {
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                                     <DSBadge tone={user.role === 'admin' ? 'blue' : 'blue'} label={user.role.toUpperCase()} />
                                     <DSBadge tone={user.is_active ? 'emerald' : 'amber'} label={user.is_active ? 'ACTIVO' : 'SUSPENDIDO'} />
-                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-1 rounded-full">
+                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-1 rounded-full">
                                         ID: {user.id}
                                     </span>
                                 </div>
@@ -225,7 +225,7 @@ export default function UserDetailPage() {
 
                         {/* Account Details */}
                         <DSCard>
-                            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
+                            <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
                                 <Shield size={14} className="text-[hsl(var(--primary))]"/> Detalles de la Cuenta
                             </h3>
                             <div className="space-y-4">
@@ -233,7 +233,7 @@ export default function UserDetailPage() {
                                     <div className="flex items-center gap-4">
                                         <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center"><Shield size={18} /></div>
                                         <div>
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Rol Asignado (Permisos Granulares)</p>
+                                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Rol Asignado (Permisos Granulares)</p>
                                             {isEditingRole ? (
                                                 <select 
                                                     value={editRoleId || ''} 
@@ -258,7 +258,7 @@ export default function UserDetailPage() {
                                             <button onClick={saveRole} disabled={isSubmitting} className="p-2 text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] transition-colors rounded-lg shadow-md"><Check size={16}/></button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setIsEditingRole(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-info-soft hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
+                                        <button onClick={() => setIsEditingRole(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-info-soft hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
                                             Cambiar Rol
                                         </button>
                                     )}
@@ -267,7 +267,7 @@ export default function UserDetailPage() {
                                     <div className="flex items-center gap-4">
                                         <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center"><Mail size={18} /></div>
                                         <div>
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Correo Electrónico</p>
+                                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Correo Electrónico</p>
                                             {isEditingEmail ? (
                                                 <input 
                                                     type="email" 
@@ -287,7 +287,7 @@ export default function UserDetailPage() {
                                             <button onClick={saveEmail} disabled={isSubmitting} className="p-2 text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] transition-colors rounded-lg shadow-md"><Check size={16}/></button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setIsEditingEmail(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-info-soft hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
+                                        <button onClick={() => setIsEditingEmail(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-info-soft hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
                                             Cambiar Email
                                         </button>
                                     )}
@@ -299,16 +299,16 @@ export default function UserDetailPage() {
                     {/* Right Column - Actions & Activity */}
                     <div className="lg:col-span-4 space-y-3">
                         <DSCard>
-                            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
+                            <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
                                 <Lock size={14} className="text-[hsl(var(--warning))]"/> Seguridad
                             </h3>
                             <button 
                                 onClick={() => setPasswordModalOpen(true)}
-                                className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 <Lock size={16} /> Resetear Password
                             </button>
-                            <p className="text-[11px] font-medium text-[hsl(var(--text-secondary))] mt-4 leading-relaxed text-center">
+                            <p className="text-xs font-medium text-[hsl(var(--text-secondary))] mt-4 leading-relaxed text-center">
                                 Al resetear, la contraseña será cambiada de forma inmediata. Asegúrate de comunicársela al usuario por un canal seguro.
                             </p>
                         </DSCard>
@@ -334,14 +334,14 @@ export default function UserDetailPage() {
                 subtitle={`Para ${user.username}`}
                 actions={
                     <>
-                        <button type="button" onClick={() => !isSubmitting && setPasswordModalOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+                        <button type="button" onClick={() => !isSubmitting && setPasswordModalOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
                         <button 
                             type="button" 
                             onClick={handlePasswordReset}
                             disabled={isSubmitting || newPassword.length < 6}
-                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--warning))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--warning))/0.2] hover:bg-[hsl(var(--warning))/0.85] active:scale-95 transition-all disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--warning))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--warning))/0.2] hover:bg-[hsl(var(--warning))/0.85] active:scale-95 transition-all disabled:opacity-50"
                         >
                             <Lock size={16} /> {isSubmitting ? 'Procesando...' : 'Confirmar Cambio'}
                         </button>
@@ -350,7 +350,7 @@ export default function UserDetailPage() {
             >
                 <div className="space-y-3 mt-4">
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2 block">Escribe la nueva clave</label>
+                        <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2 block">Escribe la nueva clave</label>
                         <input 
                             type="text" 
                             value={newPassword}

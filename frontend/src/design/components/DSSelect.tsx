@@ -37,7 +37,7 @@ export const DSSelect = React.forwardRef<HTMLSelectElement, DSSelectProps>(
                 {label && (
                 <label
                     htmlFor={selectId}
-                    className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] font-sans"
+                    className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] font-sans"
                 >
                         {label}
                     </label>
@@ -81,12 +81,12 @@ export const DSSelect = React.forwardRef<HTMLSelectElement, DSSelectProps>(
                     </div>
                 </div>
                 {error && (
-                    <p id={`${selectId}-error`} className="text-[9px] text-[hsl(var(--danger))]" role="alert">
+                    <p id={`${selectId}-error`} className="text-2xs text-[hsl(var(--danger))]" role="alert">
                         {error}
                     </p>
                 )}
                 {!error && helperText && (
-                    <p id={`${selectId}-helper`} className="text-[9px] text-[hsl(var(--text-secondary))]">
+                    <p id={`${selectId}-helper`} className="text-2xs text-[hsl(var(--text-secondary))]">
                         {helperText}
                     </p>
                 )}

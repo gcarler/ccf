@@ -24,8 +24,8 @@ export default function ProjectActivityFeed({ activities }: Props) {
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] overflow-hidden font-display">
             <header className="p-3 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--surface-1))]/50 dark:bg-white/5">
                 <div>
-                    <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Actividad Reciente</h3>
-                    <p className="text-[9px] font-medium text-[hsl(var(--primary))] uppercase mt-0.5">Pulso del Equipo</p>
+                    <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Actividad Reciente</h3>
+                    <p className="text-2xs font-medium text-[hsl(var(--primary))] uppercase mt-0.5">Pulso del Equipo</p>
                 </div>
                 <div className="size-7 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 flex items-center justify-center text-[hsl(var(--primary))]">
                     <Clock size={12} />
@@ -39,7 +39,7 @@ export default function ProjectActivityFeed({ activities }: Props) {
                 {sorted.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-center space-y-3 opacity-40">
                         <Clock size={24} />
-                        <p className="text-[10px] font-semibold uppercase tracking-wide">Sin actividad aún</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide">Sin actividad aún</p>
                     </div>
                 ) : (
                     sorted.map((log, idx) => (
@@ -59,14 +59,14 @@ export default function ProjectActivityFeed({ activities }: Props) {
 
                             <div className="flex-1 min-w-0 space-y-0.5">
                                 <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">
+                                    <span className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">
                                         {log.task_title || log.project_title || 'Sistema'}
                                     </span>
-                                    <span className="text-[9px] font-medium text-[hsl(var(--text-secondary))] whitespace-nowrap">
+                                    <span className="text-2xs font-medium text-[hsl(var(--text-secondary))] whitespace-nowrap">
                                         {formatRelative(log.created_at)}
                                     </span>
                                 </div>
-                                <p className="text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-snug">
+                                <p className="text-sm font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-snug">
                                     {log.description}
                                 </p>
                             </div>

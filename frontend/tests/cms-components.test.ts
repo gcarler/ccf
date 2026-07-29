@@ -296,9 +296,10 @@ describe("CmsPageOverride Logic", () => {
   });
 
   it("should fallback to children when no CMS sections", () => {
-    const page: { sections: Array<{ is_visible: boolean; sort_order?: number }> } | null = null as any;
-    const shouldRenderChildren = !page || !page.sections || page.sections.length === 0;
-    expect(shouldRenderChildren).toBe(true);
+    function shouldRenderChildren(page: { sections: Array<{ is_visible: boolean; sort_order?: number }> } | null) {
+      return !page || !page.sections || page.sections.length === 0;
+    }
+    expect(shouldRenderChildren(null)).toBe(true);
   });
 
   it("should filter out invisible sections", () => {

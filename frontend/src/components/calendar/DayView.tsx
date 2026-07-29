@@ -40,7 +40,7 @@ export default function DayView({
             {HOURS.map(h => (
               <div key={h} className="absolute left-0 right-0 flex items-start justify-end pr-3"
                 style={{ top: h * HOUR_HEIGHT - 7 }}>
-                {h > 0 && <span className="text-[9px] text-[hsl(var(--text-secondary))] font-bold">{formatHour(h)}</span>}
+                {h > 0 && <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold">{formatHour(h)}</span>}
               </div>
             ))}
           </div>
@@ -73,13 +73,13 @@ export default function DayView({
                     style={{ top, height: h, backgroundColor: e.color + '20', borderLeft: `4px solid ${e.color}` }}
                   >
                     <div className="mb-1">
-                      <span className={clsx('inline-flex rounded-full px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide', EVENT_TYPE_META[e.type].chip)}>
+                      <span className={clsx('inline-flex rounded-full px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide', EVENT_TYPE_META[e.type].chip)}>
                         {EVENT_TYPE_META[e.type].label}
                       </span>
                     </div>
-                    <p className="text-[11px] font-bold" style={{ color: e.color }}>{e.title}</p>
-                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">{format(e.start, 'h:mm a')}</p>
-                    {e.location && <p className="text-[9px] text-[hsl(var(--text-secondary))] mt-0.5">{e.location}</p>}
+                    <p className="text-xs font-bold" style={{ color: e.color }}>{e.title}</p>
+                    <p className="text-2xs text-[hsl(var(--text-secondary))]">{format(e.start, 'h:mm a')}</p>
+                    {e.location && <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5">{e.location}</p>}
                   </div>
                 );
               })}

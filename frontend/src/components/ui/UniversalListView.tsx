@@ -110,7 +110,7 @@ export default function UniversalListView({
                     <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">
                         {title}
                     </h3>
-                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))] px-2 py-0.5 rounded-full">
+                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))] px-2 py-0.5 rounded-full">
                         {filteredItems.length}
                     </span>
                 </div>
@@ -230,7 +230,7 @@ export default function UniversalListView({
                                             {item.priority && (
                                                 <span
                                                     className={clsx(
-                                                        "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
+                                                        "px-2 py-0.5 rounded-full text-2xs font-bold uppercase",
                                                         PRIORITY_STYLES[item.priority] || PRIORITY_STYLES.medium
                                                     )}
                                                 >
@@ -244,13 +244,13 @@ export default function UniversalListView({
                                                     {item.tags.slice(0, 2).map((tag) => (
                                                         <span
                                                             key={tag}
-                                                            className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]"
+                                                            className="px-1.5 py-0.5 text-2xs font-bold rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]"
                                                         >
                                                             {tag}
                                                         </span>
                                                     ))}
                                                     {item.tags.length > 2 && (
-                                                        <span className="text-[9px] text-[hsl(var(--text-secondary))]">
+                                                        <span className="text-2xs text-[hsl(var(--text-secondary))]">
                                                             +{item.tags.length - 2}
                                                         </span>
                                                     )}

@@ -18,7 +18,7 @@ export default function FormSection({ title, defaultOpen, children }: FormSectio
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
       >
         <span>{title}</span>
         <ChevronDown size={14} className={clsx("transition-transform", open && "rotate-180")} />

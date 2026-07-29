@@ -30,7 +30,7 @@ export const DSInput = React.forwardRef<HTMLInputElement, DSInputProps>(
                 {label && (
                 <label
                     htmlFor={inputId}
-                    className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] font-sans"
+                    className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] font-sans"
                 >
                         {label}
                     </label>
@@ -69,12 +69,12 @@ export const DSInput = React.forwardRef<HTMLInputElement, DSInputProps>(
                     )}
                 </div>
                 {error && (
-                    <p id={`${inputId}-error`} className="text-[9px] text-[hsl(var(--danger))]" role="alert">
+                    <p id={`${inputId}-error`} className="text-2xs text-[hsl(var(--danger))]" role="alert">
                         {error}
                     </p>
                 )}
                 {!error && helperText && (
-                    <p id={`${inputId}-helper`} className="text-[9px] text-[hsl(var(--text-secondary))]">
+                    <p id={`${inputId}-helper`} className="text-2xs text-[hsl(var(--text-secondary))]">
                         {helperText}
                     </p>
                 )}

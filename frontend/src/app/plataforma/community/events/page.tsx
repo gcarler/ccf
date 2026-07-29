@@ -49,7 +49,7 @@ export default function EventsCalendar() {
  <div className="p-4 lg:p-4 space-y-3 w-full animate-in fade-in duration-700">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-[10px]">
+                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-2xs">
                         <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
                         Comunidad CCF
                     </div>
@@ -67,7 +67,7 @@ export default function EventsCalendar() {
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`pb-2 text-[10px] font-bold uppercase tracking-wide transition-all relative ${activeTab === tab
+                            className={`pb-2 text-2xs font-bold uppercase tracking-wide transition-all relative ${activeTab === tab
                                 ? 'text-[hsl(var(--primary))]'
                                 : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
                                 }`}
@@ -102,25 +102,25 @@ export default function EventsCalendar() {
                             >
                                 <div className="p-4 flex-1">
                                     <div className="flex items-center justify-between mb-3">
-                                        <span className="rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 text-[9px] font-bold uppercase tracking-wide">{event.category}</span>
-                                        <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] text-[10px] font-bold">
+                                        <span className="rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] px-2 py-1 text-2xs font-bold uppercase tracking-wide">{event.category}</span>
+                                        <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] text-2xs font-bold">
                                             <CalendarDays size={12} />
                                             {new Date(event.date).toLocaleDateString()}
                                         </div>
                                     </div>
                                     <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] leading-tight mb-2 group-hover:text-[hsl(var(--primary))] transition-colors">{event.title}</h3>
                                     <p className="text-xs text-[hsl(var(--text-secondary))] font-medium line-clamp-2 mb-4">{event.description}</p>
-                                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] mb-2">
+                                    <div className="flex items-center gap-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] mb-2">
                                         <MapPin size={12} />
                                         {event.location}
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between px-4 py-3 border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
-                                    <div className="flex items-center gap-2 text-[10px] font-bold text-[hsl(var(--text-secondary))]">
+                                    <div className="flex items-center gap-2 text-2xs font-bold text-[hsl(var(--text-secondary))]">
                                         <Users size={14} />
                                         {event.attendees_count} Asistentes
                                     </div>
-                                    <button className="px-3 py-1.5 bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] rounded-lg text-[9px] font-bold uppercase tracking-wide shadow-sm hover:opacity-90 transition-all active:scale-95">
+                                    <button className="px-3 py-1.5 bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] rounded-lg text-2xs font-bold uppercase tracking-wide shadow-sm hover:opacity-90 transition-all active:scale-95">
                                         Reservar
                                     </button>
                                 </div>

@@ -121,7 +121,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                                     {t.author?.username ?? "Anónimo"}
                                 </p>
                                 <p
-                                    className="text-[10px] uppercase tracking-wide font-bold opacity-80 truncate"
+                                    className="text-2xs uppercase tracking-wide font-bold opacity-80 truncate"
                                     style={{ color: "var(--site-on-surface-variant)" }}
                                 >
                                     {t.author?.role ?? "Persona"}
@@ -132,7 +132,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                         <div className="hidden sm:flex flex-col items-end shrink-0 ml-2">
                             {t.emotion && (
                                 <span
-                                    className="px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
+                                    className="px-3 py-1.5 rounded-full text-2xs font-semibold uppercase tracking-wide"
                                     style={{
                                         background: "var(--site-surface-dim)",
                                         color: "var(--site-primary)"
@@ -143,7 +143,7 @@ function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: bool
                             )}
                             {mediaUrl && (
                                 <span
-                                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
+                                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-2xs font-semibold uppercase tracking-wide"
                                     style={{ background: "var(--site-surface-dim)", color: "var(--site-on-surface-variant)" }}
                                 >
                                     {t.media_type === "video" ? <PlayCircle size={12} /> : t.media_type === "podcast" ? <Headphones size={12} /> : <ImageIcon size={12} />}

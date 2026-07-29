@@ -155,25 +155,25 @@ export default function NewCoursePage() {
                     <section className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-[hsl(var(--info))]/20 rounded-full blur-3xl" />
                         <div className="relative z-10 space-y-3">
-                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Previsualización</h4>
+                            <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Previsualización</h4>
                             <div className="aspect-video rounded-lg bg-white/5 border border-white/10 flex flex-col items-center justify-center gap-4 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all cursor-pointer group">
                                 <ImageIcon size={40} strokeWidth={1} className="group-hover:scale-110 transition-transform" />
-                                <span className="text-[9px] font-semibold uppercase">Subir Miniatura</span>
+                                <span className="text-2xs font-semibold uppercase">Subir Miniatura</span>
                             </div>
                             <div>
                                 <h5 className="text-xl font-semibold uppercase tracking-tight truncate">{formData.title || 'Nombre del Curso'}</h5>
-                                <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">{formData.code || 'ID-XXX'} • {formData.modality}</p>
+                                <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">{formData.code || 'ID-XXX'} • {formData.modality}</p>
                             </div>
                             <div className="flex gap-3">
-                                <div className="px-3 py-1.5 bg-[hsl(var(--primary))] rounded-md text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2"><Zap size={12} fill="currentColor" /> {formData.xp_per_lesson} XP</div>
-                                <div className="px-3 py-1.5 bg-white/10 rounded-md text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2"><Award size={12} /> Graduable</div>
+                                <div className="px-3 py-1.5 bg-[hsl(var(--primary))] rounded-md text-2xs font-semibold uppercase tracking-wide flex items-center gap-2"><Zap size={12} fill="currentColor" /> {formData.xp_per_lesson} XP</div>
+                                <div className="px-3 py-1.5 bg-white/10 rounded-md text-2xs font-semibold uppercase tracking-wide flex items-center gap-2"><Award size={12} /> Graduable</div>
                             </div>
                         </div>
                     </section>
 
                     <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Resumen de Metas</h4>
+                            <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Resumen de Metas</h4>
                             <Settings size={18} className="text-[hsl(var(--text-secondary))]" />
                         </div>
                         <div className="space-y-3">
@@ -191,7 +191,7 @@ export default function NewCoursePage() {
 function GoalRow({ label, value }: GoalRowProps) {
     return (
         <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] uppercase">{label}</span>
+            <span className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase">{label}</span>
             <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase">{value}</span>
         </div>
     );

@@ -189,12 +189,12 @@ export default function Navbar() {
                         {logoName && (
                             <span className="flex min-w-0 flex-col leading-none">
                                 <span
-                                    className="max-w-[10rem] truncate text-[15px] font-semibold md:max-w-[14rem] md:text-[17px]"
+                                    className="max-w-[10rem] truncate text-md font-semibold md:max-w-[14rem] md:text-xl"
                                     style={{ color: "var(--site-on-background)" }}
                                 >
                                     {logoName}
                                 </span>
-                                <span className="hidden pt-1 text-[10px] font-semibold uppercase tracking-[0.18em] md:block" style={{ color: "var(--site-on-surface-variant)" }}>
+                                <span className="hidden pt-1 text-2xs font-semibold uppercase tracking-[0.18em] md:block" style={{ color: "var(--site-on-surface-variant)" }}>
                                     Comunidad cristiana
                                 </span>
                             </span>
@@ -213,7 +213,7 @@ export default function Navbar() {
                                 <Link
                                     key={href}
                                     href={href}
-                                    className="relative inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-[14px] font-semibold transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent xl:px-5"
+                                    className="relative inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-md font-semibold transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent xl:px-5"
                                     style={{
                                         color: active
                                             ? "var(--site-on-background)"
@@ -246,7 +246,7 @@ export default function Navbar() {
                                             border: "1px solid var(--site-dropdown-border)",
                                         }}
                                     >
-                                        <div className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                        <div className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--site-on-surface-variant)" }}>
                                             Explorar
                                         </div>
                                         {children?.map((child) => {
@@ -311,7 +311,7 @@ export default function Navbar() {
                             <Link
                                 href={ctaHref}
                                 onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="hidden h-11 items-center gap-2 rounded-full px-4 text-[13px] font-semibold transition-transform hover:-translate-y-0.5 xl:inline-flex xl:px-5"
+                                className="hidden h-11 items-center gap-2 rounded-full px-4 text-base font-semibold transition-transform hover:-translate-y-0.5 xl:inline-flex xl:px-5"
                                 style={{
                                     background: "var(--site-primary)",
                                     color: "var(--site-on-primary)",
@@ -389,7 +389,7 @@ export default function Navbar() {
 
                     <div className="flex-1 overflow-y-auto px-5 pb-8 pt-3">
                         <div className="mb-6">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-on-surface-variant)" }}>
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-on-surface-variant)" }}>
                                 Menu principal
                             </p>
                         </div>
@@ -409,7 +409,7 @@ export default function Navbar() {
                                     <Link
                                         href={href}
                                         onClick={() => setMobileOpen(false)}
-                                        className="flex items-center justify-between gap-4 rounded-2xl px-4 py-4 text-[17px] font-semibold"
+                                        className="flex items-center justify-between gap-4 rounded-2xl px-4 py-4 text-xl font-semibold"
                                         style={{ color: active ? "var(--site-on-background)" : "var(--site-on-background)" }}
                                     >
                                         <span>{label}</span>

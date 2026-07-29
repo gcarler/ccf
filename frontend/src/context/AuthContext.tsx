@@ -4,7 +4,7 @@ import { apiFetch } from '@/lib/http';
 import { useRouter } from 'next/navigation';
 import React,{ createContext,useCallback,useContext,useEffect,useState } from 'react';
 
-interface AuthContextType {
+export interface AuthContextType {
     user: any;
     token: string | null;
     login: (accessToken?: string, refreshToken?: string) => Promise<void>;

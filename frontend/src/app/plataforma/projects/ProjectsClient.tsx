@@ -290,7 +290,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                 <div className="lg:col-span-2">
                     <Link href="/plataforma/projects/team" className="block">
                         <DSCard className="hover:border-[hsl(var(--primary))]/30 transition-all cursor-pointer">
-                            <h2 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
+                            <h2 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
                                 Carga de Trabajo del Equipo
                             </h2>
                             <DSChart
@@ -308,7 +308,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                 <div>
                     <Link href="/plataforma/projects/tasks?view=list&scope=all" className="block">
                         <DSCard className="hover:border-[hsl(var(--danger)/40%)]/30 transition-all cursor-pointer">
-                            <h2 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
+                            <h2 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
                                 Estado de Tareas
                             </h2>
                             <div className="space-y-4 pt-4">
@@ -319,7 +319,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full w-[15%] bg-[hsl(var(--danger))]" />
                                 </div>
-                                <p className="text-[10px] text-[hsl(var(--text-secondary))] italic">
+                                <p className="text-2xs text-[hsl(var(--text-secondary))] italic">
                                     Se recomienda revisar los hitos críticos para evitar cuellos de botella.
                                 </p>
                             </div>

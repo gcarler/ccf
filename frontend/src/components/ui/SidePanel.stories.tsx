@@ -30,20 +30,20 @@ export const Default: Story = {
     children: (
       <div className="space-y-3 p-1">
         <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
-          <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] w-24">Nombre:</span>
-          <span className="text-[11px] font-semibold text-[hsl(var(--text-primary))] dark:text-white">Juan Pérez</span>
+          <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] w-24">Nombre:</span>
+          <span className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Juan Pérez</span>
         </div>
         <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
-          <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] w-24">Email:</span>
-          <span className="text-[11px] font-semibold text-[hsl(var(--text-primary))] dark:text-white">juan@ejemplo.com</span>
+          <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] w-24">Email:</span>
+          <span className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">juan@ejemplo.com</span>
         </div>
         <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
-          <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] w-24">Rol:</span>
-          <span className="text-[11px] font-semibold text-[hsl(var(--text-primary))] dark:text-white">Líder de Jóvenes</span>
+          <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] w-24">Rol:</span>
+          <span className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Líder de Jóvenes</span>
         </div>
         <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
-          <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] w-24">Estado:</span>
-          <span className="text-[11px] font-semibold text-[hsl(var(--success))]">Activo</span>
+          <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] w-24">Estado:</span>
+          <span className="text-xs font-semibold text-[hsl(var(--success))]">Activo</span>
         </div>
       </div>
     ),
@@ -107,7 +107,7 @@ export const LongContent: Story = {
         {Array.from({ length: 15 }, (_, i) => (
           <div key={i} className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
             <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Cambio #{i + 1}</p>
-            <p className="text-[10px] text-[hsl(var(--text-secondary))]">Descripción del cambio realizado en el sistema.</p>
+            <p className="text-2xs text-[hsl(var(--text-secondary))]">Descripción del cambio realizado en el sistema.</p>
           </div>
         ))}
       </div>

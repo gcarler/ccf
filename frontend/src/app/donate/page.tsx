@@ -120,11 +120,11 @@ export default function DonatePage() {
                     </div>
                     <div className="py-2 border-y border-[hsl(var(--border))] dark:border-white/10 flex justify-between items-center px-4">
                         <div className="text-left">
-                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Monto Sembrado</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Monto Sembrado</p>
                             <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">${amount}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoría</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoría</p>
                             <p className="text-sm font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{type}</p>
                         </div>
                     </div>
@@ -156,7 +156,7 @@ export default function DonatePage() {
             <main className="w-full max-w-5xl px-3 py-1.5 grid grid-cols-1 lg:grid-cols-2 gap-3 relative z-10 items-start">
                 {/* Left Side: Inspiration */}
                 <div className="space-y-3 pt-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[10px] font-bold uppercase tracking-wide">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-2xs font-bold uppercase tracking-wide">
                         <HandHeart size={14} /> Tu siembra tiene propósito
                     </div>
                     <h2 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-[0.9]">
@@ -177,7 +177,7 @@ export default function DonatePage() {
                     {/* Amount Selector */}
                     <div className="space-y-3">
                         <div className="text-center">
-                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-4">Selecciona un monto</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-4">Selecciona un monto</p>
                             <div className="flex items-center justify-center gap-2">
                                 <span className="text-lg font-bold text-[hsl(var(--text-secondary))]">$</span>
                                 {isCustom ? (
@@ -209,7 +209,7 @@ export default function DonatePage() {
                         <button 
                             onClick={() => setIsCustom(true)}
                             className={clsx(
-                                "w-full py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-wide transition-all border-2",
+                                "w-full py-1.5 rounded-lg font-bold text-2xs uppercase tracking-wide transition-all border-2",
                                 isCustom ? "border-[hsl(var(--info)/100%)] bg-info-soft/50 dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]" : "border-transparent bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))]"
                             )}
                         >
@@ -219,7 +219,7 @@ export default function DonatePage() {
 
                     {/* Type Selector */}
                     <div className="space-y-4">
-                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-center">Destino de la semilla</p>
+                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-center">Destino de la semilla</p>
                         <div className="grid grid-cols-2 gap-3">
                             <TypeOption active={type === 'Diezmo'} onClick={() => setType('Diezmo')} icon={Building} label="Diezmo" />
                             <TypeOption active={type === 'Ofrenda'} onClick={() => setType('Ofrenda')} icon={Heart} label="Ofrenda" />
@@ -245,7 +245,7 @@ export default function DonatePage() {
                             <div className="w-full border-t border-[hsl(var(--border))] dark:border-white/5" />
                         </div>
                         <div className="relative flex justify-center">
-                            <span className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] px-3 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <span className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] px-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 O registra manualmente
                             </span>
                         </div>
@@ -254,14 +254,14 @@ export default function DonatePage() {
                     <button
                         onClick={handleManualDonation}
                         disabled={loading || !amount || parseFloat(amount) <= 0}
-                        className="w-full py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-lg font-bold text-[11px] uppercase tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10"
+                        className="w-full py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-lg font-bold text-xs uppercase tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10"
                     >
                         {loading ? <Loader2 size={16} className="animate-spin" /> : <><CreditCard size={16} /> Registrar como recibido</>}
                     </button>
 
                     <div className="flex items-center justify-center gap-4 pt-4 border-t border-[hsl(var(--border))] dark:border-white/5 opacity-40">
-                        <div className="flex items-center gap-1"><Lock size={12} /><span className="text-[9px] font-semibold uppercase">Secure SSL</span></div>
-                        <div className="flex items-center gap-1"><CheckCircle2 size={12} /><span className="text-[9px] font-semibold uppercase">Verified Merchant</span></div>
+                        <div className="flex items-center gap-1"><Lock size={12} /><span className="text-2xs font-semibold uppercase">Secure SSL</span></div>
+                        <div className="flex items-center gap-1"><CheckCircle2 size={12} /><span className="text-2xs font-semibold uppercase">Verified Merchant</span></div>
                     </div>
                 </div>
             </main>
@@ -300,7 +300,7 @@ function TypeOption({ active, onClick, icon: Icon, label }: any) {
             )}>
                 <Icon size={20} />
             </div>
-            <span className={clsx("text-[10px] font-bold uppercase tracking-wide", active ? "text-[hsl(var(--primary))] dark:text-white" : "text-[hsl(var(--text-secondary))]")}>{label}</span>
+            <span className={clsx("text-2xs font-bold uppercase tracking-wide", active ? "text-[hsl(var(--primary))] dark:text-white" : "text-[hsl(var(--text-secondary))]")}>{label}</span>
         </button>
     );
 }

@@ -58,7 +58,7 @@ export default function BrokenLinksPage() {
               {l.error_message && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{l.error_message}</p>}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {l.status_code && <span className="text-[10px] font-bold bg-[hsl(var(--surface-2))] px-2 py-0.5 rounded">{l.status_code}</span>}
+              {l.status_code && <span className="text-2xs font-bold bg-[hsl(var(--surface-2))] px-2 py-0.5 rounded">{l.status_code}</span>}
               {!l.resolved_at && (
                 <button onClick={() => resolve(l.id)} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-[hsl(var(--secondary))] hover:bg-green-200">Marcar resuelto</button>
               )}

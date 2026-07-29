@@ -110,11 +110,11 @@ export default function AgendaEventDetailPage() {
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
+                                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
                                     {saving ? "Guardando" : "Edición activa"}
                                 </span>
                                 <span
-                                    className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${
+                                    className={`rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide ${
                                         saving
                                             ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text"
                                             : hasUnsavedChanges
@@ -133,7 +133,7 @@ export default function AgendaEventDetailPage() {
                                 <button
                                     onClick={handleDelete}
                                     disabled={!event || deleting}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-red-50 disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-red-50 disabled:opacity-50"
                                 >
                                     <Trash2 size={14} />
                                     {deleting ? "Eliminando..." : "Eliminar"}
@@ -141,7 +141,7 @@ export default function AgendaEventDetailPage() {
                                 <button
                                     onClick={handleSave}
                                     disabled={!event || saving}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))] disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))] disabled:opacity-50"
                                 >
                                     <Save size={14} />
                                     {saving ? "Guardando..." : "Guardar cambios"}
@@ -156,7 +156,7 @@ export default function AgendaEventDetailPage() {
                         ) : (
                             <div className="space-y-5">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Título</label>
+                                    <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Título</label>
                                     <input
                                         value={event.title}
                                         onChange={(e) => setEvent({ ...event, title: e.target.value })}
@@ -166,7 +166,7 @@ export default function AgendaEventDetailPage() {
 
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Inicio</label>
+                                        <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Inicio</label>
                                         <input
                                             type="datetime-local"
                                             value={event.start_at.slice(0, 16)}
@@ -175,7 +175,7 @@ export default function AgendaEventDetailPage() {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fin</label>
+                                        <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fin</label>
                                         <input
                                             type="datetime-local"
                                             value={(event.end_at || event.start_at).slice(0, 16)}
@@ -186,7 +186,7 @@ export default function AgendaEventDetailPage() {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
+                                    <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
                                     <div className="relative">
                                         <MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                                         <input
@@ -198,7 +198,7 @@ export default function AgendaEventDetailPage() {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</label>
+                                    <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</label>
                                     <textarea
                                         rows={5}
                                         value={event.description || ""}

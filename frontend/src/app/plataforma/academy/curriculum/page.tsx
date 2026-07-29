@@ -64,7 +64,7 @@ export default function StudentCurriculum() {
                 </div>
                 <div className="px-4 py-2 flex items-center justify-between">
                     <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{activeFilter}</h2>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-3 py-1 rounded-full">
+                    <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-3 py-1 rounded-full">
                         {filtered.length} cursos
                     </span>
                 </div>
@@ -95,7 +95,7 @@ export default function StudentCurriculum() {
                                 <div className="flex-1">
                                     <div
                                         className={clsx(
-                                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wide mb-3 border',
+                                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide mb-3 border',
                                             enrollment.approved
                                                 ? 'text-[hsl(var(--success))] border-[hsl(var(--success)/25%)] bg-success-soft'
                                                 : 'text-[hsl(var(--warning))] border-[hsl(var(--warning)/25%)] bg-warning-soft'
@@ -111,7 +111,7 @@ export default function StudentCurriculum() {
                                 </div>
                                 <div className="w-20 h-20 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 flex flex-col items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/20">
                                     <p className="text-[hsl(var(--text-primary))] dark:text-white text-sm font-semibold">{Math.round(enrollment.progress_percent)}%</p>
-                                    <p className="text-[9px] text-[hsl(var(--text-secondary))] uppercase tracking-wide">Progreso</p>
+                                    <p className="text-2xs text-[hsl(var(--text-secondary))] uppercase tracking-wide">Progreso</p>
                                 </div>
                             </article>
                         ))}
@@ -135,7 +135,7 @@ function SummaryCard({ label, value, tone }: { label: string; value: string | nu
     };
     return (
         <div className={`rounded-lg border border-[hsl(var(--border))] dark:border-white/5 px-4 py-1.5 flex items-center justify-between ${colors[tone]}`}>
-            <span className="text-[10px] font-semibold uppercase tracking-wide">{label}</span>
+            <span className="text-2xs font-semibold uppercase tracking-wide">{label}</span>
             <span className="text-sm font-semibold">{value}</span>
         </div>
     );

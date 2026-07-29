@@ -160,10 +160,10 @@ export default function CmsTagsManagement() {
       <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Tag size={16} className="text-[hsl(var(--primary))] shrink-0" />
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">
             Etiquetas
           </h2>
-          <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
+          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
             {visibleTags.length}
           </span>
         </div>
@@ -171,7 +171,7 @@ export default function CmsTagsManagement() {
         <select
           value={siteKey}
           onChange={(e) => setSiteKey(e.target.value)}
-          className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-1.5 text-[12px] shrink-0"
+          className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-1.5 text-sm shrink-0"
         >
           {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
           {sites.map((site) => (
@@ -191,14 +191,14 @@ export default function CmsTagsManagement() {
             placeholder="Buscar..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-lg text-[12px] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
+            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
           />
         </div>
 
         <button
           onClick={() => setIsQuickAddOpen((prev) => !prev)}
           disabled={!canEdit}
-          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
+          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
         >
           <Plus size={14} /> Nueva etiqueta
         </button>
@@ -206,7 +206,7 @@ export default function CmsTagsManagement() {
 
       {error && (
         <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-          <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+          <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
         </div>
       )}
 
@@ -228,7 +228,7 @@ export default function CmsTagsManagement() {
             <button
               type="submit"
               disabled={!canEdit}
-              className="bg-[hsl(var(--primary))] text-white px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
+              className="bg-[hsl(var(--primary))] text-white px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide disabled:opacity-50"
             >
               Guardar
             </button>
@@ -289,16 +289,16 @@ export default function CmsTagsManagement() {
                     onClick={() => setSelectedTag(tag)}
                   >
                     <div className="flex items-center gap-2">
-                      <h3 className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+                      <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                         {tag.name}
                       </h3>
                       {isArchived && (
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning-muted))] text-warning-text dark:bg-[hsl(var(--warning))]/20 dark:text-[hsl(var(--warning))]">
+                        <span className="px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--warning-muted))] text-warning-text dark:bg-[hsl(var(--warning))]/20 dark:text-[hsl(var(--warning))]">
                           Archivada
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--text-secondary))]">
+                    <div className="flex items-center gap-1 text-xs text-[hsl(var(--text-secondary))]">
                       <Globe size={11} />/{tag.slug}
                     </div>
                   </div>
@@ -340,12 +340,12 @@ export default function CmsTagsManagement() {
         {selectedTag && (
           <div className="space-y-3">
             <section className="space-y-3">
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+              <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                 Configuración
               </label>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                     Nombre
                   </span>
                   <input
@@ -354,12 +354,12 @@ export default function CmsTagsManagement() {
                     onChange={(e) =>
                       setSelectedTag({ ...selectedTag, name: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                     Slug
                   </span>
                   <input
@@ -368,7 +368,7 @@ export default function CmsTagsManagement() {
                     onChange={(e) =>
                       setSelectedTag({ ...selectedTag, slug: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
@@ -379,7 +379,7 @@ export default function CmsTagsManagement() {
               <button
                 onClick={handleSave}
                 disabled={!canEdit}
-                className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
+                className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
               >
                 Guardar cambios
               </button>
@@ -387,7 +387,7 @@ export default function CmsTagsManagement() {
                 <button
                   onClick={() => handleRestore(selectedTag)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-[hsl(var(--success)/25%)] text-success-text dark:text-success-text py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--success)/25%)] text-success-text dark:text-success-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <RotateCcw size={14} /> Restaurar
                 </button>
@@ -395,7 +395,7 @@ export default function CmsTagsManagement() {
                 <button
                   onClick={() => handleArchive(selectedTag)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-[hsl(var(--warning)/25%)] text-warning-text dark:text-warning-text py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--warning)/25%)] text-warning-text dark:text-warning-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Archive size={14} /> Archivar
                 </button>

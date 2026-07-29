@@ -199,8 +199,8 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
 
               <div className="rounded-lg border border-[hsl(var(--border))] bg-white/70 p-3">
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Biblioteca CMS</span>
-                  <Link href="/plataforma/cms/media" className="text-[10px] font-semibold uppercase tracking-wide text-primary hover:underline">
+                  <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Biblioteca CMS</span>
+                  <Link href="/plataforma/cms/media" className="text-2xs font-semibold uppercase tracking-wide text-primary hover:underline">
                     Subir media
                   </Link>
                 </div>
@@ -228,7 +228,7 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
                         }`}
                       >
                         {mediaType === "image" ? <ImageIcon size={14} /> : mediaType === "video" ? <PlayCircle size={14} /> : <Headphones size={14} />}
-                        <span className="min-w-0 truncate text-[11px] font-bold">{item.filename || item.url}</span>
+                        <span className="min-w-0 truncate text-xs font-bold">{item.filename || item.url}</span>
                       </button>
                     ))}
                   </div>

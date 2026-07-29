@@ -93,7 +93,7 @@ export default function EmailBuilderPage() {
           <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{error}</p>
           <button
             onClick={() => setReloadKey((key) => key + 1)}
-            className="mt-4 rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+            className="mt-4 rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
           >
             Reintentar
           </button>

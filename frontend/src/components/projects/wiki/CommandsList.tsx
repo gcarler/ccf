@@ -61,7 +61,7 @@ export const CommandsList = forwardRef((props: CommandsListProps, ref) => {
     return (
         <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl overflow-hidden p-1.5 min-w-[240px] animate-in fade-in zoom-in-95 duration-100 font-display">
             <div className="px-2 py-1.5 mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comandos Rápidos</span>
+                <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comandos Rápidos</span>
             </div>
             {props.items.length ? (
                 props.items.map((item: CommandItem, index: number) => (
@@ -82,8 +82,8 @@ export const CommandsList = forwardRef((props: CommandsListProps, ref) => {
                             <item.icon size={14} />
                         </div>
                         <div>
-                            <p className="text-[12px] font-bold leading-none">{item.title}</p>
-                            <p className={clsx("text-[10px] mt-0.5 font-medium", index === selectedIndex ? "text-[hsl(var(--info))]" : "text-[hsl(var(--text-secondary))]")}>
+                            <p className="text-sm font-bold leading-none">{item.title}</p>
+                            <p className={clsx("text-2xs mt-0.5 font-medium", index === selectedIndex ? "text-[hsl(var(--info))]" : "text-[hsl(var(--text-secondary))]")}>
                                 {item.description}
                             </p>
                         </div>

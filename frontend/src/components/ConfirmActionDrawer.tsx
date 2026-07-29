@@ -27,7 +27,7 @@ export default function ConfirmActionDrawer({ action, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
+            className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
           >
             Cancelar
           </button>
@@ -42,7 +42,7 @@ export default function ConfirmActionDrawer({ action, onClose }: Props) {
                 // Keep the drawer open so the user can retry or cancel.
               }
             }}
-            className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-white transition-colors ${
+            className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-colors ${
               action?.destructive
                 ? 'bg-[hsl(var(--danger))] hover:bg-[hsl(var(--danger))]'
                 : 'bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]'

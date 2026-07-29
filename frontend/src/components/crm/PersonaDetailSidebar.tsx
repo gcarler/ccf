@@ -159,9 +159,9 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
     const handlePrint = () => window.print();
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))]">
             {/* Sidebar Header Cinematic */}
-            <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-[hsl(var(--surface-1))]/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
+            <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--surface-2))]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
                 <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-[hsl(var(--primary))] dark:text-white">
                     <ShieldCheck size={160} />
                 </div>
@@ -176,13 +176,13 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                         <CloseIcon size={20} />
                     </button>
                     <div className="flex gap-2.5">
-                        <button onClick={handlePrint} className="px-3 py-2.5 bg-white/60 dark:bg-white/5 backdrop-blur-md text-[hsl(var(--primary))] dark:text-info-text rounded-lg text-[10px] font-bold uppercase tracking-wider border border-[hsl(var(--info)/20%)]/50 dark:border-white/10 flex items-center gap-2 shadow-sm hover:bg-info-soft transition-all active:scale-95">
+                        <button onClick={handlePrint} className="px-3 py-2.5 bg-white/60 dark:bg-white/5 backdrop-blur-md text-[hsl(var(--primary))] dark:text-info-text rounded-lg text-2xs font-bold uppercase tracking-wider border border-[hsl(var(--info)/20%)]/50 dark:border-white/10 flex items-center gap-2 shadow-sm hover:bg-info-soft transition-all active:scale-95">
                             <Printer size={14} /> PDF
                         </button>
                         <button
                             onClick={() => editMode ? handleUpdatePersona() : setEditMode(true)}
                             className={clsx(
-                                "px-3 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95 shadow-lg",
+                                "px-3 py-2.5 rounded-lg text-2xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95 shadow-lg",
                                 editMode
                                     ? "bg-[hsl(var(--success))] text-white shadow-[hsl(var(--success)/20%)]"
                                     : "bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white shadow-[hsl(var(--info)/25%)]"
@@ -198,11 +198,11 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                     <div className="relative">
                         <motion.div
                             whileHover={{ scale: 1.05 }}
-                            className="size-10 rounded-md bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] text-white flex items-center justify-center font-bold text-lg shadow-2xl shadow-[hsl(var(--info)/30%)] border-4 border-white dark:border-[#1e1f21]"
+                            className="size-10 rounded-md bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] text-white flex items-center justify-center font-bold text-lg shadow-2xl shadow-[hsl(var(--info)/30%)] border-4 border-white dark:border-[hsl(var(--border))]"
                         >
                             {selectedPersona.nombre_completo?.charAt(0) ?? ''}
                         </motion.div>
-                        <div className="absolute -bottom-1 -right-1 size-9 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113] border-[3px] border-[hsl(var(--border))] dark:border-[#0f1113] flex items-center justify-center text-[hsl(var(--primary))] shadow-xl overflow-hidden">
+                        <div className="absolute -bottom-1 -right-1 size-9 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-[3px] border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] shadow-xl overflow-hidden">
                             <Zap size={15} fill="currentColor" className="animate-pulse" />
                         </div>
                     </div>
@@ -211,10 +211,10 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                             {selectedPersona.nombre_completo}
                         </h2>
                         <div className="flex items-center gap-2.5">
-                            <span className="px-3 py-1 rounded-md bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-info-text text-[9px] font-bold uppercase tracking-wider border border-[hsl(var(--info)/100%)]/20">
+                            <span className="px-3 py-1 rounded-md bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-info-text text-2xs font-bold uppercase tracking-wider border border-[hsl(var(--info)/100%)]/20">
                                 {selectedPersona.role_in_family || 'Persona'}
                             </span>
-                            <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide opacity-60">
+                            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide opacity-60">
                                 ID {selectedPersona.id}
                             </span>
                         </div>
@@ -233,7 +233,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                             "bg-white/40 dark:bg-white/[0.03]",
                             kpi.border
                         )}>
-                            <p className="text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1.5">{kpi.label}</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1.5">{kpi.label}</p>
                             <p className={clsx("text-sm font-bold tracking-tighter leading-none", kpi.color)}>{kpi.value}</p>
                         </div>
                     ))}
@@ -253,7 +253,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                         key={tab.id}
                         onClick={() => setModalTab(tab.id as any)}
                         className={clsx(
-                            "px-3 py-2 text-[10px] font-bold uppercase tracking-wide border-b-2 transition-all flex items-center gap-2.5 shrink-0",
+                            "px-3 py-2 text-2xs font-bold uppercase tracking-wide border-b-2 transition-all flex items-center gap-2.5 shrink-0",
                             modalTab === tab.id ? "border-[hsl(var(--info)/100%)] text-[hsl(var(--primary))]" : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white"
                         )}
                     >
@@ -268,10 +268,10 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                     {modalTab === 'timeline' && (
                         <motion.div key="timeline" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="space-y-4">
                             <div>
-                                <h3 className="text-[10px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide mb-3 flex items-center gap-3"><Award className="text-[hsl(var(--primary))]" size={16} /> Perfil Ministerial</h3>
+                                <h3 className="text-2xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide mb-3 flex items-center gap-3"><Award className="text-[hsl(var(--primary))]" size={16} /> Perfil Ministerial</h3>
                                 <div className="space-y-4">
                                     <div className={clsx("p-3 rounded-md border transition-all", editMode ? "bg-[hsl(var(--bg-primary))] border-[hsl(var(--info)/25%)] ring-4 ring-[hsl(var(--info))]" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5")}>
-                                        <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">Talentos Detectados</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">Talentos Detectados</p>
                                         {editMode ? (
                                             <textarea
                                                 value={editedPersona.talents || ''}
@@ -283,7 +283,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                                         )}
                                     </div>
                                     <div className={clsx("p-3 rounded-md border transition-all", editMode ? "bg-[hsl(var(--bg-primary))] border-[hsl(var(--info)/25%)] ring-4 ring-[hsl(var(--info))]" : "bg-info-soft/30 dark:bg-[hsl(var(--info))]/10 border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)]")}>
-                                        <p className="text-[9px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide mb-2">Dones Espirituales</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide mb-2">Dones Espirituales</p>
                                         {editMode ? (
                                             <textarea
                                                 value={editedPersona.spiritual_gifts || ''}
@@ -298,7 +298,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                             </div>
 
                             <div>
-                                <h3 className="text-[10px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide mb-3 flex items-center gap-3"><Clock className="text-[hsl(var(--primary))]" size={16} /> Línea de Tiempo</h3>
+                                <h3 className="text-2xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide mb-3 flex items-center gap-3"><Clock className="text-[hsl(var(--primary))]" size={16} /> Línea de Tiempo</h3>
                                 {loadingHistory ? (
                                     <div className="py-2 flex justify-center"><Loader2 className="animate-spin text-[hsl(var(--primary))]" /></div>
                                 ) : history.length > 0 ? (
@@ -312,14 +312,14 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                                                 className="relative pl-10 group"
                                             >
                                                 <div className={clsx(
-                                                    "absolute -left-[11px] top-0 size-5 rounded-full border-[3px] border-white dark:border-[#0f1113] shadow-lg transition-transform group-hover:scale-125 z-10",
+                                                    "absolute -left-[11px] top-0 size-5 rounded-full border-[3px] border-white dark:border-[hsl(var(--border))] shadow-lg transition-transform group-hover:scale-125 z-10",
                                                     event.color || 'bg-[hsl(var(--surface-2))]'
                                                 )} />
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
+                                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
                                                         {new Date(event.date).toLocaleDateString('es-ES', {month:'long', day:'numeric'})}
                                                     </span>
-                                                    <span className={clsx("px-2.5 py-0.5 rounded-lg text-[8px] font-bold uppercase tracking-wide text-white shadow-sm", event.color || 'bg-[hsl(var(--surface-2))]')}>
+                                                    <span className={clsx("px-2.5 py-0.5 rounded-lg text-2xs font-bold uppercase tracking-wide text-white shadow-sm", event.color || 'bg-[hsl(var(--surface-2))]')}>
                                                         {event.type}
                                                     </span>
                                                 </div>
@@ -327,13 +327,13 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                                                     <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight">
                                                         {event.title || event.name || event.event_name || 'Evento'}
                                                     </h4>
-                                                    <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium mt-1 leading-relaxed">{event.description}</p>
+                                                    <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium mt-1 leading-relaxed">{event.description}</p>
                                                 </div>
                                             </motion.div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="p-3 text-center bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] text-[10px] font-bold uppercase tracking-wide">Sin actividad</div>
+                                    <div className="p-3 text-center bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide">Sin actividad</div>
                                 )}
                             </div>
                         </motion.div>
@@ -341,8 +341,8 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
 
                     {modalTab === 'tasks' && (
                         <motion.div key="tasks" initial={{opacity:0, scale:0.98}} animate={{opacity:1, scale:1}} exit={{opacity:0, scale:0.98}} className="space-y-3">
-                            <h3 className="text-[10px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-3"><ListTodo className="text-[hsl(var(--primary))]" size={16} /> Tareas de Seguimiento</h3>
-                            <button onClick={() => router.push('/plataforma/crm/tasks/assign')} className="w-full py-2 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-[10px] font-bold uppercase tracking-wide border border-dashed border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] flex items-center justify-center gap-2">
+                            <h3 className="text-2xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-3"><ListTodo className="text-[hsl(var(--primary))]" size={16} /> Tareas de Seguimiento</h3>
+                            <button onClick={() => router.push('/plataforma/crm/tasks/assign')} className="w-full py-2 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-2xs font-bold uppercase tracking-wide border border-dashed border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] flex items-center justify-center gap-2">
                                 <Plus size={14}/> Nueva Tarea
                             </button>
 
@@ -362,38 +362,38 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                                                 </button>
                                                 <div>
                                                     <p className={clsx("text-xs font-bold uppercase tracking-tight", task.status === 'done' ? "text-[hsl(var(--text-secondary))] line-through" : "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]")}>{task.title}</p>
-                                                    <p className="text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Sin fecha'}</p>
+                                                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Sin fecha'}</p>
                                                 </div>
                                             </div>
-                                            <span className={clsx("px-2 py-0.5 rounded text-[7px] font-bold uppercase tracking-wide", task.priority === 'urgent' ? 'bg-[hsl(var(--danger-muted))] text-danger-text' : 'bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))]')}>
+                                            <span className={clsx("px-2 py-0.5 rounded text-2xs font-bold uppercase tracking-wide", task.priority === 'urgent' ? 'bg-[hsl(var(--danger-muted))] text-danger-text' : 'bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))]')}>
                                                 {task.priority}
                                             </span>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-3 text-center text-[hsl(var(--text-secondary))] text-[10px] font-bold uppercase tracking-wide border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-md">Sin tareas asignadas</div>
+                                <div className="p-3 text-center text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-md">Sin tareas asignadas</div>
                             )}
                         </motion.div>
                     )}
 
                     {modalTab === 'finance' && (
                         <motion.div key="finance" initial={{opacity:0, x:10}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-10}} className="space-y-3 text-center">
-                            <h3 className="text-[10px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-3"><DollarSign className="text-success-text" size={16} /> Fidelidad Financiera</h3>
+                            <h3 className="text-2xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-3"><DollarSign className="text-success-text" size={16} /> Fidelidad Financiera</h3>
                             {loadingFinance ? (
                                 <div className="py-2 flex justify-center"><Loader2 className="animate-spin text-success-text" /></div>
                             ) : donations.length > 0 ? (
                                 <div className="space-y-3">
                                     <div className="p-4 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/10 border border-[hsl(var(--success)/20%)] dark:border-[hsl(var(--success)/30%)]">
-                                        <p className="text-[9px] font-bold text-success-text dark:text-[hsl(var(--success))] uppercase tracking-wide mb-1">Impacto Total</p>
+                                        <p className="text-2xs font-bold text-success-text dark:text-[hsl(var(--success))] uppercase tracking-wide mb-1">Impacto Total</p>
                                         <p className="text-lg font-bold text-success-text dark:text-[hsl(var(--success))] tracking-tighter">${donations.reduce((a,b)=>a+b.amount, 0).toLocaleString()}</p>
                                     </div>
                                     <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden text-left">
                                         {donations.map((d,i) => (
                                             <div key={i} className="p-4 flex justify-between items-center">
                                                 <div className="space-y-0.5">
-                                                    <p className="text-[10px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase">{d.donation_type}</p>
-                                                    <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))]">{new Date(d.created_at).toLocaleDateString()}</p>
+                                                    <p className="text-2xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase">{d.donation_type}</p>
+                                                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{new Date(d.created_at).toLocaleDateString()}</p>
                                                 </div>
                                                 <p className="text-xs font-bold text-success-text">+${d.amount.toLocaleString()}</p>
                                             </div>
@@ -401,14 +401,14 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                                     </div>
                                 </div>
                             ) : (
-                                <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] text-[10px] font-bold uppercase tracking-wide">Sin registros contables</div>
+                                <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide">Sin registros contables</div>
                             )}
                         </motion.div>
                     )}
 
                     {modalTab === 'messages' && (
                         <motion.div key="messages" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="space-y-3">
-                            <h3 className="text-[10px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-3"><Mail className="text-[hsl(var(--primary))]" size={16} /> Mensajería Directa</h3>
+                            <h3 className="text-2xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-3"><Mail className="text-[hsl(var(--primary))]" size={16} /> Mensajería Directa</h3>
                             <form onSubmit={handleSendMessage} className="bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 rounded-md border border-[hsl(var(--border))] dark:border-white/10 space-y-2">
                                 <div className="flex p-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
                                     {['WhatsApp', 'SMS', 'Email'].map(ch => (
@@ -417,7 +417,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                                             type="button"
                                             onClick={() => setMessageChannel(ch.toLowerCase())}
                                             className={clsx(
-                                                "flex-1 py-2 rounded-md text-[9px] font-bold uppercase tracking-wide transition-all",
+                                                "flex-1 py-2 rounded-md text-2xs font-bold uppercase tracking-wide transition-all",
                                                 messageChannel === ch.toLowerCase() ? "bg-[hsl(var(--primary))] text-white shadow-lg" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                                             )}
                                         >
@@ -432,7 +432,7 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
                                     className="w-full p-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-xs font-bold focus:ring-4 focus:ring-[hsl(var(--primary))]/10 outline-none transition-all min-h-12 dark:text-white"
                                     placeholder={`Escribe mensaje para ${selectedPersona.nombre_completo}...`}
                                 />
-                                <button type="submit" disabled={!newMessageContent} className="w-full py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center justify-center gap-2 group">
+                                <button type="submit" disabled={!newMessageContent} className="w-full py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center justify-center gap-2 group">
                                     Enviar Ahora <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </form>
@@ -441,10 +441,10 @@ export default function PersonaDetailSidebar({ persona: initialPersona, onUpdate
 
                     {modalTab === 'profile' && (
                         <motion.div key="profile" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="space-y-3">
-                            <h3 className="text-[10px] font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-3"><ShieldCheck className="text-[hsl(var(--primary))]" size={16} /> Notas del Pastor</h3>
+                            <h3 className="text-2xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-3"><ShieldCheck className="text-[hsl(var(--primary))]" size={16} /> Notas del Pastor</h3>
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide ml-2">Información Privada y de Seguimiento</label>
-                                <div className={clsx("p-4 rounded-md border transition-all min-h-[200px]", editMode ? "bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border-[hsl(var(--info)/25%)] ring-4 ring-[hsl(var(--info))]" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10")}>
+                                <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide ml-2">Información Privada y de Seguimiento</label>
+                                <div className={clsx("p-4 rounded-md border transition-all min-h-[200px]", editMode ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-[hsl(var(--info)/25%)] ring-4 ring-[hsl(var(--info))]" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10")}>
                                     {editMode ? (
                                         <textarea
                                             value={editedPersona.pastoral_notes || ''}

@@ -40,7 +40,7 @@ export default function UploadMaterials() {
 
                 {/* Lesson Header */}
                 <section className="space-y-4">
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 shadow-lg shadow-primary/5">Gestión de Contenido</span>
+                    <span className="text-2xs font-semibold uppercase tracking-wide text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 shadow-lg shadow-primary/5">Gestión de Contenido</span>
                     <h2 className="text-lg font-bold text-white tracking-tight uppercase tracking-tight">Lección: Fundamentos de la Fe Cristiana</h2>
                     <p className="text-sm font-medium text-[hsl(var(--text-secondary))] leading-relaxed">Seleccione los archivos multimedia para esta sesión de discipulado.</p>
                 </section>
@@ -116,14 +116,14 @@ export default function UploadMaterials() {
                         <CheckCircle2 size={24} className="text-[hsl(var(--success))]" />
                     </div>
                     <div className="space-y-3">
-                        <div className="flex justify-between items-center text-[10px] font-semibold uppercase tracking-wide">
+                        <div className="flex justify-between items-center text-2xs font-semibold uppercase tracking-wide">
                             <span className="text-[hsl(var(--success))]">Carga completada</span>
                             <span className="text-[hsl(var(--success))]">100%</span>
                         </div>
                         <div className="h-2 w-full rounded-full bg-[hsl(var(--success)/0.2)]">
                             <div className="h-full rounded-full bg-[hsl(var(--success))] w-full shadow-[0_0_8px_hsl(var(--success)/0.4)]"></div>
                         </div>
-                        <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] italic">podcast_leccion_01.mp3 • 45.2 MB</p>
+                        <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] italic">podcast_leccion_01.mp3 • 45.2 MB</p>
                     </div>
                 </section>
 

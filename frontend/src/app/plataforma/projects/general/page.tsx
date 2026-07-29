@@ -95,12 +95,12 @@ export default function ProjectsGeneralPage() {
         >
             {error && (
                 <div className="mx-4 mt-4 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                    <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
             <main className="flex-1 overflow-y-auto p-4">
                 <section className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 mb-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Publicar en canal</p>
+                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Publicar en canal</p>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                         <select
                             value={projectId}
@@ -120,7 +120,7 @@ export default function ProjectsGeneralPage() {
                         <button
                             onClick={postMessage}
                             disabled={saving || !projectId || !content.trim()}
-                            className="rounded-md bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                            className="rounded-md bg-[hsl(var(--primary))] text-white text-2xs font-semibold uppercase tracking-wide disabled:opacity-50"
                         >
                             {saving ? 'Publicando...' : 'Publicar'}
                         </button>
@@ -129,11 +129,11 @@ export default function ProjectsGeneralPage() {
                 {loading ? (
                     <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <DSSkeleton key={idx} className="h-20 rounded-lg" />)}</div>
                 ) : !error && viewType === 'table' ? (
-                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Proyecto</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Actividad</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{activities.map((activity) => <tr key={activity.id}><td className="px-3 py-2 text-sm font-medium">{activity.project_title}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{activity.description}</td></tr>)}</tbody></table></div>
+                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Proyecto</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Actividad</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{activities.map((activity) => <tr key={activity.id}><td className="px-3 py-2 text-sm font-medium">{activity.project_title}</td><td className="px-3 py-2 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{activity.description}</td></tr>)}</tbody></table></div>
                 ) : !error && viewType === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{activities.map((activity) => <article key={activity.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{activity.project_title}</p><h3 className="font-bold mt-1">{activity.task_title || 'Actividad'}</h3><p className="text-sm mt-1">{activity.description}</p></article>)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{activities.map((activity) => <article key={activity.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5"><p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{activity.project_title}</p><h3 className="font-bold mt-1">{activity.task_title || 'Actividad'}</h3><p className="text-sm mt-1">{activity.description}</p></article>)}</div>
                 ) : !error && (viewType === 'board' || viewType === 'kanban') ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">{Object.entries(groupedActivities).map(([project, rows]) => <section key={project} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{project}</span><span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{rows.length}</span></div><div className="space-y-2">{rows.map((row) => <div key={row.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-2 text-sm">{row.description}</div>)}</div></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">{Object.entries(groupedActivities).map(([project, rows]) => <section key={project} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{project}</span><span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{rows.length}</span></div><div className="space-y-2">{rows.map((row) => <div key={row.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-2 text-sm">{row.description}</div>)}</div></section>)}</div>
                 ) : !error && viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario del canal general" />
                 ) : !error && viewType === 'gantt' ? (
@@ -144,7 +144,7 @@ export default function ProjectsGeneralPage() {
                     <div className="space-y-3">
                         {activities.map((activity) => (
                             <article key={activity.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{activity.project_title}</p>
+                                <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{activity.project_title}</p>
                                 <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">{activity.task_title || 'Actividad'}</h3>
                                 <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1">{activity.description}</p>
                             </article>

@@ -73,7 +73,7 @@ function AlertBadge({ rules, metrics }: { rules: AlertRule[]; metrics: Record<st
     return (
         <div className="flex items-center gap-1.5 px-2 py-1 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-md">
             <AlertTriangle size={12} className="text-[hsl(var(--destructive))]" />
-            <span className="text-[10px] font-bold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
+            <span className="text-2xs font-bold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
                 {activeAlerts.length} alerta{activeAlerts.length > 1 ? 's' : ''}
             </span>
         </div>
@@ -118,14 +118,14 @@ function AlertConfigDrawer({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+                        className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                     >
                         Cancelar
                     </button>
                     <button
                         type="button"
                         onClick={() => { onSave(localRules); onClose(); }}
-                        className="px-3 py-2 rounded-md bg-[hsl(var(--primary))] text-white text-[11px] font-bold uppercase tracking-wide transition-colors"
+                        className="px-3 py-2 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide transition-colors"
                     >
                         Guardar
                     </button>
@@ -142,16 +142,16 @@ function AlertConfigDrawer({
                                 }}>
                                     {r.enabled ? <Bell size={14} className="text-[hsl(var(--primary))]" /> : <BellOff size={14} className="text-[hsl(var(--text-secondary))]" />}
                                 </button>
-                                <span className="truncate text-[11px] font-medium text-[hsl(var(--text-primary))]">
+                                <span className="truncate text-xs font-medium text-[hsl(var(--text-primary))]">
                                     {r.label}
                                 </span>
-                                <span className="shrink-0 text-[10px] text-[hsl(var(--text-secondary))]">
+                                <span className="shrink-0 text-2xs text-[hsl(var(--text-secondary))]">
                                     {r.metric} {r.operator === 'gt' ? '>' : r.operator === 'lt' ? '<' : '='} {r.threshold}
                                 </span>
                             </div>
                             <button
                                 onClick={() => setLocalRules(prev => prev.filter(x => x.id !== r.id))}
-                                className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--destructive))]"
+                                className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--destructive))]"
                             >
                                 Eliminar
                             </button>
@@ -164,12 +164,12 @@ function AlertConfigDrawer({
                         value={newMetric}
                         onChange={e => setNewMetric(e.target.value)}
                         placeholder="Métrica (ej: attendance)"
-                        className="col-span-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] px-2 py-1.5 text-[11px] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
+                        className="col-span-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] px-2 py-1.5 text-xs text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
                     />
                     <select
                         value={newOp}
                         onChange={e => setNewOp(e.target.value as any)}
-                        className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] px-1 py-1.5 text-[11px] text-[hsl(var(--text-primary))]"
+                        className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] px-1 py-1.5 text-xs text-[hsl(var(--text-primary))]"
                     >
                         <option value="gt">&gt;</option><option value="lt">&lt;</option><option value="eq">=</option>
                     </select>
@@ -177,7 +177,7 @@ function AlertConfigDrawer({
                         value={newThreshold}
                         onChange={e => setNewThreshold(e.target.value)}
                         type="number"
-                        className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] px-2 py-1.5 text-[11px] text-[hsl(var(--text-primary))]"
+                        className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] px-2 py-1.5 text-xs text-[hsl(var(--text-primary))]"
                     />
                 </div>
                 {newMetric && (
@@ -185,13 +185,13 @@ function AlertConfigDrawer({
                         value={newLabel}
                         onChange={e => setNewLabel(e.target.value)}
                         placeholder="Nombre visible (ej: Asistencia baja)"
-                        className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] px-2 py-1.5 text-[11px] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
+                        className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] px-2 py-1.5 text-xs text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
                     />
                 )}
                 <button
                     onClick={addRule}
                     disabled={!newMetric}
-                    className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--surface-2))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] disabled:opacity-40"
+                    className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--surface-2))] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary))] disabled:opacity-40"
                 >
                     + Agregar Regla
                 </button>
@@ -308,13 +308,13 @@ export default function EmbeddedDashboard({
             <div className="flex items-center justify-between mb-2 no-print">
                 <div className="flex items-center gap-2">
                     {title && (
-                        <h3 className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
+                        <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
                             <BarChart3 size={14} className="text-[hsl(var(--primary))]" /> {title}
                         </h3>
                     )}
                     {hasAlerts && <AlertBadge rules={alertRules} metrics={metrics} />}
                     {refreshInterval > 0 && (
-                        <span className="text-[9px] text-[hsl(var(--text-secondary))] animate-pulse">● vivo</span>
+                        <span className="text-2xs text-[hsl(var(--text-secondary))] animate-pulse">● vivo</span>
                     )}
                 </div>
                 <div className="flex items-center gap-1">
@@ -354,10 +354,10 @@ export default function EmbeddedDashboard({
                 <div className="flex flex-wrap items-center gap-2 mb-3 p-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md">
                     {filterDefs.map((f: any) => (
                         <div key={f.key} className="flex items-center gap-1.5">
-                            <label className="text-[9px] font-semibold uppercase text-[hsl(var(--text-secondary))]">{f.label}:</label>
+                            <label className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))]">{f.label}:</label>
                             <select value={filters[f.key] ?? f.default ?? ''}
                                 onChange={e => setFilters(prev => ({...prev, [f.key]: e.target.value}))}
-                                className="text-[10px] font-medium bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-1.5 py-0.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                                className="text-2xs font-medium bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-1.5 py-0.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                 {(f.options || []).map((o: any) => (
                                     <option key={o.value} value={o.value}>{o.label}</option>
                                 ))}
@@ -379,8 +379,8 @@ export default function EmbeddedDashboard({
                     <div className="flex items-center justify-center py-8">
                         <div className="text-center space-y-1">
                             <AlertTriangle size={20} className="mx-auto text-[hsl(var(--warning))]" />
-                            <p className="text-[11px] text-[hsl(var(--text-secondary))]">{error}</p>
-                            <button onClick={fetchData} className="text-[10px] font-semibold text-[hsl(var(--primary))] hover:underline">Reintentar</button>
+                            <p className="text-xs text-[hsl(var(--text-secondary))]">{error}</p>
+                            <button onClick={fetchData} className="text-2xs font-semibold text-[hsl(var(--primary))] hover:underline">Reintentar</button>
                         </div>
                     </div>
                 )}
@@ -401,17 +401,17 @@ export default function EmbeddedDashboard({
                         {!compact && (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                                 {data.pipeline_funnel && (
-                                    <DSCard padding="sm"><div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-2">Pipeline</div>
+                                    <DSCard padding="sm"><div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-2">Pipeline</div>
                                         {data.pipeline_funnel.map((s: FunnelStage) => {
                                             const max = Math.max(...data.pipeline_funnel.map((x: FunnelStage) => x.count), 1);
                                             return (
                                                 <div key={s.stage} className="flex items-center gap-2 py-0.5">
-                                                    <span className="text-[10px] text-[hsl(var(--text-secondary))] w-20 truncate">{s.stage}</span>
+                                                    <span className="text-2xs text-[hsl(var(--text-secondary))] w-20 truncate">{s.stage}</span>
                                                     <div className="flex-1 h-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                                                         <div className="h-full rounded-full bg-[hsl(var(--primary))] transition-all duration-500"
                                                             style={{ width: `${(s.count / max) * 100}%` }} />
                                                     </div>
-                                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] w-8 text-right">{s.count}</span>
+                                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] w-8 text-right">{s.count}</span>
                                                 </div>
                                             );
                                         })}
@@ -419,55 +419,55 @@ export default function EmbeddedDashboard({
                                 )}
                                 {data.growth_chart && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Crecimiento</div>
+                                        <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Crecimiento</div>
                                         <DSChart type="area" data={data.growth_chart} height={140} color="hsl(var(--primary))" />
                                     </DSCard>
                                 )}
                                 {data.asistencia_por_sesion && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Asistencia x Sesión</div>
+                                        <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Asistencia x Sesión</div>
                                         <DSChart type="bar" data={data.asistencia_por_sesion} height={140} color="hsl(var(--success))" />
                                     </DSCard>
                                 )}
                                 {data.income_by_category && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Ingresos x Categoría</div>
+                                        <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Ingresos x Categoría</div>
                                         <DSChart type="bar" data={data.income_by_category} height={140} color="hsl(var(--info))" />
                                     </DSCard>
                                 )}
                                 {data.monthly_series && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Tendencia Mensual</div>
+                                        <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Tendencia Mensual</div>
                                         <DSChart type="area" data={data.monthly_series} height={140} color="hsl(var(--success))" />
                                     </DSCard>
                                 )}
                                 {data.enrollment_trends && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Matrículas</div>
+                                        <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Matrículas</div>
                                         <DSChart type="bar" data={data.enrollment_trends} height={140} color="hsl(var(--success))" />
                                     </DSCard>
                                 )}
                                 {data.status_distribution && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Tareas x Estado</div>
+                                        <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Tareas x Estado</div>
                                         <DSChart type="bar" data={data.status_distribution} height={140} color="hsl(var(--primary))" />
                                     </DSCard>
                                 )}
                                 {data.usuarios_por_rol && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Usuarios x Rol</div>
+                                        <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Usuarios x Rol</div>
                                         <DSChart type="bar" data={data.usuarios_por_rol} height={140} color="hsl(var(--text-secondary))" />
                                     </DSCard>
                                 )}
                                 {data.grupos_por_ubicacion && data.grupos_por_ubicacion.length > 0 && (
                                     <DSCard padding="sm">
-                                        <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Grupos x Ubicación</div>
+                                        <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Grupos x Ubicación</div>
                                         <div className="space-y-1">
                                             {data.grupos_por_ubicacion.map((g: any) => (
-                                                <div key={g.label} className="flex items-center gap-2 text-[11px]">
+                                                <div key={g.label} className="flex items-center gap-2 text-xs">
                                                     <div className="size-1.5 rounded-full bg-[hsl(var(--primary))]" />
                                                     <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{g.label}</span>
-                                                    {g.lat && <span className="text-[9px] text-[hsl(var(--text-secondary))] ml-auto">({g.lat.toFixed(3)}, {g.lng.toFixed(3)})</span>}
+                                                    {g.lat && <span className="text-2xs text-[hsl(var(--text-secondary))] ml-auto">({g.lat.toFixed(3)}, {g.lng.toFixed(3)})</span>}
                                                 </div>
                                             ))}
                                         </div>
@@ -479,17 +479,17 @@ export default function EmbeddedDashboard({
                         {/* Ausentes/Asistentes tables */}
                         {data.ausentes_detalle?.length > 0 && (
                             <DSCard padding="sm">
-                                <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1 flex items-center gap-1">
+                                <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1 flex items-center gap-1">
                                     <AlertTriangle size={10} className="text-[hsl(var(--warning))]" /> Ausentes - {data.ausentes_detalle.length} registros
                                 </div>
-                                <div className="max-h-32 overflow-y-auto text-[10px]">
+                                <div className="max-h-32 overflow-y-auto text-2xs">
                                     {// eslint-disable-next-line @typescript-eslint/no-unused-vars
 data.ausentes_detalle.slice(0, 10).map((r: TableRow) => (
                                         <div key={r.id} className="flex items-center gap-2 py-0.5 border-b border-[hsl(var(--border))] dark:border-white/5">
                                             <span className="font-medium text-[hsl(var(--text-secondary))] w-28 truncate">{r.columns.persona || ''}</span>
                                             <span className="text-[hsl(var(--text-secondary))] w-20 truncate">{r.columns.grupo || ''}</span>
                                             <span className="text-[hsl(var(--text-secondary))] w-16">{r.columns.fecha || ''}</span>
-                                            <span className="text-[hsl(var(--destructive))] ml-auto text-[9px]">{r.columns.excusa || ''}</span>
+                                            <span className="text-[hsl(var(--destructive))] ml-auto text-2xs">{r.columns.excusa || ''}</span>
                                         </div>
                                     ))}
                                 </div>

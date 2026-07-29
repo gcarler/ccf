@@ -136,19 +136,19 @@ function VideoCard({
                 {/* Badges */}
                 <div className="absolute top-2.5 left-2.5 flex gap-1.5">
                     {featured && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm">
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-2xs font-bold uppercase tracking-wider backdrop-blur-sm">
                             <Youtube size={9} /> {featuredBadge}
                         </span>
                     )}
                     {watched && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm">
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-2xs font-bold uppercase tracking-wider backdrop-blur-sm">
                             <Eye size={9} /> Visto
                         </span>
                     )}
                 </div>
 
                 {/* Tiempo */}
-                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-[10px] font-semibold text-white backdrop-blur-md" style={{ background: "rgba(0,0,0,0.6)" }}>
+                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-2xs font-semibold text-white backdrop-blur-md" style={{ background: "rgba(0,0,0,0.6)" }}>
                     {timeAgo(video.published_at)}
                 </span>
             </div>
@@ -169,7 +169,7 @@ function VideoCard({
                 )}
 
                 <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 text-[11px] text-site-outline font-medium">
+                    <div className="flex items-center gap-2.5 text-xs text-site-outline font-medium">
                         <span className="flex items-center gap-1">
                             <Calendar size={10} /> {formatDate(video.published_at)}
                         </span>
@@ -427,7 +427,7 @@ export default function PredicasPage() {
                             {heroEyebrow && (
                                 <div className="flex items-center gap-3 mb-4">
                                     <span className="w-8 h-0.5 bg-site-primary" />
-                                    <span className="text-[11px] font-bold uppercase tracking-widest text-site-primary flex items-center gap-2">
+                                    <span className="text-xs font-bold uppercase tracking-widest text-site-primary flex items-center gap-2">
                                         <Youtube size={13} /> {heroEyebrow}
                                     </span>
                                 </div>
@@ -524,7 +524,7 @@ export default function PredicasPage() {
                                         <div className="flex items-center justify-between mb-4">
                                             {featuredLabel && <h2 className="text-sm font-bold uppercase tracking-widest text-site-primary">{featuredLabel}</h2>}
                                             {channelLinkLabel && youtubeChannelUrl && (
-                                                <a href={youtubeChannelUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-site-outline hover:text-site-primary transition-colors">
+                                                <a href={youtubeChannelUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-site-outline hover:text-site-primary transition-colors">
                                                     {channelLinkLabel} <ExternalLink size={11} />
                                                 </a>
                                             )}
@@ -554,7 +554,7 @@ export default function PredicasPage() {
                                                 </h2>
                                             )}
                                             {!search && moreVideosLabel && (
-                                                <span className="text-[11px] text-site-outline">{rest.length} {moreVideosLabel}</span>
+                                                <span className="text-xs text-site-outline">{rest.length} {moreVideosLabel}</span>
                                             )}
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

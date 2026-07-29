@@ -170,7 +170,7 @@ export default function CrmTasksPage() {
             rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Tarea
                 </button>
@@ -179,7 +179,7 @@ export default function CrmTasksPage() {
             {tasksError && (
                 <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div className="min-w-0">
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
+                        <p className="text-xs font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                             No se pudo cargar el tablero de tareas
                         </p>
                         <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
@@ -188,7 +188,7 @@ export default function CrmTasksPage() {
                     </div>
                     <button
                         onClick={() => fetchTasks()}
-                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
+                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                     >
                         Reintentar
                     </button>
@@ -198,7 +198,7 @@ export default function CrmTasksPage() {
             {/* ─── Stats strip ─── */}
             <div className="px-4 pt-4 pb-0 flex items-center gap-3">
                 {STATUS_COLUMNS.map(col => (
-                    <div key={col.key} className={clsx("flex items-center gap-2 px-4 py-2 rounded-md border text-[11px] font-bold", col.bg, col.border)}>
+                    <div key={col.key} className={clsx("flex items-center gap-2 px-4 py-2 rounded-md border text-xs font-bold", col.bg, col.border)}>
                         <div className={clsx("size-2 rounded-full", col.dot)} />
                         <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{col.label}</span>
                         <span className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{tasksByStatus[col.key]?.length ?? 0}</span>
@@ -224,10 +224,10 @@ export default function CrmTasksPage() {
                                         <div className="flex items-center justify-between shrink-0">
                                             <div className="flex items-center gap-2">
                                                 <div className={clsx("size-2 rounded-full", col.dot)} />
-                                                <span className={`text-[11px] font-bold uppercase tracking-wide text-${col.color}-600 dark:text-${col.color}-400`}>
+                                                <span className={`text-xs font-bold uppercase tracking-wide text-${col.color}-600 dark:text-${col.color}-400`}>
                                                     {col.label}
                                                 </span>
-                                                <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-full px-2 py-0.5 border border-[hsl(var(--border))] dark:border-white/10">
+                                                <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-full px-2 py-0.5 border border-[hsl(var(--border))] dark:border-white/10">
                                                     {colTasks.length}
                                                 </span>
                                             </div>
@@ -250,7 +250,7 @@ export default function CrmTasksPage() {
                                             {colTasks.length === 0 && (
                                                 <div className="py-1.5 flex flex-col items-center justify-center text-center opacity-40">
                                                     <Icon size={24} strokeWidth={1} className="mb-2 text-[hsl(var(--text-secondary))]" />
-                                                    <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase">Sin tareas</p>
+                                                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Sin tareas</p>
                                                 </div>
                                             )}
                                         </div>
@@ -305,9 +305,9 @@ export default function CrmTasksPage() {
                                 )}
                                 <div className="flex-1">
                                     <p className={clsx("text-sm font-bold", task.status === 'done' && "line-through text-[hsl(var(--text-secondary))]")}>{task.title}</p>
-                                    {task.persona_name && <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold">{task.persona_name}</p>}
+                                    {task.persona_name && <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold">{task.persona_name}</p>}
                                 </div>
-                                <div className="flex items-center gap-2 text-[10px] shrink-0">
+                                <div className="flex items-center gap-2 text-2xs shrink-0">
                                     <span className={clsx("px-2 py-0.5 rounded-full font-bold uppercase", PRIORITY_STYLES[task.priority])}>{task.priority}</span>
                                     {task.due_date && <span className="text-[hsl(var(--text-secondary))] font-bold">{new Date(task.due_date).toLocaleDateString()}</span>}
                                 </div>
@@ -327,7 +327,7 @@ export default function CrmTasksPage() {
                             <thead>
                                 <tr className="border-b border-[hsl(var(--border))] dark:border-white/10">
                                     {['Tarea', 'Persona', 'Categoría', 'Prioridad', 'Estado', 'Vence'].map(h => (
-                                        <th key={h} className="pb-3 px-3 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{h}</th>
+                                        <th key={h} className="pb-3 px-3 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
@@ -344,18 +344,18 @@ export default function CrmTasksPage() {
                                             className="border-b border-[hsl(var(--border))] dark:border-white/5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                                         >
                                             <td className="py-1.5 px-3 text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white max-w-[250px] truncate">{task.title}</td>
-                                            <td className="py-1.5 px-3 text-[11px] text-[hsl(var(--text-secondary))]">{task.persona_name || '—'}</td>
-                                            <td className="py-1.5 px-3 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase">{task.category}</td>
+                                            <td className="py-1.5 px-3 text-xs text-[hsl(var(--text-secondary))]">{task.persona_name || '—'}</td>
+                                            <td className="py-1.5 px-3 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">{task.category}</td>
                                             <td className="py-1.5 px-3">
-                                                <span className={clsx("px-2 py-0.5 rounded text-[9px] font-bold uppercase", PRIORITY_STYLES[task.priority])}>{task.priority}</span>
+                                                <span className={clsx("px-2 py-0.5 rounded text-2xs font-bold uppercase", PRIORITY_STYLES[task.priority])}>{task.priority}</span>
                                             </td>
                                             <td className="py-1.5 px-3">
                                                 <div className="flex items-center gap-1.5">
                                                     <div className={clsx("size-1.5 rounded-full", col?.dot)} />
-                                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase">{col?.label}</span>
+                                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">{col?.label}</span>
                                                 </div>
                                             </td>
-                                            <td className="py-1.5 px-3 text-[11px] text-[hsl(var(--text-secondary))]">{task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}</td>
+                                            <td className="py-1.5 px-3 text-xs text-[hsl(var(--text-secondary))]">{task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}</td>
                                         </tr>
                                     );
                                 })}
@@ -373,12 +373,12 @@ export default function CrmTasksPage() {
                             <div className="py-1.5 text-center text-[hsl(var(--text-secondary))] font-bold uppercase text-sm">Sin tareas con fecha</div>
                         ) : dueBuckets.map(([isoDate, bucket]) => (
                             <div key={isoDate} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
-                                <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{new Date(`${isoDate}T00:00:00`).toLocaleDateString()}</p>
+                                <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{new Date(`${isoDate}T00:00:00`).toLocaleDateString()}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {bucket.map(task => (
                                         <button key={task.id} onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all">
                                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{task.title}</p>
-                                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">{task.persona_name || 'Sin persona asignado'}</p>
+                                            <p className="text-2xs text-[hsl(var(--text-secondary))]">{task.persona_name || 'Sin persona asignado'}</p>
                                         </button>
                                     ))}
                                 </div>
@@ -390,10 +390,10 @@ export default function CrmTasksPage() {
                 {viewType === 'gantt' && (
                     <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4">
                         <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Timeline de avance</p>
+                            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Timeline de avance</p>
                             {tasks.map(task => (
                                 <div key={task.id} className="space-y-1">
-                                    <div className="flex items-center justify-between text-[11px]">
+                                    <div className="flex items-center justify-between text-xs">
                                         <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{task.title}</span>
                                         <span className="font-bold text-[hsl(var(--text-secondary))]">{STATUS_PROGRESS[task.status] ?? 0}%</span>
                                     </div>
@@ -402,7 +402,7 @@ export default function CrmTasksPage() {
                                     </div>
                                 </div>
                             ))}
-                            {!tasksError && tasks.length === 0 && <div className="py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin tareas</div>}
+                            {!tasksError && tasks.length === 0 && <div className="py-1.5 text-center text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin tareas</div>}
                         </div>
                     </motion.div>
                 )}
@@ -410,7 +410,7 @@ export default function CrmTasksPage() {
                 {viewType === 'wiki' && (
                     <motion.div key="wiki" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4">
                         <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki de tareas de consolidación</p>
+                            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki de tareas de consolidación</p>
                             <textarea
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
@@ -436,10 +436,10 @@ export default function CrmTasksPage() {
                 subtitle={`${String(selectedTask?.category ?? 'general').toUpperCase()} · ${String(selectedTask?.priority ?? 'normal').toUpperCase()}`}
                 actions={
                     <>
-                        <button onClick={() => setIsDetailOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))]">Cerrar</button>
+                        <button onClick={() => setIsDetailOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))]">Cerrar</button>
                         <button
                             onClick={() => selectedTask && updateTaskStatus(selectedTask.id, selectedTask.status === 'done' ? 'pending' : 'done')}
-                            className="px-4 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-[11px] font-bold shadow-lg shadow-[hsl(var(--success)/20%)]"
+                            className="px-4 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-xs font-bold shadow-lg shadow-[hsl(var(--success)/20%)]"
                         >
                             {selectedTask?.status === 'done' ? 'Reabrir' : 'Marcar Completada'}
                         </button>
@@ -462,20 +462,20 @@ export default function CrmTasksPage() {
                                 { label: 'Creada', val: new Date(selectedTask.created_at).toLocaleDateString() },
                             ].map(item => (
                                 <div key={item.label} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md border border-[hsl(var(--border))] dark:border-white/5">
-                                    <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-0.5">{item.label}</p>
+                                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-0.5">{item.label}</p>
                                     <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{item.val}</p>
                                 </div>
                             ))}
                         </div>
                         <div className="space-y-2">
-                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Cambiar estado</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Cambiar estado</p>
                             <div className="flex flex-wrap gap-2">
                                 {STATUS_COLUMNS.map(col => (
                                     <button
                                         key={col.key}
                                         onClick={() => updateTaskStatus(selectedTask.id, col.key)}
                                         className={clsx(
-                                            "flex items-center gap-1.5 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all border",
+                                            "flex items-center gap-1.5 px-3 py-2 rounded-md text-2xs font-bold uppercase tracking-wide transition-all border",
                                             selectedTask.status === col.key
                                                 ? `${col.bg} ${col.border} text-${col.color}-600 dark:text-${col.color}-400`
                                                 : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 border-transparent text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]'
@@ -499,14 +499,14 @@ export default function CrmTasksPage() {
                 subtitle="Seguimiento y gestión ministerial"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
                         <button
                             form="create-task-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
+                            className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Crear Tarea
@@ -516,7 +516,7 @@ export default function CrmTasksPage() {
             >
                 <form id="create-task-form" onSubmit={handleCreate} className="space-y-2">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Título *</label>
+                        <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Título *</label>
                         <input
                             required
                             value={newTask.title}
@@ -526,7 +526,7 @@ export default function CrmTasksPage() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción</label>
+                        <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción</label>
                         <textarea
                             value={newTask.description}
                             onChange={e => setNewTask({ ...newTask, description: e.target.value })}
@@ -537,7 +537,7 @@ export default function CrmTasksPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoría</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoría</label>
                             <select
                                 value={newTask.category}
                                 onChange={e => setNewTask({ ...newTask, category: e.target.value })}
@@ -547,7 +547,7 @@ export default function CrmTasksPage() {
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Prioridad</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Prioridad</label>
                             <select
                                 value={newTask.priority}
                                 onChange={e => setNewTask({ ...newTask, priority: e.target.value })}
@@ -561,7 +561,7 @@ export default function CrmTasksPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estado inicial</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estado inicial</label>
                             <select
                                 value={newTask.status}
                                 onChange={e => setNewTask({ ...newTask, status: e.target.value })}
@@ -571,7 +571,7 @@ export default function CrmTasksPage() {
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Fecha límite</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Fecha límite</label>
                             <input
                                 type="date"
                                 value={newTask.due_date}
@@ -582,7 +582,7 @@ export default function CrmTasksPage() {
                     </div>
                     {true && (
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Persona asociado</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Persona asociado</label>
                             <PersonaSelect
                                 value={newTask.persona_id || null}
                                 onChange={(id) => setNewTask({ ...newTask, persona_id: id ?? '' })}

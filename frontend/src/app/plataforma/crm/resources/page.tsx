@@ -104,18 +104,18 @@ function PlantillaCard({
             {(plantilla.variables_requeridas ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-3">
                     {(plantilla.variables_requeridas ?? []).slice(0, 4).map(v => (
-                        <span key={v} className="text-[10px] font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded">
+                        <span key={v} className="text-2xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded">
                             {`{{${v}}}`}
                         </span>
                     ))}
                     {(plantilla.variables_requeridas ?? []).length > 4 && (
-                        <span className="text-[10px] text-[hsl(var(--text-secondary))]">+{(plantilla.variables_requeridas ?? []).length - 4}</span>
+                        <span className="text-2xs text-[hsl(var(--text-secondary))]">+{(plantilla.variables_requeridas ?? []).length - 4}</span>
                     )}
                 </div>
             )}
 
             {/* Footer */}
-            <div className="flex items-center justify-between text-[10px] text-[hsl(var(--text-secondary))]">
+            <div className="flex items-center justify-between text-2xs text-[hsl(var(--text-secondary))]">
                 <span>{plantilla.total_envios ?? 0} envíos</span>
                 <span>{plantilla.fecha_creacion ? fmt(plantilla.fecha_creacion) : '—'}</span>
             </div>
@@ -267,7 +267,7 @@ function DetailPanel({
                     <>
                         {plantilla.canal === 'EMAIL' && plantilla.asunto && (
                             <div>
-                                <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-1">Asunto</p>
+                                <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-1">Asunto</p>
                                 <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{plantilla.asunto}</p>
                             </div>
                         )}
@@ -275,7 +275,7 @@ function DetailPanel({
                         {/* Variable inputs */}
                         {(plantilla.variables_requeridas ?? []).length > 0 && (
                             <div>
-                                <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2">Variables</p>
+                                <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2">Variables</p>
                                 <div className="space-y-2">
                                     {(plantilla.variables_requeridas ?? []).map(v => (
                                         <div key={v} className="flex items-center gap-2">
@@ -294,11 +294,11 @@ function DetailPanel({
 
                         {/* Preview */}
                         <div>
-                            <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2">Vista previa</p>
+                            <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2">Vista previa</p>
                             {plantilla.contenido_html ? (
                                 <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
                                     <div className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary)/0.05)] dark:bg-[hsl(var(--primary)/0.1)] border-b border-[hsl(var(--border))] dark:border-white/10">
-                                        <span className="text-[10px] font-medium text-[hsl(var(--primary))]">Vista previa HTML</span>
+                                        <span className="text-2xs font-medium text-[hsl(var(--primary))]">Vista previa HTML</span>
                                     </div>
                                     <iframe
                                         srcDoc={plantilla.contenido_html}
@@ -351,7 +351,7 @@ function DetailPanel({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white truncate">{a.nombre_recurso}</p>
-                                        <p className="text-[10px] text-[hsl(var(--text-secondary))]">{a.tipo_mime} · {fmtBytes(a.peso_bytes)}</p>
+                                        <p className="text-2xs text-[hsl(var(--text-secondary))]">{a.tipo_mime} · {fmtBytes(a.peso_bytes)}</p>
                                     </div>
                                     <a href={a.url_acceso} target="_blank" rel="noopener noreferrer"
                                         className="size-6 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors">
@@ -394,12 +394,12 @@ function DetailPanel({
                                 return (
                                     <div key={b.id} className="p-3 rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
                                         <div className="flex items-center justify-between mb-1">
-                                            <span className={clsx('text-[10px] font-medium px-2 py-0.5 rounded-full', em.cls)}>{em.label}</span>
-                                            <span className="text-[10px] text-[hsl(var(--text-secondary))]">{fmt(b.fecha_envio)}</span>
+                                            <span className={clsx('text-2xs font-medium px-2 py-0.5 rounded-full', em.cls)}>{em.label}</span>
+                                            <span className="text-2xs text-[hsl(var(--text-secondary))]">{fmt(b.fecha_envio)}</span>
                                         </div>
-                                        <p className="text-[10px] text-[hsl(var(--text-secondary))] font-mono">→ {b.destinatario_id.slice(0, 8)}…</p>
+                                        <p className="text-2xs text-[hsl(var(--text-secondary))] font-mono">→ {b.destinatario_id.slice(0, 8)}…</p>
                                         {b.log_error && (
-                                            <p className="text-[10px] text-[hsl(var(--destructive))] mt-1">{b.log_error}</p>
+                                            <p className="text-2xs text-[hsl(var(--destructive))] mt-1">{b.log_error}</p>
                                         )}
                                     </div>
                                 );
@@ -621,7 +621,7 @@ function PlantillaDrawer({
                                 <div className="flex gap-1 flex-wrap justify-end">
                                     {form.variables_requeridas.map(v => (
                                         <button key={v} onClick={() => insertVar(v)}
-                                            className="text-[10px] font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/20 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded transition-colors">
+                                            className="text-2xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/20 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded transition-colors">
                                             {`{{${v}}}`}
                                         </button>
                                     ))}
@@ -879,16 +879,16 @@ function SendDrawer({
                         <div className="flex gap-6">
                             <div className="text-center">
                                 <p className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{campResult.target_count}</p>
-                                <p className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))]">Destinatarios</p>
+                                <p className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))]">Destinatarios</p>
                             </div>
                             <div className="text-center">
                                 <p className="text-2xl font-bold text-[hsl(var(--success))]">{campResult.delivered_count}</p>
-                                <p className="text-[10px] font-semibold uppercase text-[hsl(var(--success))]">Enviados</p>
+                                <p className="text-2xs font-semibold uppercase text-[hsl(var(--success))]">Enviados</p>
                             </div>
                             {campResult.failed_count > 0 && (
                                 <div className="text-center">
                                     <p className="text-2xl font-bold text-[hsl(var(--destructive))]">{campResult.failed_count}</p>
-                                    <p className="text-[10px] font-semibold uppercase text-[hsl(var(--destructive))]">Fallidos</p>
+                                    <p className="text-2xs font-semibold uppercase text-[hsl(var(--destructive))]">Fallidos</p>
                                 </div>
                             )}
                         </div>
@@ -1044,7 +1044,7 @@ function SendDrawer({
                         {plantilla?.contenido_html ? (
                             <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
                                 <div className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary)/0.05)] dark:bg-[hsl(var(--primary)/0.1)] border-b border-[hsl(var(--border))] dark:border-white/10">
-                                    <span className="text-[10px] font-medium text-[hsl(var(--primary))]">Vista previa HTML</span>
+                                    <span className="text-2xs font-medium text-[hsl(var(--primary))]">Vista previa HTML</span>
                                 </div>
                                 <iframe
                                     srcDoc={plantilla.contenido_html}
@@ -1169,7 +1169,7 @@ export default function RecursosPage() {
             {/* ── Category sidebar ── */}
             <div className="w-52 shrink-0 flex flex-col border-r border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] overflow-y-auto">
                 <div className="px-4 pt-5 pb-3">
-                    <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2">Categorías</p>
+                    <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2">Categorías</p>
                     <button
                         onClick={() => setFilterCat(null)}
                         className={clsx(
@@ -1257,12 +1257,12 @@ export default function RecursosPage() {
                     {!loading && error && (
                         <div className="mb-4 flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] p-4 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
                             <div>
-                                <p className="text-[11px] font-bold uppercase tracking-wide">No se pudo cargar el módulo</p>
+                                <p className="text-xs font-bold uppercase tracking-wide">No se pudo cargar el módulo</p>
                                 <p className="text-xs">{error}</p>
                             </div>
                             <button
                                 onClick={() => setReloadKey(key => key + 1)}
-                                className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
+                                className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
                             >
                                 Reintentar
                             </button>

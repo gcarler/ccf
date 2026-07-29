@@ -107,7 +107,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                 <div>
                                     <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] tracking-tight leading-none mb-1">Optimus Brain</h3>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--success))]">Neural Active</span>
+                                        <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--success))]">Neural Active</span>
                                         <div className="size-1 rounded-full bg-[hsl(var(--success))] animate-pulse" />
                                     </div>
                                 </div>
@@ -140,7 +140,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                         msg.role === 'user' ? "items-end text-right" : "items-start text-left"
                                     )}>
                                         <div className={clsx(
-                                            "p-4 rounded-lg text-[13px] font-medium leading-relaxed shadow-sm",
+                                            "p-4 rounded-lg text-base font-medium leading-relaxed shadow-sm",
                                             msg.role === 'bot' 
                                                 ? "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/5" 
                                                 : "bg-[hsl(var(--primary))] text-white"
@@ -150,7 +150,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                         {msg.sources && msg.sources.length > 0 && (
                                             <div className="flex flex-wrap gap-2 pt-1">
                                                 {msg.sources.map((s, i) => (
-                                                    <span key={i} className="text-[9px] font-semibold uppercase tracking-wide bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] px-2 py-1 rounded-md border border-[hsl(var(--border))] dark:border-white/5">
+                                                    <span key={i} className="text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] px-2 py-1 rounded-md border border-[hsl(var(--border))] dark:border-white/5">
                                                         Source: {s}
                                                     </span>
                                                 ))}
@@ -195,7 +195,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     <Send size={18} />
                                 </button>
                             </form>
-                            <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] text-center mt-4 uppercase tracking-wide">MESH Neural Engine v3.0</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] text-center mt-4 uppercase tracking-wide">MESH Neural Engine v3.0</p>
                         </div>
                     </motion.div>
                 </>

@@ -76,7 +76,7 @@ export default function AdminTreasuryPage() {
         <div className="p-4 space-y-3 animate-in fade-in duration-700">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                 <div className="space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] rounded-full text-[10px] font-semibold uppercase tracking-wide w-fit">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] rounded-full text-2xs font-semibold uppercase tracking-wide w-fit">
                         <DollarSign size={12} /> Gestion de Tesoreria
                     </div>
                     <h1 className="text-lg font-bold tracking-tighter text-white uppercase italic">
@@ -109,7 +109,7 @@ export default function AdminTreasuryPage() {
                                             <div className="text-sm font-bold text-white uppercase tracking-tight">
                                                 {tx.person?.nombre_completo || tx.person?.first_name ? `Ofrenda: ${tx.person.nombre_completo || tx.person.first_name}` : 'Entrada General'}
                                             </div>
-                                            <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-wide">ID: {tx.donation_id}</div>
+                                            <div className="text-2xs text-muted-foreground font-bold uppercase tracking-wide">ID: {tx.donation_id}</div>
                                         </td>
                                         <td className="px-3 py-2">
                                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -123,7 +123,7 @@ export default function AdminTreasuryPage() {
                                 ))}
                                 {transactions.length === 0 && (
                                     <tr>
-                                        <td colSpan={3} className="py-1.5 text-center text-muted-foreground text-[10px] font-semibold uppercase tracking-wide">No hay transacciones registradas</td>
+                                        <td colSpan={3} className="py-1.5 text-center text-muted-foreground text-2xs font-semibold uppercase tracking-wide">No hay transacciones registradas</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -138,7 +138,7 @@ export default function AdminTreasuryPage() {
                     <div className="space-y-3">
                         {funds.map((fund, i) => (
                             <div key={i} className="space-y-2">
-                                <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide">
+                                <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide">
                                     <span className="text-white/60">{fund.name}</span>
                                     <span className="text-white">${(fund.current_balance || 0).toLocaleString()}</span>
                                 </div>

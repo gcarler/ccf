@@ -150,7 +150,7 @@ export default function EvangelismClient() {
  canManageStrategies ? (
  <button
  onClick={handleAddItem}
- className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-[7px] transition-all shadow-sm"
+ className="h-7 px-3 text-xs font-bold flex items-center gap-1.5 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-[7px] transition-all shadow-sm"
  >
  <Plus size={12} />
  Crear estrategia
@@ -179,13 +179,13 @@ export default function EvangelismClient() {
  <table className="w-full text-left border-collapse">
  <thead>
  <tr className="border-b border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))]/50 dark:bg-black/10">
- <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-16">ID</th>
- <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Estrategia</th>
- <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-32">Estado</th>
- <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-44">Tipo</th>
- <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-40">Inicio</th>
- <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-40">Fin</th>
- <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-12"></th>
+ <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-16">ID</th>
+ <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Estrategia</th>
+ <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-32">Estado</th>
+ <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-44">Tipo</th>
+ <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-40">Inicio</th>
+ <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-40">Fin</th>
+ <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-12"></th>
  </tr>
  </thead>
  <tbody className="divide-y divide-[hsl(var(--border-primary))]">
@@ -198,22 +198,22 @@ export default function EvangelismClient() {
  onClick={() => handleSelectStrategy(strategy)}
  className="hover:bg-[hsl(var(--bg-muted))] cursor-pointer group transition-colors"
  >
- <td className="px-3 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+ <td className="px-3 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
  {strategy.codigo ? strategy.codigo : `#${strategy.id}`}
  </td>
  <td className="px-3 py-1.5">
- <div className="text-[12px] font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">
+ <div className="text-sm font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">
  {strategy.name}
  </div>
  {strategy.description && (
- <div className="text-[11px] text-[hsl(var(--text-secondary))] font-medium truncate max-w-[300px] mt-0.5">
+ <div className="text-xs text-[hsl(var(--text-secondary))] font-medium truncate max-w-[300px] mt-0.5">
  {strategy.description}
  </div>
  )}
  </td>
  <td className="px-3 py-1.5">
  <span 
- className="px-2.5 py-1 rounded-full text-[10px] font-bold"
+ className="px-2.5 py-1 rounded-full text-2xs font-bold"
  style={{ 
  backgroundColor: `${statusColors[strategy.status]}12`, 
  color: statusColors[strategy.status] 
@@ -222,13 +222,13 @@ export default function EvangelismClient() {
  {statusLabels[strategy.status]}
  </span>
  </td>
- <td className="px-3 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))]">
+ <td className="px-3 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))]">
  {strategy.strategy_type || 'General'}
  </td>
- <td className="px-3 py-1.5 text-[12px] text-[hsl(var(--text-secondary))] font-medium">
+ <td className="px-3 py-1.5 text-sm text-[hsl(var(--text-secondary))] font-medium">
  {formatDate(strategy.start_date)}
  </td>
- <td className="px-3 py-1.5 text-[12px] text-[hsl(var(--text-secondary))] font-medium">
+ <td className="px-3 py-1.5 text-sm text-[hsl(var(--text-secondary))] font-medium">
  {formatDate(strategy.end_date)}
  </td>
  <td className="px-3 py-1.5 text-right">
@@ -258,7 +258,7 @@ export default function EvangelismClient() {
  className="size-2.5 rounded-full" 
  style={{ backgroundColor: statusColors[colStatus] }}
  />
- <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))]">
+ <h3 className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))]">
  {statusLabels[colStatus]}
  </h3>
  </div>
@@ -279,7 +279,7 @@ export default function EvangelismClient() {
  style={{ borderTopColor: statusColors[strategy.status] }}
  >
  <div className="flex items-start justify-between gap-4">
- <h4 className="text-[13px] font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">
+ <h4 className="text-base font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">
  {strategy.name}
  </h4>
  <span className="font-semibold text-[hsl(var(--text-secondary))] shrink-0">
@@ -288,17 +288,17 @@ export default function EvangelismClient() {
  </div>
 
  {strategy.description && (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-2 font-medium line-clamp-2 leading-relaxed">
+ <p className="text-xs text-[hsl(var(--text-secondary))] mt-2 font-medium line-clamp-2 leading-relaxed">
  {strategy.description}
  </p>
  )}
 
  <div className="mt-4 pt-3 border-t border-[hsl(var(--border-primary))] flex flex-wrap gap-2 items-center justify-between">
- <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-semibold uppercase tracking-wide bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
+ <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
  {strategy.strategy_type || 'General'}
  </span>
  
- <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))] font-bold">
+ <div className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))] font-bold">
  <Calendar size={11} />
  <span>{formatDate(strategy.start_date).split(' ')[0]}</span>
  <span>-</span>
@@ -309,7 +309,7 @@ export default function EvangelismClient() {
  ))}
 
  {colItems.length === 0 && (
- <div className="py-8 text-center border border-dashed border-[hsl(var(--border-primary))] rounded-lg text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <div className="py-8 text-center border border-dashed border-[hsl(var(--border-primary))] rounded-lg text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  Vacío
  </div>
  )}
@@ -349,11 +349,11 @@ export default function EvangelismClient() {
  </span>
  </div>
  {strategy.description && (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1 font-medium line-clamp-1">
+ <p className="text-xs text-[hsl(var(--text-secondary))] mt-1 font-medium line-clamp-1">
  {strategy.description}
  </p>
  )}
- <div className="flex items-center gap-4 mt-2 text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wider">
+ <div className="flex items-center gap-4 mt-2 text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wider">
  <span>Tipo: {strategy.strategy_type || 'General'}</span>
  <span>•</span>
  <span>Inicio: {formatDate(strategy.start_date)}</span>
@@ -365,7 +365,7 @@ export default function EvangelismClient() {
 
  <div className="flex items-center gap-4">
  <span 
- className="px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0"
+ className="px-2.5 py-1 rounded-full text-2xs font-bold shrink-0"
  style={{ 
  backgroundColor: `${statusColors[strategy.status]}12`, 
  color: statusColors[strategy.status] 

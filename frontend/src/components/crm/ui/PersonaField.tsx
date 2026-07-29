@@ -14,7 +14,7 @@ interface PersonaFieldProps {
 export default function PersonaField({ label, value, onChange, placeholder, type = 'text', required = false }: PersonaFieldProps) {
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</label>
+      <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</label>
       <input
         required={required}
         type={type}

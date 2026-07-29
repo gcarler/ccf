@@ -92,7 +92,7 @@ export default function WorkspaceDrawer({
                                         {title}
                                     </h2>
                                     {subtitle && (
-                                        <p className="text-[10px] text-[hsl(var(--text-secondary))] font-black truncate uppercase tracking-wide">
+                                        <p className="text-2xs text-[hsl(var(--text-secondary))] font-black truncate uppercase tracking-wide">
                                             {subtitle}
                                         </p>
                                     )}
@@ -100,7 +100,7 @@ export default function WorkspaceDrawer({
                             </div>
 
                             <div className="flex shrink-0 items-center gap-1">
-                                <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-info-text dark:text-[hsl(var(--info))] rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:opacity-80 transition-all border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/50%)]">
+                                <button className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-info-text dark:text-[hsl(var(--info))] rounded-lg text-2xs font-semibold uppercase tracking-wide hover:opacity-80 transition-all border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/50%)]">
                                     <Sparkles size={14} /> Resumir
                                 </button>
                                 <div className="hidden sm:block h-5 w-[1px] bg-[hsl(var(--border))] dark:bg-white/10 mx-2" />

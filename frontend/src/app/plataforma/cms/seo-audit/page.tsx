@@ -173,10 +173,10 @@ export default function CmsSeoAuditPage() {
       <header className="h-12 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-4 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Gauge size={16} className="text-[hsl(var(--primary))] shrink-0" />
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">
             Auditoría SEO
           </h2>
-          <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full">
+          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full">
             {audit?.pages?.length ?? 0} páginas
           </span>
         </div>
@@ -185,7 +185,7 @@ export default function CmsSeoAuditPage() {
           type="button"
           onClick={() => fetchAudit().catch(() => toast.error("Error al cargar auditoría"))}
           disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--primary))] dark:hover:border-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] disabled:opacity-40 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--primary))] dark:hover:border-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] disabled:opacity-40 transition-colors"
           title="Refrescar"
         >
           <RefreshCcw size={12} className={loading ? "animate-spin" : ""} />
@@ -237,7 +237,7 @@ export default function CmsSeoAuditPage() {
                 >
                   {React.createElement(severityIcon(sev), { size: 18 })}
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80">
+                    <p className="text-2xs font-semibold uppercase tracking-wide opacity-80">
                       {severityToneChip(sev).label}
                     </p>
                     <p className="text-2xl font-bold">
@@ -260,14 +260,14 @@ export default function CmsSeoAuditPage() {
                   placeholder="Buscar páginas o slugs…"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-transparent focus:border-[hsl(var(--primary))] rounded-lg text-[13px] focus:ring-0 outline-none"
+                  className="w-full pl-9 pr-4 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-transparent focus:border-[hsl(var(--primary))] rounded-lg text-base focus:ring-0 outline-none"
                 />
               </div>
 
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-                className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg text-[12px] border border-transparent focus:border-[hsl(var(--primary))]"
+                className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg text-sm border border-transparent focus:border-[hsl(var(--primary))]"
               >
                 {STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -277,7 +277,7 @@ export default function CmsSeoAuditPage() {
               </select>
 
               <div className="flex items-center gap-2">
-                <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                   Score mínimo
                 </label>
                 <input
@@ -292,7 +292,7 @@ export default function CmsSeoAuditPage() {
                         : Number.parseInt(event.target.value, 10) || 0,
                     )
                   }
-                  className="w-16 px-2 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg text-[12px] border border-transparent focus:border-[hsl(var(--primary))]"
+                  className="w-16 px-2 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg text-sm border border-transparent focus:border-[hsl(var(--primary))]"
                 />
               </div>
             </section>
@@ -340,19 +340,19 @@ export default function CmsSeoAuditPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">
+                            <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">
                               {page.title}
                             </p>
-                            <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
+                            <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
                               {page.status}
                             </span>
                           </div>
-                          <p className="text-[11px] text-[hsl(var(--text-secondary))] truncate">
+                          <p className="text-xs text-[hsl(var(--text-secondary))] truncate">
                             /{page.slug} · {page.findings.length} hallazgos
                           </p>
                         </div>
                         {isCritical && (
-                          <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-danger-text dark:text-danger-text bg-danger-soft dark:bg-[hsl(var(--danger))]/15 border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 px-2 py-1 rounded-full">
+                          <span className="shrink-0 inline-flex items-center gap-1 text-2xs font-bold uppercase tracking-wide text-danger-text dark:text-danger-text bg-danger-soft dark:bg-[hsl(var(--danger))]/15 border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 px-2 py-1 rounded-full">
                             <AlertCircle size={11} /> Crítico
                           </span>
                         )}
@@ -367,7 +367,7 @@ export default function CmsSeoAuditPage() {
               )}
             </section>
 
-            <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center">
+            <p className="text-xs text-[hsl(var(--text-secondary))] text-center">
               Auditoría basada en el estado actual del CMS. Los hallazgos críticos y
               warnings se actualizan al refrescar; corríjalos en el builder o en la
               configuración de cada página.
@@ -401,17 +401,17 @@ export default function CmsSeoAuditPage() {
               )}
             >
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide opacity-75">
+                <p className="text-2xs font-bold uppercase tracking-wide opacity-75">
                   Score SEO
                 </p>
                 <p className="text-3xl font-bold leading-tight">
                   {selectedPage.score}
                 </p>
-                <p className="text-[10px] font-semibold uppercase tracking-wide opacity-80 mt-1">
+                <p className="text-2xs font-semibold uppercase tracking-wide opacity-80 mt-1">
                   {scoreTone(selectedPage.score).label}
                 </p>
               </div>
-              <div className="flex-1 text-right text-[11px] leading-relaxed opacity-80">
+              <div className="flex-1 text-right text-xs leading-relaxed opacity-80">
                 {selectedPage.findings.length === 0
                   ? "Sin hallazgos. Auditoría limpia para esta página."
                   : `${selectedPage.findings.length} hallazgo${selectedPage.findings.length === 1 ? "" : "s"} que requieren atención`}
@@ -449,21 +449,21 @@ export default function CmsSeoAuditPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-[12px] font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">
+                          <p className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">
                             {finding.code.replace(/_/g, " ")}
                           </p>
-                          <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full">
+                          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full">
                             -{finding.impact_points} pts
                           </span>
                         </div>
-                        <p className="mt-1 text-[12px] text-[hsl(var(--text-secondary))] leading-relaxed">
+                        <p className="mt-1 text-sm text-[hsl(var(--text-secondary))] leading-relaxed">
                           {finding.message}
                         </p>
-                        <p className="mt-2 text-[11px] font-medium text-[hsl(var(--primary))]">
+                        <p className="mt-2 text-xs font-medium text-[hsl(var(--primary))]">
                           Sugerencia: {finding.hint}
                         </p>
                         {finding.field_ref && (
-                          <p className="mt-1 text-[10px] font-mono text-[hsl(var(--text-secondary))]">
+                          <p className="mt-1 text-2xs font-mono text-[hsl(var(--text-secondary))]">
                             {finding.field_ref}
                           </p>
                         )}
@@ -473,7 +473,7 @@ export default function CmsSeoAuditPage() {
                             onClick={() =>
                               openSectionInBuilder(selectedPage, finding.section_id!)
                             }
-                            className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline"
+                            className="mt-2 inline-flex items-center gap-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline"
                           >
                             <Eye size={10} /> Abrir sección en builder
                           </button>
@@ -490,14 +490,14 @@ export default function CmsSeoAuditPage() {
                 <button
                   type="button"
                   onClick={() => openPageInBuilder(selectedPage)}
-                  className="w-full bg-[hsl(var(--primary))] text-white px-3 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-[0.98] transition-all"
+                  className="w-full bg-[hsl(var(--primary))] text-white px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-[0.98] transition-all"
                 >
                   Ir al builder de la página
                 </button>
               ) : (
                 <Link
                   href="/plataforma/cms/pages"
-                  className="block w-full text-center px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
+                  className="block w-full text-center px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
                 >
                   Ver listado completo en /plataforma/cms/pages
                 </Link>
@@ -554,11 +554,11 @@ function ScoreCard({
         <span className="text-lg font-bold">{loading ? "..." : score}</span>
       </div>
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-wide opacity-80">
+        <p className="text-2xs font-bold uppercase tracking-wide opacity-80">
           Score promedio
         </p>
         <p className="text-xl font-bold leading-tight">{tone.label}</p>
-        <p className="text-[11px] opacity-80 mt-1">
+        <p className="text-xs opacity-80 mt-1">
           Faro global · {aggregate?.total_pages ?? 0} páginas
         </p>
       </div>
@@ -589,7 +589,7 @@ function StatCard({
       )}
     >
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
           {label}
         </p>
         <Icon size={14} className="text-[hsl(var(--text-secondary))]" />
@@ -598,7 +598,7 @@ function StatCard({
         {value}
       </p>
       {hint && (
-        <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))]">
+        <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">
           {hint}
         </p>
       )}

@@ -127,7 +127,7 @@ export default function LoginPage() {
                                 <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
                             </svg>
                         )}
-                        <span className="text-white font-bold uppercase tracking-wide text-[10px]">
+                        <span className="text-white font-bold uppercase tracking-wide text-2xs">
                             {logoName || "Ministerio Internacional"}
                         </span>
                     </div>
@@ -208,7 +208,7 @@ export default function LoginPage() {
                         <h2 className="text-[clamp(2rem,4vw,2.75rem)] font-extrabold text-[hsl(var(--text-primary))] tracking-[-0.02em] leading-none m-0 mb-4">
                             Bienvenido
                         </h2>
-                        <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px] m-0">
+                        <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-2xs m-0">
                             Acceso a la plataforma digital
                         </p>
                     </motion.div>
@@ -241,12 +241,12 @@ export default function LoginPage() {
                                         <h3 className="text-white font-extrabold text-sm tracking-tight m-0 mb-1.5">
                                             Tu sesión ha expirado o no has ingresado
                                         </h3>
-                                        <p className="text-white/70 text-[11px] leading-relaxed m-0 mb-4">
+                                        <p className="text-white/70 text-xs leading-relaxed m-0 mb-4">
                                             El enlace al que intentas acceder es privado. Ingresa al ecosistema para continuar exactamente donde lo dejaste.
                                         </p>
                                         <Link
                                             href="/plataforma/admin"
-                                            className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] uppercase tracking-wider px-5 py-2.5 rounded-xl border border-white/20 transition-all no-underline"
+                                            className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold text-2xs uppercase tracking-wider px-5 py-2.5 rounded-xl border border-white/20 transition-all no-underline"
                                         >
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
@@ -266,7 +266,7 @@ export default function LoginPage() {
 
                         {/* Email */}
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
                                 Email
                             </label>
                             <input
@@ -291,10 +291,10 @@ export default function LoginPage() {
                             transition={{ duration: 0.22 }}
                         >
                             <div className="flex justify-between items-center mb-3 mx-2">
-                                <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
+                                <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
                                     Contraseña
                                 </label>
-                                <Link href="/auth/forgot" className="text-[9px] text-[hsl(var(--primary))] font-bold uppercase tracking-wider no-underline">
+                                <Link href="/auth/forgot" className="text-2xs text-[hsl(var(--primary))] font-bold uppercase tracking-wider no-underline">
                                     ¿Olvidaste la clave?
                                 </Link>
                             </div>
@@ -328,7 +328,7 @@ export default function LoginPage() {
                                     initial={{ opacity: 0, scale: 0.96 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.96 }}
-                                    className="px-3 py-1.5 bg-[hsl(var(--destructive)/0.08)] border-2 border-[hsl(var(--destructive)/0.2)] rounded-lg text-[hsl(var(--destructive))] text-[11px] font-bold text-center uppercase tracking-wider"
+                                    className="px-3 py-1.5 bg-[hsl(var(--destructive)/0.08)] border-2 border-[hsl(var(--destructive)/0.2)] rounded-lg text-[hsl(var(--destructive))] text-xs font-bold text-center uppercase tracking-wider"
                                 >
                                     {error}
                                 </motion.div>
@@ -363,7 +363,7 @@ export default function LoginPage() {
                             <div className="w-full border-t-2 border-[hsl(var(--border))]" />
                         </div>
                         <div className="relative flex justify-center">
-                            <span className="bg-[hsl(var(--bg-primary))] px-4 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <span className="bg-[hsl(var(--bg-primary))] px-4 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 O bien
                             </span>
                         </div>
@@ -394,12 +394,12 @@ export default function LoginPage() {
                         transition={{ delay: 0.95 }}
                         className="text-center"
                     >
-                        <p className="text-[hsl(var(--text-secondary))] text-[10px] font-bold tracking-wider uppercase mb-2.5">
+                        <p className="text-[hsl(var(--text-secondary))] text-2xs font-bold tracking-wider uppercase mb-2.5">
                             ¿No tienes una cuenta ministerial?
                         </p>
                         <Link
                             href="/register"
-                            className="text-[hsl(var(--primary))] font-bold text-[10px] uppercase tracking-wider no-underline"
+                            className="text-[hsl(var(--primary))] font-bold text-2xs uppercase tracking-wider no-underline"
                         >
                             Solicitar registro ahora
                         </Link>

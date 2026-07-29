@@ -84,7 +84,7 @@ export default function PersonaSelect({
                                 {displayName(selected)}
                             </p>
                             {showMetadata && selected.church_role && (
-                                <p className="text-[10px] text-[hsl(var(--text-secondary))] truncate">{selected.church_role}</p>
+                                <p className="text-2xs text-[hsl(var(--text-secondary))] truncate">{selected.church_role}</p>
                             )}
                         </div>
                     </>
@@ -145,7 +145,7 @@ export default function PersonaSelect({
                                         {displayName(persona)}
                                     </p>
                                     {showMetadata && persona.church_role && (
-                                        <p className="text-[10px] text-[hsl(var(--text-secondary))] truncate flex items-center gap-1">
+                                        <p className="text-2xs text-[hsl(var(--text-secondary))] truncate flex items-center gap-1">
                                             <Shield size={8} /> {persona.church_role}
                                         </p>
                                     )}
@@ -156,7 +156,7 @@ export default function PersonaSelect({
                             </button>
                         ))}
                         {filtered.length === 0 && (
-                            <p className="px-3 py-4 text-center text-[10px] text-[hsl(var(--text-secondary))]">
+                            <p className="px-3 py-4 text-center text-2xs text-[hsl(var(--text-secondary))]">
                                 No se encontraron personas
                             </p>
                         )}

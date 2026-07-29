@@ -59,7 +59,7 @@ export default function GroupRankingsPanel({ groupRankings, loadingGroups, activ
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide border-b-2 -mb-[1px] transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-2 text-2xs font-semibold uppercase tracking-wide border-b-2 -mb-[1px] transition-all ${
                 isActive
                   ? 'text-[hsl(var(--primary))] border-[hsl(var(--primary))]'
                   : 'text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-primary))]'
@@ -99,17 +99,17 @@ export default function GroupRankingsPanel({ groupRankings, loadingGroups, activ
                   {group.group_name}
                 </p>
                 {activeTab === 'attendance' && (
-                  <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
+                  <p className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
                     {group.present} presentes / {group.expected} esperados
                   </p>
                 )}
                 {activeTab === 'growth' && (
-                  <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
+                  <p className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
                     {group.current_personas} actuales (antes {group.previous_personas})
                   </p>
                 )}
                 {activeTab === 'visitors' && (
-                  <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
+                  <p className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
                     {group.visitors} visitantes nuevos este mes
                   </p>
                 )}

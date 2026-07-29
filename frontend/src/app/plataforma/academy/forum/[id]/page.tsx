@@ -129,7 +129,7 @@ export default function ForumThreadDetail() {
                     setViewType={setViewType}
                     availableViews={['list', 'grid', 'table']}
                     rightActions={
-                        <button onClick={() => router.back()} className="flex items-center gap-2 px-4 py-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all text-[11px] font-semibold uppercase tracking-wide">
+                        <button onClick={() => router.back()} className="flex items-center gap-2 px-4 py-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all text-xs font-semibold uppercase tracking-wide">
                             <ChevronLeft size={16} /> Volver al Foro
                         </button>
                     }
@@ -154,7 +154,7 @@ export default function ForumThreadDetail() {
                 setViewType={setViewType}
                 availableViews={['list', 'grid', 'table']}
                 rightActions={
-                    <button onClick={() => router.back()} className="flex items-center gap-2 px-4 py-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all text-[11px] font-semibold uppercase tracking-wide">
+                    <button onClick={() => router.back()} className="flex items-center gap-2 px-4 py-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all text-xs font-semibold uppercase tracking-wide">
                         <ChevronLeft size={16} /> Volver al Foro
                     </button>
                 }
@@ -164,7 +164,7 @@ export default function ForumThreadDetail() {
                 {viewType === 'table' && (
  <div className="w-full overflow-x-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full min-w-[480px] text-left">
-                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 <tr>
                                     <th className="px-4 py-2">Autor</th>
                                     <th className="px-4 py-2">Respuesta</th>
@@ -192,7 +192,7 @@ export default function ForumThreadDetail() {
                             <article key={reply.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/5">
                                 <div className="flex items-center justify-between gap-4">
                                     <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{reply.author}</h3>
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{reply.time}</span>
+                                    <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{reply.time}</span>
                                 </div>
                                 <p className="mt-4 text-sm leading-relaxed text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{reply.text}</p>
                             </article>
@@ -208,8 +208,8 @@ export default function ForumThreadDetail() {
                         <div className="relative z-10 flex flex-col gap-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <span className="px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[9px] font-semibold uppercase tracking-wide">{thread.category}</span>
-                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{thread.created_at}</span>
+                                    <span className="px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide">{thread.category}</span>
+                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{thread.created_at}</span>
                                 </div>
                                 <button aria-label="Más opciones del debate" className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors"><MoreVertical size={20} aria-hidden="true" /></button>
                             </div>
@@ -217,17 +217,17 @@ export default function ForumThreadDetail() {
                             <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-tight">{thread.title}</h1>
 
                             <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5">
-                                <p className="text-[16px] leading-relaxed text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] font-medium">
+                                <p className="text-lg leading-relaxed text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] font-medium">
                                     {thread.content}
                                 </p>
                             </div>
 
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                    <div className="size-9 rounded-lg bg-[hsl(var(--bg-muted))] flex items-center justify-center text-white text-[10px] font-semibold uppercase">{(thread.author ?? '?').charAt(0)}</div>
+                                    <div className="size-9 rounded-lg bg-[hsl(var(--bg-muted))] flex items-center justify-center text-white text-2xs font-semibold uppercase">{(thread.author ?? '?').charAt(0)}</div>
                                     <div>
                                         <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none mb-1">{thread.author ?? 'Usuario'}</p>
-                                        <p className="text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{thread.author_role ?? ''}</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{thread.author_role ?? ''}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
@@ -273,17 +273,17 @@ export default function ForumThreadDetail() {
                                     )}
                                     <div className="flex gap-4 items-start">
                                         <div className="flex flex-col items-center gap-2 shrink-0">
-                                            <div className="size-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] font-black text-[10px] uppercase">{reply.author.charAt(0)}</div>
+                                            <div className="size-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] font-black text-2xs uppercase">{reply.author.charAt(0)}</div>
                                             {reply.is_pastoral && <ShieldCheck size={16} className="text-[hsl(var(--primary))]" />}
                                         </div>
                                         <div className="flex-1 space-y-4">
                                             <div className="flex justify-between items-center">
                                                 <div>
                                                     <span className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none block mb-1">{reply.author}</span>
-                                                    <span className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{reply.time}</span>
+                                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{reply.time}</span>
                                                 </div>
                                                 {reply.is_accepted && (
-                                                    <span className="px-3 py-1 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text rounded-full text-[9px] font-semibold uppercase tracking-wide flex items-center gap-1.5">
+                                                    <span className="px-3 py-1 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text rounded-full text-2xs font-semibold uppercase tracking-wide flex items-center gap-1.5">
                                                         <CheckCircle2 size={12} /> Mejor Respuesta
                                                     </span>
                                                 )}

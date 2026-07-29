@@ -155,11 +155,11 @@ export default function GroupDetailPage() {
  content: (
  <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
  <div className="px-3 pt-4 pb-3 border-b border-[hsl(var(--border-primary))]">
- <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] transition-colors mb-3 text-[10px] font-semibold uppercase tracking-wide">
+ <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] transition-colors mb-3 text-2xs font-semibold uppercase tracking-wide">
  <ArrowLeft size={14} /> Volver a Grupos
  </button>
  <p className="text-xs font-semibold text-[hsl(var(--text-primary))] truncate mb-4">{house.name}</p>
- <h2 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+ <h2 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
  <Calendar size={12} /> Sesiones Registradas
  </h2>
  {/* New Session Action */}
@@ -187,7 +187,7 @@ export default function GroupDetailPage() {
  toast.error('Error al crear sesion. Puede que ya exista para hoy.');
  }
  }}
- className="mt-3 w-full py-2 bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10 text-[hsl(var(--text-primary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5"
+ className="mt-3 w-full py-2 bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10 text-[hsl(var(--text-primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5"
  >
  <Plus size={12} /> Registrar sesion de esta semana
  </button>}
@@ -196,7 +196,7 @@ export default function GroupDetailPage() {
  {house.sessions.length === 0 ? (
  <div className="py-1.5 text-center text-[hsl(var(--text-secondary))]">
  <Calendar size={24} className="mx-auto mb-3 opacity-30" />
- <p className="text-[11px] font-semibold uppercase tracking-wide">Sin sesiones</p>
+ <p className="text-xs font-semibold uppercase tracking-wide">Sin sesiones</p>
  </div>
  ) : house.sessions.map(s => {
  const isActive = activeSession?.id === s.id;
@@ -214,9 +214,9 @@ export default function GroupDetailPage() {
  <p className={`text-xs font-bold ${isActive ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-primary))]'}`}>
  {s.topic ? s.topic : new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}
  </p>
- {s.topic && <p className="text-[10px] font-medium text-[hsl(var(--text-secondary))] mt-0.5">{new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}</p>}
- {s.season_name && !s.topic && <p className="text-[10px] font-medium text-[hsl(var(--text-secondary))] mt-0.5">{s.season_name}</p>}
- {s.estado_habilitacion !== 'HABILITADO' && <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))] mt-0.5">Bloqueada</p>}
+ {s.topic && <p className="text-2xs font-medium text-[hsl(var(--text-secondary))] mt-0.5">{new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}</p>}
+ {s.season_name && !s.topic && <p className="text-2xs font-medium text-[hsl(var(--text-secondary))] mt-0.5">{s.season_name}</p>}
+ {s.estado_habilitacion !== 'HABILITADO' && <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))] mt-0.5">Bloqueada</p>}
  </div>
  <div className="flex items-center gap-2">
  <span className={`px-2 py-0.5 rounded-lg font-semibold ${isActive ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/50 text-[hsl(var(--primary))] dark:text-info-text' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
@@ -506,7 +506,7 @@ setRemoteResults([]);
  </button>
  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Grupos en Casa</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Grupos en Casa</p>
  <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight">{house.name}</h1>
  <div className="flex flex-wrap gap-4 text-xs text-[hsl(var(--text-secondary))] font-medium mt-1.5">
  {house.code && <span className="flex items-center gap-1.5"><Activity size={12} /> Código: {house.code}</span>}
@@ -518,15 +518,15 @@ setRemoteResults([]);
  <div className="flex gap-3 shrink-0">
  <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-[hsl(var(--border-primary))] shadow-sm">
  <p className="text-base font-bold text-[hsl(var(--text-primary))]">{house.total_sessions}</p>
- <p className="text-[10px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5">Sesiones</p>
+ <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5">Sesiones</p>
  </div>
  <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-[hsl(var(--border-primary))] shadow-sm">
  <p className="text-base font-bold text-[hsl(var(--text-primary))]">{house.total_attendance}</p>
- <p className="text-[10px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5">Asistentes</p>
+ <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5">Asistentes</p>
  </div>
  <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-[hsl(var(--border-primary))] shadow-sm">
  <p className="text-base font-bold text-[hsl(var(--text-primary))]">{avgAttendance}</p>
- <p className="text-[10px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5">Promedio</p>
+ <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5">Promedio</p>
  </div>
  </div>
  </div>
@@ -556,7 +556,7 @@ setRemoteResults([]);
  <button
  onClick={() => setShowAddAttendee(true)}
  disabled={!activeSessionEnabled}
- className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--info)/20%)]"
+ className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--info)/20%)]"
  >
  <UserPlus size={14} /> Añadir Asistentes
  </button>
@@ -566,17 +566,17 @@ setRemoteResults([]);
  <div className="flex gap-4">
  <div className="flex-1 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 text-center">
  <p className="text-lg font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{loadingAtt ? 'â€”' : attendance?.total ?? 0}</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Presentes</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Presentes</p>
  </div>
  <div className="flex-1 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 text-center">
  <p className="text-lg font-bold text-[hsl(var(--text-primary))]">{house.capacity ?? 'â€”'}</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Capacidad</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Capacidad</p>
  </div>
  <div className="flex-1 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 text-center">
  <p className="text-lg font-bold text-success-text dark:emerald-400">
  {house.capacity && attendance ? `${Math.round(attendance.total / house.capacity * 100)}%` : 'â€”'}
  </p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Ocupación</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Ocupación</p>
  </div>
  </div>
 
@@ -586,22 +586,22 @@ setRemoteResults([]);
  <h3 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] flex items-center gap-2">
  <BarChart3 className="text-[hsl(var(--primary))]" size={18} /> Monitoreo de la casa
  </h3>
- <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  {monitoring?.expected_personas ?? 0} esperados
  </span>
  </div>
 
  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
  <div className="rounded-lg border border-[hsl(var(--border-primary))] p-4 bg-[hsl(var(--bg-muted))] dark:bg-black/20">
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Promedio de presencia</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Promedio de presencia</p>
  <p className="mt-2 text-lg font-bold text-[hsl(var(--text-primary))]">{monitoring?.average_attendance ?? avgAttendance}</p>
  </div>
  <div className="rounded-lg border border-[hsl(var(--border-primary))] p-4 bg-[hsl(var(--bg-muted))] dark:bg-black/20">
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tasa promedio</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tasa promedio</p>
  <p className="mt-2 text-lg font-bold text-[hsl(var(--text-primary))]">{monitoring?.average_attendance_rate ?? 0}%</p>
  </div>
  <div className="rounded-lg border border-[hsl(var(--border-primary))] p-4 bg-[hsl(var(--bg-muted))] dark:bg-black/20">
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Alertas activas</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Alertas activas</p>
  <p className="mt-2 text-lg font-bold text-[hsl(var(--text-primary))]">{alerts.length}</p>
  </div>
  </div>
@@ -609,8 +609,8 @@ setRemoteResults([]);
  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
  <div className="rounded-lg border border-[hsl(var(--border-primary))] p-4">
  <div className="flex items-center justify-between mb-4">
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tendencia reciente</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{trendRows.length} sesiones</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tendencia reciente</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{trendRows.length} sesiones</p>
  </div>
  <div className="space-y-3">
  {trendRows.length === 0 ? (
@@ -621,11 +621,11 @@ setRemoteResults([]);
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
  {new Date(row.session_date + 'T12:00:00').toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}
  </p>
- <p className="text-[10px] font-medium text-[hsl(var(--text-secondary))]">{row.status}</p>
+ <p className="text-2xs font-medium text-[hsl(var(--text-secondary))]">{row.status}</p>
  </div>
  <div className="text-right shrink-0">
  <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{row.attendance_rate}%</p>
- <p className="text-[10px] font-medium text-[hsl(var(--text-secondary))]">{row.present_count}/{row.present_count + row.absent_count}</p>
+ <p className="text-2xs font-medium text-[hsl(var(--text-secondary))]">{row.present_count}/{row.present_count + row.absent_count}</p>
  </div>
  </div>
  ))}
@@ -634,8 +634,8 @@ setRemoteResults([]);
 
  <div className="rounded-lg border border-[hsl(var(--border-primary))] p-4">
  <div className="flex items-center justify-between mb-4">
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Alertas</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{repeatAbsentees.length} reincidentes</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Alertas</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{repeatAbsentees.length} reincidentes</p>
  </div>
  <div className="space-y-3">
  {alerts.length === 0 && repeatAbsentees.length === 0 ? (
@@ -650,7 +650,7 @@ setRemoteResults([]);
  {repeatAbsentees.slice(0, 4).map((item) => (
  <div key={item.persona_id} className="rounded-lg border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 px-4 py-1.5">
  <p className="text-sm font-bold text-danger-text dark:text-[hsl(var(--danger))]">{item.name}</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--danger))] mt-1">{item.absences} ausencias recurrentes</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--danger))] mt-1">{item.absences} ausencias recurrentes</p>
  </div>
  ))}
  </>
@@ -663,14 +663,14 @@ setRemoteResults([]);
  <h3 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] flex items-center gap-2">
  <Activity className="text-[hsl(var(--primary))]" size={18} /> Reporte semanal
  </h3>
- <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  {reportPersonas.length} personas
  </span>
  </div>
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
-  <label htmlFor="session-topic" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Tema tratado</label>
+  <label htmlFor="session-topic" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Tema tratado</label>
   <input
   id="session-topic"
   value={reportTopic}
@@ -680,7 +680,7 @@ setRemoteResults([]);
  />
  </div>
  <div>
-  <label htmlFor="session-offering" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Ofrenda recibida</label>
+  <label htmlFor="session-offering" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Ofrenda recibida</label>
   <input
   type="number"
   id="session-offering"
@@ -693,7 +693,7 @@ setRemoteResults([]);
  />
  </div>
  <div>
-  <label htmlFor="session-status" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Estado</label>
+  <label htmlFor="session-status" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Estado</label>
   <select
   id="session-status"
   value={reportStatus}
@@ -712,7 +712,7 @@ setRemoteResults([]);
  </select>
  </div>
  <div>
-  <label htmlFor="session-novelty" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Novedad</label>
+  <label htmlFor="session-novelty" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Novedad</label>
   <select
   id="session-novelty"
   value={reportNoveltyType}
@@ -731,7 +731,7 @@ setRemoteResults([]);
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
-  <label htmlFor="session-novelty-detail" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Detalle de novedad</label>
+  <label htmlFor="session-novelty-detail" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Detalle de novedad</label>
   <textarea
   id="session-novelty-detail"
   value={reportNoveltyDetail}
@@ -741,7 +741,7 @@ setRemoteResults([]);
  />
  </div>
  <div>
-  <label htmlFor="session-cancellation-reason" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Motivo de cancelación</label>
+  <label htmlFor="session-cancellation-reason" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Motivo de cancelación</label>
   <textarea
   id="session-cancellation-reason"
   value={reportCancellationReason}
@@ -753,7 +753,7 @@ setRemoteResults([]);
  </div>
 
  <div>
-  <label htmlFor="session-notes" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Notas del reporte</label>
+  <label htmlFor="session-notes" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Notas del reporte</label>
   <textarea
   id="session-notes"
   value={reportNotes}
@@ -765,8 +765,8 @@ setRemoteResults([]);
 
  <div className="space-y-3">
  <div className="flex items-center justify-between">
- <h4 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistencia por persona</h4>
- <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Presente / Ausente</span>
+ <h4 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistencia por persona</h4>
+ <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Presente / Ausente</span>
  </div>
  <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
  {reportPersonas.map((row) => {
@@ -776,9 +776,9 @@ setRemoteResults([]);
  <div className="flex items-center justify-between gap-3">
  <div className="min-w-0">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{row.name}</p>
- <p className="text-[10px] uppercase font-bold tracking-wide text-[hsl(var(--text-secondary))]">{row.role || 'Persona'}</p>
+ <p className="text-2xs uppercase font-bold tracking-wide text-[hsl(var(--text-secondary))]">{row.role || 'Persona'}</p>
  </div>
- <label className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  <input
  type="checkbox"
  checked={attended}
@@ -800,7 +800,7 @@ setRemoteResults([]);
  {!attended && (
  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
  <div>
-  <label htmlFor={`absence-reason-${row.persona_id}`} className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Razón</label>
+  <label htmlFor={`absence-reason-${row.persona_id}`} className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Razón</label>
   <select
   id={`absence-reason-${row.persona_id}`}
   value={row.absence_reason || 'other'}
@@ -811,7 +811,7 @@ setRemoteResults([]);
  </select>
  </div>
  <div>
-  <label htmlFor={`absence-detail-${row.persona_id}`} className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Detalle</label>
+  <label htmlFor={`absence-detail-${row.persona_id}`} className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Detalle</label>
   <input
   id={`absence-detail-${row.persona_id}`}
   value={row.absence_reason_detail || ''}
@@ -832,13 +832,13 @@ setRemoteResults([]);
  {activeSession?.report_deadline && new Date() > new Date(activeSession.report_deadline) ? (
  <div className="flex items-center gap-2 text-[hsl(var(--danger))] bg-danger-soft dark:bg-[hsl(var(--danger))]/10 px-4 py-1.5 rounded-lg">
  <Clock size={16} />
- <span className="text-[11px] font-semibold uppercase tracking-wide">Plazo de reporte vencido ({new Date(activeSession.report_deadline).toLocaleString()})</span>
+ <span className="text-xs font-semibold uppercase tracking-wide">Plazo de reporte vencido ({new Date(activeSession.report_deadline).toLocaleString()})</span>
  </div>
  ) : (
  <button
  onClick={handleSaveReport}
  disabled={savingReport || !activeSession || !activeSessionEnabled}
- className="inline-flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--success)/20%)] disabled:opacity-50"
+ className="inline-flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--success)/20%)] disabled:opacity-50"
  >
  {savingReport ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />}
  Guardar reporte
@@ -860,7 +860,7 @@ setRemoteResults([]);
  ) : (
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-[hsl(var(--border-primary))] overflow-hidden shadow-sm">
  <div className="px-4 py-2 border-b border-[hsl(var(--border-primary))] flex items-center justify-between">
- <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+ <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
  <CheckCircle2 size={14} className="text-[hsl(var(--success))]" /> Lista de Asistencia
  </h3>
  <span className="text-xs font-semibold text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 px-3 py-1 rounded-lg">{attendance.total} personas</span>
@@ -873,7 +873,7 @@ setRemoteResults([]);
  </div>
  <div className="flex-1 min-w-0">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{a.name}</p>
- {a.role && <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">{a.role}</p>}
+ {a.role && <p className="text-2xs text-[hsl(var(--text-secondary))] font-medium">{a.role}</p>}
  </div>
  <CheckCircle2 size={16} className="text-[hsl(var(--success))] shrink-0" />
  </div>
@@ -895,7 +895,7 @@ setRemoteResults([]);
  <div className="flex items-center justify-between mb-4 pb-4 border-b border-[hsl(var(--border-primary))]">
  <div>
  <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))]">Registrar Asistentes</h3>
- <p className="text-[10px] uppercase tracking-wide text-[hsl(var(--text-secondary))] font-bold mt-1">Busca o crea personas para registrar su asistencia</p>
+ <p className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] font-bold mt-1">Busca o crea personas para registrar su asistencia</p>
  </div>
  <div className="flex items-center gap-3">
  <button
@@ -904,7 +904,7 @@ setRemoteResults([]);
  setSelectedIds(new Set());
  setIsCreatingPersona(false);
  }}
- className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors"
+ className="px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors"
  >
  Cancelar
  </button>
@@ -912,7 +912,7 @@ setRemoteResults([]);
  <button
  onClick={handleSaveAttendance}
  disabled={saving || selectedIds.size === 0 || !activeSessionEnabled}
- className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+ className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide transition-all flex items-center justify-center gap-2 disabled:opacity-50"
  >
  {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
  {saving ? 'Guardando...' : `Guardar ${selectedIds.size > 0 ? `(${selectedIds.size})` : ''}`}
@@ -942,13 +942,13 @@ setRemoteResults([]);
  </div>
  <button
  onClick={() => setIsCreatingPersona(true)}
- className="px-4 py-1.5 bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] transition-colors shrink-0 flex items-center gap-2"
+ className="px-4 py-1.5 bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10 rounded-lg text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] transition-colors shrink-0 flex items-center gap-2"
  >
  <Plus size={14} /> Nuevo
  </button>
  </div>
  {selectedIds.size > 0 && (
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] ml-1">
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] ml-1">
  {selectedIds.size} seleccionado{selectedIds.size > 1 ? 's' : ''}
  </p>
  )}
@@ -958,19 +958,19 @@ setRemoteResults([]);
  {isCreatingPersona ? (
  <div className="flex-1 overflow-y-auto pb-6 space-y-4 pt-2">
  <div>
-  <label htmlFor="persona-first-name" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Nombres *</label>
+  <label htmlFor="persona-first-name" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Nombres *</label>
   <input id="persona-first-name" value={newPersonaForm.first_name} onChange={e => setNewPersonaForm(p => ({ ...p, first_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Ej. Juan" />
  </div>
  <div>
-  <label htmlFor="persona-last-name" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Apellidos *</label>
+  <label htmlFor="persona-last-name" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Apellidos *</label>
   <input id="persona-last-name" value={newPersonaForm.last_name} onChange={e => setNewPersonaForm(p => ({ ...p, last_name: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Ej. Pérez" />
  </div>
  <div>
-  <label htmlFor="persona-phone" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Teléfono</label>
+  <label htmlFor="persona-phone" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Teléfono</label>
   <input id="persona-phone" value={newPersonaForm.phone} onChange={e => setNewPersonaForm(p => ({ ...p, phone: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Opcional" />
  </div>
  <div>
-  <label htmlFor="persona-email" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Correo Electrónico</label>
+  <label htmlFor="persona-email" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Correo Electrónico</label>
   <input type="email" id="persona-email" value={newPersonaForm.email} onChange={e => setNewPersonaForm(p => ({ ...p, email: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Opcional" />
  </div>
  <div className="flex gap-3 pt-4">
@@ -1001,7 +1001,7 @@ setRemoteResults([]);
  </div>
  <div className="flex-1 min-w-0">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{m.nombre_completo}</p>
- {m.church_role && <p className="text-[10px] text-[hsl(var(--text-secondary))]">{m.church_role}</p>}
+ {m.church_role && <p className="text-2xs text-[hsl(var(--text-secondary))]">{m.church_role}</p>}
  </div>
  </button>
  );

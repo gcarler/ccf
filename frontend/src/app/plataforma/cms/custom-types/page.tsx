@@ -160,7 +160,7 @@ export default function CustomTypesPage() {
                       <tr key={e.id} className="hover:bg-[hsl(var(--surface-1))]/50">
                         <td className="px-4 py-3 font-medium">{e.title}</td>
                         <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))] font-mono">{e.slug}</td>
-                        <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColors[e.status] || ""}`}>{e.status}</span></td>
+                        <td className="px-4 py-3"><span className={`text-2xs font-bold px-2 py-0.5 rounded-full ${statusColors[e.status] || ""}`}>{e.status}</span></td>
                         <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))]">v{e.version}</td>
                         <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))]">{e.view_count}</td>
                         <td className="px-4 py-3">

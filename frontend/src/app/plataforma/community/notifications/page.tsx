@@ -112,7 +112,7 @@ function NotificationSection({
     return (
         <section>
             <div className="flex items-center gap-4 mb-3">
-                <h3 className="text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide">{title}</h3>
+                <h3 className="text-[hsl(var(--text-secondary))] text-2xs font-semibold uppercase tracking-wide">{title}</h3>
                 <div className="h-px flex-1 bg-[hsl(var(--border))] opacity-50" />
             </div>
 
@@ -141,7 +141,7 @@ function NotificationSection({
                                     {formatNotificationTime(notification.createdAt)}
                                 </span>
                             </div>
-                            <p className="text-[12px] text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
+                            <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
                                 {notification.body || 'Sin detalle adicional.'}
                             </p>
                         </div>

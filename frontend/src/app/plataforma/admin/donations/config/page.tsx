@@ -152,9 +152,9 @@ export default function DonationConfig() {
                 <div key={cat.id} className="config-aura p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between gap-3" style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as CSSAuraProperties}>
                     <div>
                         <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{cat.name}</h3>
-                        <p className="mt-1 text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{cat.description || 'Fondo ministerial'}</p>
+                        <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{cat.description || 'Fondo ministerial'}</p>
                     </div>
-                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", cat.active ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{cat.active ? 'Activo' : 'Inactivo'}</span>
+                    <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", cat.active ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{cat.active ? 'Activo' : 'Inactivo'}</span>
                 </div>
             ))}
         </div>
@@ -165,17 +165,17 @@ export default function DonationConfig() {
             <table className="w-full min-w-[480px] text-left">
                 <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <tr>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fondo</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Descripción</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fondo</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Descripción</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                     {categories.map((cat) => (
                         <tr key={cat.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{cat.name}</td>
-                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{cat.description || '—'}</td>
-                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", cat.active ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{cat.active ? 'Activo' : 'Inactivo'}</span></td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{cat.description || '—'}</td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", cat.active ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{cat.active ? 'Activo' : 'Inactivo'}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -188,14 +188,14 @@ export default function DonationConfig() {
             {groupedCategories.map((group) => (
                 <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                        <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((cat) => (
                             <div key={cat.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4">
                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{cat.name}</p>
-                                <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))]">{cat.description || 'Fondo ministerial'}</p>
+                                <p className="mt-2 text-2xs font-bold text-[hsl(var(--text-secondary))]">{cat.description || 'Fondo ministerial'}</p>
                             </div>
                         ))}
                     </div>
@@ -256,7 +256,7 @@ export default function DonationConfig() {
                 availableViews={DONATION_CONFIG_VIEWS}
                 rightActions={
 
-                    <button className="flex items-center gap-2 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
 
                         <Zap size={16} /> Aplicar Protocolo
 
@@ -286,7 +286,7 @@ export default function DonationConfig() {
 
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
 
-                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
+                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
 
                         >
 
@@ -387,7 +387,7 @@ export default function DonationConfig() {
 
                                 <CreditCard size={18} className="text-[hsl(var(--primary))]" />
 
-                                <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] leading-none">Canales Autorizados</h2>
+                                <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] leading-none">Canales Autorizados</h2>
 
                             </div>
 
@@ -415,7 +415,7 @@ export default function DonationConfig() {
 
                                     <Layout size={18} className="text-[hsl(var(--primary))]" />
 
-                                    <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fondos y Destinos</h2>
+                                    <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fondos y Destinos</h2>
 
                                 </div>
 
@@ -463,7 +463,7 @@ export default function DonationConfig() {
 
                                                     <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none mb-1">{cat.name}</p>
 
-                                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{cat.description || 'Fondo para actividades ministeriales'}</p>
+                                                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{cat.description || 'Fondo para actividades ministeriales'}</p>
 
                                                 </div>
 
@@ -518,7 +518,7 @@ export default function DonationConfig() {
 
                             <div className="space-y-3 text-center lg:text-left">
 
-                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-full text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] shadow-sm">
+                                <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-full text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] shadow-sm">
 
                                     <Zap size={14} className="text-[hsl(var(--warning))]" fill="currentColor" /> Automatización de Flujo
 
@@ -536,9 +536,9 @@ export default function DonationConfig() {
 
                             <div className="flex flex-col sm:flex-row gap-4 shrink-0 w-full lg:w-auto">
 
-                                <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95 flex items-center justify-center gap-3"><Palette size={18} /> Estilo Documental</button>
+                                <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95 flex items-center justify-center gap-3"><Palette size={18} /> Estilo Documental</button>
 
-                                <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[11px] uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-[hsl(var(--info)/20%)]"><Mail size={18} /> Validar Email</button>
+                                <button className="flex-1 px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-[hsl(var(--info)/20%)]"><Mail size={18} /> Validar Email</button>
 
                             </div>
 
@@ -583,7 +583,7 @@ function PaymentMethodItem({ icon: Icon, label, active }: PaymentMethodItemProps
 
                     <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none mb-1">{label}</p>
 
-                    <p className={clsx("text-[10px] font-bold uppercase tracking-wide", active ? "text-[hsl(var(--success))]" : "text-[hsl(var(--text-secondary))]")}>{active ? 'Servicio Activo' : 'Offline'}</p>
+                    <p className={clsx("text-2xs font-bold uppercase tracking-wide", active ? "text-[hsl(var(--success))]" : "text-[hsl(var(--text-secondary))]")}>{active ? 'Servicio Activo' : 'Offline'}</p>
 
                 </div>
 

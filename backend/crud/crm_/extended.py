@@ -722,7 +722,7 @@ def get_persona_role_links(
     persona_id: str | None = None,
     role_id: UUID | None = None,
 ) -> List[models.PersonaRoleLink]:
-    q = db.query(models.PersonaRoleLink).filter(models.PersonaRoleLink.deleted_at.is_(None))
+    q = db.query(models.PersonaRoleLink)
     if persona_id is not None:
         q = q.filter(models.PersonaRoleLink.persona_id == persona_id)
     if role_id is not None:

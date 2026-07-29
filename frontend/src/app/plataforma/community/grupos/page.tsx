@@ -59,7 +59,7 @@ export default function CommunityGruposPage() {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-[10px]">
+          <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-2xs">
             <div className="size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_10px_hsl(var(--primary))]"></div>
             Grupos Pequeños
           </div>
@@ -78,7 +78,7 @@ export default function CommunityGruposPage() {
           <button className="size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
             <Filter size={18} />
           </button>
-          <button className="h-8 px-4 rounded-lg bg-[hsl(var(--primary))] text-white font-semibold uppercase tracking-wide text-[10px] flex items-center gap-2 shadow-lg hover:opacity-90 transition-all">
+          <button className="h-8 px-4 rounded-lg bg-[hsl(var(--primary))] text-white font-semibold uppercase tracking-wide text-2xs flex items-center gap-2 shadow-lg hover:opacity-90 transition-all">
             <Plus size={16} strokeWidth={3} />
             Unirse a un Grupo
           </button>
@@ -103,7 +103,7 @@ export default function CommunityGruposPage() {
                 className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-1000"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--surface-2))] via-transparent to-transparent"></div>
-              <div className="absolute top-4 left-4 h-8 px-4 rounded-full bg-[hsl(var(--primary)/0.2)] backdrop-blur-md border border-[hsl(var(--primary)/0.3)] flex items-center justify-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
+              <div className="absolute top-4 left-4 h-8 px-4 rounded-full bg-[hsl(var(--primary)/0.2)] backdrop-blur-md border border-[hsl(var(--primary)/0.3)] flex items-center justify-center text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                 {group.category}
               </div>
             </div>
@@ -153,7 +153,7 @@ export default function CommunityGruposPage() {
                 >
                   <ArrowLeft size={16} />
                 </button>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                   Detalles del Grupo
                 </span>
                 <button
@@ -177,7 +177,7 @@ export default function CommunityGruposPage() {
                 {/* Info */}
                 <div className="space-y-4">
                   <div>
-                    <div className="inline-flex h-6 px-3 rounded-full bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] items-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-2">
+                    <div className="inline-flex h-6 px-3 rounded-full bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] items-center text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-2">
                       {drawer.group.category}
                     </div>
                     <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter">
@@ -192,21 +192,21 @@ export default function CommunityGruposPage() {
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                       <MapPin size={16} className="text-[hsl(var(--primary))]" />
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</p>
                         <p className="text-sm font-medium text-[hsl(var(--text-primary))]">{drawer.group.location}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                       <Clock size={16} className="text-[hsl(var(--primary))]" />
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Horario</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Horario</p>
                         <p className="text-sm font-medium text-[hsl(var(--text-primary))]">{drawer.group.schedule}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] col-span-2">
                       <Users size={16} className="text-[hsl(var(--primary))]" />
                       <div>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Integrantes</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Integrantes</p>
                         <p className="text-sm font-medium text-[hsl(var(--text-primary))]">{drawer.group.total_personas} personas</p>
                       </div>
                     </div>

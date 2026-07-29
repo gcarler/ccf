@@ -108,7 +108,7 @@ function GateScreen({
                 {/* Badge del brand — idéntico al login */}
                 <div className="inline-flex items-center gap-3 border border-white/20 rounded-full px-3 py-2.5 bg-white/5 backdrop-blur-md mb-10">
                     <GroupFlame size={16} />
-                    <span className="text-white font-bold uppercase tracking-wide text-[10px]">
+                    <span className="text-white font-bold uppercase tracking-wide text-2xs">
                         Ministerio Internacional
                     </span>
                 </div>
@@ -201,7 +201,7 @@ function GateScreen({
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.88'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
                 >
-                    <span className="uppercase tracking-wider text-[11px]">{cta}</span>
+                    <span className="uppercase tracking-wider text-xs">{cta}</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
                         style={{ transition: 'transform 0.15s' }}
                         className="group-hover:translate-x-0.5">
@@ -211,7 +211,7 @@ function GateScreen({
 
                 {/* Footer */}
                 <p
-                    className="mt-6 text-[10px] font-medium tracking-[0.18em] uppercase"
+                    className="mt-6 text-2xs font-medium tracking-[0.18em] uppercase"
                     style={{ color: 'rgba(255,255,255,0.18)' }}
                 >
                     {SITE_NAME} · Acceso Protegido
@@ -251,7 +251,7 @@ function LoadingScreen() {
                 {/* Badge */}
                 <div className="inline-flex items-center gap-2.5 border border-white/15 rounded-full px-3 py-2 bg-white/5 backdrop-blur-md mb-2">
                     <GroupFlame size={14} />
-                    <span className="text-white/60 font-bold uppercase tracking-wide text-[9px]">{SITE_NAME}</span>
+                    <span className="text-white/60 font-bold uppercase tracking-wide text-2xs">{SITE_NAME}</span>
                 </div>
 
                 {/* Spinner */}
@@ -274,7 +274,7 @@ function LoadingScreen() {
                 </div>
 
                 <p
-                    className="text-[10px] font-bold tracking-[0.25em] uppercase animate-pulse"
+                    className="text-2xs font-bold tracking-[0.25em] uppercase animate-pulse"
                     style={{ color: 'rgba(255,255,255,0.25)' }}
                 >
                     Verificando acceso

@@ -296,7 +296,7 @@ export default function EventosPage() {
                     >
                         {upcomingLabel && (
                             <p
-                                className="text-[10px] font-semibold uppercase tracking-wide mb-3"
+                                className="text-2xs font-semibold uppercase tracking-wide mb-3"
                                 style={{ color: "var(--site-on-surface-variant)" }}
                             >
                                 {upcomingLabel}
@@ -381,7 +381,7 @@ export default function EventosPage() {
                                         >
                                             {month && (
                                                 <p
-                                                    className="text-[9px] font-semibold uppercase tracking-wider"
+                                                    className="text-2xs font-semibold uppercase tracking-wider"
                                                     style={{ color: "var(--site-on-surface-variant)" }}
                                                 >
                                                     {month}
@@ -401,7 +401,7 @@ export default function EventosPage() {
                                 <div className="p-8">
                                     {event.category && (
                                         <span
-                                            className="text-[10px] font-semibold uppercase tracking-wide mb-2 block"
+                                            className="text-2xs font-semibold uppercase tracking-wide mb-2 block"
                                             style={{ color: "var(--site-secondary)" }}
                                         >
                                             {event.category}
@@ -557,7 +557,7 @@ export default function EventosPage() {
                                 {[["D","Dom"], ["L","Lun"], ["M","Mar"], ["X","Mie"], ["J","Jue"], ["V","Vie"], ["S","Sab"]].map(([short, full]) => (
                                     <div
                                         key={full}
-                                        className="text-center py-2 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide"
+                                        className="text-center py-2 text-2xs sm:text-2xs font-semibold uppercase tracking-wide"
                                         style={{ color: "var(--site-on-surface-variant)" }}
                                     >
                                         <span className="sm:hidden">{short}</span>
@@ -635,7 +635,7 @@ export default function EventosPage() {
                                                     />
                                                     <div>
                                                         <p
-                                                            className="text-[10px] font-semibold uppercase tracking-wide mb-0.5"
+                                                            className="text-2xs font-semibold uppercase tracking-wide mb-0.5"
                                                             style={{ color: "var(--site-primary)" }}
                                                         >
                                                             {event.category}

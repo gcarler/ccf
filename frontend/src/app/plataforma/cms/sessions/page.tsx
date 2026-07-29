@@ -85,7 +85,7 @@ export default function SessionsPage() {
               </div>
               <div className="text-right shrink-0">
                 <p className="text-xs text-[hsl(var(--text-secondary))]">Activa: {new Date(s.last_activity_at).toLocaleString("es")}</p>
-                <p className="text-[10px] text-[hsl(var(--text-secondary))]">Inicio: {new Date(s.created_at).toLocaleString("es")}</p>
+                <p className="text-2xs text-[hsl(var(--text-secondary))]">Inicio: {new Date(s.created_at).toLocaleString("es")}</p>
               </div>
               <button onClick={() => setPendingAction({ type: "one", id: s.id })} className="p-2 rounded-lg hover:bg-red-50 shrink-0" title="Revocar">
                 <Trash2 size={14} className="text-[hsl(var(--destructive))]" />

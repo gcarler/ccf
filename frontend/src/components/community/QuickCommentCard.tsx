@@ -27,16 +27,16 @@ export default function QuickCommentCard({
                     </button>
                     <div>
                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{title}</p>
-                        <p className="text-[11px] text-[hsl(var(--text-secondary))]">{description}</p>
+                        <p className="text-xs text-[hsl(var(--text-secondary))]">{description}</p>
                     </div>
                 </div>
-                <select className="h-9 rounded-full border border-[hsl(var(--border))] px-4 text-[12px] text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))]">
+                <select className="h-9 rounded-full border border-[hsl(var(--border))] px-4 text-sm text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))]">
                     <option>Comentario</option>
                     <option>Nota</option>
                     <option>Checklist</option>
                 </select>
             </div>
-            <div className="flex items-center justify-between text-[12px] text-[hsl(var(--text-secondary))]">
+            <div className="flex items-center justify-between text-sm text-[hsl(var(--text-secondary))]">
                 <div className="flex items-center gap-2">
                     {attachments.map((Icon, index) => (
                         <button key={index} className="p-2 rounded-full border border-[hsl(var(--border))] hover:text-[hsl(var(--primary))]">
@@ -44,7 +44,7 @@ export default function QuickCommentCard({
                         </button>
                     ))}
                 </div>
-                <button className="px-4 h-9 rounded-full bg-[hsl(var(--primary))] text-white text-[11px] font-semibold uppercase tracking-wide">
+                <button className="px-4 h-9 rounded-full bg-[hsl(var(--primary))] text-white text-xs font-semibold uppercase tracking-wide">
                     {actionLabel}
                 </button>
             </div>

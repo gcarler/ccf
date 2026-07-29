@@ -113,7 +113,7 @@ export default function FaroNavbar() {
                                 <Link
                                     key={href}
                                     href={href}
-                                    className="relative px-5 py-2.5 text-[14px] font-semibold uppercase tracking-wide transition-colors duration-200 rounded-xl"
+                                    className="relative px-5 py-2.5 text-md font-semibold uppercase tracking-wide transition-colors duration-200 rounded-xl"
                                     style={{
                                         color: active
                                             ? "var(--site-primary)"
@@ -123,7 +123,7 @@ export default function FaroNavbar() {
                                     onMouseLeave={(e) => (e.currentTarget.style.color = active ? "var(--site-primary)" : "var(--site-on-surface-variant)")}
                                 >
                                     {label}
-                                    {(children || []).length > 0 && <span className="ml-1.5 text-[11px]">▾</span>}
+                                    {(children || []).length > 0 && <span className="ml-1.5 text-xs">▾</span>}
                                     {active && (
                                         <span
                                             className="absolute bottom-1 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full"
@@ -250,7 +250,7 @@ export default function FaroNavbar() {
                             <Link
                                 href={ctaHref}
                                 onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="flex items-center justify-center gap-2 px-3 py-3 mt-4 w-full rounded-full text-[12px] font-bold uppercase tracking-wider transition-all hover:scale-105"
+                                className="flex items-center justify-center gap-2 px-3 py-3 mt-4 w-full rounded-full text-sm font-bold uppercase tracking-wider transition-all hover:scale-105"
                                 style={{
                                     background: "var(--site-cta-gradient)",
                                     backgroundSize: "200% auto",

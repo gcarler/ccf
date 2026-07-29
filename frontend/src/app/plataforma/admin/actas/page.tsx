@@ -132,7 +132,7 @@ export default function ActaManagementPage() {
                 <button key={course.id} onClick={() => setSelectedCourse(course)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex items-center justify-between hover:border-[hsl(var(--info)/30%)] transition-all">
                     <div>
                         <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{course.title}</h3>
-                        <p className="mt-1 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{course.code} · {course.modality}</p>
+                        <p className="mt-1 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{course.code} · {course.modality}</p>
                     </div>
                     <ChevronRight size={18} className="text-[hsl(var(--text-secondary))]" />
                 </button>
@@ -145,17 +145,17 @@ export default function ActaManagementPage() {
             <table className="w-full text-left min-w-[560px]">
                 <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <tr>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Curso</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Código</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Curso</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Código</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                     {courses.map((course) => (
                         <tr key={course.id} onClick={() => setSelectedCourse(course)} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] cursor-pointer">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{course.title}</td>
-                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{course.code}</td>
-                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", course.id === selectedCourse?.id ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-info-soft text-[hsl(var(--primary))]")}>{course.id === selectedCourse?.id ? 'Seleccionado' : 'Disponible'}</span></td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{course.code}</td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", course.id === selectedCourse?.id ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-info-soft text-[hsl(var(--primary))]")}>{course.id === selectedCourse?.id ? 'Seleccionado' : 'Disponible'}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -168,14 +168,14 @@ export default function ActaManagementPage() {
             {groupedCourses.map((group) => (
                 <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                        <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((course) => (
                             <button key={course.id} onClick={() => setSelectedCourse(course)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--info)/30%)] transition-all">
                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{course.title}</p>
-                                <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))]">{course.code}</p>
+                                <p className="mt-2 text-2xs font-bold text-[hsl(var(--text-secondary))]">{course.code}</p>
                             </button>
                         ))}
                     </div>
@@ -193,7 +193,7 @@ export default function ActaManagementPage() {
                     setViewType={setViewType}
                     availableViews={ACTA_VIEWS}
                     rightActions={
-                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all">
+                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all">
                             <Download size={14} /> Historial Global
                         </button>
                     }
@@ -287,7 +287,7 @@ export default function ActaManagementPage() {
                                                 </div>
                                             </div>
                                             {lastActa && (
-                                                <div className="px-4 py-2 bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] rounded-md text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--success)/0.3)] flex items-center gap-2 shadow-sm">
+                                                <div className="px-4 py-2 bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] rounded-md text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--success)/0.3)] flex items-center gap-2 shadow-sm">
                                                     <ShieldCheck size={14} /> Acta Vigente
                                                 </div>
                                             )}
@@ -298,14 +298,14 @@ export default function ActaManagementPage() {
                                                 <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2"><Zap size={14} className="text-[hsl(var(--primary))]" /> Requisitos de Aprobación</h4>
                                                 <div className="space-y-3">
                                                     <div className="space-y-2">
-                                                        <label className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] ml-2">Nota Mínima</label>
+                                                        <label className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] ml-2">Nota Mínima</label>
                                                         <div className="relative">
                                                             <input type="number" value={minGrade} onChange={(e) => setMinGrade(Number(e.target.value))} className="w-full bg-[hsl(var(--bg-primary))] dark:bg-black/40 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 font-semibold focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all outline-none" />
                                                             <span className="font-semibold">%</span>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <label className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] ml-2">Asistencia Mínima</label>
+                                                        <label className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] ml-2">Asistencia Mínima</label>
                                                         <div className="relative">
                                                             <input type="number" value={minAttendance} onChange={(e) => setMinAttendance(Number(e.target.value))} className="w-full bg-[hsl(var(--bg-primary))] dark:bg-black/40 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 font-semibold focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all outline-none" />
                                                             <span className="font-semibold">%</span>
@@ -320,11 +320,11 @@ export default function ActaManagementPage() {
                                                 </div>
                                                 <div className="relative z-10 h-full flex flex-col justify-between">
                                                     <div className="space-y-2">
-                                                        <h4 className="text-[11px] font-semibold uppercase tracking-wide text-white/60">Simulación de Cierre</h4>
+                                                        <h4 className="text-xs font-semibold uppercase tracking-wide text-white/60">Simulación de Cierre</h4>
                                                         <p className="text-lg font-bold tracking-tight">12 Alumnos</p>
                                                         <p className="text-sm font-medium text-[hsl(var(--info)/80%)]">Listos para recibir certificación según los criterios actuales.</p>
                                                     </div>
-                                                    <button className="w-full py-1.5 mt-3 bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl active:scale-95 transition-all">Ver Alumnos Calificados</button>
+                                                    <button className="w-full py-1.5 mt-3 bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] rounded-lg font-black text-2xs uppercase tracking-wide shadow-xl active:scale-95 transition-all">Ver Alumnos Calificados</button>
                                                 </div>
                                             </div>
                                         </section>
@@ -342,7 +342,7 @@ export default function ActaManagementPage() {
                                             <button
                                                 onClick={handleCloseActa}
                                                 disabled={closing}
-                                                className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-black text-[12px] uppercase tracking-wide shadow-2xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-4 group"
+                                                className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-black text-sm uppercase tracking-wide shadow-2xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-4 group"
                                             >
                                                 {closing ? <Loader2 className="animate-spin" /> : <ShieldCheck size={20} className="group-hover:scale-110 transition-transform" />}
                                                 {closing ? 'PROCESANDO PROTOCOLO...' : 'CERRAR ACTA Y CERTIFICAR'}
@@ -353,15 +353,15 @@ export default function ActaManagementPage() {
                                             <section className="space-y-3">
                                                 <div className="flex items-center justify-between px-4">
                                                     <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2"><History size={14} /> Historial de Decisiones</h4>
-                                                    <button className="text-[10px] font-bold text-[hsl(var(--primary))] flex items-center gap-1">Ver todos <ChevronRight size={12} /></button>
+                                                    <button className="text-2xs font-bold text-[hsl(var(--primary))] flex items-center gap-1">Ver todos <ChevronRight size={12} /></button>
                                                 </div>
                                                 <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden">
                                                     <div className="p-3 flex items-center justify-between hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all group">
                                                         <div className="flex items-center gap-4">
                                                             <div className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]"><FileText size={18} /></div>
                                                             <div>
-                                                                <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white">Acta Académica #{lastActa.id}</p>
-                                                                <p className="text-[10px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">{new Date(lastActa.created_at).toLocaleString()}</p>
+                                                                <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Acta Académica #{lastActa.id}</p>
+                                                                <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">{new Date(lastActa.created_at).toLocaleString()}</p>
                                                             </div>
                                                         </div>
                                                         <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all opacity-0 group-hover:opacity-100"><Eye size={18} /></button>

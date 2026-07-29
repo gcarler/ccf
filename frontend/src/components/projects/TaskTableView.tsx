@@ -48,14 +48,14 @@ function TitleRenderer(params: ICellRendererParams) {
         <div className="flex items-center gap-2 h-full w-full text-left group">
             <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
                 task.status === 'completed' ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
-                {task.status === 'completed' && <span className="text-[7px] font-bold">✓</span>}
+                {task.status === 'completed' && <span className="text-2xs font-bold">✓</span>}
             </div>
-            <span className="text-[13px] font-semibold truncate group-hover:text-[hsl(var(--primary))] transition-colors">
+            <span className="text-base font-semibold truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                 {task.title}
             </span>
             {(task.comments_count ?? 0) > 0 && (
                 <span className="ml-auto flex items-center gap-0.5 text-[hsl(var(--text-secondary))] shrink-0">
-                    <MessageSquare size={11} /><span className="text-[10px]">{task.comments_count}</span>
+                    <MessageSquare size={11} /><span className="text-2xs">{task.comments_count}</span>
                 </span>
             )}
         </div>
@@ -228,10 +228,10 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
         return (
             <div className="flex items-center gap-2.5 px-4 h-full bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border-b border-[hsl(var(--border))] dark:border-white/5">
                 {dot && <span className={clsx('size-2 rounded-full flex-shrink-0', dot)} />}
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
-                <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full px-2 py-0.5">{groupRow.__groupCount}</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
+                <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full px-2 py-0.5">{groupRow.__groupCount}</span>
                 <button onClick={() => setQuickAddGroup(groupRow.__groupKey)}
-                    className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/0.8)] transition-colors">
+                    className="ml-auto flex items-center gap-1 text-2xs font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/0.8)] transition-colors">
                     <Plus size={11} /> Agregar
                 </button>
             </div>
@@ -262,7 +262,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
 
             {error && (
                 <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))]">
-                    <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
 
@@ -272,19 +272,19 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {/* Column visibility */}
                 <Popover.Root open={cfgOpen} onOpenChange={setCfgOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', cfgOpen ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all', cfgOpen ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
                             <Settings2 size={12} /> Columnas
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-2">
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5">Columnas visibles</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5">Columnas visibles</p>
                             {ALL_COLUMNS.map(col => (
                                 <button key={col.id} onClick={() => setVisibleCols(prev => { const n = new Set(prev); if (n.has(col.id)) { if (col.id !== 'title') n.delete(col.id); } else n.add(col.id); return n; })}
                                     className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                                     {visibleCols.has(col.id) ? <Eye size={13} className="text-[hsl(var(--primary))] shrink-0" /> : <EyeOff size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />}
-                                    <span className={clsx('text-[12px] font-medium flex-1 text-left', visibleCols.has(col.id) ? 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]' : 'text-[hsl(var(--text-secondary))]')}>{col.label}</span>
-                                    {col.id === 'title' && <span className="text-[9px] text-[hsl(var(--text-secondary))]">fijo</span>}
+                                    <span className={clsx('text-sm font-medium flex-1 text-left', visibleCols.has(col.id) ? 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]' : 'text-[hsl(var(--text-secondary))]')}>{col.label}</span>
+                                    {col.id === 'title' && <span className="text-2xs text-[hsl(var(--text-secondary))]">fijo</span>}
                                 </button>
                             ))}
                         </Popover.Content>
@@ -296,17 +296,17 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {/* Group by */}
                 <Popover.Root open={groupOpen} onOpenChange={setGroupOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', groupBy !== 'status' ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all', groupBy !== 'status' ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
                             <Layers size={12} /> Agrupar{groupBy !== 'none' ? `: ${groupBy === 'status' ? 'Estado' : 'Prioridad'}` : ''}
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5">
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Agrupar por</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Agrupar por</p>
                             {([['status','Estado'],['priority','Prioridad'],['none','Sin agrupación']] as const).map(([k, lbl]) => (
                                 <button key={k} onClick={() => { setGroupBy(k); setGroupOpen(false); }}
                                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
-                                    <span className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1 text-left">{lbl}</span>
+                                    <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1 text-left">{lbl}</span>
                                     {groupBy === k && <Check size={12} className="text-[hsl(var(--primary))]" />}
                                 </button>
                             ))}
@@ -317,33 +317,33 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {/* Filter */}
                 <Popover.Root open={filterOpen} onOpenChange={setFilterOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all', activeFilters.length > 0 ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all', activeFilters.length > 0 ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5')}>
                             <Filter size={12} /> Filtrar{activeFilters.length > 0 ? ` (${activeFilters.length})` : ''}
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start" className="z-[500] w-64 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-2">
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5">Por Estado</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5">Por Estado</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                                 {STATUS_OPTIONS.map(s => {
                                     const active = activeFilters.some(f => f.field === 'status' && f.value === s.value);
                                     return <button key={s.value} onClick={() => setActiveFilters(prev => active ? prev.filter(f => !(f.field==='status' && f.value===s.value)) : [...prev, { field: 'status', value: s.value, label: s.label }])}
-                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all', active ? `${s.bg} ${s.text} ${s.border} ring-2 ring-[hsl(var(--primary))]/30` : `${s.bg} ${s.text} ${s.border} opacity-60 hover:opacity-100`)}>
+                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold border transition-all', active ? `${s.bg} ${s.text} ${s.border} ring-2 ring-[hsl(var(--primary))]/30` : `${s.bg} ${s.text} ${s.border} opacity-60 hover:opacity-100`)}>
                                         <div className={clsx('size-1.5 rounded-full', s.dot)} />{s.label}
                                     </button>;
                                 })}
                             </div>
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/5">Por Prioridad</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/5">Por Prioridad</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                                 {PRIORITY_OPTIONS.map(p => {
                                     const active = activeFilters.some(f => f.field === 'priority' && f.value === p.value);
                                     return <button key={p.value} onClick={() => setActiveFilters(prev => active ? prev.filter(f => !(f.field==='priority' && f.value===p.value)) : [...prev, { field: 'priority', value: p.value, label: p.label }])}
-                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10', active ? 'ring-2 ring-[hsl(var(--primary))]/30 opacity-100' : 'opacity-60 hover:opacity-100', p.color)}>
+                                        className={clsx('flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold border transition-all bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10', active ? 'ring-2 ring-[hsl(var(--primary))]/30 opacity-100' : 'opacity-60 hover:opacity-100', p.color)}>
                                         <FlagIcon fill={p.fill} size={11} />{p.label}
                                     </button>;
                                 })}
                             </div>
-                            {activeFilters.length > 0 && <button onClick={() => setActiveFilters([])} className="w-full text-[11px] font-bold text-[hsl(var(--destructive))] py-1.5 hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors border-t border-[hsl(var(--border))] dark:border-white/5 mt-1">Limpiar filtros</button>}
+                            {activeFilters.length > 0 && <button onClick={() => setActiveFilters([])} className="w-full text-xs font-bold text-[hsl(var(--destructive))] py-1.5 hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg transition-colors border-t border-[hsl(var(--border))] dark:border-white/5 mt-1">Limpiar filtros</button>}
                         </Popover.Content>
                     </Popover.Portal>
                 </Popover.Root>
@@ -351,10 +351,10 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 <div className="ml-0 sm:ml-auto flex min-w-0 items-center gap-1.5 overflow-x-auto">
                     {activeFilters.length > 0 && (
                         <div className="flex min-w-0 gap-1">
-                            {activeFilters.map((f, i) => <span key={i} className="flex shrink-0 items-center gap-1 px-2 py-0.5 rounded-full bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] text-[10px] font-semibold">{f.label}<button onClick={() => setActiveFilters(p => p.filter((_,j) => j !== i))}><X size={9} /></button></span>)}
+                            {activeFilters.map((f, i) => <span key={i} className="flex shrink-0 items-center gap-1 px-2 py-0.5 rounded-full bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] text-2xs font-semibold">{f.label}<button onClick={() => setActiveFilters(p => p.filter((_,j) => j !== i))}><X size={9} /></button></span>)}
                         </div>
                     )}
-                    <button onClick={() => onAddTask('todo')} className="flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors">
+                    <button onClick={() => onAddTask('todo')} className="flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-white transition-colors">
                         <Plus size={13} /> Nueva tarea
                     </button>
                 </div>
@@ -375,9 +375,9 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                 if (e.key === 'Escape') { setQuickAddGroup(null); setQuickAddTitle(''); }
                             }}
                             placeholder="Nombre de la tarea... (Enter para crear)"
-                            className="flex-1 text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]"
+                            className="flex-1 text-base font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]"
                         />
-                        <button onClick={() => quickAddTitle.trim() && handleQuickAdd(quickAddGroup, quickAddTitle.trim())} className="px-3 py-1 bg-[hsl(var(--primary))] text-white text-[11px] font-bold rounded-lg hover:bg-[hsl(var(--primary))] transition-colors shrink-0">Crear</button>
+                        <button onClick={() => quickAddTitle.trim() && handleQuickAdd(quickAddGroup, quickAddTitle.trim())} className="px-3 py-1 bg-[hsl(var(--primary))] text-white text-xs font-bold rounded-lg hover:bg-[hsl(var(--primary))] transition-colors shrink-0">Crear</button>
                         <button onClick={() => { setQuickAddGroup(null); setQuickAddTitle(''); }} className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"><X size={13} /></button>
                     </motion.div>
                 )}

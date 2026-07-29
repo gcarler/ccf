@@ -126,11 +126,11 @@ export default function EventDetailPage() {
             </div>
             <div className="flex flex-col items-stretch gap-3">
               <div className="flex flex-wrap justify-end gap-2">
-                <span className="rounded-full border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                <span className="rounded-full border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                   Seguimiento ministerial
                 </span>
                 <span
-                  className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide ${
+                  className={`rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide ${
                     activeTab === 'session'
                       ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text"
                       : "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
@@ -162,13 +162,13 @@ export default function EventDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 space-y-3">
                 <DSCard>
-                  <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Descripción</h3>
+                  <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Descripción</h3>
                   <p className="text-[hsl(var(--text-secondary))] font-medium">{event.description || "Sin descripción."}</p>
                 </DSCard>
               </div>
               <div className="space-y-3">
                 <DSCard>
-                  <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Acciones</h3>
+                  <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Acciones</h3>
                   <button onClick={() => router.push('/plataforma/evangelism/events')} className="w-full py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] rounded-md font-bold flex items-center justify-center gap-2">
                     <ArrowLeft size={16}/> Volver a Eventos
                   </button>

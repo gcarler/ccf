@@ -174,7 +174,7 @@ export default function RankingsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">
               Métricas y Análisis
             </p>
             <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight flex items-center gap-2">
@@ -183,7 +183,7 @@ export default function RankingsPage() {
             </h1>
           </div>
           <div className="w-full md:w-64">
-            <label htmlFor="strategy-filter" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">
+            <label htmlFor="strategy-filter" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1.5">
               Filtrar por estrategia
             </label>
             <select

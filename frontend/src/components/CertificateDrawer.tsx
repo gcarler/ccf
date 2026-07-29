@@ -52,7 +52,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
 
     return (
         <RightPanel open={true} onClose={onClose} title="Certificado Oficial" width={960}>
-            <div className="relative w-full h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] flex flex-col md:flex-row overflow-hidden">
+            <div className="relative w-full h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] flex flex-col md:flex-row overflow-hidden">
                 
                 {/* Close Button - Premium Positioning */}
                 <button 
@@ -63,7 +63,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                 </button>
 
                 {/* Sidebar - Control Panel */}
-                <div className="w-full md:w-80 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-4 border-r border-[hsl(var(--border))] dark:border-white/5 print:hidden flex flex-col shrink-0">
+                <div className="w-full md:w-80 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] p-4 border-r border-[hsl(var(--border))] dark:border-white/5 print:hidden flex flex-col shrink-0">
                     <div className="mb-3">
                         <div className="size-8 bg-[hsl(var(--primary))] text-white rounded-lg flex items-center justify-center mb-3 shadow-xl shadow-[hsl(var(--info)/20%)]">
                             <Award size={36} />
@@ -100,7 +100,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
 
                         <div className="p-3 bg-warning-soft dark:bg-[hsl(var(--warning))]/5 rounded-lg border border-[hsl(var(--warning)/25%)]/50 dark:border-[hsl(var(--warning)/100%)]/10 flex items-center gap-4">
                             <Verified className="text-[hsl(var(--warning))] shrink-0" size={24} />
-                            <p className="text-[11px] font-bold text-warning-text dark:text-[hsl(var(--warning))] leading-tight">
+                            <p className="text-xs font-bold text-warning-text dark:text-[hsl(var(--warning))] leading-tight">
                                 Verificado por el motor de inteligencia ministerial Optimus Brain.
                             </p>
                         </div>
@@ -115,7 +115,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                         </button>
                         <button 
                             onClick={handleDownloadImage}
-                            className="w-full py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10 transition-all flex items-center justify-center gap-3"
+                            className="w-full py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10 transition-all flex items-center justify-center gap-3"
                         >
                             <Download size={18} /> Guardar Imagen
                         </button>
@@ -126,7 +126,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                 <div className="flex-1 p-4 md:p-4 flex items-center justify-center bg-[#f1f5f9] dark:bg-black overflow-y-auto">
                     
                     {/* The Actual Document */}
-                    <div id="certificate-to-print" className="certificate-paper w-full aspect-[1.414/1] max-w-[850px] bg-[hsl(var(--bg-primary))] border-[16px] border-double border-[#e2e8f0] p-4 md:p-4 relative flex flex-col items-center text-center shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] print:shadow-none">
+                    <div id="certificate-to-print" className="certificate-paper w-full aspect-[1.414/1] max-w-[850px] bg-[hsl(var(--bg-primary))] border-[16px] border-double border-[hsl(var(--border))] p-4 md:p-4 relative flex flex-col items-center text-center shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] print:shadow-none">
                         
                         {/* Elegant Corner Motifs */}
                         <div className="absolute top-4 left-4 size-10 border-t-4 border-l-4 border-[hsl(var(--warning)/40%)]/30 rounded-tl-[2rem]"></div>
@@ -150,7 +150,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
 
                         <h1 className="text-xl md:text-xl font-serif italic text-[hsl(var(--text-primary))] mb-3 relative z-10">Diploma de Reconocimiento</h1>
                         
-                        <p className="text-[hsl(var(--text-secondary))] font-bold italic mb-3 uppercase tracking-wide text-[10px] relative z-10">Se otorga con distinción a:</p>
+                        <p className="text-[hsl(var(--text-secondary))] font-bold italic mb-3 uppercase tracking-wide text-2xs relative z-10">Se otorga con distinción a:</p>
                         <div className="relative mb-3 px-4 z-10">
                             <h2 className="text-lg md:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">
                                 {userName}
@@ -178,7 +178,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                                     <div className="absolute inset-1 border-4 border-white/30 rounded-full border-dashed"></div>
                                     <div className="flex flex-col items-center text-white">
                                         <ShieldCheck size={40} className="drop-shadow-lg" />
-                                        <span className="text-[7px] font-semibold uppercase tracking-wide mt-1">Garantía MESH</span>
+                                        <span className="text-2xs font-semibold uppercase tracking-wide mt-1">Garantía MESH</span>
                                     </div>
                                     {/* Ribbon effect */}
                                     <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-1">
@@ -202,13 +202,13 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                              </div>
                              <div className="text-left">
                                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-none">Validación Digital</p>
-                                <p className="text-[9px] font-bold text-[hsl(var(--text-primary))] leading-tight mt-1">{certificate.certificate_code}</p>
+                                <p className="text-2xs font-bold text-[hsl(var(--text-primary))] leading-tight mt-1">{certificate.certificate_code}</p>
                              </div>
                         </div>
 
                         <div className="absolute bottom-6 right-10 text-right">
                              <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-none">Fecha de Emisión</p>
-                             <p className="text-[9px] font-bold text-[hsl(var(--text-primary))] leading-tight mt-1">{new Date(certificate.issued_at).toLocaleDateString()}</p>
+                             <p className="text-2xs font-bold text-[hsl(var(--text-primary))] leading-tight mt-1">{new Date(certificate.issued_at).toLocaleDateString()}</p>
                         </div>
                     </div>
                 </div>

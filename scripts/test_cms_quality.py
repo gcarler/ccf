@@ -7,9 +7,13 @@ Uso:
 
 from __future__ import annotations
 
+import contextlib
+import json
 import os
 import subprocess
 import sys
+import time
+import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve()
@@ -53,35 +57,143 @@ def info(message: str) -> None:
 def run_command(label: str, cmd: list[str], cwd: Path | None = None) -> bool:
     section(label)
     info("Ejecutando: " + " ".join(cmd))
-    result = subprocess.run(cmd, cwd=cwd or PROJECT_ROOT, text=True, capture_output=True)
-    if result.stdout.strip():
-        for line in result.stdout.strip().splitlines():
-            print(f"    {line}")
+    # Stream output directly to avoid buffering deadlocks on long-running E2E steps.
+    result = subprocess.run(cmd, cwd=cwd or PROJECT_ROOT, text=True)
     if result.returncode == 0:
         ok(f"{label} OK")
         return True
     fail(f"{label} falló")
-    if result.stderr.strip():
-        for line in result.stderr.strip().splitlines()[:20]:
-            print(f"    {line}")
     return False
 
 
+def _clean_stale_next_lock() -> None:
+    """Remove stale next-command.lock left by killed builds."""
+    lock_dir = PROJECT_ROOT / "frontend" / ".next-command.lock"
+    if not lock_dir.is_dir():
+        return
+
+    import datetime as _dt
+    import time as _time
+
+    try:
+        info_json = (lock_dir / "owner.json").read_text(encoding="utf-8")
+        lock_info = json.loads(info_json)
+        pid = int(lock_info.get("pid", 0))
+        created_at = lock_info.get("createdAt", "")
+        created = _dt.datetime.fromisoformat(created_at) if created_at else None
+    except Exception:
+        pid = 0
+        created = None
+
+    try:
+        alive = pid > 0 and os.kill(pid, 0) is None
+    except (OSError, ProcessLookupError):
+        alive = False
+
+    now = _dt.datetime.now(_dt.timezone.utc)
+    if not alive or (created and (now - created).total_seconds() > 600):
+        import shutil as _shutil
+
+        _shutil.rmtree(lock_dir, ignore_errors=True)
+        info("Removed stale .next-command.lock")
+
+
 def require_e2e_env() -> None:
-    required = {
-        "E2E_EMAIL": os.getenv("E2E_EMAIL", "").strip(),
-        "E2E_PASSWORD": os.getenv("E2E_PASSWORD", "").strip(),
-    }
-    api_url = os.getenv("E2E_API_URL", "").strip() or os.getenv("API_BASE_URL", "").strip()
-    if not api_url:
-        required["E2E_API_URL_or_API_BASE_URL"] = ""
-    missing = [key for key, value in required.items() if not value]
-    if missing:
+    email = os.getenv("E2E_EMAIL", "").strip()
+    password = os.getenv("E2E_PASSWORD", "").strip()
+    required: dict[str, str] = {}
+    if not email:
+        required["E2E_EMAIL"] = ""
+    if not password:
+        required["E2E_PASSWORD"] = ""
+
+    api_base = os.getenv("API_BASE_URL", "").strip() or "http://127.0.0.1:8000/api"
+    e2e_api = os.getenv("E2E_API_URL", "").strip()
+
+    if required:
         raise RuntimeError(
             "Faltan variables E2E para CMS quality: "
-            + ", ".join(missing)
+            + ", ".join(required.keys())
             + ". Define E2E_EMAIL, E2E_PASSWORD y E2E_API_URL o API_BASE_URL."
         )
+
+    # E2E_API_URL must point to the host root; API_BASE_URL is the /api prefix.
+    # If the caller only supplied API_BASE_URL, derive the root from it.
+    if not e2e_api:
+        e2e_api = api_base.rstrip("/")
+        if e2e_api.endswith("/api"):
+            e2e_api = e2e_api[: -len("/api")]
+        os.environ["E2E_API_URL"] = e2e_api or "http://127.0.0.1:8000"
+    else:
+        os.environ["E2E_API_URL"] = e2e_api
+
+    os.environ.setdefault("API_BASE_URL", api_base)
+
+
+@contextlib.contextmanager
+def managed_backend_server():
+    """Ensure a backend server is running for E2E stages.
+
+    If a server is already listening on 127.0.0.1:8000, reuse it. Otherwise
+    start uvicorn for the lifetime of the E2E suite and terminate it when
+    the context manager exits.
+    """
+    health_url = "http://127.0.0.1:8000/healthz"
+    log_path = Path("/tmp/cms_backend_server.log")
+    try:
+        with urllib.request.urlopen(health_url, timeout=2) as response:
+            if response.status == 200:
+                info("Backend server already running at 127.0.0.1:8000 (will not stop it)")
+                yield
+                return
+    except (urllib.error.URLError, ConnectionRefusedError, TimeoutError, OSError):
+        pass
+
+    info("Starting backend server for E2E tests")
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(PROJECT_ROOT)
+    env.setdefault("ENV_FILE", str(PROJECT_ROOT / "backend" / ".env"))
+    log_file = log_path.open("w")
+    try:
+        proc = subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "backend.main:app", "--host", "127.0.0.1", "--port", "8000"],
+            cwd=PROJECT_ROOT,
+            env=env,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+        )
+    except Exception as exc:
+        log_file.close()
+        raise RuntimeError(f"Failed to launch backend server: {exc}")
+    started = False
+    try:
+        for _ in range(120):
+            try:
+                with urllib.request.urlopen(health_url, timeout=2) as response:
+                    if response.status == 200:
+                        started = True
+                        break
+            except (urllib.error.URLError, ConnectionRefusedError, TimeoutError):
+                pass
+            time.sleep(0.5)
+        if not started:
+            raise RuntimeError(f"Backend server did not start in time for E2E tests. See {log_path}")
+        yield
+    finally:
+        info("Stopping backend server")
+        if started:
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+        else:
+            proc.kill()
+            try:
+                proc.wait()
+            except Exception:
+                pass
+        log_file.close()
 
 
 def main() -> int:
@@ -112,18 +224,51 @@ def main() -> int:
     )
 
     require_e2e_env()
+    _clean_stale_next_lock()
 
-    frontend_e2e_ok = run_command(
-        "3. Frontend CMS E2E",
-        ["npm", "run", "test:e2e:cms"],
-        cwd=PROJECT_ROOT / "frontend",
+    # Reuse the existing production build when available to avoid rebuilding
+    # twice in the managed runner. If .next is missing, the managed runner will
+    # build once before starting the server.
+    has_frontend_build = (
+        (PROJECT_ROOT / "frontend" / ".next" / "BUILD_ID").is_file()
+        or (PROJECT_ROOT / "frontend" / ".next" / "build-manifest.json").is_file()
     )
+    reuse_args = ["--reuse-build"] if has_frontend_build else []
 
-    public_contract_ok = run_command(
-        "4. Frontend CMS public contract",
-        ["npm", "run", "test:e2e:cms:public"],
-        cwd=PROJECT_ROOT / "frontend",
-    )
+    with managed_backend_server():
+        frontend_e2e_smoke_ok = run_command(
+            "3. Frontend CMS E2E smoke",
+            [
+                "node",
+                "scripts/run-managed-playwright.mjs",
+                "--auth",
+                *reuse_args,
+                "tests/e2e/cms/smoke.spec.ts",
+            ],
+            cwd=PROJECT_ROOT / "frontend",
+        )
+        frontend_e2e_preview_ok = run_command(
+            "4. Frontend CMS E2E preview",
+            [
+                "node",
+                "scripts/run-managed-playwright.mjs",
+                *reuse_args,
+                "tests/e2e/cms/pages-preview.spec.ts",
+            ],
+            cwd=PROJECT_ROOT / "frontend",
+        )
+        frontend_e2e_ok = frontend_e2e_smoke_ok and frontend_e2e_preview_ok
+
+        public_contract_ok = run_command(
+            "5. Frontend CMS public contract",
+            [
+                "node",
+                "scripts/run-managed-playwright.mjs",
+                *reuse_args,
+                "tests/e2e/cms-public-contract.spec.ts",
+            ],
+            cwd=PROJECT_ROOT / "frontend",
+        )
 
     section("RESUMEN")
     total = PASS + FAIL

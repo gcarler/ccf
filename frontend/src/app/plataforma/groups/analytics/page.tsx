@@ -99,7 +99,7 @@ export default function GroupsAnalyticsPage() {
                         <button
                             type="button"
                             onClick={() => void loadGroups()}
-                            className="mt-4 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--destructive)/0.3)] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition hover:bg-[hsl(var(--destructive)/0.08)]"
+                            className="mt-4 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--destructive)/0.3)] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition hover:bg-[hsl(var(--destructive)/0.08)]"
                         >
                             <RefreshCw size={12} /> Reintentar
                         </button>
@@ -116,7 +116,7 @@ export default function GroupsAnalyticsPage() {
                 {!loading && !error && groups.length > 0 && (
                     <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Top grupos por personas</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Top grupos por personas</p>
                             <div className="mt-5 space-y-3">
                                 {metrics.topGroups.map((group) => {
                                     const cap = Math.max(1, normalize(group.capacity));
@@ -127,7 +127,7 @@ export default function GroupsAnalyticsPage() {
                                         <div key={group.id} className="rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10">
                                             <div className="flex items-center justify-between gap-3">
                                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{group.name}</p>
-                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{personas}/{cap}</p>
+                                                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{personas}/{cap}</p>
                                             </div>
                                             <div className="mt-2 h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10">
                                                 <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${pct}%` }} />
@@ -139,7 +139,7 @@ export default function GroupsAnalyticsPage() {
                         </article>
 
                         <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Riesgos operativos</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Riesgos operativos</p>
                             <div className="mt-5 space-y-4">
                                 <RiskRow
                                     label="Casas sin lider asignado"
@@ -176,7 +176,7 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
 
     return (
         <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
             <p className={`mt-2 text-xl font-bold ${toneClass[tone]}`}>{value}</p>
         </article>
     );

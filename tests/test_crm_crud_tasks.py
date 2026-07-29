@@ -137,3 +137,96 @@ def test_delete_crm_task_soft_deletes(db_session):
     assert crud_tasks.delete_crm_task(db_session, task.id) is True
     db_session.expire_all()
     assert crud_tasks.get_crm_tasks(db_session, persona_id=target.id) == []
+
+
+def test_delete_crm_task_not_found(db_session):
+    assert crud_tasks.delete_crm_task(db_session, _uuid.uuid4()) is False
+
+
+def test_update_crm_task_not_found(db_session):
+    payload = CrmTaskUpdate(title="Ghost")
+    result = crud_tasks.update_crm_task(
+        db_session, _uuid.uuid4(), payload, actor_user_id=_uuid.uuid4(),
+    )
+    assert result is None
+
+
+def test_update_crm_task_with_case_anchor(db_session):
+    sede = _seed_sede(db_session)
+    actor = _seed_persona(db_session, sede_id=sede.id, first="Actor")
+    target = _seed_persona(db_session, sede_id=sede.id, first="Target")
+    from backend.models_crm_pipeline import CasoCRM, EstadoCasoEnum, PrioridadCasoEnum, CanalOrigenEnum
+    caso = CasoCRM(
+        id=_uuid.uuid4(), sede_id=sede.id, persona_id=target.id,
+        titulo_caso="Caso", pipeline_id=_uuid.uuid4(),
+        etapa_actual_id=_uuid.uuid4(),
+        origen_canal=CanalOrigenEnum.WEB_FORM,
+        prioridad=PrioridadCasoEnum.MEDIA,
+        estado=EstadoCasoEnum.ABIERTO,
+    )
+    db_session.add(caso)
+    task = models.TareaCRM(
+        id=_uuid.uuid4(), persona_id=target.id, titulo="Old",
+        estado="pending", prioridad="medium", caso_id=caso.id,
+    )
+    db_session.add(task)
+    _commit(db_session)
+    payload = CrmTaskUpdate(caso_id=caso.id)
+    result = crud_tasks.update_crm_task(
+        db_session, task.id, payload, actor_user_id=actor.id,
+    )
+    assert result is not None
+
+
+def test_get_crm_tasks_by_persona(db_session):
+    sede = _seed_sede(db_session)
+    p1 = _seed_persona(db_session, sede_id=sede.id, first="P1")
+    p2 = _seed_persona(db_session, sede_id=sede.id, first="P2")
+    t1 = models.TareaCRM(id=_uuid.uuid4(), persona_id=p1.id, titulo="T1", estado="pending", prioridad="medium")
+    t2 = models.TareaCRM(id=_uuid.uuid4(), persona_id=p2.id, titulo="T2", estado="pending", prioridad="medium")
+    db_session.add_all([t1, t2])
+    _commit(db_session)
+    result = crud_tasks.get_crm_tasks(db_session, persona_id=p1.id)
+    assert len(result) == 1
+    assert result[0].id == t1.id
+
+
+class TestValuesEquivalent:
+
+    def test_both_none(self):
+        assert crud_tasks._values_equivalent(None, None) is True
+
+    def test_one_none(self):
+        assert crud_tasks._values_equivalent(None, "x") is False
+        assert crud_tasks._values_equivalent("x", None) is False
+
+    def test_both_datetime(self):
+        import datetime as dt
+        t1 = dt.datetime(2024, 1, 1)
+        t2 = dt.datetime(2024, 1, 1)
+        t3 = dt.datetime(2024, 1, 2)
+        assert crud_tasks._values_equivalent(t1, t2) is True
+        assert crud_tasks._values_equivalent(t1, t3) is False
+
+    def test_regular(self):
+        assert crud_tasks._values_equivalent("a", "a") is True
+        assert crud_tasks._values_equivalent("a", "b") is False
+
+
+class TestValueForAudit:
+
+    def test_none(self):
+        assert crud_tasks._value_for_audit(None) is None
+
+    def test_uuid(self):
+        u = _uuid.uuid4()
+        assert crud_tasks._value_for_audit(u) == str(u)
+
+    def test_datetime(self):
+        import datetime as dt
+        t = dt.datetime(2024, 6, 15, 10, 30)
+        assert crud_tasks._value_for_audit(t) == t.isoformat()
+
+    def test_plain(self):
+        assert crud_tasks._value_for_audit("hello") == "hello"
+        assert crud_tasks._value_for_audit(42) == 42

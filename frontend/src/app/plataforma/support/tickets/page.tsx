@@ -128,19 +128,19 @@ export default function SupportTicketsPage() {
         <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
             <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
                 <MessageSquare size={16} className="text-[hsl(var(--primary))]" />
-                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex-1">Mis Tickets de Soporte</h1>
+                <h1 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex-1">Mis Tickets de Soporte</h1>
                 <div className="relative">
                     <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                     <input
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Buscar ticket..."
-                        className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-md text-[12px] focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-56 transition-all text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+                        className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-md text-sm focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-56 transition-all text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                     />
                 </div>
                 <button
                     onClick={() => setShowNew(true)}
-                    className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/20%)] transition-all"
+                    className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/20%)] transition-all"
                 >
                     <Plus size={14} /> Nuevo Ticket
                 </button>
@@ -152,14 +152,14 @@ export default function SupportTicketsPage() {
                         key={status}
                         onClick={() => setFilter(status)}
                         className={clsx(
-                            'px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all',
+                            'px-4 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all',
                             filter === status
                                 ? 'bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]'
                                 : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]',
                         )}
                     >
                         {status === 'all' ? 'Todos' : STATUS_CONFIG[status]?.label ?? status}
-                        <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-current/10 text-[9px]">
+                        <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-current/10 text-2xs">
                             {status === 'all' ? tickets.length : counts[status] ?? 0}
                         </span>
                     </button>
@@ -193,14 +193,14 @@ export default function SupportTicketsPage() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide font-mono">CCF-{ticket.id}</span>
-                                            <span className={clsx('px-1.5 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide', statusConfig.bg, statusConfig.color)}>
+                                            <span className={clsx('px-1.5 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide', statusConfig.bg, statusConfig.color)}>
                                                 {statusConfig.label}
                                             </span>
                                         </div>
-                                        <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
+                                        <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                                             {ticket.subject}
                                         </p>
-                                        <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5">
+                                        <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5">
                                             Actualizado: {formatDate(ticket.updated_at ?? ticket.created_at)}
                                         </p>
                                     </div>
@@ -226,14 +226,14 @@ export default function SupportTicketsPage() {
                 subtitle="Describe el problema o solicitud"
                 actions={
                     <>
-                        <button onClick={() => setShowNew(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+                        <button onClick={() => setShowNew(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
                         <button
                             form="support-ticket-form"
                             type="submit"
                             disabled={submitting}
-                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all disabled:cursor-wait disabled:opacity-60"
+                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all disabled:cursor-wait disabled:opacity-60"
                         >
                             {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
                             Enviar Ticket

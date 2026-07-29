@@ -41,7 +41,7 @@ export default function StudentGrades() {
             <section className="relative overflow-hidden rounded-lg bg-primary p-4 text-white shadow-2xl shadow-primary/30 border border-white/10">
                 <div className="relative flex flex-wrap gap-4 justify-between items-center">
                     <div>
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-[hsl(var(--bg-primary))] px-3 py-1.5 rounded-lg shadow-sm">
+                        <span className="text-2xs font-semibold uppercase tracking-wide text-primary bg-[hsl(var(--bg-primary))] px-3 py-1.5 rounded-lg shadow-sm">
                             Resumen del {new Date().getFullYear()}
                         </span>
                         <h2 className="text-xl font-bold tracking-tight leading-none mt-3">Progreso Academico</h2>
@@ -87,7 +87,7 @@ export default function StudentGrades() {
                                             {typeof enrollment.final_grade === 'number' ? enrollment.final_grade.toFixed(1) : '--'}
                                             <span className="text-xs text-[hsl(var(--text-secondary))] font-bold">/10</span>
                                         </p>
-                                        <p className="text-[9px] text-[hsl(var(--text-secondary))] uppercase font-bold tracking-wide mt-1">Calificacion</p>
+                                        <p className="text-2xs text-[hsl(var(--text-secondary))] uppercase font-bold tracking-wide mt-1">Calificacion</p>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-3 items-center text-sm">
@@ -114,7 +114,7 @@ export default function StudentGrades() {
 function MetricCard({ label, value }: { label: string; value: string }) {
     return (
         <div className="bg-white/15 rounded-lg px-3 py-1.5 border border-white/20 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-white/70">{label}</p>
+            <p className="text-2xs font-semibold uppercase tracking-wide text-white/70">{label}</p>
             <p className="text-lg font-bold text-white mt-1">{value}</p>
         </div>
     );
@@ -123,7 +123,7 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 function StatusPill({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
     return (
         <div
-            className={`px-3 py-1.5 rounded-lg border text-[10px] font-semibold uppercase tracking-wide ${
+            className={`px-3 py-1.5 rounded-lg border text-2xs font-semibold uppercase tracking-wide ${
                 highlight
                     ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border-[hsl(var(--success)/100%)]/30'
                     : 'bg-white/5 text-[hsl(var(--text-secondary))] border-white/10'

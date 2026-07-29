@@ -273,11 +273,11 @@ export default function CmsMediaLibrary() {
       <table className="w-full text-left min-w-[480px]">
         <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
           <tr>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Archivo</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Tipo</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">TamaÃ±o</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Subido</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acciones</th>
+            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Archivo</th>
+            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Tipo</th>
+            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">TamaÃ±o</th>
+            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Subido</th>
+            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acciones</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
@@ -291,12 +291,12 @@ export default function CmsMediaLibrary() {
                       {isImage(item.mime_type) ? <OptimizedImage src={item.url} alt="" width={36} height={36} className="w-full h-full object-cover" /> : <FileIcon size={16} className="text-[hsl(var(--text-secondary))]" />}
                     </div>
                     <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[260px]">{item.filename || "Archivo"}</span>
-                    {item.status === "archived" && <span className="rounded-full bg-[hsl(var(--warning-muted))] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Archivado</span>}
+                    {item.status === "archived" && <span className="rounded-full bg-[hsl(var(--warning-muted))] px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Archivado</span>}
                   </div>
                 </td>
-                <td className="px-4 py-3 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{item.mime_type || "—"}</td>
-                <td className="px-4 py-3 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{formatBytes(item.file_size)}</td>
-                <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}</td>
+                <td className="px-4 py-3 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{item.mime_type || "—"}</td>
+                <td className="px-4 py-3 hidden lg:table-cell text-xs text-[hsl(var(--text-secondary))]">{formatBytes(item.file_size)}</td>
+                <td className="px-4 py-3 hidden xl:table-cell text-xs text-[hsl(var(--text-secondary))]">{item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}</td>
                 <td className="px-4 py-3">
                   <button onClick={e => { e.stopPropagation(); copyUrl(item); }} className="p-2 rounded-md hover:bg-[hsl(var(--info-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]">
                     {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
@@ -315,8 +315,8 @@ export default function CmsMediaLibrary() {
       {mediaGroups.map(group => (
         <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-4">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
-            <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
+            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+            <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
           </div>
           <div className="space-y-3">
             {group.items.map(item => {
@@ -328,8 +328,8 @@ export default function CmsMediaLibrary() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{item.filename || "Archivo"}</p>
-                    {item.status === "archived" && <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Archivado</p>}
-                    <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-1">{formatBytes(item.file_size)}</p>
+                    {item.status === "archived" && <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Archivado</p>}
+                    <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1">{formatBytes(item.file_size)}</p>
                   </div>
                 </button>
               );
@@ -366,10 +366,10 @@ export default function CmsMediaLibrary() {
       <header className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-1.5 flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FileImage size={18} className="text-[hsl(var(--primary))] shrink-0" />
-          <h1 className="text-[13px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white truncate">
+          <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white truncate">
             Biblioteca de Medios
           </h1>
-          <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
+          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
             {filtered.length} archivos
           </span>
         </div>
@@ -391,7 +391,7 @@ export default function CmsMediaLibrary() {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60 shrink-0"
+          className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60 shrink-0"
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
           {uploading ? "Subiendo..." : "Subir Archivos"}
@@ -406,7 +406,7 @@ export default function CmsMediaLibrary() {
             key={opt.id}
             onClick={() => setFilter(opt.id)}
             className={clsx(
-              "px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
+              "px-4 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all",
               filter === opt.id
                 ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
                 : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10"
@@ -443,7 +443,7 @@ export default function CmsMediaLibrary() {
               {!search && (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all"
+                  className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all"
                 >
                   <Plus size={16} /> Subir primer archivo
                 </button>
@@ -473,20 +473,20 @@ export default function CmsMediaLibrary() {
                     ) : (
                       <div className="w-full h-full bg-[hsl(var(--surface-1))] dark:bg-white/5 flex flex-col items-center justify-center gap-2">
                         <FileIcon size={32} strokeWidth={1} className="text-[hsl(var(--text-secondary))]" />
-                        <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-center px-2 line-clamp-2">{item.filename}</p>
+                        <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-center px-2 line-clamp-2">{item.filename}</p>
                       </div>
                     )}
 
                     {/* Hover overlay */}
                     {item.status === "archived" && (
-                      <span className="absolute left-2 top-2 rounded-full bg-[hsl(var(--warning-muted))] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">
+                      <span className="absolute left-2 top-2 rounded-full bg-[hsl(var(--warning-muted))] px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">
                         Archivado
                       </span>
                     )}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 p-2">
                       <button
                         onClick={e => { e.stopPropagation(); copyUrl(item); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--bg-primary))] rounded-lg text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--info-muted))] transition-all w-full justify-center"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--bg-primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--info-muted))] transition-all w-full justify-center"
                       >
                         {copiedId === item.id ? <Check size={10} className="text-[hsl(var(--success))]" /> : <Copy size={10} />}
                         {copiedId === item.id ? "¡Copiado!" : "Copiar URL"}
@@ -495,7 +495,7 @@ export default function CmsMediaLibrary() {
                         <button
                           onClick={e => { e.stopPropagation(); optimizeItem(item); }}
                           disabled={optimizingId === item.id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--info))] hover:bg-[hsl(var(--info))] rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--info))] hover:bg-[hsl(var(--info))] rounded-lg text-2xs font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
                         >
                           {optimizingId === item.id ? <Loader2 size={10} className="animate-spin" /> : <Zap size={10} />}
                           Optimizar
@@ -505,7 +505,7 @@ export default function CmsMediaLibrary() {
                         onClick={e => { e.stopPropagation(); toggleArchiveItem(item); }}
                         disabled={deletingId === item.id}
                         className={clsx(
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60",
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-2xs font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60",
                           item.status === "archived" ? "bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]" : "bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))]"
                         )}
                       >
@@ -515,7 +515,7 @@ export default function CmsMediaLibrary() {
                       <button
                         onClick={e => { e.stopPropagation(); deleteItem(item); }}
                         disabled={deletingId === item.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))] rounded-lg text-[9px] font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))] rounded-lg text-2xs font-semibold uppercase tracking-wide text-white transition-all w-full justify-center disabled:opacity-60"
                       >
                         {deletingId === item.id ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={10} />}
                         Eliminar
@@ -580,10 +580,10 @@ export default function CmsMediaLibrary() {
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{item.filename || "Archivo"}</p>
                         {item.status === "archived" && (
-                          <span className="rounded-full bg-[hsl(var(--warning-muted))] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Archivado</span>
+                          <span className="rounded-full bg-[hsl(var(--warning-muted))] px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Archivado</span>
                         )}
                       </div>
-                      <p className="text-[11px] text-[hsl(var(--text-secondary))] truncate">{item.mime_type || "Sin tipo"} · {formatBytes(item.file_size)}</p>
+                      <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{item.mime_type || "Sin tipo"} · {formatBytes(item.file_size)}</p>
                     </div>
                     <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                       <button

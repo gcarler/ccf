@@ -48,7 +48,7 @@ export default function MediaFoldersPage() {
           ) : <div className="w-3" />}
           <FolderTree size={14} className="text-[hsl(var(--warning))]" />
           <span className="text-sm">{folder.name}</span>
-          <span className="text-[10px] text-[hsl(var(--text-secondary))] font-mono">{folder.path}</span>
+          <span className="text-2xs text-[hsl(var(--text-secondary))] font-mono">{folder.path}</span>
         </div>
         {expanded && children.map(child => <FolderNode key={child.id} folder={child} depth={depth + 1} />)}
       </div>

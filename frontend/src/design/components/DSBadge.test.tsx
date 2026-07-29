@@ -49,7 +49,7 @@ describe('DSBadge', () => {
     it('has correct styling', () => {
         render(<DSBadge label="Test" />);
         const badge = screen.getByText('Test');
-        expect(badge.className).toContain('text-[9px]');
+        expect(badge.className).toContain('text-2xs');
         expect(badge.className).toContain('font-semibold');
         expect(badge.className).toContain('uppercase');
         expect(badge.className).toContain('rounded');

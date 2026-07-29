@@ -80,15 +80,15 @@ export default function GroupsHistoryPage() {
             <main className="flex-1 space-y-3 overflow-y-auto p-4 lg:p-4">
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Total registros</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Total registros</p>
                         <p className="mt-2 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{groups.length}</p>
                     </article>
                     <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Meses con actividad</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Meses con actividad</p>
                         <p className="mt-2 text-xl font-bold text-[hsl(var(--primary))]">{timeline.length}</p>
                     </article>
                     <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Con lider asignado</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Con lider asignado</p>
                         <p className="mt-2 text-xl font-bold text-[hsl(var(--success))]">{groups.filter((item) => !!item.leader_name).length}</p>
                     </article>
                 </section>
@@ -105,7 +105,7 @@ export default function GroupsHistoryPage() {
                         <button
                             type="button"
                             onClick={() => void loadGroups()}
-                            className="mt-4 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--destructive)/0.3)] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition hover:bg-[hsl(var(--destructive)/0.08)]"
+                            className="mt-4 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--destructive)/0.3)] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition hover:bg-[hsl(var(--destructive)/0.08)]"
                         >
                             <RefreshCw size={12} /> Reintentar
                         </button>
@@ -127,14 +127,14 @@ export default function GroupsHistoryPage() {
                                 <div className="mt-3 space-y-4">
                                     {month.items.map((item) => (
                                         <div key={item.id} className="grid grid-cols-1 gap-3 rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10 md:grid-cols-[180px_1fr_auto] md:items-center">
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.date ? dayFormatter.format(item.date) : "Sin fecha"}</p>
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.date ? dayFormatter.format(item.date) : "Sin fecha"}</p>
                                             <div>
                                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
-                                                <p className="text-[11px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                     Zona: {item.zone || "Sin zona"} · Lider: {item.leader_name || "No asignado"}
                                                 </p>
                                             </div>
-                                            <span className="w-fit rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]">
+                                            <span className="w-fit rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]">
                                                 {item.status || "Estado no definido"}
                                             </span>
                                         </div>

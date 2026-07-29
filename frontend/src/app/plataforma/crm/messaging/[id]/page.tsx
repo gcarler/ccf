@@ -83,7 +83,7 @@ export default function MessagingDetailPage() {
                 <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
                 >
                     Reintentar
                 </button>
@@ -107,7 +107,7 @@ export default function MessagingDetailPage() {
                 </p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
                 >
                     Reintentar
                 </button>
@@ -169,7 +169,7 @@ export default function MessagingDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Contenido del Mensaje</h3>
+                            <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Contenido del Mensaje</h3>
                             <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5">
                                 <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">
                                     {campaign.content || ''}
@@ -180,7 +180,7 @@ export default function MessagingDetailPage() {
 
                     <aside className="space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Entrega</h3>
+                            <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Entrega</h3>
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between text-xs font-bold">
                                     <span className="text-[hsl(var(--text-secondary))]">Completado</span>

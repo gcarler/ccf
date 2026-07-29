@@ -37,7 +37,7 @@ export default function BooksPage() {
             <section className="py-1.5 px-3 text-center relative">
                 <div className="absolute inset-0 bg-gradient-to-b to-[hsl(var(--info)/10%)] to-transparent pointer-events-none" />
                 <div className="max-w-4xl mx-auto relative">
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--info))]/20 text-[hsl(var(--info))] text-[11px] font-bold uppercase tracking-wide mb-3">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--info))]/20 text-[hsl(var(--info))] text-xs font-bold uppercase tracking-wide mb-3">
                         <BookOpen size={11} /> Biblioteca Digital
                     </span>
                     <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
@@ -60,13 +60,13 @@ export default function BooksPage() {
                 <Filter size={12} className="text-[hsl(var(--text-secondary))]" />
                 {CATEGORIES.map(c => (
                     <button key={c} onClick={() => setCat(c)}
-                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-[hsl(var(--info))] text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
+                        className={`px-4 py-1.5 rounded-lg text-2xs font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-[hsl(var(--info))] text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
                         {c}
                     </button>
                 ))}
                 <div className="ml-auto">
                     <button onClick={() => setFreeOnly(!freeOnly)}
-                        className={clsx("flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all border",
+                        className={clsx("flex items-center gap-2 px-4 py-1.5 rounded-lg text-2xs font-bold uppercase tracking-wide transition-all border",
                             freeOnly ? "bg-[hsl(var(--success))]/20 text-[hsl(var(--success))] border-[hsl(var(--success)/100%)]/30" : "bg-white/5 text-[hsl(var(--text-secondary))] border-white/10 hover:text-white")}>
                         <Download size={11} /> Solo Gratuitos
                     </button>
@@ -84,25 +84,25 @@ export default function BooksPage() {
                                 <BookOpen size={48} className="text-white/30" />
                                 <div className="absolute top-3 left-3 flex gap-2">
                                     {book.free && (
-                                        <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--success))] text-white text-[9px] font-bold uppercase tracking-wide">
+                                        <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--success))] text-white text-2xs font-bold uppercase tracking-wide">
                                             Gratis
                                         </span>
                                     )}
-                                    <span className="px-2 py-0.5 rounded-full bg-black/30 backdrop-blur text-white text-[9px] font-bold">
+                                    <span className="px-2 py-0.5 rounded-full bg-black/30 backdrop-blur text-white text-2xs font-bold">
                                         {book.category}
                                     </span>
                                 </div>
                                 <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/30 backdrop-blur">
                                     <Star size={10} className="text-[hsl(var(--warning))] fill-[hsl(var(--warning))]" />
-                                    <span className="text-[10px] text-white font-bold">{book.rating}</span>
+                                    <span className="text-2xs text-white font-bold">{book.rating}</span>
                                 </div>
                             </div>
                             {/* Info */}
                             <div className="p-3">
                                 <p className="text-sm font-bold text-white leading-snug group-hover:text-[hsl(var(--info))] transition-colors">{book.title}</p>
-                                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1 font-medium">{book.author}</p>
-                                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-2 leading-relaxed line-clamp-2">{book.desc}</p>
-                                <button className={clsx("mt-4 w-full py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2",
+                                <p className="text-xs text-[hsl(var(--text-secondary))] mt-1 font-medium">{book.author}</p>
+                                <p className="text-xs text-[hsl(var(--text-secondary))] mt-2 leading-relaxed line-clamp-2">{book.desc}</p>
+                                <button className={clsx("mt-4 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all flex items-center justify-center gap-2",
                                     book.free
                                         ? "bg-[hsl(var(--success))]/20 hover:bg-[hsl(var(--success))] text-[hsl(var(--success))] hover:text-white"
                                         : "bg-[hsl(var(--info))]/20 hover:bg-[hsl(var(--info))] text-[hsl(var(--info))] hover:text-white")}>

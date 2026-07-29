@@ -67,7 +67,7 @@ export default function PublishTestimony() {
                     <ArrowLeft size={20} />
                 </button>
                 <div className="space-y-0.5">
-                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[9px]">
+                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs">
                         <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
                         Inspiración
                     </div>
@@ -85,7 +85,7 @@ export default function PublishTestimony() {
 
                 {/* Text Area */}
                 <section className="space-y-3">
-                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-bold tracking-wide flex items-center gap-2">
+                    <h4 className="text-[hsl(var(--primary))] text-2xs uppercase font-bold tracking-wide flex items-center gap-2">
                         <div className="size-1.5 rounded-full bg-current"></div>
                         Tu Testimonio
                     </h4>
@@ -105,7 +105,7 @@ export default function PublishTestimony() {
 
                 {/* Category Selector */}
                 <section className="space-y-3">
-                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-bold tracking-wide flex items-center gap-2">
+                    <h4 className="text-[hsl(var(--primary))] text-2xs uppercase font-bold tracking-wide flex items-center gap-2">
                         <div className="size-1.5 rounded-full bg-current"></div>
                         Área del Milagro
                     </h4>
@@ -115,7 +115,7 @@ export default function PublishTestimony() {
                                 key={category}
                                 type="button"
                                 onClick={() => setSelectedCategory(category)}
-                                className={`h-8 px-4 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all border ${selectedCategory === category
+                                className={`h-8 px-4 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all border ${selectedCategory === category
                                     ? 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-primary/30 border-transparent scale-105'
                                     : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]'
                                     }`}
@@ -128,7 +128,7 @@ export default function PublishTestimony() {
 
                 {/* Multimedia Upload */}
                 <section className="space-y-3">
-                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-bold tracking-wide flex items-center gap-2">
+                    <h4 className="text-[hsl(var(--primary))] text-2xs uppercase font-bold tracking-wide flex items-center gap-2">
                         <div className="size-1.5 rounded-full bg-current"></div>
                         Multimedia (Opcional)
                     </h4>
@@ -137,13 +137,13 @@ export default function PublishTestimony() {
                             <Camera size={28} strokeWidth={2.5} />
                         </div>
                         <p className="font-semibold text-sm uppercase tracking-tight">Añadir Evidencia</p>
-                        <p className="text-[hsl(var(--text-secondary))] text-[10px] mt-2 font-semibold uppercase tracking-wide opacity-60">Foto o Video (Máx 50MB)</p>
+                        <p className="text-[hsl(var(--text-secondary))] text-2xs mt-2 font-semibold uppercase tracking-wide opacity-60">Foto o Video (Máx 50MB)</p>
                     </div>
                 </section>
 
                 {/* Privacy Visibility */}
                 <section className="space-y-3">
-                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-bold tracking-wide flex items-center gap-2 mb-3">
+                    <h4 className="text-[hsl(var(--primary))] text-2xs uppercase font-bold tracking-wide flex items-center gap-2 mb-3">
                         <div className="size-1.5 rounded-full bg-current"></div>
                         Visibilidad
                     </h4>
@@ -154,7 +154,7 @@ export default function PublishTestimony() {
                             </div>
                             <div className="flex flex-col pt-1">
                                 <span className={`font-black text-sm uppercase tracking-tight transition-colors ${isAnonymous ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-primary))]'}`}>Publicar como Anónimo</span>
-                                <span className="text-[hsl(var(--text-secondary))] text-[11px] font-medium mt-1">Tu nombre no aparecerá en el muro de milagros.</span>
+                                <span className="text-[hsl(var(--text-secondary))] text-xs font-medium mt-1">Tu nombre no aparecerá en el muro de milagros.</span>
                             </div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer shrink-0">

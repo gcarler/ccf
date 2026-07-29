@@ -166,7 +166,7 @@ export default function ProjectDetailPage() {
                     <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
                     <button
                         onClick={() => bumpReloadKey()}
-                        className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                        className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
                     >
                         Reintentar
                     </button>
@@ -188,20 +188,20 @@ export default function ProjectDetailPage() {
                     availableViews={PROJECT_DETAIL_VIEWS}
                     rightActions={
                         <div className="flex items-center gap-2">
-                            <button onClick={() => setShowTaskModal(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
+                            <button onClick={() => setShowTaskModal(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
                                 <Plus size={14} /> Nueva Tarea
                             </button>
-                            <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-2 border border-[hsl(var(--border))] dark:border-white/10">
+                            <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-2 border border-[hsl(var(--border))] dark:border-white/10">
                                 <PencilRuler size={14} /> Pizarra
                             </button>
-                            <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
+                            <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Fases
                             </button>
-                            <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-[hsl(var(--warning))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning))] active:scale-95 transition-all flex items-center gap-2">
+                            <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-[hsl(var(--warning))] text-white rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning))] active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Editar
                             </button>
                             {canDeleteProject && (
-                                <button onClick={handleDeleteProject} className="px-3 py-1.5 bg-[hsl(var(--danger))] text-white rounded-lg text-[10px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--danger))] active:scale-95 transition-all flex items-center gap-2">
+                                <button onClick={handleDeleteProject} className="px-3 py-1.5 bg-[hsl(var(--danger))] text-white rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--danger))] active:scale-95 transition-all flex items-center gap-2">
                                     <Trash2 size={14} /> Eliminar
                                 </button>
                             )}

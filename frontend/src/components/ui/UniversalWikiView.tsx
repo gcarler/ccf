@@ -117,7 +117,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                     </div>
                     <div>
                         <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Wiki {moduleName}</h4>
-                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{moduleName}</p>
+                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{moduleName}</p>
                     </div>
                 </div>
 
@@ -125,9 +125,9 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                     <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--info)/0.2)] dark:border-[hsl(var(--info)/0.2)] rounded-lg shadow-sm">
                         <div className="flex items-center gap-3 text-[hsl(var(--primary))] mb-1">
                             <FileText size={16} />
-                            <span className="text-[11px] font-semibold uppercase tracking-wide">General</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide">General</span>
                         </div>
-                        <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">Protocolos y estandares del modulo {moduleName}.</p>
+                        <p className="text-2xs text-[hsl(var(--text-secondary))] font-medium">Protocolos y estandares del modulo {moduleName}.</p>
                     </div>
 
                     {[{ id: 1, label: "Protocolos" }, { id: 2, label: "Guías" }, { id: 3, label: "Recursos" }].map((item) => (
@@ -142,7 +142,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                         >
                             <div className="flex items-center gap-3">
                                 <FileText size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
-                                <span className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white">{item.label}</span>
+                                <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white">{item.label}</span>
                             </div>
                             <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                         </div>
@@ -152,7 +152,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                 <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-2))]/50 dark:bg-black/20">
                     <button
                         aria-label="Vincular recursos"
-                        className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:opacity-80 transition-all"
+                        className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:opacity-80 transition-all"
                         onClick={() => {/* future: open resource linker */}}
                     >
                         <Link2 size={14} /> Vincular Recursos
@@ -177,7 +177,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                             aria-label="Vista previa"
                             title={viewMode === 'edit' ? 'Vista previa' : 'Editar'}
                             onClick={() => setViewMode(m => m === 'edit' ? 'preview' : 'edit')}
-                            className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center gap-2 hover:opacity-80 transition-all"
+                            className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 hover:opacity-80 transition-all"
                         >
                             <Eye size={14} />
                             {viewMode === 'edit' ? 'Vista previa' : 'Editar'}
@@ -186,7 +186,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                             aria-label="Exportar"
                             title="Exportar documento"
                             onClick={handleExportHtml}
-                            className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center gap-2 hover:opacity-80 transition-all"
+                            className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 hover:opacity-80 transition-all"
                         >
                             <Download size={14} />
                             Exportar
@@ -194,7 +194,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                         <button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide flex items-center gap-3 shadow-xl shadow-[hsl(var(--primary)/0.2)] hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                            className="px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center gap-3 shadow-xl shadow-[hsl(var(--primary)/0.2)] hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                         >
                             {isSaving ? <Sparkles size={14} className="animate-spin" /> : <Save size={14} />}
                             {isSaving ? 'Sincronizando...' : 'Guardar Wiki'}
@@ -220,7 +220,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                         <EditorContent editor={editor} />
                     )}
                     {error && (
-                        <p className="absolute bottom-4 left-10 rounded-full bg-danger-soft px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-danger-text">
+                        <p className="absolute bottom-4 left-10 rounded-full bg-danger-soft px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-danger-text">
                             {error}
                         </p>
                     )}
@@ -230,7 +230,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
                             <Clock size={14} className="text-[hsl(var(--text-secondary))]" />
-                            <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Persistencia compartida</span>
+                            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Persistencia compartida</span>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">

@@ -288,6 +288,7 @@ class CrmTaskBase(BaseModel):
     persona_id: Optional[UUID] = None
     assignee_id: Optional[UUID] = None
     category: Optional[str] = None
+    caso_id: Optional[UUID] = None
     due_date: Optional[AwareDateTime] = None
     status: CrmTaskStatus = CrmTaskStatus.pending
     priority: CrmTaskPriority = CrmTaskPriority.medium

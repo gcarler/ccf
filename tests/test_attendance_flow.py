@@ -40,9 +40,10 @@ class TestAttendance:
         db_session.add(g)
         db_session.flush()
 
-        # 3. Create session
+        # 3. Create session (must be HABILITADO for attendance submission)
         ses = models.SesionGrupo(
-            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="PENDIENTE",
+            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA",
+            estado_habilitacion="HABILITADO",
         )
         db_session.add(ses)
         db_session.commit()
@@ -52,10 +53,7 @@ class TestAttendance:
             json={"persona_ids": [str(p.id)]}, headers=h)
 
         # Admin user should pass _can_manage_grupo check
-        assert resp.status_code in (200, 201, 403), f"att: {resp.status_code} {resp.text}"
-        if resp.status_code == 403:
-            # If admin doesn't have permission, just log it
-            print("Admin cannot manage grupo — 403 expected")
+        assert resp.status_code in (200, 201), f"att: {resp.status_code} {resp.text}"
 
     def test_get_attendance(self, full, db_session):
         c, h, s = full["c"], full["h"], full["s"]
@@ -69,7 +67,8 @@ class TestAttendance:
         db_session.add(g)
         db_session.flush()
         ses = models.SesionGrupo(
-            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="PENDIENTE",
+            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA",
+            estado_habilitacion="HABILITADO",
         )
         db_session.add(ses)
         db_session.commit()

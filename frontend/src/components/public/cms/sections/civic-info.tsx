@@ -21,15 +21,15 @@ export function CivicFileDownloadsSection({ section }: { section: CmsSection<"ci
   }>;
 
   const fmtBadge: Record<string, React.ReactNode> = {
-    pdf:  <span className="text-[10px] font-black text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.2)] px-1.5 py-0.5 rounded select-none">PDF</span>,
-    xls:  <span className="text-[10px] font-black text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.2)] px-1.5 py-0.5 rounded select-none">XLS</span>,
-    xlsx: <span className="text-[10px] font-black text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.2)] px-1.5 py-0.5 rounded select-none">XLS</span>,
-    doc:  <span className="text-[10px] font-black text-[hsl(var(--info))] bg-[hsl(var(--info-muted))] border border-[hsl(var(--info)/0.2)] px-1.5 py-0.5 rounded select-none">DOC</span>,
-    docx: <span className="text-[10px] font-black text-[hsl(var(--info))] bg-[hsl(var(--info-muted))] border border-[hsl(var(--info)/0.2)] px-1.5 py-0.5 rounded select-none">DOC</span>,
-    csv:  <span className="text-[10px] font-black text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.2)] px-1.5 py-0.5 rounded select-none">CSV</span>,
-    ppt:  <span className="text-[10px] font-black text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] border border-[hsl(var(--warning)/0.2)] px-1.5 py-0.5 rounded select-none">PPT</span>,
-    pptx: <span className="text-[10px] font-black text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] border border-[hsl(var(--warning)/0.2)] px-1.5 py-0.5 rounded select-none">PPT</span>,
-    zip:  <span className="text-[10px] font-black text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] px-1.5 py-0.5 rounded select-none">ZIP</span>,
+    pdf:  <span className="text-2xs font-black text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.2)] px-1.5 py-0.5 rounded select-none">PDF</span>,
+    xls:  <span className="text-2xs font-black text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.2)] px-1.5 py-0.5 rounded select-none">XLS</span>,
+    xlsx: <span className="text-2xs font-black text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.2)] px-1.5 py-0.5 rounded select-none">XLS</span>,
+    doc:  <span className="text-2xs font-black text-[hsl(var(--info))] bg-[hsl(var(--info-muted))] border border-[hsl(var(--info)/0.2)] px-1.5 py-0.5 rounded select-none">DOC</span>,
+    docx: <span className="text-2xs font-black text-[hsl(var(--info))] bg-[hsl(var(--info-muted))] border border-[hsl(var(--info)/0.2)] px-1.5 py-0.5 rounded select-none">DOC</span>,
+    csv:  <span className="text-2xs font-black text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.2)] px-1.5 py-0.5 rounded select-none">CSV</span>,
+    ppt:  <span className="text-2xs font-black text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] border border-[hsl(var(--warning)/0.2)] px-1.5 py-0.5 rounded select-none">PPT</span>,
+    pptx: <span className="text-2xs font-black text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] border border-[hsl(var(--warning)/0.2)] px-1.5 py-0.5 rounded select-none">PPT</span>,
+    zip:  <span className="text-2xs font-black text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] px-1.5 py-0.5 rounded select-none">ZIP</span>,
   };
 
   return (
@@ -44,7 +44,7 @@ export function CivicFileDownloadsSection({ section }: { section: CmsSection<"ci
         )}
         {items.map((item, i) => {
           const fmt = (item.format || "").toLowerCase();
-          const badge = fmtBadge[fmt] ?? <span className="text-[10px] font-black text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] px-1.5 py-0.5 rounded select-none">FILE</span>;
+          const badge = fmtBadge[fmt] ?? <span className="text-2xs font-black text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] px-1.5 py-0.5 rounded select-none">FILE</span>;
           return (
             <div key={i} className="flex items-center gap-4 px-5 py-4" style={{ background: i % 2 === 0 ? "var(--site-surface)" : "var(--site-surface-container)" }}>
               <div className="shrink-0">{badge}</div>

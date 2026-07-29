@@ -339,6 +339,16 @@ async def upload_public_document(
     file_size = len(contents)
     mime_type = ALLOWED_DOC_TYPES.get(ext, file.content_type or "application/octet-stream")
 
+    sede = db.query(models.Sede).filter(models.Sede.es_activa.is_(True)).first()
+    if not sede:
+        sede = db.query(models.Sede).first()
+
+    persona = db.query(models.Persona).first()
+    if not persona:
+        persona = models.Persona(first_name="Sistema", last_name="Público", sede_id=sede.id if sede else None)
+        db.add(persona)
+        db.flush()
+
     media = models.CmsMediaItem(
         url=f"/uploads/{unique_name}",
         filename=unique_name,
@@ -346,6 +356,8 @@ async def upload_public_document(
         file_size=file_size,
         alt_text=file.filename,
         section="public_documents",
+        created_by_persona_id=persona.id,
+        sede_id=sede.id if sede else persona.sede_id,
     )
     db.add(media)
     db.commit()

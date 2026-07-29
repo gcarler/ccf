@@ -14,7 +14,7 @@ interface StatCardProps {
 export const StatCard: React.FC<StatCardProps> = ({ 
     label, value, icon: Icon, color, bg, desc, trend 
 }) => (
-    <div className="group relative bg-[#1e1f21] border border-white/5 p-3 rounded-lg hover:border-primary/50 transition-all duration-500 overflow-hidden">
+    <div className="group relative bg-[hsl(var(--surface-2))] border border-white/5 p-3 rounded-lg hover:border-primary/50 transition-all duration-500 overflow-hidden">
         <div className={`absolute top-0 right-0 p-4 opacity-5 group-hover:scale-150 transition-transform duration-700 ${color}`}>
             <Icon size={80} />
         </div>
@@ -23,14 +23,14 @@ export const StatCard: React.FC<StatCardProps> = ({
                 <Icon size={24} />
             </div>
             <div>
-                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mb-1">{label}</div>
+                <div className="text-2xs font-bold text-muted-foreground uppercase tracking-wide mb-1">{label}</div>
                 <div className="text-xl font-bold text-white tabular-nums tracking-tighter italic">
                     {value}
                 </div>
             </div>
             {(desc || trend) && (
                 <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground leading-relaxed">{desc}</span>
+                    <span className="text-2xs text-muted-foreground leading-relaxed">{desc}</span>
                     {trend && (
                         <div className="flex items-center gap-1 font-semibold text-primary">
                             {trend} <ArrowUpRight size={12} />

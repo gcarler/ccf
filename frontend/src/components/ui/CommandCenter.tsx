@@ -126,7 +126,7 @@ export function CommandCenter() {
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                        className="relative w-full max-w-2xl overflow-hidden rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-white/80 dark:bg-[#1e1f21]/80 backdrop-blur-xl shadow-2xl shadow-black/50"
+                        className="relative w-full max-w-2xl overflow-hidden rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-white/80 dark:bg-[hsl(var(--surface-2))]/80 backdrop-blur-xl shadow-2xl shadow-black/50"
                     >
                         <Command label="Command Menu" className="flex h-full w-full flex-col" shouldFilter={false}>
                             <div className="flex items-center border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-1.5">
@@ -156,7 +156,7 @@ export function CommandCenter() {
                                 )}
 
                                 {results.length > 0 && (
-                                    <Command.Group heading="Resultados de Inteligencia" className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
+                                    <Command.Group heading="Resultados de Inteligencia" className="px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                                         {results.map((item) => (
                                             <Item
                                                 key={`${item.type}-${item.id}`}
@@ -170,7 +170,7 @@ export function CommandCenter() {
                                 )}
 
                                 {groupedCommands.map(([groupName, commands]) => (
-                                    <Command.Group key={groupName} heading={groupName} className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                    <Command.Group key={groupName} heading={groupName} className="px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         {commands.map((cmd) => (
                                             <Item key={cmd.id} icon={cmd.icon} label={cmd.label} shortcut={cmd.shortcut} description={cmd.description} onSelect={() => runCommand(cmd.action)} />
                                         ))}
@@ -195,7 +195,7 @@ function Item({ icon: Icon, label, shortcut, description, onSelect }: { icon?: R
             {Icon ? <Icon className="h-4 w-4 shrink-0 opacity-70 group-data-[selected='true']:opacity-100" /> : <span className="h-4 w-4" />}
             <div className="flex-1">
                 <span className="block leading-tight">{label}</span>
-                {description && <span className="text-[11px] font-normal text-[hsl(var(--text-secondary))] group-data-[selected='true']:text-white/80">{description}</span>}
+                {description && <span className="text-xs font-normal text-[hsl(var(--text-secondary))] group-data-[selected='true']:text-white/80">{description}</span>}
             </div>
             {shortcut && (
                 <div className="flex items-center gap-1 rounded bg-[hsl(var(--surface-2))] dark:bg-black/20 px-1.5 py-0.5 font-semibold text-[hsl(var(--text-secondary))] group-data-[selected='true']:bg-white/20 group-data-[selected='true']:text-white">
@@ -224,10 +224,10 @@ function ShortcutSheet({ onClose }: { onClose: () => void }) {
                 initial={{ opacity: 0, y: 12, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 12, scale: 0.98 }}
-                className="relative w-full max-w-lg rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-2xl dark:border-white/10 dark:bg-[#1e1f21]"
+                className="relative w-full max-w-lg rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--surface-2))]"
             >
                 <div className="mb-5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Atajos</p>
+                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Atajos</p>
                     <h2 className="mt-1 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">Productividad global</h2>
                 </div>
                 <div className="space-y-2">

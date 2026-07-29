@@ -119,7 +119,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
           disabled={disabled}
           onClick={(e) => e.stopPropagation()}
           className={clsx(
-            "group flex items-center gap-1.5 px-2 py-1 rounded-lg text-[12px] font-medium whitespace-nowrap transition-all",
+            "group flex items-center gap-1.5 px-2 py-1 rounded-lg text-sm font-medium whitespace-nowrap transition-all",
             "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5",
             open && "bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10",
             isOverdue ? "text-danger" : isToday2 ? "text-warning" : label ? "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" : "text-[hsl(var(--text-secondary))] dark:text-white/20",
@@ -146,7 +146,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
             >
               <ChevronLeft size={14} />
             </button>
-            <span className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+            <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
               {MONTHS_ES[viewMonth]} {viewYear}
             </span>
             <button
@@ -158,7 +158,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
           </div>
           <div className="grid grid-cols-7 mb-1">
             {DAYS_ES.map((d) => (
-              <div key={d} className="text-[9px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center py-0.5">
+              <div key={d} className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center py-0.5">
                 {d}
               </div>
             ))}
@@ -175,7 +175,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
                   key={day}
                   onClick={() => selectDay(day)}
                   className={clsx(
-                    "size-8 rounded-lg text-[12px] font-medium transition-all mx-auto flex items-center justify-center",
+                    "size-8 rounded-lg text-sm font-medium transition-all mx-auto flex items-center justify-center",
                     isSelected
                       ? "bg-[hsl(var(--primary))] text-white font-bold shadow-sm"
                       : isTodayCell
@@ -197,7 +197,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
                 setViewMonth(today.getMonth());
                 selectDate(today);
               }}
-              className="flex-1 text-[11px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] py-1.5 rounded-lg hover:bg-[hsl(var(--info-muted))] dark:hover:bg-[hsl(var(--info)/0.1)] transition-colors"
+              className="flex-1 text-xs font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] py-1.5 rounded-lg hover:bg-[hsl(var(--info-muted))] dark:hover:bg-[hsl(var(--info)/0.1)] transition-colors"
             >
               Hoy
             </button>
@@ -207,7 +207,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
                   onChange(null);
                   setOpen(false);
                 }}
-                className="flex-1 text-[11px] font-bold text-danger py-1.5 rounded-lg hover:bg-[hsl(var(--danger-muted))] dark:hover:bg-[hsl(var(--danger)/0.1)] transition-colors"
+                className="flex-1 text-xs font-bold text-danger py-1.5 rounded-lg hover:bg-[hsl(var(--danger-muted))] dark:hover:bg-[hsl(var(--danger)/0.1)] transition-colors"
               >
                 Quitar
               </button>

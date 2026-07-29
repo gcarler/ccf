@@ -26,28 +26,28 @@ function TitleRenderer({ value, data }: { value: string; data: { id?: string; st
         <div className="flex items-center gap-2.5">
             <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
                 st ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
-                {st && <span className="text-[8px] font-bold">✓</span>}
+                {st && <span className="text-2xs font-bold">✓</span>}
             </div>
-            <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{value}</span>
+            <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{value}</span>
         </div>
     );
 }
 
 function StatusRenderer({ value }: { value: string }) {
     const opt = getStatusOption(value?.toLowerCase());
-    return <span className={clsx('px-2.5 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide border', STATUS_CLS[opt.value])}>{opt.label}</span>;
+    return <span className={clsx('px-2.5 py-0.5 rounded-lg text-2xs font-semibold uppercase tracking-wide border', STATUS_CLS[opt.value])}>{opt.label}</span>;
 }
 
 function PriorityRenderer({ value }: { value: string }) {
     const opt = getPriorityOption(value?.toLowerCase());
-    return <span className={clsx('text-[11px] font-bold uppercase tracking-wide', PRIORITY_CLS[opt.value])}>⚑ {opt.label}</span>;
+    return <span className={clsx('text-xs font-bold uppercase tracking-wide', PRIORITY_CLS[opt.value])}>⚑ {opt.label}</span>;
 }
 
 function AssigneeRenderer({ value }: { value: string | null | undefined }) {
-    if (!value) return <span className="text-[11px] text-[hsl(var(--text-secondary))]">—</span>;
+    if (!value) return <span className="text-xs text-[hsl(var(--text-secondary))]">—</span>;
     return (
         <span
-            className="text-[11px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+            className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
             title={value}
         >
             {String(value).replace(/-/g, '').slice(0, 8)}
@@ -57,7 +57,7 @@ function AssigneeRenderer({ value }: { value: string | null | undefined }) {
 
 function DateRenderer({ value }: { value: string }) {
     if (!value) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs">—</span>;
-    return <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">{new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}</span>;
+    return <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}</span>;
 }
 
 export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[] }) {

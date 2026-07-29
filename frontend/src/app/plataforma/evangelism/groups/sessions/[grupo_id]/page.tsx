@@ -276,22 +276,22 @@ method: 'POST', token: token, silent: true, body: attPayload,
 
  {/* Date */}
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] rounded-lg p-4">
- <label className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5 mb-2"><Calendar size={12} /> Fecha</label>
+ <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5 mb-2"><Calendar size={12} /> Fecha</label>
  <input type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} className="w-full md:w-auto px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
  </div>
 
  {/* Stats */}
  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
- <div className="bg-success-soft border border-success-muted rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]">{stats.present}</p><p className="text-[10px] font-semibold text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]">Presentes</p></div>
- <div className="bg-danger-soft border border-danger-muted rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">{stats.absent}</p><p className="text-[10px] font-semibold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">Ausentes</p></div>
- <div className="bg-info-soft border border-info-muted rounded-lg p-3 text-center"><p className="text-lg font-bold text-info-text dark:text-info">{stats.firstTime}</p><p className="text-[10px] font-semibold text-info-text dark:text-info">Nuevos</p></div>
- <div className="bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--text-primary))]">{stats.total}</p><p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))]">Total</p></div>
+ <div className="bg-success-soft border border-success-muted rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]">{stats.present}</p><p className="text-2xs font-semibold text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]">Presentes</p></div>
+ <div className="bg-danger-soft border border-danger-muted rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">{stats.absent}</p><p className="text-2xs font-semibold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">Ausentes</p></div>
+ <div className="bg-info-soft border border-info-muted rounded-lg p-3 text-center"><p className="text-lg font-bold text-info-text dark:text-info">{stats.firstTime}</p><p className="text-2xs font-semibold text-info-text dark:text-info">Nuevos</p></div>
+ <div className="bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--text-primary))]">{stats.total}</p><p className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">Total</p></div>
  </div>
 
  {/* Attendance */}
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] rounded-lg overflow-hidden">
  <div className="px-4 py-3 border-b border-[hsl(var(--border-primary))] flex items-center justify-between">
- <h2 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><Users size={12} /> Asistencia ({people.length})</h2>
+ <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><Users size={12} /> Asistencia ({people.length})</h2>
  <div className="relative">
  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
  <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Buscar..." className="pl-8 pr-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-xs text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none w-40" />
@@ -306,7 +306,7 @@ method: 'POST', token: token, silent: true, body: attPayload,
  <div className={`size-8 rounded-lg flex items-center justify-center shrink-0 border ${rs.bg} ${rs.border}`}><Icon size={14} className={rs.text} /></div>
  <div className="flex-1 min-w-0">
  <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{person.name}</p>
- <div className="flex items-center gap-2 text-[10px] font-medium text-[hsl(var(--text-secondary))]">
+ <div className="flex items-center gap-2 text-2xs font-medium text-[hsl(var(--text-secondary))]">
  <span className={`px-1.5 py-0.5 rounded font-bold ${rs.text} ${rs.bg}`}>{person.role}</span>
  {person.phone && <span>📱 {person.phone}</span>}
  </div>
@@ -325,8 +325,8 @@ method: 'POST', token: token, silent: true, body: attPayload,
  {/* New Guests */}
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] rounded-lg overflow-hidden">
  <div className="px-4 py-3 border-b border-[hsl(var(--border-primary))] flex items-center justify-between">
- <h2 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><UserPlus size={12} /> Invitados nuevos ({newGuests.length})</h2>
- <button onClick={addGuest} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold hover:bg-[hsl(var(--primary))]"><Plus size={11} /> Agregar</button>
+ <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><UserPlus size={12} /> Invitados nuevos ({newGuests.length})</h2>
+ <button onClick={addGuest} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold hover:bg-[hsl(var(--primary))]"><Plus size={11} /> Agregar</button>
  </div>
  <AnimatePresence>
  {newGuests.map((g, i) => (
@@ -345,20 +345,20 @@ method: 'POST', token: token, silent: true, body: attPayload,
 
  {/* Session Details */}
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
- <h2 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><FileText size={12} /> Detalles</h2>
+ <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><FileText size={12} /> Detalles</h2>
  <div>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Tema</label>
+ <label className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Tema</label>
  <input type="text" value={topic} onChange={e => setTopic(e.target.value)} placeholder="Tema de la reunión..." className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
  </div>
  <div>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Ofrenda</label>
+ <label className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Ofrenda</label>
  <div className="relative w-48">
  <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
  <input type="number" step="0.01" value={offering} onChange={e => setOffering(e.target.value)} placeholder="0.00" className="w-full pl-9 pr-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
  </div>
  </div>
  <div>
- <label className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Notas</label>
+ <label className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Notas</label>
  <textarea value={reportNotes} onChange={e => setReportNotes(e.target.value)} rows={3} placeholder="Observaciones..." className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none resize-none" />
  </div>
  </div>

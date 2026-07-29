@@ -77,7 +77,7 @@ export default function SettingsPage() {
             <div className="sticky top-0 z-30 bg-white/80 dark:bg-[#0f1117]/80 backdrop-blur-xl border-b border-[hsl(var(--border))]/60 dark:border-white/5">
                 <div className="max-w-3xl mx-auto px-3 py-1.5 flex items-center gap-3">
                     <Settings size={18} className="text-[hsl(var(--text-secondary))]" />
-                    <h1 className="text-[13px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                    <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                         Configuración
                     </h1>
                 </div>
@@ -97,16 +97,16 @@ export default function SettingsPage() {
                         <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">
                             {(user as any)?.name ?? 'Usuario CCF'}
                         </p>
-                        <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium truncate">
+                        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium truncate">
                             {(user as any)?.email ?? 'usuario@ccf.com'}
                         </p>
-                        <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide">
+                        <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide">
                             <Shield size={9} /> Admin
                         </span>
                     </div>
                     <button
                         onClick={() => router.push('/plataforma/account')}
-                        className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md hover:border-[hsl(var(--info)/100%)]/50 transition-all"
+                        className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md hover:border-[hsl(var(--info)/100%)]/50 transition-all"
                     >
                         Editar
                     </button>
@@ -119,7 +119,7 @@ export default function SettingsPage() {
                     transition={{ delay: 0.05 }}
                     className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 p-3 shadow-sm"
                 >
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Tema Visual</p>
+                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Tema Visual</p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {([
                             { id: 'light', icon: Sun, label: 'Claro' },
@@ -130,7 +130,7 @@ export default function SettingsPage() {
                                 key={t.id}
                                 onClick={() => setTheme(t.id)}
                                 className={clsx(
-                                    "flex flex-col items-center gap-2 py-1.5 rounded-md border-2 transition-all text-[11px] font-semibold uppercase tracking-wide",
+                                    "flex flex-col items-center gap-2 py-1.5 rounded-md border-2 transition-all text-xs font-semibold uppercase tracking-wide",
                                     theme === t.id
                                         ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]"
                                         : "border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))] dark:hover:border-white/10"
@@ -152,7 +152,7 @@ export default function SettingsPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.08 + gi * 0.04 }}
                     >
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 ml-1">
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 ml-1">
                             {group.title}
                         </p>
                         <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 shadow-sm divide-y divide-[hsl(var(--border))] dark:divide-white/5 overflow-hidden">
@@ -166,8 +166,8 @@ export default function SettingsPage() {
                                         <item.icon size={16} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.label}</p>
-                                        <p className="text-[11px] text-[hsl(var(--text-secondary))] truncate">{item.desc}</p>
+                                        <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.label}</p>
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{item.desc}</p>
                                     </div>
                                     <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] transition-colors shrink-0" />
                                 </button>
@@ -183,19 +183,19 @@ export default function SettingsPage() {
                     transition={{ delay: 0.25 }}
                     className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/100%)]/10 p-3 shadow-sm space-y-3"
                 >
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--danger))] mb-4">Zona de Peligro</p>
+                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--danger))] mb-4">Zona de Peligro</p>
                     <button
                         onClick={() => { logout(); router.push('/login'); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all text-[12px] font-bold"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all text-sm font-bold"
                     >
                         <LogOut size={16} /> Cerrar Sesión
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all text-[12px] font-bold">
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all text-sm font-bold">
                         <Trash2 size={16} /> Eliminar mi cuenta
                     </button>
                 </motion.div>
 
-                <p className="text-center text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-primary))] font-bold uppercase tracking-wide pb-8">
+                <p className="text-center text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-primary))] font-bold uppercase tracking-wide pb-8">
                     {SITE_NAME} · Powered by Antigravity
                 </p>
             </div>

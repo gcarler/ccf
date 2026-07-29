@@ -116,27 +116,27 @@ export default function DocumentosPage() {
               </button>
               <div>
                 <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase">Documentos</h1>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-0.5">Archivo centralizado · Etiquetas · IA</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-0.5">Archivo centralizado · Etiquetas · IA</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setShowTagCreate(true)} className="px-3 py-1.5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold text-[hsl(var(--text-secondary))]"><Tag size={12} className="inline mr-1" /> Etiqueta</button>
-              <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold shadow-sm"><Plus size={12} /> Subir</button>
+              <button onClick={() => setShowTagCreate(true)} className="px-3 py-1.5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-2xs font-semibold text-[hsl(var(--text-secondary))]"><Tag size={12} className="inline mr-1" /> Etiqueta</button>
+              <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold shadow-sm"><Plus size={12} /> Subir</button>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar documentos..." className="pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[12px] w-full focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]" />
+              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar documentos..." className="pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm w-full focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]" />
             </div>
           </div>
 
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              <button onClick={() => setSelectedTag(null)} className={clsx("px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide", selectedTag === null ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]")}>Todas</button>
+              <button onClick={() => setSelectedTag(null)} className={clsx("px-2 py-1 rounded-full text-2xs font-bold uppercase tracking-wide", selectedTag === null ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]")}>Todas</button>
               {tags.map((tag) => (
-                <button key={tag.id} onClick={() => setSelectedTag(tag.id)} className={clsx("px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide", selectedTag === tag.id ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]")} style={selectedTag !== tag.id ? { borderLeft: `3px solid ${tag.color}` } : undefined}>{tag.name}</button>
+                <button key={tag.id} onClick={() => setSelectedTag(tag.id)} className={clsx("px-2 py-1 rounded-full text-2xs font-bold uppercase tracking-wide", selectedTag === tag.id ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]")} style={selectedTag !== tag.id ? { borderLeft: `3px solid ${tag.color}` } : undefined}>{tag.name}</button>
               ))}
             </div>
           )}
@@ -144,10 +144,10 @@ export default function DocumentosPage() {
           {showCreate && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 space-y-3">
               <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Nuevo Documento</h3>
-              <input type="text" placeholder="Título" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-              <input type="text" placeholder="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-              <input type="text" placeholder="URL del archivo" value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value, file_name: e.target.value.split("/").pop() || "" })} className="w-full px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-              <select value={form.document_type} onChange={(e) => setForm({ ...form, document_type: e.target.value })} className="w-full px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
+              <input type="text" placeholder="Título" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+              <input type="text" placeholder="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+              <input type="text" placeholder="URL del archivo" value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value, file_name: e.target.value.split("/").pop() || "" })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+              <select value={form.document_type} onChange={(e) => setForm({ ...form, document_type: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
                 <option value="invoice">Factura</option>
                 <option value="contract">Contrato</option>
                 <option value="receipt">Recibo</option>
@@ -155,8 +155,8 @@ export default function DocumentosPage() {
                 <option value="other">Otro</option>
               </select>
               <div className="flex gap-2">
-                <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-semibold">Cancelar</button>
-                <button onClick={handleCreate} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[11px] font-semibold">Guardar</button>
+                <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-semibold">Cancelar</button>
+                <button onClick={handleCreate} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold">Guardar</button>
               </div>
             </motion.div>
           )}
@@ -164,11 +164,11 @@ export default function DocumentosPage() {
           {showTagCreate && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 space-y-3">
               <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Nueva Etiqueta</h3>
-              <input type="text" placeholder="Nombre" value={tagForm.name} onChange={(e) => setTagForm({ ...tagForm, name: e.target.value })} className="w-full px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+              <input type="text" placeholder="Nombre" value={tagForm.name} onChange={(e) => setTagForm({ ...tagForm, name: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
               <input type="color" value={tagForm.color} onChange={(e) => setTagForm({ ...tagForm, color: e.target.value })} className="w-full h-8 rounded-lg" />
               <div className="flex gap-2">
-                <button onClick={() => setShowTagCreate(false)} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-semibold">Cancelar</button>
-                <button onClick={handleCreateTag} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[11px] font-semibold">Crear</button>
+                <button onClick={() => setShowTagCreate(false)} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-semibold">Cancelar</button>
+                <button onClick={handleCreateTag} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold">Crear</button>
               </div>
             </motion.div>
           )}
@@ -187,22 +187,22 @@ export default function DocumentosPage() {
                       <div className="size-8 rounded-lg bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] flex items-center justify-center"><Icon size={16} /></div>
                       <button onClick={() => handleDelete(doc.id)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] transition-all"><Trash2 size={12} /></button>
                     </div>
-                    <h3 className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate mb-1">{doc.title}</h3>
-                    <p className="text-[10px] text-[hsl(var(--text-secondary))] line-clamp-2 mb-2">{doc.description || "Sin descripción"}</p>
+                    <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate mb-1">{doc.title}</h3>
+                    <p className="text-2xs text-[hsl(var(--text-secondary))] line-clamp-2 mb-2">{doc.description || "Sin descripción"}</p>
                     {doc.ai_summary && (
-                      <div className="mb-2 p-1.5 rounded-md bg-[hsl(var(--primary)/0.08)] text-[10px] text-[hsl(var(--primary))]">
+                      <div className="mb-2 p-1.5 rounded-md bg-[hsl(var(--primary)/0.08)] text-2xs text-[hsl(var(--primary))]">
                         <span className="font-bold">IA:</span> {doc.ai_summary}
                       </div>
                     )}
                     <div className="flex flex-wrap gap-1">
                       {doc.tags?.map((t: any) => (
-                        <span key={t.id} className="px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white" style={{ backgroundColor: t.color }}>{t.name}</span>
+                        <span key={t.id} className="px-1.5 py-0.5 rounded-full text-2xs font-bold text-white" style={{ backgroundColor: t.color }}>{t.name}</span>
                       ))}
                       {doc.ai_tags?.map((tag: string, idx: number) => (
-                        <span key={idx} className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))]">{tag}</span>
+                        <span key={idx} className="px-1.5 py-0.5 rounded-full text-2xs font-bold bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))]">{tag}</span>
                       ))}
                     </div>
-                    <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="mt-2 block text-[10px] font-bold text-[hsl(var(--primary))] hover:underline">Abrir archivo →</a>
+                    <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="mt-2 block text-2xs font-bold text-[hsl(var(--primary))] hover:underline">Abrir archivo →</a>
                   </motion.div>
                 );
               })

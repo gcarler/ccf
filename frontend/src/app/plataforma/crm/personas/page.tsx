@@ -216,7 +216,7 @@ export default function PersonasPage() {
             >
                 <main className="flex-1 overflow-y-auto scrollbar-thin p-4">
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-4 text-center">
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             La sesión no está disponible para cargar personas.
                         </p>
                     </div>
@@ -235,7 +235,7 @@ export default function PersonasPage() {
             >
                 <main className="flex-1 overflow-y-auto scrollbar-thin p-4">
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-4 text-center">
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] animate-pulse">
+                        <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] animate-pulse">
                             Verificando sesión y cargando personas...
                         </p>
                     </div>
@@ -293,7 +293,7 @@ export default function PersonasPage() {
                         {canEditCrm && (
                             <button
                                 onClick={() => setIsCreateOpen(true)}
-                                className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all shrink-0"
+                                className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all shrink-0"
                             >
                                 <Plus size={16} /> Nueva Persona
                             </button>
@@ -305,7 +305,7 @@ export default function PersonasPage() {
                     {personasError && (
                         <div className="rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                             <div className="min-w-0">
-                                <p className="text-[11px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
+                                <p className="text-xs font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
                                     No se pudo cargar el directorio de personas
                                 </p>
                                 <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
@@ -314,7 +314,7 @@ export default function PersonasPage() {
                             </div>
                             <button
                                 onClick={() => loadPersonas()}
-                                className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
+                                className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                             >
                                 Reintentar
                             </button>
@@ -338,7 +338,7 @@ export default function PersonasPage() {
                                 <button
                                     onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                                     className={clsx(
-                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all shrink-0 border",
+                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all shrink-0 border",
                                         showAdvancedFilters || activeFilterCount > 0
                                             ? "bg-ccf-blue text-white border-ccf-blue shadow-md"
                                             : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10"
@@ -347,7 +347,7 @@ export default function PersonasPage() {
                                     <SlidersHorizontal size={14} />
                                     Filtros
                                     {activeFilterCount > 0 && (
-                                        <span className="ml-1 size-4 rounded-full bg-[hsl(var(--bg-primary))] text-ccf-blue text-[9px] font-bold flex items-center justify-center">
+                                        <span className="ml-1 size-4 rounded-full bg-[hsl(var(--bg-primary))] text-ccf-blue text-2xs font-bold flex items-center justify-center">
                                             {activeFilterCount}
                                         </span>
                                     )}
@@ -358,9 +358,9 @@ export default function PersonasPage() {
 
                         {/* Role Chips Row */}
                         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none snap-x">
-                            <button onClick={() => setRoleFilter('Todos')} className={clsx("px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === 'Todos' ? "bg-[hsl(var(--surface-2))] text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))] shadow-md" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10")}>Todos</button>
+                            <button onClick={() => setRoleFilter('Todos')} className={clsx("px-3 py-1 rounded-lg text-2xs font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === 'Todos' ? "bg-[hsl(var(--surface-2))] text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))] shadow-md" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10")}>Todos</button>
                             {roles.map(role => (
-                                <button key={role.id} onClick={() => setRoleFilter(role.name)} className={clsx("px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === role.name ? "bg-[hsl(var(--surface-2))] text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))] shadow-md" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10")}>{role.name}</button>
+                                <button key={role.id} onClick={() => setRoleFilter(role.name)} className={clsx("px-3 py-1 rounded-lg text-2xs font-bold uppercase tracking-wide whitespace-nowrap transition-all shrink-0 snap-start", roleFilter === role.name ? "bg-[hsl(var(--surface-2))] text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))] shadow-md" : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10")}>{role.name}</button>
                             ))}
                         </div>
 
@@ -376,7 +376,7 @@ export default function PersonasPage() {
                                 >
                                     <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3">
                                         <div className="flex items-center justify-between mb-2">
-                                            <h4 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Filtros Avanzados</h4>
+                                            <h4 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Filtros Avanzados</h4>
                                             <button
                                                 onClick={() => {
                                                     setIdTypeFilter('');
@@ -385,7 +385,7 @@ export default function PersonasPage() {
                                                     setParticipationFilter('');
                                                     setRoleFilter('Todos');
                                                 }}
-                                                className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] transition-colors"
+                                                className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive))] transition-colors"
                                             >
                                                 <X size={12} /> Limpiar
                                             </button>
@@ -393,13 +393,13 @@ export default function PersonasPage() {
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                                             {/* Tipo de Identificación */}
                                             <div className="space-y-1">
-                                                <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                                <label className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                     <Fingerprint size={11} /> Tipo ID
                                                 </label>
                                                 <select
                                                     value={idTypeFilter}
                                                     onChange={e => setIdTypeFilter(e.target.value)}
-                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
+                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-xs font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                 >
                                                     <option value="">Todos</option>
                                                     <option value="Cédula De Ciudadanía">Cédula Ciudadanía</option>
@@ -413,13 +413,13 @@ export default function PersonasPage() {
 
                                             {/* Sexo */}
                                             <div className="space-y-1">
-                                                <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                                <label className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                     <VenetianMask size={11} /> Sexo
                                                 </label>
                                                 <select
                                                     value={sexFilter}
                                                     onChange={e => setSexFilter(e.target.value)}
-                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
+                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-xs font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                 >
                                                     <option value="">Todos</option>
                                                     <option value="M">Masculino</option>
@@ -429,13 +429,13 @@ export default function PersonasPage() {
 
                                             {/* Grupo */}
                                             <div className="space-y-1">
-                                                <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                                <label className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                     <MapPin size={11} /> Grupo
                                                 </label>
                                                 <select
                                                     value={groupFilter}
                                                     onChange={e => setGroupFilter(e.target.value)}
-                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
+                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-xs font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                 >
                                                     <option value="">Todos</option>
                                                     {uniqueGroups.map(g => (
@@ -446,13 +446,13 @@ export default function PersonasPage() {
 
                                             {/* Tipo Participación */}
                                             <div className="space-y-1">
-                                                <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                                <label className="flex items-center gap-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                     <BookOpen size={11} /> Participación
                                                 </label>
                                                 <select
                                                     value={participationFilter}
                                                     onChange={e => setParticipationFilter(e.target.value)}
-                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
+                                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 px-2.5 py-1 text-xs font-semibold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                 >
                                                     <option value="">Todos</option>
                                                     <option value="Activo">Activo</option>
@@ -471,12 +471,12 @@ export default function PersonasPage() {
 
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2">
                         <div className="flex flex-col gap-1">
-                            <div className="text-[11px] font-medium text-[hsl(var(--text-secondary))]">
+                            <div className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                                 {totalPersonas === 0
                                     ? 'No hay personas para mostrar en esta consulta.'
                                     : `Mostrando ${pageStart}-${pageEnd} de ${totalPersonas} personas`}
                             </div>
-                            <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <label className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 Registros por página
                                 <select
                                     value={pageSize}
@@ -484,7 +484,7 @@ export default function PersonasPage() {
                                         setPage(1);
                                         setPageSize(Number(event.target.value));
                                     }}
-                                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-2 py-1 text-[11px] font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
+                                    className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 px-2 py-1 text-xs font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                 >
                                     {PERSONAS_PAGE_SIZE_OPTIONS.map((option) => (
                                         <option key={option} value={option}>{option}</option>
@@ -497,7 +497,7 @@ export default function PersonasPage() {
                                 type="button"
                                 onClick={() => setPage(1)}
                                 disabled={loading || page <= 1}
-                                className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 disabled:opacity-50"
+                                className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 disabled:opacity-50"
                             >
                                 Primera
                             </button>
@@ -505,14 +505,14 @@ export default function PersonasPage() {
                                 type="button"
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={loading || page <= 1}
-                                className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 disabled:opacity-50"
+                                className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 disabled:opacity-50"
                             >
                                 Anterior
                             </button>
                             <div className="flex items-center gap-1">
                                 {paginationItems.map((item, index) => (
                                     item === 'ellipsis' ? (
-                                        <span key={`ellipsis-${index}`} className="px-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">…</span>
+                                        <span key={`ellipsis-${index}`} className="px-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">…</span>
                                     ) : (
                                         <button
                                             key={item}
@@ -520,7 +520,7 @@ export default function PersonasPage() {
                                             onClick={() => setPage(item)}
                                             disabled={loading}
                                             className={clsx(
-                                                "min-w-8 px-2.5 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-wide transition-all",
+                                                "min-w-8 px-2.5 py-1.5 rounded-lg border text-2xs font-bold uppercase tracking-wide transition-all",
                                                 item === page
                                                     ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/20%)]"
                                                     : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10"
@@ -535,7 +535,7 @@ export default function PersonasPage() {
                                 type="button"
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={loading || page >= totalPages}
-                                className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 disabled:opacity-50"
+                                className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 disabled:opacity-50"
                             >
                                 Siguiente
                             </button>
@@ -543,11 +543,11 @@ export default function PersonasPage() {
                                 type="button"
                                 onClick={() => setPage(totalPages)}
                                 disabled={loading || page >= totalPages}
-                                className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 disabled:opacity-50"
+                                className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 disabled:opacity-50"
                             >
                                 Última
                             </button>
-                            <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 Página {page} de {totalPages}
                             </span>
                         </div>
@@ -631,7 +631,7 @@ export default function PersonasPage() {
                                                     <div>
                                                         <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase truncate max-w-[150px]">{persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}</h3>
                                                         <div className="mt-1 flex items-center gap-2">
-                                                            <span className={clsx("px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide", getRoleColor(persona.church_role || ''))}>{persona.church_role || 'Persona'}</span>
+                                                            <span className={clsx("px-2 py-0.5 rounded-md text-2xs font-bold uppercase tracking-wide", getRoleColor(persona.church_role || ''))}>{persona.church_role || 'Persona'}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -661,7 +661,7 @@ export default function PersonasPage() {
                                             </div>
                                             <div>
                                                 <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{label}</h3>
-                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{desc} · {count} persona{count !== 1 ? 's' : ''}</p>
+                                                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{desc} · {count} persona{count !== 1 ? 's' : ''}</p>
                                             </div>
                                         </div>
                                     );
@@ -678,14 +678,14 @@ export default function PersonasPage() {
                                                         const gm = visitantes.filter(m => m.group_name === g);
                                                         return (
                                                             <div key={g}>
-                                                                <h4 className="text-[10px] font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))] mb-2">▸ {g} ({gm.length})</h4>
+                                                                <h4 className="text-2xs font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))] mb-2">▸ {g} ({gm.length})</h4>
                                                                 {renderGroupPersonaCards(gm)}
                                                             </div>
                                                         );
                                                     })}
                                                     {visitantesSinGrupo.length > 0 && (
                                                         <div>
-                                                            <h4 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">▸ Sin Grupo ({visitantesSinGrupo.length})</h4>
+                                                            <h4 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">▸ Sin Grupo ({visitantesSinGrupo.length})</h4>
                                                             {renderGroupPersonaCards(visitantesSinGrupo)}
                                                         </div>
                                                     )}
@@ -745,8 +745,8 @@ export default function PersonasPage() {
                 subtitle="Registrar perfil en la base ministerial"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">Cancelar</button>
-                        <button form="create-persona-form" type="submit" disabled={isSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)] transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
+                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">Cancelar</button>
+                        <button form="create-persona-form" type="submit" disabled={isSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)] transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
                         </button>
@@ -809,14 +809,14 @@ export default function PersonasPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Departamento</label>
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Departamento</label>
                                 <select value={newPersona.colombian_department_id ?? ''} onChange={e => setNewPersona(prev => ({ ...prev, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">Seleccionar departamento</option>
                                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ciudad</label>
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ciudad</label>
                                 <select value={newPersona.city} onChange={e => setNewPersona(prev => ({ ...prev, city: e.target.value }))} disabled={!newPersona.colombian_department_id || loadingCities} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">{loadingCities ? 'Cargando ciudades...' : 'Seleccionar ciudad'}</option>
                                     {cities.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}

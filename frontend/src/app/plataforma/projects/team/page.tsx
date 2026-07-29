@@ -69,7 +69,7 @@ export default function TeamPage() {
                 <div className="w-full mx-auto p-3 space-y-3 pb-4">
                     {error && (
                         <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                            <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                            <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
                         </div>
                     )}
 
@@ -80,25 +80,25 @@ export default function TeamPage() {
                                 <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center">
                                     <Users size={14} className="text-[hsl(var(--primary))]" />
                                 </div>
-                                <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Recursos Humanos</span>
+                                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Recursos Humanos</span>
                             </div>
                             <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
                                 Equipo del Proyecto
                             </h1>
-                            <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
+                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
                                 Disponibilidad y saturación del equipo ministerial en tiempo real.
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
                             {!loading && team.length > 0 && (
                                 <div className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm text-center">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cap. Prom.</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cap. Prom.</p>
                                     <p className="text-sm font-semibold text-[hsl(var(--primary))]">
                                         {Math.round(team.reduce((a, m) => a + m.capacity_percent, 0) / team.length)}%
                                     </p>
                                 </div>
                             )}
-                            <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                            <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                                 <UserPlus size={13} /> Invitar
                             </button>
                         </div>
@@ -139,9 +139,9 @@ export default function TeamPage() {
                                                     {persona.name.substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-white leading-none">{persona.name}</p>
+                                                    <p className="text-base font-medium text-[hsl(var(--text-primary))] dark:text-white leading-none">{persona.name}</p>
                                                     <span className={clsx(
-                                                        "text-[9px] font-semibold uppercase tracking-wide mt-0.5 block",
+                                                        "text-2xs font-semibold uppercase tracking-wide mt-0.5 block",
                                                         isOverloaded ? "text-[hsl(var(--danger))]" : "text-[hsl(var(--text-secondary))]"
                                                     )}>{persona.load_status}</span>
                                                 </div>
@@ -151,11 +151,11 @@ export default function TeamPage() {
 
                                         <div className="grid grid-cols-2 gap-2 mb-3">
                                             <div className="p-2 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md">
-                                                <p className="text-[9px] font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Activas</p>
+                                                <p className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Activas</p>
                                                 <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{persona.open}</p>
                                             </div>
                                             <div className="p-2 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md">
-                                                <p className="text-[9px] font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Criticas</p>
+                                                <p className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Criticas</p>
                                                 <p className={clsx("text-lg font-bold", persona.critical > 0 ? "text-[hsl(var(--danger))]" : "text-[hsl(var(--text-primary))] dark:text-white")}>
                                                     {persona.critical}
                                                 </p>
@@ -163,7 +163,7 @@ export default function TeamPage() {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide">
+                                            <div className="flex items-center justify-between text-2xs font-semibold uppercase tracking-wide">
                                                 <span className="text-[hsl(var(--text-secondary))]">Saturación</span>
                                                 <span className={isOverloaded ? "text-[hsl(var(--danger))]" : "text-[hsl(var(--primary))]"}>{persona.capacity_percent}%</span>
                                             </div>
@@ -177,7 +177,7 @@ export default function TeamPage() {
                                             </div>
                                         </div>
 
-                                        <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-semibold uppercase text-[hsl(var(--primary))] tracking-wide">
+                                        <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-2xs font-semibold uppercase text-[hsl(var(--primary))] tracking-wide">
                                             Ver detalle <ChevronRight size={11} />
                                         </div>
                                     </motion.div>
@@ -199,7 +199,7 @@ export default function TeamPage() {
                             <div>
                                 <h3 className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">{selectedPersona.name}</h3>
                                 <span className={clsx(
-                                    "text-[9px] font-semibold uppercase tracking-wide",
+                                    "text-2xs font-semibold uppercase tracking-wide",
                                     selectedPersona.load_status === 'sobrecargado' ? "text-[hsl(var(--danger))]" : "text-[hsl(var(--success))]"
                                 )}>{selectedPersona.load_status}</span>
                             </div>
@@ -213,7 +213,7 @@ export default function TeamPage() {
                                 { label: 'Estado', value: selectedPersona.load_status === 'disponible' ? 'Disponible' : 'Ocupado', color: 'text-[hsl(var(--success))]' },
                             ].map(item => (
                                 <div key={item.label} className="bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md p-2 border border-[hsl(var(--border))] dark:border-white/5">
-                                    <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.label}</p>
+                                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.label}</p>
                                     <p className={clsx("text-lg font-bold mt-0.5", item.color)}>{item.value}</p>
                                 </div>
                             ))}
@@ -221,7 +221,7 @@ export default function TeamPage() {
 
                         <button
                             onClick={() => closeLayer('RIGHT')}
-                            className="w-full py-2 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
+                            className="w-full py-2 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
                         >
                             Cerrar
                         </button>

@@ -6,10 +6,10 @@ vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({ user: { id: 'u1', role: 'admin' }, hasPermission: () => true, loading: false }),
 }));
 import ProjectsBoardView from './ProjectsBoardView';
-import type { ProjectRecord } from '@/types/projects';
+import { createMockProject } from '@/test-utils/factories';
 
-const projects: ProjectRecord[] = [
-    {
+const projects = [
+    createMockProject({
         id: 'p1',
         title: 'Proyecto activo',
         description: 'En marcha',
@@ -18,8 +18,8 @@ const projects: ProjectRecord[] = [
         owner_id: 'u1',
         created_at: '2025-06-15T10:00:00Z',
         tasks: [],
-    } as ProjectRecord,
-    {
+    }),
+    createMockProject({
         id: 'p2',
         title: 'Proyecto completado',
         description: 'Finalizado',
@@ -28,7 +28,7 @@ const projects: ProjectRecord[] = [
         owner_id: 'u2',
         created_at: '2025-06-16T10:00:00Z',
         tasks: [],
-    } as ProjectRecord,
+    }),
 ];
 
 describe('ProjectsBoardView', () => {

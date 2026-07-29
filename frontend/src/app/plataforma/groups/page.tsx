@@ -40,7 +40,7 @@ export default function GroupsPage() {
                     { label: 'Dashboard', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:scale-105 transition-all flex items-center gap-2">
+                    <button className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:scale-105 transition-all flex items-center gap-2">
                         <Plus size={14} /> Nuevo Grupo
                     </button>
                 }

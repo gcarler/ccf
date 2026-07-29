@@ -187,16 +187,16 @@ export default function UserTasksPage() {
             {savingTaskId === task.id ? <CheckCircle2 size={13} className="text-[hsl(var(--success))]" /> : <Circle size={12} className="text-[hsl(var(--text-secondary))]" />}
           </button>
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-[13px] font-bold leading-snug text-[hsl(var(--text-primary))] transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">
+            <p className="line-clamp-2 text-base font-bold leading-snug text-[hsl(var(--text-primary))] transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">
               {task.title}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className={clsx("rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide", config.color)}>{config.label}</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5">
+              <span className={clsx("rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide", config.color)}>{config.label}</span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5">
                 <FolderOpen size={10} /> {task.project_title || "Sin proyecto"}
               </span>
               {task.due_date && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20">
+                <span className="inline-flex items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20">
                   <CalendarDays size={10} /> {new Date(task.due_date).toLocaleDateString("es-CO")}
                 </span>
               )}
@@ -234,7 +234,7 @@ export default function UserTasksPage() {
                 { label: "Hoy", value: metrics.dueToday },
               ].map(metric => (
                 <div key={metric.label} className="rounded-md border border-[hsl(var(--border))] px-3 py-2 dark:border-white/10">
-                  <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
+                  <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
                   <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{metric.value}</p>
                 </div>
               ))}
@@ -255,7 +255,7 @@ export default function UserTasksPage() {
                     key={priority}
                     onClick={() => setFilterPriority(priority)}
                     className={clsx(
-                      "rounded-md px-3 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all",
+                      "rounded-md px-3 py-2 text-2xs font-semibold uppercase tracking-wide transition-all",
                       filterPriority === priority
                         ? "bg-[hsl(var(--primary))] text-white"
                         : "border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:bg-white/5"
@@ -287,7 +287,7 @@ export default function UserTasksPage() {
                   {query || filterPriority !== "all" ? "Ajusta los filtros para ver otras tareas." : "No tienes tareas activas asignadas en este momento."}
                 </p>
               </div>
-              <Link href="/plataforma/projects?view=list#projects-list" className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+              <Link href="/plataforma/projects?view=list#projects-list" className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-white">
                 <FolderOpen size={13} /> Ver proyectos
               </Link>
             </div>
@@ -301,7 +301,7 @@ export default function UserTasksPage() {
                   type: "text",
                   width: "420px",
                   render: (_value, task) => (
-                    <button onClick={() => setSelectedTask(task as TaskDetail)} className="text-left text-[13px] font-semibold text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))]">
+                    <button onClick={() => setSelectedTask(task as TaskDetail)} className="text-left text-base font-semibold text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))]">
                       {task.title}
                     </button>
                   ),
@@ -323,12 +323,12 @@ export default function UserTasksPage() {
               {grouped.map(group => (
                 <section key={group.status} className="flex w-72 shrink-0 flex-col rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/60 dark:border-white/10 dark:bg-white/[0.03]">
                   <div className="flex items-center justify-between border-b border-[hsl(var(--border))] px-4 py-3 dark:border-white/10">
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{group.label}</span>
-                    <span className="rounded-full bg-[hsl(var(--bg-primary))] px-2 py-0.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] dark:bg-white/5">{group.items.length}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{group.label}</span>
+                    <span className="rounded-full bg-[hsl(var(--bg-primary))] px-2 py-0.5 text-2xs font-bold text-[hsl(var(--text-secondary))] dark:bg-white/5">{group.items.length}</span>
                   </div>
                   <div className="flex-1 space-y-3 overflow-y-auto p-3">
                     {group.items.length === 0 ? (
-                      <div className="flex h-20 items-center justify-center rounded-md border-2 border-dashed border-[hsl(var(--border))] text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
+                      <div className="flex h-20 items-center justify-center rounded-md border-2 border-dashed border-[hsl(var(--border))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
                         Vacio
                       </div>
                     ) : (

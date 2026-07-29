@@ -89,7 +89,7 @@ export default function LocationManagement() {
                 </div>
                 <button
                     onClick={() => setIsDrawerOpen(true)}
-                    className="flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
+                    className="flex items-center gap-3 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                 >
                     <PlusCircle size={18} /> Añadir Nueva Sede
                 </button>
@@ -159,13 +159,13 @@ export default function LocationManagement() {
                 subtitle="Configuración de nuevo nodo ministerial"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+                        <button type="button" onClick={() => setIsDrawerOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
                         <button
                             form="location-create-form"
                             type="submit"
-                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
+                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
                         >
                             Confirmar Apertura
                         </button>
@@ -174,20 +174,20 @@ export default function LocationManagement() {
             >
                 <form id="location-create-form" onSubmit={handleCreate} className="space-y-3">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre de la Sede *</label>
+                        <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre de la Sede *</label>
                         <input required value={newLoc.nombre} onChange={e => setNewLoc({...newLoc, nombre: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="Ej: Sede Norte" />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Dirección</label>
+                        <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Dirección</label>
                         <input value={newLoc.address} onChange={e => setNewLoc({...newLoc, address: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="Calle #, Barrio..." />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pastor Encargado</label>
+                            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pastor Encargado</label>
                             <input value={newLoc.pastor} onChange={e => setNewLoc({...newLoc, pastor: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="Nombre" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo</label>
+                            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo</label>
                             <select value={newLoc.type} onChange={e => setNewLoc({...newLoc, type: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none transition-all appearance-none dark:text-white">
                                 <option value="Central">Central</option>
                                 <option value="Sede">Sede</option>

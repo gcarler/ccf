@@ -144,7 +144,7 @@ export default function CommentModeration() {
                     <button 
                         key={f} onClick={() => setActiveFilter(f)}
                         className={clsx(
-                            "px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all relative border-b-2 shrink-0",
+                            "px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all relative border-b-2 shrink-0",
                             activeFilter === f ? "text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]"
                         )}
                     >
@@ -162,7 +162,7 @@ export default function CommentModeration() {
                         <div className="space-y-4">
                             <motion.div 
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                             >
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Moderación Activo
                             </motion.div>
@@ -189,7 +189,7 @@ export default function CommentModeration() {
                         ) : viewType === 'table' ? (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                                 <table className="w-full text-left text-sm">
-                                    <thead className="border-b border-[hsl(var(--border))] text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
+                                    <thead className="border-b border-[hsl(var(--border))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
                                         <tr><th className="px-3 py-3">Autor</th><th className="px-3 py-3">Contexto</th><th className="px-3 py-3">Tipo</th><th className="px-3 py-3">Fecha</th><th className="px-3 py-3" /></tr>
                                     </thead>
                                     <tbody>
@@ -211,7 +211,7 @@ export default function CommentModeration() {
                                     <article key={comment.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
                                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{comment.author}</p>
                                         <p className="mt-2 line-clamp-3 text-sm font-medium text-[hsl(var(--text-secondary))]">{comment.text}</p>
-                                        <p className="mt-4 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{comment.type}</p>
+                                        <p className="mt-4 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{comment.type}</p>
                                     </article>
                                 ))}
                             </motion.div>
@@ -220,14 +220,14 @@ export default function CommentModeration() {
                                 {groupedComments.map((column) => (
                                     <section key={column.type} className="w-80 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                                         <div className="mb-3 flex items-center justify-between px-1">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.type}</p>
+                                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.type}</p>
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.items.length}</span>
                                         </div>
                                         <div className="space-y-2">
                                             {column.items.map((comment) => (
                                                 <article key={comment.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
                                                     <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{comment.author}</p>
-                                                    <p className="mt-2 line-clamp-2 text-[11px] font-medium text-[hsl(var(--text-secondary))]">{comment.text}</p>
+                                                    <p className="mt-2 line-clamp-2 text-xs font-medium text-[hsl(var(--text-secondary))]">{comment.text}</p>
                                                 </article>
                                             ))}
                                         </div>
@@ -285,10 +285,10 @@ export default function CommentModeration() {
                                         </div>
 
                                         <div className="flex gap-4 pt-8 border-t border-[hsl(var(--border))] dark:border-white/5">
-                                            <button className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all active:scale-95 flex items-center justify-center gap-3">
+                                            <button className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white text-2xs font-semibold uppercase tracking-wide rounded-lg shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all active:scale-95 flex items-center justify-center gap-3">
                                                 <CheckCircle2 size={16} /> Aprobar Registro
                                             </button>
-                                            <button className="px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide rounded-lg hover:bg-[hsl(var(--surface-3))] transition-all active:scale-95">
+                                            <button className="px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-2xs font-semibold uppercase tracking-wide rounded-lg hover:bg-[hsl(var(--surface-3))] transition-all active:scale-95">
                                                 Responder
                                             </button>
                                             <button 
@@ -308,7 +308,7 @@ export default function CommentModeration() {
                                 </div>
                                 <div className="space-y-2">
                                     <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Comunidad Limpia</p>
-                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">No hay interacciones pendientes de moderación.</p>
+                                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">No hay interacciones pendientes de moderación.</p>
                                 </div>
                             </motion.div>
                         )}

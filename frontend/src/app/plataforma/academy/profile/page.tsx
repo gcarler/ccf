@@ -108,7 +108,7 @@ export default function StudentProfilePage() {
                 rightActions={
                     <button
                         aria-label="Editar perfil pastoral"
-                        className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all border border-[hsl(var(--border))] dark:border-white/10 shadow-sm active:scale-95"
+                        className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all border border-[hsl(var(--border))] dark:border-white/10 shadow-sm active:scale-95"
                     >
                         <Edit3 size={14} aria-hidden="true" /> Editar Perfil
                     </button>
@@ -144,7 +144,7 @@ export default function StudentProfilePage() {
                 {viewType === 'table' && (
                     <div className="relative z-10 mx-auto max-w-6xl overflow-x-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full min-w-[480px] text-left">
-                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 <tr><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Nombre</th><th className="px-4 py-2">Progreso</th><th className="px-4 py-2">Detalle</th></tr>
                             </thead>
                             <tbody>
@@ -195,9 +195,9 @@ export default function StudentProfilePage() {
                                 </div>
 
                                 <div className="flex items-center gap-4 text-[hsl(var(--text-secondary))]">
-                                    <div className="flex items-center gap-1.5"><MapPin size={12} /><span className="text-[11px] font-bold">Sede Central</span></div>
+                                    <div className="flex items-center gap-1.5"><MapPin size={12} /><span className="text-xs font-bold">Sede Central</span></div>
                                     <div className="size-1 rounded-full bg-[hsl(var(--surface-3))] dark:bg-[hsl(var(--surface-2))]" />
-                                    <div className="flex items-center gap-1.5"><Calendar size={12} /><span className="text-[11px] font-bold">Unido en 2024</span></div>
+                                    <div className="flex items-center gap-1.5"><Calendar size={12} /><span className="text-xs font-bold">Unido en 2024</span></div>
                                 </div>
 
                                  <div className="w-full pt-8 border-t border-[hsl(var(--border))] dark:border-white/5 space-y-3">
@@ -249,7 +249,7 @@ export default function StudentProfilePage() {
                                                     {badge.title}
                                                 </div>
                                             </div>
-                                            <span className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{badge.title}</span>
+                                            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{badge.title}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -287,7 +287,7 @@ export default function StudentProfilePage() {
                                         )}>
                                             {step.done ? <CheckCircle2 size={20} /> : <span className="font-semibold">{i+1}</span>}
                                         </div>
-                                        <span className={clsx("text-[10px] font-semibold uppercase tracking-wide", step.done ? "text-[hsl(var(--text-primary))] dark:text-white" : "text-[hsl(var(--text-secondary))]")}>{step.label}</span>
+                                        <span className={clsx("text-2xs font-semibold uppercase tracking-wide", step.done ? "text-[hsl(var(--text-primary))] dark:text-white" : "text-[hsl(var(--text-secondary))]")}>{step.label}</span>
                                     </div>
                                 ))}
                             </div>
@@ -304,9 +304,9 @@ export default function StudentProfilePage() {
                                     {activeCourses.map((enrollment: EnrollmentRecord) => (
                                         <article key={enrollment.id} className="flex flex-col lg:flex-row lg:items-center gap-4 rounded-md border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/60 dark:bg-white/5 p-3 hover:border-[hsl(var(--info)/100%)]/30 transition-colors">
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-1">{enrollment.course.modality === 'formal' ? 'Formal' : 'No formal'}</p>
+                                                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-1">{enrollment.course.modality === 'formal' ? 'Formal' : 'No formal'}</p>
                                                 <h4 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white mb-1 leading-tight truncate">{enrollment.course.title}</h4>
-                                                <p className="text-[12px] text-[hsl(var(--text-secondary))] font-medium">Asistencia {Math.round(enrollment.attendance_percent)}% • Nota {enrollment.final_grade ?? 'N/A'}</p>
+                                                <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">Asistencia {Math.round(enrollment.attendance_percent)}% • Nota {enrollment.final_grade ?? 'N/A'}</p>
                                             </div>
                                             <div className="w-full lg:w-auto lg:min-w-[220px] flex flex-col gap-3">
                                                 <ProgressPill label="Progreso" value={enrollment.progress_percent} tone="primary" />
@@ -340,7 +340,7 @@ export default function StudentProfilePage() {
                                              </div>
                                              <div>
                                                  <h4 className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none mb-2 line-clamp-2">{cert.course_title || cert.certificate_type || 'Certificado'}</h4>
-                                                 <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Expedido: {new Date(cert.issued_at).toLocaleDateString()}</p>
+                                                 <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Expedido: {new Date(cert.issued_at).toLocaleDateString()}</p>
                                              </div>
                                          </div>
                                      ))
@@ -386,7 +386,7 @@ function ProgressPill({ label, value, tone }: { label: string; value: number; to
     const bg = tone === 'primary' ? 'from-[hsl(var(--info))] to-[hsl(var(--info))] shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))] shadow-[0_0_10px_rgba(16,185,129,0.4)]';
     return (
         <div className="w-full">
-            <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5">
+            <div className="flex items-center justify-between text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5">
                 <span>{label}</span>
                 <span className={clsx(tone === 'primary' ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--success))]")}>{Math.round(value)}%</span>
             </div>

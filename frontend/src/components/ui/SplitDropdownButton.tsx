@@ -58,7 +58,7 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
                 {/* Main Action */}
                 <button
                     onClick={onMainClick}
-                    className="h-7 px-3 text-[11px] font-bold flex items-center gap-1.5 transition-colors border-r border-white/20 active:bg-white/15 whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    className="h-7 px-3 text-xs font-bold flex items-center gap-1.5 transition-colors border-r border-white/20 active:bg-white/15 whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                     {Icon && <Icon size={12} />}
                     {mainLabel}
@@ -86,8 +86,8 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
                         className="absolute top-9 right-0 w-64 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] py-2 z-[100] origin-top-right overflow-hidden"
                     >
                         <div className="px-3 pb-2 pt-1 mb-1 flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-white/5">
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Crear</span>
-                            <span className="text-[10px] font-bold text-[hsl(var(--primary))] cursor-pointer hover:underline">Gestionar</span>
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Crear</span>
+                            <span className="text-2xs font-bold text-[hsl(var(--primary))] cursor-pointer hover:underline">Gestionar</span>
                         </div>
 
                         <div className="px-1.5 flex flex-col gap-0.5">
@@ -112,7 +112,7 @@ function DropdownItem({ icon: Icon, label, selected, onClick }: any) {
     return (
         <button 
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-[13px] text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))] ${
+            className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-base text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))] ${
                 selected 
                     ? 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white font-bold' 
                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'

@@ -57,17 +57,17 @@ export default function TaskCard({ task, onStatusChange, allowEditing = true }: 
             {task.title}
           </p>
           {task.persona_name && (
-            <div className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] font-bold">
+            <div className="flex items-center gap-1.5 text-2xs text-[hsl(var(--text-secondary))] font-bold">
               <UserCircle size={11} /> {task.persona_name}
             </div>
           )}
           <div className="flex items-center gap-2">
-            <span className={clsx("px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide", PRIORITY_STYLES[task.priority])}>
+            <span className={clsx("px-1.5 py-0.5 rounded text-2xs font-bold uppercase tracking-wide", PRIORITY_STYLES[task.priority])}>
               {task.priority}
             </span>
-            <span className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase">{task.category}</span>
+            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">{task.category}</span>
             {task.due_date && (
-              <span className="flex items-center gap-0.5 text-[9px] font-bold text-[hsl(var(--text-secondary))]">
+              <span className="flex items-center gap-0.5 text-2xs font-bold text-[hsl(var(--text-secondary))]">
                 <Calendar size={9} /> {new Date(task.due_date).toLocaleDateString()}
               </span>
             )}

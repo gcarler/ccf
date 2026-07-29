@@ -40,7 +40,7 @@ export default function TestimoniesWall() {
             {/* Header Section */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px]">
+                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs">
                         <Star size={14} className="fill-current shadow-[0_0_8px_currentColor]" />
                         Muro de Milagros
                     </div>
@@ -48,7 +48,7 @@ export default function TestimoniesWall() {
                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium mt-1">Lo que Dios ha hecho, lo volverá a hacer.</p>
                 </div>
                 
-                <Link href="/community/testimonies/publish" className="h-8 px-3 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-primary/30 hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95 flex items-center gap-3">
+                <Link href="/community/testimonies/publish" className="h-8 px-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-primary/30 hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95 flex items-center gap-3">
                     <Plus size={20} strokeWidth={2.5} />
                     Publicar Milagro
                 </Link>
@@ -68,7 +68,7 @@ export default function TestimoniesWall() {
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.2 }}
-                        className="inline-block bg-[hsl(var(--primary))] px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide text-white mb-4 shadow-lg"
+                        className="inline-block bg-[hsl(var(--primary))] px-4 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide text-white mb-4 shadow-lg"
                     >
                         Historias de Fe
                     </motion.span>
@@ -91,7 +91,7 @@ export default function TestimoniesWall() {
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`pb-4 text-[10px] font-semibold uppercase tracking-wide transition-all relative whitespace-nowrap ${activeTab === tab
+                            className={`pb-4 text-2xs font-semibold uppercase tracking-wide transition-all relative whitespace-nowrap ${activeTab === tab
                                 ? 'text-[hsl(var(--primary))]'
                                 : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
                                 }`}
@@ -113,7 +113,7 @@ export default function TestimoniesWall() {
                         {loading ? (
                             <div className="col-span-full flex flex-col items-center justify-center py-1.5 gap-4">
                                 <Loader2 className="w-12 h-8 animate-spin text-[hsl(var(--primary))]" strokeWidth={1.5} />
-                                <p className="text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-[10px]">Cargando Historias...</p>
+                                <p className="text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-2xs">Cargando Historias...</p>
                             </div>
                         ) : filteredTestimonials.length > 0 ? (
                             filteredTestimonials.map((testimony, idx) => (
@@ -133,7 +133,7 @@ export default function TestimoniesWall() {
                                                 <h4 className="text-sm font-bold tracking-tight text-[hsl(var(--text-primary))]">
                                                     {testimony.author?.username || "Anónimo"}
                                                 </h4>
-                                                <p className="text-[10px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5 opacity-60">
+                                                <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5 opacity-60">
                                                     {new Date(testimony.created_at).toLocaleDateString()}
                                                 </p>
                                             </div>
@@ -156,11 +156,11 @@ export default function TestimoniesWall() {
                                         <div className="flex gap-4">
                                             <button className="flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors group/btn">
                                                 <HeartHandshake size={18} className="group-hover/btn:scale-110 transition-transform" />
-                                                <span className="text-[10px] font-semibold uppercase tracking-wide">Amén</span>
+                                                <span className="text-2xs font-semibold uppercase tracking-wide">Amén</span>
                                             </button>
                                             <button className="flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                                                 <Share2 size={18} />
-                                                <span className="text-[10px] font-semibold uppercase tracking-wide">Compartir</span>
+                                                <span className="text-2xs font-semibold uppercase tracking-wide">Compartir</span>
                                             </button>
                                         </div>
                                     </div>
@@ -168,8 +168,8 @@ export default function TestimoniesWall() {
                             ))
                         ) : (
                             <div className="col-span-full text-center py-1.5 bg-[hsl(var(--surface-2))] rounded-lg border border-dashed border-[hsl(var(--border))]">
-                                <p className="text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-[10px]">No hay testimonios en esta categoría.</p>
-                                <p className="text-[hsl(var(--text-secondary))] text-[12px] mt-2 font-medium opacity-60">¡Sé el primero en compartir lo que Dios ha hecho!</p>
+                                <p className="text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-2xs">No hay testimonios en esta categoría.</p>
+                                <p className="text-[hsl(var(--text-secondary))] text-sm mt-2 font-medium opacity-60">¡Sé el primero en compartir lo que Dios ha hecho!</p>
                             </div>
                         )}
                     </AnimatePresence>

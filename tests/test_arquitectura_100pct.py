@@ -341,7 +341,7 @@ def test_cms_helpers_module_structure():
     if not pkg.exists():
         return
     expected = {"__init__.py", "_shared.py", "__pycache__"}
-    actual = {p.name for p in pkg.iterdir()}
+    actual = {p.name for p in pkg.iterdir() if not p.name.endswith(",cover")}
     extras = sorted(actual - expected)
     assert not extras, (
         f"backend/api/_cms_helpers/ contiene archivos inesperados: "
@@ -531,26 +531,29 @@ def test_runtime_has_no_legacy_write_bypasses():
     assert "user?.id || 1" not in counseling_ui
     # REGLAS §10 — AliasChoices path-scoped carve-out (Gate 10):
     # ``AliasChoices`` es feature legítima de pydantic v2 SOLO para
-    # ``validation_alias`` multi-nombre (env-var resolution en runtime).
+    # ``validation_alias`` multi-nombre (env-var resolution / legacy compatibility).
     # El check usa un substring match — no distingue entre
     # ``validation_alias=AliasChoices(...)`` y otros usages;
-    # permite ``AliasChoices`` en los dos archivos canónicos abajo
+    # permite ``AliasChoices`` en los archivos canónicos abajo
     # donde sabemos que NO hay write bypass:
     #   - backend/core/config.py: Settings.environment (ENV vs environment).
+    #   - backend/schemas/admin.py: AdminRoleCreate/Update (name/nombre, permissions/permisos).
     #   - backend/schemas/evangelism.py: campo equivalente.
     # Cualquier otra ubicación se considera regresión porque el resto
     # del axioma 3 prohíbe write/route bypasses y AliasChoices fuera
-    # de env-var context NO tiene razón legítima de existir.
+    # de env-var / payload compat context NO tiene razón legítima de existir.
     alias_offenders = _run(
         "rg -n 'AliasChoices' backend "
         "-g '!backend/core/config.py' "
+        "-g '!backend/schemas/admin.py' "
         "-g '!backend/schemas/evangelism.py' "
         "-g '!tests/test_arquitectura*.py'"
     )
     assert not alias_offenders.strip(), (
         "REGLAS §10: AliasChoices fuera de archivos canónicos.\n"
-        "Archivos permitidos (validation_alias para env vars):\n"
+        "Archivos permitidos (validation_alias para env vars / DTO compat):\n"
         "  - backend/core/config.py (Settings.environment: ENV + environment)\n"
+        "  - backend/schemas/admin.py (AdminRoleCreate/Update)\n"
         "  - backend/schemas/evangelism.py (campos equivalentes)\n"
         "Cualquier otro uso es write-bypass o regresión de runtime legacy.\n"
         "Si necesitas usarlo, añádelo al whitelist + documenta el motivo.\n"

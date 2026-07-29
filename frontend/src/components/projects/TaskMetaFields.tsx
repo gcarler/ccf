@@ -36,7 +36,7 @@ export default function TaskMetaFields({
             </MetaRow>
 
             <MetaRow icon={<CalendarDays size={13} className="text-[hsl(var(--text-secondary))]" />} label="Fecha límite">
-                <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04] border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/[0.08] transition-all">
+                <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04] border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/[0.08] transition-all">
                     {task.due_date
                         ? new Date(task.due_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
                         : 'Sin fecha límite'
@@ -48,7 +48,7 @@ export default function TaskMetaFields({
                 <button
                     onClick={onPriorityCycle}
                     title="Click para cambiar prioridad"
-                    className={clsx('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[12px] font-bold border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/[0.08] transition-all cursor-pointer', priority.color)}>
+                    className={clsx('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm font-bold border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/[0.08] transition-all cursor-pointer', priority.color)}>
                     <span className={clsx('size-2 rounded-full', priority.dot)} />
                     {priority.label}
                 </button>

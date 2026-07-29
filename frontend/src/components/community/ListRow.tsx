@@ -46,35 +46,35 @@ export default function CommunityListRow({
                 className
             )}
         >
-            <div className="text-[11px] text-[hsl(var(--text-secondary))]">#{index + 1}</div>
+            <div className="text-xs text-[hsl(var(--text-secondary))]">#{index + 1}</div>
             <div className="space-y-1 text-[hsl(var(--text-primary))]">
                 <div className="flex items-center gap-2 font-semibold">
-                    <span className={`size-6 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-center text-[10px] text-[hsl(var(--text-secondary))]`}>
+                    <span className={`size-6 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-center text-2xs text-[hsl(var(--text-secondary))]`}>
                         {item.name.slice(0, 1)}
                     </span>
                     {item.name}
                 </div>
-                <p className="text-[10px] uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                <p className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                     <span className={`size-2 rounded-full ${accentClass}`}></span>
                     {item.stage}
                 </p>
             </div>
             <div className="flex items-center gap-2 text-[hsl(var(--text-primary))]">
-                <div className="size-8 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] font-semibold text-[11px] flex items-center justify-center">
+                <div className="size-8 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] font-semibold text-xs flex items-center justify-center">
                     {getInitials(item.owner)}
                 </div>
-                <span className="text-[12px] font-medium">{item.owner}</span>
+                <span className="text-sm font-medium">{item.owner}</span>
             </div>
-            <div className="flex items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))]">
+            <div className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))]">
                 <Calendar size={14} /> {item.due}
             </div>
             <div className="flex items-center">
-                <span className={`px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide ${priorityClass}`}>{item.priority}</span>
+                <span className={`px-3 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide ${priorityClass}`}>{item.priority}</span>
             </div>
             <div className="flex items-center">
-                <span className={`px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide ${statusClass}`}>{item.status}</span>
+                <span className={`px-3 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide ${statusClass}`}>{item.status}</span>
             </div>
-            <div className="flex items-center justify-end gap-1 text-[12px] text-[hsl(var(--text-secondary))]">
+            <div className="flex items-center justify-end gap-1 text-sm text-[hsl(var(--text-secondary))]">
                 <MessageCircle size={14} />
                 <span>{commentCount}</span>
             </div>

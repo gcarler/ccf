@@ -80,7 +80,7 @@ export default function BlogPostPage() {
           </Link>
 
           {/* Meta */}
-          <div className="flex flex-wrap items-center gap-3 mb-4 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+          <div className="flex flex-wrap items-center gap-3 mb-4 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
             {post.published_at && (
               <span className="flex items-center gap-1">
                 <Calendar size={12} />
@@ -107,14 +107,14 @@ export default function BlogPostPage() {
             <div className="flex flex-wrap gap-2 mb-8">
               {post.categories?.map((cat) => (
                 <Link key={cat.id} href={`/categoria/${cat.slug}`}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wide transition-opacity hover:opacity-70"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-2xs font-semibold uppercase tracking-wide transition-opacity hover:opacity-70"
                   style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
                   <FolderOpen size={10} /> {cat.name}
                 </Link>
               ))}
               {post.tags?.map((tag) => (
                 <Link key={tag.id} href={`/etiqueta/${tag.slug}`}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wide transition-opacity hover:opacity-70"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-2xs font-semibold uppercase tracking-wide transition-opacity hover:opacity-70"
                   style={{ background: "var(--site-surface-container-highest)", color: "var(--site-on-surface-variant)" }}>
                   <Tag size={10} /> {tag.name}
                 </Link>

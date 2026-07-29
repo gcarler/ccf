@@ -142,9 +142,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="max-w-2xl space-y-3">
                         <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 bg-[hsl(var(--primary))] rounded-full text-[10px] font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/40%)]">Misión Proactiva</span>
+                            <span className="px-2 py-1 bg-[hsl(var(--primary))] rounded-full text-2xs font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/40%)]">Misión Proactiva</span>
                             <div className="size-2 rounded-full bg-[hsl(var(--success))] animate-ping" />
-                            <span className="text-[10px] font-medium text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizado en tiempo real</span>
+                            <span className="text-2xs font-medium text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizado en tiempo real</span>
                         </div>
                         <h1 className="text-xl font-bold tracking-tight leading-none text-white">
                             <InlineTextInput
@@ -165,7 +165,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                 inputClassName="text-[hsl(var(--text-secondary))] border-white/20 bg-white/10 placeholder:text-white/30"
                             />
                         </div>
-                        <div className="flex items-center gap-2 text-[12px] text-[hsl(var(--text-secondary))]">
+                        <div className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))]">
                             <InlineProjectStatusPicker
                                 value={project.status || 'planning'}
                                 onChange={(v) => updateProject({ status: v })}
@@ -197,10 +197,10 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             </div>
                         </div>
                         <div>
-                            <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-0.5">Avance Real</span>
+                            <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-0.5">Avance Real</span>
                             <div className="text-xl font-bold tracking-tighter">{dbProgress}%</div>
                             <div className="flex items-center gap-2 mt-2">
-                                <div className="px-2 py-0.5 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] rounded text-[9px] font-semibold uppercase">Salud: Óptima</div>
+                                <div className="px-2 py-0.5 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] rounded text-2xs font-semibold uppercase">Salud: Óptima</div>
                             </div>
                         </div>
                     </div>
@@ -266,7 +266,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                     onChange={(v) => milestonePatch(m.id, { title: v })}
                                     placeholder="Título del hito"
                                     className="block"
-                                    inputClassName="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight"
+                                    inputClassName="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight"
                                 />
                                 {m.description && (
                                     <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed mt-1">{m.description}</p>
@@ -282,7 +282,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             onKeyDown={e => { if (e.key === 'Enter') milestoneCreate(); }}
                             placeholder="+ Nuevo hito..."
                             disabled={addingMilestone}
-                            className="w-full bg-transparent border-none text-[13px] font-bold outline-none placeholder:text-[hsl(var(--text-secondary))] text-[hsl(var(--text-primary))] dark:text-white"
+                            className="w-full bg-transparent border-none text-base font-bold outline-none placeholder:text-[hsl(var(--text-secondary))] text-[hsl(var(--text-primary))] dark:text-white"
                         />
                         <div className="flex items-center gap-1.5">
                             <div className="flex-1 min-w-0">
@@ -346,10 +346,10 @@ function AnalyticCard({ title, value, detail, icon: Icon, color }: AnalyticCardP
                 <div className={clsx("p-1.5 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5", color)}>
                     <Icon size={14} />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{title}</span>
+                <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{title}</span>
             </div>
             <div className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white leading-none">{value}</div>
-            <p className="text-[10px] font-medium text-[hsl(var(--text-secondary))] mt-1 uppercase tracking-tight">{detail}</p>
+            <p className="text-2xs font-medium text-[hsl(var(--text-secondary))] mt-1 uppercase tracking-tight">{detail}</p>
         </div>
     );
 }
@@ -373,7 +373,7 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                 </div>
                 <div>
                     <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{title}</h3>
-                    <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">Avance por Nodo</p>
+                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">Avance por Nodo</p>
                 </div>
             </div>
             <div className="space-y-2">
@@ -399,7 +399,7 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                                 onChange={(v) => onTitleSave(t, v)}
                                 placeholder="Título de la tarea..."
                                 className="flex-1 min-w-0"
-                                inputClassName="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+                                inputClassName="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                             />
                             <button
                                 onClick={() => onOpenTask?.(t)}
@@ -413,7 +413,7 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                     );
                 })}
                 {tasks.length === 0 && (
-                    <p className="text-[11px] text-[hsl(var(--text-secondary))] italic px-2 py-1">Sin tareas en este nodo</p>
+                    <p className="text-xs text-[hsl(var(--text-secondary))] italic px-2 py-1">Sin tareas en este nodo</p>
                 )}
             </div>
         </div>

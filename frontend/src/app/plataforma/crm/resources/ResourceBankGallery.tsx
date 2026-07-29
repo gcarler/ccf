@@ -179,7 +179,7 @@ export default function ResourceBankGallery({
                   style={{ background: cat.color_ui_hex ?? '#6B7280' }}
                   />
                   {cat.nombre}
-                  <span className="text-[10px] opacity-70">({categoryCounts.get(cat.nombre) ?? 0})</span>
+                  <span className="text-2xs opacity-70">({categoryCounts.get(cat.nombre) ?? 0})</span>
                 </button>
               ))}
           </div>
@@ -190,12 +190,12 @@ export default function ResourceBankGallery({
           {!loading && error && (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] px-4 py-3 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))]">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wide">Banco de recursos sin respuesta</p>
+                <p className="text-xs font-bold uppercase tracking-wide">Banco de recursos sin respuesta</p>
                 <p className="text-xs">{error}</p>
               </div>
               <button
                 onClick={() => setReloadKey(key => key + 1)}
-                className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
+                className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
               >
                 Reintentar
               </button>
@@ -239,12 +239,12 @@ export default function ResourceBankGallery({
                         {canalMeta.label}
                       </span>
                       {tpl.html_template_type && (
-                        <span className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
+                        <span className="inline-flex items-center text-2xs font-medium px-1.5 py-0.5 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
                           HTML
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-[hsl(var(--text-secondary))] truncate max-w-[120px]">
+                    <span className="text-2xs text-[hsl(var(--text-secondary))] truncate max-w-[120px]">
                       {tpl.categoria ?? 'Sin categoría'}
                     </span>
                   </div>
@@ -262,7 +262,7 @@ export default function ResourceBankGallery({
                       {(tpl.variables_requeridas ?? []).map(v => (
                         <span
                           key={v}
-                          className="text-[10px] font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded"
+                          className="text-2xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded"
                         >
                           {'{{' + v + '}}'}
                         </span>

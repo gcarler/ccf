@@ -30,7 +30,7 @@ export default function ProjectsBoardView({ projects, onUpdate, onDelete }: Proj
                     className="w-80 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]"
                 >
                     <div className="mb-3 flex items-center justify-between px-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             {column.status}
                         </p>
                         <span className="font-semibold text-[hsl(var(--text-secondary))]">
@@ -48,7 +48,7 @@ export default function ProjectsBoardView({ projects, onUpdate, onDelete }: Proj
                             />
                         ))}
                         {column.projects.length === 0 && (
-                            <div data-testid="empty-column" className="rounded-md border border-dashed border-[hsl(var(--border))] py-8 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
+                            <div data-testid="empty-column" className="rounded-md border border-dashed border-[hsl(var(--border))] py-8 text-center text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
                                 Vacío
                             </div>
                         )}

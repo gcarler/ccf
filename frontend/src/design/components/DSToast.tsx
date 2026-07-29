@@ -80,7 +80,7 @@ export function DSToast({
                 {action && (
                     <button
                         onClick={action.onClick}
-                        className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+                        className="mt-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
                     >
                         {action.label}
                     </button>

@@ -109,7 +109,7 @@ export function DSTabs({
                             disabled={tab.disabled}
                             onClick={() => handleTabClick(tab.id)}
                             className={clsx(
-                                'flex items-center gap-1.5 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide font-sans',
+                                'flex items-center gap-1.5 px-3 py-2 text-2xs font-semibold uppercase tracking-wide font-sans',
                                 'border-b-2 -mb-[1px] transition-all',
                                 isActive
                                     ? 'text-[hsl(var(--primary))] border-[hsl(var(--primary))]'
