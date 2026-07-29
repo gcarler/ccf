@@ -36,6 +36,14 @@ repos:
 
   - repo: local
     hooks:
+      - id: frontend-test-no-any
+        name: Detect new `any` in frontend tests
+        entry: python3 scripts/check-frontend-test-any.py
+        language: system
+        files: ^frontend/.*\.(test|spec)\.(ts|tsx)$
+        pass_filenames: false
+        always_run: false
+
       - id: pytest-smoke
         name: Run smoke tests
         entry: pytest tests/test_smoke.py -q --no-cov
