@@ -28,6 +28,35 @@ from backend.api._cms_helpers import (
     collect_section_media_ids,
     group_sections_by_page,
 )
+
+# Fase 4 refactor: shared helpers now live in ``_shared`` to break the
+# circular-import risk that the monolithic single-file design created.
+# Re-export them here so existing call-sites (``cms_v2._assert_role`` etc.)
+# and test imports (``from backend.api.cms_v2 import _commit_or_raise_conflict``)
+# keep working without modification.
+from backend.api.cms_v2._shared import (  # noqa: F401 — re-exports
+    CMS_EDITOR_ROLES,
+    CMS_PUBLISHER_ROLES,
+    _actor_sede_from_user,
+    _assert_role,
+    _assert_site_sede_scope,
+    _commit_or_raise_conflict,
+    _get_menu_or_404,
+    _get_page_or_404,
+    _get_public_site_or_404,
+    _get_scoped_site_or_404,
+    _get_site_or_404,
+    _is_global_admin,
+    _slugify,
+    _snapshot_section_read,
+)
+
+# Fase 4 refactor: section type catalog extracted to ``section_types.py``.
+# ``get_allowed_section_types`` is imported here because 4 call-sites in the
+# monolith still reference it; the routes are wired via ``include_router``.
+from backend.api.cms_v2.section_types import (  # noqa: F401 — re-export
+    get_allowed_section_types,
+)
 from backend.core.cache_v2 import cached_public
 from backend.core.config import get_settings
 from backend.core.database import get_db
@@ -44,28 +73,6 @@ from backend.models_shared import _utcnow
 from backend.schemas import cms as cms_schemas
 from backend.schemas._common import PaginatedResponse
 from backend.schemas.cms_v2_sections import validate_section_props
-
-# Fase 4 refactor: shared helpers now live in ``_shared`` to break the
-# circular-import risk that the monolithic single-file design created.
-# Re-export them here so existing call-sites (``cms_v2._assert_role`` etc.)
-# and test imports (``from backend.api.cms_v2 import _commit_or_raise_conflict``)
-# keep working without modification.
-from backend.api.cms_v2._shared import (  # noqa: F401 — re-exports
-    CMS_EDITOR_ROLES,
-    CMS_PUBLISHER_ROLES,
-    _assert_role,
-    _assert_site_sede_scope,
-    _actor_sede_from_user,
-    _commit_or_raise_conflict,
-    _get_menu_or_404,
-    _get_page_or_404,
-    _get_public_site_or_404,
-    _get_scoped_site_or_404,
-    _get_site_or_404,
-    _is_global_admin,
-    _slugify,
-    _snapshot_section_read,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -89,178 +96,18 @@ router = APIRouter(
 )
 PUBLIC_CMS_RATE_LIMIT = 240
 
+# Fase 4 refactor: mount the section type sub-router onto the main CMS router.
+# The sub-router has no prefix — all its routes (/section-types, /section-types/{name})
+# are relative to the parent's /cms/v2 prefix.
+from backend.api.cms_v2 import section_types as _section_types_mod  # noqa: E402
+
+router.include_router(_section_types_mod.router)
+
 
 # ── Section Types (platform-wide catalog admin endpoints) ─────────────────
-#
-# Counterpart to ``get_allowed_section_types`` above: what the CMS does
-# at runtime when an editor builds a page, vs. what the API exposes for
-# managing the catalog that backs those decisions.
-
-
-def _get_section_type_or_404(db: Session, name: str) -> models.CmsSectionType:
-    """Look up by name (the public identifier) or raise 404."""
-    row = db.query(models.CmsSectionType).filter(models.CmsSectionType.name == name.strip().lower()).first()
-    if not row:
-        raise HTTPException(status_code=404, detail="section type not found")
-    return row
-
-
-@router.get(
-    "/section-types",
-    response_model=list[schemas.CmsSectionTypeRead],
-)
-def list_section_types(
-    only_active: bool = Query(default=False),
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
-):
-    """List every platform-wide section type.
-
-    Section types are global (no site FK), so the endpoint is mounted
-    on the global CMS router. Use ``?only_active=true`` to mirror
-    ``get_allowed_section_types()`` semantics — the runtime guard
-    consulted by ``create_section``.
-    """
-    query = db.query(models.CmsSectionType).order_by(models.CmsSectionType.name)
-    if only_active:
-        query = query.filter(models.CmsSectionType.is_active.is_(True))
-    return query.all()
-
-
-@router.get(
-    "/section-types/{name}",
-    response_model=schemas.CmsSectionTypeRead,
-)
-def get_section_type(
-    name: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
-):
-    return _get_section_type_or_404(db, name)
-
-
-@router.post(
-    "/section-types",
-    response_model=schemas.CmsSectionTypeRead,
-    status_code=201,
-)
-def create_section_type(
-    payload: schemas.CmsSectionTypeCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "edit")),
-):
-    """Register a new section type. Required role: CMS publisher."""
-    _assert_role(current_user, CMS_PUBLISHER_ROLES)
-    name = payload.name.strip().lower()
-    if not name:
-        raise HTTPException(status_code=422, detail="name is required")
-    if db.query(models.CmsSectionType).filter(models.CmsSectionType.name == name).first():
-        raise HTTPException(status_code=409, detail="section type already exists")
-    row = models.CmsSectionType(
-        name=name,
-        description=payload.description,
-        is_active=payload.is_active,
-    )
-    db.add(row)
-    _commit_or_raise_conflict(db, detail="section type already exists")
-    db.refresh(row)
-    return row
-
-
-@router.patch(
-    "/section-types/{name}",
-    response_model=schemas.CmsSectionTypeRead,
-)
-def patch_section_type(
-    name: str,
-    payload: schemas.CmsSectionTypeUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "edit")),
-):
-    """Partially update a section type. ``name`` is immutable by design."""
-    _assert_role(current_user, CMS_PUBLISHER_ROLES)
-    row = _get_section_type_or_404(db, name)
-    # ``CmsSectionTypeUpdate`` excludes ``name`` to protect dangling
-    # ``CmsSection.type`` refs (free-string, no FK cascade).
-    data = payload.model_dump(exclude_unset=True)
-    for key, value in data.items():
-        setattr(row, key, value)
-    db.commit()
-    db.refresh(row)
-    return row
-
-
-@router.delete("/section-types/{name}", status_code=204)
-def delete_section_type(
-    name: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "edit")),
-):
-    """Soft-delete a section type by flipping ``is_active=False``.
-
-    Hard-deletes are intentionally disallowed. ``CmsSection.type`` is a
-    free-string column, so a hard delete would silently orphan every
-    existing section that uses the type. Soft-delete keeps the catalog
-    row for audit and aligns with the seed-script policy in
-    ``scripts/seed_cms_section_types.py`` (``apply_section_types``
-    preserves admin deactivations on re-seed).
-    """
-    _assert_role(current_user, CMS_PUBLISHER_ROLES)
-    row = _get_section_type_or_404(db, name)
-    row.is_active = False
-    db.commit()
-    return None
-
-
-def get_allowed_section_types(db: Session) -> set[str]:
-    """Return set of active section type names from DB, fallback to hardcoded."""
-    try:
-        rows = db.query(models.CmsSectionType.name).filter(models.CmsSectionType.is_active.is_(True)).all()
-        types = {row[0] for row in rows}
-        if types:
-            return types
-    except Exception as exc:
-        # If table missing or any error, fall back
-        logger.debug("Section type catalog query failed, using hardcoded fallback: %s", exc)
-    # Fallback hardcoded list (kept in sync with scripts/seed_cms_section_types.py)
-    return {
-        "hero",
-        "video_hero",
-        "rich_text",
-        "rich_text_columns",
-        "cards",
-        "cta_banner",
-        "gallery",
-        "faq",
-        "embed",
-        "testimonials",
-        "stats",
-        "team",
-        "countdown",
-        "pricing",
-        "image_text",
-        "timeline",
-        "icon_grid",
-        "newsletter",
-        "popup_banner",
-        "button",
-        "toc",
-        "divider",
-        "collapsible",
-        "social_links",
-        "spacer",
-        "calendar",
-        "map",
-        "document_upload",
-        "content_blocks",
-        "accordion",
-        "civic_hero_search",
-        "civic_convocatoria_cards",
-        "civic_quick_links",
-        "civic_file_downloads",
-        "civic_data_table",
-        "civic_alert_banner",
-    }
+# Fase 4 refactor: section type CRUD + ``get_allowed_section_types`` runtime
+# guard now live in ``section_types.py``. The sub-router is mounted below via
+# ``router.include_router``; the function is re-exported for call-sites.
 
 
 # Fase 4 refactor: ``CMS_EDITOR_ROLES``, ``CMS_PUBLISHER_ROLES`` and
@@ -2614,6 +2461,40 @@ def delete_post(
 # ── Posts (Public) ────────────────────────────────────────────────────────
 
 
+def _enrich_public_posts(
+    db: Session,
+    site_key: str,
+    posts: list[models.CmsPost],
+) -> list[schemas.CmsPublicPostRead]:
+    """Batch-enrich a list of public posts with categories, tags and author names.
+
+    Uses the same batch CRUD helpers for both list and detail views, avoiding
+    N+1 queries in listings and keeping the enrichment logic in a single place.
+    """
+    if not posts:
+        return []
+    post_ids = [post.id for post in posts]
+    categories_by_post = crud.get_posts_categories_batch(db, post_ids)
+    tags_by_post = crud.get_posts_tags_batch(db, post_ids)
+    author_ids = {post.author_persona_id for post in posts if post.author_persona_id is not None}
+    authors_by_id: dict = {}
+    if author_ids:
+        for row in db.query(models.Persona).filter(models.Persona.id.in_(author_ids)).all():
+            authors_by_id[row.id] = row.nombre_completo
+    settings = get_settings()
+    base_url = settings.frontend_url.rstrip("/")
+    enriched: list[schemas.CmsPublicPostRead] = []
+    for post in posts:
+        p = schemas.CmsPublicPostRead.model_validate(post)
+        p.site_key = site_key
+        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in categories_by_post.get(str(post.id), [])]
+        p.tags = [schemas.CmsTagRead.model_validate(t) for t in tags_by_post.get(str(post.id), [])]
+        p.author_name = authors_by_id.get(post.author_persona_id) if post.author_persona_id else None
+        p.canonical_url = f"{base_url}/blog/{post.slug}"
+        enriched.append(p)
+    return enriched
+
+
 @router.get(
     "/public/sites/{site_key}/posts",
     response_model=PaginatedResponse[schemas.CmsPublicPostRead],
@@ -2645,34 +2526,7 @@ def public_posts_list(
         query = query.join(models.CmsPostTag).join(models.CmsTag).filter(models.CmsTag.slug == tag_slug)
     total = query.count()
     items = query.order_by(models.CmsPost.published_at.desc().nullslast()).offset(skip).limit(limit).all()
-    # ── Fase 3.1 — N+1 fix: reemplazar N×3 queries del loop per-post por
-    # 3 queries batch + 1 query batch para authors. Antes: get_post_categories
-    # + get_post_tags + db.query(Persona) por cada post => 3N queries.
-    # Ahora: get_posts_categories_batch + get_posts_tags_batch + una sola
-    # query de Persona por IN clausula => 3 queries totales.
-    post_ids = [post.id for post in items]
-    categories_by_post = crud.get_posts_categories_batch(db, post_ids)
-    tags_by_post = crud.get_posts_tags_batch(db, post_ids)
-    # Batch fetch de autores: una sola query por IN en vez de N queries.
-    author_ids = {post.author_persona_id for post in items if post.author_persona_id is not None}
-    authors_by_id: dict = {}
-    if author_ids:
-        for row in db.query(models.Persona).filter(models.Persona.id.in_(author_ids)).all():
-            authors_by_id[row.id] = row.nombre_completo
-    settings = get_settings()
-    base_url = settings.frontend_url.rstrip("/")
-    enriched = []
-    for post in items:
-        # Fase 3.1 (MEMORY §79): CmsPublicPostRead.model_validate(post) ahora
-        # funciona gracias a ``model_config = orm_config`` añadido al schema
-        # (Pydantic v2 requiere from_attributes=True para aceptar ORM rows).
-        p = schemas.CmsPublicPostRead.model_validate(post)
-        p.site_key = site_key
-        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in categories_by_post.get(str(post.id), [])]
-        p.tags = [schemas.CmsTagRead.model_validate(t) for t in tags_by_post.get(str(post.id), [])]
-        p.author_name = authors_by_id.get(post.author_persona_id) if post.author_persona_id else None
-        p.canonical_url = f"{base_url}/blog/{post.slug}"
-        enriched.append(p)
+    enriched = _enrich_public_posts(db, site_key, items)
     return PaginatedResponse[schemas.CmsPublicPostRead](items=enriched, total=total, skip=skip, limit=limit)
 
 
@@ -2700,22 +2554,7 @@ def public_post(
     )
     if not post:
         raise HTTPException(status_code=404, detail="published post not found")
-    # Fase 3.1 (MEMORY §79): CmsPublicPostRead.model_validate(post) ahora
-    # funciona gracias a ``model_config = orm_config`` añadido al schema.
-    p = schemas.CmsPublicPostRead.model_validate(post)
-    p.site_key = site_key
-    p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, post.id)]
-    p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, post.id)]
-    author_name = None
-    if post.author_persona_id:
-        author = db.query(models.Persona).filter(models.Persona.id == post.author_persona_id).first()
-        if author:
-            author_name = author.nombre_completo
-    p.author_name = author_name
-    settings = get_settings()
-    base_url = settings.frontend_url.rstrip("/")
-    p.canonical_url = f"{base_url}/blog/{post.slug}"
-    return p
+    return _enrich_public_posts(db, site_key, [post])[0]
 
 
 # ── PAGE VIEWS TRACKING (Phase 6 Analytics) ────────────────────────────────────
