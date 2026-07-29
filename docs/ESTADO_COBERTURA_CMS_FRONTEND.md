@@ -3,7 +3,7 @@
 > ⚠️ **Nota:** este reporte se genera automáticamente. No edites los valores a mano.
 > Regenerarlo con: `cd /root/ccf/frontend && npm run test:cms:coverage`
 
-**Fecha:** 2026-07-29 17:52:34 UTC  
+**Fecha:** 2026-07-29 18:07:46 UTC  
 **Configuración:** `frontend/vitest.cms.config.ts`  
 **Comando para reproducir:**
 
@@ -16,10 +16,10 @@ npm run test:cms:coverage
 
 | Métrica     | Porcentaje |
 |-------------|------------|
-| Statements  | 17.93%     |
-| Branches    | 63.44%     |
-| Functions   | 25.89%     |
-| Lines       | 17.93%     |
+| Statements  | 18.65%     |
+| Branches    | 63.26%     |
+| Functions   | 26.65%     |
+| Lines       | 18.65%     |
 
 > **Nota metodológica:** El reporte no aplica umbrales (thresholds) porque es informativo. La cobertura baja se debe a que gran parte de las páginas administrativas del CMS aún no tienen tests unitarios. El área del builder sí está parcialmente cubierta gracias a los tests recientes.
 
@@ -28,8 +28,8 @@ npm run test:cms:coverage
 | Área                              | Stmts | Branch | Funcs | Lines | Estado        |
 |-----------------------------------|-------|--------|-------|-------|---------------|
 | `app/plataforma/cms/builder`      | 100%  | 82.35% | 100%  | 100%  | ✅ Cubierto   |
-| `components/cms/builder`          | 64.08%| 63.15% | 24.47%| 64.08%| ⚠️ Parcial    |
-| `lib/cms`                         | 45.26%| 72.39% | 37.5% | 45.26%| ⚠️ Parcial    |
+| `components/cms/builder`          | 81.17%| 62.82% | 36.92%| 81.17%| ✅ Casi cubierto |
+| `lib/cms`                         | 39.59%| 68.92% | 32.26%| 39.59%| ️ Parcial    |
 | `app/plataforma/cms/*` (resto)    | 0%    | 0%     | 0%    | 0%    | ❌ Sin tests  |
 | `components/cms` (resto)           | 0%    | 0%     | 0%    | 0%    | ❌ Sin tests  |
 
@@ -86,9 +86,9 @@ Cobertura general buena pero con oportunidades:
 - **BuilderRightPanel.tsx** (93.93% stmts, 52.5% funcs)
   - Cubrir flujo de analytics con `getPageAnalytics`.
   - Cubrir preview links (`window.open`).
-- **BuilderSectionInspector.tsx** (29.63% stmts, 6.21% funcs)
-  - Es el archivo más crítico sin cobertura dentro del builder.
-  - Cubrir edición de props por tipo de sección y manipulación de arrays.
+- **BuilderSectionInspector.tsx** (39.2% stmts, 10% funcs, 38.38% branches)
+  - Subió de ~29.6% a 39.2% en statements tras agregar tests para `countdown`, `popup_banner`, `team`, `image_text` y `pricing`.
+  - Aún es el archivo más crítico dentro del builder; seguir cubriendo edición de props por tipo de sección y manipulación de arrays.
 - **SectionPreview.tsx** (70.83% stmts)
   - Cubrir variantes restantes y error boundary.
 
