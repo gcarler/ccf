@@ -13,6 +13,7 @@
         "typegen": "node scripts/with-next-lock.mjs next typegen",
         "typecheck": "npm run typegen && tsc --noEmit",
         "test": "vitest run",
+        "test:cms:coverage": "vitest run -c vitest.cms.config.ts --coverage",
         "test:e2e": "playwright test",
         "test:e2e:auth": "playwright test --grep @auth",
         "test:e2e:crm": "node scripts/run-managed-playwright.mjs --auth tests/e2e/crm/smoke.spec.ts tests/e2e/crm/personas-live.spec.ts tests/e2e/crm/groups-admin-live.spec.ts tests/e2e/crm/automations-builder-live.spec.ts && node scripts/run-managed-playwright.mjs --reuse-build tests/e2e/crm/dashboard.spec.ts tests/e2e/crm/groups-admin.spec.ts",
