@@ -4,7 +4,6 @@ import { fileURLToPath } from 'url';
 
 const config: StorybookConfig = {
   "stories": [
-    "../src/**/*.mdx",
     "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"
   ],
   "addons": [
@@ -22,6 +21,9 @@ const config: StorybookConfig = {
         ...config.resolve.alias,
         '@': path.resolve(__dirname, '../src'),
       };
+    }
+    if (config.performance) {
+      config.performance.hints = false;
     }
     return config;
   }

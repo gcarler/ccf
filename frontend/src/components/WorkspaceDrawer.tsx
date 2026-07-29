@@ -78,12 +78,12 @@ export default function WorkspaceDrawer({
                         </div>
 
                         {/* Drawer Header */}
-                        <header
+                        <div
                             className="min-h-14 flex items-center justify-between gap-2 px-3 sm:px-5 py-3 border-b border-[hsl(var(--border))] shrink-0"
                             style={{ backgroundColor: 'hsl(var(--surface-2) / 0.5)' }}
                         >
                             <div className="flex min-w-0 items-center gap-3 sm:gap-4 overflow-hidden">
-                                <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md transition-colors text-[hsl(var(--text-secondary))]">
+                                <button onClick={onClose} aria-label="Cerrar" className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md transition-colors text-[hsl(var(--text-secondary))]">
                                     <X size={20} />
                                 </button>
                                 <div className="h-6 w-[1px] bg-[hsl(var(--border))] dark:bg-white/10" />
@@ -108,21 +108,21 @@ export default function WorkspaceDrawer({
                                 <HeaderButton icon={Clock} tooltip="Historial" />
                                 <HeaderButton icon={MoreHorizontal} tooltip="Más" />
                             </div>
-                        </header>
+                        </div>
 
                         {/* Drawer Body */}
-                        <main className="flex-1 min-w-0 overflow-y-auto scrollbar-thin px-4 sm:px-8 py-5">
+                        <div className="flex-1 min-w-0 overflow-y-auto scrollbar-thin px-4 sm:px-8 py-5">
                             {children}
-                        </main>
+                        </div>
 
                         {/* Drawer Footer */}
                         {actions && (
-                            <footer
+                            <div
                                 className="px-4 sm:px-8 py-5 border-t border-[hsl(var(--border))] flex flex-wrap items-center justify-end gap-3 sm:gap-4 dark:bg-white/5"
                                 style={{ backgroundColor: 'hsl(var(--surface-2) / 0.5)' }}
                             >
                                 {actions}
-                            </footer>
+                            </div>
                         )}
                     </motion.div>
                 </>
@@ -132,11 +132,11 @@ export default function WorkspaceDrawer({
 }
 
 function HeaderButton({ icon: Icon, onClick, tooltip }: { icon: any, onClick?: () => void, tooltip: string }) {
-    void tooltip;
     return (
         <div className="relative group/drawer-btn">
             <button
                 onClick={onClick}
+                aria-label={tooltip}
                 className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
             >
                 <Icon size={18} />

@@ -322,7 +322,7 @@ export default function TaskEditDrawer({
                                             </motion.button>
                                         ) : null}
                                     </AnimatePresence>
-                                    <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all ml-0.5">
+                                    <button aria-label="Más opciones" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all ml-0.5">
                                         <MoreHorizontal size={15} />
                                     </button>
                                     <button onClick={onClose} aria-label="Cerrar"
@@ -398,6 +398,7 @@ export default function TaskEditDrawer({
                                     <div className="relative">
                                         <input
                                             type="date"
+                                            aria-label="Fecha límite"
                                             value={form.due_date ? form.due_date.split('T')[0] : ''}
                                             onChange={e => updateField('due_date', e.target.value || null)}
                                             className="h-8 px-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.08] text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"

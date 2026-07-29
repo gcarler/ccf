@@ -320,10 +320,13 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
             <div className="flex flex-col h-full">
                 {/* ── TAB BAR ─────────────────────────────── */}
                 <div className="flex items-center border-b border-[hsl(var(--border))] dark:border-white/5 px-2 justify-between">
-                    <div className="flex items-center overflow-x-auto hide-scrollbar flex-1 mr-2 scroll-smooth">
-                                        {TABS.map(tab => (
+                    <div role="tablist" aria-label="Tipos de creación" className="flex items-center overflow-x-auto hide-scrollbar flex-1 mr-2 scroll-smooth">
+                        {TABS.map(tab => (
                             <button
                                 key={tab.id}
+                                role="tab"
+                                aria-selected={type === tab.id}
+                                id={`tab-${tab.id}`}
                                 onClick={() => setType(tab.id)}
                                 className={clsx(
                                     'flex items-center gap-1.5 px-3 py-3 text-[12px] font-semibold transition-all relative whitespace-nowrap shrink-0 border-b-2 border-transparent',
@@ -352,10 +355,11 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                         ))}
                     </div>
                     <div className="flex items-center shrink-0 border-l border-[hsl(var(--border))] dark:border-white/5 pl-2 py-2">
-                        <button className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all">
+                        <button aria-label="Minimizar" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all">
                             <Minus size={15} />
                         </button>
-                        <button 
+                        <button
+                            aria-label="Cerrar drawer"
                             onClick={onClose}
                             className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all ml-0.5"
                         >
@@ -369,6 +373,9 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={type}
+                            role="tabpanel"
+                            id={`panel-${type}`}
+                            aria-labelledby={`tab-${type}`}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
@@ -391,6 +398,8 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         <div className="relative">
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); setShowProjectDropdown(!showProjectDropdown); }}
+                                                aria-expanded={showProjectDropdown}
+                                                aria-haspopup="listbox"
                                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[12px] font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
                                             >
                                                 <span className="size-3 rounded-sm inline-block"
@@ -526,6 +535,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 type="date"
                                                 value={dueDate}
                                                 onChange={e => setDueDate(e.target.value)}
+                                                aria-label="Fecha límite"
                                                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
                                             />
                                             <button className={clsx(
@@ -567,6 +577,8 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                     e.stopPropagation();
                                                     setShowTagsDropdown(!showTagsDropdown);
                                                 }}
+                                                aria-expanded={showTagsDropdown}
+                                                aria-haspopup="listbox"
                                                 className={clsx(
                                                     "flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5",
                                                     tags.length > 0 ? "border-[hsl(var(--info)/0.2)] dark:border-[hsl(var(--info)/0.3)] bg-info-soft dark:bg-[hsl(var(--info)/0.1)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]"
@@ -624,6 +636,8 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         <div className="relative">
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); setShowEventTypeDropdown(!showEventTypeDropdown); }}
+                                                aria-expanded={showEventTypeDropdown}
+                                                aria-haspopup="listbox"
                                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
                                             >
                                                 <Calendar size={12} />
@@ -652,6 +666,8 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         <div className="relative">
                                             <button 
                                                 onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+                                                aria-expanded={showProjectDropdown}
+                                                aria-haspopup="listbox"
                                                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
                                             >
                                                 {selectedProject ? (
@@ -698,6 +714,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
                                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
+                                        aria-label="Título del evento"
                                         placeholder="Añade un título a la reunión o cita..."
                                         className="px-3 py-2 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
@@ -710,6 +727,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 type="date"
                                                 value={eventDate}
                                                 onChange={e => setEventDate(e.target.value)}
+                                                aria-label="Fecha de inicio"
                                                 className="text-[13px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all cursor-pointer" 
                                             />
                                             <span className="text-[hsl(var(--text-secondary))] text-[11px] font-semibold">hasta</span>
@@ -717,6 +735,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 type="date"
                                                 value={eventEndDate}
                                                 onChange={e => setEventEndDate(e.target.value)}
+                                                aria-label="Fecha de fin"
                                                 className="text-[13px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all cursor-pointer" 
                                             />
                                         </div>
@@ -726,6 +745,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 type="text" 
                                                 value={eventLocation}
                                                 onChange={e => setEventLocation(e.target.value)}
+                                                aria-label="Invitados"
                                                 placeholder="Añadir invitados (correo o nombre)" 
                                                 className="text-[12px] flex-1 bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 pb-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:border-[hsl(var(--primary))] placeholder:text-[hsl(var(--text-secondary))]"
                                             />
@@ -735,6 +755,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             <textarea 
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
+                                                aria-label="Descripción del evento"
                                                 placeholder="Añadir descripción o enlace de la reunión" 
                                                 className="text-[12px] flex-1 min-h-[60px] bg-transparent border border-[hsl(var(--border))] dark:border-white/10 rounded p-2 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:border-[hsl(var(--primary))] placeholder:text-[hsl(var(--text-secondary))] resize-none"
                                             />
@@ -757,6 +778,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         ref={titleRef as React.RefObject<HTMLInputElement>}
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
+                                        aria-label="Nombre del proyecto"
                                         placeholder="Nombre del proyecto..."
                                         className="px-3 py-1.5 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
@@ -767,12 +789,14 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 type="color"
                                                 value={projectColor}
                                                 onChange={(e) => setProjectColor(e.target.value)}
+                                                aria-label="Color del proyecto"
                                                 className="size-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent p-0"
                                             />
                                         </div>
                                         <textarea
                                             value={description}
                                             onChange={e => setDescription(e.target.value)}
+                                            aria-label="Descripción del proyecto"
                                             placeholder="Describe el propósito del proyecto..."
                                             className="w-full min-h-[90px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all resize-none"
                                         />
@@ -797,6 +821,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         ref={titleRef as React.RefObject<HTMLInputElement>}
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
+                                        aria-label="Título del documento"
                                         placeholder="Ponle un nombre a este documento..."
                                         className="px-3 py-2 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
@@ -805,6 +830,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             <textarea
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
+                                                aria-label="Contenido del documento"
                                                 placeholder="Comienza a redactar el contenido de tu documento..."
                                                 className="w-full min-h-[90px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all resize-none"
                                             />
@@ -848,6 +874,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         ref={titleRef as React.RefObject<HTMLInputElement>}
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
+                                        aria-label="Título del recordatorio"
                                         placeholder="Escribe el nombre del recordatorio o pulsa «/» para ver comandos"
                                         className="px-3 py-1.5 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none w-full"
                                     />
@@ -856,6 +883,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             <textarea
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
+                                                aria-label="Detalles del recordatorio"
                                                 placeholder="Añade detalles o notas a este recordatorio..."
                                                 className="w-full min-h-[60px] text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all resize-none"
                                             />
@@ -891,6 +919,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         ref={titleRef as React.RefObject<HTMLInputElement>}
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
+                                        aria-label="Título de la pizarra"
                                         placeholder="Ponle un nombre a esta pizarra..."
                                         className="px-3 py-1.5 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
@@ -926,6 +955,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         ref={titleRef as React.RefObject<HTMLInputElement>}
                                         value={title}
                                         onChange={e => setTitle(e.target.value)}
+                                        aria-label="Título del panel"
                                         placeholder="Nombre del panel..."
                                         className="px-3 py-1.5 text-[16px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
@@ -968,6 +998,8 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                     <div className="flex items-center gap-2">
                         {(type === 'doc' || type === 'whiteboard') && (
                             <button
+                                role="switch"
+                                aria-checked={isPrivate}
                                 onClick={() => setIsPrivate(v => !v)}
                                 className="flex items-center gap-1.5 text-[12px] font-medium text-[hsl(var(--text-secondary))]"
                             >
@@ -989,10 +1021,10 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                     <Sparkles size={13} />
                                     Plantillas
                                 </button>
-                                <button className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
+                                <button aria-label="Adjuntar" className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
                                     <Paperclip size={14} />
                                 </button>
-                                <button className="flex items-center gap-1 p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
+                                <button aria-label="Comentarios" className="flex items-center gap-1 p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors">
                                     <MessageSquare size={14} />
                                     <span className="text-[11px]">1</span>
                                 </button>
@@ -1015,6 +1047,9 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                 e.stopPropagation();
                                 setShowSubmitDropdown(!showSubmitDropdown);
                             }}
+                            aria-label="Opciones de creación"
+                            aria-expanded={showSubmitDropdown}
+                            aria-haspopup="menu"
                             className="flex items-center px-2 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] text-[12px] font-bold rounded-r-lg border-l border-white/20 dark:border-[hsl(var(--border))]/20 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-colors"
                         >
                             <ChevronDown size={13} />

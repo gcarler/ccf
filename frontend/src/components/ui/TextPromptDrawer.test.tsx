@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { axe } from 'jest-axe';
 import TextPromptDrawer from './TextPromptDrawer';
 
 describe('TextPromptDrawer component', () => {
   it('does not render content when isOpen is false', () => {
-    const { container } = render(
+    render(
       <TextPromptDrawer
         isOpen={false}
         title="Editar Titulo"
@@ -53,5 +54,21 @@ describe('TextPromptDrawer component', () => {
 
     fireEvent.click(screen.getByText('Cancelar'));
     expect(onCloseMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no accessibility violations when open', async () => {
+    const { container } = render(
+      <TextPromptDrawer
+        isOpen
+        title="Editar"
+        label="Nombre"
+        value="Texto"
+        onChange={vi.fn()}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+      />
+    );
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
   });
 });

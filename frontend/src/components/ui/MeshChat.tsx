@@ -112,7 +112,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     </div>
                                 </div>
                             </div>
-                            <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md transition-all text-[hsl(var(--text-secondary))]">
+                            <button aria-label="Cerrar" onClick={onClose} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md transition-all text-[hsl(var(--text-secondary))]">
                                 <X size={20} />
                             </button>
                         </header>
@@ -186,8 +186,9 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     placeholder="Preguntar a Optimus..."
                                     className="w-full h-8 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-lg pl-6 pr-14 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--primary))]/50 transition-all shadow-inner"
                                 />
-                                <button 
+                                <button
                                     type="submit"
+                                    aria-label="Enviar"
                                     disabled={!input.trim() || loading}
                                     className="absolute right-2 top-1/2 -translate-y-1/2 size-10 rounded-md bg-[hsl(var(--info))] text-white flex items-center justify-center hover:bg-[hsl(var(--info)/0.85)] active:scale-95 transition-all shadow-lg shadow-[hsl(var(--info))/0.3] disabled:opacity-50"
                                 >

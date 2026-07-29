@@ -91,6 +91,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
     return (
         <DSTooltip content={isNight ? "Modo Claro" : "Modo Oscuro"} side="right">
             <button
+                aria-label={isNight ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
                 onClick={toggleTheme}
                 className={`size-10 rounded-lg flex items-center justify-center transition-all group focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))] ${
                     isNight

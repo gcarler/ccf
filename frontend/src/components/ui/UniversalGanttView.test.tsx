@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { axe } from 'jest-axe';
 import UniversalGanttView, { type GanttItem } from './UniversalGanttView';
 
 const today = new Date();
@@ -78,7 +79,12 @@ describe('UniversalGanttView', () => {
         await userEvent.click(dayButton);
         expect(dayButton).toHaveAttribute('aria-pressed', 'true');
 
-        await userEvent.click(monthButton);
-        expect(monthButton).toHaveAttribute('aria-pressed', 'true');
-    });
+        await userEvent.click(monthButton);    expect(monthButton).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<UniversalGanttView items={mockItems} moduleName="Cronograma" />);
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
+  });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { axe } from 'jest-axe';
 import UniversalCalendarView, { type CalendarEvent } from './UniversalCalendarView';
 
 const today = new Date();
@@ -74,8 +75,12 @@ describe('UniversalCalendarView', () => {
 
         // Click on the current day cell using its data-testid
         const dayCell = screen.getByTestId(`calendar-day-${today.getDate()}`);
-        await userEvent.click(dayCell);
+        await userEvent.click(dayCell);    expect(onDateClick).toHaveBeenCalledWith(expect.any(Date));
+  });
 
-        expect(onDateClick).toHaveBeenCalledWith(expect.any(Date));
-    });
+  it('has no accessibility violations', async () => {
+    const { container } = render(<UniversalCalendarView events={mockEvents} title="Calendario" />);
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
+  });
 });

@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { axe } from 'jest-axe';
 import ThemeToggle from './ThemeToggle';
 
 vi.mock('@/design', () => ({
@@ -42,5 +44,11 @@ describe('ThemeToggle', () => {
     it('shows correct label in row variant for day theme', () => {
         render(<ThemeToggle variant="row" />);
         expect(screen.getByText('Modo Claro')).toBeInTheDocument();
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(<ThemeToggle />);
+        const results = await axe(container);
+        expect(results.violations).toHaveLength(0);
     });
 });
