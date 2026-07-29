@@ -6,8 +6,63 @@ import { SITE_KEY } from "@/lib/site-config";
 import { FolderTree, Plus, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
+interface MediaFolder {
+  id: string;
+  name: string;
+  slug: string;
+  path: string;
+  parent_id: string | null;
+}
 
-interface MediaFolder { id: string; name: string; slug: string; path: string; parent_id: string | null; }
+function buildTree(folders: MediaFolder[], parentId: string | null = null): MediaFolder[] {
+  return folders
+    .filter((f) => f.parent_id === parentId)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function FolderNode({
+  folder,
+  depth = 0,
+  folders,
+}: {
+  folder: MediaFolder;
+  depth?: number;
+  folders: MediaFolder[];
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const children = buildTree(folders, folder.id);
+
+  return (
+    <div>
+      <div
+        className="flex items-center gap-2 py-1.5 px-2 hover:bg-[hsl(var(--surface-1))] rounded-lg"
+        style={{ paddingLeft: `${depth * 20 + 8}px` }}
+      >
+        {children.length > 0 ? (
+          <button onClick={() => setExpanded(!expanded)} className="p-0.5">
+            {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          </button>
+        ) : (
+          <div className="w-3" />
+        )}
+        <FolderTree size={14} className="text-[hsl(var(--warning))]" />
+        <span className="text-sm">{folder.name}</span>
+        <span className="text-2xs text-[hsl(var(--text-secondary))] font-mono">
+          {folder.path}
+        </span>
+      </div>
+      {expanded &&
+        children.map((child) => (
+          <FolderNode
+            key={child.id}
+            folder={child}
+            depth={depth + 1}
+            folders={folders}
+          />
+        ))}
+    </div>
+  );
+}
 
 export default function MediaFoldersPage() {
   const [folders, setFolders] = useState<MediaFolder[]>([]);
@@ -18,44 +73,36 @@ export default function MediaFoldersPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<MediaFolder[]>(`/cms/v2/media-folders?site_key=${SITE_KEY}`, { silent: true });
+      const data = await apiFetch<MediaFolder[]>(
+        `/cms/v2/media-folders?site_key=${SITE_KEY}`,
+        { silent: true },
+      );
       setFolders(Array.isArray(data) ? data : []);
-    } catch { toast.error("Error al cargar datos"); setFolders([]); }
+    } catch {
+      toast.error("Error al cargar datos");
+      setFolders([]);
+    }
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const create = async () => {
     if (!form.name || !form.slug) return;
-    await apiFetch("/cms/v2/media-folders", { method: "POST", body: { site_key: SITE_KEY, ...form, parent_id: form.parent_id || undefined }, silent: true });
+    await apiFetch("/cms/v2/media-folders", {
+      method: "POST",
+      body: {
+        site_key: SITE_KEY,
+        ...form,
+        parent_id: form.parent_id || undefined,
+      },
+      silent: true,
+    });
     setForm({ name: "", slug: "", parent_id: "" });
     setShowForm(false);
     load();
-  };
-
-  const buildTree = (parentId: string | null = null): MediaFolder[] => {
-    return folders.filter(f => f.parent_id === parentId).sort((a, b) => a.name.localeCompare(b.name));
-  };
-
-  const FolderNode = ({ folder, depth = 0 }: { folder: MediaFolder; depth?: number }) => {
-    const [expanded, setExpanded] = useState(true);
-    const children = buildTree(folder.id);
-    return (
-      <div>
-        <div className="flex items-center gap-2 py-1.5 px-2 hover:bg-[hsl(var(--surface-1))] rounded-lg" style={{ paddingLeft: `${depth * 20 + 8}px` }}>
-          {children.length > 0 ? (
-            <button onClick={() => setExpanded(!expanded)} className="p-0.5">
-              {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            </button>
-          ) : <div className="w-3" />}
-          <FolderTree size={14} className="text-[hsl(var(--warning))]" />
-          <span className="text-sm">{folder.name}</span>
-          <span className="text-2xs text-[hsl(var(--text-secondary))] font-mono">{folder.path}</span>
-        </div>
-        {expanded && children.map(child => <FolderNode key={child.id} folder={child} depth={depth + 1} />)}
-      </div>
-    );
   };
 
   return (
@@ -65,10 +112,15 @@ export default function MediaFoldersPage() {
           <FolderTree size={24} className="text-[hsl(var(--primary))]" />
           <div>
             <h1 className="text-xl font-bold">Carpetas de Media</h1>
-            <p className="text-sm text-[hsl(var(--text-secondary))]">{folders.length} carpetas</p>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">
+              {folders.length} carpetas
+            </p>
           </div>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white">
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white"
+        >
           <Plus size={14} /> Nueva Carpeta
         </button>
       </div>
@@ -76,24 +128,72 @@ export default function MediaFoldersPage() {
       {showForm && (
         <div className="p-4 border rounded-xl bg-[hsl(var(--surface-1))] space-y-3">
           <div className="grid grid-cols-3 gap-3">
-            <input placeholder="Nombre" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg" />
-            <input placeholder="slug" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg" />
-            <select value={form.parent_id} onChange={e => setForm(f => ({ ...f, parent_id: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg">
+            <input
+              placeholder="Nombre"
+              value={form.name}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, name: e.target.value }))
+              }
+              className="px-3 py-2 text-sm border rounded-lg"
+            />
+            <input
+              placeholder="slug"
+              value={form.slug}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, slug: e.target.value }))
+              }
+              className="px-3 py-2 text-sm border rounded-lg"
+            />
+            <select
+              value={form.parent_id}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, parent_id: e.target.value }))
+              }
+              className="px-3 py-2 text-sm border rounded-lg"
+            >
               <option value="">Raiz</option>
-              {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="flex gap-2">
-            <button onClick={create} className="px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white">Crear</button>
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm font-medium rounded-lg border">Cancelar</button>
+            <button
+              onClick={create}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white"
+            >
+              Crear
+            </button>
+            <button
+              onClick={() => setShowForm(false)}
+              className="px-4 py-2 text-sm font-medium rounded-lg border"
+            >
+              Cancelar
+            </button>
           </div>
         </div>
       )}
 
       <div className="border rounded-xl p-4 bg-[hsl(var(--bg-primary))]">
-        {loading ? <div className="py-8 text-center text-[hsl(var(--text-secondary))]">Cargando...</div> : folders.length === 0 ? (
-          <div className="py-8 text-center text-[hsl(var(--text-secondary))]">Sin carpetas</div>
-        ) : buildTree(null).map(folder => <FolderNode key={folder.id} folder={folder} />)}
+        {loading ? (
+          <div className="py-8 text-center text-[hsl(var(--text-secondary))]">
+            Cargando...
+          </div>
+        ) : folders.length === 0 ? (
+          <div className="py-8 text-center text-[hsl(var(--text-secondary))]">
+            Sin carpetas
+          </div>
+        ) : (
+          buildTree(folders, null).map((folder) => (
+            <FolderNode
+              key={folder.id}
+              folder={folder}
+              folders={folders}
+            />
+          ))
+        )}
       </div>
     </div>
   );
