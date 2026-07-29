@@ -43,7 +43,7 @@ export function DSCommandEntry({
             <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold tracking-tight">{label}</p>
                 {description ? (
-                    <p className={clsx("truncate text-[10px]", active ? "text-white/80" : "text-[hsl(var(--text-secondary))]")}>
+                    <p className={clsx("truncate text-2xs", active ? "text-white/80" : "text-[hsl(var(--text-secondary))]")}>
                         {description}
                     </p>
                 ) : null}
@@ -51,7 +51,7 @@ export function DSCommandEntry({
             {shortcut ? (
                 <span
                     className={clsx(
-                        "rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
+                        "rounded-md px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide",
                         active ? "bg-white/20 text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]",
                     )}
                 >

@@ -101,7 +101,7 @@ export default function ResourcesLibrary() {
                     ))}
                     <button
                         onClick={handleRefresh}
-                        className="ml-auto text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-primary"
+                        className="ml-auto text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-primary"
                     >
                         Actualizar
                     </button>
@@ -162,10 +162,10 @@ function ResourceRow({ resource, isFavorite, onToggleFavorite }: { resource: Res
                 {resource.snippet.length > 120 ? <FileText size={28} /> : <BookOpen size={28} />}
             </div>
             <div className="flex flex-col flex-1 min-w-0">
-                <p className="text-[10px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mb-1">{resource.courseTitle}</p>
+                <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mb-1">{resource.courseTitle}</p>
                 <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{resource.lessonTitle}</h3>
-                <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1 line-clamp-2">{resource.snippet}</p>
-                <p className="text-[10px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-3">{resource.duration}</p>
+                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1 line-clamp-2">{resource.snippet}</p>
+                <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-3">{resource.duration}</p>
             </div>
             <div className="flex items-center gap-3">
                 <button

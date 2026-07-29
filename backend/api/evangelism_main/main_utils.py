@@ -60,7 +60,7 @@ def _persona_matches_segment(
             "creyente",
         }
     if value == "vip":
-        return persona.id in donation_persona_ids
+        return str(persona.id) in donation_persona_ids
     return False
 
 

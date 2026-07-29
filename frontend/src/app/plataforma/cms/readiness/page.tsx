@@ -105,10 +105,10 @@ export default function CmsReadinessPage() {
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-[hsl(var(--border))] px-4 dark:border-white/5">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <Gauge size={16} className="shrink-0 text-[hsl(var(--primary))]" />
-          <h1 className="truncate text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+          <h1 className="truncate text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
             Readiness CMS
           </h1>
-          <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] font-semibold text-[hsl(var(--text-secondary))] dark:bg-white/5">
+          <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-2xs font-semibold text-[hsl(var(--text-secondary))] dark:bg-white/5">
             {data ? scoreLabel(data.score) : "Calculando"}
           </span>
         </div>
@@ -116,7 +116,7 @@ export default function CmsReadinessPage() {
           type="button"
           onClick={() => load().catch(() => toast.error("Error al cargar readiness"))}
           disabled={loading}
-          className="flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] disabled:opacity-40 dark:border-white/10"
+          className="flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] disabled:opacity-40 dark:border-white/10"
           title="Refrescar"
         >
           <RefreshCcw size={12} className={loading ? "animate-spin" : ""} />
@@ -144,7 +144,7 @@ export default function CmsReadinessPage() {
               <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                       Score operativo
                     </p>
                     <p className="mt-2 text-5xl font-semibold tracking-normal text-[hsl(var(--text-primary))]">
@@ -227,7 +227,7 @@ export default function CmsReadinessPage() {
 function MetricTile({ metric }: { metric: CmsReadinessMetric }) {
   const content = (
     <div className="h-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 transition-colors hover:border-[hsl(var(--primary))] dark:border-white/10 dark:bg-white/[0.03]">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
+      <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
       <p className="mt-2 text-2xl font-semibold tracking-normal text-[hsl(var(--text-primary))]">{metric.value}</p>
     </div>
   );
@@ -246,7 +246,7 @@ function IssueRow({ issue }: { issue: CmsReadinessIssue }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))]">{issue.title}</h3>
-          <span className={clsx("rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", style.className)}>
+          <span className={clsx("rounded-full border px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide", style.className)}>
             {style.label} · {issue.count}
           </span>
         </div>
@@ -263,7 +263,7 @@ function CapabilityRow({ capability }: { capability: CmsReadinessCapability }) {
     <div className="rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-[hsl(var(--primary))] dark:border-white/10">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))]">{capability.label}</h3>
-        <span className={clsx("rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", CAPABILITY_STYLE[capability.status])}>
+        <span className={clsx("rounded-full border px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide", CAPABILITY_STYLE[capability.status])}>
           {capability.status === "ready" ? "Ready" : capability.status === "partial" ? "Parcial" : "Atención"}
         </span>
       </div>

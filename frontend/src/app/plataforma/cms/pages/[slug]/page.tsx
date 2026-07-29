@@ -111,14 +111,14 @@ export default function CmsPageDetailPage() {
         {/* Page info */}
         <div className="space-y-3">
           <div className="flex justify-center">
-            <span className={clsx("px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide border", status.color)}>
+            <span className={clsx("px-3 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide border", status.color)}>
               {status.label}
             </span>
           </div>
           <h1 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
             {page?.title}
           </h1>
-          <div className="flex items-center justify-center gap-4 text-[11px] font-bold text-[hsl(var(--text-secondary))]">
+          <div className="flex items-center justify-center gap-4 text-xs font-bold text-[hsl(var(--text-secondary))]">
             <span className="flex items-center gap-1.5">
               <Globe size={11} /> {page?.site_key || SITE_KEY}
             </span>
@@ -142,7 +142,7 @@ export default function CmsPageDetailPage() {
         {/* Redirect card */}
         <DSCard className="space-y-5">
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+            <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
               Redirigiendo al Builder
             </p>
             <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm font-medium">
@@ -172,7 +172,7 @@ export default function CmsPageDetailPage() {
           {/* CTA button */}
           <button
             onClick={handleGoNow}
-            className="w-full flex items-center justify-center gap-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
+            className="w-full flex items-center justify-center gap-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
           >
             <PenTool size={16} />
             Abrir en el Builder ahora
@@ -181,7 +181,7 @@ export default function CmsPageDetailPage() {
 
           <button
             onClick={() => router.push("/plataforma/cms/pages")}
-            className="w-full py-2.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide transition-colors"
+            className="w-full py-2.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] text-2xs font-semibold uppercase tracking-wide transition-colors"
           >
             ← Volver a páginas
           </button>

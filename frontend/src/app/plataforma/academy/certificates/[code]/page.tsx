@@ -76,7 +76,7 @@ export default function PublicCertificatePage() {
         <div className="min-h-screen bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] overflow-y-auto py-1.5 px-4">
  <div className="w-full space-y-3">
                 <div className="flex flex-col items-center text-center space-y-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--success)/20%)] dark:border-[hsl(var(--success)/40%)]">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--success)/20%)] dark:border-[hsl(var(--success)/40%)]">
                         Certificado Verificado por CCF
                     </div>
                     <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Validacion Oficial de Logro</h1>
@@ -84,7 +84,7 @@ export default function PublicCertificatePage() {
 
                 <CertificateView data={certificate} />
 
-                <p className="text-center text-[10px] text-[hsl(var(--text-secondary))] font-medium uppercase tracking-wide">
+                <p className="text-center text-2xs text-[hsl(var(--text-secondary))] font-medium uppercase tracking-wide">
                     Este documento es una representacion digital del certificado original emitido por el Centro Cristiano Familiar.
                 </p>
             </div>

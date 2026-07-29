@@ -98,7 +98,7 @@ export default function SubmissionsPage() {
                                         </div>
                                         <div>
                                             <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white text-base leading-none mb-1">{sub.student_name}</p>
-                                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1">
+                                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1">
                                                 <Clock size={10} /> {new Date(sub.submitted_at).toLocaleString()}
                                             </p>
                                         </div>
@@ -129,7 +129,7 @@ export default function SubmissionsPage() {
                                     {gradingId === sub.id ? (
                                         <div className="space-y-4 animate-in zoom-in-95 duration-200">
                                             <div>
-                                                <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Nota (0-100)</label>
+                                                <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Nota (0-100)</label>
                                                 <input 
                                                     type="number" 
                                                     value={grade}
@@ -138,7 +138,7 @@ export default function SubmissionsPage() {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Retroalimentación</label>
+                                                <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Retroalimentación</label>
                                                 <textarea 
                                                     value={feedback}
                                                     onChange={(e) => setFeedback(e.target.value)}
@@ -166,7 +166,7 @@ export default function SubmissionsPage() {
                                             {sub.grade !== null ? (
                                                 <div className="flex flex-col items-center gap-3">
                                                     <div className="p-4 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] dark:text-[hsl(var(--success))] rounded-lg border border-[hsl(var(--success)/100%)]/20 shadow-sm">
-                                                        <p className="text-[10px] font-semibold uppercase tracking-wide mb-1">Calificación</p>
+                                                        <p className="text-2xs font-semibold uppercase tracking-wide mb-1">Calificación</p>
                                                         <p className="text-lg font-bold leading-none">{sub.grade}</p>
                                                     </div>
                                                     {sub.teacher_feedback && (
@@ -178,7 +178,7 @@ export default function SubmissionsPage() {
                                                             setGrade(sub.grade || 0);
                                                             setFeedback(sub.teacher_feedback || '');
                                                         }}
-                                                        className="w-full py-3 text-[10px] font-bold text-primary uppercase tracking-wide hover:bg-primary/5 rounded-md transition-all border border-transparent hover:border-primary/10"
+                                                        className="w-full py-3 text-2xs font-bold text-primary uppercase tracking-wide hover:bg-primary/5 rounded-md transition-all border border-transparent hover:border-primary/10"
                                                     >
                                                         Modificar Nota
                                                     </button>

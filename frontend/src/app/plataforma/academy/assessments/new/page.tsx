@@ -102,13 +102,13 @@ export default function NewAssessmentPage() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => router.back()}
-                            className="px-3 py-1.5 text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide hover:text-[hsl(var(--text-primary))] transition-all"
+                            className="px-3 py-1.5 text-[hsl(var(--text-secondary))] text-2xs font-semibold uppercase tracking-wide hover:text-[hsl(var(--text-primary))] transition-all"
                         >
                             Cancelar
                         </button>
                         <button
                             onClick={handleSave}
-                            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2"
+                            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2"
                         >
                             <Save size={14} /> Guardar Evaluacion
                         </button>
@@ -119,10 +119,10 @@ export default function NewAssessmentPage() {
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
  <div className="w-full space-y-3">
                     <DSCard>
-                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Configuracion General</h3>
+                        <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Configuracion General</h3>
                         <div className="space-y-3">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Titulo de la Evaluacion</label>
+                                <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Titulo de la Evaluacion</label>
                                 <input
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
@@ -132,7 +132,7 @@ export default function NewAssessmentPage() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nota Minima de Aprobacion (%)</label>
+                                    <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nota Minima de Aprobacion (%)</label>
                                     <input
                                         type="number"
                                         value={passingScore}
@@ -141,7 +141,7 @@ export default function NewAssessmentPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">ID del Curso *</label>
+                                    <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">ID del Curso *</label>
                                     <input
                                         type="number"
                                         value={courseId}
@@ -159,7 +159,7 @@ export default function NewAssessmentPage() {
                             <h3 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Preguntas ({questions.length})</h3>
                             <button
                                 onClick={addQuestion}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:border-[hsl(var(--info)/100%)] transition-all"
+                                className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide hover:border-[hsl(var(--info)/100%)] transition-all"
                             >
                                 <Plus size={14} /> Agregar Pregunta
                             </button>
@@ -190,7 +190,7 @@ export default function NewAssessmentPage() {
                                                             updateQuestion(q.id, updates);
                                                         }}
                                                         className={clsx(
-                                                            "px-3 py-1.5 rounded-lg text-[9px] font-semibold uppercase tracking-wide transition-all",
+                                                            "px-3 py-1.5 rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all",
                                                             q.type === t
                                                                 ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-sm"
                                                                 : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
@@ -222,7 +222,7 @@ export default function NewAssessmentPage() {
 
                                     <div className="space-y-4">
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pregunta</label>
+                                            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pregunta</label>
                                             <textarea
                                                 value={q.text}
                                                 onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
@@ -234,7 +234,7 @@ export default function NewAssessmentPage() {
 
                                         {q.type !== 'text' && (
                                             <div className="grid grid-cols-1 gap-3">
-                                                <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Opciones (Marca la correcta)</label>
+                                                <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Opciones (Marca la correcta)</label>
                                                 {q.options.map((opt, optIndex) => (
                                                     <div key={optIndex} className="flex items-center gap-3 group">
                                                         <button
@@ -281,7 +281,7 @@ export default function NewAssessmentPage() {
                                                         onClick={() => {
                                                             updateQuestion(q.id, { options: [...q.options, ''] });
                                                         }}
-                                                        className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-2 hover:underline text-left flex items-center gap-2"
+                                                        className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-2 hover:underline text-left flex items-center gap-2"
                                                     >
                                                         <Plus size={12} /> Agregar opcion
                                                     </button>
@@ -291,10 +291,10 @@ export default function NewAssessmentPage() {
 
                                         {q.type === 'text' && (
                                             <div className="p-3 bg-[hsl(var(--warning)/0.08)] border border-[hsl(var(--warning)/0.3)] rounded-lg">
-                                                <p className="text-[10px] font-bold text-[hsl(var(--warning))] uppercase tracking-wide flex items-center gap-2">
+                                                <p className="text-2xs font-bold text-[hsl(var(--warning))] uppercase tracking-wide flex items-center gap-2">
                                                     <AlertCircle size={14} /> Pregunta Abierta
                                                 </p>
-                                                <p className="text-[11px] text-[hsl(var(--warning))] mt-1">Estas preguntas requieren calificacion manual por parte del docente en el panel de entregas.</p>
+                                                <p className="text-xs text-[hsl(var(--warning))] mt-1">Estas preguntas requieren calificacion manual por parte del docente en el panel de entregas.</p>
                                             </div>
                                         )}
                                     </div>
@@ -306,7 +306,7 @@ export default function NewAssessmentPage() {
                             <div className="p-4 text-center border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
                                 <ListChecks size={48} className="mx-auto text-[hsl(var(--text-secondary))] mb-4" />
                                 <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tu evaluacion esta vacia</p>
-                                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-2">Comienza agregando tu primera pregunta</p>
+                                <p className="text-xs text-[hsl(var(--text-secondary))] mt-2">Comienza agregando tu primera pregunta</p>
                             </div>
                         )}
                     </div>

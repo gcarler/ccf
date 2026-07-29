@@ -114,24 +114,24 @@ export default function WikiEditor({
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: 20, opacity: 0 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] border border-[hsl(var(--border))] dark:border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3"
+                            className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3"
                         >
                             {status === 'saving' && (
                                 <>
                                     <Loader2 size={14} className="animate-spin text-[hsl(var(--primary))]" />
-                                    <span className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Guardando...</span>
+                                    <span className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Guardando...</span>
                                 </>
                             )}
                             {status === 'saved' && (
                                 <>
                                     <Cloud size={14} className="text-[hsl(var(--success))]" />
-                                    <span className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Guardado</span>
+                                    <span className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Guardado</span>
                                 </>
                             )}
                             {status === 'error' && (
                                 <>
                                     <CloudOff size={14} className="text-[hsl(var(--danger))]" />
-                                    <span className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--danger))]">Error al guardar</span>
+                                    <span className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--danger))]">Error al guardar</span>
                                 </>
                             )}
                         </motion.div>
@@ -146,10 +146,10 @@ export default function WikiEditor({
             <div className="mt-3 pt-8 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between text-[hsl(var(--text-secondary))]">
                 <div className="flex items-center gap-2">
                     <div className="size-2 rounded-full bg-[hsl(var(--success))]" />
-                    <span className="text-[10px] font-semibold uppercase tracking-wide">Editor Activo</span>
+                    <span className="text-2xs font-semibold uppercase tracking-wide">Editor Activo</span>
                 </div>
                 {lastSaved && (
-                    <span className="text-[10px] font-bold uppercase tracking-wide">
+                    <span className="text-2xs font-bold uppercase tracking-wide">
                         Última edición: {lastSaved.toLocaleTimeString()}
                     </span>
                 )}

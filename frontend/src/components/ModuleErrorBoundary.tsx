@@ -45,8 +45,8 @@ export class ModuleErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className="min-h-[400px] flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
-          <div className="max-w-md w-full p-6 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-red-200 dark:border-red-900/30 rounded-xl shadow-lg">
+        <div className="min-h-[400px] flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]">
+          <div className="max-w-md w-full p-6 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-red-200 dark:border-red-900/30 rounded-xl shadow-lg">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20 text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
                 <AlertTriangle size={20} />
@@ -55,7 +55,7 @@ export class ModuleErrorBoundary extends Component<Props, State> {
                 <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">
                   Módulo no disponible
                 </h3>
-                <p className="text-[11px] text-[hsl(var(--text-secondary))]">{this.props.moduleName}</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))]">{this.props.moduleName}</p>
               </div>
             </div>
 
@@ -64,7 +64,7 @@ export class ModuleErrorBoundary extends Component<Props, State> {
             </p>
 
             {this.state.error && (
-              <details className="mb-4 p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg text-[10px] font-mono text-[hsl(var(--text-secondary))] max-h-32 overflow-auto">
+              <details className="mb-4 p-3 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg text-2xs font-mono text-[hsl(var(--text-secondary))] max-h-32 overflow-auto">
                 <summary className="cursor-pointer text-xs font-sans text-[hsl(var(--text-secondary))] mb-1">Ver detalles técnicos</summary>
                 <pre className="whitespace-pre-wrap break-all">{this.state.error.message}</pre>
                 <pre className="whitespace-pre-wrap break-all mt-1 opacity-60">{this.state.errorInfo?.componentStack?.slice(0, 500)}</pre>

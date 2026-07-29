@@ -38,7 +38,7 @@ export default function SermonsPage() {
             <section className="relative py-1.5 px-3 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b to-[hsl(var(--info)/10%)] to-transparent" />
                 <div className="max-w-6xl mx-auto relative text-center">
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-[11px] font-bold uppercase tracking-wide mb-3">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-xs font-bold uppercase tracking-wide mb-3">
                         <Mic size={11} /> Prédicas & Mensajes
                     </span>
                     <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
@@ -58,14 +58,14 @@ export default function SermonsPage() {
 
             {/* Series */}
             <section className="max-w-6xl mx-auto px-3 py-1.5">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Series Destacadas</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Series Destacadas</p>
                 <div className="grid grid-cols-3 gap-3 mb-3">
                     {SERIES.map((s, i) => (
                         <motion.div key={s.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                             className={`h-44 rounded-lg bg-gradient-to-br ${s.thumb} relative overflow-hidden cursor-pointer group hover:scale-[1.02] transition-all shadow-2xl`}>
                             <div className="absolute inset-0 bg-black/30" />
                             <div className="absolute inset-0 p-4 flex flex-col justify-end">
-                                <span className="text-white/60 text-[10px] font-bold uppercase tracking-wide">{s.category} · {s.count} episodios</span>
+                                <span className="text-white/60 text-2xs font-bold uppercase tracking-wide">{s.category} · {s.count} episodios</span>
                                 <p className="text-white font-bold text-lg">{s.title}</p>
                             </div>
                             <div className="absolute top-4 right-4 size-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
@@ -80,7 +80,7 @@ export default function SermonsPage() {
                     <Filter size={12} className="text-[hsl(var(--text-secondary))] shrink-0" />
                     {CATEGORIES.map(c => (
                         <button key={c} onClick={() => setCat(c)}
-                            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${cat === c ? 'bg-[hsl(var(--primary))] text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
+                            className={`px-4 py-1.5 rounded-lg text-2xs font-bold uppercase tracking-wide transition-all whitespace-nowrap ${cat === c ? 'bg-[hsl(var(--primary))] text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
                             {c}
                         </button>
                     ))}
@@ -95,18 +95,18 @@ export default function SermonsPage() {
                                 <Play size={22} className="ml-0.5" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-[13px] font-bold text-white truncate group-hover:text-[hsl(var(--primary))] transition-colors">{s.title}</p>
+                                <p className="text-base font-bold text-white truncate group-hover:text-[hsl(var(--primary))] transition-colors">{s.title}</p>
                                 <div className="flex items-center gap-3 mt-1">
-                                    <span className="text-[11px] text-[hsl(var(--text-secondary))]">{s.speaker}</span>
+                                    <span className="text-xs text-[hsl(var(--text-secondary))]">{s.speaker}</span>
                                     <span className="text-[hsl(var(--text-secondary))]">·</span>
-                                    <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]"><Calendar size={9} /> {s.date}</span>
-                                    <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]"><Clock size={9} /> {s.duration}</span>
+                                    <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]"><Calendar size={9} /> {s.date}</span>
+                                    <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]"><Clock size={9} /> {s.duration}</span>
                                 </div>
-                                {s.series && <span className="text-[9px] text-[hsl(var(--info))]/70 font-bold mt-0.5 block">Serie: {s.series}</span>}
+                                {s.series && <span className="text-2xs text-[hsl(var(--info))]/70 font-bold mt-0.5 block">Serie: {s.series}</span>}
                             </div>
                             <div className="shrink-0 text-right">
-                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{s.views.toLocaleString()} vistas</p>
-                                <span className="px-2 py-0.5 mt-1 rounded-full bg-white/5 text-[9px] text-[hsl(var(--text-secondary))] font-bold block">{s.category}</span>
+                                <p className="text-2xs text-[hsl(var(--text-secondary))]">{s.views.toLocaleString()} vistas</p>
+                                <span className="px-2 py-0.5 mt-1 rounded-full bg-white/5 text-2xs text-[hsl(var(--text-secondary))] font-bold block">{s.category}</span>
                             </div>
                         </motion.div>
                     ))}

@@ -77,17 +77,16 @@ vi.mock("@/components/projects/ProjectKanbanBoard", () => ({
 }));
 
 import { ProjectUpdateProvider, useProjectUpdate } from "@/context/ProjectUpdateContext";
-import type { ProjectTaskRecord } from "@/types/projects";
+import type { ProjectRecord, ProjectTaskRecord } from "@/types/projects";
 
-const FAKE_PROJECT = {
+const FAKE_PROJECT: ProjectRecord = {
   id: "p1",
   title: "Proyecto Test",
   owner_id: "u1",
-  sede_id: "s1",
   status: "active",
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
-} as any;
+};
 
 const PHASES = [
   { slug: "todo", name: "To Do", color: "#94a3b8", order_index: 0 },
@@ -226,14 +225,14 @@ function Harness({
     },
     createTask: async (payload: {
       title: string;
-      priority: string;
+      priority: ProjectTaskRecord["priority"];
       status: string;
     }) => {
       const id = `new-${tasks.length + 1}-${Date.now()}`;
       setTasks((prev) => [
         makeTask(id, {
           title: payload.title,
-          priority: payload.priority as ProjectTaskRecord["priority"],
+          priority: payload.priority,
           status: payload.status,
         }),
         ...prev,

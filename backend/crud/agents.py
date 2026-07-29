@@ -56,7 +56,7 @@ def create_agent_insight(db: Session, payload: schemas.AgentInsightCreate):
         confidence=int(payload.confidence * 100),
         source_agent=payload.source_agent,
         insight_payload=payload.payload,
-        insight_data=payload.metadata,
+        insight_data=getattr(payload, "metadata", None),
         acknowledged=False,
     )
     db.add(row)

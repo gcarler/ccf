@@ -80,12 +80,12 @@ export default function MinistrySettings() {
                     </div>
                     <div className="mt-3 text-center space-y-2">
                         <h2 className="text-xl font-bold text-white tracking-tight uppercase">{SITE_NAME}</h2>
-                        <div className="flex items-center justify-center gap-2 text-[hsl(var(--text-secondary))] font-bold text-[10px] uppercase tracking-wide">
+                        <div className="flex items-center justify-center gap-2 text-[hsl(var(--text-secondary))] font-bold text-2xs uppercase tracking-wide">
                             <MapPin size={12} className="text-primary" />
                             Sede Central • Mocoa, Putumayo
                         </div>
                         <div className="mt-4 px-4 py-1.5 bg-primary/10 rounded-full border border-primary/20 inline-block">
-                            <span className="text-primary text-[10px] font-semibold uppercase tracking-wide">Admin ID: CCF-2024</span>
+                            <span className="text-primary text-2xs font-semibold uppercase tracking-wide">Admin ID: CCF-2024</span>
                         </div>
                     </div>
                 </section>
@@ -93,7 +93,7 @@ export default function MinistrySettings() {
                 {/* Settings Groups */}
                 {settingsGroups.map((group, idx) => (
                     <section key={idx} className="space-y-3">
-                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-1">{group.title}</h3>
+                        <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-1">{group.title}</h3>
                         <div className="space-y-4">
                             {group.items.map((item, iidx) => (
                                 <div
@@ -121,7 +121,7 @@ export default function MinistrySettings() {
                 <section className="pt-6">
                     <button
                         onClick={handleLogout}
-                        className="w-full h-8 bg-[hsl(var(--danger))]/10 hover:bg-[hsl(var(--danger))] text-[hsl(var(--danger))] hover:text-white font-black rounded-lg border border-[hsl(var(--danger)/100%)]/20 transition-all flex items-center justify-center gap-3 uppercase text-[11px] tracking-wide shadow-lg shadow-[hsl(var(--danger)/5%)] active:scale-[0.98]"
+                        className="w-full h-8 bg-[hsl(var(--danger))]/10 hover:bg-[hsl(var(--danger))] text-[hsl(var(--danger))] hover:text-white font-black rounded-lg border border-[hsl(var(--danger)/100%)]/20 transition-all flex items-center justify-center gap-3 uppercase text-xs tracking-wide shadow-lg shadow-[hsl(var(--danger)/5%)] active:scale-[0.98]"
                     >
                         <LogOut size={20} />
                         Cerrar Sesión Admin

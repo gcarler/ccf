@@ -79,10 +79,10 @@ export default function AdminCourseContentPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <button className="px-4 py-2 text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide hover:text-[hsl(var(--text-primary))] transition-all">
+                        <button className="px-4 py-2 text-[hsl(var(--text-secondary))] text-2xs font-semibold uppercase tracking-wide hover:text-[hsl(var(--text-primary))] transition-all">
                             Vista Previa
                         </button>
-                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2">
+                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2">
                             <Save size={14} /> Publicar Cambios
                         </button>
                     </div>
@@ -105,7 +105,7 @@ export default function AdminCourseContentPage() {
                         <section className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Lecciones y Módulos ({lessons.length})</h3>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:border-[hsl(var(--info)/100%)] transition-all">
+                                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-2xs font-semibold uppercase tracking-wide hover:border-[hsl(var(--info)/100%)] transition-all">
                                     <Plus size={14} /> Nueva Lección
                                 </button>
                             </div>
@@ -138,31 +138,31 @@ export default function AdminCourseContentPage() {
 
                     <aside className="space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Configuración de Obra</h3>
+                            <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Configuración de Obra</h3>
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Código de Referencia</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Código de Referencia</p>
                                     <p className="text-sm font-bold">{course?.code}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sede Principal</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sede Principal</p>
                                     <p className="text-sm font-bold">Campus Virtual / Central</p>
                                 </div>
                                 <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
-                                <button className="w-full flex items-center justify-center gap-2 py-3 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] transition-all">
+                                <button className="w-full flex items-center justify-center gap-2 py-3 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] transition-all">
                                     <Settings size={14} /> Ajustes Técnicos
                                 </button>
                             </div>
                         </DSCard>
 
                         <div className="bg-[hsl(var(--bg-muted))] rounded-lg p-4 text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
+                            <div className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                                 <History size={14} /> Control de Versiones
                             </div>
-                            <p className="text-[11px] font-medium opacity-70">
+                            <p className="text-xs font-medium opacity-70">
                                 Última edición por Admin_CCF hace 1 hora.
                             </p>
-                            <button className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:text-info-text">
+                            <button className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:text-info-text">
                                 Ver historial completo
                             </button>
                         </div>

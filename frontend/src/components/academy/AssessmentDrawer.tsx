@@ -124,7 +124,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="assessment-drawer-title"
-                className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] font-sans"
+                className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] font-sans"
             >
                 <span id="assessment-drawer-title" className="sr-only">
                     {assessment?.title || 'Evaluación'}
@@ -164,7 +164,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                             {result.passed ? <Trophy size={64} /> : <AlertCircle size={64} />}
                                             <motion.div 
                                                 animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}
-                                                className="absolute -top-4 -right-4 size-7 bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg flex items-center justify-center text-[hsl(var(--text-primary))] dark:text-white shadow-xl border border-[hsl(var(--border))] dark:border-white/10"
+                                                className="absolute -top-4 -right-4 size-7 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg flex items-center justify-center text-[hsl(var(--text-primary))] dark:text-white shadow-xl border border-[hsl(var(--border))] dark:border-white/10"
                                             >
                                                 <span className="text-sm font-semibold">{result.score}%</span>
                                             </motion.div>
@@ -246,7 +246,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                                         "size-8 rounded-md flex items-center justify-center shrink-0 shadow-inner border transition-colors",
                                                         answers[questions[currentStep - 1].id] === option.id 
                                                             ? "bg-white/20 border-white/30 text-white" 
-                                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] group-hover:border-[hsl(var(--info)/100%)]/50"
+                                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] group-hover:border-[hsl(var(--info)/100%)]/50"
                                                     )}>
                                                         {answers[questions[currentStep - 1].id] === option.id ? <CheckCircle2 size={18} /> : <HelpCircle size={18} />}
                                                     </div>
@@ -263,7 +263,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                         {/* Footer Actions (Quiz Navigation) */}
                         {!isWelcome && !isResult && (
                             <div className="p-4 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between shrink-0 bg-[hsl(var(--surface-1))]/50 dark:bg-black/20">
-                                <button onClick={prevStep} className="flex items-center gap-2 px-3 py-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-all font-semibold uppercase text-[10px] tracking-wide">
+                                <button onClick={prevStep} className="flex items-center gap-2 px-3 py-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-all font-semibold uppercase text-2xs tracking-wide">
                                     <ArrowLeft size={16} /> Anterior
                                 </button>
                                 

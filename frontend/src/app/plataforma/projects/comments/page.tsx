@@ -115,7 +115,7 @@ export default function ProjectsCommentsPage() {
         >
             {error && (
                 <div className="mx-4 mt-4 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                    <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
             <main className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -140,7 +140,7 @@ export default function ProjectsCommentsPage() {
                         <button
                             onClick={handleSubmit}
                             disabled={saving || !projectId || !content.trim()}
-                            className="md:col-span-1 rounded-md bg-[hsl(var(--primary))] text-white text-[11px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                            className="md:col-span-1 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-semibold uppercase tracking-wide disabled:opacity-50"
                         >
                             {saving ? 'Guardando...' : 'Publicar'}
                         </button>
@@ -152,11 +152,11 @@ export default function ProjectsCommentsPage() {
                 ) : !error && comments.length === 0 ? (
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">Sin comentarios pendientes.</div>
                 ) : viewType === 'table' ? (
-                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Autor</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Comentario</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{comments.map((item) => <tr key={item.id}><td className="px-3 py-2 text-sm font-medium">{item.author_name}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{item.content}</td><td className="px-3 py-2"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase", item.is_resolved ? "bg-success-soft text-success-text" : "bg-info-soft text-[hsl(var(--primary))]")}>{item.is_resolved ? 'Resuelto' : 'Pendiente'}</span></td></tr>)}</tbody></table></div>
+                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Autor</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Comentario</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{comments.map((item) => <tr key={item.id}><td className="px-3 py-2 text-sm font-medium">{item.author_name}</td><td className="px-3 py-2 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{item.content}</td><td className="px-3 py-2"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-bold uppercase", item.is_resolved ? "bg-success-soft text-success-text" : "bg-info-soft text-[hsl(var(--primary))]")}>{item.is_resolved ? 'Resuelto' : 'Pendiente'}</span></td></tr>)}</tbody></table></div>
                 ) : viewType === 'grid' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{comments.map((item) => <article key={item.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5"><p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.author_name}</p><p className="text-sm mt-1">{item.content}</p></article>)}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{comments.map((item) => <article key={item.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5"><p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.author_name}</p><p className="text-sm mt-1">{item.content}</p></article>)}</div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{[false, true].map((resolved) => <section key={String(resolved)} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{resolved ? 'Resueltos' : 'Pendientes'}</span><span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{comments.filter((item) => item.is_resolved === resolved).length}</span></div><div className="space-y-2">{comments.filter((item) => item.is_resolved === resolved).map((item) => <div key={item.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-2 text-sm">{item.content}</div>)}</div></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{[false, true].map((resolved) => <section key={String(resolved)} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{resolved ? 'Resueltos' : 'Pendientes'}</span><span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{comments.filter((item) => item.is_resolved === resolved).length}</span></div><div className="space-y-2">{comments.filter((item) => item.is_resolved === resolved).map((item) => <div key={item.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-2 text-sm">{item.content}</div>)}</div></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario de comentarios" />
                 ) : viewType === 'gantt' ? (
@@ -175,11 +175,11 @@ export default function ProjectsCommentsPage() {
                                             <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{item.author_name}</p>
                                             <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mt-2">{item.content}</p>
                                             <div className="mt-3 flex items-center justify-between">
-                                                <span className="text-[10px] text-[hsl(var(--text-secondary))]">{new Date(item.created_at).toLocaleString('es-PE')}</span>
+                                                <span className="text-2xs text-[hsl(var(--text-secondary))]">{new Date(item.created_at).toLocaleString('es-PE')}</span>
                                                 <button
                                                     onClick={() => resolveComment(item)}
                                                     disabled={item.is_resolved}
-                                                    className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50"
+                                                    className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-semibold uppercase tracking-wide disabled:opacity-50"
                                                 >
                                                     {item.is_resolved ? 'Resuelto' : 'Resolver'}
                                                 </button>

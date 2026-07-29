@@ -95,7 +95,7 @@ export default function SidePanel({
                     {/* Content Area */}
                     <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar p-3">
                         <header className="mb-3">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-1">
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-1">
                                 DETALLES DEL ÍTEM
                             </p>
                             <h2 id={titleId} className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">

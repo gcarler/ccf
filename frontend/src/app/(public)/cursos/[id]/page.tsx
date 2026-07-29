@@ -325,7 +325,7 @@ export default function CursoDetailPage() {
                                 <form id="course-enroll-form" onSubmit={submitEnroll} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
                                     {getString(cms, "enroll_name_label") && (
                                         <div>
-                                            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                            <label className="mb-1 block text-2xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
                                                 {getString(cms, "enroll_name_label")}
                                             </label>
                                             <input
@@ -340,7 +340,7 @@ export default function CursoDetailPage() {
                                     )}
                                     {getString(cms, "enroll_email_label") && (
                                         <div>
-                                            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                            <label className="mb-1 block text-2xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
                                                 {getString(cms, "enroll_email_label")}
                                             </label>
                                             <input
@@ -355,7 +355,7 @@ export default function CursoDetailPage() {
                                     )}
                                     {getString(cms, "enroll_phone_label") && (
                                         <div>
-                                            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                            <label className="mb-1 block text-2xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
                                                 {getString(cms, "enroll_phone_label")}
                                             </label>
                                             <input

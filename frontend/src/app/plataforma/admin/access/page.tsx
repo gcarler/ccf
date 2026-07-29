@@ -308,13 +308,13 @@ export default function AccessManagementPage() {
                 .map((i) => (
                   <div
                     key={i}
-                    className="size-6 rounded-full border-2 border-white dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-center text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase"
+                    className="size-6 rounded-full border-2 border-white dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-center text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase"
                   >
                     U
                   </div>
                 ))}
             </div>
-            <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] ml-2">
+            <span className="text-xs font-bold text-[hsl(var(--text-secondary))] ml-2">
               {Number(info.getValue())} vinculados
             </span>
           </div>
@@ -344,10 +344,10 @@ export default function AccessManagementPage() {
               <UserCircle size={18} />
             </div>
             <div className="flex flex-col">
-              <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+              <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                 {String(info.getValue())}
               </span>
-              <span className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
+              <span className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
                 #{info.row.original.id}
               </span>
             </div>
@@ -358,14 +358,14 @@ export default function AccessManagementPage() {
         accessorKey: 'email',
         header: 'Email',
         cell: (info) => (
-          <span className="text-[12px] text-[hsl(var(--text-secondary))]">{String(info.getValue())}</span>
+          <span className="text-sm text-[hsl(var(--text-secondary))]">{String(info.getValue())}</span>
         ),
       },
       {
         accessorKey: 'role',
         header: 'Rol Asignado',
         cell: (info) => (
-          <span className="px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-[9px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]">
+          <span className="px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]">
             {String(info.getValue())}
           </span>
         ),
@@ -383,7 +383,7 @@ export default function AccessManagementPage() {
                   : 'bg-[hsl(var(--surface-2))]'
               )}
             />
-            <span className="text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide">
+            <span className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide">
               {info.getValue() ? 'Activo' : 'Inactivo'}
             </span>
           </div>
@@ -548,7 +548,7 @@ export default function AccessManagementPage() {
                 <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none mb-1">
                   {title}
                 </h3>
-                <p className="mt-1 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                <p className="mt-1 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                   {subtitle}
                 </p>
               </div>
@@ -568,7 +568,7 @@ export default function AccessManagementPage() {
           className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"
         >
           <div className="flex items-center justify-between mb-5">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
               {group.label}
             </span>
             <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
@@ -583,7 +583,7 @@ export default function AccessManagementPage() {
                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">
                   {activeTab === 'roles' ? row.name : row.username || row.email}
                 </p>
-                <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                <p className="mt-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                   {activeTab === 'roles' ? `${row.users_count || 0} usuarios` : row.role}
                 </p>
               </button>
@@ -640,7 +640,7 @@ export default function AccessManagementPage() {
         rightActions={
           <button
             onClick={handleCreateEntity}
-            className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
+            className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
           >
             <Plus size={14} /> Crear Nuevo
           </button>
@@ -653,7 +653,7 @@ export default function AccessManagementPage() {
         <button
           onClick={() => setActiveTab('roles')}
           className={clsx(
-            'px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10',
+            'px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10',
             activeTab === 'roles'
               ? 'text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]'
               : 'text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50'
@@ -664,7 +664,7 @@ export default function AccessManagementPage() {
         <button
           onClick={() => setActiveTab('users')}
           className={clsx(
-            'px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10',
+            'px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10',
             activeTab === 'users'
               ? 'text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]'
               : 'text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50'
@@ -750,14 +750,14 @@ export default function AccessManagementPage() {
         actions={
           <div className="flex gap-3">
             <button
-              className="px-3 py-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-all"
+              className="px-3 py-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-all"
               onClick={() => setIsDrawerOpen(false)}
             >
               Cerrar
             </button>
             <button
               disabled={isSaving}
-              className="px-4 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
+              className="px-4 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
               onClick={handleSavePermissions}
             >
               {isSaving ? (
@@ -816,7 +816,7 @@ export default function AccessManagementPage() {
           {/* Modular roles read-only section for users */}
           {activeTab === 'users' && userModuleRoles.length > 0 && (
             <section className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 space-y-3">
-              <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-[10px]">
+              <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-2xs">
                 <Shield size={14} className="text-[hsl(var(--primary))]" /> Roles Modulares Asignados
               </div>
               <ul className="space-y-2">
@@ -828,7 +828,7 @@ export default function AccessManagementPage() {
                       className="flex items-center justify-between text-xs text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 rounded-md px-3 py-2"
                     >
                       <span className="font-semibold uppercase tracking-wide">{mr.module}</span>
-                      <span className="text-[10px] text-[hsl(var(--text-secondary))]">
+                      <span className="text-2xs text-[hsl(var(--text-secondary))]">
                         {modularRole?.name || mr.role_id}
                       </span>
                     </li>
@@ -843,7 +843,7 @@ export default function AccessManagementPage() {
               <Lock size={80} />
             </div>
             <div className="relative z-10 space-y-4">
-              <div className="flex items-center gap-3 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px]">
+              <div className="flex items-center gap-3 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs">
                 <AlertCircle size={14} /> Protocolo de Seguridad
               </div>
               <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
@@ -913,7 +913,7 @@ function PermissionRow({
           <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight leading-none mb-1">
             {label}
           </p>
-          <p className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">
+          <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">
             Efectivo:{' '}
             <span className="text-[hsl(var(--primary))]">
               {LEVEL_LABELS[effectiveLevel] || effectiveLevel}

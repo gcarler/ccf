@@ -14,7 +14,7 @@ export default function CrmTopBar({ title, view, onViewChange }: CrmTopBarProps)
         <header className="h-[48px] border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-[#111418] flex items-center justify-between px-4 sticky top-0 z-40">
             {/* Left: Breadcrumbs & View Switcher */}
             <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-[12px] font-medium text-[hsl(var(--text-secondary))]">
+                <div className="flex items-center gap-2 text-sm font-medium text-[hsl(var(--text-secondary))]">
                     <HouseIcon size={14} className="text-[hsl(var(--text-secondary))]" />
                     <ChevronRight size={10} className="text-[hsl(var(--text-secondary))]" />
                     <span>Espacio del equipo</span>
@@ -30,13 +30,13 @@ export default function CrmTopBar({ title, view, onViewChange }: CrmTopBarProps)
                 <div className="flex items-center gap-1">
                     <button
                         onClick={() => onViewChange('list')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-bold transition-all ${view === 'list' ? 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-cu-blue shadow-sm' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition-all ${view === 'list' ? 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-cu-blue shadow-sm' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'}`}
                     >
                         <List size={14} /> Lista
                     </button>
                     <button
                         onClick={() => onViewChange('board')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-bold transition-all ${view === 'board' ? 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-cu-blue shadow-sm' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition-all ${view === 'board' ? 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-cu-blue shadow-sm' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'}`}
                     >
                         <LayoutGrid size={14} /> Tablero
                     </button>
@@ -52,7 +52,7 @@ export default function CrmTopBar({ title, view, onViewChange }: CrmTopBarProps)
                         placeholder="Buscar... Ctrl K"
                         className="w-full bg-[hsl(var(--surface-2))]/50 dark:bg-white/5 border border-transparent focus:border-cu-blue/30 rounded-lg pl-9 pr-4 py-1.5 text-xs transition-all outline-none placeholder:text-[hsl(var(--text-secondary))]"
                     />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded text-[10px] text-[hsl(var(--text-secondary))] font-bold shadow-sm">
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 size-5 flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded text-2xs text-[hsl(var(--text-secondary))] font-bold shadow-sm">
                         /
                     </div>
                 </div>

@@ -63,7 +63,7 @@ function Sparkline({
 }) {
     if (!points?.length) {
         return (
-            <div className="flex items-center justify-center h-11 text-[11px] italic text-[hsl(var(--text-secondary))]">
+            <div className="flex items-center justify-center h-11 text-xs italic text-[hsl(var(--text-secondary))]">
                 Sin datos
             </div>
         );
@@ -188,14 +188,14 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                 actions={
                     trend.is_alert ? (
                         <span
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/15 text-danger-text dark:text-danger-text text-[10px] font-bold uppercase tracking-wide"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/15 text-danger-text dark:text-danger-text text-2xs font-bold uppercase tracking-wide"
                             title={`Bajó más de ${trend.alert_threshold} puntos`}
                         >
                             <AlertTriangle size={11} />
                             Alerta · -{Math.abs(change ?? 0)} pts
                         </span>
                     ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/15 text-success-text dark:text-success-text text-[10px] font-bold uppercase tracking-wide">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/15 text-success-text dark:text-success-text text-2xs font-bold uppercase tracking-wide">
                             Saludable
                         </span>
                     )
@@ -211,7 +211,7 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                         tone === 'amber' && 'bg-warning-soft dark:bg-[hsl(var(--warning))]/10 border border-[hsl(var(--warning)/25%)]/60 dark:border-[hsl(var(--warning)/100%)]/20',
                         tone === 'rose' && 'bg-danger-soft dark:bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/25%)]/60 dark:border-[hsl(var(--danger)/100%)]/20',
                     )}>
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             Score actual
                         </p>
                         <div className="flex items-end gap-2 mt-1">
@@ -221,11 +221,11 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                             >
                                 {score}
                             </span>
-                            <span className="text-[12px] text-[hsl(var(--text-secondary))] mb-1">/ 100</span>
+                            <span className="text-sm text-[hsl(var(--text-secondary))] mb-1">/ 100</span>
                         </div>
                         {change != null && (
                             <div className={clsx(
-                                'mt-2 inline-flex items-center gap-1 text-[11px] font-semibold',
+                                'mt-2 inline-flex items-center gap-1 text-xs font-semibold',
                                 trendTone === 'emerald' && 'text-success-text dark:text-[hsl(var(--success))]',
                                 trendTone === 'rose' && 'text-danger-text dark:text-[hsl(var(--danger))]',
                                 trendTone === 'blue' && 'text-[hsl(var(--text-secondary))]',
@@ -234,7 +234,7 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                                 {change > 0 ? `+${change}` : change} pts vs día previo
                             </div>
                         )}
-                        <p className="mt-2 text-[10px] text-[hsl(var(--text-secondary))]">
+                        <p className="mt-2 text-2xs text-[hsl(var(--text-secondary))]">
                             {trend.total_pages} págs auditadas · {trend.pages_with_errors} con errores
                         </p>
                     </div>
@@ -243,10 +243,10 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                 {/* ── 7d sparkline ── */}
                 <div>
                     <div className="flex items-center justify-between mb-1">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             Últimos 7 días
                         </p>
-                        <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] tabular-nums">
+                        <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] tabular-nums">
                             {trend.history_7d.length} pts
                         </span>
                     </div>
@@ -256,10 +256,10 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                 {/* ── 30d sparkline ── */}
                 <div>
                     <div className="flex items-center justify-between mb-1">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             Últimos 30 días
                         </p>
-                        <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] tabular-nums">
+                        <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] tabular-nums">
                             {trend.history_30d.length} pts
                         </span>
                     </div>
@@ -276,10 +276,10 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
                 >
                     <span className="text-danger-text dark:text-[hsl(var(--danger))] mt-0.5 shrink-0 inline-flex items-center justify-center size-4">▼</span>
                     <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-bold text-danger-text dark:text-danger-text">
+                        <p className="text-sm font-bold text-danger-text dark:text-danger-text">
                             Caída de {Math.abs(change)} puntos en el último día
                         </p>
-                        <p className="text-[11px] text-danger-text/80 dark:text-[hsl(var(--danger)/80%)] mt-0.5">
+                        <p className="text-xs text-danger-text/80 dark:text-[hsl(var(--danger)/80%)] mt-0.5">
                             Umbral de alerta: {trend.alert_threshold} pts. Score previo: {trend.previous_score} → actual: {trend.current_score}.
                         </p>
                     </div>
@@ -287,7 +287,7 @@ export function SeoTrendCard({ trend }: { trend: SeoTrendResponse }) {
             )}
 
             {/* ── Footer: capture timestamp + deep link ── */}
-            <div className="mt-3 flex items-center justify-between text-[10px] text-[hsl(var(--text-secondary))]">
+            <div className="mt-3 flex items-center justify-between text-2xs text-[hsl(var(--text-secondary))]">
                 <span>
                     Último snapshot:{' '}
                     <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">

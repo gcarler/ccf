@@ -23,7 +23,7 @@ export default function ToggleSetting({ icon: Icon, color, title, desc, active, 
         </div>
         <div>
           <h4 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-xs">{title}</h4>
-          <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{desc}</p>
+          <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{desc}</p>
         </div>
       </div>
       <button

@@ -15,7 +15,7 @@ import clsx from 'clsx';
 import { motion } from 'framer-motion';
 
 const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
-const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4";
+const LABEL = "text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4";
 
 export default function EditCoursePage() {
     const params = useParams();
@@ -106,7 +106,7 @@ export default function EditCoursePage() {
  <motion.div variants={containerVariants} initial="hidden"animate="show"className="w-full space-y-3">
 
                         <motion.header variants={itemVariants} className="space-y-3">
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--warning)/0.1)] rounded-full text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--warning)/0.1)] rounded-full text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">
                                 <FileText size={13} strokeWidth={3} /> Edicion de Contenido
                             </div>
                             <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
@@ -185,7 +185,7 @@ export default function EditCoursePage() {
 
                             <div className="flex items-center justify-end gap-4 pt-4">
                                 <button type="button" onClick={() => router.back()}
-                                    className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all">
+                                    className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all">
                                     Descartar
                                 </button>
                                 <button type="submit" disabled={saving}

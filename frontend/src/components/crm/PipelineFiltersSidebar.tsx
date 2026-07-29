@@ -27,9 +27,9 @@ interface PipelineFiltersSidebarProps {
 
 export default function PipelineFiltersSidebar({ stats, search, onSearchChange }: PipelineFiltersSidebarProps) {
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#0f1113]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))]">
             {/* Header Cinematic */}
-            <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-[hsl(var(--surface-1))]/50 dark:bg-[#0f1113]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
+            <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--surface-2))]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
                 <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-[hsl(var(--primary))] dark:text-white">
                     <Target size={160} />
                 </div>
@@ -53,7 +53,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                         { label: 'Conversión', value: `${stats.conversion}%`, color: 'text-info-text', icon: TrendingUp }
                     ].map((s) => (
                         <div key={s.label} className="bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] shadow-sm">
-                            <p className="text-[8px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1.5">{s.label}</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1.5">{s.label}</p>
                             <div className="flex items-center justify-between">
                                 <p className={clsx("text-sm font-bold tracking-tighter leading-none", s.color)}>{s.value}</p>
                                 {s.icon && <s.icon size={12} className={s.color} />}
@@ -66,7 +66,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
             {/* Filters Section */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 <section className="space-y-4">
-                    <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
+                    <h3 className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                         <Filter size={14} className="text-[hsl(var(--primary))]" /> Segmentación
                     </h3>
                     <div className="space-y-2">
@@ -83,15 +83,15 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                                 <div className={clsx("size-8 rounded-lg flex items-center justify-center transition-all group-hover:scale-110", s.bg, s.color)}>
                                     <s.icon size={16} />
                                 </div>
-                                <span className="flex-1 text-left font-bold text-[11px] uppercase tracking-tight text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{s.label}</span>
-                                <span className="text-[10px] px-2.5 py-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-lg font-bold text-[hsl(var(--text-secondary))]">{s.count}</span>
+                                <span className="flex-1 text-left font-bold text-xs uppercase tracking-tight text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{s.label}</span>
+                                <span className="text-2xs px-2.5 py-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-lg font-bold text-[hsl(var(--text-secondary))]">{s.count}</span>
                             </motion.button>
                         ))}
                     </div>
                 </section>
 
                 <section className="space-y-4">
-                    <h3 className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
+                    <h3 className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                         <Search size={14} className="text-[hsl(var(--primary))]" /> Búsqueda Quick-Scan
                     </h3>
                     <div className="relative group">
@@ -101,7 +101,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                             onChange={e => onSearchChange(e.target.value)}
                             placeholder="Nombre, teléfono o etiqueta..."
                             aria-label="Buscar prospectos"
-                            className="w-full pl-12 pr-6 py-2 text-xs font-bold rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--surface-1))] dark:bg-[#1a1b1d] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 dark:text-white transition-all placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-primary))]"
+                            className="w-full pl-12 pr-6 py-2 text-xs font-bold rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 dark:text-white transition-all placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-primary))]"
                         />
                     </div>
                 </section>
@@ -110,7 +110,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                     <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 transition-transform duration-700"><Zap size={80} /></div>
                     <div className="relative z-10">
                         <h4 className="text-sm font-bold uppercase tracking-tighter leading-tight mb-2">Asistente<br/>Optimus</h4>
-                        <p className="text-[10px] font-bold text-[hsl(var(--info))] uppercase tracking-wide leading-relaxed">
+                        <p className="text-2xs font-bold text-[hsl(var(--info))] uppercase tracking-wide leading-relaxed">
                             Analizando tendencias de permanencia para optimizar el discipulado.
                         </p>
                     </div>

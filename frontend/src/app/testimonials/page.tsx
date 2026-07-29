@@ -49,7 +49,7 @@ export default function TestimonialsPage() {
             <section className="py-1.5 px-3 text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b to-[hsl(var(--danger)/10%)] to-transparent pointer-events-none" />
                 <div className="max-w-4xl mx-auto relative">
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--danger))]/20 text-[hsl(var(--danger))] text-[11px] font-bold uppercase tracking-wide mb-3">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--danger))]/20 text-[hsl(var(--danger))] text-xs font-bold uppercase tracking-wide mb-3">
                         <Heart size={11} /> Historias Reales
                     </span>
                     <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
@@ -81,7 +81,7 @@ export default function TestimonialsPage() {
                     <div className="max-w-6xl mx-auto px-3 flex items-center gap-2 flex-wrap mb-3">
                         {categories.map(c => (
                             <button key={c} onClick={() => setCat(c)}
-                                className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-[hsl(var(--danger))] text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
+                                className={`px-4 py-1.5 rounded-lg text-2xs font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-[hsl(var(--danger))] text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
                                 {c}
                             </button>
                         ))}
@@ -95,7 +95,7 @@ export default function TestimonialsPage() {
                                     className="bg-white/5 hover:bg-white/8 border border-white/5 hover:border-[hsl(var(--danger)/100%)]/20 rounded-lg p-3 cursor-pointer group transition-all hover:shadow-xl hover:shadow-[hsl(var(--danger)/5%)]"
                                     onClick={() => setSelected(t)}>
                                     <div className="text-xl text-[hsl(var(--danger))]/30 font-bold leading-none mb-3">&quot;</div>
-                                    <p className="text-[13px] text-[hsl(var(--text-secondary))] leading-relaxed line-clamp-4 mb-5 group-hover:text-white transition-colors">
+                                    <p className="text-base text-[hsl(var(--text-secondary))] leading-relaxed line-clamp-4 mb-5 group-hover:text-white transition-colors">
                                         {t.content}
                                     </p>
                                     <div className="flex items-center gap-3">
@@ -103,10 +103,10 @@ export default function TestimonialsPage() {
                                             <User size={16} />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[12px] font-bold text-white truncate">{t.author?.username || 'Anónimo'}</p>
+                                            <p className="text-sm font-bold text-white truncate">{t.author?.username || 'Anónimo'}</p>
                                         </div>
                                         <div className="flex flex-col items-end gap-1">
-                                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-[hsl(var(--danger))]/20 text-[hsl(var(--danger))] font-bold uppercase tracking-wide">{t.emotion || 'General'}</span>
+                                            <span className="text-2xs px-2 py-0.5 rounded-full bg-[hsl(var(--danger))]/20 text-[hsl(var(--danger))] font-bold uppercase tracking-wide">{t.emotion || 'General'}</span>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -133,7 +133,7 @@ export default function TestimonialsPage() {
                             </div>
                             <div>
                                 <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-base">{selected.author?.username || 'Anónimo'}</p>
-                                <span className="text-[9px] px-2 py-0.5 rounded-full bg-danger-soft dark:bg-[hsl(var(--danger))]/20 text-danger-text dark:text-[hsl(var(--danger))] font-bold uppercase tracking-wide mt-1 inline-block">{selected.emotion || 'General'}</span>
+                                <span className="text-2xs px-2 py-0.5 rounded-full bg-danger-soft dark:bg-[hsl(var(--danger))]/20 text-danger-text dark:text-[hsl(var(--danger))] font-bold uppercase tracking-wide mt-1 inline-block">{selected.emotion || 'General'}</span>
                             </div>
                         </div>
                     </div>

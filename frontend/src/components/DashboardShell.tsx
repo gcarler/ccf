@@ -122,13 +122,13 @@ function FilterBar({
             <Filter size={14} className="text-[hsl(var(--text-secondary))]" />
             {filters.map((f) => (
                 <div key={f.key} className="flex items-center gap-1.5">
-                    <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         {f.label}:
                     </label>
                     <select
                         value={activeFilters[f.key] ?? f.default ?? ''}
                         onChange={(e) => onFilterChange(f.key, e.target.value)}
-                        className="text-[11px] font-medium bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md px-2 py-1 text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
+                        className="text-xs font-medium bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md px-2 py-1 text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
                     >
                         {(f.options || []).map((opt) => (
                             <option key={opt.value} value={opt.value}>
@@ -156,12 +156,12 @@ function FunnelChart({ stages }: { stages: FunnelStage[] }) {
                     'bg-[hsl(var(--primary)/0.7)]';
                 return (
                     <div key={s.stage} className="space-y-0.5">
-                        <div className="flex items-center justify-between text-[11px]">
+                        <div className="flex items-center justify-between text-xs">
                             <span className="font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{s.stage}</span>
                             <div className="flex items-center gap-2">
                                 <span className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{fmtNum(s.count)}</span>
                                 {s.conversion_rate !== undefined && (
-                                    <span className="text-[10px] text-[hsl(var(--text-secondary))]">({s.conversion_rate}%)</span>
+                                    <span className="text-2xs text-[hsl(var(--text-secondary))]">({s.conversion_rate}%)</span>
                                 )}
                             </div>
                         </div>
@@ -190,7 +190,7 @@ function HeatMap({ data }: { data: HeatmapItem[] }) {
 
     return (
         <div className="overflow-x-auto">
-            <table className="w-full text-[10px]">
+            <table className="w-full text-2xs">
                 <thead>
                     <tr>
                         <th className="p-1 text-left text-[hsl(var(--text-secondary))] font-medium">Tipo \ Día</th>
@@ -248,11 +248,11 @@ function GeoMap({ data }: { data: GeoBucket[] }) {
                         <MapPin size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">
+                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">
                             {g.label}
                         </p>
                         {g.lat && g.lng && (
-                            <p className="text-[9px] text-[hsl(var(--text-secondary))]">
+                            <p className="text-2xs text-[hsl(var(--text-secondary))]">
                                 {g.lat.toFixed(4)}, {g.lng.toFixed(4)}
                             </p>
                         )}
@@ -277,13 +277,13 @@ function DataTable({ rows, title }: { rows: TableRow[]; title?: string }) {
     return (
         <div className="overflow-x-auto">
             {title && (
-                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{title}</p>
+                <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{title}</p>
             )}
-            <table className="w-full text-[11px]">
+            <table className="w-full text-xs">
                 <thead>
                     <tr className="border-b border-[hsl(var(--border))] dark:border-white/5">
                         {columns.map((col) => (
-                            <th key={col} className="text-left py-2 px-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <th key={col} className="text-left py-2 px-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 {col}
                             </th>
                         ))}
@@ -392,7 +392,7 @@ export default function DashboardShell({
                             {title || config?.label || module}
                         </h1>
                         {data?.last_updated && (
-                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+                            <p className="text-2xs text-[hsl(var(--text-secondary))]">
                                 Actualizado: {new Date(data.last_updated).toLocaleString('es-CO')}
                             </p>
                         )}
@@ -439,7 +439,7 @@ export default function DashboardShell({
                         <p className="text-sm text-[hsl(var(--text-secondary))]">{error}</p>
                         <button
                             onClick={fetchDashboard}
-                            className="text-[11px] font-semibold text-[hsl(var(--primary))] hover:underline"
+                            className="text-xs font-semibold text-[hsl(var(--primary))] hover:underline"
                         >
                             Reintentar
                         </button>
@@ -860,10 +860,10 @@ export default function DashboardShell({
                                             key={i}
                                             className="flex items-center justify-between py-1.5 px-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
-                                            <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                                            <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                 {c.title}
                                             </span>
-                                            <span className="text-[11px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
+                                            <span className="text-xs font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">
                                                 {c.count} matriculados
                                             </span>
                                         </div>
@@ -888,12 +888,12 @@ export default function DashboardShell({
                                             className="flex items-center justify-between py-1.5 px-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
                                             <div>
-                                                <p className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                                                <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                     {d.donor}
                                                 </p>
-                                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{d.type}</p>
+                                                <p className="text-2xs text-[hsl(var(--text-secondary))]">{d.type}</p>
                                             </div>
-                                            <span className="text-[12px] font-bold text-[hsl(var(--success))]">
+                                            <span className="text-sm font-bold text-[hsl(var(--success))]">
                                                 ${Number(d.amount).toLocaleString()}
                                             </span>
                                         </div>
@@ -918,14 +918,14 @@ export default function DashboardShell({
                                             className="flex items-center justify-between py-1.5 px-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
                                             <div>
-                                                <p className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                                                <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                     {e.titulo}
                                                 </p>
-                                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+                                                <p className="text-2xs text-[hsl(var(--text-secondary))]">
                                                     {e.ubicacion} · {e.participantes} participantes
                                                 </p>
                                             </div>
-                                            <span className="text-[11px] text-[hsl(var(--text-secondary))]">
+                                            <span className="text-xs text-[hsl(var(--text-secondary))]">
                                                 {new Date(e.fecha).toLocaleDateString('es-CO', {
                                                     day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
                                                 })}

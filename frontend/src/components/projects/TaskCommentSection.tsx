@@ -79,22 +79,22 @@ export default function TaskCommentSection({
         <section className="px-4 py-3">
             {error && (
                 <div className="mb-2 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-2 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                    <p className="text-[10px] font-bold uppercase tracking-wide">{error}</p>
+                    <p className="text-2xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
 
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-1.5">
+            <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-1.5">
                 <MessageSquare size={11} /> Actividad
             </p>
 
             <div className="space-y-3 mb-4">
                 {loadingComments && (
-                    <p className="text-[11px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] italic text-center py-2">
+                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] italic text-center py-2">
                         Cargando actividad...
                     </p>
                 )}
                 {!loadingComments && comments.length === 0 && (
-                    <p className="text-[11px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] italic text-center py-2">
+                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] italic text-center py-2">
                         Sin comentarios aún. Menciona a alguien con @
                     </p>
                 )}
@@ -108,8 +108,8 @@ export default function TaskCommentSection({
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-baseline gap-2 mb-1">
-                                <span className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{c.author}</span>
-                                <span className="text-[10px] text-[hsl(var(--text-secondary))]">
+                                <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{c.author}</span>
+                                <span className="text-2xs text-[hsl(var(--text-secondary))]">
                                     {c.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                                 <button
@@ -120,7 +120,7 @@ export default function TaskCommentSection({
                                     <Trash2 size={12} />
                                 </button>
                             </div>
-                            <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{c.text}</p>
+                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{c.text}</p>
                         </div>
                     </div>
                 ))}
@@ -137,7 +137,7 @@ export default function TaskCommentSection({
                         onChange={e => setCommentInput(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSendComment()}
                         placeholder="Menciona @Dzin para crear, encontrar y preguntar..."
-                        className="flex-1 text-[12px] bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))]"
+                        className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))]"
                     />
                     {commentInput.trim() && (
                         <button
@@ -152,7 +152,7 @@ export default function TaskCommentSection({
             </div>
 
             <div className="flex items-center gap-2 mt-2 pl-8">
-                <button className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10 border border-[hsl(var(--info)/25%)]/50 dark:border-[hsl(var(--info)/100%)]/20">
+                <button className="flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-semibold text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10 border border-[hsl(var(--info)/25%)]/50 dark:border-[hsl(var(--info)/100%)]/20">
                     <MessageSquare size={9} /> Comentario
                     <ChevronDown size={9} />
                 </button>

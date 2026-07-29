@@ -131,14 +131,14 @@ function CmsPreviewInner() {
       <header className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-3 dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Vista previa CMS</p>
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Vista previa CMS</p>
             <h1 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">{page?.title || slug || "Preview"}</h1>
             <p className="text-xs text-[hsl(var(--text-secondary))]">/{siteKey}/{slug}</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-colors ${
+              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-2xs font-semibold uppercase tracking-wide transition-colors ${
                 autoRefresh
                   ? "border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:border-[hsl(var(--success)/0.7)] dark:bg-[hsl(var(--success)/0.3)] dark:text-[hsl(var(--success))]"
                   : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] dark:border-white/10"
@@ -148,10 +148,10 @@ function CmsPreviewInner() {
               {autoRefresh ? <Pause size={11} /> : <Play size={11} />}
               {autoRefresh ? `Auto ${timeSinceRefresh}` : "Pausado"}
             </button>
-            <button onClick={() => loadPreview(false)} className="inline-flex items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
+            <button onClick={() => loadPreview(false)} className="inline-flex items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
               <RefreshCw size={13} /> Recargar
             </button>
-            <Link href={publicHref} target="_blank" className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--bg-muted))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))]">
+            <Link href={publicHref} target="_blank" className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--bg-muted))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))]">
               <ExternalLink size={13} /> Publicado
             </Link>
           </div>
@@ -160,7 +160,7 @@ function CmsPreviewInner() {
 
       <main className="flex-1 overflow-y-auto p-4 md:p-4">
         <div className="mx-auto max-w-6xl overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-xl dark:border-white/10 dark:bg-[hsl(var(--admin-bg-surface))]">
-          <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
+          <div className="flex items-center gap-2 border-b border-[hsl(var(--border))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
             <Monitor size={13} /> Draft actual
             {autoRefresh && <span className="ml-auto text-[hsl(var(--success))] dark:text-[hsl(var(--success))]">● Auto-refresh activo</span>}
           </div>

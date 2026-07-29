@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { ProjectTaskRecord } from '@/types/projects';
+import { createMockTask } from '@/test-utils/factories';
 
 vi.mock('@/lib/agGrid', () => ({}));
 vi.mock('ag-grid-react', async () => import('../../__mocks__/ag-grid-react'));
@@ -27,7 +27,9 @@ vi.mock('@/components/ui/inline-editors', () => ({
 }));
 
 vi.mock('@/components/projects/TitleCellEditor', () => {
-  const MockedTitleCellEditor = forwardRef((props: any, ref: any) => <input ref={ref} defaultValue={props.value} aria-label="title-editor" />);
+  const MockedTitleCellEditor = forwardRef<HTMLInputElement, { value?: string }>((props, ref) => (
+    <input ref={ref} defaultValue={props.value} aria-label="title-editor" />
+  ));
   MockedTitleCellEditor.displayName = 'MockedTitleCellEditor';
   return {
     __esModule: true,
@@ -37,8 +39,8 @@ vi.mock('@/components/projects/TitleCellEditor', () => {
 
 import TaskTableView from './TaskTableView';
 
-const tasks: ProjectTaskRecord[] = [
-  {
+const tasks = [
+  createMockTask({
     id: 't1',
     project_id: 'p1',
     parent_id: null,
@@ -53,7 +55,7 @@ const tasks: ProjectTaskRecord[] = [
     order_index: 0,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
-  } as ProjectTaskRecord,
+  }),
 ];
 
 describe('TaskTableView', () => {

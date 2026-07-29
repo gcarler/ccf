@@ -63,12 +63,12 @@ export default function TransparencyPage() {
                     <div className="size-7 rounded-lg bg-success-soft dark:bg-[hsl(var(--success))]/30 flex items-center justify-center">
                         <ShieldCheck size={14} className="text-success-text" />
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-success-text">Mayordomía Transparente</span>
+                    <span className="text-2xs font-semibold uppercase tracking-wide text-success-text">Mayordomía Transparente</span>
                 </div>
                 <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
                     Impacto y Transparencia
                 </h1>
-                <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">
+                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">
                     En CCF creemos en la rendición de cuentas. Aquí puedes ver cómo tus ofrendas se transforman en impacto real para el Reino de Dios.
                 </p>
                 {data && (

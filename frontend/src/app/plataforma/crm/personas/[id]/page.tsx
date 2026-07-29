@@ -92,13 +92,13 @@ function MentorAssignmentDrawer({
             subtitle={subtitle || `Para: ${personaName}`}
             actions={
                 <div className="flex items-center gap-2">
-                    <button onClick={onClose} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+                    <button onClick={onClose} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                         Cerrar
                     </button>
                     <button
                         onClick={onSave}
                         disabled={saving || !selectedMentorId}
-                        className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)] transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60"
+                        className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)] transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60"
                     >
                         {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                         Guardar
@@ -109,7 +109,7 @@ function MentorAssignmentDrawer({
             <div className="mt-6 space-y-4">
                 {currentMentor?.mentor_name ? (
                     <div className="rounded-lg border border-[hsl(var(--success)/100%)]/20 bg-[hsl(var(--success))]/5 p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-success-text dark:text-success-text">Mentoría actual</p>
+                        <p className="text-2xs font-bold uppercase tracking-wide text-success-text dark:text-success-text">Mentoría actual</p>
                         <p className="mt-1 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{currentMentor.mentor_name}</p>
                         <p className="text-xs text-[hsl(var(--text-secondary))]">{currentMentor.mentor_role || 'Mentor activo'}</p>
                     </div>
@@ -120,7 +120,7 @@ function MentorAssignmentDrawer({
                 )}
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Buscar mentor</label>
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Buscar mentor</label>
                     <input
                         value={search}
                         onChange={(e) => onSearchChange(e.target.value)}
@@ -130,7 +130,7 @@ function MentorAssignmentDrawer({
                 </div>
 
                 <div className="space-y-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Candidatos sugeridos</p>
+                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Candidatos sugeridos</p>
                     {loadingCandidates ? (
                         <div className="flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 text-sm text-[hsl(var(--text-secondary))]">
                             <Loader2 size={14} className="animate-spin" />
@@ -155,11 +155,11 @@ function MentorAssignmentDrawer({
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
                                                 <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{candidate.nombre_completo}</p>
-                                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{candidate.church_role || 'Persona'}</p>
+                                                <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{candidate.church_role || 'Persona'}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-[11px] font-bold text-[hsl(var(--primary))]">{candidate.fit_score ?? 0}%</p>
-                                                <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ajuste</p>
+                                                <p className="text-xs font-bold text-[hsl(var(--primary))]">{candidate.fit_score ?? 0}%</p>
+                                                <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ajuste</p>
                                             </div>
                                         </div>
                                         <p className="mt-2 text-xs text-[hsl(var(--text-secondary))] leading-relaxed">{candidate.fit_reason}</p>
@@ -175,7 +175,7 @@ function MentorAssignmentDrawer({
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Observaciones</label>
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Observaciones</label>
                     <textarea
                         value={notes}
                         onChange={(e) => onNotesChange(e.target.value)}
@@ -581,7 +581,7 @@ export default function PersonaDetailPage() {
             <div className="size-9 rounded-lg bg-[hsl(var(--info))]/10 flex items-center justify-center">
                 <Activity size={24} className="text-[hsl(var(--primary))] animate-spin" />
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Accediendo al Expediente...</p>
+            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Accediendo al Expediente...</p>
         </div>
     );
 
@@ -646,7 +646,7 @@ export default function PersonaDetailPage() {
                     {/* Info */}
                     <div className="flex-1 space-y-2">
                         <div className="space-y-2">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-full text-[10px] font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-full text-2xs font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20">
                                 ID: #{persona.id} <span className="text-[hsl(var(--text-secondary))]">•</span> {persona.status}
                             </div>
                             <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">{fullName}</h1>
@@ -677,7 +677,7 @@ export default function PersonaDetailPage() {
                             key={tabId}
                             onClick={() => setActiveTab(tabId)}
                             className={clsx(
-                                "flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all relative whitespace-nowrap shrink-0",
+                                "flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all relative whitespace-nowrap shrink-0",
                                 active ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
                             )}
                         >
@@ -704,7 +704,7 @@ export default function PersonaDetailPage() {
                         <div className="lg:col-span-8 space-y-3">
                             {/* Perfil de Consolidación */}
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Perfil de Consolidación</h3>
+                                <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Perfil de Consolidación</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Ingreso', value: formatDate(persona.joinedAt), icon: Calendar },
                                     { label: 'Fecha de Nacimiento', value: formatDate(persona.birthday), icon: Calendar },
@@ -713,7 +713,7 @@ export default function PersonaDetailPage() {
                                 ]} />
                                 {persona.pastoral_notes && (
                                     <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5">
-                                        <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">Notas Pastorales</p>
+                                        <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">Notas Pastorales</p>
                                         <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed italic">&ldquo;{persona.pastoral_notes}&rdquo;</p>
                                     </div>
                                 )}
@@ -721,7 +721,7 @@ export default function PersonaDetailPage() {
 
                             {/* Datos Personales */}
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Datos Personales</h3>
+                                <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Datos Personales</h3>
                                 <InfoGrid items={[
                                     { label: 'Tipo de ID', value: persona.id_type },
                                     { label: 'Número de ID', value: persona.id_number },
@@ -737,7 +737,7 @@ export default function PersonaDetailPage() {
                             {/* Contacto y Ubicación */}
                             {(persona.landline_phone || persona.address || persona.city) && (
                                 <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contacto y Ubicación</h3>
+                                    <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contacto y Ubicación</h3>
                                     <InfoGrid items={[
                                         { label: 'Teléfono Fijo', value: persona.landline_phone },
                                         { label: 'Celular', value: persona.mobile_phone },
@@ -753,7 +753,7 @@ export default function PersonaDetailPage() {
                             {/* Educación y Profesión */}
                             {(persona.profession || persona.education_level) && (
                                 <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Educación y Profesión</h3>
+                                    <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Educación y Profesión</h3>
                                     <InfoGrid items={[
                                         { label: 'Nivel Educativo', value: persona.education_level },
                                         { label: 'Estado Educativo', value: persona.education_status },
@@ -766,7 +766,7 @@ export default function PersonaDetailPage() {
                             {/* Médico */}
                             {(persona.blood_type || persona.medical_notes) && (
                                 <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Información Médica</h3>
+                                    <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Información Médica</h3>
                                     <InfoGrid items={[
                                         { label: 'Tipo de Sangre', value: persona.blood_type },
                                         { label: 'Notas Médicas', value: persona.medical_notes },
@@ -777,8 +777,8 @@ export default function PersonaDetailPage() {
                             {/* Núcleo Familiar */}
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Núcleo Familiar</h3>
-                                    <button className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-all">
+                                    <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Núcleo Familiar</h3>
+                                    <button className="flex items-center gap-1.5 text-2xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-all">
                                         <Plus size={12} /> Añadir
                                     </button>
                                 </div>
@@ -792,7 +792,7 @@ export default function PersonaDetailPage() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{f.name ?? f.first_name}</p>
-                                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{f.relation}</p>
+                                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{f.relation}</p>
                                                     </div>
                                                 </div>
                                                 <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:translate-x-1 transition-transform" />
@@ -802,7 +802,7 @@ export default function PersonaDetailPage() {
                                 ) : (
                                     <div className="py-2 text-center rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-dashed border-[hsl(var(--border))] dark:border-white/10">
                                         <Users size={28} className="mx-auto text-[hsl(var(--text-secondary))] mb-3" />
-                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sin núcleo familiar registrado</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sin núcleo familiar registrado</p>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Este persona aún no pertenece a una familia</p>
                                     </div>
                                 )}
@@ -833,9 +833,9 @@ export default function PersonaDetailPage() {
                                             </div>
                                             {currentMentor?.mentor_name ? (
                                                 <div className="rounded-lg bg-white/10 p-3 border border-white/10">
-                                                    <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--info))]">Mentoría actual</p>
+                                                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--info))]">Mentoría actual</p>
                                                     <p className="mt-1 text-sm font-bold text-white">{currentMentor.mentor_name}</p>
-                                                    <p className="text-[11px] text-[hsl(var(--info)/90%)]">{currentMentor.mentor_role || 'Mentor activo'}</p>
+                                                    <p className="text-xs text-[hsl(var(--info)/90%)]">{currentMentor.mentor_role || 'Mentor activo'}</p>
                                                 </div>
                                             ) : null}
                                             {metrics.length > 0 ? (
@@ -853,7 +853,7 @@ export default function PersonaDetailPage() {
                                             {insight?.signals?.length ? (
                                                 <div className="flex flex-wrap gap-2">
                                                     {insight.signals.slice(0, 4).map((signal) => (
-                                                        <span key={signal} className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--info))]">
+                                                        <span key={signal} className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--info))]">
                                                             {signal}
                                                         </span>
                                                     ))}
@@ -867,7 +867,7 @@ export default function PersonaDetailPage() {
                                                     });
                                                     setMentorDrawerOpen(true);
                                                 }}
-                                                className="w-full py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] rounded-lg font-bold text-[10px] uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all"
+                                                className="w-full py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] rounded-lg font-bold text-2xs uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all"
                                             >
                                                 Asignar Mentoría
                                             </button>
@@ -878,7 +878,7 @@ export default function PersonaDetailPage() {
 
                             {/* Indicadores de Salud */}
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-4 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-2">
-                                <h3 className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Indicadores de Salud</h3>
+                                <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Indicadores de Salud</h3>
                                 <HealthIndicator label="Asistencia Mensual" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.attendance_rate ?? 0)))} color="bg-[hsl(var(--success))]" />
                                 <HealthIndicator label="Progreso Academia" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.academy_progress ?? persona.academy_progress ?? 0)))} color="bg-[hsl(var(--primary))]" />
                                 <HealthIndicator label="Compromiso Voluntario" value={Math.max(0, Math.min(100, Math.round(persona.mesh_insight?.volunteer_commitment ?? persona.volunteer_commitment ?? 0)))} color="bg-[hsl(var(--warning))]" />
@@ -890,7 +890,7 @@ export default function PersonaDetailPage() {
                     {activeTab === 'spiritual' && <>
                         <div className="lg:col-span-8 space-y-3">
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Datos Espirituales</h3>
+                                <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Datos Espirituales</h3>
                                 <InfoGrid items={[
                                     { label: 'Fecha de Bautismo', value: formatDate(persona.baptism_date), icon: CheckCircle2 },
                                     { label: 'Grupo', value: persona.house, icon: Heart },
@@ -899,10 +899,10 @@ export default function PersonaDetailPage() {
                                 ]} />
                                 {persona.spiritual_gifts ? (
                                     <div className="space-y-3">
-                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Dones Espirituales</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Dones Espirituales</p>
                                         <div className="flex flex-wrap gap-2">
                                             {persona.spiritual_gifts.split(',').map((gift: string, i: number) => (
-                                                <span key={i} className="px-3 py-1.5 bg-info-soft dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-info-text text-[11px] font-bold rounded-md border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--primary))]/20 uppercase tracking-wide">
+                                                <span key={i} className="px-3 py-1.5 bg-info-soft dark:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] dark:text-info-text text-xs font-bold rounded-md border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--primary))]/20 uppercase tracking-wide">
                                                     {gift.trim()}
                                                 </span>
                                             ))}
@@ -910,12 +910,12 @@ export default function PersonaDetailPage() {
                                     </div>
                                 ) : (
                                     <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 text-center">
-                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Dones espirituales no registrados</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Dones espirituales no registrados</p>
                                     </div>
                                 )}
                                 {persona.talents ? (
                                     <div className="space-y-3">
-                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Talentos y Habilidades</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Talentos y Habilidades</p>
                                         <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{persona.talents}</p>
                                     </div>
                                 ) : null}
@@ -935,7 +935,7 @@ export default function PersonaDetailPage() {
                                             });
                                             setMentorDrawerOpen(true);
                                         }}
-                                        className="w-full py-1.5 bg-[hsl(var(--surface-1))] text-danger-text rounded-lg font-bold text-[10px] uppercase tracking-wide hover:scale-105 transition-all"
+                                        className="w-full py-1.5 bg-[hsl(var(--surface-1))] text-danger-text rounded-lg font-bold text-2xs uppercase tracking-wide hover:scale-105 transition-all"
                                     >
                                         Asignar Pastor
                                     </button>
@@ -949,8 +949,8 @@ export default function PersonaDetailPage() {
                         <div className="lg:col-span-12">
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso Académico</h3>
-                                    <Link href="/plataforma/academy" className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-all">
+                                    <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso Académico</h3>
+                                    <Link href="/plataforma/academy" className="flex items-center gap-1.5 text-2xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-all">
                                         Ver Academia <ExternalLink size={12} />
                                     </Link>
                                 </div>
@@ -982,7 +982,7 @@ export default function PersonaDetailPage() {
                                         <div className={clsx('size-8 rounded-md flex items-center justify-center text-white', stat.color)}>
                                             <stat.icon size={18} />
                                         </div>
-                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{stat.label}</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{stat.label}</p>
                                         <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{formatCurrency(stat.value)}</p>
                                     </div>
                                 ))}
@@ -990,7 +990,7 @@ export default function PersonaDetailPage() {
 
                             {/* Transactions */}
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Historial de Siembras</h3>
+                                <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Historial de Siembras</h3>
                                 {loadingDonations ? (
                                     <div className="py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Cargando...</div>
                                 ) : donations.length > 0 ? (
@@ -1003,7 +1003,7 @@ export default function PersonaDetailPage() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white capitalize">{d.donation_type}</p>
-                                                        <p className="text-[10px] text-[hsl(var(--text-secondary))]">{formatDate(d.created_at)}</p>
+                                                        <p className="text-2xs text-[hsl(var(--text-secondary))]">{formatDate(d.created_at)}</p>
                                                     </div>
                                                 </div>
                                                 <p className="text-sm font-bold text-success-text">{formatCurrency(d.amount)}</p>
@@ -1025,7 +1025,7 @@ export default function PersonaDetailPage() {
                     {activeTab === 'history' && <>
                         <div className="lg:col-span-12">
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm">
-                                <h3 className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Línea de Tiempo Pastoral</h3>
+                                <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Línea de Tiempo Pastoral</h3>
                                 {loadingHistory ? (
                                     <div className="py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Cargando historial...</div>
                                 ) : history.length > 0 ? (
@@ -1039,7 +1039,7 @@ export default function PersonaDetailPage() {
                                                 <div className="flex-1 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg p-3">
                                                     <div className="flex items-center justify-between mb-2">
                                                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{event.event_type ?? event.type ?? 'Evento'}</p>
-                                                        <p className="text-[10px] text-[hsl(var(--text-secondary))]">{formatDate(event.created_at)}</p>
+                                                        <p className="text-2xs text-[hsl(var(--text-secondary))]">{formatDate(event.created_at)}</p>
                                                     </div>
                                                     {event.notes && <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed">{event.notes}</p>}
                                                 </div>
@@ -1094,8 +1094,8 @@ export default function PersonaDetailPage() {
                 subtitle={`Actualizando perfil de ${fullName}`}
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">Cancelar</button>
-                        <button type="button" onClick={handleSavePersona} disabled={isEditSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)] transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
+                        <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">Cancelar</button>
+                        <button type="button" onClick={handleSavePersona} disabled={isEditSaving} className="flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)] transition-all hover:bg-[hsl(var(--primary))] active:scale-95 disabled:opacity-60">
                             {isEditSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Guardar
                         </button>
@@ -1155,14 +1155,14 @@ export default function PersonaDetailPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Departamento</label>
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Departamento</label>
                                 <select value={editPersona.colombian_department_id ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">Seleccionar departamento</option>
                                     {departments.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ciudad</label>
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ciudad</label>
                                 <select value={editPersona.city ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, city: e.target.value }))} disabled={!editPersona.colombian_department_id || loadingEditCities} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">{loadingEditCities ? 'Cargando ciudades...' : 'Seleccionar ciudad'}</option>
                                     {editCities.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)}

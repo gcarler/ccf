@@ -136,10 +136,10 @@ export default function WorkspaceExperienceManager() {
                         </div>
                         <div>
                             <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{feature.label}</h3>
-                            <p className="mt-1 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{feature.desc}</p>
+                            <p className="mt-1 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{feature.desc}</p>
                         </div>
                     </div>
-                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", feature.enabled ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span>
+                    <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", feature.enabled ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span>
                 </button>
             ))}
         </div>
@@ -150,17 +150,17 @@ export default function WorkspaceExperienceManager() {
             <table className="w-full min-w-[480px] text-left">
                 <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                     <tr>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Feature</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Descripción</th>
-                        <th className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Feature</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Descripción</th>
+                        <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                     {featureRows.map((feature) => (
                         <tr key={feature.id} onClick={() => toggleFeature(feature.id)} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] cursor-pointer">
                             <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{feature.label}</td>
-                            <td className="px-3 py-1.5 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{feature.desc}</td>
-                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", feature.enabled ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span></td>
+                            <td className="px-3 py-1.5 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{feature.desc}</td>
+                            <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", feature.enabled ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span></td>
                         </tr>
                     ))}
                 </tbody>
@@ -173,14 +173,14 @@ export default function WorkspaceExperienceManager() {
             {groupedFeatures.map((group) => (
                 <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                     <div className="flex items-center justify-between mb-5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                        <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((feature) => (
                             <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--info)/30%)] transition-all">
                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{feature.label}</p>
-                                <p className="mt-2 text-[10px] font-bold text-[hsl(var(--text-secondary))]">{feature.desc}</p>
+                                <p className="mt-2 text-2xs font-bold text-[hsl(var(--text-secondary))]">{feature.desc}</p>
                             </button>
                         ))}
                     </div>
@@ -201,7 +201,7 @@ export default function WorkspaceExperienceManager() {
                         <button onClick={() => router.back()} className="px-4 py-2 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide hover:text-[hsl(var(--text-primary))]">Cancelar</button>
                         <button 
                             onClick={handleSave} disabled={isSaving}
-                            className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
+                            className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
                         >
                             {isSaving ? <RotateCcw className="animate-spin" size={14} /> : <Save size={14} />} Guardar Workspace
                         </button>
@@ -216,7 +216,7 @@ export default function WorkspaceExperienceManager() {
                     
                     {/* Header */}
                     <header className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-info-text rounded-lg text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)]">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-info-text rounded-lg text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)]">
                             <Zap size={14} /> Workspace Experience Manager v3.0
                         </div>
                         <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
@@ -245,7 +245,7 @@ export default function WorkspaceExperienceManager() {
                     <section className="space-y-3">
                         <div className="flex items-center justify-between px-2">
                             <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Módulos y Funcionalidades</h3>
-                            <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">Selección Global</span>
+                            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">Selección Global</span>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -269,7 +269,7 @@ export default function WorkspaceExperienceManager() {
                                             </div>
                                             <div>
                                                 <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{feature.label}</h4>
-                                                <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium mt-1 leading-snug">{feature.desc}</p>
+                                                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium mt-1 leading-snug">{feature.desc}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -299,11 +299,11 @@ export default function WorkspaceExperienceManager() {
                                 </div>
                                 <div className="space-y-3 bg-white/5 p-4 rounded-lg border border-white/10 backdrop-blur-md">
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide ml-2">Nombre del Workspace</label>
+                                        <label className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide ml-2">Nombre del Workspace</label>
                                         <input type="text" defaultValue={SITE_NAME} className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide ml-2">URL del Logotipo (SVG/PNG)</label>
+                                        <label className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide ml-2">URL del Logotipo (SVG/PNG)</label>
                                         <input type="text" placeholder="https://..." className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all" />
                                     </div>
                                 </div>

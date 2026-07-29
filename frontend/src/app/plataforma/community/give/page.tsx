@@ -90,7 +90,7 @@ export default function GivingAndConnection() {
                         </p>
 
                         <div className="h-0.5 w-12 bg-[hsl(var(--primary)/0.2)] mb-4"></div>
-                        <p className="text-[hsl(var(--primary))] font-bold tracking-wide text-[10px] uppercase">2 Corintios 9:7</p>
+                        <p className="text-[hsl(var(--primary))] font-bold tracking-wide text-2xs uppercase">2 Corintios 9:7</p>
                     </div>
                 </div>
 
@@ -123,7 +123,7 @@ export default function GivingAndConnection() {
                 
                 <div className="relative z-10 flex flex-col md:flex-row gap-3 items-center">
                     <div className="flex-1 space-y-4">
-                        <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px]">
+                        <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs">
                             <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
                             Ministerio
                         </div>
@@ -145,7 +145,7 @@ export default function GivingAndConnection() {
                 {/* Donation Form */}
                 <div className="lg:col-span-3 space-y-3">
                     <section className="space-y-3">
-                        <h4 className="text-[hsl(var(--primary))] text-[11px] uppercase font-bold tracking-wide flex items-center gap-2">
+                        <h4 className="text-[hsl(var(--primary))] text-xs uppercase font-bold tracking-wide flex items-center gap-2">
                             <div className="size-1.5 rounded-full bg-current"></div>
                             Ofrenda Voluntaria
                         </h4>
@@ -190,7 +190,7 @@ export default function GivingAndConnection() {
                                     />
                                     <div className="flex flex-col">
                                         <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">Donación Anónima</span>
-                                        <span className="text-[10px] text-[hsl(var(--text-secondary))] font-medium uppercase tracking-tight">Ocultar mi nombre del registro público</span>
+                                        <span className="text-2xs text-[hsl(var(--text-secondary))] font-medium uppercase tracking-tight">Ocultar mi nombre del registro público</span>
                                     </div>
                                 </label>
                             </div>
@@ -218,7 +218,7 @@ export default function GivingAndConnection() {
                 {/* Connection / Prayer */}
                 <div className="lg:col-span-2 space-y-3">
                     <section className="space-y-3">
-                        <h4 className="text-[hsl(var(--primary))] text-[11px] uppercase font-bold tracking-wide flex items-center gap-2">
+                        <h4 className="text-[hsl(var(--primary))] text-xs uppercase font-bold tracking-wide flex items-center gap-2">
                             <div className="size-1.5 rounded-full bg-current"></div>
                             Intercesión
                         </h4>
@@ -238,7 +238,7 @@ export default function GivingAndConnection() {
                             <button 
                                 onClick={handlePrayerRequest}
                                 disabled={!prayerRequest.trim()}
-                                className="w-full h-8 flex items-center justify-center gap-2 bg-[hsl(var(--surface-3))] text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[10px] hover:bg-[hsl(var(--primary))] hover:text-white rounded-md transition-all border border-[hsl(var(--primary)/0.1)] disabled:opacity-50 disabled:hover:bg-[hsl(var(--surface-3))] disabled:hover:text-[hsl(var(--primary))]"
+                                className="w-full h-8 flex items-center justify-center gap-2 bg-[hsl(var(--surface-3))] text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs hover:bg-[hsl(var(--primary))] hover:text-white rounded-md transition-all border border-[hsl(var(--primary)/0.1)] disabled:opacity-50 disabled:hover:bg-[hsl(var(--surface-3))] disabled:hover:text-[hsl(var(--primary))]"
                             >
                                 <span>Enviar Petición</span>
                                 <Send size={14} />
@@ -253,7 +253,7 @@ export default function GivingAndConnection() {
                                 <Mail size={18} />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Email Ministerio</span>
+                                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Email Ministerio</span>
                                 <span className="text-xs font-bold text-[hsl(var(--text-primary))]">hola@iglesiamoderna.org</span>
                             </div>
                         </div>
@@ -263,7 +263,7 @@ export default function GivingAndConnection() {
                                 <Phone size={18} />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">WhatsApp</span>
+                                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">WhatsApp</span>
                                 <span className="text-xs font-bold text-[hsl(var(--text-primary))]">+1 (555) 0123-456</span>
                             </div>
                         </div>

@@ -22,13 +22,13 @@ export default function StrategyHeader({ strategy, groupCount, canManage, onDele
           <h1 className="text-xl font-bold text-[hsl(var(--text-primary))]">{strategy.name}</h1>
           <div className="flex items-center gap-3 mt-1 text-xs text-[hsl(var(--text-secondary))] font-medium flex-wrap">
             {strategy.typology && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+              <span className="px-2 py-0.5 rounded-full text-2xs font-bold"
                 style={{ backgroundColor: `${TYPOLOGY_COLORS[strategy.typology]}18`, color: TYPOLOGY_COLORS[strategy.typology] }}>
                 {TYPOLOGY_LABELS[strategy.typology]}
               </span>
             )}
             {strategy.recurrence && <span className="inline-flex items-center gap-1.5"><Clock size={12} />{strategy.recurrence}</span>}
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+            <span className="px-2 py-0.5 rounded-full text-2xs font-bold"
               style={{ backgroundColor: `${STATUS_COLORS[strategy.status]}18`, color: STATUS_COLORS[strategy.status] }}>
               {STATUS_LABELS[strategy.status]}
             </span>

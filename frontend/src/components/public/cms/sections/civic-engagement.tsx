@@ -56,13 +56,13 @@ export function CivicConvocatoriaCardsSection({ section }: { section: CmsSection
                   <h3 className="font-black text-base leading-tight flex-1" style={{ color: "var(--site-on-surface)" }}>
                     {item.title || `Convocatoria ${i + 1}`}
                   </h3>
-                  <span className="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: st.bg, color: st.text }}>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: st.bg, color: st.text }}>
                     <span className="size-1.5 rounded-full" style={{ background: st.dot }} />
                     {st.label}
                   </span>
                 </div>
                 {item.category && (
-                  <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--site-primary)" }}>{item.category}</span>
+                  <span className="text-2xs font-bold uppercase tracking-wide" style={{ color: "var(--site-primary)" }}>{item.category}</span>
                 )}
                 {item.description && (
                   <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--site-on-surface-variant)" }}>{item.description}</p>
@@ -122,7 +122,7 @@ export function CivicHeroSearchSection({ section }: { section: CmsSection<"civic
       }}
     >
       {eyebrow && (
-        <span className="text-[11px] font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}>
+        <span className="text-xs font-black uppercase tracking-widest mb-3 px-3 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}>
           {eyebrow}
         </span>
       )}

@@ -60,7 +60,7 @@ describe('DSCommandEntry', () => {
     it('renders shortcut with correct styling', () => {
         render(<DSCommandEntry label="Command" shortcut="G C" />);
         const shortcut = screen.getByText('G C');
-        expect(shortcut.className).toContain('text-[9px]');
+        expect(shortcut.className).toContain('text-2xs');
         expect(shortcut.className).toContain('uppercase');
     });
 

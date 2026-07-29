@@ -23,7 +23,7 @@ export const DSButton = React.forwardRef<HTMLButtonElement, DSButtonProps>(
                 ref={ref}
                 type={type}
                 className={clsx(
-                    'px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all active:scale-95 disabled:opacity-50 rounded-md',
+                    'px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide transition-all active:scale-95 disabled:opacity-50 rounded-md',
                     variantClasses[variant],
                     className
                 )}

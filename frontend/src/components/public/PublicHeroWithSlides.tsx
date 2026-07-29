@@ -130,11 +130,11 @@ export default function PublicHeroWithSlides({
           </div>
         </div>
         <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between p-4 md:p-6 text-white/90">
-          <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] uppercase backdrop-blur">
+          <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
             Home
           </span>
           {totalSlides > 1 && (
-            <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] uppercase backdrop-blur">
+            <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
               {String(activeIndex + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
             </span>
           )}
@@ -220,11 +220,11 @@ export default function PublicHeroWithSlides({
             </AnimatePresence>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.2),transparent_30%),linear-gradient(to_top,rgba(0,0,0,0.9)_0%,rgba(0,0,0,0.42)_45%,transparent_100%)]" />
             <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 md:p-6 text-white/90">
-              <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] uppercase backdrop-blur">
+              <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
                 Banner
               </span>
               {totalSlides > 1 && (
-                <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] uppercase backdrop-blur">
+                <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
                   {String(activeIndex + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
                 </span>
               )}
@@ -247,7 +247,7 @@ export default function PublicHeroWithSlides({
                 </button>
               ))}
               {totalSlides > 4 && (
-                <div className="flex items-center justify-center rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[10px] font-bold uppercase tracking-[0.3em] text-[hsl(var(--text-secondary))]">
+                <div className="flex items-center justify-center rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-2xs font-bold uppercase tracking-[0.3em] text-[hsl(var(--text-secondary))]">
                   +{totalSlides - 4}
                 </div>
               )}

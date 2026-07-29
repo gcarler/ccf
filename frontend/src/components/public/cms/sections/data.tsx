@@ -69,7 +69,7 @@ export function CountdownSection({ section }: { section: CmsSection<"countdown">
               >
                 {String(unit.value).padStart(2, "0")}
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">{unit.label}</span>
+              <span className="text-2xs font-bold uppercase tracking-widest text-white/70">{unit.label}</span>
             </div>
           ))}
         </div>
@@ -111,7 +111,7 @@ export function PricingSection({ section }: { section: CmsSection<"pricing"> }) 
               }}
             >
               {featured && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest bg-[hsl(var(--bg-primary))]" style={{ color: "var(--site-primary)" }}>
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-2xs font-black uppercase tracking-widest bg-[hsl(var(--bg-primary))]" style={{ color: "var(--site-primary)" }}>
                   Recomendado
                 </span>
               )}

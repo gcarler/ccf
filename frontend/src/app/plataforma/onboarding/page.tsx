@@ -68,7 +68,7 @@ export default function OnboardingPage() {
                             className="space-y-3"
                         >
                             <div className="text-center space-y-4">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-[10px] font-semibold uppercase tracking-wide">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide">
                                     <Sparkles size={14} /> Bienvenido a la Familia
                                 </div>
                                 <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-tight">
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
                                         </div>
                                         <div className="text-center">
                                             <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">{campus.name}</p>
-                                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{campus.location}</p>
+                                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{campus.location}</p>
                                         </div>
                                         {selectedCampus === campus.id && (
                                             <div className="absolute top-3 right-3 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"><CheckCircle2 size={16} /></div>

@@ -79,7 +79,7 @@ export default function TaskDetailPage() {
                         <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
                             <MoreVertical size={20} />
                         </button>
-                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
+                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
                             Finalizar Tarea
                         </button>
                     </div>
@@ -100,14 +100,14 @@ export default function TaskDetailPage() {
                         </header>
 
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Descripción</h3>
+                            <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Descripción</h3>
                             <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm leading-relaxed">
                                 {task.description}
                             </p>
                         </DSCard>
 
                         <section className="space-y-4">
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Actividad y Comentarios</h3>
+                            <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Actividad y Comentarios</h3>
                             <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 text-center py-1.5">
                                 <MessageSquare size={32} className="mx-auto text-[hsl(var(--text-secondary))] mb-4" />
                                 <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No hay comentarios aún</p>
@@ -119,7 +119,7 @@ export default function TaskDetailPage() {
                         <DSCard>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Responsable</span>
+                                    <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Responsable</span>
                                     <div className="flex items-center gap-2">
                                         <div className="size-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white">
                                             {task.assignee?.charAt(0)}
@@ -128,14 +128,14 @@ export default function TaskDetailPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha Límite</span>
+                                    <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha Límite</span>
                                     <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--destructive))]">
                                         <Calendar size={14} /> {new Date(task.due_date).toLocaleDateString()}
                                     </div>
                                 </div>
                                 <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                                 <div className="space-y-4">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Seguimiento de Tiempo</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Seguimiento de Tiempo</p>
                                     <div className="flex items-center justify-between">
                                         <span className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white font-mono">00:45:12</span>
                                         <button 
@@ -153,10 +153,10 @@ export default function TaskDetailPage() {
                         </DSCard>
 
                         <div className="p-3 bg-[hsl(var(--primary))] rounded-lg text-white space-y-4">
-                            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide">
+                            <div className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide">
                                 <Sparkles size={14} /> AI Context
                             </div>
-                            <p className="text-[11px] font-bold leading-relaxed opacity-90">
+                            <p className="text-xs font-bold leading-relaxed opacity-90">
                                 Esta tarea es un prerrequisito para el hito &quot;Lanzamiento Beta&quot;. Juan, recuerda adjuntar el reporte de calidad antes de cerrar.
                             </p>
                         </div>

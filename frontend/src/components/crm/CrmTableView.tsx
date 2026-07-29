@@ -20,8 +20,8 @@ function AvatarNameRenderer({ data }: any) {
                 {initials}
             </div>
             <div>
-                <div className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{data?.nombre_completo}</div>
-                <div className="text-[10px] text-[hsl(var(--text-secondary))]">#{data?.id}</div>
+                <div className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{data?.nombre_completo}</div>
+                <div className="text-2xs text-[hsl(var(--text-secondary))]">#{data?.id}</div>
             </div>
         </div>
     );
@@ -30,7 +30,7 @@ function AvatarNameRenderer({ data }: any) {
 function RoleRenderer({ value }: any) {
     const isLeader = String(value ?? '').toLowerCase().includes('líder') || String(value ?? '').toLowerCase().includes('lider');
     return (
-        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.2)]' : 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.15)]'}`}>
+        <span className={`px-2.5 py-0.5 rounded-lg text-2xs font-bold uppercase tracking-wider ${isLeader ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.2)]' : 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.15)]'}`}>
             {value || 'Persona'}
         </span>
     );

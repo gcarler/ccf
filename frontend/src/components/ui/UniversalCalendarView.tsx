@@ -95,7 +95,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                 <div className="flex items-center gap-4">
                     <div className="flex bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1.5 rounded-lg gap-1">
                         <button onClick={prevMonth} aria-label="Mes anterior" className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={18} /></button>
-                        <button onClick={() => setCurrentDate(new Date())} className="px-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors">Hoy</button>
+                        <button onClick={() => setCurrentDate(new Date())} className="px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors">Hoy</button>
                         <button onClick={nextMonth} aria-label="Mes siguiente" className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={18} /></button>
                     </div>
                     {onCreate && (
@@ -192,7 +192,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                                                 setDragOverDay(null);
                                             }}
                                             className={clsx(
-                                                "w-full text-left p-2 rounded-md text-[10px] font-semibold uppercase tracking-tight truncate transition-all hover:scale-[1.03] active:scale-95 cursor-move",
+                                                "w-full text-left p-2 rounded-md text-2xs font-semibold uppercase tracking-tight truncate transition-all hover:scale-[1.03] active:scale-95 cursor-move",
                                                 COLORS[ev.color || 'blue']
                                             )}
                                         >
@@ -230,7 +230,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                         <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Consejería Especial</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-4 text-[hsl(var(--text-secondary))] text-[10px] font-semibold uppercase tracking-wide">
+                <div className="flex items-center gap-4 text-[hsl(var(--text-secondary))] text-2xs font-semibold uppercase tracking-wide">
                     <span>Vistas:</span>
                     <button className="text-[hsl(var(--primary))]">Mes</button>
                     <button className="hover:text-[hsl(var(--text-secondary))]">Semana</button>

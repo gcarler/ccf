@@ -350,7 +350,7 @@ export default function TaskDetailPanel({
 
                     {/* Description */}
                     <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1.5">
+                        <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1.5">
                             <AlignLeft size={11} /> Descripción
                         </p>
                         <textarea
@@ -359,7 +359,7 @@ export default function TaskDetailPanel({
                             onBlur={handleSave}
                             rows={3}
                             placeholder="Añade una descripción..."
-                            className="w-full text-[13px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent resize-none outline-none placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] leading-relaxed focus:ring-0"
+                            className="w-full text-base font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent resize-none outline-none placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] leading-relaxed focus:ring-0"
                         />
                     </section>
 

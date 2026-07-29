@@ -220,7 +220,7 @@ export default function AdminSettingsContactPage() {
               <ArrowLeft size={16} />
             </button>
             <Contact size={18} className="text-[hsl(var(--primary))]" />
-            <h1 className="text-[13px] font-semibold uppercase tracking-wide text-white">
+            <h1 className="text-base font-semibold uppercase tracking-wide text-white">
               Información de Contacto
             </h1>
           </div>
@@ -228,7 +228,7 @@ export default function AdminSettingsContactPage() {
             {editing && (
               <button
                 onClick={cancelEditing}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all"
               >
                 <X size={12} /> Cancelar
               </button>
@@ -236,7 +236,7 @@ export default function AdminSettingsContactPage() {
             {!editing ? (
               <button
                 onClick={startEditing}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-md text-[11px] font-semibold uppercase tracking-wide transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-md text-xs font-semibold uppercase tracking-wide transition-all"
               >
                 <Edit2 size={14} /> Editar
               </button>
@@ -244,7 +244,7 @@ export default function AdminSettingsContactPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/80 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 transition-all disabled:opacity-60"
+                className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/80 text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 transition-all disabled:opacity-60"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 Guardar
@@ -262,13 +262,13 @@ export default function AdminSettingsContactPage() {
           className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-4"
         >
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
               Medios de Contacto
             </p>
             {editing && (
               <button
                 onClick={handleAddContact}
-                className="flex items-center gap-1 text-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide hover:opacity-70 transition-opacity"
+                className="flex items-center gap-1 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:opacity-70 transition-opacity"
               >
                 <Plus size={12} /> Agregar
               </button>
@@ -324,7 +324,7 @@ export default function AdminSettingsContactPage() {
                                       setOpenTypeMenu(null);
                                     }}
                                     className={clsx(
-                                      "w-full flex items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all",
+                                      "w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-all",
                                       c.type === opt.value
                                         ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]"
                                         : "text-[hsl(var(--text-secondary))] hover:bg-white/5"
@@ -351,10 +351,10 @@ export default function AdminSettingsContactPage() {
                           value={c.label}
                           onChange={(e) => updateContact(c.id, "label", e.target.value)}
                           placeholder="Etiqueta"
-                          className="bg-transparent border-b border-white/20 text-[11px] font-semibold text-white uppercase tracking-wide w-full outline-none focus:border-[hsl(var(--primary))] transition-colors py-0.5"
+                          className="bg-transparent border-b border-white/20 text-xs font-semibold text-white uppercase tracking-wide w-full outline-none focus:border-[hsl(var(--primary))] transition-colors py-0.5"
                         />
                       ) : (
-                        <p className="text-[11px] font-semibold text-white uppercase tracking-wide">
+                        <p className="text-xs font-semibold text-white uppercase tracking-wide">
                           {c.label}
                         </p>
                       )}
@@ -394,13 +394,13 @@ export default function AdminSettingsContactPage() {
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => handleDeleteContact(c.id)}
-                                className="px-2 py-1 bg-[hsl(var(--danger))] text-white text-[9px] font-bold uppercase rounded transition-all"
+                                className="px-2 py-1 bg-[hsl(var(--danger))] text-white text-2xs font-bold uppercase rounded transition-all"
                               >
                                 Sí
                               </button>
                               <button
                                 onClick={() => setDeleteConfirmId(null)}
-                                className="px-2 py-1 bg-white/10 text-[hsl(var(--text-secondary))] text-[9px] font-bold uppercase rounded transition-all"
+                                className="px-2 py-1 bg-white/10 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase rounded transition-all"
                               >
                                 No
                               </button>
@@ -421,7 +421,7 @@ export default function AdminSettingsContactPage() {
               })}
             </AnimatePresence>
             {displayContacts.length === 0 && (
-              <p className="text-center text-[11px] text-[hsl(var(--text-secondary))] py-6 opacity-60">
+              <p className="text-center text-xs text-[hsl(var(--text-secondary))] py-6 opacity-60">
                 No hay contactos configurados
               </p>
             )}
@@ -438,14 +438,14 @@ export default function AdminSettingsContactPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Clock size={14} className="text-[hsl(var(--primary))]" />
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+              <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 Horarios de Atención
               </p>
             </div>
             {editing && (
               <button
                 onClick={handleAddSchedule}
-                className="flex items-center gap-1 text-[hsl(var(--primary))] text-[10px] font-semibold uppercase tracking-wide hover:opacity-70 transition-opacity"
+                className="flex items-center gap-1 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:opacity-70 transition-opacity"
               >
                 <Plus size={12} /> Agregar
               </button>
@@ -477,10 +477,10 @@ export default function AdminSettingsContactPage() {
                       value={s.hours}
                       onChange={(e) => updateSchedule(i, "hours", e.target.value)}
                       placeholder="Horario"
-                      className="bg-transparent border-b border-white/15 text-[11px] text-[hsl(var(--text-secondary))] font-medium outline-none focus:border-[hsl(var(--primary))] transition-colors flex-1 text-right"
+                      className="bg-transparent border-b border-white/15 text-xs text-[hsl(var(--text-secondary))] font-medium outline-none focus:border-[hsl(var(--primary))] transition-colors flex-1 text-right"
                     />
                   ) : (
-                    <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium flex-1 text-right">
+                    <p className="text-xs text-[hsl(var(--text-secondary))] font-medium flex-1 text-right">
                       {s.hours}
                     </p>
                   )}
@@ -490,13 +490,13 @@ export default function AdminSettingsContactPage() {
                         <div className="flex items-center gap-1 shrink-0">
                           <button
                             onClick={() => handleDeleteSchedule(i)}
-                            className="px-2 py-1 bg-[hsl(var(--danger))] text-white text-[9px] font-bold uppercase rounded transition-all"
+                            className="px-2 py-1 bg-[hsl(var(--danger))] text-white text-2xs font-bold uppercase rounded transition-all"
                           >
                             Sí
                           </button>
                           <button
                             onClick={() => setDeleteConfirmScheduleIdx(null)}
-                            className="px-2 py-1 bg-white/10 text-[hsl(var(--text-secondary))] text-[9px] font-bold uppercase rounded transition-all"
+                            className="px-2 py-1 bg-white/10 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase rounded transition-all"
                           >
                             No
                           </button>
@@ -515,7 +515,7 @@ export default function AdminSettingsContactPage() {
               ))}
             </AnimatePresence>
             {displaySchedule.length === 0 && (
-              <p className="text-center text-[11px] text-[hsl(var(--text-secondary))] py-6 opacity-60">
+              <p className="text-center text-xs text-[hsl(var(--text-secondary))] py-6 opacity-60">
                 No hay horarios configurados
               </p>
             )}
@@ -530,7 +530,7 @@ export default function AdminSettingsContactPage() {
             transition={{ delay: 0.2 }}
             className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-4"
           >
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
               Vista Previa — Contacto Público
             </p>
             <div className="p-4 bg-white/[0.03] rounded-lg border border-white/5 space-y-3">
@@ -543,8 +543,8 @@ export default function AdminSettingsContactPage() {
                       <Icon size={12} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[9px] font-bold text-white/50 uppercase tracking-wide">{c.label}</p>
-                      <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium truncate">{c.value}</p>
+                      <p className="text-2xs font-bold text-white/50 uppercase tracking-wide">{c.label}</p>
+                      <p className="text-xs text-[hsl(var(--text-secondary))] font-medium truncate">{c.value}</p>
                     </div>
                   </div>
                 );
@@ -553,10 +553,10 @@ export default function AdminSettingsContactPage() {
                 <div className="pt-2 mt-2 border-t border-white/5">
                   <div className="flex items-center gap-1.5 mb-2">
                     <Clock size={10} className="text-[hsl(var(--primary))]" />
-                    <p className="text-[9px] font-bold text-white/50 uppercase tracking-wide">Horarios</p>
+                    <p className="text-2xs font-bold text-white/50 uppercase tracking-wide">Horarios</p>
                   </div>
                   {schedule.map((s, i) => (
-                    <div key={i} className="flex justify-between text-[10px] py-0.5">
+                    <div key={i} className="flex justify-between text-2xs py-0.5">
                       <span className="font-bold text-white/70">{s.day}</span>
                       <span className="text-[hsl(var(--text-secondary))]">{s.hours}</span>
                     </div>

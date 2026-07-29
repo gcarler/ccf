@@ -138,7 +138,7 @@ export default function AcademyClient() {
                     { label: 'Dashboard Inteligente', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button onClick={() => router.push('/plataforma/academy/curriculum')} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
+                    <button onClick={() => router.push('/plataforma/academy/curriculum')} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
                         Ver Malla Curricular
                     </button>
                 }
@@ -164,7 +164,7 @@ export default function AcademyClient() {
                         <DSCard>
                             <div className="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Tendencia de Crecimiento</h3>
+                                    <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Tendencia de Crecimiento</h3>
                                     <p className="text-xl font-bold text-white italic">Inscripciones Mensuales</p>
                                 </div>
                                 <div className="size-10 rounded-md bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))]">
@@ -182,7 +182,7 @@ export default function AcademyClient() {
                     {/* Top Cursos */}
                     <div className="space-y-3">
                         <DSCard>
-                            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Cursos Top Performance</h3>
+                            <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Cursos Top Performance</h3>
                             <div className="space-y-4">
                                 {dashboard.top_courses?.map((course) => (
                                     <div key={course.title} className="flex items-center justify-between group">

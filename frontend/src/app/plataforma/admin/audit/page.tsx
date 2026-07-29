@@ -97,12 +97,12 @@ export default function SecurityAuditPage() {
                                     <span className="relative inline-flex rounded-full size-3 bg-[hsl(var(--danger))]"></span>
                                 </span>
                             </h1>
-                            <p className="text-[10px] text-success-text uppercase tracking-wide mt-1">Registro inmutable de transacciones del sistema</p>
+                            <p className="text-2xs text-success-text uppercase tracking-wide mt-1">Registro inmutable de transacciones del sistema</p>
                         </div>
                     </div>
                     <button 
                         onClick={() => fetchLogs()}
-                        className="px-3 py-2.5 bg-[hsl(var(--success))]/50 text-[hsl(var(--success))] border border-[hsl(var(--success)/100%)]/30 rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success))] transition-colors flex items-center gap-2 group"
+                        className="px-3 py-2.5 bg-[hsl(var(--success))]/50 text-[hsl(var(--success))] border border-[hsl(var(--success)/100%)]/30 rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success))] transition-colors flex items-center gap-2 group"
                     >
                         <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-700" />
                         Sincronizar
@@ -118,7 +118,7 @@ export default function SecurityAuditPage() {
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-1.5 gap-4">
                                 <Activity className="text-[hsl(var(--success))] animate-pulse" size={48} />
-                                <p className="text-[hsl(var(--success))]/70 text-[10px] uppercase tracking-wide animate-pulse">Descifrando registros...</p>
+                                <p className="text-[hsl(var(--success))]/70 text-2xs uppercase tracking-wide animate-pulse">Descifrando registros...</p>
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -133,9 +133,9 @@ export default function SecurityAuditPage() {
                                             className="group flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-md bg-black/40 border border-[hsl(var(--success)/20%)] hover:border-[hsl(var(--success)/100%)]/50 hover:bg-[hsl(var(--success))]/20 transition-all cursor-crosshair"
                                         >
                                             <div className="flex items-center gap-4 w-full md:w-auto md:min-w-[200px] shrink-0">
-                                                <span className="text-success-text text-[10px]">[{new Date(log.timestamp).toLocaleTimeString('en-US', { hour12: false })}]</span>
+                                                <span className="text-success-text text-2xs">[{new Date(log.timestamp).toLocaleTimeString('en-US', { hour12: false })}]</span>
                                                 <span className={clsx(
-                                                    "px-2 py-0.5 rounded text-[9px] uppercase tracking-wide font-black",
+                                                    "px-2 py-0.5 rounded text-2xs uppercase tracking-wide font-black",
                                                     log.action.includes('delete') || log.action.includes('remove') ? "bg-[hsl(var(--danger))]/50 text-[hsl(var(--danger))] border border-[hsl(var(--danger)/100%)]" :
                                                     log.action.includes('update') || log.action.includes('edit') ? "bg-[hsl(var(--warning))]/50 text-[hsl(var(--warning))] border border-[hsl(var(--warning)/100%)]" :
                                                     "bg-[hsl(var(--success))]/50 text-[hsl(var(--success))] border border-[hsl(var(--success)/100%)]"
@@ -152,7 +152,7 @@ export default function SecurityAuditPage() {
                                             </div>
 
                                             <div className="shrink-0 flex items-center gap-3">
-                                                <div className="text-[9px] text-success-text/50 uppercase tracking-wide hidden lg:block truncate max-w-[200px]">
+                                                <div className="text-2xs text-success-text/50 uppercase tracking-wide hidden lg:block truncate max-w-[200px]">
                                                     {JSON.stringify(log.changes || log.after || {})}
                                                 </div>
                                                 <button 
@@ -171,7 +171,7 @@ export default function SecurityAuditPage() {
                 </div>
 
                 {/* Status Bar */}
-                <div className="p-2 border-t border-[hsl(var(--success)/50%)] bg-black text-success-text text-[9px] uppercase tracking-wide flex justify-between shrink-0 relative z-10">
+                <div className="p-2 border-t border-[hsl(var(--success)/50%)] bg-black text-success-text text-2xs uppercase tracking-wide flex justify-between shrink-0 relative z-10">
                     <span>SYS_STATUS: ONLINE</span>
                     <span>CONNECTION: SECURE_SOCKET</span>
                     <span>DB_SYNC: OK</span>

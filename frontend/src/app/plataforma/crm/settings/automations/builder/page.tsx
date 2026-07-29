@@ -433,14 +433,14 @@ export default function AutomationBuilderPage() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => router.push('/plataforma/crm/messaging/automations')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[11px] font-bold uppercase hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                        className="flex items-center gap-1.5 px-3 py-1.5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-xs font-bold uppercase hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                     >
                         <ArrowLeft size={12} /> Volver
                     </button>
                     <button
                         onClick={handleSaveGraph}
                         disabled={saving}
-                        className="flex items-center gap-1.5 bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-md text-[11px] font-bold uppercase hover:bg-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary)/0.2)] transition-all disabled:opacity-50"
+                        className="flex items-center gap-1.5 bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-md text-xs font-bold uppercase hover:bg-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary)/0.2)] transition-all disabled:opacity-50"
                     >
                         {saving ? 'Guardando...' : <Save size={12} />}
                         Guardar Flujo
@@ -499,7 +499,7 @@ export default function AutomationBuilderPage() {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre del paso</label>
+                                    <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre del paso</label>
                                     <input
                                         type="text"
                                         value={selectedNode.data.automation.name}
@@ -509,7 +509,7 @@ export default function AutomationBuilderPage() {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Disparador (Trigger)</label>
+                                    <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Disparador (Trigger)</label>
                                     <select
                                         value={selectedNode.data.automation.trigger_event}
                                         onChange={e => handleUpdateNodeField('trigger_event', e.target.value)}
@@ -520,7 +520,7 @@ export default function AutomationBuilderPage() {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Acción a realizar</label>
+                                    <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Acción a realizar</label>
                                     <select
                                         value={selectedNode.data.automation.action_type}
                                         onChange={e => handleUpdateNodeField('action_type', e.target.value)}
@@ -531,7 +531,7 @@ export default function AutomationBuilderPage() {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1">
+                                    <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1">
                                         <Clock size={12} />
                                         Retardo de ejecución (minutos)
                                     </label>
@@ -546,7 +546,7 @@ export default function AutomationBuilderPage() {
 
                                 {selectedNode.data.automation.action_type === 'create_task' ? (
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Título de Tarea Pastoral</label>
+                                        <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Título de Tarea Pastoral</label>
                                         <input
                                             type="text"
                                             value={readPayloadText(selectedNode.data.automation.action_payload, 'task_title')}
@@ -557,7 +557,7 @@ export default function AutomationBuilderPage() {
                                     </div>
                                 ) : (
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Mensaje de Notificación</label>
+                                        <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Mensaje de Notificación</label>
                                         <textarea
                                             value={readPayloadText(selectedNode.data.automation.action_payload, 'message')}
                                             onChange={e => handleUpdateNodePayload('message', e.target.value)}
@@ -598,7 +598,7 @@ export default function AutomationBuilderPage() {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tipo de Condición</label>
+                                    <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tipo de Condición</label>
                                     <select
                                         value={selectedEdge.data?.condition_type || 'always'}
                                         onChange={e => handleUpdateEdgeField('condition_type', e.target.value)}
@@ -611,7 +611,7 @@ export default function AutomationBuilderPage() {
                                 {selectedEdge.data?.condition_type !== 'always' && (
                                     <>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Variable / Campo a evaluar</label>
+                                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Variable / Campo a evaluar</label>
                                             <input
                                                 type="text"
                                                 value={selectedEdge.data?.condition_key || ''}
@@ -622,7 +622,7 @@ export default function AutomationBuilderPage() {
                                         </div>
 
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Valor Esperado</label>
+                                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Valor Esperado</label>
                                             <input
                                                 type="text"
                                                 value={selectedEdge.data?.condition_value || ''}
@@ -652,7 +652,7 @@ export default function AutomationBuilderPage() {
                             <div className="flex flex-col items-center justify-center text-center text-[hsl(var(--text-secondary))] py-12 px-4">
                                 <AlertTriangle size={32} className="mb-2 opacity-55 text-[hsl(var(--text-secondary))]" />
                                 <p className="text-xs font-bold">Ningún elemento seleccionado</p>
-                                <p className="text-[11px] mt-1 text-[hsl(var(--text-secondary))]">Selecciona un paso o una línea de conexión para editar sus configuraciones específicas.</p>
+                                <p className="text-xs mt-1 text-[hsl(var(--text-secondary))]">Selecciona un paso o una línea de conexión para editar sus configuraciones específicas.</p>
                             </div>
                         )}
                     </div>

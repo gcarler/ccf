@@ -150,7 +150,7 @@ export default function StudentSchedule() {
                     {filteredSessions.length > 0 && (
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-primary text-xs font-semibold uppercase tracking-wide">{DAYS[activeDay]}</h3>
-                            <span className="text-[10px] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide border border-white/10 px-2 py-1 rounded">
+                            <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide border border-white/10 px-2 py-1 rounded">
                                 {filteredSessions.length} sesiones
                             </span>
                         </div>
@@ -194,7 +194,7 @@ export default function StudentSchedule() {
                                         {session.isVirtual && (
                                             <button className="flex items-center gap-3 text-[hsl(var(--success))] text-sm font-bold mt-2 bg-[hsl(var(--success))]/10 p-3 rounded-md border border-[hsl(var(--success)/100%)]/20 hover:bg-[hsl(var(--success))]/20 transition-colors w-fit">
                                                 <Video size={16} className="fill-current" />
-                                                <span className="uppercase tracking-wide text-[10px]">Unirse a sesión</span>
+                                                <span className="uppercase tracking-wide text-2xs">Unirse a sesión</span>
                                             </button>
                                         )}
                                     </div>

@@ -169,7 +169,6 @@ class AgentInsightCreate(BaseModel):
     confidence: float = 0.5
     source_agent: Optional[str] = None
     payload: Optional[dict] = None
-    metadata: Optional[dict] = None
 
 
 class AgentInsight(AgentInsightCreate):

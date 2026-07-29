@@ -44,12 +44,12 @@ export default function DigitalCertificatesPage() {
                             <div className="size-7 rounded-lg bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/30%)] flex items-center justify-center">
                                 <ShieldCheck size={14} className="text-[hsl(var(--domain-cyan)/90%)]" />
                             </div>
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--domain-cyan)/90%)]">Certificación Oficial</span>
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--domain-cyan)/90%)]">Certificación Oficial</span>
                         </div>
                         <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
                             Mis Certificados
                         </h1>
-                        <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
+                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
                             Descarga tus actas y diplomas con validez digital dentro del ecosistema CCF.
                         </p>
                     </div>
@@ -91,7 +91,7 @@ export default function DigitalCertificatesPage() {
                                                 {isSacramento ? <Waves size={24} /> : <FileCheck size={24} />}
                                             </div>
                                             <span className={clsx(
-                                                "text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full border",
+                                                "text-2xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full border",
                                                 isSacramento
                                                     ? "bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)] text-[hsl(var(--domain-cyan)/90%)] border-[hsl(var(--domain-cyan)/30%)] dark:border-[hsl(var(--domain-cyan)/20%)]"
                                                     : "bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20"
@@ -110,11 +110,11 @@ export default function DigitalCertificatesPage() {
                                         </div>
 
                                         <div className="pt-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
-                                            <code className="text-[9px] font-mono text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                            <code className="text-2xs font-mono text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                                 {cert.certificate_code}
                                             </code>
                                             <div className="flex items-center gap-2">
-                                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-[10px] font-semibold uppercase tracking-wide rounded-lg active:scale-95 transition-all shadow-sm shadow-[hsl(var(--info)/20%)]">
+                                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-2xs font-semibold uppercase tracking-wide rounded-lg active:scale-95 transition-all shadow-sm shadow-[hsl(var(--info)/20%)]">
                                                     <Download size={12} /> PDF
                                                 </button>
                                                 <button className="p-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-lg transition-all">
@@ -135,12 +135,12 @@ export default function DigitalCertificatesPage() {
                         <ShieldCheck size={20} />
                     </div>
                     <div className="flex-1 text-center md:text-left">
-                        <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white">Verificación de Autenticidad</p>
-                        <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5">
+                        <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Verificación de Autenticidad</p>
+                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5">
                             Cada certificado contiene un código único y token QR para validar su veracidad ante autoridades eclesiásticas.
                         </p>
                     </div>
-                    <button className="shrink-0 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-all active:scale-95">
+                    <button className="shrink-0 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] text-xs font-semibold uppercase tracking-wide rounded-lg transition-all active:scale-95">
                         Validar Código
                     </button>
                 </div>

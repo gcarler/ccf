@@ -206,17 +206,17 @@ export default function RolesPage() {
                                     </button>
                                 </div>
                                 <div className="space-y-3">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         {role.permissions.length} Permisos Activos
                                     </p>
                                     <div className="flex flex-wrap gap-1.5">
                                         {role.permissions.slice(0, 5).map((p: string) => (
-                                            <span key={p} className="px-2 py-1 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-bold border border-[hsl(var(--border))]">
+                                            <span key={p} className="px-2 py-1 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] rounded-md text-2xs font-bold border border-[hsl(var(--border))]">
                                                 {p}
                                             </span>
                                         ))}
                                         {role.permissions.length > 5 && (
-                                            <span className="px-2 py-1 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-bold">
+                                            <span className="px-2 py-1 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] rounded-md text-2xs font-bold">
                                                 +{role.permissions.length - 5}
                                             </span>
                                         )}
@@ -242,7 +242,7 @@ export default function RolesPage() {
             >
                 <div className="space-y-3 p-1">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2">Nombre del Rol</label>
+                        <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2">Nombre del Rol</label>
                         <input 
                             type="text"
                             value={editingRole.name || ''}
@@ -262,7 +262,7 @@ export default function RolesPage() {
                             if (perms.length === 0) return null;
                             return (
                                 <div key={group} className="space-y-3">
-                                    <h5 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] px-3 py-1.5 rounded-lg inline-block">{group}</h5>
+                                    <h5 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] px-3 py-1.5 rounded-lg inline-block">{group}</h5>
                                     <div className="grid grid-cols-1 gap-2">
                                         {perms.map(p => {
                                             const isActive = editingRole.permissions?.includes(p);

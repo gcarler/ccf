@@ -15,7 +15,7 @@ import clsx from "clsx";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 
 const INPUT = "w-full bg-[hsl(var(--bg-muted))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] transition-all";
-const LABEL = "block text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
+const LABEL = "block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 type Volunteer = {
     id: string;
@@ -35,7 +35,7 @@ function Badge({ label, tone = "blue" }: { label: string; tone?: string }) {
         sky: "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-info-text dark:text-info-text border-[hsl(var(--info)/25%)]/50",
     };
     return (
-        <span className={clsx("inline-flex items-center px-3 py-1 rounded-md border text-[9px] font-bold uppercase tracking-wide", styles[tone] ?? styles.blue)}>
+        <span className={clsx("inline-flex items-center px-3 py-1 rounded-md border text-2xs font-bold uppercase tracking-wide", styles[tone] ?? styles.blue)}>
             {label}
         </span>
     );
@@ -158,7 +158,7 @@ export default function VolunteerDetailPage() {
                         {canEditCrm && (
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <button onClick={openEdit}
-                                    className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all">
+                                    className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all">
                                     <PencilLine size={13} /> Editar
                                 </button>
                                 <button
@@ -179,14 +179,14 @@ export default function VolunteerDetailPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         <div className="lg:col-span-2 space-y-3">
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">Información del Servidor</p>
+                                <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">Información del Servidor</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Equipo</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Equipo</p>
                                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{volunteer.team || "Sin equipo"}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Fecha de Ingreso</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Fecha de Ingreso</p>
                                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">
                                             {volunteer.joined_date ? new Date(volunteer.joined_date).toLocaleDateString("es-ES") : "Sin fecha"}
                                         </p>
@@ -195,7 +195,7 @@ export default function VolunteerDetailPage() {
                             </div>
 
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Habilidades y Dones</p>
+                                <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Habilidades y Dones</p>
                                 <div className="flex flex-wrap gap-2">
                                     {(volunteer.skills ?? []).length > 0
                                         ? (volunteer.skills ?? []).map((s) => <Badge key={s} label={s} tone="blue" />)
@@ -206,7 +206,7 @@ export default function VolunteerDetailPage() {
 
                         <aside className="space-y-3">
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">Métricas de Servicio</p>
+                                <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">Métricas de Servicio</p>
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-medium text-[hsl(var(--text-secondary))]">Horas Totales</span>
@@ -239,7 +239,7 @@ export default function VolunteerDetailPage() {
                             className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] shadow-2xl rounded-l-lg overflow-hidden flex flex-col">
                             <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))] dark:border-white/5">
                                 <div>
-                                    <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar Servidor</p>
+                                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar Servidor</p>
                                     <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">{volunteer.name}</h2>
                                 </div>
                                 <button onClick={() => setEditOpen(false)}
@@ -257,11 +257,11 @@ export default function VolunteerDetailPage() {
                             </div>
                             <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex gap-3">
                                 <button onClick={() => setEditOpen(false)}
-                                    className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
+                                    className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                                     <Save size={14} /> {saving ? "Guardando..." : "Guardar"}
                                 </button>
                             </div>

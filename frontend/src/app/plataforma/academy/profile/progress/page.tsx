@@ -138,7 +138,7 @@ export default function StudentProgressPage() {
                 {viewType === 'table' && (
                     <div className="overflow-x-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full min-w-[480px] text-left">
-                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 <tr><th className="px-4 py-2">Curso</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2">Progreso</th><th className="px-4 py-2">Nota</th></tr>
                             </thead>
                             <tbody>
@@ -183,7 +183,7 @@ export default function StudentProgressPage() {
                         
                         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between p-4 lg:p-4 gap-4">
                             <div className="space-y-3 max-w-xl">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--info))] border border-white/10">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--info))] border border-white/10">
                                     <Trophy size={14} className="text-[hsl(var(--warning))]" /> Rendimiento Académico
                                 </div>
                                 <h1 className="text-xl lg:text-xl font-bold text-white tracking-tighter leading-[0.9] mb-4">
@@ -229,7 +229,7 @@ export default function StudentProgressPage() {
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-center gap-3">
                                                 <span className={clsx(
-                                                    "px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide",
+                                                    "px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide",
                                                     course.status === 'completed' ? "bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" : "bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]"
                                                 )}>
                                                     {course.status === 'completed' ? 'Completado' : 'En Curso'}
@@ -247,7 +247,7 @@ export default function StudentProgressPage() {
                                                 {course.certificate_issued && (
                                                     <div className="flex items-center gap-2 text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)] px-3 py-1 rounded-full">
                                                         <Award size={14} strokeWidth={2.5} />
-                                                        <span className="text-[10px] font-semibold uppercase tracking-wide">Certificado Disponible</span>
+                                                        <span className="text-2xs font-semibold uppercase tracking-wide">Certificado Disponible</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -256,7 +256,7 @@ export default function StudentProgressPage() {
                                         <div className="w-full lg:w-[400px] flex flex-col md:flex-row items-center gap-3">
                                             <div className="flex-1 w-full space-y-4">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso General</span>
+                                                    <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso General</span>
                                                     <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{course.progress_percent}%</span>
                                                 </div>
                                                 <div className="h-3 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden p-0.5">
@@ -273,7 +273,7 @@ export default function StudentProgressPage() {
 
                                             <div className="flex items-center gap-4 md:border-l border-[hsl(var(--border))] dark:border-white/5 md:pl-8 shrink-0">
                                                 <div className="text-center">
-                                                    <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nota</p>
+                                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nota</p>
                                                     <p className={clsx("text-xl font-bold tracking-tighter", course.average_grade >= 70 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]")}>
                                                         {course.average_grade.toFixed(1)}
                                                     </p>

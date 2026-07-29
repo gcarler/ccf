@@ -124,7 +124,7 @@ function GanttBarItem({ item, pos, width, idx, onClick, onMove, onResize }: Gant
                     <div className="size-8 rounded-md bg-white/20 flex items-center justify-center text-white shrink-0"><Clock size={16} /></div>
                     <div className="overflow-hidden">
                         <p className="font-semibold text-white uppercase tracking-tight truncate leading-none mb-1">{item.title}</p>
-                        {item.subtitle && <p className="text-[9px] text-white/70 uppercase font-bold tracking-wide truncate">{item.subtitle}</p>}
+                        {item.subtitle && <p className="text-2xs text-white/70 uppercase font-bold tracking-wide truncate">{item.subtitle}</p>}
                     </div>
                 </div>
                 {item.progress !== undefined && (
@@ -197,21 +197,21 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                         <button
                             onClick={() => setZoom('day')}
                             aria-pressed={zoom === 'day'}
-                            className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'day' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
+                            className={clsx("px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'day' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Día</button>
                         <button
                             onClick={() => setZoom('week')}
                             aria-pressed={zoom === 'week'}
-                            className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'week' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
+                            className={clsx("px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'week' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Semana</button>
                         <button
                             onClick={() => setZoom('month')}
                             aria-pressed={zoom === 'month'}
-                            className={clsx("px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'month' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
+                            className={clsx("px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'month' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Mes</button>
                     </div>
                     <div className="h-6 w-px bg-[hsl(var(--surface-3))] dark:bg-white/10" />
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <Layout size={14} className="text-[hsl(var(--primary))]" /> {moduleName}
                     </p>
                 </div>
@@ -224,7 +224,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                     {onOptimize && (
                         <button
                             onClick={onOptimize}
-                            className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white rounded-md text-[10px] font-semibold uppercase tracking-wide flex items-center gap-2 shadow-xl shadow-[hsl(var(--info)/10%)] hover:scale-105 transition-all"
+                            className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white rounded-md text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 shadow-xl shadow-[hsl(var(--info)/10%)] hover:scale-105 transition-all"
                         >
                             <Zap size={14} /> Optimus Brain
                         </button>
@@ -247,7 +247,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                                     "w-[160px] p-3 flex flex-col gap-1 border-r border-[hsl(var(--border))] dark:border-white/5",
                                     day.toDateString() === today.toDateString() ? "bg-info-soft dark:bg-[hsl(var(--info)/0.05)] text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"
                                 )}>
-                                    <span className="text-[10px] font-semibold uppercase tracking-tighter opacity-60">
+                                    <span className="text-2xs font-semibold uppercase tracking-tighter opacity-60">
                                         {day.toLocaleDateString('es-ES', { weekday: 'long' })}
                                     </span>
                                     <span className="text-lg font-bold tracking-tighter italic leading-none">
@@ -272,7 +272,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                                     <div className="absolute inset-0 flex items-center justify-center p-4 opacity-20 select-none grayscale pointer-events-none">
                                         <div className="flex flex-col items-center gap-4">
                                             <Calendar size={120} strokeWidth={0.5} />
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide">No se detectan secuencias temporales activas</p>
+                                            <p className="text-2xs font-semibold uppercase tracking-wide">No se detectan secuencias temporales activas</p>
                                         </div>
                                     </div>
                                 ) : (

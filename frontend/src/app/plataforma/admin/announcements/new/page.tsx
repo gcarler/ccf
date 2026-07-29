@@ -111,7 +111,7 @@ export default function NewAnnouncementPage() {
                                 <textarea 
                                     value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})}
                                     placeholder="Escribe los detalles aquí..."
-                                    className="w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 text-[16px] font-medium leading-relaxed outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none"
+                                    className="w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 text-lg font-medium leading-relaxed outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none"
                                 />
                             </div>
                         </div>
@@ -151,7 +151,7 @@ export default function NewAnnouncementPage() {
                             <div className="flex items-center justify-between p-4 bg-[hsl(var(--surface-1))] dark:bg-black/10 rounded-lg">
                                 <div className="flex items-center gap-3">
                                     <Users size={18} className="text-[hsl(var(--text-secondary))]" />
-                                    <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase">Alcance Global</span>
+                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase">Alcance Global</span>
                                 </div>
                                 <div className="size-5 rounded-full bg-[hsl(var(--success))] shadow-[0_0_8px_hsl(var(--success))]" />
                             </div>
@@ -165,13 +165,13 @@ export default function NewAnnouncementPage() {
                                         : 'bg-[hsl(var(--surface-1))] dark:bg-black/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
                                 }`}
                             >
-                                <span className="text-[11px] font-bold uppercase">Destacar anuncio</span>
+                                <span className="text-xs font-bold uppercase">Destacar anuncio</span>
                                 <span className={`size-5 rounded-full ${formData.is_featured ? 'bg-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-2))] dark:bg-white/20'}`} />
                             </button>
 
                             <button className="w-full py-1.5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all flex flex-col items-center gap-2">
                                 <ImageIcon size={24} />
-                                <span className="text-[9px] font-semibold uppercase">Añadir Imagen de Portada</span>
+                                <span className="text-2xs font-semibold uppercase">Añadir Imagen de Portada</span>
                             </button>
                         </div>
                     </section>
@@ -181,7 +181,7 @@ export default function NewAnnouncementPage() {
                         <div className="relative z-10 flex flex-col gap-3">
                             <div className="flex items-center gap-3">
                                 <Eye size={20} className="text-[hsl(var(--primary))]" />
-                                <h4 className="text-[11px] font-semibold uppercase tracking-wide">Vista Previa Móvil</h4>
+                                <h4 className="text-xs font-semibold uppercase tracking-wide">Vista Previa Móvil</h4>
                             </div>
                             <div className="aspect-[9/16] w-full rounded-lg bg-white/5 border border-white/10 p-3 space-y-4">
                                 <div className="h-4 w-2/3 bg-white/20 rounded-full" />

@@ -313,15 +313,15 @@ export default function CmsTestimonialsPage() {
         const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
         return (
           <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 hover:border-[hsl(var(--danger)/30%)] transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-warning-soft/40 dark:bg-[hsl(var(--warning))]/5")}>
-            <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-[11px] font-semibold shrink-0", getAvatarColor(identityKey(t)))}>{getInitials(identityKey(t))}</div>
+            <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-xs font-semibold shrink-0", getAvatarColor(identityKey(t)))}>{getInitials(identityKey(t))}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className={clsx("text-[10px] font-semibold uppercase tracking-wide", cfg.color)}>{cfg.emoji} {t.emotion || "Testimonio"}</span>
-                <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span>
+                <span className={clsx("text-2xs font-semibold uppercase tracking-wide", cfg.color)}>{cfg.emoji} {t.emotion || "Testimonio"}</span>
+                <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span>
               </div>
               <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1 mt-1">{t.content}</p>
             </div>
-            <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{new Date(t.created_at).toLocaleDateString("es-CO")}</span>
+            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{new Date(t.created_at).toLocaleDateString("es-CO")}</span>
           </button>
         );
       })}
@@ -333,22 +333,22 @@ export default function CmsTestimonialsPage() {
       <table className="w-full min-w-[480px] text-left">
         <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
           <tr>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Emoción</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Fecha</th>
-            <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acción</th>
+            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio</th>
+            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Emoción</th>
+            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
+            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Fecha</th>
+            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acción</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
           {filtered.map(t => (
             <tr key={t.id} onClick={() => setSelected(t)} className={clsx("hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] cursor-pointer", t.status === "archived" && "opacity-70 bg-warning-soft/40 dark:bg-[hsl(var(--warning))]/5")}>
               <td className="px-4 py-3 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1 max-w-[420px]">{t.content}</td>
-              <td className="px-4 py-3 hidden md:table-cell text-[11px] font-bold text-[hsl(var(--text-secondary))]">{t.emotion || "—"}</td>
-              <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
-              <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{new Date(t.created_at).toLocaleDateString("es-CO")}</td>
+              <td className="px-4 py-3 hidden md:table-cell text-xs font-bold text-[hsl(var(--text-secondary))]">{t.emotion || "—"}</td>
+              <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
+              <td className="px-4 py-3 hidden xl:table-cell text-xs text-[hsl(var(--text-secondary))]">{new Date(t.created_at).toLocaleDateString("es-CO")}</td>
               <td className="px-4 py-3">
-                <button onClick={e => { e.stopPropagation(); toggleArchive(t); }} disabled={processing === t.id} className="text-[9px] font-semibold uppercase tracking-wide text-warning-text disabled:opacity-50">{t.status === "archived" ? "Restaurar" : "Archivar"}</button>
+                <button onClick={e => { e.stopPropagation(); toggleArchive(t); }} disabled={processing === t.id} className="text-2xs font-semibold uppercase tracking-wide text-warning-text disabled:opacity-50">{t.status === "archived" ? "Restaurar" : "Archivar"}</button>
               </td>
             </tr>
           ))}
@@ -362,13 +362,13 @@ export default function CmsTestimonialsPage() {
       {testimonialGroups.map(group => (
         <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-4">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
-            <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
+            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+            <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
           </div>
           <div className="space-y-3">
             {group.items.map(t => (
               <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--danger)/30%)] transition-all", t.status === "archived" && "opacity-70 bg-warning-soft/40 dark:bg-[hsl(var(--warning))]/5")}>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{authorLabel(t)} · {t.emotion || "Testimonio"}</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{authorLabel(t)} · {t.emotion || "Testimonio"}</p>
                 <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-3">{t.content}</p>
               </button>
             ))}
@@ -407,7 +407,7 @@ export default function CmsTestimonialsPage() {
       <header className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-1.5 flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <MessageCircle size={18} className="text-[hsl(var(--danger))] shrink-0" />
-          <h1 className="text-[13px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">
+          <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">
             Testimonios
           </h1>
         </div>
@@ -423,7 +423,7 @@ export default function CmsTestimonialsPage() {
         <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={TESTIMONIAL_VIEWS} />
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--danger))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--danger)/20%)] hover:bg-[hsl(var(--danger))] active:scale-95 transition-all"
+          className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--danger))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--danger)/20%)] hover:bg-[hsl(var(--danger))] active:scale-95 transition-all"
         >
           <Plus size={14} /> Nuevo Testimonio
         </button>
@@ -451,7 +451,7 @@ export default function CmsTestimonialsPage() {
               )}
             >
               <s.icon size={14} className={s.color} />
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{s.label}</span>
+              <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{s.label}</span>
               <span className={clsx("text-xl font-semibold tabular-nums leading-none", s.color)}>{s.value}</span>
             </button>
           ))}
@@ -468,7 +468,7 @@ export default function CmsTestimonialsPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={clsx(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-all",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border transition-all",
                 filter === f
                   ? `${cfg.bg} ${cfg.border} ${cfg.color}`
                   : "bg-[hsl(var(--surface-2))] dark:bg-white/5 border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
@@ -550,7 +550,7 @@ export default function CmsTestimonialsPage() {
                     {/* Status badge */}
                     <div className="absolute top-4 right-4">
                       <span className={clsx(
-                        "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide border",
+                        "px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide border",
                         t.published
                           ? "bg-success-soft text-success-text border-[hsl(var(--success)/25%)]"
                           : "bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)]"
@@ -561,17 +561,17 @@ export default function CmsTestimonialsPage() {
 
                     {/* Author */}
                     <div className="flex items-center gap-3 pr-20">
-                      <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-[11px] font-semibold shrink-0", getAvatarColor(identityKey(t)))}>
+                      <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-xs font-semibold shrink-0", getAvatarColor(identityKey(t)))}>
                         {getInitials(identityKey(t))}
                       </div>
                       <div>
-                        <p className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{authorLabel(t)}</p>
-                        <div className={clsx("flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide", cfg.color)}>
+                        <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{authorLabel(t)}</p>
+                        <div className={clsx("flex items-center gap-1 text-2xs font-semibold uppercase tracking-wide", cfg.color)}>
                           <span>{cfg.emoji}</span>
                           <span>{t.emotion || "Testimonio"}</span>
                         </div>
                         {getTestimonialMediaUrl(t) && (
-                          <div className="mt-1 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                          <div className="mt-1 flex items-center gap-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             {t.media_type === "video" ? <PlayCircle size={10} /> : t.media_type === "podcast" ? <Headphones size={10} /> : <ImageIcon size={10} />}
                             {getMediaLabel(t)}
                           </div>
@@ -586,7 +586,7 @@ export default function CmsTestimonialsPage() {
 
                     {/* Footer */}
                     <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border))] dark:border-white/5">
-                      <p className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase">
+                      <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">
                         {new Date(t.created_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
                       </p>
                       <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -594,7 +594,7 @@ export default function CmsTestimonialsPage() {
                           onClick={e => { e.stopPropagation(); handleToggle(t); }}
                           disabled={processing === t.id || t.status === "archived"}
                           className={clsx(
-                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-wide transition-all border",
+                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all border",
                             t.published
                               ? "bg-danger-soft text-danger-text border-[hsl(var(--danger)/25%)] hover:bg-[hsl(var(--danger-muted))]"
                               : "bg-success-soft text-success-text border-[hsl(var(--success)/25%)] hover:bg-[hsl(var(--success-muted))]"
@@ -606,7 +606,7 @@ export default function CmsTestimonialsPage() {
                           onClick={e => { e.stopPropagation(); toggleArchive(t); }}
                           disabled={processing === t.id}
                           className={clsx(
-                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-semibold uppercase tracking-wide transition-all border",
+                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all border",
                             t.status === "archived"
                               ? "bg-success-soft text-success-text border-[hsl(var(--success)/25%)] hover:bg-[hsl(var(--success-muted))]"
                               : "bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)] hover:bg-[hsl(var(--warning-muted))]"
@@ -644,7 +644,7 @@ export default function CmsTestimonialsPage() {
               <div className="p-3 flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-white/5 shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageCircle size={14} className="text-[hsl(var(--danger))]" />
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio #{selected.id}</p>
+                  <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio #{selected.id}</p>
                 </div>
                 <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 text-[hsl(var(--text-secondary))] transition-all">
                   <X size={14} />
@@ -661,13 +661,13 @@ export default function CmsTestimonialsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{authorLabel(selected)}</p>
-                      <div className={clsx("flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide mt-0.5", cfg.color)}>
+                      <div className={clsx("flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide mt-0.5", cfg.color)}>
                         <span>{cfg.emoji}</span>
                         <span>{selected.emotion || "Sin categoría"}</span>
                       </div>
                     </div>
                     <span className={clsx(
-                      "px-2 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wide border",
+                      "px-2 py-1 rounded-md text-2xs font-semibold uppercase tracking-wide border",
                       selected.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]" : selected.published ? "bg-success-soft text-success-text border-[hsl(var(--success)/25%)]" : "bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)]"
                     )}>
                       {selected.status === "archived" ? "Archivado" : selected.published ? "✓ Publicado" : "⏳ Pendiente"}
@@ -679,7 +679,7 @@ export default function CmsTestimonialsPage() {
               {/* Full content */}
               <div className="p-3 flex-1 space-y-4">
                 <div className="space-y-2">
-                  <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Contenido completo</p>
+                  <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Contenido completo</p>
                   <textarea
                     value={selected.content}
                     onChange={event => setSelected(prev => prev ? { ...prev, content: event.target.value } : prev)}
@@ -699,7 +699,7 @@ export default function CmsTestimonialsPage() {
                       key={option.id}
                       onClick={() => changeSelectedMediaType(option.id as TestimonialMediaType)}
                       className={clsx(
-                        "flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-[9px] font-semibold uppercase tracking-wide transition-all",
+                        "flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-2xs font-semibold uppercase tracking-wide transition-all",
                         (selected.media_type || "text") === option.id
                           ? "border-[hsl(var(--danger)/30%)] bg-danger-soft text-danger-text"
                           : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
@@ -714,8 +714,8 @@ export default function CmsTestimonialsPage() {
                   <div className="space-y-2">
                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
                       <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Seleccionar desde media</p>
-                        <Link href="/plataforma/cms/media" className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--danger))] hover:underline">
+                        <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Seleccionar desde media</p>
+                        <Link href="/plataforma/cms/media" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--danger))] hover:underline">
                           Subir archivo
                         </Link>
                       </div>
@@ -749,7 +749,7 @@ export default function CmsTestimonialsPage() {
                                 )}
                               >
                                 {mediaKind === "image" ? <ImageIcon size={13} /> : mediaKind === "video" ? <PlayCircle size={13} /> : <Headphones size={13} />}
-                                <span className="min-w-0 truncate text-[10px] font-bold">{item.filename || item.url}</span>
+                                <span className="min-w-0 truncate text-2xs font-bold">{item.filename || item.url}</span>
                               </button>
                             );
                           })}
@@ -757,7 +757,7 @@ export default function CmsTestimonialsPage() {
                       )}
                     </div>
 
-                    <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">URL multimedia</p>
+                    <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">URL multimedia</p>
                     <input
                       value={getTestimonialMediaUrl(selected)}
                       onChange={event => {
@@ -792,7 +792,7 @@ export default function CmsTestimonialsPage() {
                 )}
 
                 <label className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Mostrar en inicio</span>
+                  <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Mostrar en inicio</span>
                   <input
                     type="checkbox"
                     checked={!!selected.show_on_home}
@@ -802,7 +802,7 @@ export default function CmsTestimonialsPage() {
                 </label>
 
                 <div className="space-y-2">
-                  <p className="text-[9px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoria / emocion</p>
+                  <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoria / emocion</p>
                   <input
                     value={selected.emotion || ""}
                     onChange={event => setSelected(prev => prev ? { ...prev, emotion: event.target.value } : prev)}
@@ -810,7 +810,7 @@ export default function CmsTestimonialsPage() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] font-bold text-[hsl(var(--text-secondary))]">
+                <div className="flex items-center justify-between text-2xs font-bold text-[hsl(var(--text-secondary))]">
                   <span className="flex items-center gap-1">
                     <Clock size={11} />
                     {new Date(selected.created_at).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}
@@ -827,7 +827,7 @@ export default function CmsTestimonialsPage() {
                 <button
                   onClick={saveSelected}
                   disabled={processing === selected.id}
-                  className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-[hsl(var(--bg-muted))] text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))] transition-all active:scale-95 disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide bg-[hsl(var(--bg-muted))] text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))] transition-all active:scale-95 disabled:opacity-60"
                 >
                   <Save size={16} /> Guardar cambios
                 </button>
@@ -835,7 +835,7 @@ export default function CmsTestimonialsPage() {
                   onClick={() => handleToggle(selected)}
                   disabled={processing === selected.id || selected.status === "archived"}
                   className={clsx(
-                    "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
+                    "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
                     selected.published
                       ? "bg-[hsl(var(--danger))] text-white shadow-[hsl(var(--danger)/20%)] hover:bg-[hsl(var(--danger))]"
                       : "bg-[hsl(var(--success))] text-white shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))]"
@@ -850,7 +850,7 @@ export default function CmsTestimonialsPage() {
                   onClick={() => toggleArchive(selected)}
                   disabled={processing === selected.id}
                   className={clsx(
-                    "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
+                    "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
                     selected.status === "archived"
                       ? "bg-[hsl(var(--success))] text-white shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))]"
                       : "bg-[hsl(var(--warning))] text-white shadow-[hsl(var(--warning)/20%)] hover:bg-[hsl(var(--warning))]"

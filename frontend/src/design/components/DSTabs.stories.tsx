@@ -96,10 +96,10 @@ export const FullExample: Story = {
                         Administra tu información personal y preferencias de cuenta.
                     </p>
                     <div className="flex gap-2">
-                        <button className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-white rounded-md">
+                        <button className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-white rounded-md">
                             Guardar
                         </button>
-                        <button className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide border border-white/20 text-white rounded-md">
+                        <button className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide border border-white/20 text-white rounded-md">
                             Cancelar
                         </button>
                     </div>

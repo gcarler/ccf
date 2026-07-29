@@ -181,7 +181,7 @@ export default function NewsletterLeadsPage() {
                     <button
                         onClick={() => setShowFilters(!showFilters)}
                         className={clsx(
-                            "flex items-center gap-2 px-3 py-2 rounded-md text-[11px] font-bold uppercase tracking-wide transition-all",
+                            "flex items-center gap-2 px-3 py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all",
                             showFilters
                                 ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
                                 : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10"
@@ -192,7 +192,7 @@ export default function NewsletterLeadsPage() {
                     <button
                         onClick={handleExport}
                         disabled={exporting}
-                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--success))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--success))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                         Exportar CSV
@@ -215,7 +215,7 @@ export default function NewsletterLeadsPage() {
                                     <div className={`size-6 rounded-md ${stat.bg} flex items-center justify-center ${stat.color}`}>
                                         <stat.icon size={14} />
                                     </div>
-                                    <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</span>
+                                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</span>
                                 </div>
                                 <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{stat.value}</p>
                             </div>
@@ -228,7 +228,7 @@ export default function NewsletterLeadsPage() {
                     <div className="px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                         <div className="flex gap-3 items-end">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Desde</label>
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Desde</label>
                                 <input
                                     type="date"
                                     value={dateFrom}
@@ -290,7 +290,7 @@ export default function NewsletterLeadsPage() {
                                             </p>
                                         </div>
                                     </div>
-                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border ${STAGE_COLORS[stageValue] || 'bg-[hsl(var(--surface-2))]/10 text-[hsl(var(--text-secondary))]'}`}>
+                                    <span className={`px-2.5 py-1 rounded-md text-2xs font-bold uppercase tracking-wide border ${STAGE_COLORS[stageValue] || 'bg-[hsl(var(--surface-2))]/10 text-[hsl(var(--text-secondary))]'}`}>
                                         {STAGE_LABELS[stageValue] || stageValue}
                                     </span>
                                 </div>
@@ -298,11 +298,11 @@ export default function NewsletterLeadsPage() {
                                     <p className="text-xs text-[hsl(var(--text-secondary))] mt-2 pl-12 line-clamp-2">{lead.notes.replace(/\n/g, ' · ')}</p>
                                 )}
                                 <div className="flex items-center gap-3 mt-2 pl-12">
-                                    <span className="text-[10px] text-[hsl(var(--text-secondary))] flex items-center gap-1">
+                                    <span className="text-2xs text-[hsl(var(--text-secondary))] flex items-center gap-1">
                                         <Calendar size={10} />
                                         {lead.created_at ? new Date(lead.created_at).toLocaleDateString('es-CO') : '—'}
                                     </span>
-                                    <span className="text-[10px] text-[hsl(var(--text-secondary))] flex items-center gap-1">
+                                    <span className="text-2xs text-[hsl(var(--text-secondary))] flex items-center gap-1">
                                         <Globe size={10} />
                                         {lead.source || '—'}
                                     </span>
@@ -315,13 +315,13 @@ export default function NewsletterLeadsPage() {
                             <table className="w-full text-left">
                                 <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                                     <tr>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Email</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Teléfono</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Etapa</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Notas</th>
-                                        <th className="px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha</th>
+                                        <th className="px-4 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre</th>
+                                        <th className="px-4 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Email</th>
+                                        <th className="px-4 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Teléfono</th>
+                                        <th className="px-4 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</th>
+                                        <th className="px-4 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Etapa</th>
+                                        <th className="px-4 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Notas</th>
+                                        <th className="px-4 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -339,12 +339,12 @@ export default function NewsletterLeadsPage() {
                                             <td className="px-4 py-2 text-xs text-[hsl(var(--text-secondary))]">{lead.email || '—'}</td>
                                             <td className="px-4 py-2 text-xs text-[hsl(var(--text-secondary))]">{lead.phone || '—'}</td>
                                             <td className="px-4 py-2 text-xs">
-                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                                                <span className="px-2 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                                     {lead.source?.replace('newsletter-', '') || '—'}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-2">
-                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${STAGE_COLORS[stageValue] || ''}`}>
+                                                <span className={`px-2 py-0.5 rounded text-2xs font-bold uppercase tracking-wide border ${STAGE_COLORS[stageValue] || ''}`}>
                                                     {STAGE_LABELS[stageValue] || stageValue}
                                                 </span>
                                             </td>
@@ -371,7 +371,7 @@ export default function NewsletterLeadsPage() {
                                 }
                                 return Object.entries(grouped).sort((a, b) => b[0].localeCompare(a[0])).map(([dateKey, items]) => (
                                     <div key={dateKey} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
-                                        <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                        <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             {dateKey === 'unknown' ? 'Sin fecha' : new Date(dateKey + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}
                                             <span className="ml-2 text-[hsl(var(--text-secondary))]">({items.length})</span>
                                         </p>
@@ -385,7 +385,7 @@ export default function NewsletterLeadsPage() {
                                                     <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                                         {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                                                     </p>
-                                                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">{lead.email || 'Sin email'}</p>
+                                                    <p className="text-2xs text-[hsl(var(--text-secondary))]">{lead.email || 'Sin email'}</p>
                                                 </button>
                                             ))}
                                         </div>
@@ -395,7 +395,7 @@ export default function NewsletterLeadsPage() {
                         </div>
                     ) : viewType === 'wiki' ? (
                         <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 <BookOpen size={12} /> Wiki de leads de newsletter
                             </div>
                             <textarea
@@ -413,7 +413,7 @@ export default function NewsletterLeadsPage() {
                 {/* Pagination */}
                 {data && data.total_pages > 1 && (
                     <div className="px-4 py-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
-                        <span className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">
+                        <span className="text-xs text-[hsl(var(--text-secondary))] font-medium">
                             {data.total} registros · Página {data.page} de {data.total_pages}
                         </span>
                         <div className="flex gap-1">

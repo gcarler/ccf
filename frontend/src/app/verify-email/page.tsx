@@ -63,7 +63,7 @@ function VerifyEmailContent() {
               <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round"/>
               <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
             </svg>
-            <span className="text-white font-bold uppercase tracking-wide text-[10px]">
+            <span className="text-white font-bold uppercase tracking-wide text-2xs">
               Ministerio Internacional
             </span>
           </div>
@@ -161,7 +161,7 @@ function VerifyEmailContent() {
               <>
                 <button
                   onClick={() => router.push("/login")}
-                  className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[hsl(var(--primary))] transition-all"
+                  className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-xs uppercase tracking-wide border-none cursor-pointer hover:bg-[hsl(var(--primary))] transition-all"
                 >
                   {status === "success" ? "Ir al inicio de sesión →" : "Volver al inicio"}
                 </button>
@@ -171,7 +171,7 @@ function VerifyEmailContent() {
                     <div className="w-full border-t-2 border-[hsl(var(--border))]" />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="bg-[hsl(var(--bg-primary))] px-4 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    <span className="bg-[hsl(var(--bg-primary))] px-4 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                       Salmos 133:1
                     </span>
                   </div>

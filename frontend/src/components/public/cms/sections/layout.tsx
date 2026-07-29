@@ -29,7 +29,7 @@ export function TocSection({ section }: { section: CmsSection<"toc"> }) {
             {items.map((item, i) => (
               <li key={i}>
                 <a href={val(item, "href", "#")} className="flex items-center gap-2 text-sm font-medium hover:underline" style={{ color: "var(--site-on-surface)" }}>
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>{i + 1}</span>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-2xs font-bold" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>{i + 1}</span>
                   {val(item, "label", `Sección ${i + 1}`)}
                 </a>
               </li>

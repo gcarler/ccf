@@ -92,7 +92,7 @@ export default function AdminPersonasPage() {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
-                                        <tr className="bg-[hsl(var(--surface-1))]/60 dark:bg-black/20 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                        <tr className="bg-[hsl(var(--surface-1))]/60 dark:bg-black/20 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             <th className="px-4 py-3">Nombre</th>
                                             <th className="px-4 py-3">Correo</th>
                                             <th className="px-4 py-3">Teléfono</th>
@@ -113,7 +113,7 @@ export default function AdminPersonasPage() {
                                                             <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">
                                                                 {persona.first_name} {persona.last_name}
                                                             </p>
-                                                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">ID: {String(persona.id)}</p>
+                                                            <p className="text-2xs text-[hsl(var(--text-secondary))]">ID: {String(persona.id)}</p>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -130,14 +130,14 @@ export default function AdminPersonasPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="inline-flex items-center rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                                    <span className="inline-flex items-center rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2.5 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                         {persona.church_role || "Sin rol"}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <button
                                                         onClick={() => router.push(`/plataforma/admin/personas/${persona.id}`)}
-                                                        className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm hover:opacity-95"
+                                                        className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-white shadow-sm hover:opacity-95"
                                                     >
                                                         Ver expediente <ArrowRight size={13} />
                                                     </button>

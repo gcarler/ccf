@@ -104,7 +104,7 @@ export default function CourseManagementPage() {
                     <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Acceso Restringido</h2>
                     <p className="text-[hsl(var(--text-secondary))] max-w-sm font-medium">Esta consola de gestion esta reservada para personal autorizado. Contacta a coordinacion academica.</p>
                 </div>
-                <button onClick={() => router.back()} className="px-3 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-semibold uppercase tracking-wide text-[10px] shadow-2xl transition-all active:scale-95">Volver a puerto</button>
+                <button onClick={() => router.back()} className="px-3 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-semibold uppercase tracking-wide text-2xs shadow-2xl transition-all active:scale-95">Volver a puerto</button>
             </div>
         );
     }
@@ -158,7 +158,7 @@ export default function CourseManagementPage() {
                 {viewType === 'table' && (
                     <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full min-w-[480px] text-left">
-                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 <tr><th className="px-4 py-1.5">Estudiante</th><th className="px-4 py-1.5">Correo</th><th className="px-4 py-1.5">Progreso</th><th className="px-4 py-1.5">Nota</th></tr>
                             </thead>
                             <tbody>
@@ -185,10 +185,10 @@ export default function CourseManagementPage() {
 
                         <div className="space-y-3 relative z-10">
                             <div className="flex items-center gap-3">
-                                <div className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-full text-[9px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)]">
+                                <div className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-full text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)]">
                                     {course?.modality === 'formal' ? 'Ruta Ministerial' : 'Capacitacion'}
                                 </div>
-                                <div className="px-3 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-full text-[9px] font-semibold uppercase tracking-wide">
+                                <div className="px-3 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-full text-2xs font-semibold uppercase tracking-wide">
                                     {course?.code || '---'}
                                 </div>
                             </div>
@@ -223,7 +223,7 @@ export default function CourseManagementPage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={clsx(
-                                    "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide transition-all",
+                                    "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all",
                                     activeTab === tab.id
                                         ? "bg-[hsl(var(--bg-primary))] dark:bg-[#1c1f26] text-[hsl(var(--primary))] shadow-xl shadow-black/10/50 dark:shadow-none"
                                         : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
@@ -253,7 +253,7 @@ export default function CourseManagementPage() {
                                         />
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <button className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
+                                        <button className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
                                             <FileText size={16} /> Exportar Acta
                                         </button>
                                     </div>
@@ -277,7 +277,7 @@ export default function CourseManagementPage() {
                                                     </div>
                                                     <div className="flex flex-col items-end gap-2">
                                                         <span className={clsx(
-                                                            "px-3 py-1 rounded-full text-[8px] font-semibold uppercase tracking-wide",
+                                                            "px-3 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide",
                                                             student.status === 'active' ? "bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]" : "bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]"
                                                         )}>
                                                             {student.status}
@@ -288,13 +288,13 @@ export default function CourseManagementPage() {
 
                                                 <div className="mt-3 space-y-1 relative z-10">
                                                     <h4 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate tracking-tight">{student.username}</h4>
-                                                    <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] truncate tracking-wide">{student.email}</p>
+                                                    <p className="text-xs font-bold text-[hsl(var(--text-secondary))] truncate tracking-wide">{student.email}</p>
                                                 </div>
 
                                                 <div className="mt-3 pt-3 border-t border-[hsl(var(--border))] dark:border-white/5 grid grid-cols-2 gap-4 relative z-10">
                                                     <div className="space-y-3">
                                                         <div className="flex items-center justify-between">
-                                                            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso</p>
+                                                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso</p>
                                                             <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{student.progress}%</span>
                                                         </div>
                                                         <div className="h-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden p-0.5">
@@ -302,14 +302,14 @@ export default function CourseManagementPage() {
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nota Promedio</p>
+                                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nota Promedio</p>
                                                         <p className={clsx("text-xl font-bold tracking-tighter", student.average_grade >= 70 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]")}>
                                                             {student.average_grade.toFixed(1)}
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                <button className="w-full mt-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white group-hover:shadow-xl group-hover:shadow-[hsl(var(--info)/20%)] transition-all">Perfil Academico</button>
+                                                <button className="w-full mt-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white group-hover:shadow-xl group-hover:shadow-[hsl(var(--info)/20%)] transition-all">Perfil Academico</button>
                                             </div>
                                         ))
                                     ) : (

@@ -30,7 +30,7 @@
       "users_deny": [],
       "rollout_percent": 100
     },
-    "390c54a8-ef94-45fd-b9ac-6f5afb6c1433": {
+    "327350d6-43a0-4d4e-a81a-413c9da4c32f": {
       "roles_allow": [],
       "roles_deny": [],
       "users_allow": [],
@@ -64,7 +64,12 @@
       }
     },
     "critical_feature_flags": [
-      "feat_x"
+      "automation_builder",
+      "collaborative_editor",
+      "command_center",
+      "knowledge_graph",
+      "presence_live",
+      "web_vitals_dashboard"
     ],
     "suppressions": []
   }

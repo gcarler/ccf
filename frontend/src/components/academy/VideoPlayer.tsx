@@ -84,7 +84,7 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
                         <button className="text-white hover:rotate-12 transition-transform">
                             <RotateCcw size={20} />
                         </button>
-                        <div className="text-white text-[12px] font-bold font-mono">
+                        <div className="text-white text-sm font-bold font-mono">
                             {formatTime(videoRef.current?.currentTime || 0)} / {formatTime(duration)}
                         </div>
                     </div>

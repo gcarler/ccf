@@ -410,7 +410,7 @@ export default function CmsHomePage() {
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
+            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
           >
             Ver sitio público
             <ExternalLink size={14} />
@@ -424,7 +424,7 @@ export default function CmsHomePage() {
             return (
               <Link key={metric.label} href={metric.href} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))] transition-colors hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]/50">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
+                  <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
                   <Icon size={15} className="text-[hsl(var(--text-secondary))]" />
                 </div>
                 <p className="mt-3 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">
@@ -439,7 +439,7 @@ export default function CmsHomePage() {
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="mb-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tendencias</p>
+              <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tendencias</p>
               <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Publicaciones por mes</h2>
             </div>
             {pubsChart.length > 0 ? (
@@ -451,7 +451,7 @@ export default function CmsHomePage() {
                       style={{ height: `${Math.max((d.value / maxPubValue) * 100, 4)}%` }}
                       title={`${d.label}: ${Math.round(d.value)}`}
                     />
-                    <span className="text-[10px] text-[hsl(var(--text-secondary))]">{d.label}</span>
+                    <span className="text-2xs text-[hsl(var(--text-secondary))]">{d.label}</span>
                   </div>
                 ))}
               </div>
@@ -462,7 +462,7 @@ export default function CmsHomePage() {
 
           <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="mb-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contenido</p>
+              <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contenido</p>
               <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Secciones por tipo</h2>
             </div>
             {contentTypeChart.length > 0 ? (
@@ -491,7 +491,7 @@ export default function CmsHomePage() {
           <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] pb-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Control de calidad</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Control de calidad</p>
                 <h2 className="mt-1 text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">Prioridades editoriales</h2>
               </div>
               <div className="flex items-center gap-3">
@@ -537,7 +537,7 @@ export default function CmsHomePage() {
           <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acceso</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acceso</p>
                 <h2 className="mt-1 text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">Rol editorial</h2>
               </div>
               <ShieldCheck className="h-5 w-5 text-[hsl(var(--primary))]" />
@@ -591,12 +591,12 @@ export default function CmsHomePage() {
                 topPages.map((page, idx) => (
                   <div key={page.slug} className="flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded bg-[hsl(var(--surface-1))] text-[10px] font-bold text-[hsl(var(--text-secondary))] dark:bg-white/5">
+                      <span className="flex h-6 w-6 items-center justify-center rounded bg-[hsl(var(--surface-1))] text-2xs font-bold text-[hsl(var(--text-secondary))] dark:bg-white/5">
                         {idx + 1}
                       </span>
                       <div>
                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate max-w-[140px]">{page.title}</p>
-                        <p className="text-[11px] text-[hsl(var(--text-secondary))]">/{page.slug}</p>
+                        <p className="text-xs text-[hsl(var(--text-secondary))]">/{page.slug}</p>
                       </div>
                     </div>
                     <span className="text-sm font-bold text-[hsl(var(--primary))]">{page.views}</span>
@@ -614,7 +614,7 @@ export default function CmsHomePage() {
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Últimos publicados.</p>
               </div>
               {canEdit && (
-                <Link href="/plataforma/cms/posts" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
+                <Link href="/plataforma/cms/posts" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
                   Ver todo
                 </Link>
               )}
@@ -631,11 +631,11 @@ export default function CmsHomePage() {
                   <div key={post.slug} className="rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{post.title}</p>
-                      <span className="shrink-0 rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-bold text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text">
+                      <span className="shrink-0 rounded-full bg-success-soft px-2 py-0.5 text-2xs font-bold text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text">
                         {post.status}
                       </span>
                     </div>
-                    <div className="mt-1 flex items-center gap-2 text-[11px] text-[hsl(var(--text-secondary))]">
+                    <div className="mt-1 flex items-center gap-2 text-xs text-[hsl(var(--text-secondary))]">
                       <span>{post.published_at}</span>
                       {post.category_count > 0 && <span>· {post.category_count} cat</span>}
                       {post.tag_count > 0 && <span>· {post.tag_count} tags</span>}
@@ -669,11 +669,11 @@ export default function CmsHomePage() {
                     <div className="min-w-0">
                       <p className="text-sm text-[hsl(var(--text-primary))] dark:text-white">{activityLabel(activity)}</p>
                       {activity.from_status && activity.to_status && (
-                        <p className="mt-0.5 text-[11px] text-[hsl(var(--text-secondary))]">
+                        <p className="mt-0.5 text-xs text-[hsl(var(--text-secondary))]">
                           {activity.from_status} → {activity.to_status}
                         </p>
                       )}
-                      <p className="mt-1 text-[11px] text-[hsl(var(--text-secondary))]">{activity.created_at}</p>
+                      <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{activity.created_at}</p>
                     </div>
                   </div>
                 ))
@@ -691,7 +691,7 @@ export default function CmsHomePage() {
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Ultimas historias recibidas para revision y publicacion.</p>
               </div>
               {canEdit && (
-                <Link href="/plataforma/cms/testimonials" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
+                <Link href="/plataforma/cms/testimonials" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
                   Ver todo
                 </Link>
               )}
@@ -709,12 +709,12 @@ export default function CmsHomePage() {
                   <div key={testimony.id} className="rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{testimony.emotion || "Sin categoria"}</p>
-                      <span className={testimony.is_approved ? "rounded-full bg-success-soft px-2 py-1 text-[10px] font-bold text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text" : "rounded-full bg-warning-soft px-2 py-1 text-[10px] font-bold text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text"}>
+                      <span className={testimony.is_approved ? "rounded-full bg-success-soft px-2 py-1 text-2xs font-bold text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text" : "rounded-full bg-warning-soft px-2 py-1 text-2xs font-bold text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text"}>
                         {testimony.is_approved ? "Aprobado" : "Pendiente"}
                       </span>
                     </div>
                     <p className="mt-2 line-clamp-2 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{testimony.content}</p>
-                    <p className="mt-3 text-[11px] text-[hsl(var(--text-secondary))]">{formatDate(testimony.created_at)}</p>
+                    <p className="mt-3 text-xs text-[hsl(var(--text-secondary))]">{formatDate(testimony.created_at)}</p>
                   </div>
                 ))
               )}

@@ -10,6 +10,7 @@ import {
   type PageVersionSnapshot,
   type SectionSnapshot,
 } from "./versionDiff";
+import { createMockSectionSnapshot } from "@/test-utils/factories";
 
 // ── diffWords (LCS) ────────────────────────────────────────────────────
 
@@ -305,20 +306,20 @@ describe("section diff (via diffPageVersionSnapshots)", () => {
     // warning is emitted.
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
-      const before: PageVersionSnapshot = {
-        page: {},
-        // No section_key, no id.
-        sections: [
-          { type: "rich_text", props_json: { title: "Ghost 1" }, sort_order: 0 } as SectionSnapshot,
-        ],
-      };
-      const after: PageVersionSnapshot = {
-        page: {},
-        sections: [
-          { type: "rich_text", props_json: { title: "Ghost 1" }, sort_order: 0 } as SectionSnapshot,
-          { type: "rich_text", props_json: { title: "Ghost 2" }, sort_order: 1 } as SectionSnapshot,
-        ],
-      };
+    const before: PageVersionSnapshot = {
+      page: {},
+      // No section_key, no id.
+      sections: [
+        createMockSectionSnapshot({ type: "rich_text", props_json: { title: "Ghost 1" }, sort_order: 0 }),
+      ],
+    };
+    const after: PageVersionSnapshot = {
+      page: {},
+      sections: [
+        createMockSectionSnapshot({ type: "rich_text", props_json: { title: "Ghost 1" }, sort_order: 0 }),
+        createMockSectionSnapshot({ type: "rich_text", props_json: { title: "Ghost 2" }, sort_order: 1 }),
+      ],
+    };
       const diff = diffPageVersionSnapshots(before, after);
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining("3 section(s) have no section_key/id"),

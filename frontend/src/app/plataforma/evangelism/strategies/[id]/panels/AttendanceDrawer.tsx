@@ -170,9 +170,9 @@ export default function AttendanceDrawer({
     subtitle={session ? new Date(session.session_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''}
     actions={<>
     <button onClick={onClose}
-    className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
+    className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
     <button onClick={onSave} disabled={saving}
-    className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+    className="px-4 py-1.5 text-sm font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
     {saving ? <><Loader2 size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar asistencia</>}
     </button>
     </>}>
@@ -181,12 +181,12 @@ export default function AttendanceDrawer({
     <div className="text-center py-8">
     <Users size={32} className="text-[hsl(var(--text-secondary))] mx-auto mb-2" />
     <p className="text-xs text-[hsl(var(--text-secondary))]">Este grupo no tiene personas asignadas</p>
-    <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1">Agrega personas desde la pestaña Grupos</p>
+    <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Agrega personas desde la pestaña Grupos</p>
     </div>
     ) : (
     <>
     {personas.length > 0 && (
-    <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--text-secondary))] mb-1">
+    <div className="flex items-center gap-2 text-xs text-[hsl(var(--text-secondary))] mb-1">
     <span>{personas.filter(m => m.status === 'present').length} presentes</span>
     <span>·</span>
     <span>{personas.filter(m => m.status === 'absent').length} ausentes</span>
@@ -200,9 +200,9 @@ export default function AttendanceDrawer({
     <div className="flex-1 min-w-0">
     <div className="flex items-center gap-1.5">
     <p className="text-xs font-semibold text-[hsl(var(--text-primary))] ">{m.name}</p>
-    {m.status === 'first_time' && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[hsl(var(--primary))] text-white">1ª vez</span>}
+    {m.status === 'first_time' && <span className="text-2xs font-bold px-1 py-0.5 rounded bg-[hsl(var(--primary))] text-white">1ª vez</span>}
     </div>
-    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${getRoleColor(m.role)}`}>
+    <span className={`text-2xs font-semibold px-1.5 py-0.5 rounded ${getRoleColor(m.role)}`}>
     {getRoleLabel(m.role, m.role_label)}
     </span>
     </div>
@@ -214,7 +214,7 @@ export default function AttendanceDrawer({
     ] as const).map(opt => (
     <button key={opt.status}
     onClick={() => setPersonas(prev => prev.map((x, j) => j === i ? { ...x, status: opt.status } : x))}
-    className={`w-8 h-8 rounded-lg text-[11px] font-bold transition-all ${opt.cls} ${m.status === opt.status ? opt.activeCls : 'opacity-50 hover:opacity-100'}`}>
+    className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${opt.cls} ${m.status === opt.status ? opt.activeCls : 'opacity-50 hover:opacity-100'}`}>
     {opt.label}
     </button>
     ))}
@@ -256,7 +256,7 @@ export default function AttendanceDrawer({
     value={visitorSearch}
     onChange={e => setVisitorSearch(e.target.value)}
     placeholder="Buscar persona por nombre..."
-    className="w-full pl-8 pr-3 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]"
+    className="w-full pl-8 pr-3 py-2 text-sm bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]"
     />
     </div>
     <button onClick={() => { setShowVisitorSearch(false); setVisitorSearch(''); }}
@@ -285,7 +285,7 @@ export default function AttendanceDrawer({
     className="w-full text-left px-3 py-2 rounded-md text-xs text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] flex items-center gap-2 transition-colors">
     <UserPlus size={12} className="text-[hsl(var(--primary))] shrink-0" />
     <span className="font-medium">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}</span>
-    {m.church_role && <span className="text-[hsl(var(--text-secondary))] text-[10px]">({m.church_role})</span>}
+    {m.church_role && <span className="text-[hsl(var(--text-secondary))] text-2xs">({m.church_role})</span>}
     </button>
     ))}
     {!visitorSearchLoading && visitorSearchResults.filter(m => !personas.find(a => a.persona_id === m.id)).length === 0 && (
@@ -294,14 +294,14 @@ export default function AttendanceDrawer({
     </div>
     )}
     {visitorSearch.trim().length > 0 && visitorSearch.trim().length < 3 && (
-    <p className="text-[11px] text-[hsl(var(--text-secondary))]">Escribe al menos 3 caracteres para buscar en la sede</p>
+    <p className="text-xs text-[hsl(var(--text-secondary))]">Escribe al menos 3 caracteres para buscar en la sede</p>
     )}
     </div>
     ) : (
     /* Formulario crear persona nueva */
     <div className="space-y-3 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-3">
     <div className="flex items-center justify-between mb-1">
-    <span className="text-[11px] font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide">Nueva persona visitante</span>
+    <span className="text-xs font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide">Nueva persona visitante</span>
     <button onClick={() => { setShowNewVisitorForm(false); setNewVisitorForm(EMPTY_VISITOR_FORM); }}
     className="w-6 h-6 flex items-center justify-center rounded text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10">
     <X size={13} />
@@ -309,44 +309,44 @@ export default function AttendanceDrawer({
     </div>
     <div className="grid grid-cols-2 gap-2">
     <div>
-    <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">Nombres</label>
+    <label className="block text-2xs text-[hsl(var(--text-secondary))] mb-0.5">Nombres</label>
     <input value={newVisitorForm.first_name} onChange={e => setNewVisitorForm(p => ({ ...p, first_name: e.target.value }))}
     placeholder="Opcional"
-    className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+    className="w-full py-1.5 px-2 text-sm bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
     </div>
     <div>
-    <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">Apellidos</label>
+    <label className="block text-2xs text-[hsl(var(--text-secondary))] mb-0.5">Apellidos</label>
     <input value={newVisitorForm.last_name} onChange={e => setNewVisitorForm(p => ({ ...p, last_name: e.target.value }))}
     placeholder="Opcional"
-    className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+    className="w-full py-1.5 px-2 text-sm bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
     </div>
     <div>
-    <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">Teléfono</label>
+    <label className="block text-2xs text-[hsl(var(--text-secondary))] mb-0.5">Teléfono</label>
     <input value={newVisitorForm.phone} onChange={e => setNewVisitorForm(p => ({ ...p, phone: e.target.value }))}
     placeholder="Opcional" type="tel"
-    className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+    className="w-full py-1.5 px-2 text-sm bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
     </div>
     <div>
-    <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">WhatsApp</label>
+    <label className="block text-2xs text-[hsl(var(--text-secondary))] mb-0.5">WhatsApp</label>
     <input value={newVisitorForm.whatsapp} onChange={e => setNewVisitorForm(p => ({ ...p, whatsapp: e.target.value }))}
     placeholder="Opcional" type="tel"
-    className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+    className="w-full py-1.5 px-2 text-sm bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
     </div>
     <div className="col-span-2">
-    <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">Email</label>
+    <label className="block text-2xs text-[hsl(var(--text-secondary))] mb-0.5">Email</label>
     <input value={newVisitorForm.email} onChange={e => setNewVisitorForm(p => ({ ...p, email: e.target.value }))}
     placeholder="Opcional" type="email"
-    className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+    className="w-full py-1.5 px-2 text-sm bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
     </div>
     <div className="col-span-2">
-    <label className="block text-[10px] text-[hsl(var(--text-secondary))] mb-0.5">Dirección</label>
+    <label className="block text-2xs text-[hsl(var(--text-secondary))] mb-0.5">Dirección</label>
     <input value={newVisitorForm.address} onChange={e => setNewVisitorForm(p => ({ ...p, address: e.target.value }))}
     placeholder="Opcional"
-    className="w-full py-1.5 px-2 text-[12px] bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
+    className="w-full py-1.5 px-2 text-sm bg-[hsl(var(--bg-primary))] dark:bg-black/30 border border-[hsl(var(--border-primary))] rounded-md text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]" />
     </div>
     </div>
     <button onClick={handleCreateNewVisitor} disabled={savingNewVisitor}
-    className="w-full py-2 rounded-lg text-[12px] font-semibold text-white bg-[hsl(var(--secondary))] hover:bg-[hsl(var(--secondary))] disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+    className="w-full py-2 rounded-lg text-sm font-semibold text-white bg-[hsl(var(--secondary))] hover:bg-[hsl(var(--secondary))] disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
     {savingNewVisitor ? <><Loader2 size={13} className="animate-spin" />Guardando...</> : <><UserPlus size={13} />Registrar visitante</>}
     </button>
     </div>

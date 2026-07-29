@@ -107,7 +107,7 @@ function FooterLinkColumn({ title, links }: { title: string; links: PublicLink[]
 
     return (
         <div className="min-w-0">
-            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>
+            <h4 className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>
                 {title}
             </h4>
             <ul className="mt-5 grid gap-1.5">
@@ -115,7 +115,7 @@ function FooterLinkColumn({ title, links }: { title: string; links: PublicLink[]
                     <li key={href}>
                         <Link
                             href={href}
-                            className="group flex min-h-10 items-center justify-between gap-3 rounded-xl px-0 py-1.5 text-sm font-medium leading-snug transition-colors sm:text-[15px]"
+                            className="group flex min-h-10 items-center justify-between gap-3 rounded-xl px-0 py-1.5 text-sm font-medium leading-snug transition-colors sm:text-md"
                             style={{ color: "var(--site-on-surface-variant)" }}
                         >
                             <span className="min-w-0 truncate">{label}</span>
@@ -217,7 +217,7 @@ export default function Footer() {
                                     <span className="block truncate text-2xl font-semibold leading-tight sm:text-3xl" style={{ color: "var(--site-on-surface)" }}>
                                         {brandName}
                                     </span>
-                                    <span className="mt-1 block text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>
+                                    <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>
                                         Comunidad cristiana
                                     </span>
                                 </span>
@@ -285,24 +285,24 @@ export default function Footer() {
                         <FooterLinkColumn title={resourceSectionTitle} links={visibleResourceLinks} />
 
                         <div className="min-w-0 sm:col-span-2 lg:col-span-1">
-                            <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>
+                            <h4 className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>
                                 {contactSectionTitle}
                             </h4>
                             <div className="mt-5 grid gap-2">
                                 {SITE_EMAIL ? (
-                                    <a href={`mailto:${SITE_EMAIL}`} className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-[15px]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    <a href={`mailto:${SITE_EMAIL}`} className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-md" style={{ color: "var(--site-on-surface-variant)" }}>
                                         <Mail size={16} className="shrink-0" aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                         <span className="min-w-0 truncate">{SITE_EMAIL}</span>
                                     </a>
                                 ) : null}
                                 {locationLabel ? (
-                                    <Link href="/sedes" className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-[15px]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    <Link href="/sedes" className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-md" style={{ color: "var(--site-on-surface-variant)" }}>
                                         <MapPin size={16} className="shrink-0" aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                         <span className="min-w-0 truncate">{locationLabel}</span>
                                     </Link>
                                 ) : null}
                                 {newsletterLabel ? (
-                                    <Link href="/boletin" className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-[15px]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    <Link href="/boletin" className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-md" style={{ color: "var(--site-on-surface-variant)" }}>
                                         <Newspaper size={16} className="shrink-0" aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                         <span className="min-w-0 truncate">{newsletterLabel}</span>
                                     </Link>

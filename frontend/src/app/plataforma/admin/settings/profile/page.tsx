@@ -32,7 +32,7 @@ export default function AdminSettingsProfilePage() {
                 <div className="px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Church size={18} className="text-primary" />
-                        <h1 className="text-[13px] font-semibold uppercase tracking-wide text-white">
+                        <h1 className="text-base font-semibold uppercase tracking-wide text-white">
                             Perfil del Ministerio
                         </h1>
                     </div>
@@ -41,7 +41,7 @@ export default function AdminSettingsProfilePage() {
                             <motion.span
                                 initial={{ opacity: 0, x: 10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="px-3 py-1.5 bg-[hsl(var(--success))]/20 text-[hsl(var(--success))] rounded-md text-[10px] font-semibold uppercase tracking-wide"
+                                className="px-3 py-1.5 bg-[hsl(var(--success))]/20 text-[hsl(var(--success))] rounded-md text-2xs font-semibold uppercase tracking-wide"
                             >
                                 ✓ Guardado
                             </motion.span>
@@ -49,14 +49,14 @@ export default function AdminSettingsProfilePage() {
                         {!editing ? (
                             <button
                                 onClick={() => setEditing(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-md text-[11px] font-semibold uppercase tracking-wide transition-all"
+                                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-md text-xs font-semibold uppercase tracking-wide transition-all"
                             >
                                 <Edit2 size={14} /> Editar
                             </button>
                         ) : (
                             <button
                                 onClick={handleSave}
-                                className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/80 text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-primary/20 transition-all"
+                                className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/80 text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-primary/20 transition-all"
                             >
                                 <Save size={14} /> Guardar Cambios
                             </button>
@@ -79,7 +79,7 @@ export default function AdminSettingsProfilePage() {
                         )}
                     </div>
                     {editing && (
-                        <p className="text-[10px] text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                        <p className="text-2xs text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                             Toca el ícono para cambiar el logo
                         </p>
                     )}
@@ -116,7 +116,7 @@ export default function AdminSettingsProfilePage() {
                 </Section>
 
                 {editing && (
-                    <div className="flex items-start gap-3 p-4 bg-[hsl(var(--warning))]/10 border border-[hsl(var(--warning)/100%)]/20 rounded-lg text-[11px] text-[hsl(var(--warning))] font-bold">
+                    <div className="flex items-start gap-3 p-4 bg-[hsl(var(--warning))]/10 border border-[hsl(var(--warning)/100%)]/20 rounded-lg text-xs text-[hsl(var(--warning))] font-bold">
                         <AlertCircle size={16} className="shrink-0 mt-0.5" />
                         Los cambios se reflejarán en todo el ecosistema CCF, incluyendo el sitio público.
                     </div>
@@ -133,7 +133,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
             animate={{ opacity: 1, y: 0 }}
             className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-3 space-y-4"
         >
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">{title}</p>
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">{title}</p>
             {children}
         </motion.div>
     );
@@ -145,7 +145,7 @@ function Field({ label, value, editing, onChange, multiline }: {
 }) {
     return (
         <div className="space-y-1.5">
-            <label className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</label>
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</label>
             {editing ? (
                 multiline ? (
                     <textarea

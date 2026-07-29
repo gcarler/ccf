@@ -68,7 +68,7 @@ export default function SearchAdminPage() {
                   <p className="text-sm font-medium truncate">{r.title || r.entity_slug}</p>
                   <p className="text-xs text-[hsl(var(--text-secondary))]">{r.entity_type} · {r.entity_slug}</p>
                 </div>
-                {r.boost_score > 0 && <span className="text-[10px] bg-[hsl(var(--warning-muted))] text-warning-text px-1.5 py-0.5 rounded font-bold">+{r.boost_score}</span>}
+                {r.boost_score > 0 && <span className="text-2xs bg-[hsl(var(--warning-muted))] text-warning-text px-1.5 py-0.5 rounded font-bold">+{r.boost_score}</span>}
               </div>
             ))}
           </div>

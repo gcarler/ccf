@@ -69,7 +69,7 @@ export default function AnnouncementsPage() {
     return (
  <div className="w-full space-y-3 pb-4 animate-in fade-in duration-700">
             <header className="space-y-2">
-                <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-[10px]">
+                <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold uppercase tracking-wide text-2xs">
                     <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
                     Comunicación Oficial
                 </div>
@@ -99,10 +99,10 @@ export default function AnnouncementsPage() {
 
                             <div className="flex-1 space-y-3">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-[10px] font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
+                                    <span className="text-2xs font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
                                         {item.category}
                                     </span>
-                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary)/0.6)] uppercase tracking-tight">
+                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary)/0.6)] uppercase tracking-tight">
                                         {item.date}
                                     </span>
                                 </div>
@@ -127,7 +127,7 @@ export default function AnnouncementsPage() {
                 <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-xs mx-auto mb-3">
                     Si eres líder de ministerio y tienes una actualización importante, contacta al equipo de comunicaciones.
                 </p>
-                <button className="px-3 h-8 bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] rounded-lg font-bold uppercase tracking-wide text-[10px] hover:opacity-90 transition-all">
+                <button className="px-3 h-8 bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] rounded-lg font-bold uppercase tracking-wide text-2xs hover:opacity-90 transition-all">
                     Contactar Equipo
                 </button>
             </div>

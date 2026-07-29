@@ -25,8 +25,8 @@ const variantClasses: Record<Variant, string> = {
 };
 
 const sizeClasses = {
-    sm: 'px-2 py-1 text-[9px] rounded-md',
-    md: 'px-2.5 py-1 text-[9px] rounded-md',
+    sm: 'px-2 py-1 text-2xs rounded-md',
+    md: 'px-2.5 py-1 text-2xs rounded-md',
 };
 
 export function DSToolbarChip({ label, active, variant = 'soft', size = 'md', icon: Icon, tone = 'neutral', type = 'button', className, ...props }: DSToolbarChipProps) {

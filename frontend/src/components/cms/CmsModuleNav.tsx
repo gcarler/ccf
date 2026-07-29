@@ -104,12 +104,12 @@ export function CmsModuleNav() {
     }) ?? availableTabs[0];
 
   return (
-    <nav className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/[0.05] dark:bg-[#141517]">
+    <nav className="shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/[0.05] dark:bg-[hsl(var(--surface-2))]">
       <div className="flex items-center gap-1.5 px-4 pt-2.5">
         <Globe size={8} className="text-[hsl(var(--text-secondary))]" />
-        <span className="text-[11px] text-[hsl(var(--text-secondary))]">Sitio web</span>
+        <span className="text-xs text-[hsl(var(--text-secondary))]">Sitio web</span>
         <ChevronRight size={8} className="text-[hsl(var(--text-secondary))]" />
-        <span className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+        <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
           {activeTab?.label ?? "CMS"}
         </span>
       </div>
@@ -125,7 +125,7 @@ export function CmsModuleNav() {
                 href={tab.href}
                 aria-current={isActive ? "page" : undefined}
                 className={clsx(
-                  "flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-[12px] font-medium transition-colors whitespace-nowrap",
+                  "flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors whitespace-nowrap",
                   isActive
                     ? "border-[hsl(var(--info)/100%)] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]"
                     : "border-transparent text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]",
@@ -141,19 +141,19 @@ export function CmsModuleNav() {
 
       {stats && (
         <div className="flex items-center gap-4 px-4 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/[0.03] overflow-x-auto">
-          <Link href="/plataforma/cms/pages" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+          <Link href="/plataforma/cms/pages" className="flex items-center gap-1.5 text-2xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
             <FileText size={10} />
             <span className="font-semibold">{stats.pagesTotal}</span> paginas
           </Link>
-          <Link href="/plataforma/cms/media" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+          <Link href="/plataforma/cms/media" className="flex items-center gap-1.5 text-2xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
             <ImageIcon size={10} />
             <span className="font-semibold">{stats.mediaTotal}</span> media
           </Link>
-          <Link href="/plataforma/cms/testimonials" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+          <Link href="/plataforma/cms/testimonials" className="flex items-center gap-1.5 text-2xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
             <MessageCircle size={10} />
             <span className="font-semibold">{stats.testimonialsTotal}</span> testimonios
           </Link>
-          <Link href="/plataforma/cms/posts" className="flex items-center gap-1.5 text-[10px] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+          <Link href="/plataforma/cms/posts" className="flex items-center gap-1.5 text-2xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
             <PackageOpen size={10} />
             <span className="font-semibold">{stats.postsTotal}</span> posts
           </Link>

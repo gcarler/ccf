@@ -43,7 +43,7 @@ export default function WeekView({
         <div className="w-16 shrink-0" />
         {weekDays.map((day, i) => (
           <div key={i} className="flex-1 min-w-0 flex flex-col items-center py-2 border-l border-[hsl(var(--border))] dark:border-white/5 first:border-l-0">
-            <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
               {format(day, 'EEE', { locale: es })}
             </span>
             <span className={clsx(
@@ -63,7 +63,7 @@ export default function WeekView({
       {/* All-day row */}
       <div className="flex shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 min-h-[28px]">
         <div className="w-16 shrink-0 flex items-center justify-end pr-2">
-          <span className="text-[9px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold">Todo el día</span>
+          <span className="text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold">Todo el día</span>
         </div>
         {weekDays.map((day, i) => {
           const dayAllDay = getAllDayForDay(day);
@@ -77,10 +77,10 @@ export default function WeekView({
                   style={{ backgroundColor: e.color }}
                 >
                   <div className="flex items-center gap-1">
-                    <span className="text-[8px] font-semibold uppercase tracking-wide opacity-80">
+                    <span className="text-2xs font-semibold uppercase tracking-wide opacity-80">
                       {EVENT_TYPE_META[e.type].label}
                     </span>
-                    <span className="truncate text-[10px] font-bold">{e.title}</span>
+                    <span className="truncate text-2xs font-bold">{e.title}</span>
                   </div>
                 </div>
               ))}
@@ -96,7 +96,7 @@ export default function WeekView({
             {HOURS.map(h => (
               <div key={h} className="absolute left-0 right-0 flex items-start justify-end pr-3"
                 style={{ top: h * HOUR_HEIGHT - 7 }}>
-                {h > 0 && <span className="text-[9px] text-[hsl(var(--text-secondary))] font-bold">{formatHour(h)}</span>}
+                {h > 0 && <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold">{formatHour(h)}</span>}
               </div>
             ))}
           </div>
@@ -130,11 +130,11 @@ export default function WeekView({
                         className="absolute left-1 right-1 rounded-lg px-2 py-1 overflow-hidden cursor-pointer hover:brightness-95 transition-all z-20 shadow-sm"
                         style={{ top, height: h, backgroundColor: e.color + '20', borderLeft: `3px solid ${e.color}` }}
                       >
-                        <p className="text-[10px] font-bold truncate" style={{ color: e.color }}>
+                        <p className="text-2xs font-bold truncate" style={{ color: e.color }}>
                           {format(e.start, 'h:mm a')} · {e.title}
                         </p>
                         {e.location && (
-                          <p className="text-[9px] truncate opacity-60" style={{ color: e.color }}>{e.location}</p>
+                          <p className="text-2xs truncate opacity-60" style={{ color: e.color }}>{e.location}</p>
                         )}
                       </div>
                     );

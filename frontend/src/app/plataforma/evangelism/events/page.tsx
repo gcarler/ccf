@@ -863,12 +863,12 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <Calendar size={20} />
  </div>
  {ev.status === 'CANCELLED' && (
- <span className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide rounded-full badge-danger group-hover:badge-danger" title={ev.cancellation_reason}>
+ <span className="px-3 py-1 text-2xs font-semibold uppercase tracking-wide rounded-full badge-danger group-hover:badge-danger" title={ev.cancellation_reason}>
  Cancelado
  </span>
  )}
  </div>
- <span className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wide rounded-full ${EVENT_TYPE_COLOR[ev.event_type] ?? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
+ <span className={`px-3 py-1 text-2xs font-semibold uppercase tracking-wide rounded-full ${EVENT_TYPE_COLOR[ev.event_type] ?? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
  {EVENT_TYPE_LABEL[ev.event_type] ?? ev.event_type}
  </span>
  </div>
@@ -877,13 +877,13 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  </h3>
  <p className="text-sm font-medium text-[hsl(var(--text-secondary))] line-clamp-2">{ev.description || 'Evento comunitario de CCF.'}</p>
  <div className="mt-3 flex flex-wrap gap-2">
- <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
+ <span className="px-2.5 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
  {getTargetRoleLabel(ev)}
  </span>
- <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide badge-info group-hover:badge-info">
+ <span className="px-2.5 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide badge-info group-hover:badge-info">
  Universo: {attendanceStat.expected}
  </span>
- <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide badge-success group-hover:badge-success">
+ <span className="px-2.5 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide badge-success group-hover:badge-success">
  {attendanceStat.attended} / {attendanceStat.expected || 0} ({attendanceStat.rate}%)
  </span>
  </div>
@@ -892,7 +892,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="size-8 flex items-center justify-center bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-white rounded-md transition-all shrink-0" title="Generar QR">
  <QrCode size={16} />
  </button>
- <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="flex-1 py-1.5 bg-[hsl(var(--bg-muted))] group-hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] group-hover:text-white rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all">
+ <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="flex-1 py-1.5 bg-[hsl(var(--bg-muted))] group-hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] group-hover:text-white rounded-md text-2xs font-semibold uppercase tracking-wide transition-all">
  Panel de Asistencia
  </button>
  <div className="relative shrink-0" onClick={e => e.stopPropagation()}>
@@ -951,27 +951,27 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  </div>
  <div className="flex gap-2 items-center">
  {ev.status === 'CANCELLED' && (
- <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase badge-danger group-hover:badge-danger" title={ev.cancellation_reason}>
+ <span className="px-2.5 py-0.5 rounded-full text-2xs font-semibold uppercase badge-danger group-hover:badge-danger" title={ev.cancellation_reason}>
  Cancelado
  </span>
  )}
- <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
+ <span className="px-2.5 py-0.5 rounded-full text-2xs font-semibold uppercase bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
  {getTargetRoleLabel(ev)}
  </span>
- <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase badge-info group-hover:badge-info">
+ <span className="px-2.5 py-0.5 rounded-full text-2xs font-semibold uppercase badge-info group-hover:badge-info">
  Universo: {attendanceStat.expected}
  </span>
- <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase badge-success group-hover:badge-success">
+ <span className="px-2.5 py-0.5 rounded-full text-2xs font-semibold uppercase badge-success group-hover:badge-success">
  {attendanceStat.attended} / {attendanceStat.expected || 0} ({attendanceStat.rate}%)
  </span>
- <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${EVENT_TYPE_COLOR[ev.event_type] ?? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
+ <span className={`px-2.5 py-0.5 rounded-full text-2xs font-semibold uppercase ${EVENT_TYPE_COLOR[ev.event_type] ?? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
  {EVENT_TYPE_LABEL[ev.event_type] ?? ev.event_type}
  </span>
  </div>
- <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="px-3 py-1.5 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] text-[hsl(var(--primary))] text-[10px] font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity mr-2">
+ <button onClick={(e) => { e.stopPropagation(); openQr(ev); }} className="px-3 py-1.5 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity mr-2">
  QR
  </button>
- <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="px-3 py-1.5 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] text-[hsl(var(--primary))] text-[10px] font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity">
+ <button onClick={(e) => { e.stopPropagation(); openAttendance(ev); }} className="px-3 py-1.5 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity">
  Asistencia
  </button>
  </div>
@@ -986,7 +986,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <thead className="bg-[hsl(var(--bg-muted))]">
  <tr>
  {['Evento', 'Tipo', 'Audiencia', 'Universo', 'Asistencia', 'Fecha visual'].map((label) => (
- <th key={label} className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <th key={label} className="px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  {label}
  </th>
  ))}
@@ -1021,7 +1021,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  {boardColumns.map((column) => (
  <section key={column.key} className="rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:bg-surface-card">
  <header className="mb-4 flex items-center justify-between">
- <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.label}</h3>
+ <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.label}</h3>
  <span className="rounded-full bg-[hsl(var(--bg-muted))] px-2 py-0.5 font-semibold text-[hsl(var(--text-secondary))] ">
  {column.items.length}
  </span>
@@ -1036,8 +1036,8 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  className="w-full rounded-lg border border-[hsl(var(--border-primary))] p-4 text-left transition-all hover:border-[hsl(var(--primary)/0.3)] hover:shadow-lg "
  >
  <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{event.name}</p>
- <p className="mt-1 text-[11px] text-[hsl(var(--text-secondary))]">{getTargetRoleLabel(event)}</p>
- <div className="mt-3 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{getTargetRoleLabel(event)}</p>
+ <div className="mt-3 flex items-center justify-between text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  <span>{EVENT_TYPE_LABEL[event.event_type] ?? event.event_type}</span>
  <span>{attendanceStat.rate}%</span>
  </div>
@@ -1065,7 +1065,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  {viewType === 'wiki' && (
  <section className="rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:bg-surface-card">
- <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki de eventos</p>
+ <p className="mb-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki de eventos</p>
  <textarea
  value={wikiNotes}
  onChange={(event) => setWikiNotes(event.target.value)}
@@ -1086,14 +1086,14 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  subtitle="Configura un evento de la iglesia"
  actions={
  <>
- <button type="button" disabled={savingCreateEvent} onClick={() => setIsCreateDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
+ <button type="button" disabled={savingCreateEvent} onClick={() => setIsCreateDrawerOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
  Cancelar
  </button>
  <button
  form="create-event-form"
  type="submit"
  disabled={savingCreateEvent}
- className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:active:scale-100"
+ className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:active:scale-100"
  >
  {savingCreateEvent ? 'Guardando...' : 'Guardar'} <Check size={14} />
  </button>
@@ -1175,21 +1175,21 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <div className="space-y-3 rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-4">
  <div className="flex items-center justify-between gap-3">
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Plantillas de audiencia</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Plantillas de audiencia</p>
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] ">Guarda y reaplica universos esperados frecuentes</p>
  </div>
  <div className="flex items-center gap-2">
  <button
  type="button"
  onClick={addSuggestedAudiencePresets}
- className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10"
+ className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10"
  >
  Sugerencias
  </button>
  <button
  type="button"
  onClick={() => saveAudiencePreset(newEvent)}
- className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))]"
+ className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))]"
  >
  Guardar actual
  </button>
@@ -1204,7 +1204,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <div key={preset.id} className="flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-1.5">
  <div className="min-w-0">
  <p className="truncate text-sm font-bold text-[hsl(var(--text-primary))]">{preset.name}</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  {preset.target_audience === 'ALL'
  ? 'Toda la iglesia'
  : preset.target_audience === 'ROLE'
@@ -1216,14 +1216,14 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <button
  type="button"
  onClick={() => applyPresetToCreateEvent(preset.id)}
- className="rounded-lg bg-[hsl(var(--bg-primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:opacity-85 "
+ className="rounded-lg bg-[hsl(var(--bg-primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-white transition-all hover:opacity-85 "
  >
  Aplicar
  </button>
  <button
  type="button"
  onClick={() => deleteAudiencePreset(preset.id)}
- className="rounded-lg border border-[hsl(var(--border-primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))]"
+ className="rounded-lg border border-[hsl(var(--border-primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))]"
  >
  Borrar
  </button>
@@ -1237,7 +1237,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <div className="space-y-3">
  <div className="flex items-center justify-between gap-3">
   <label htmlFor="event-personas" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Personas esperadas</label>
- <span className="rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info">
+ <span className="rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info">
  {newEvent.target_persona_ids.length} seleccionadas
  </span>
  </div>
@@ -1269,9 +1269,9 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  >
  <div>
  <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{persona.nombre_completo}</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{persona.church_role || 'Sin rol'}</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{persona.church_role || 'Sin rol'}</p>
  </div>
- <span className={`text-[10px] font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] dark:text-info' : 'text-[hsl(var(--text-secondary))]'}`}>
+ <span className={`text-2xs font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] dark:text-info' : 'text-[hsl(var(--text-secondary))]'}`}>
  {isSelected ? 'Incluida' : 'Agregar'}
  </span>
  </button>
@@ -1382,13 +1382,13 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  className="text-sm font-bold text-[hsl(var(--text-primary))] outline-none bg-transparent"
  />
  </div>
- <button disabled={savingAttendance} onClick={() => setIsAttendanceDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] disabled:opacity-60">
+ <button disabled={savingAttendance} onClick={() => setIsAttendanceDrawerOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] disabled:opacity-60">
  Cancelar
  </button>
  <button
  onClick={() => saveAttendance()}
  disabled={savingAttendance || attendanceLoading || String(selectedEvent?.status || '').toUpperCase() === 'CANCELLED' || String(selectedEvent?.status || '').toUpperCase() === 'CANCELED'}
- className="px-3 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100"
+ className="px-3 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100"
  >
  {savingAttendance ? 'Guardando...' : 'Guardar asistencia'}
  </button>
@@ -1400,7 +1400,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <div>
  <button
  onClick={() => setShowScanner(s => !s)}
- className={`px-4 py-2 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all ${showScanner ? 'bg-[hsl(var(--danger))] text-white' : 'bg-[hsl(var(--bg-primary))] text-white hover:opacity-80'}`}
+ className={`px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all ${showScanner ? 'bg-[hsl(var(--danger))] text-white' : 'bg-[hsl(var(--bg-primary))] text-white hover:opacity-80'}`}
  >
  {showScanner ? 'Cerrar Escáner' : 'Modo Escáner'}
  </button>
@@ -1421,7 +1421,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <button
  onClick={handleScanToken}
  disabled={isScanning || !scannerToken}
- className="px-4 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 text-white rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all"
+ className="px-4 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 text-white rounded-md text-2xs font-semibold uppercase tracking-wide transition-all"
  >
  {isScanning ? 'Validando...' : 'Validar'}
  </button>
@@ -1459,14 +1459,14 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <button
  onClick={markFilteredPersonas}
  disabled={filteredPersonas.length === 0}
- className="px-4 py-1.5 rounded-lg border border-success dark:border-success bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)] text-[10px] font-semibold uppercase tracking-wide text-success-text dark:text-success transition-all hover:bg-success-muted disabled:opacity-50"
+ className="px-4 py-1.5 rounded-lg border border-success dark:border-success bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)] text-2xs font-semibold uppercase tracking-wide text-success-text dark:text-success transition-all hover:bg-success-muted disabled:opacity-50"
  >
  Marcar filtrados
  </button>
  <button
  onClick={clearFilteredPersonas}
  disabled={filteredPersonas.length === 0}
- className="px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))] disabled:opacity-50"
+ className="px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))] disabled:opacity-50"
  >
  Limpiar filtrados
  </button>
@@ -1476,7 +1476,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <div className="flex items-center justify-between px-4 py-1.5 bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] rounded-lg border border-success-muted dark:border-success">
  <div>
  <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">Presentes</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  {attendanceLoading ? 'Cargando sesión...' : `${filteredPersonas.length} visibles en esta búsqueda`}
  </p>
  </div>
@@ -1485,15 +1485,15 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
 
  {!attendanceLoading && (
  <div className="flex flex-wrap gap-2">
- <span className="rounded-full border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <span className="rounded-full border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  {selectedEvent?.target_audience === 'ROLE'
  ? `Universo: ${getTargetRoleLabel(selectedEvent)}`
  : 'Universo: toda la iglesia'}
  </span>
- <span className="rounded-full border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <span className="rounded-full border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  {attendanceRoleFilter === 'ALL' ? 'Todos los roles visibles' : attendanceRoleFilter}
  </span>
- <span className="rounded-full border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <span className="rounded-full border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  {attendanceStatusFilter === 'ALL' ? 'Vista completa' : attendanceStatusFilter === 'PENDING' ? 'Solo pendientes' : 'Solo presentes'}
  </span>
  </div>
@@ -1526,7 +1526,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <p className={`font-bold text-sm ${attendedPersonaIds.includes(persona.id) ? 'text-success-text dark:text-success' : 'text-[hsl(var(--text-primary))]'}`}>
  {persona.nombre_completo}
  </p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  {persona.church_role || 'Sin rol'}
  </p>
  </div>
@@ -1551,7 +1551,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  actions={
  <button
  onClick={downloadQr}
- className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
+ className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
  >
  <Download size={14} /> Descargar
  </button>
@@ -1569,7 +1569,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  </div>
  <div className="text-center space-y-2">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))]">Escanea para registrarte</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Enlace de Registro</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Enlace de Registro</p>
  <a href={typeof window !== 'undefined' ? `${window.location.origin}/public/register?event_id=${selectedEvent?.id}` : '#'} target="_blank" rel="noreferrer" className="text-xs font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors break-all bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] px-4 py-2 rounded-md inline-block mt-2">
  {typeof window !== 'undefined' ? `${window.location.origin}/public/register?event_id=${selectedEvent?.id}` : ''}
  </a>
@@ -1585,10 +1585,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  subtitle="Atención: acción destructiva irreversible"
  actions={
  <>
- <button disabled={deletingEventLoadingId === deletingEventId} onClick={() => setDeletingEventId(null)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
+ <button disabled={deletingEventLoadingId === deletingEventId} onClick={() => setDeletingEventId(null)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
  Cancelar
  </button>
- <button onClick={() => deletingEventId && handleDeleteEvent(deletingEventId)} disabled={deletingEventLoadingId === deletingEventId} className="px-3 py-2 bg-[hsl(var(--destructive))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--destructive))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
+ <button onClick={() => deletingEventId && handleDeleteEvent(deletingEventId)} disabled={deletingEventLoadingId === deletingEventId} className="px-3 py-2 bg-[hsl(var(--destructive))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--destructive))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
  <Trash2 size={14} /> Eliminar
  </button>
  </>
@@ -1611,10 +1611,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  subtitle="Modifica los detalles o configuración"
  actions={
  <>
- <button disabled={!!editingEvent && updatingEventId === editingEvent.id} onClick={() => setEditingEvent(null)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
+ <button disabled={!!editingEvent && updatingEventId === editingEvent.id} onClick={() => setEditingEvent(null)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
  Cancelar
  </button>
- <button disabled={!editingEvent || updatingEventId === editingEvent.id} onClick={() => editingEvent && handleUpdateEvent(editingEvent.id, { name: editingEvent.name, description: editingEvent.description, location: editingEvent.location, status: editingEvent.status, cancellation_reason: editingEvent.cancellation_reason, start_time: editingEvent.start_time, end_time: editingEvent.end_time, target_audience: editingEvent.target_audience || 'ALL', target_role_id: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids?.[0] || editingEvent.target_role_id) : null, target_role_ids: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [], target_persona_ids: (editingEvent.target_audience || 'ALL') === 'MANUAL' ? (editingEvent.target_persona_ids || []) : [] })} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
+ <button disabled={!editingEvent || updatingEventId === editingEvent.id} onClick={() => editingEvent && handleUpdateEvent(editingEvent.id, { name: editingEvent.name, description: editingEvent.description, location: editingEvent.location, status: editingEvent.status, cancellation_reason: editingEvent.cancellation_reason, start_time: editingEvent.start_time, end_time: editingEvent.end_time, target_audience: editingEvent.target_audience || 'ALL', target_role_id: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids?.[0] || editingEvent.target_role_id) : null, target_role_ids: (editingEvent.target_audience || 'ALL') === 'ROLE' ? (editingEvent.target_role_ids || getTargetRoleIds(editingEvent)) : [], target_persona_ids: (editingEvent.target_audience || 'ALL') === 'MANUAL' ? (editingEvent.target_persona_ids || []) : [] })} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
  {editingEvent && updatingEventId === editingEvent.id ? 'Guardando...' : 'Guardar'} <Pencil size={14} />
  </button>
  </>
@@ -1681,12 +1681,12 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <div className="space-y-3 rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-4">
  <div className="flex items-center justify-between gap-3">
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Plantillas de audiencia</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Plantillas de audiencia</p>
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] ">Aplica o guarda universos reutilizables</p>
  </div>
  <div className="flex items-center gap-2">
- <button type="button" onClick={addSuggestedAudiencePresets} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10">Sugerencias</button>
- <button type="button" onClick={() => saveAudiencePreset({ target_audience: editingEvent.target_audience || 'ALL', target_role_ids: editingEvent.target_role_ids || [], target_persona_ids: editingEvent.target_persona_ids || [] })} className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))]">Guardar actual</button>
+ <button type="button" onClick={addSuggestedAudiencePresets} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10">Sugerencias</button>
+ <button type="button" onClick={() => saveAudiencePreset({ target_audience: editingEvent.target_audience || 'ALL', target_role_ids: editingEvent.target_role_ids || [], target_persona_ids: editingEvent.target_persona_ids || [] })} className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))]">Guardar actual</button>
  </div>
  </div>
  <div className="space-y-2">
@@ -1696,11 +1696,11 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <div key={preset.id} className="flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-1.5">
  <div className="min-w-0">
  <p className="truncate text-sm font-bold text-[hsl(var(--text-primary))]">{preset.name}</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{preset.target_audience === 'ALL' ? 'Toda la iglesia' : preset.target_audience === 'ROLE' ? `${preset.target_role_ids.length} roles` : `${preset.target_persona_ids.length} personas`}</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{preset.target_audience === 'ALL' ? 'Toda la iglesia' : preset.target_audience === 'ROLE' ? `${preset.target_role_ids.length} roles` : `${preset.target_persona_ids.length} personas`}</p>
  </div>
  <div className="flex items-center gap-2">
- <button type="button" onClick={() => applyPresetToEditingEvent(preset.id)} className="rounded-lg bg-[hsl(var(--bg-primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-all hover:opacity-85 ">Aplicar</button>
- <button type="button" onClick={() => deleteAudiencePreset(preset.id)} className="rounded-lg border border-[hsl(var(--border-primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))]">Borrar</button>
+ <button type="button" onClick={() => applyPresetToEditingEvent(preset.id)} className="rounded-lg bg-[hsl(var(--bg-primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-white transition-all hover:opacity-85 ">Aplicar</button>
+ <button type="button" onClick={() => deleteAudiencePreset(preset.id)} className="rounded-lg border border-[hsl(var(--border-primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))]">Borrar</button>
  </div>
  </div>
  ))}
@@ -1709,8 +1709,8 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  {editingEvent.target_audience === 'MANUAL' && (
  <div className="space-y-3">
  <div className="flex items-center justify-between gap-3">
-  <label htmlFor="edit-event-personas" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Personas esperadas</label>
- <span className="rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info">{(editingEvent.target_persona_ids || []).length} seleccionadas</span>
+  <label htmlFor="edit-event-personas" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Personas esperadas</label>
+ <span className="rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info">{(editingEvent.target_persona_ids || []).length} seleccionadas</span>
  </div>
    <input id="edit-event-personas" value={editManualSearch} onChange={e => setEditManualSearch(e.target.value)} placeholder="Buscar por nombre, correo o rol..." className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
  <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-3">
@@ -1720,9 +1720,9 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <button key={persona.id} type="button" onClick={() => setEditingEvent({ ...editingEvent, target_persona_ids: isSelected ? (editingEvent.target_persona_ids || []).filter((value) => value !== persona.id) : [...(editingEvent.target_persona_ids || []), persona.id], })} className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${isSelected ? 'border-info bg-info-muted dark:border-info dark:bg-[hsl(var(--info)/0.2)]' : 'border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] '}`}>
  <div>
  <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{persona.nombre_completo}</p>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{persona.church_role || 'Sin rol'}</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{persona.church_role || 'Sin rol'}</p>
  </div>
- <span className={`text-[10px] font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] dark:text-info' : 'text-[hsl(var(--text-secondary))]'}`}>{isSelected ? 'Incluida' : 'Agregar'}</span>
+ <span className={`text-2xs font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] dark:text-info' : 'text-[hsl(var(--text-secondary))]'}`}>{isSelected ? 'Incluida' : 'Agregar'}</span>
  </button>
  );
  })}
@@ -1732,25 +1732,25 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  )}
  {editingEvent.status === 'CANCELLED' && (
  <div className="animate-in fade-in slide-in-from-top-2 space-y-1.5">
-  <label htmlFor="edit-event-cancellation-reason" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">Razón de Cancelación *</label>
+  <label htmlFor="edit-event-cancellation-reason" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">Razón de Cancelación *</label>
   <textarea id="edit-event-cancellation-reason" value={editingEvent.cancellation_reason || ''} onChange={e => setEditingEvent({...editingEvent, cancellation_reason: e.target.value})} rows={3} placeholder="¿Por qué no se realizó este evento?" className="w-full px-4 py-1.5 rounded-lg border border-danger bg-[hsl(var(--danger-muted))] dark:bg-black/20 focus:ring-2 focus:ring-danger outline-none font-bold text-sm text-danger dark:text-danger resize-none placeholder:text-[hsl(var(--danger)/0.5)] dark:placeholder:text-[hsl(var(--destructive))]" />
  </div>
  )}
  <div className="space-y-1.5">
- <label htmlFor="edit-event-description" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</label>
+ <label htmlFor="edit-event-description" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</label>
  <textarea id="edit-event-description" value={editingEvent.description || ''} onChange={e => setEditingEvent({...editingEvent, description: e.target.value})} rows={3} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] resize-none" />
  </div>
  <div className="space-y-1.5">
- <label htmlFor="edit-event-location" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
+ <label htmlFor="edit-event-location" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
  <input id="edit-event-location" type="text" value={editingEvent.location || ''} onChange={e => setEditingEvent({...editingEvent, location: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
  </div>
  <div className="grid grid-cols-2 gap-4">
  <div className="space-y-1.5">
- <label htmlFor="edit-event-start-time" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hora de Inicio</label>
+ <label htmlFor="edit-event-start-time" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hora de Inicio</label>
  <input id="edit-event-start-time" type="time" value={editingEvent.start_time || ''} onChange={e => setEditingEvent({...editingEvent, start_time: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
  </div>
  <div className="space-y-1.5">
- <label htmlFor="edit-event-end-time" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hora de Finalización</label>
+ <label htmlFor="edit-event-end-time" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hora de Finalización</label>
  <input id="edit-event-end-time" type="time" value={editingEvent.end_time || ''} onChange={e => setEditingEvent({...editingEvent, end_time: e.target.value})} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]" />
  </div>
  </div>

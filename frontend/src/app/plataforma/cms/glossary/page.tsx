@@ -82,7 +82,7 @@ export default function GlossaryPage() {
               <div key={t.id} className="p-4 border rounded-xl bg-[hsl(var(--bg-primary))] hover:shadow-sm transition-shadow">
                 <div className="flex items-start justify-between">
                   <h4 className="font-bold text-sm">{t.term}</h4>
-                  {t.aliases.length > 0 && <span className="text-[10px] bg-[hsl(var(--surface-2))] px-1.5 py-0.5 rounded">{t.aliases.join(", ")}</span>}
+                  {t.aliases.length > 0 && <span className="text-2xs bg-[hsl(var(--surface-2))] px-1.5 py-0.5 rounded">{t.aliases.join(", ")}</span>}
                 </div>
                 <p className="text-xs text-[hsl(var(--text-secondary))] mt-2 leading-relaxed">{t.definition}</p>
               </div>

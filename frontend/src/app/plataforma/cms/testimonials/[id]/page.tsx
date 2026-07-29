@@ -142,7 +142,7 @@ export default function CmsTestimonialDetailPage() {
                         <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => handleAction(testimonial.status === 'archived' ? 'pending' : 'archived')}
-                                className="px-3 py-2 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--destructive))] hover:text-white hover:border-[hsl(var(--destructive))] transition-all flex items-center gap-2"
+                                className="px-3 py-2 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--destructive))] hover:text-white hover:border-[hsl(var(--destructive))] transition-all flex items-center gap-2"
                             >
                                 {testimonial.status === 'archived' ? <RotateCcw size={14} /> : <Archive size={14} />}
                                 {testimonial.status === 'archived' ? 'Restaurar' : 'Archivar'}
@@ -150,7 +150,7 @@ export default function CmsTestimonialDetailPage() {
                             <button 
                                 onClick={() => handleAction('approved')}
                                 disabled={testimonial.status === 'archived'}
-                                className="px-3 py-2 bg-[hsl(var(--success))] text-white rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/0.2)] hover:scale-105 transition-all flex items-center gap-2"
+                                className="px-3 py-2 bg-[hsl(var(--success))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/0.2)] hover:scale-105 transition-all flex items-center gap-2"
                             >
                                 <CheckCircle2 size={14} /> Aprobar para Web
                             </button>
@@ -163,7 +163,7 @@ export default function CmsTestimonialDetailPage() {
                                 <DSCard>
                                     <div className="mb-4 flex items-center gap-2">
                                         {testimonial.media_type === 'video' ? <PlayCircle size={16} className="text-[hsl(var(--destructive))]" /> : testimonial.media_type === 'podcast' ? <Headphones size={16} className="text-[hsl(var(--warning))]" /> : <ImageIcon size={16} className="text-[hsl(var(--primary))]" />}
-                                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                        <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             Media asociada
                                         </h3>
                                     </div>
@@ -176,7 +176,7 @@ export default function CmsTestimonialDetailPage() {
                                             </video>
                                         ) : (
                                             <div className="space-y-4 bg-[hsl(var(--bg-primary))] p-3 dark:bg-white/5">
-                                                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Podcast / audio testimonial</p>
+                                                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Podcast / audio testimonial</p>
                                                 <audio controls src={mediaUrl} className="w-full" />
                                             </div>
                                         )}
@@ -199,7 +199,7 @@ export default function CmsTestimonialDetailPage() {
                             </DSCard>
 
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Información del Autor</h3>
+                                <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Información del Autor</h3>
                                 <div className="flex items-center gap-3">
                                     <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
                                         <User size={32} />
@@ -214,22 +214,22 @@ export default function CmsTestimonialDetailPage() {
 
                         <aside className="space-y-3">
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Detalles de Envío</h3>
+                                <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Detalles de Envío</h3>
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha de Recepción</p>
+                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fecha de Recepción</p>
                                         <p className="text-xs font-bold flex items-center gap-2">
                                             <Calendar size={14} /> {testimonial.created_at ? new Date(testimonial.created_at).toLocaleString() : '—'}
                                         </p>
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Origen</p>
+                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Origen</p>
                                         <p className="text-xs font-bold flex items-center gap-2">
                                             <MessageSquare size={14} /> Formulario Comunidad
                                         </p>
                                     </div>
                                     <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
-                                    <div className="flex items-center gap-2 text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                                    <div className="flex items-center gap-2 text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                         <Shield size={12} /> ID: {testimonial.id}
                                     </div>
                                 </div>

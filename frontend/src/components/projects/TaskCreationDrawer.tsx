@@ -63,14 +63,14 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
             subtitle="Definición de Acción"
             actions={
                 <>
-                    <button type="button" onClick={onClose} className="px-3 py-1.5 text-[11px] font-medium text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+                    <button type="button" onClick={onClose} className="px-3 py-1.5 text-xs font-medium text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                         Cancelar
                     </button>
                     <button
                         type="button"
                         onClick={handleSubmit(onFormSubmit)}
                         disabled={isSubmitting}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isSubmitting ? <Loader2 className="animate-spin" size={12} /> : <CheckSquare size={12} />}
                         {isSubmitting ? 'Creando...' : 'Crear Tarea'}
@@ -80,7 +80,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
         >
             <form onSubmit={handleSubmit(onFormSubmit)} className="mt-3 space-y-4">
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <Type size={12} /> Título de la tarea
                     </label>
                     <input
@@ -92,7 +92,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <AlignLeft size={12} /> Descripción (Opcional)
                     </label>
                     <textarea
@@ -104,7 +104,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <Flag size={12} /> Nivel de Prioridad
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -114,7 +114,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                                 type="button"
                                 onClick={() => setValue('priority', p.value)}
                                 className={clsx(
-                                    "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-[11px] font-bold uppercase tracking-wide transition-all",
+                                    "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-wide transition-all",
                                     priority === p.value
                                         ? `${p.color} border-transparent text-white shadow-md`
                                         : `bg-transparent border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5`
@@ -128,7 +128,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <User size={12} /> Asignar a
                     </label>
                     <PersonaSelect

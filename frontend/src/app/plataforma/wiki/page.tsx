@@ -115,7 +115,7 @@ export default function WikiHomePage() {
             <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
                 <div className="flex items-center gap-2 flex-1">
                     <BookOpen size={16} className="text-[hsl(var(--primary))]" />
-                    <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         BASE DE CONOCIMIENTO
                     </h2>
                 </div>
@@ -128,12 +128,12 @@ export default function WikiHomePage() {
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
                             placeholder="Buscar en la wiki..."
-                            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-lg text-[12px] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-64 transition-all"
+                            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-64 transition-all"
                         />
                     </div>
                     <button 
                         onClick={() => setIsQuickAddOpen(prev => !prev)}
-                        className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary)/0.85)] active:scale-95 transition-all flex items-center gap-2"
+                        className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary)/0.85)] active:scale-95 transition-all flex items-center gap-2"
                     >
                         <Plus size={14} />
                         Nuevo Doc
@@ -173,7 +173,7 @@ export default function WikiHomePage() {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
                 <div className="w-full space-y-3">
                     <section>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
                             DOCUMENTOS RECIENTES
                         </p>
                         
@@ -214,20 +214,20 @@ export default function WikiHomePage() {
                                                 <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
                                                     {doc.title}
                                                 </h3>
-                                                <p className="text-[12px] text-[hsl(var(--text-secondary))] mt-2 line-clamp-3 leading-relaxed">
+                                                <p className="text-sm text-[hsl(var(--text-secondary))] mt-2 line-clamp-3 leading-relaxed">
                                                     {doc.content ? doc.content.replace(/<[^>]+>/g, '').substring(0, 120) + '...' : 'Documento de la base de conocimiento.'}
                                                 </p>
                                             </div>
                                         </div>
 
                                         <div className="mt-3 pt-4 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                                            <div className="flex items-center gap-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                                 <Clock size={12} />
                                                 <span>{new Date(doc.updated_at).toLocaleDateString()}</span>
                                             </div>
                                             <Link 
                                                 href={`/plataforma/wiki/docs/${doc.page_key}`}
-                                                className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all"
+                                                className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all"
                                             >
                                                 EDITAR <ChevronRight size={12} />
                                             </Link>

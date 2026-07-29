@@ -161,12 +161,12 @@ function KpiCard({ label, value, sub, semaforo, icon: Icon }: {
     <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-4 flex flex-col gap-1">
       <div className="flex items-center gap-2 mb-1">
         <Icon size={14} className="text-[hsl(var(--text-secondary))]" />
-        <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{label}</p>
+        <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{label}</p>
       </div>
       <p className={`text-2xl font-black ${semaforo ? sem(semaforo) : "text-[hsl(var(--text-primary))]"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-[hsl(var(--text-secondary))]">{sub}</p>}
+      {sub && <p className="text-xs text-[hsl(var(--text-secondary))]">{sub}</p>}
       {semaforo && (
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border w-fit mt-1 ${semBg(semaforo)}`}>
+        <span className={`text-2xs font-bold px-2 py-0.5 rounded-full border w-fit mt-1 ${semBg(semaforo)}`}>
           {semaforo.replace(/_/g, " ")}
         </span>
       )}
@@ -182,7 +182,7 @@ function SectionHeader({ icon: Icon, title, sub }: { icon: React.ElementType; ti
       </div>
       <div>
         <h2 className="text-sm font-bold text-[hsl(var(--text-primary))]">{title}</h2>
-        <p className="text-[11px] text-[hsl(var(--text-secondary))]">{sub}</p>
+        <p className="text-xs text-[hsl(var(--text-secondary))]">{sub}</p>
       </div>
     </div>
   );
@@ -332,7 +332,7 @@ export default function StrategyAnalyticsPage() {
                 <BarChart3 size={18} className="text-[hsl(var(--primary))]" />
                 Panel analítico
               </h1>
-              <p className="text-[11px] text-[hsl(var(--text-secondary))]">
+              <p className="text-xs text-[hsl(var(--text-secondary))]">
                 {resumen.fecha_desde} → {resumen.fecha_hasta} · {resumen.total_grupos} grupos · {resumen.total_participantes} participantes
               </p>
             </div>
@@ -341,7 +341,7 @@ export default function StrategyAnalyticsPage() {
             <div className="flex items-center gap-1 bg-[hsl(var(--bg-muted))] rounded-lg p-1">
               {WEEKS_OPTIONS.map(w => (
                 <button key={w} onClick={() => setWeeks(w)}
-                  className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all ${weeks === w
+                  className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${weeks === w
                     ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] shadow-sm"
                     : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"}`}>
                   {w}s
@@ -374,20 +374,20 @@ export default function StrategyAnalyticsPage() {
           <SectionHeader icon={MapPin} title="1. Dimensión Territorial" sub="Densidad de cobertura por zona geográfica (IDC)" />
           <div className="grid md:grid-cols-3 gap-4">
             <div className={`rounded-lg border p-4 text-center ${semBg(dim1_territorial.semaforo)}`}>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">IDC global</p>
+              <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">IDC global</p>
               <p className={`text-4xl font-black ${sem(dim1_territorial.semaforo)}`}>{dim1_territorial.idc}</p>
-              <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1">grupos / zona</p>
-              <span className={`text-[10px] font-bold ${sem(dim1_territorial.semaforo)}`}>{dim1_territorial.semaforo}</span>
+              <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">grupos / zona</p>
+              <span className={`text-2xs font-bold ${sem(dim1_territorial.semaforo)}`}>{dim1_territorial.semaforo}</span>
             </div>
             <div className="md:col-span-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Grupos por zona</p>
+              <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Grupos por zona</p>
               {dim1_territorial.por_zona.length === 0 && (
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Sin datos de ubicación en los grupos</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin datos de ubicación en los grupos</p>
               )}
               <div className="space-y-2">
                 {dim1_territorial.por_zona.map(z => (
                   <div key={z.zona}>
-                    <div className="flex justify-between text-[11px] mb-0.5">
+                    <div className="flex justify-between text-xs mb-0.5">
                       <span className="text-[hsl(var(--text-primary))] font-medium truncate">{z.zona}</span>
                       <span className="text-[hsl(var(--text-secondary))] font-bold ml-2">{z.grupos} grupos</span>
                     </div>
@@ -395,7 +395,7 @@ export default function StrategyAnalyticsPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-3 italic">
+              <p className="text-2xs text-[hsl(var(--text-secondary))] mt-3 italic">
                 Para activar el mapa GIS agrega latitud/longitud a los grupos.
               </p>
             </div>
@@ -413,12 +413,12 @@ export default function StrategyAnalyticsPage() {
             ].map(s => (
               <div key={s.label} className={`rounded-lg border p-3 text-center ${s.bg}`}>
                 <p className={`text-3xl font-black ${s.color}`}>{s.count}</p>
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-0.5">{s.label}</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
           {dim2_capacidad.grupos.length === 0 ? (
-            <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-6">Sin grupos con datos de capacidad</p>
+            <p className="text-xs text-[hsl(var(--text-secondary))] italic text-center py-6">Sin grupos con datos de capacidad</p>
           ) : (
             <ChartBox height={Math.max(120, dim2_capacidad.grupos.length * 36)}>
               <ResponsiveContainer width="100%" height="100%">
@@ -444,23 +444,23 @@ export default function StrategyAnalyticsPage() {
             sub="Tasa de atracción e Índice de Recurrencia Temprana" />
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">
+              <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">
                 TAN global: <span className="text-[hsl(var(--primary))]">{dim3_atraccion.tan_global_porcentaje}%</span>
                 {" "}· Total nuevos: <span className="text-[hsl(var(--primary))]">{dim3_atraccion.total_nuevos_periodo}</span>
               </p>
               {dim3_atraccion.por_grupo.length === 0 && (
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Sin grupos con datos de asistencia</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin grupos con datos de asistencia</p>
               )}
               <div className="space-y-3">
                 {dim3_atraccion.por_grupo.map(g => (
                   <div key={g.nombre} className="p-3 bg-[hsl(var(--bg-secondary))] rounded-lg">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-[12px] font-bold text-[hsl(var(--text-primary))]">{g.nombre}</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${semBg(g.irt_semaforo)}`}>
+                      <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{g.nombre}</span>
+                      <span className={`text-2xs font-bold px-1.5 py-0.5 rounded-full border ${semBg(g.irt_semaforo)}`}>
                         IRT {g.irt_promedio}
                       </span>
                     </div>
-                    <div className="flex gap-4 text-[11px] text-[hsl(var(--text-secondary))]">
+                    <div className="flex gap-4 text-xs text-[hsl(var(--text-secondary))]">
                       <span><strong className="text-[hsl(var(--text-primary))]">{g.nuevos_visitantes}</strong> nuevos</span>
                       <span>TAN <strong className="text-[hsl(var(--text-primary))]">{g.tan_porcentaje}%</strong></span>
                     </div>
@@ -472,7 +472,7 @@ export default function StrategyAnalyticsPage() {
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Tendencia de primera vez</p>
+              <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Tendencia de primera vez</p>
               <ChartBox height={200}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={tendencia_semanal} margin={{ left: 0, right: 8 }}>
@@ -502,20 +502,20 @@ export default function StrategyAnalyticsPage() {
             ].map(s => (
               <div key={s.label} className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
                 <p className={`text-2xl font-black ${s.color || "text-[hsl(var(--text-primary))]"}`}>{s.value}</p>
-                <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5">{s.label}</p>
+                <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
           {dim4_conversion_crm.por_grupo.length === 0 && (
-            <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-4">Sin grupos con casos CRM registrados</p>
+            <p className="text-xs text-[hsl(var(--text-secondary))] italic text-center py-4">Sin grupos con casos CRM registrados</p>
           )}
           <div className="space-y-2">
             {dim4_conversion_crm.por_grupo.map(g => (
               <div key={g.nombre} className="flex items-center gap-3 p-3 bg-[hsl(var(--bg-secondary))] rounded-lg">
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[12px] font-bold text-[hsl(var(--text-primary))]">{g.nombre}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${semBg(_semClasif(g.clasificacion))}`}>
+                    <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{g.nombre}</span>
+                    <span className={`text-2xs font-bold px-2 py-0.5 rounded-full border ${semBg(_semClasif(g.clasificacion))}`}>
                       {g.clasificacion.replace(/_/g, " ")}
                     </span>
                   </div>
@@ -523,7 +523,7 @@ export default function StrategyAnalyticsPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-sm font-black text-[hsl(var(--text-primary))]">{g.icn_porcentaje}%</p>
-                  <p className="text-[10px] text-[hsl(var(--text-secondary))]">{g.casos_resueltos_exito}/{g.casos_crm_total}</p>
+                  <p className="text-2xs text-[hsl(var(--text-secondary))]">{g.casos_resueltos_exito}/{g.casos_crm_total}</p>
                 </div>
               </div>
             ))}
@@ -539,31 +539,31 @@ export default function StrategyAnalyticsPage() {
               <div className="flex items-center gap-4 mb-4 p-3 bg-[hsl(var(--bg-secondary))] rounded-lg">
                 <div className="text-center">
                   <p className="text-3xl font-black text-[hsl(var(--primary))]">{dim5_fidelidad.ica_global_porcentaje}%</p>
-                  <p className="text-[10px] text-[hsl(var(--text-secondary))]">ICA global</p>
+                  <p className="text-2xs text-[hsl(var(--text-secondary))]">ICA global</p>
                 </div>
                 <div className="flex-1">
                   <ProgressBar value={dim5_fidelidad.ica_global_porcentaje}
                     color={dim5_fidelidad.ica_global_porcentaje >= 70 ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--warning))]"} />
-                  <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-1">{dim5_fidelidad.total_personas_analizadas} personas analizadas</p>
+                  <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1">{dim5_fidelidad.total_personas_analizadas} personas analizadas</p>
                 </div>
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+              <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
                 Alertas de enfriamiento ({dim5_fidelidad.total_alertas_enfriamiento})
               </p>
               {dim5_fidelidad.alertas_enfriamiento.length === 0 ? (
                 <div className="flex items-center gap-2 p-3 bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.3)] rounded-lg">
                   <CheckCircle2 size={14} className="text-[hsl(var(--success))]" />
-                  <p className="text-[11px] text-[hsl(var(--success))] font-medium">Sin alertas activas</p>
+                  <p className="text-xs text-[hsl(var(--success))] font-medium">Sin alertas activas</p>
                 </div>
               ) : (
                 <div className="space-y-1.5">
                   {dim5_fidelidad.alertas_enfriamiento.slice(0, 8).map((a) => (
                     <div key={`${a.nombre}-${a.grupo}`} className="flex items-center justify-between p-2 bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.3)] rounded-lg">
                       <div>
-                        <p className="text-[11px] font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
-                        <p className="text-[10px] text-[hsl(var(--text-secondary))]">{a.grupo}</p>
+                        <p className="text-xs font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
+                        <p className="text-2xs text-[hsl(var(--text-secondary))]">{a.grupo}</p>
                       </div>
-                      <span className="text-[10px] font-black text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] px-2 py-0.5 rounded-full">
+                      <span className="text-2xs font-black text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] px-2 py-0.5 rounded-full">
                         {a.ausencias_consecutivas}× FALTO
                       </span>
                     </div>
@@ -572,19 +572,19 @@ export default function StrategyAnalyticsPage() {
               )}
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Top asistentes</p>
+              <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Top asistentes</p>
               {dim5_fidelidad.top_asistentes.length === 0 ? (
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Sin datos suficientes aún</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin datos suficientes aún</p>
               ) : (
                 <div className="space-y-1.5">
                   {dim5_fidelidad.top_asistentes.map((a) => (
                     <div key={`${a.nombre}-${a.grupo}`} className="p-2 bg-[hsl(var(--bg-secondary))] rounded-lg">
                       <div className="flex justify-between items-center mb-1">
                         <div>
-                          <p className="text-[11px] font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
-                          <p className="text-[10px] text-[hsl(var(--text-secondary))]">{a.grupo}</p>
+                          <p className="text-xs font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
+                          <p className="text-2xs text-[hsl(var(--text-secondary))]">{a.grupo}</p>
                         </div>
-                        <span className="text-[11px] font-black text-[hsl(var(--success))]">{a.ica_porcentaje}%</span>
+                        <span className="text-xs font-black text-[hsl(var(--success))]">{a.ica_porcentaje}%</span>
                       </div>
                       <ProgressBar value={a.ica_porcentaje} color="bg-[hsl(var(--success))]" />
                     </div>
@@ -609,21 +609,21 @@ export default function StrategyAnalyticsPage() {
                 ].map(s => (
                   <div key={s.label} className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
                     <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
-                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">{s.label}</p>
+                    <p className="text-2xs text-[hsl(var(--text-secondary))]">{s.label}</p>
                   </div>
                 ))}
               </div>
               {dim6_eficiencia.por_grupo.length === 0 && (
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Sin datos de sesiones por grupo</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin datos de sesiones por grupo</p>
               )}
               <div className="space-y-2">
                 {dim6_eficiencia.por_grupo.map(g => (
                   <div key={g.nombre} className="p-3 bg-[hsl(var(--bg-secondary))] rounded-lg">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-[12px] font-bold text-[hsl(var(--text-primary))]">{g.nombre}</span>
-                      <span className={`text-[10px] font-bold ${sem(g.estado_operativo)}`}>{g.estado_operativo}</span>
+                      <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{g.nombre}</span>
+                      <span className={`text-2xs font-bold ${sem(g.estado_operativo)}`}>{g.estado_operativo}</span>
                     </div>
-                    <div className="flex gap-4 text-[11px] text-[hsl(var(--text-secondary))] mb-1.5">
+                    <div className="flex gap-4 text-xs text-[hsl(var(--text-secondary))] mb-1.5">
                       <span>{g.sesiones_realizadas}/{g.sesiones_proyectadas} sesiones</span>
                       {g.ofrenda_total > 0 && <span className="text-[hsl(var(--success))] font-bold">${g.ofrenda_total.toLocaleString()}</span>}
                     </div>
@@ -633,7 +633,7 @@ export default function StrategyAnalyticsPage() {
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Tendencia semanal de asistencia</p>
+              <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Tendencia semanal de asistencia</p>
               <ChartBox height={240}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={tendencia_semanal} margin={{ left: 0, right: 8 }}>
@@ -657,7 +657,7 @@ export default function StrategyAnalyticsPage() {
           <SectionHeader icon={Activity} title="Heatmap de Asistencia por Día de la Semana"
             sub="¿Qué días concentran más asistencia? Color según % de asistencia promedio" />
           {heatmap.length === 0 ? (
-            <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-4">
+            <p className="text-xs text-[hsl(var(--text-secondary))] italic text-center py-4">
               Sin datos suficientes para calcular heatmap en el período actual
             </p>
           ) : (
@@ -668,7 +668,7 @@ export default function StrategyAnalyticsPage() {
                   const intensity = ratio; // 0..1
                   return (
                     <div key={d.weekday} className="flex flex-col gap-1">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center">
+                      <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center">
                         {d.label.slice(0, 3)}
                       </p>
                       <div
@@ -683,7 +683,7 @@ export default function StrategyAnalyticsPage() {
                       >
                         {d.sessions > 0 ? `${Math.round(d.pct ?? 0)}%` : '—'}
                       </div>
-                      <p className="text-[9px] text-[hsl(var(--text-secondary))] text-center font-mono">
+                      <p className="text-2xs text-[hsl(var(--text-secondary))] text-center font-mono">
                         {d.sessions} ses.
                       </p>
                     </div>
@@ -692,23 +692,23 @@ export default function StrategyAnalyticsPage() {
               </div>
               <div className="flex items-center justify-between gap-2 pt-2 border-t border-[hsl(var(--border-primary))]">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                  <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                     Leyenda:
                   </span>
-                  <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                  <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
                     <span className="size-3 rounded" style={{ background: 'hsl(var(--bg-muted))' }} /> Sin sesiones
                   </span>
-                  <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                  <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
                     <span className="size-3 rounded" style={{ background: 'rgba(99, 102, 241, 0.2)' }} /> Bajo
                   </span>
-                  <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                  <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
                     <span className="size-3 rounded" style={{ background: 'rgba(99, 102, 241, 0.55)' }} /> Medio
                   </span>
-                  <span className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                  <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
                     <span className="size-3 rounded" style={{ background: 'rgba(99, 102, 241, 0.95)' }} /> Alto
                   </span>
                 </div>
-                <p className="text-[10px] text-[hsl(var(--text-secondary))] italic">
+                <p className="text-2xs text-[hsl(var(--text-secondary))] italic">
                   Período: últimas {weeks} semanas
                 </p>
               </div>
@@ -721,7 +721,7 @@ export default function StrategyAnalyticsPage() {
           <SectionHeader icon={Zap} title="Velocidad de Transición entre Roles"
             sub="Días promedio antes de que una persona avance al siguiente rol en el embudo ministerial" />
           {velocity.length === 0 ? (
-            <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-4">
+            <p className="text-xs text-[hsl(var(--text-secondary))] italic text-center py-4">
               Sin transiciones de rol registradas aún
             </p>
           ) : (
@@ -738,7 +738,7 @@ export default function StrategyAnalyticsPage() {
                   return (
                     <div key={`${s.role}-${i}`} className="flex items-center gap-2 shrink-0">
                       <div className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 min-w-[140px] flex flex-col gap-2 hover:shadow-md transition-shadow">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                        <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                           Etapa {i + 1}
                         </p>
                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate" title={s.label}>
@@ -748,13 +748,13 @@ export default function StrategyAnalyticsPage() {
                           <p className="text-2xl font-black text-[hsl(var(--primary))]">
                             {Math.round(s.avg_days)}
                           </p>
-                          <p className="text-[10px] font-semibold text-[hsl(var(--text-secondary))]">días</p>
+                          <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">días</p>
                         </div>
                         <div className="space-y-1">
                           <div className="h-1.5 w-full bg-[hsl(var(--bg-muted))] rounded-full overflow-hidden">
                             <div className={`h-full rounded-full transition-all ${toneColor}`} style={{ width: `${barWidth}%` }} />
                           </div>
-                          <p className="text-[9px] text-[hsl(var(--text-secondary))] font-mono">
+                          <p className="text-2xs text-[hsl(var(--text-secondary))] font-mono">
                             {s.transitions} transición{s.transitions !== 1 ? 'es' : ''}
                           </p>
                         </div>
@@ -768,7 +768,7 @@ export default function StrategyAnalyticsPage() {
                   );
                 })}
               </div>
-              <p className="text-[10px] text-[hsl(var(--text-secondary))] italic mt-3 text-center">
+              <p className="text-2xs text-[hsl(var(--text-secondary))] italic mt-3 text-center">
                 El conteo se reinicia al cambiar de rol. La barra crece con días promedio.
               </p>
             </div>
@@ -784,25 +784,25 @@ export default function StrategyAnalyticsPage() {
               <p className={`text-4xl font-black ${sem(dim7_multiplicacion.estado_reproduccion)}`}>
                 {dim7_multiplicacion.tmg_porcentaje}%
               </p>
-              <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1">TMG — Tasa de multiplicación</p>
-              <p className={`text-[10px] font-bold mt-1 ${sem(dim7_multiplicacion.estado_reproduccion)}`}>
+              <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">TMG — Tasa de multiplicación</p>
+              <p className={`text-2xs font-bold mt-1 ${sem(dim7_multiplicacion.estado_reproduccion)}`}>
                 {dim7_multiplicacion.estado_reproduccion}
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
                 <p className="text-xl font-black text-[hsl(var(--text-primary))]">{dim7_multiplicacion.grupos_multiplicados_periodo}</p>
-                <p className="text-[10px] text-[hsl(var(--text-secondary))]">Multiplicaciones</p>
+                <p className="text-2xs text-[hsl(var(--text-secondary))]">Multiplicaciones</p>
               </div>
               <div className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
                 <p className="text-xl font-black text-[hsl(var(--text-primary))]">
                   {dim7_multiplicacion.tpm_meses_promedio ?? "—"}
                 </p>
-                <p className="text-[10px] text-[hsl(var(--text-secondary))]">meses TPM</p>
+                <p className="text-2xs text-[hsl(var(--text-secondary))]">meses TPM</p>
               </div>
             </div>
             {dim7_multiplicacion.grupos_multiplicados_periodo === 0 && (
-              <p className="text-[11px] text-[hsl(var(--text-secondary))] italic mt-3 text-center">
+              <p className="text-xs text-[hsl(var(--text-secondary))] italic mt-3 text-center">
                 Sin multiplicaciones registradas en el período. La estructura está lista.
               </p>
             )}
@@ -820,27 +820,27 @@ export default function StrategyAnalyticsPage() {
               ].map(s => (
                 <div key={s.label} className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
                   <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
-                  <p className="text-[10px] text-[hsl(var(--text-secondary))]">{s.label}</p>
+                  <p className="text-2xs text-[hsl(var(--text-secondary))]">{s.label}</p>
                 </div>
               ))}
             </div>
             {dim8_liderazgo.alertas_burnout.length > 0 ? (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--destructive))] mb-1">Alertas burnout</p>
+                <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--destructive))] mb-1">Alertas burnout</p>
                 {dim8_liderazgo.alertas_burnout.map((a) => (
                   <div key={`${a.nombre}-${a.grupo}`} className="flex justify-between items-center p-2 bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.3)] rounded-lg">
                     <div>
-                      <p className="text-[11px] font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
-                      <p className="text-[10px] text-[hsl(var(--text-secondary))]">{a.grupo}</p>
+                      <p className="text-xs font-bold text-[hsl(var(--text-primary))]">{a.nombre}</p>
+                      <p className="text-2xs text-[hsl(var(--text-secondary))]">{a.grupo}</p>
                     </div>
-                    <span className="text-[10px] text-[hsl(var(--destructive))] font-bold">{a.estado_vital}</span>
+                    <span className="text-2xs text-[hsl(var(--destructive))] font-bold">{a.estado_vital}</span>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="flex items-center gap-2 p-3 bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.3)] rounded-lg">
                 <CheckCircle2 size={14} className="text-[hsl(var(--success))]" />
-                <p className="text-[11px] text-[hsl(var(--success))] font-medium">Liderazgo sin alertas</p>
+                <p className="text-xs text-[hsl(var(--success))] font-medium">Liderazgo sin alertas</p>
               </div>
             )}
           </div>
@@ -853,17 +853,17 @@ export default function StrategyAnalyticsPage() {
           <div className="grid md:grid-cols-3 gap-4">
             <div className={`rounded-lg border p-4 text-center col-span-1 ${semBg(dim9_campanas.semaforo)}`}>
               <p className={`text-4xl font-black ${sem(dim9_campanas.semaforo)}`}>{dim9_campanas.irc_porcentaje}%</p>
-              <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1">IRC — Índice de Retención</p>
-              <p className={`text-[10px] font-bold mt-1 ${sem(dim9_campanas.semaforo)}`}>{dim9_campanas.semaforo}</p>
+              <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">IRC — Índice de Retención</p>
+              <p className={`text-2xs font-bold mt-1 ${sem(dim9_campanas.semaforo)}`}>{dim9_campanas.semaforo}</p>
             </div>
             <div className="md:col-span-2 grid grid-cols-2 gap-3">
               <div className="bg-[hsl(var(--bg-secondary))] rounded-lg p-4 text-center">
                 <p className="text-3xl font-black text-[hsl(var(--primary))]">{dim9_campanas.total_captados_campana}</p>
-                <p className="text-[11px] text-[hsl(var(--text-secondary))]">captados por campaña</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))]">captados por campaña</p>
               </div>
               <div className="bg-[hsl(var(--bg-secondary))] rounded-lg p-4 text-center">
                 <p className="text-3xl font-black text-[hsl(var(--success))]">{dim9_campanas.retenidos_3_sesiones}</p>
-                <p className="text-[11px] text-[hsl(var(--text-secondary))]">retenidos (≥3 sesiones)</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))]">retenidos (≥3 sesiones)</p>
               </div>
             </div>
           </div>
@@ -877,19 +877,19 @@ export default function StrategyAnalyticsPage() {
             <div>
               <div className={`rounded-lg border p-4 text-center mb-3 ${semBg(dim10_demografia.estado_equilibrio)}`}>
                 <p className={`text-3xl font-black ${sem(dim10_demografia.estado_equilibrio)}`}>{dim10_demografia.idg}</p>
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-0.5">IDG (máx 1.61)</p>
-                <p className="text-[11px] font-bold mt-1">{dim10_demografia.equilibrio_porcentaje}% equilibrio</p>
-                <span className={`text-[10px] font-bold ${sem(dim10_demografia.estado_equilibrio)}`}>{dim10_demografia.estado_equilibrio}</span>
+                <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">IDG (máx 1.61)</p>
+                <p className="text-xs font-bold mt-1">{dim10_demografia.equilibrio_porcentaje}% equilibrio</p>
+                <span className={`text-2xs font-bold ${sem(dim10_demografia.estado_equilibrio)}`}>{dim10_demografia.estado_equilibrio}</span>
               </div>
               <div className="p-3 bg-[hsl(var(--bg-secondary))] rounded-lg text-center">
                 <p className="text-2xl font-black text-[hsl(var(--primary))]">{dim10_demografia.pct_bautizados}%</p>
-                <p className="text-[11px] text-[hsl(var(--text-secondary))]">bautizados ({dim10_demografia.bautizados}/{dim10_demografia.total_personas})</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))]">bautizados ({dim10_demografia.bautizados}/{dim10_demografia.total_personas})</p>
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Distribución por edad</p>
+              <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Distribución por edad</p>
               {pieEtaria.length === 0 ? (
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-8">Sin datos de edad registrados</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] italic text-center py-8">Sin datos de edad registrados</p>
               ) : (
                 <ChartBox height={180}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -904,9 +904,9 @@ export default function StrategyAnalyticsPage() {
               )}
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Estado espiritual</p>
+              <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Estado espiritual</p>
               {pieSpiritual.length === 0 ? (
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] italic text-center py-8">Sin datos de estado espiritual</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] italic text-center py-8">Sin datos de estado espiritual</p>
               ) : (
                 <ChartBox height={160}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -921,7 +921,7 @@ export default function StrategyAnalyticsPage() {
               )}
               <div className="space-y-1 mt-2">
                 {pieSpiritual.map((e, i) => (
-                  <div key={e.name} className="flex items-center gap-2 text-[11px]">
+                  <div key={e.name} className="flex items-center gap-2 text-xs">
                     <div className="w-2 h-2 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
                     <span className="text-[hsl(var(--text-secondary))] truncate">{e.name}</span>
                     <span className="ml-auto font-bold text-[hsl(var(--text-primary))]">{e.value}</span>

@@ -87,7 +87,7 @@ export default function FinanceAdminPage() {
     };
 
     const columns = useMemo<ColumnDef<FinanceTransaction>[]>(() => [
-        { accessorKey: 'id', header: '#', size: 60, cell: info => <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">#{info.getValue() as number}</span> },
+        { accessorKey: 'id', header: '#', size: 60, cell: info => <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">#{info.getValue() as number}</span> },
         {
             accessorKey: 'description',
             header: 'Concepto / Descripción',
@@ -101,8 +101,8 @@ export default function FinanceAdminPage() {
                         {row.original.type === 'income' ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
                     </div>
                     <div className="flex flex-col truncate">
-                        <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{String(row.original.description ?? '')}</span>
-                        <span className="text-[10px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide leading-none mt-0.5">{String(row.original.category ?? '')}</span>
+                        <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{String(row.original.description ?? '')}</span>
+                        <span className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide leading-none mt-0.5">{String(row.original.category ?? '')}</span>
                     </div>
                 </div>
             )
@@ -203,8 +203,8 @@ export default function FinanceAdminPage() {
                 viewType={viewType} setViewType={setViewType} availableViews={FINANCE_VIEWS} onSearch={setSearch}
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] rounded-md text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all active:scale-95"><Download size={14} /> Exportar</button>
-                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"><Plus size={14} /> Registrar Transacción</button>
+                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] rounded-md text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all active:scale-95"><Download size={14} /> Exportar</button>
+                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"><Plus size={14} /> Registrar Transacción</button>
                     </div>
                 }
             />
@@ -242,14 +242,14 @@ export default function FinanceAdminPage() {
                                 {groupedTransactions.map((column) => (
                                     <section key={column.type} className="w-96 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                                         <div className="mb-3 flex items-center justify-between px-1">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.type}</p>
+                                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.type}</p>
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.items.length}</span>
                                         </div>
                                         <div className="space-y-2">
                                             {column.items.map((tx) => (
                                                 <button key={tx.id} onClick={() => handleOpenTx(tx)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 text-left dark:border-white/10 dark:bg-white/5">
                                                     <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{tx.description}</p>
-                                                    <p className="mt-1 text-[10px] font-semibold text-[hsl(var(--text-secondary))]">${Number(tx.amount || 0).toLocaleString()} · {tx.category}</p>
+                                                    <p className="mt-1 text-2xs font-semibold text-[hsl(var(--text-secondary))]">${Number(tx.amount || 0).toLocaleString()} · {tx.category}</p>
                                                 </button>
                                             ))}
                                         </div>
@@ -309,8 +309,8 @@ export default function FinanceAdminPage() {
                                                     <p className="text-xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">Periodo Fiscal 2026</p>
                                                 </div>
                                                 <div className="flex gap-3">
-                                                    <div className="flex items-center gap-2"><div className="size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_12px_hsl(var(--primary))]" /><span className="text-[9px] font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide">Ingresos</span></div>
-                                                    <div className="flex items-center gap-2"><div className="size-2 rounded-full bg-[hsl(var(--destructive))] shadow-[0_0_12px_hsl(var(--destructive))]" /><span className="text-[9px] font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide">Gastos</span></div>
+                                                    <div className="flex items-center gap-2"><div className="size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_12px_hsl(var(--primary))]" /><span className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide">Ingresos</span></div>
+                                                    <div className="flex items-center gap-2"><div className="size-2 rounded-full bg-[hsl(var(--destructive))] shadow-[0_0_12px_hsl(var(--destructive))]" /><span className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide">Gastos</span></div>
                                                 </div>
                                             </div>
                                             <div className="h-48 flex items-end justify-between gap-4 px-2">
@@ -344,7 +344,7 @@ export default function FinanceAdminPage() {
                                             <BudgetItem label="Personal y Staff" percent={15} color="bg-[hsl(var(--warning))]" />
                                             <BudgetItem label="Otros Gastos" percent={10} color="bg-[hsl(var(--surface-2))]" />
                                         </div>
-                                        <button className="w-full py-2 mt-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] transition-all transform active:scale-95 shadow-sm">Ver Presupuestos 2026</button>
+                                        <button className="w-full py-2 mt-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] transition-all transform active:scale-95 shadow-sm">Ver Presupuestos 2026</button>
                                     </div>
                                 </div>
                             </motion.div>
@@ -361,7 +361,7 @@ export default function FinanceAdminPage() {
                                     <div className="absolute -bottom-20 -left-20 size-96 bg-[hsl(var(--primary))/0.1] blur-[100px] rounded-full" />
                                     
                                     <div className="relative z-10 max-w-3xl space-y-3">
-                                        <div className="inline-flex items-center gap-3 px-3 py-2 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-full text-[11px] font-semibold uppercase tracking-wide shadow-2xl">
+                                        <div className="inline-flex items-center gap-3 px-3 py-2 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-full text-xs font-semibold uppercase tracking-wide shadow-2xl">
                                             <Zap size={16} className="text-[hsl(var(--warning))]" fill="currentColor" /> Optimus Finance Intelligence
                                         </div>
                                         <h2 className="text-xl lg:text-xl font-bold tracking-tighter leading-none">
@@ -400,7 +400,7 @@ export default function FinanceAdminPage() {
                 isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
                 title={selectedTx?.description || 'Detalle de Operación'}
                 subtitle={`${selectedTx?.type?.toUpperCase()} • REF-${selectedTx?.id}`}
-                actions={<><button className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-md transition-all">Anular</button><button className="px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl">Descargar Recibo</button></>}
+                actions={<><button className="px-4 py-2 text-xs font-bold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-md transition-all">Anular</button><button className="px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl">Descargar Recibo</button></>}
             >
                 <div className="space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
                     <section className="grid grid-cols-2 gap-4">
@@ -416,7 +416,7 @@ export default function FinanceAdminPage() {
                             <div className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                                 <FileText size={56} strokeWidth={1} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                             </div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide group-hover:text-[hsl(var(--primary))] transition-colors">Ver Documento Escaneado</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide group-hover:text-[hsl(var(--primary))] transition-colors">Ver Documento Escaneado</p>
                         </div>
                     </section>
 
@@ -424,7 +424,7 @@ export default function FinanceAdminPage() {
                         <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12"><ShieldCheck size={80} /></div>
                         <div className="size-7 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--success))] shadow-sm relative z-10"><ShieldCheck size={28} /></div>
                         <div className="relative z-10">
-                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--success))]">Transacción Verificada</h4>
+                            <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--success))]">Transacción Verificada</h4>
                             <p className="text-xs text-[hsl(var(--success))/0.7] font-bold">Conciliación bancaria completada automáticamente.</p>
                         </div>
                     </section>
@@ -436,7 +436,7 @@ export default function FinanceAdminPage() {
 
 function FinanceTab({ label, active, onClick }: TabButtonProps) {
     return (
-        <button onClick={onClick} className={clsx("px-4 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all border-b-2 relative overflow-hidden shrink-0", active ? "text-[hsl(var(--primary))] border-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50")}>
+        <button onClick={onClick} className={clsx("px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all border-b-2 relative overflow-hidden shrink-0", active ? "text-[hsl(var(--primary))] border-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50")}>
             {active && <motion.div layoutId="finance-tab" className="absolute bottom-0 left-0 w-full h-[2.5px] bg-[hsl(var(--primary))]" />}
             {label}
         </button>
@@ -464,7 +464,7 @@ function SummaryCard({ title, value, trend, icon: Icon, color, auraColor }: Summ
 function BudgetItem({ label, percent, color }: BudgetItemProps) {
     return (
         <div className="space-y-3 group/item">
-            <div className="flex justify-between items-center text-[11px] font-semibold uppercase tracking-tight">
+            <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-tight">
                 <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover/item:text-[hsl(var(--text-primary))] transition-colors">{label}</span>
                 <span className="text-[hsl(var(--text-secondary))] group-hover/item:text-[hsl(var(--primary))] transition-colors">{percent}%</span>
             </div>

@@ -107,13 +107,13 @@ function ActivityItem({
                             if (e.key === 'Enter') { onUpdateTitle(activity.id, titleVal); setEditing(false); }
                             if (e.key === 'Escape') { setTitleVal(activity.title); setEditing(false); }
                         }}
-                        className="flex-1 text-[12px] bg-transparent outline-none border-b border-[hsl(var(--info)/40%)] text-[hsl(var(--text-primary))] dark:text-white"
+                        className="flex-1 text-sm bg-transparent outline-none border-b border-[hsl(var(--info)/40%)] text-[hsl(var(--text-primary))] dark:text-white"
                     />
                 ) : (
                     <span
                         onDoubleClick={() => setEditing(true)}
                         className={clsx(
-                            'flex-1 text-[12px] font-medium cursor-default select-none truncate',
+                            'flex-1 text-sm font-medium cursor-default select-none truncate',
                             activity.completed
                                 ? 'line-through text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
                                 : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]'
@@ -199,9 +199,9 @@ export default function TaskActivitySection({
     return (
         <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
             <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
+                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
                     <Check size={11} /> Actividades
-                    <span className="px-1.5 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/[0.06] rounded text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold text-[9px]">
+                    <span className="px-1.5 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/[0.06] rounded text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold text-2xs">
                         {activities.length}
                     </span>
                 </p>
@@ -229,12 +229,12 @@ export default function TaskActivitySection({
                     onChange={e => onNewActivityTitleChange(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && onAddTopLevel()}
                     placeholder="Añadir actividad..."
-                    className="flex-1 text-[12px] bg-transparent outline-none text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))]"
+                    className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))]"
                 />
                 {newActivityTitle.trim() && (
                     <button
                         onClick={onAddTopLevel}
-                        className="px-2 py-1 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold hover:bg-[hsl(var(--primary))] transition-all"
+                        className="px-2 py-1 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-bold hover:bg-[hsl(var(--primary))] transition-all"
                     >
                         + Añadir
                     </button>

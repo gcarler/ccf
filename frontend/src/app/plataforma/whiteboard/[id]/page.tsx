@@ -25,7 +25,7 @@ export default function WhiteboardSessionPage() {
                         ]}
                         rightActions={
                             <div className="flex items-center gap-3">
-                                <div data-testid="whiteboard-save-status" className="flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5">
+                                <div data-testid="whiteboard-save-status" className="flex items-center gap-2 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5">
                                     {saveStatus === "saving" ? (
                                         <span>Guardando</span>
                                     ) : saveStatus === "error" ? (
@@ -38,7 +38,7 @@ export default function WhiteboardSessionPage() {
                                 </div>
                                 <button
                                     onClick={saveNow}
-                                    className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--primary)/0.2)] transition-all hover:scale-105"
+                                    className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--primary)/0.2)] transition-all hover:scale-105"
                                 >
                                     Guardar
                                 </button>

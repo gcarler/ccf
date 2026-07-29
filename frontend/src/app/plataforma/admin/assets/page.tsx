@@ -162,7 +162,7 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
                     <div className="flex size-7 items-center justify-center rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] shadow-sm dark:bg-white/10"><Icon size={24} /></div>
                     <div>
                         <p className="text-sm font-semibold uppercase text-[hsl(var(--text-primary))] dark:text-white">{asset.filename}</p>
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{formatBytes(asset.sizeBytes)} | {date} | {asset.type}</p>
+                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{formatBytes(asset.sizeBytes)} | {date} | {asset.type}</p>
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -177,8 +177,8 @@ function AssetCard({ asset, mode, onDelete }: { asset: Asset; mode: "grid" | "li
             <div className="mb-3 flex aspect-square w-full items-center justify-center rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] shadow-inner transition-all group-hover:text-[hsl(var(--primary))] dark:bg-white/5">
                 <Icon size={64} strokeWidth={1} />
             </div>
-            <h4 className="w-full truncate px-2 text-[13px] font-semibold uppercase text-[hsl(var(--text-primary))] dark:text-white">{asset.filename}</h4>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{formatBytes(asset.sizeBytes)} | {date}</p>
+            <h4 className="w-full truncate px-2 text-base font-semibold uppercase text-[hsl(var(--text-primary))] dark:text-white">{asset.filename}</h4>
+            <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{formatBytes(asset.sizeBytes)} | {date}</p>
             <div className="absolute right-4 top-4 flex flex-col gap-2 opacity-0 transition-all group-hover:opacity-100">
                 <a href={asset.url} download className="rounded-lg bg-[hsl(var(--bg-primary))] p-3 text-[hsl(var(--text-secondary))] shadow-xl hover:text-[hsl(var(--primary))] dark:bg-[hsl(var(--surface-2))]"><Download size={18} /></a>
                 <button onClick={onDelete} className="rounded-lg bg-[hsl(var(--bg-primary))] p-3 text-[hsl(var(--text-secondary))] shadow-xl hover:text-danger-text dark:bg-[hsl(var(--surface-2))]"><Trash2 size={18} /></button>
@@ -198,9 +198,9 @@ function StorageStat({ label, count, size, icon: Icon, color = 'slate' }: Storag
         <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
             <div className={clsx("flex size-7 items-center justify-center rounded-lg", colors[color])}>{Icon && <Icon size={28} />}</div>
             <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
                 <h4 className="text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white">{size}</h4>
-                <p className="mt-3 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{count}</p>
+                <p className="mt-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{count}</p>
             </div>
         </div>
     );

@@ -134,7 +134,7 @@ export default function WhiteboardPage() {
                     <p className="mt-1 line-clamp-2 text-sm font-medium text-[hsl(var(--text-secondary))]">
                       Proyecto: {board.project_id.slice(0, 8)}...
                     </p>
-                    <div className="mt-4 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    <div className="mt-4 flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                       <Clock size={12} />
                       {formatBoardDate(board.updated_at || board.created_at)}
                     </div>
@@ -144,7 +144,7 @@ export default function WhiteboardPage() {
                       onClick={() =>
                         router.push(`/plataforma/whiteboard/${board.project_id}`)
                       }
-                      className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
+                      className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
                     >
                       Abrir
                     </button>

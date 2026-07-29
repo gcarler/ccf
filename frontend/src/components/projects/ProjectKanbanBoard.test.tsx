@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProjectKanbanBoard } from './ProjectKanbanBoard';
-import type { ProjectRecord, ProjectTaskRecord } from '@/types/projects';
+import { createMockProject, createMockTask } from '@/test-utils/factories';
 import type { PhaseDef } from '@/context/ProjectUpdateContext';
 
 // Mock contexts
@@ -18,7 +18,7 @@ vi.mock('@/context/ProjectUpdateContext', () => ({
     useProjectUpdate: () => ({ updateTask, deleteTask, createTask }),
 }));
 
-const mockProject: ProjectRecord = {
+const mockProject = createMockProject({
     id: 'proj-1',
     title: 'Proyecto Kanban',
     description: '',
@@ -27,9 +27,9 @@ const mockProject: ProjectRecord = {
     color: '#2563eb',
     progress_percent: 0,
     milestones: [],
-    created_at: '2024-01-01',
-    updated_at: '2024-01-01',
-};
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+});
 
 const mockPhases: PhaseDef[] = [
     { slug: 'todo', name: 'Por hacer', color: '#94a3b8', order_index: 0 },
@@ -37,9 +37,9 @@ const mockPhases: PhaseDef[] = [
     { slug: 'completed', name: 'Completado', color: '#22c55e', order_index: 2 },
 ];
 
-const mockTasks: ProjectTaskRecord[] = [
-    { id: 'task-1', title: 'Tarea Todo', status: 'todo', priority: 'medium', project_id: 'proj-1', description: '', due_date: null, assignee_id: null, comments_count: 0, created_at: '', updated_at: '' },
-    { id: 'task-2', title: 'Tarea En Progreso', status: 'in_progress', priority: 'high', project_id: 'proj-1', description: '', due_date: null, assignee_id: null, comments_count: 0, created_at: '', updated_at: '' },
+const mockTasks = [
+    createMockTask({ id: 'task-1', project_id: 'proj-1', title: 'Tarea Todo', status: 'todo', priority: 'medium' }),
+    createMockTask({ id: 'task-2', project_id: 'proj-1', title: 'Tarea En Progreso', status: 'in_progress', priority: 'high' }),
 ];
 
 describe('ProjectKanbanBoard', () => {

@@ -53,19 +53,19 @@ export default function SpiritualTimelinePage() {
                             <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center">
                                 <Calendar size={14} className="text-[hsl(var(--primary))]" />
                             </div>
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Línea de Tiempo</span>
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Línea de Tiempo</span>
                         </div>
                         <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
                             Mi Ruta de Victoria
                         </h1>
-                        <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
+                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
                             Cada hito de tu caminar con Cristo, registrado y celebrado.
                         </p>
                     </div>
                     {canManage && (
                         <a
                             href="/plataforma/admin/spiritual-life/milestones"
-                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
+                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                         >
                             <Plus size={13} /> Administrar Hitos
                         </a>
@@ -118,12 +118,12 @@ export default function SpiritualTimelinePage() {
                                         <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-lg p-4 shadow-sm hover:shadow-md hover:border-[hsl(var(--border))] dark:hover:border-white/15 transition-all">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white">{def.label}</p>
+                                                    <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{def.label}</p>
                                                     {m.notes && (
-                                                        <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5">{m.notes}</p>
+                                                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5">{m.notes}</p>
                                                     )}
                                                 </div>
-                                                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                                <span className="shrink-0 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                     {new Date(m.event_date).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })}
                                                 </span>
                                             </div>
@@ -138,7 +138,7 @@ export default function SpiritualTimelinePage() {
                 {/* Upcoming milestones preview */}
                 {!loading && (
                     <section>
-                        <h2 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Próximos Hitos</h2>
+                        <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Próximos Hitos</h2>
                         <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-lg overflow-hidden shadow-sm divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                             {Object.entries(MILESTONE_DEFS)
                                 .filter(([key]) => !milestones.some(m => m.type === key))
@@ -149,7 +149,7 @@ export default function SpiritualTimelinePage() {
                                             <div className={clsx('size-8 rounded-md flex items-center justify-center border shrink-0', def.bg, def.border)}>
                                                 <Icon size={14} className={def.color} />
                                             </div>
-                                            <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1">{def.label}</p>
+                                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1">{def.label}</p>
                                             <Lock size={13} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
                                         </div>
                                     );

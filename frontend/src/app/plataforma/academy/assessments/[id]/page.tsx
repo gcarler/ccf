@@ -200,7 +200,7 @@ export default function AssessmentPage() {
                         role="timer"
                         aria-live="off"
                         aria-label="Tiempo restante de la evaluación"
-                        className="flex items-center gap-3 px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full text-[11px] font-bold text-[hsl(var(--text-secondary))]"
+                        className="flex items-center gap-3 px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full text-xs font-bold text-[hsl(var(--text-secondary))]"
                     >
                         <Clock size={14} aria-hidden="true" /> 45:00
                     </div>
@@ -223,11 +223,11 @@ export default function AssessmentPage() {
                             >
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pregunta {index + 1}</p>
+                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pregunta {index + 1}</p>
                                         <h3 className="mt-2 text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{question.question_text}</h3>
                                     </div>
                                     <span className={clsx(
-                                        "rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wide",
+                                        "rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide",
                                         answeredQuestionIds.has(question.id)
                                             ? "bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text"
                                             : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10"
@@ -243,7 +243,7 @@ export default function AssessmentPage() {
                 {viewType === 'table' && (
  <div className="w-full overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
                         <table className="w-full min-w-[480px] text-left">
-                            <thead className="bg-[hsl(var(--surface-1))] text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5">
+                            <thead className="bg-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5">
                                 <tr>
                                     <th className="px-4 py-1.5">#</th>
                                     <th className="px-4 py-1.5">Pregunta</th>
@@ -365,7 +365,7 @@ export default function AssessmentPage() {
                         <button
                             disabled={currentStep === 0}
                             onClick={() => setCurrentStep(prev => prev - 1)}
-                            className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] disabled:opacity-0 transition-all"
+                            className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] disabled:opacity-0 transition-all"
                         >
                             <ArrowLeft size={16} /> Anterior
                         </button>
@@ -374,7 +374,7 @@ export default function AssessmentPage() {
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting || answers.length < assessment.questions.length}
-                                className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50"
+                                className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-2xs uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50"
                             >
                                 {isSubmitting ? 'Enviando...' : 'Finalizar Evaluacion'}
                             </button>
@@ -382,7 +382,7 @@ export default function AssessmentPage() {
                             <button
                                 onClick={() => setCurrentStep(prev => prev + 1)}
                                 disabled={!answers.find(a => a.question_id === currentQuestion.id)}
-                                className="px-3 py-1.5 bg-[hsl(var(--bg-muted))] text-white rounded-lg font-black text-[10px] uppercase tracking-wide shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+                                className="px-3 py-1.5 bg-[hsl(var(--bg-muted))] text-white rounded-lg font-black text-2xs uppercase tracking-wide shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
                             >
                                 Siguiente <ArrowRight size={16} />
                             </button>

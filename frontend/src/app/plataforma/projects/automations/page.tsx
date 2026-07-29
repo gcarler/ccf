@@ -172,7 +172,7 @@ export default function AutomationsPage() {
         <div className="w-full mx-auto p-3 space-y-3 pb-4">
           {error && (
             <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-              <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+              <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
             </div>
           )}
           {/* Sub-header */}
@@ -182,21 +182,21 @@ export default function AutomationsPage() {
                 <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center">
                   <Sparkles size={14} className="text-[hsl(var(--primary))]" />
                 </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
+                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                   Motor Optimus 3.0
                 </span>
               </div>
               <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
                 Automatizaciones
               </h1>
-              <p className="text-[12px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
+              <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
                 Configura cómo el sistema reacciona a los desafíos de tu ministerio.
               </p>
             </div>
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60"
+              className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60"
             >
               {creating ? (
                 <Loader2 size={13} className="animate-spin" />
@@ -209,10 +209,10 @@ export default function AutomationsPage() {
 
           {/* Active count */}
           <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20">
+            <span className="px-2.5 py-1 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20">
               {rules.filter((r) => r.is_active).length} activas
             </span>
-            <span className="px-2.5 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-full text-[10px] font-semibold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10">
+            <span className="px-2.5 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10">
               {rules.filter((r) => !r.is_active).length} inactivas
             </span>
           </div>
@@ -276,17 +276,17 @@ export default function AutomationsPage() {
                       <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">
                         {rule.name}
                       </h3>
-                      <p className="text-[11px] font-medium text-[hsl(var(--text-secondary))] uppercase tracking-wider">
+                      <p className="text-xs font-medium text-[hsl(var(--text-secondary))] uppercase tracking-wider">
                         {meta.label}
                       </p>
                     </div>
 
                     <div className="pt-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
-                      <button className="text-[10px] font-semibold uppercase text-[hsl(var(--primary))] tracking-wide flex items-center gap-1.5 hover:underline">
+                      <button className="text-2xs font-semibold uppercase text-[hsl(var(--primary))] tracking-wide flex items-center gap-1.5 hover:underline">
                         Configurar lógica <ArrowRight size={11} />
                       </button>
                       {!rule.is_active && (
-                        <span className="px-2 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-md text-[9px] font-semibold uppercase tracking-wide">
+                        <span className="px-2 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-md text-2xs font-semibold uppercase tracking-wide">
                           Inactivo
                         </span>
                       )}
@@ -307,10 +307,10 @@ export default function AutomationsPage() {
                   <Plus size={18} />
                 </div>
                 <div>
-                  <h4 className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">
+                  <h4 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">
                     Crear Regla
                   </h4>
-                  <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">
+                  <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">
                     Expandir Inteligencia
                   </p>
                 </div>

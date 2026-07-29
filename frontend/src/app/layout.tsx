@@ -1,5 +1,32 @@
 import type { Metadata } from "next";
+import { Space_Grotesk, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+
+// ── Typography: Load production fonts via next/font/google (self-hosted, no FOUC) ──
+const spaceGrotesk = Space_Grotesk({
+    subsets: ["latin"],
+    weight: ["300", "400", "500", "600", "700"],
+    variable: "--font-space-grotesk",
+    display: "swap",
+    preload: true,
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+    subsets: ["latin"],
+    weight: ["400", "500", "600", "700", "800"],
+    variable: "--font-plus-jakarta",
+    display: "swap",
+    preload: false,
+});
+
+const inter = Inter({
+    subsets: ["latin"],
+    weight: ["400", "500", "600", "700"],
+    variable: "--font-inter",
+    display: "swap",
+    preload: false,
+});
+
 import { AuthProvider } from "@/context/AuthContext";
 import { ConfigProvider } from "@/context/ConfigContext";
 import { ToastProvider } from "@/context/ToastContext";
@@ -34,7 +61,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="es" suppressHydrationWarning>
+        <html lang="es" suppressHydrationWarning className={`${spaceGrotesk.variable} ${plusJakartaSans.variable} ${inter.variable}`}>
             <head>
                 <script
                     dangerouslySetInnerHTML={{

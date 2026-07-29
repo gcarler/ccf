@@ -74,7 +74,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
             {/* Column Header */}
             {error && (
                 <div className="rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-2 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                    <p className="text-[10px] font-bold uppercase tracking-wide">{error}</p>
+                    <p className="text-2xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
             <div className="flex items-center justify-between px-1 pb-1">
@@ -83,7 +83,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                     <span className="font-semibold tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase">
                         {name}
                     </span>
-                    <span className="text-[10px] text-[hsl(var(--text-secondary))] font-bold bg-[hsl(var(--surface-3))] dark:bg-white/10 px-1.5 py-0.5 rounded-md">
+                    <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold bg-[hsl(var(--surface-3))] dark:bg-white/10 px-1.5 py-0.5 rounded-md">
                         {tasks.length}
                     </span>
                 </div>
@@ -128,7 +128,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                         'flex-1 flex items-center justify-center py-2 rounded-lg border-2 border-dashed transition-all',
                         isOver ? 'border-[hsl(var(--info)/40%)] bg-info-soft/50' : 'border-[hsl(var(--border))] dark:border-white/10'
                     )}>
-                        <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">Suelta aquí</p>
+                        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">Suelta aquí</p>
                     </div>
                 )}
 
@@ -152,13 +152,13 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
                                     if (e.key === 'Escape') handleCancel();
                                 }}
                                 placeholder="Nombre de la tarea..."
-                                className="w-full text-[13px] font-medium bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
+                                className="w-full text-base font-medium bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
                             />
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleSave}
                                     disabled={saving || !title.trim()}
-                                    className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white text-[11px] font-bold rounded-lg hover:bg-[hsl(var(--primary))] disabled:opacity-40 transition-colors"
+                                    className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white text-xs font-bold rounded-lg hover:bg-[hsl(var(--primary))] disabled:opacity-40 transition-colors"
                                 >
                                     {saving ? 'Guardando…' : 'Guardar'}
                                 </button>
@@ -178,7 +178,7 @@ export function KanbanColumn({ id, name, color, tasks, onOpenTask, onAddTask, pr
             {!isAdding && (
                 <button
                     onClick={handleStartAdd}
-                    className="w-full flex items-center gap-2 py-2 px-3 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 transition-all text-[12px] font-bold"
+                    className="w-full flex items-center gap-2 py-2 px-3 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 transition-all text-sm font-bold"
                 >
                     <Plus size={13} /> Nuevo
                 </button>

@@ -112,7 +112,7 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
           aria-label="Selector de persona asignada"
         >
           {value ? (
-            <div className="size-6 rounded-full bg-gradient-to-br from-primary to-info flex items-center justify-center font-semibold text-white shrink-0 shadow-sm text-[10px]">
+            <div className="size-6 rounded-full bg-gradient-to-br from-primary to-info flex items-center justify-center font-semibold text-white shrink-0 shadow-sm text-2xs">
               {initials}
             </div>
           ) : (
@@ -136,7 +136,7 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar usuario..."
-              className="flex-1 text-[12px] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]"
+              className="flex-1 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]"
             />
             {query && (
               <button onClick={() => setQuery("")}>
@@ -150,7 +150,7 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
                 <Loader2 size={16} className="text-[hsl(var(--primary))] animate-spin" />
               </div>
             ) : filtered.length === 0 ? (
-              <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-1.5">Sin resultados</p>
+              <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-1.5">Sin resultados</p>
             ) : (
               <>
                 {value && (
@@ -163,7 +163,7 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
                     className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--danger-muted))] dark:hover:bg-[hsl(var(--danger)/0.1)] text-danger transition-colors"
                   >
                     <X size={12} />
-                    <span className="text-[11px] font-bold">Quitar asignación</span>
+                    <span className="text-xs font-bold">Quitar asignación</span>
                   </button>
                 )}
                 {filtered.map((u) => (
@@ -181,12 +181,12 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
                         : "hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                     )}
                   >
-                    <div className="size-6 rounded-full bg-info-soft flex items-center justify-center font-semibold text-info-text shrink-0 text-[10px]">
+                    <div className="size-6 rounded-full bg-info-soft flex items-center justify-center font-semibold text-info-text shrink-0 text-2xs">
                       {u.username.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 text-left">
-                      <p className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{u.username}</p>
-                      {u.email && <p className="text-[10px] text-[hsl(var(--text-secondary))] truncate">{u.email}</p>}
+                      <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{u.username}</p>
+                      {u.email && <p className="text-2xs text-[hsl(var(--text-secondary))] truncate">{u.email}</p>}
                     </div>
                     {u.id === value && <Check size={12} className="text-[hsl(var(--primary))]" />}
                   </button>

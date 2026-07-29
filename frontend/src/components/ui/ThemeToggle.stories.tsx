@@ -58,15 +58,15 @@ export const AllVariants: Story = {
   render: () => (
     <div className="flex flex-col gap-6" style={{ width: '300px' }}>
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Icono</p>
+        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Icono</p>
         <ThemeToggle variant="icon" />
       </div>
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Pill</p>
+        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Pill</p>
         <ThemeToggle variant="pill" />
       </div>
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Fila</p>
+        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Fila</p>
         <ThemeToggle variant="row" />
       </div>
     </div>

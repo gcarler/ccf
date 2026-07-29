@@ -134,7 +134,7 @@ export default function AdminDashboard() {
                         <div className="flex justify-between items-center">
                             <div>
                                 <h3 className="text-xl font-bold tracking-tight mb-1">Tendencia de Crecimiento</h3>
-                                <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Participación Semanal</p>
+                                <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Participación Semanal</p>
                             </div>
                             <div className="flex items-center gap-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1 rounded-md border border-[hsl(var(--border))] dark:border-white/10">
                                 {['7D', '30D', '90D'].map(p => (
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{item.title}</h4>
-                                        <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1 truncate">{item.desc}</p>
+                                        <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1 truncate">{item.desc}</p>
                                     </div>
                                     <div className="text-right shrink-0">
                                         <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">{item.time}</p>
@@ -199,7 +199,7 @@ export default function AdminDashboard() {
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Rendimiento Académico</h3>
-                                <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Desglose por Modalidad</p>
+                                <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Desglose por Modalidad</p>
                             </div>
                         </div>
 
@@ -220,7 +220,7 @@ export default function AdminDashboard() {
 
                         {/* Top Courses List */}
                         <div className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4">
-                             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 px-2">Cursos más Populares</h4>
+                             <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 px-2">Cursos más Populares</h4>
                              <div className="space-y-4">
                                 {academy?.top_courses.map((course, i) => (
                                     <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 group hover:border-[hsl(var(--primary))/0.2] transition-all">
@@ -230,7 +230,7 @@ export default function AdminDashboard() {
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-semibold">{course.count}</span>
-                                            <span className="text-[9px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estudiantes</span>
+                                            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estudiantes</span>
                                         </div>
                                     </div>
                                 ))}
@@ -247,7 +247,7 @@ export default function AdminDashboard() {
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
                                 <PieChart size={20} className="text-[hsl(var(--primary))]" />
-                                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Distribución de Impacto</h4>
+                                <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Distribución de Impacto</h4>
                             </div>
                             <div className="relative size-56 mx-auto mb-3">
                                 <svg className="size-full -rotate-90 drop-shadow-2xl" viewBox="0 0 36 36">
@@ -270,22 +270,22 @@ export default function AdminDashboard() {
                             <div className="p-3 bg-white/5 rounded-lg border border-white/10 space-y-4">
                                 <div className="flex items-center gap-3">
                                     <Sparkles size={18} className="text-[hsl(var(--primary))]" />
-                                    <h5 className="text-[10px] font-semibold uppercase tracking-wide">IA Insights</h5>
+                                    <h5 className="text-2xs font-semibold uppercase tracking-wide">IA Insights</h5>
                                 </div>
-                                <p className="text-[11px] font-bold text-[hsl(var(--text-secondary))] leading-relaxed uppercase tracking-wider">
+                                <p className="text-xs font-bold text-[hsl(var(--text-secondary))] leading-relaxed uppercase tracking-wider">
                                     &quot;La participación ha subido un 15% en los cursos no formales. Se recomienda potenciar la ruta formal para el próximo trimestre.&quot;
                                 </p>
                             </div>
                         </div>
 
-                        <button className="relative z-10 w-full py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl hover:scale-[1.02] transition-all active:scale-95">
+                        <button className="relative z-10 w-full py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:scale-[1.02] transition-all active:scale-95">
                             Generar Auditoría
                         </button>
                     </div>
 
                     <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Próximos Eventos</h4>
+                            <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Próximos Eventos</h4>
                             <Calendar size={18} className="text-[hsl(var(--text-secondary))]" />
                         </div>
                         <div className="space-y-3">
@@ -296,11 +296,11 @@ export default function AdminDashboard() {
                                 <div key={i} className="flex gap-3 items-center group cursor-pointer">
                                     <div className="flex flex-col items-center justify-center size-7 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
                                         <span className="text-lg font-bold leading-none">{event.day}</span>
-                                        <span className="text-[8px] font-semibold uppercase">{event.month}</span>
+                                        <span className="text-2xs font-semibold uppercase">{event.month}</span>
                                     </div>
                                     <div>
                                         <h5 className="font-semibold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">{event.title}</h5>
-                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">{event.time}</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">{event.time}</p>
                                     </div>
                                 </div>
                             ))}
@@ -337,7 +337,7 @@ function ModalityCard({ title, stats, icon: Icon, color = 'blue' }: ModalityCard
                 <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wider">{title}</h4>
                 <div className="flex items-center gap-2 mt-1">
                     <div className="size-1.5 rounded-full bg-[hsl(var(--success))]" />
-                    <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{stats.completed} de {stats.total} finalizados</p>
+                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{stats.completed} de {stats.total} finalizados</p>
                 </div>
             </div>
 
@@ -395,7 +395,7 @@ function StatCard({ label, value, icon: Icon, trend, color = 'blue' }: StatCardP
 function ProgressItem({ label, value, color }: ProgressItemProps) {
     return (
         <div className="space-y-2">
-            <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 <span>{label}</span>
                 <span className="text-white">{value}</span>
             </div>

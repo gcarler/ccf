@@ -69,7 +69,7 @@ export default function AcademyStudentsPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             {filtered.length} activos
                         </span>
                         <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={MINIMAL_VIEWS} />
@@ -87,7 +87,7 @@ export default function AcademyStudentsPage() {
                 <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-sm dark:border-white/10 dark:bg-white/5">
                     <header className="flex flex-col gap-4 border-b border-[hsl(var(--border))] p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Directorio academico</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Directorio academico</p>
                             <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Estudiantes</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
@@ -140,7 +140,7 @@ export default function AcademyStudentsPage() {
                         ) : (
                         <table className="min-w-full text-sm">
                             <thead>
-                                <tr className="border-b border-[hsl(var(--border))] text-left text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
+                                <tr className="border-b border-[hsl(var(--border))] text-left text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
                                     <th className="px-4 py-1.5">Nombre</th>
                                     <th className="px-4 py-1.5">Correo</th>
                                     <th className="px-4 py-1.5">Cursos</th>
@@ -160,7 +160,7 @@ export default function AcademyStudentsPage() {
                                         <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{student.course_count ?? 0}</td>
                                         <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{student.progress ?? 0}%</td>
                                         <td className="px-4 py-1.5">
-                                            <span className="rounded-full bg-[hsl(var(--success-muted))] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--success))]">
+                                            <span className="rounded-full bg-[hsl(var(--success-muted))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--success))]">
                                                 {student.status || "Activo"}
                                             </span>
                                         </td>
@@ -196,7 +196,7 @@ function Metric({ icon: Icon, label, value }: { icon: LucideIcon; label: string;
             <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10">
                 <Icon size={20} />
             </div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
             <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
         </div>
     );

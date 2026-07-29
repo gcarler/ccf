@@ -314,12 +314,12 @@ export default function SectionTypesPage() {
               onChange={(event) => setOnlyActive(event.target.checked)}
               className="w-4 h-4 rounded border-[hsl(var(--border))] dark:border-white/20 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))/0.3]"
             />
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
               Solo activos
             </span>
           </label>
 
-          <div className="text-[10px] uppercase tracking-wider font-bold text-[hsl(var(--text-secondary))]">
+          <div className="text-2xs uppercase tracking-wider font-bold text-[hsl(var(--text-secondary))]">
             {filtered.length} de {types.length}
           </div>
         </div>
@@ -351,19 +351,19 @@ export default function SectionTypesPage() {
             <table className="w-full text-sm">
               <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border-b border-[hsl(var(--border))] dark:border-white/10">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-[10px]">
+                  <th className="px-4 py-3 text-left font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-2xs">
                     Nombre
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-[10px]">
+                  <th className="px-4 py-3 text-left font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-2xs">
                     Descripcion
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-[10px]">
+                  <th className="px-4 py-3 text-left font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-2xs">
                     Estado
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-[10px]">
+                  <th className="px-4 py-3 text-left font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-2xs">
                     Creado
                   </th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     Acciones
                   </th>
                 </tr>
@@ -379,7 +379,7 @@ export default function SectionTypesPage() {
                         type="button"
                         onClick={() => openEditDrawer(row)}
                         disabled={!canPublish}
-                        className="font-mono text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-white hover:text-[hsl(var(--primary))] disabled:cursor-not-allowed disabled:hover:text-[hsl(var(--text-primary))] transition-colors"
+                        className="font-mono text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white hover:text-[hsl(var(--primary))] disabled:cursor-not-allowed disabled:hover:text-[hsl(var(--text-primary))] transition-colors"
                       >
                         {row.name}
                       </button>
@@ -393,7 +393,7 @@ export default function SectionTypesPage() {
                     </td>
                     <td className="px-4 py-3 align-top">
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusBadge(row.is_active)}`}
+                        className={`text-2xs font-bold px-2 py-0.5 rounded-full ${statusBadge(row.is_active)}`}
                       >
                         {row.is_active ? (
                           <span className="inline-flex items-center gap-1">
@@ -490,7 +490,7 @@ export default function SectionTypesPage() {
           )}
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+            <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
               NOMBRE
               <span className="ml-1 text-[hsl(var(--text-secondary))]/70 font-normal normal-case">
                 ({form.name.length}/80)
@@ -505,17 +505,17 @@ export default function SectionTypesPage() {
               maxLength={80}
               disabled={drawerMode === "edit" || saving}
               placeholder="hero, cta_banner, custom_widget..."
-              className="w-full px-3 py-2 text-[13px] font-mono bg-[hsl(var(--bg-primary))] dark:bg-[#1a1c20] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 text-base font-mono bg-[hsl(var(--bg-primary))] dark:bg-[#1a1c20] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             />
             {drawerMode === "edit" && (
-              <p className="text-[10px] text-warning-text dark:text-warning-text">
+              <p className="text-2xs text-warning-text dark:text-warning-text">
                 El nombre es inmutable. Para cambiarlo: desactivar este + crear uno nuevo.
               </p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+            <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
               DESCRIPCION
               <span className="ml-1 text-[hsl(var(--text-secondary))]/70 font-normal normal-case">
                 ({form.description.length}/255, opcional)
@@ -530,7 +530,7 @@ export default function SectionTypesPage() {
               rows={4}
               disabled={saving}
               placeholder="Proposito y notas internas sobre este tipo de seccion..."
-              className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[#1a1c20] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[#1a1c20] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -548,10 +548,10 @@ export default function SectionTypesPage() {
               className="mt-1 w-4 h-4 rounded border-[hsl(var(--border))] dark:border-white/20 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))/0.3] disabled:opacity-60"
             />
             <div className="flex-1">
-              <span className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white">
+              <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">
                 Activo en el validador del builder
               </span>
-              <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 leading-relaxed">
+              <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 leading-relaxed">
                 Si esta apagado, los editores no podran anadir secciones de este tipo.
                 Los ya existentes seguiran renderizando.
               </p>
@@ -562,14 +562,14 @@ export default function SectionTypesPage() {
             <button
               type="button"
               onClick={closeDrawer}
-              className="flex-1 py-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[12px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
+              className="flex-1 py-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-2.5 rounded-lg bg-[hsl(var(--primary))] text-white text-[12px] font-bold uppercase tracking-wide hover:opacity-90 disabled:opacity-50 transition-all"
+              className="flex-1 py-2.5 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold uppercase tracking-wide hover:opacity-90 disabled:opacity-50 transition-all"
             >
               {saving ? "Guardando..." : drawerMode === "create" ? "Crear" : "Guardar"}
             </button>
@@ -614,7 +614,7 @@ export default function SectionTypesPage() {
               <button
                 type="button"
                 onClick={closeDrawer}
-                className="flex-1 py-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[12px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
+                className="flex-1 py-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
               >
                 Cancelar
               </button>
@@ -622,7 +622,7 @@ export default function SectionTypesPage() {
                 type="button"
                 onClick={() => handleSoftDelete(target)}
                 disabled={saving}
-                className="flex-1 py-2.5 rounded-lg bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] disabled:opacity-50 text-white text-[12px] font-bold uppercase tracking-wide transition-all"
+                className="flex-1 py-2.5 rounded-lg bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] disabled:opacity-50 text-white text-sm font-bold uppercase tracking-wide transition-all"
               >
                 {saving ? "Procesando..." : "Desactivar"}
               </button>

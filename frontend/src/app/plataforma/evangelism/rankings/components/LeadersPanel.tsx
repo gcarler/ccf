@@ -23,7 +23,7 @@ interface Props {
 export default function LeadersPanel({ leaders, loadingLeaders }: Props) {
   return (
     <section>
-      <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
         <User size={14} />
         Panel de líderes
       </h2>
@@ -52,7 +52,7 @@ export default function LeadersPanel({ leaders, loadingLeaders }: Props) {
                     <p className="text-sm font-bold text-[hsl(var(--text-primary))]">
                       {leader.leader_name}
                     </p>
-                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
+                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
                     {leader.group_name} · {leader.personas} personas
                     </p>
                   </div>
@@ -61,7 +61,7 @@ export default function LeadersPanel({ leaders, loadingLeaders }: Props) {
                   <p className="text-lg font-bold text-[hsl(var(--text-primary))]">
                     {leader.attendance_pct}%
                   </p>
-                  <p className="text-[9px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">
+                  <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">
                     Asistencia
                   </p>
                 </div>
@@ -71,7 +71,7 @@ export default function LeadersPanel({ leaders, loadingLeaders }: Props) {
                   tone={leader.visitors_this_month > 0 ? 'emerald' : 'slate'}
                   label={`${leader.visitors_this_month} visitantes este mes`}
                 />
-                <span className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
+                <span className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
                   {leader.personas} personas
                 </span>
               </div>

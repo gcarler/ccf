@@ -116,7 +116,7 @@ export default function CategoryArchivePage() {
                     </div>
                   )}
                   <div className="p-6">
-                    <div className="flex items-center gap-3 mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                    <div className="flex items-center gap-3 mb-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
                       {post.published_at && (
                         <span className="flex items-center gap-1">
                           <Calendar size={12} />
@@ -141,7 +141,7 @@ export default function CategoryArchivePage() {
                   <div className="px-6 pb-6 pt-0 flex flex-wrap gap-2">
                     {post.tags.map((t) => (
                       <Link key={t.id} href={`/etiqueta/${t.slug}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide transition-opacity hover:opacity-70"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide transition-opacity hover:opacity-70"
                         style={{ background: "var(--site-surface-container-highest)", color: "var(--site-on-surface-variant)" }}>
                         <Tag size={10} /> {t.name}
                       </Link>

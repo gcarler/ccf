@@ -61,16 +61,16 @@ export default function TaskAttachmentSection({
     return (
         <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
             <div className="mb-3 flex items-center justify-between">
-                <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                     <Paperclip size={11} /> Archivos
-                    <span className="rounded bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-[9px] font-bold text-[hsl(var(--text-secondary))] dark:bg-white/[0.06] dark:text-[hsl(var(--text-secondary))]">
+                    <span className="rounded bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-2xs font-bold text-[hsl(var(--text-secondary))] dark:bg-white/[0.06] dark:text-[hsl(var(--text-secondary))]">
                         {attachments.length}
                     </span>
                 </p>
             </div>
 
             {attachments.length === 0 ? (
-                <p className="text-[11px] italic text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                <p className="text-xs italic text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                     Sin archivos adjuntos aun.
                 </p>
             ) : (
@@ -86,10 +86,10 @@ export default function TaskAttachmentSection({
                                 rel="noreferrer"
                                 className="min-w-0 flex-1 text-left transition hover:text-[hsl(var(--primary))]"
                             >
-                                <p className="truncate text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                                <p className="truncate text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                                     {attachment.filename}
                                 </p>
-                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+                                <p className="text-2xs text-[hsl(var(--text-secondary))]">
                                     {attachment.file_size ? `${Math.max(1, Math.round(attachment.file_size / 1024))} KB` : 'Archivo adjunto'}
                                 </p>
                             </a>
@@ -98,7 +98,7 @@ export default function TaskAttachmentSection({
                                     href={attachment.file_url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:underline"
+                                    className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:underline"
                                 >
                                     Abrir
                                 </a>

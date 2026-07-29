@@ -46,7 +46,7 @@ const footerLinks: FooterGroup[] = [
 export default function Footer() {
     const { logoUrl, logoName } = useSiteBranding();
     return (
-        <footer className="w-full bg-[#020617] border-t border-white/5">
+        <footer className="w-full bg-[hsl(var(--bg-primary))] border-t border-white/5">
             <div className="w-full px-4 lg:px-4 py-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     {/* Brand */}
@@ -62,7 +62,7 @@ export default function Footer() {
                         <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed max-w-xs">
                             Plataforma de inteligencia ministerial para la formación teológica, gestión pastoral y colaboración de equipos.
                         </p>
-                        <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                        <div className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
                             <Heart size={10} className="text-[hsl(var(--primary))]" />
                             Hecho con fe
                         </div>
@@ -71,7 +71,7 @@ export default function Footer() {
                     {/* Links */}
                     {footerLinks.map((group) => (
                         <div key={group.title}>
-                            <h4 className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">
+                            <h4 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">
                                 {group.title}
                             </h4>
                             <ul className="space-y-1.5">
@@ -94,7 +94,7 @@ export default function Footer() {
 
             {/* Bottom bar */}
             <div className="w-full border-t border-white/5 px-4 lg:px-4 py-3">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-[hsl(var(--text-secondary))]">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-2xs text-[hsl(var(--text-secondary))]">
                     <span>&copy; {new Date().getFullYear()} {SITE_NAME}. Todos los derechos reservados.</span>
                     <div className="flex items-center gap-3">
                         <Link href="/" className="hover:text-white transition-colors">Sitio público</Link>

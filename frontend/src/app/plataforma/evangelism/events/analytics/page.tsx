@@ -79,7 +79,7 @@ export default function GlobalEventAnalyticsPage() {
  
  <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Agrupación de Tiempo</label>
+ <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Agrupación de Tiempo</label>
  <select 
  value={period}
  onChange={e => setPeriod(e.target.value)}
@@ -89,7 +89,7 @@ export default function GlobalEventAnalyticsPage() {
  </select>
  </div>
  <div>
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Tipo de Evento</label>
+ <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Tipo de Evento</label>
  <select 
  value={eventType}
  onChange={e => setEventType(e.target.value)}
@@ -117,7 +117,7 @@ export default function GlobalEventAnalyticsPage() {
  <Users size={24} />
  </div>
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistencia total</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistencia total</p>
  <p className="text-xl font-bold text-[hsl(var(--text-primary))] mt-1">{data.kpis.total_attendance}</p>
  </div>
  </div>
@@ -127,7 +127,7 @@ export default function GlobalEventAnalyticsPage() {
  <TrendingUp size={24} />
  </div>
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Promedio por sesión</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Promedio por sesión</p>
  <p className="text-xl font-bold text-[hsl(var(--text-primary))] mt-1">{data.kpis.avg_per_session}</p>
  </div>
  </div>
@@ -137,7 +137,7 @@ export default function GlobalEventAnalyticsPage() {
  <Award size={24} />
  </div>
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Período pico</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Período pico</p>
  <p className="text-base font-bold text-[hsl(var(--text-primary))] mt-1">{data.kpis.peak_period?.label}</p>
  <p className="text-xs text-success font-bold mt-1">{data.kpis.peak_period?.total} asistencias</p>
  </div>
@@ -149,7 +149,7 @@ export default function GlobalEventAnalyticsPage() {
  <TrendingUp size={24} className={data.kpis.trend_percentage < 0 ? 'rotate-180' : ''} />
  </div>
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Variación de cierre</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Variación de cierre</p>
  <div className="flex items-end gap-2 mt-1">
  <p className="text-xl font-bold text-[hsl(var(--text-primary))]">
  {data.kpis.trend_percentage > 0 ? '+' : ''}{data.kpis.trend_percentage}%
@@ -162,7 +162,7 @@ export default function GlobalEventAnalyticsPage() {
 
  {/* GRÁFICO MOTOR CSS */}
  <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm">
- <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
+ <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
  <BarChart3 size={16} /> Tendencia en el tiempo
  </h3>
  
@@ -178,10 +178,10 @@ export default function GlobalEventAnalyticsPage() {
  return (
  <div key={d.key} className="flex-1 min-w-[60px] max-w-[100px] flex flex-col items-center justify-end group relative h-full">
  {/* Tooltip */}
- <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4 bg-[hsl(var(--bg-primary))] text-white text-[10px] font-bold px-3 py-2 rounded-md whitespace-nowrap z-10 flex flex-col items-center shadow-xl">
+ <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4 bg-[hsl(var(--bg-primary))] text-white text-2xs font-bold px-3 py-2 rounded-md whitespace-nowrap z-10 flex flex-col items-center shadow-xl">
  <span className="text-[hsl(var(--primary))] mb-1">{d.label}</span>
  <span>{d.total} asistentes</span>
- <span className="text-[hsl(var(--text-secondary))] text-[8px]">{d.sessions} sesiones</span>
+ <span className="text-[hsl(var(--text-secondary))] text-2xs">{d.sessions} sesiones</span>
  </div>
  
  {/* Barra */}
@@ -191,7 +191,7 @@ export default function GlobalEventAnalyticsPage() {
  ></div>
  
  {/* Label Eje X */}
- <div className="mt-4 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] rotate-[-45deg] origin-top-left translate-y-2 translate-x-2 whitespace-nowrap">
+ <div className="mt-4 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] rotate-[-45deg] origin-top-left translate-y-2 translate-x-2 whitespace-nowrap">
  {d.label}
  </div>
  </div>

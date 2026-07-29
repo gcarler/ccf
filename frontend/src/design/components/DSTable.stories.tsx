@@ -19,7 +19,7 @@ const columns: ColumnDef<User, any>[] = [
         accessorKey: 'status', 
         header: 'Estado',
         cell: ({ getValue }) => (
-            <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase ${
+            <span className={`px-2 py-0.5 rounded-full text-2xs font-semibold uppercase ${
                 getValue() === 'active' 
                     ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' 
                     : 'bg-[hsl(var(--text-secondary)/0.15)] text-[hsl(var(--text-secondary))]'

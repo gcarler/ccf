@@ -36,7 +36,7 @@ export default function SpiritualCertificatesPanel() {
         return (
             <div className="flex flex-col items-center justify-center h-40 gap-3">
                 <Loader2 className="animate-spin text-[hsl(var(--domain-cyan)/90%)]" size={24} />
-                <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Consultando registros...</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Consultando registros...</p>
             </div>
         );
     }
@@ -72,7 +72,7 @@ export default function SpiritualCertificatesPanel() {
                                         {isSacramento ? <Waves size={24} /> : <FileCheck size={24} />}
                                     </div>
                                     <span className={clsx(
-                                        "text-[9px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-md border-2",
+                                        "text-2xs font-semibold uppercase tracking-wider px-3 py-1.5 rounded-md border-2",
                                         isSacramento ? "bg-[hsl(var(--domain-cyan)/10%)] text-[hsl(var(--domain-cyan)/90%)] border-[hsl(var(--domain-cyan)/30%)] dark:bg-[hsl(var(--domain-cyan)/40%)] dark:border-[hsl(var(--domain-cyan)/30%)]" : "bg-info-soft text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:bg-[hsl(var(--info))]/40 dark:border-[hsl(var(--info)/100%)]/30"
                                     )}>
                                         {cert.certificate_type || 'ACADEMIA'}
@@ -91,10 +91,10 @@ export default function SpiritualCertificatesPanel() {
                                 <div className="pt-5 border-t border-[hsl(var(--border))] dark:border-white/[0.04] flex items-center justify-between relative z-10">
                                     <div className="space-y-0.5">
                                         <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide opacity-60">ID DE VALIDACIÓN</p>
-                                        <code className="text-[10px] font-mono text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold tracking-tight">{cert.certificate_code}</code>
+                                        <code className="text-2xs font-mono text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold tracking-tight">{cert.certificate_code}</code>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white text-[10px] font-semibold uppercase tracking-wider rounded-lg shadow-lg active:scale-95 transition-all flex items-center gap-2">
+                                        <button className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white text-2xs font-semibold uppercase tracking-wider rounded-lg shadow-lg active:scale-95 transition-all flex items-center gap-2">
                                             <Download size={14} /> PDF
                                         </button>
                                         <button className="p-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-lg transition-all active:scale-90">

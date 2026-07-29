@@ -66,7 +66,7 @@ export default function SedesPage() {
             <aside className="w-full md:w-[340px] lg:w-[420px] xl:w-[480px] flex flex-col max-h-[60vh] md:max-h-none md:h-[calc(100vh-88px)] md:sticky md:top-[88px] bg-site-surface-container-lowest border-r border-site-outline-variant/10 overflow-hidden">
                 <div className="p-4 border-b border-site-outline-variant/10">
                     {eyebrow && (
-                        <span className="font-semibold text-[10px] tracking-wide uppercase block mb-4">
+                        <span className="font-semibold text-2xs tracking-wide uppercase block mb-4">
                             {eyebrow}
                         </span>
                     )}
@@ -121,7 +121,7 @@ export default function SedesPage() {
                                         <Home size={20} />
                                     </div>
                                     {loc.isMain && mainBadge && (
-                                        <span className="text-[9px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full" style={{ background: "var(--site-cta-gradient)", color: "white" }}>
+                                        <span className="text-2xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full" style={{ background: "var(--site-cta-gradient)", color: "white" }}>
                                             {mainBadge}
                                         </span>
                                     )}

@@ -292,7 +292,7 @@ export default function PastoralTeamPage() {
                         {profile.social_facebook && <Facebook size={12} className="text-[hsl(var(--text-secondary))]" />}
                         {profile.social_twitter && <Twitter size={12} className="text-[hsl(var(--text-secondary))]" />}
                         {!profile.social_instagram && !profile.social_facebook && !profile.social_twitter && (
-                          <span className="text-[9px] text-[hsl(var(--text-secondary))]">Sin redes</span>
+                          <span className="text-2xs text-[hsl(var(--text-secondary))]">Sin redes</span>
                         )}
                       </div>
                     </div>
@@ -331,7 +331,7 @@ export default function PastoralTeamPage() {
                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{profile.name}</p>
                         {profile.is_main_pastor && <Sparkles size={10} className="text-[hsl(var(--primary))]" />}
                       </div>
-                      <p className="text-[11px] text-[hsl(var(--text-secondary))]">{profile.role || "Pastor"}</p>
+                      <p className="text-xs text-[hsl(var(--text-secondary))]">{profile.role || "Pastor"}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {profile.social_instagram && <Instagram size={12} className="text-[hsl(var(--text-secondary))]" />}
@@ -355,12 +355,12 @@ export default function PastoralTeamPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-[hsl(var(--border))] dark:border-white/[0.06] bg-[hsl(var(--surface-1))] dark:bg-white/[0.02]">
-                      <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Foto</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Nombre</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Rol</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Redes</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Principal</th>
-                      <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Acciones</th>
+                      <th className="text-left px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Foto</th>
+                      <th className="text-left px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Nombre</th>
+                      <th className="text-left px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Rol</th>
+                      <th className="text-left px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Redes</th>
+                      <th className="text-left px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Principal</th>
+                      <th className="text-right px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -390,17 +390,17 @@ export default function PastoralTeamPage() {
                             {profile.social_facebook && <Facebook size={12} className="text-[hsl(var(--text-secondary))]" />}
                             {profile.social_twitter && <Twitter size={12} className="text-[hsl(var(--text-secondary))]" />}
                             {!profile.social_instagram && !profile.social_facebook && !profile.social_twitter && (
-                              <span className="text-[10px] text-[hsl(var(--text-secondary))]">—</span>
+                              <span className="text-2xs text-[hsl(var(--text-secondary))]">—</span>
                             )}
                           </div>
                         </td>
                         <td className="px-4 py-3">
                           {profile.is_main_pastor ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--primary))/0.1 text-[hsl(var(--primary))] text-[10px] font-semibold">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--primary))/0.1 text-[hsl(var(--primary))] text-2xs font-semibold">
                               <Check size={10} /> Sí
                             </span>
                           ) : (
-                            <span className="text-[10px] text-[hsl(var(--text-secondary))]">No</span>
+                            <span className="text-2xs text-[hsl(var(--text-secondary))]">No</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -479,7 +479,7 @@ export default function PastoralTeamPage() {
 
               {/* Nombre (readonly) */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
+                <label className="block text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   Nombre
                 </label>
                 <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">
@@ -489,7 +489,7 @@ export default function PastoralTeamPage() {
 
               {/* Rol (readonly) */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
+                <label className="block text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   Rol
                 </label>
                 <p className="text-sm text-[hsl(var(--text-secondary))]">
@@ -499,7 +499,7 @@ export default function PastoralTeamPage() {
 
               {/* Photo URL */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
+                <label className="block text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   Foto del perfil
                 </label>
                 <div className="flex gap-2">
@@ -534,7 +534,7 @@ export default function PastoralTeamPage() {
 
               {/* Bio short */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
+                <label className="block text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   Biografía corta
                 </label>
                 <textarea
@@ -548,7 +548,7 @@ export default function PastoralTeamPage() {
 
               {/* Bio full */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
+                <label className="block text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   Historia completa (HTML)
                 </label>
                 <textarea
@@ -563,7 +563,7 @@ export default function PastoralTeamPage() {
               {/* Social */}
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5 flex items-center gap-1.5">
                     <Instagram size={12} /> Instagram URL
                   </label>
                   <input
@@ -575,7 +575,7 @@ export default function PastoralTeamPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5 flex items-center gap-1.5">
                     <Facebook size={12} /> Facebook URL
                   </label>
                   <input
@@ -587,7 +587,7 @@ export default function PastoralTeamPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5 flex items-center gap-1.5">
                     <Twitter size={12} /> X (Twitter) URL
                   </label>
                   <input
@@ -612,7 +612,7 @@ export default function PastoralTeamPage() {
                   <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">
                     Pastor Principal
                   </span>
-                  <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+                  <p className="text-2xs text-[hsl(var(--text-secondary))]">
                     Aparece resaltado en la página pública
                   </p>
                 </div>
@@ -630,7 +630,7 @@ export default function PastoralTeamPage() {
                   <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">
                     Publicado
                   </span>
-                  <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+                  <p className="text-2xs text-[hsl(var(--text-secondary))]">
                     Visible en el sitio público
                   </p>
                 </div>
@@ -638,7 +638,7 @@ export default function PastoralTeamPage() {
 
               {/* Sort Order */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
+                <label className="block text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] mb-1.5">
                   Orden de aparición
                 </label>
                 <input
@@ -648,7 +648,7 @@ export default function PastoralTeamPage() {
                   min="0"
                   className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                 />
-                <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-1">
+                <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1">
                   Menor número = aparece primero
                 </p>
               </div>
@@ -745,14 +745,14 @@ export default function PastoralTeamPage() {
                             <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">
                               {persona.nombre_completo || persona.name}
                             </p>
-                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+                            <p className="text-2xs text-[hsl(var(--text-secondary))]">
                               {persona.church_role || "Persona"}
                             </p>
                           </div>
                           <button
                             onClick={() => handleAddLeader(persona.id)}
                             disabled={saving}
-                            className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
+                            className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
                           >
                             {saving ? "..." : "Agregar"}
                           </button>

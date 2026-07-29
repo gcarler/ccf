@@ -39,7 +39,7 @@ export default function EventsPage() {
             <section className="py-1.5 px-3 text-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b to-[hsl(var(--success)/10%)] to-transparent pointer-events-none" />
                 <div className="max-w-4xl mx-auto relative">
-                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--success))]/20 text-[hsl(var(--success))] text-[11px] font-bold uppercase tracking-wide mb-3">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[hsl(var(--success))]/20 text-[hsl(var(--success))] text-xs font-bold uppercase tracking-wide mb-3">
                         <Calendar size={11} /> Próximos Eventos
                     </span>
                     <h1 className="text-xl font-bold text-white mb-3 tracking-tight">
@@ -59,7 +59,7 @@ export default function EventsPage() {
 
             {/* Featured Events Carousel */}
             <section className="max-w-6xl mx-auto px-3 mb-3">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
                     <Star size={10} className="inline mr-1.5 text-[hsl(var(--warning))]" />Eventos Destacados
                 </p>
                 <div className="grid grid-cols-3 gap-3">
@@ -69,22 +69,22 @@ export default function EventsPage() {
                             <div className="absolute inset-0 bg-black/30" />
                             <div className="absolute inset-0 p-3 flex flex-col justify-between">
                                 <div className="flex items-start justify-between">
-                                    <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur text-white text-[9px] font-bold uppercase tracking-wide">{ev.category}</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur text-white text-2xs font-bold uppercase tracking-wide">{ev.category}</span>
                                     <div className="text-right">
-                                        <p className="text-white/70 text-[9px] font-bold uppercase tracking-wide">{ev.date}</p>
-                                        <p className="text-white text-[10px] font-bold">{ev.time}</p>
+                                        <p className="text-white/70 text-2xs font-bold uppercase tracking-wide">{ev.date}</p>
+                                        <p className="text-white text-2xs font-bold">{ev.time}</p>
                                     </div>
                                 </div>
                                 <div>
                                     <p className="font-semibold text-lg leading-tight">{ev.title}</p>
-                                    <div className="flex items-center gap-1 text-white/60 text-[10px] mt-1">
+                                    <div className="flex items-center gap-1 text-white/60 text-2xs mt-1">
                                         <MapPin size={9} /> {ev.location}
                                     </div>
                                     {/* Progress bar */}
                                     <div className="mt-3 w-full bg-white/20 rounded-full h-1.5">
                                         <div className="bg-[hsl(var(--bg-primary))] rounded-full h-1.5 transition-all" style={{ width: `${pct(ev.attendees, ev.capacity)}%` }} />
                                     </div>
-                                    <p className="text-white/50 text-[9px] mt-1">{ev.attendees}/{ev.capacity} inscritos</p>
+                                    <p className="text-white/50 text-2xs mt-1">{ev.attendees}/{ev.capacity} inscritos</p>
                                 </div>
                             </div>
                         </motion.div>
@@ -97,7 +97,7 @@ export default function EventsPage() {
                 <Filter size={12} className="text-[hsl(var(--text-secondary))]" />
                 {CATEGORIES.map(c => (
                     <button key={c} onClick={() => setCat(c)}
-                        className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-[hsl(var(--success))] text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
+                        className={`px-4 py-1.5 rounded-lg text-2xs font-bold uppercase tracking-wide transition-all ${cat === c ? 'bg-[hsl(var(--success))] text-white' : 'bg-white/5 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10'}`}>
                         {c}
                     </button>
                 ))}
@@ -115,11 +115,11 @@ export default function EventsPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{ev.category}</span>
+                                    <span className="text-2xs px-2 py-0.5 rounded-full bg-white/10 text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{ev.category}</span>
                                     {ev.featured && <Star size={10} className="text-[hsl(var(--warning))] fill-[hsl(var(--warning))]" />}
                                 </div>
                                 <p className="text-sm font-bold text-white group-hover:text-[hsl(var(--success))] transition-colors">{ev.title}</p>
-                                <div className="flex flex-wrap items-center gap-3 mt-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                                <div className="flex flex-wrap items-center gap-3 mt-1 text-2xs text-[hsl(var(--text-secondary))]">
                                     <span className="flex items-center gap-1"><Calendar size={9} /> {ev.date}{ev.endDate ? ` → ${ev.endDate}` : ''}</span>
                                     <span className="flex items-center gap-1"><Clock size={9} /> {ev.time}</span>
                                     <span className="flex items-center gap-1"><MapPin size={9} /> {ev.location}</span>
@@ -128,13 +128,13 @@ export default function EventsPage() {
                             <div className="shrink-0 text-right space-y-2">
                                 <div className="flex items-center gap-2 justify-end">
                                     <Users size={11} className="text-[hsl(var(--text-secondary))]" />
-                                    <span className="text-[10px] text-[hsl(var(--text-secondary))]">{ev.attendees} / {ev.capacity}</span>
+                                    <span className="text-2xs text-[hsl(var(--text-secondary))]">{ev.attendees} / {ev.capacity}</span>
                                 </div>
                                 <div className="w-24 bg-white/10 rounded-full h-1.5">
                                     <div className={clsx("rounded-full h-1.5", occupation > 80 ? "bg-[hsl(var(--danger))]" : occupation > 50 ? "bg-[hsl(var(--warning))]" : "bg-[hsl(var(--success))]")}
                                         style={{ width: `${occupation}%` }} />
                                 </div>
-                                <button className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--success))] hover:text-white transition-colors">
+                                <button className="flex items-center gap-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--success))] hover:text-white transition-colors">
                                     <Ticket size={11} /> Inscribirme <ChevronRight size={10} />
                                 </button>
                             </div>

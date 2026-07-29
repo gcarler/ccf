@@ -84,14 +84,14 @@ export default function TaskSupplySection({
         <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
             {error && (
                 <div className="mb-2 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-2 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                    <p className="text-[10px] font-bold uppercase tracking-wide">{error}</p>
+                    <p className="text-2xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
 
             <div className="mb-3 flex items-center justify-between">
-                <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                     <Boxes size={11} /> Insumos
-                    <span className="rounded bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-[9px] font-bold text-[hsl(var(--text-secondary))] dark:bg-white/[0.06] dark:text-[hsl(var(--text-secondary))]">
+                    <span className="rounded bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-2xs font-bold text-[hsl(var(--text-secondary))] dark:bg-white/[0.06] dark:text-[hsl(var(--text-secondary))]">
                         {supplies.length}
                     </span>
                 </p>
@@ -99,7 +99,7 @@ export default function TaskSupplySection({
 
             <div className="space-y-2">
                 {supplies.length === 0 && (
-                    <p className="text-[11px] italic text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                    <p className="text-xs italic text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                         Sin insumos registrados.
                     </p>
                 )}
@@ -117,7 +117,7 @@ export default function TaskSupplySection({
                                 const original = task.supplies?.find(item => item.id === supply.id);
                                 if (value && value !== original?.item_name) handleUpdateSupply(supply, { item_name: value });
                             }}
-                            className="min-w-0 bg-transparent text-[12px] font-bold text-[hsl(var(--text-primary))] outline-none dark:text-[hsl(var(--text-secondary))]"
+                            className="min-w-0 bg-transparent text-sm font-bold text-[hsl(var(--text-primary))] outline-none dark:text-[hsl(var(--text-secondary))]"
                         />
                         <input
                             type="number"
@@ -132,13 +132,13 @@ export default function TaskSupplySection({
                                 const original = task.supplies?.find(item => item.id === supply.id);
                                 if (quantity !== original?.quantity) handleUpdateSupply(supply, { quantity });
                             }}
-                            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-xs font-bold outline-none dark:border-white/10 dark:bg-white/5"
                         />
                         <select
                             value={supply.status}
                             disabled={savingSupplyId === supply.id}
                             onChange={event => handleUpdateSupply(supply, { status: event.target.value })}
-                            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-[11px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-xs font-bold outline-none dark:border-white/10 dark:bg-white/5"
                         >
                             <option value="pending">Pendiente</option>
                             <option value="ready">Listo</option>
@@ -162,19 +162,19 @@ export default function TaskSupplySection({
                     onChange={event => setNewSupplyName(event.target.value)}
                     onKeyDown={event => event.key === 'Enter' && handleAddSupply()}
                     placeholder="Nuevo insumo"
-                    className="min-w-0 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-[12px] font-medium outline-none dark:border-white/10 dark:bg-white/5"
+                    className="min-w-0 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium outline-none dark:border-white/10 dark:bg-white/5"
                 />
                 <input
                     type="number"
                     min={1}
                     value={newSupplyQuantity}
                     onChange={event => setNewSupplyQuantity(Math.max(1, Number(event.target.value) || 1))}
-                    className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-2 text-[12px] font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-2 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5"
                 />
                 <button
                     onClick={handleAddSupply}
                     disabled={creatingSupply || !newSupplyName.trim()}
-                    className="rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50"
+                    className="rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-white disabled:opacity-50"
                 >
                     {creatingSupply ? '...' : 'Agregar'}
                 </button>

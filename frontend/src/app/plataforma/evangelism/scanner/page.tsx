@@ -51,7 +51,7 @@ export default function ScannerPage() {
  breadcrumbs={[{ label: 'CCF', icon: Users }, { label: 'CRM Pastoral', icon: Users }, { label: 'Escáner', icon: QrCode }]}
  rightActions={
  scannedData ? (
- <button onClick={resetScanner} className="px-4 py-2 bg-[hsl(var(--bg-primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-black transition-all">
+ <button onClick={resetScanner} className="px-4 py-2 bg-[hsl(var(--bg-primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-black transition-all">
  Reiniciar
  </button>
  ) : undefined
@@ -77,7 +77,7 @@ export default function ScannerPage() {
  <div className="text-center space-y-2">
  <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-primary mb-4">
  <Zap size={14} className="animate-pulse" />
- <span className="text-[10px] font-semibold uppercase tracking-wide">Validación en Tiempo Real</span>
+ <span className="text-2xs font-semibold uppercase tracking-wide">Validación en Tiempo Real</span>
  </div>
  <h1 className="text-xl font-bold text-white tracking-tight">Escáner de Asistencia</h1>
  <p className="text-[hsl(var(--text-secondary))] text-sm">Escanea el QR del carnet digital para validar el ingreso.</p>
@@ -122,7 +122,7 @@ export default function ScannerPage() {
  <button
  onClick={() => handleScan(manualToken)}
  disabled={!manualToken || loading}
- className="w-full py-2 bg-primary hover:bg-primary-600 text-white rounded-lg font-semibold uppercase tracking-wide text-[11px] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+ className="w-full py-2 bg-primary hover:bg-primary-600 text-white rounded-lg font-semibold uppercase tracking-wide text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
  >
  {loading ? <RefreshCcw className="animate-spin" size={16} /> : <UserCheck size={16} />}
  Validar Token
@@ -147,7 +147,7 @@ export default function ScannerPage() {
  </p>
  <button
  onClick={resetScanner}
- className="mt-3 px-3 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg font-semibold uppercase tracking-wide text-[10px] flex items-center gap-2 transition-all"
+ className="mt-3 px-3 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-lg font-semibold uppercase tracking-wide text-2xs flex items-center gap-2 transition-all"
  >
  <RefreshCcw size={16} /> Escanear Siguiente
  </button>
@@ -159,10 +159,10 @@ export default function ScannerPage() {
  <div className="flex items-center justify-center gap-4 text-[hsl(var(--text-secondary))]">
  <div className="flex items-center gap-2">
  <div className="size-2 bg-[hsl(var(--success))] rounded-full animate-pulse"></div>
- <span className="text-[10px] font-semibold uppercase tracking-wide">Servidor Activo</span>
+ <span className="text-2xs font-semibold uppercase tracking-wide">Servidor Activo</span>
  </div>
  <div className="w-px h-3 bg-white/10"></div>
- <button className="text-[10px] font-semibold uppercase tracking-wide hover:text-white transition-colors">Escaneo activo</button>
+ <button className="text-2xs font-semibold uppercase tracking-wide hover:text-white transition-colors">Escaneo activo</button>
  </div>
  </div>
 

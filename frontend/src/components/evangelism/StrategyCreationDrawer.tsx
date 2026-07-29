@@ -176,14 +176,14 @@ export default function StrategyCreationDrawer({
                 <>
                     <button
                         onClick={handleClose}
-                        className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md transition-colors"
+                        className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md transition-colors"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleSubmit(onSubmit)}
                         disabled={isSubmitting || !watch('name').trim()}
-                        className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
+                        className="px-4 py-1.5 text-sm font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
                     >
                         {isSubmitting ? (
                             <>
@@ -203,7 +203,7 @@ export default function StrategyCreationDrawer({
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 {/* ── Typology Selector ── */}
                 <div>
-                    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                         Tipología
                     </label>
                     <div className="flex gap-2">
@@ -216,7 +216,7 @@ export default function StrategyCreationDrawer({
                                 key={t.id}
                                 type="button"
                                 onClick={() => setValue('typology', t.id)}
-                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-bold transition-all flex-1 justify-center ${
+                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all flex-1 justify-center ${
                                     typology === t.id
                                         ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
                                         : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
@@ -233,7 +233,7 @@ export default function StrategyCreationDrawer({
                 {typology === 'relacional' && (
                     <>
                     <div>
-                        <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
+                        <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                             Recurrencia
                         </label>
                         <div className="flex gap-2">
@@ -242,7 +242,7 @@ export default function StrategyCreationDrawer({
                                     key={r}
                                     type="button"
                                     onClick={() => setValue('recurrence', r)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex-1 justify-center ${
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center ${
                                         watch('recurrence') === r
                                             ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]'
                                             : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
@@ -256,7 +256,7 @@ export default function StrategyCreationDrawer({
                     </div>
 
                     <div>
-                        <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
+                        <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                             Día de reunión <span className="text-[hsl(var(--destructive))]">*</span>
                         </label>
                         <div className="flex gap-1.5 flex-wrap">
@@ -265,7 +265,7 @@ export default function StrategyCreationDrawer({
                                     key={d}
                                     type="button"
                                     onClick={() => setValue('dayOfWeek', d)}
-                                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                         watch('dayOfWeek') === d
                                             ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]'
                                             : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
@@ -278,14 +278,14 @@ export default function StrategyCreationDrawer({
                     </div>
 
                     <div>
-                        <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
+                        <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                             Hora de reunión
                         </label>
                         <input
                             type="time"
                             value={watch('startTime')}
                             onChange={e => setValue('startTime', e.target.value)}
-                            className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
+                            className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
                         />
                     </div>
                     </>
@@ -295,7 +295,7 @@ export default function StrategyCreationDrawer({
                 {typology === 'evento_masivo' && (
                     <>
                         <div>
-                            <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
+                            <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                                 Formato
                             </label>
                             <div className="flex gap-2">
@@ -307,7 +307,7 @@ export default function StrategyCreationDrawer({
                                         key={f.id}
                                         type="button"
                                         onClick={() => setValue('eventFormat', f.id)}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex-1 justify-center ${
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center ${
                                             watch('eventFormat') === f.id
                                                 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800'
                                                 : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
@@ -323,13 +323,13 @@ export default function StrategyCreationDrawer({
                         {/* Phases */}
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
+                                <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
                                     Fases ({fields.length})
                                 </label>
                                 <button
                                     type="button"
                                     onClick={() => append({ name: '', type: 'preparacion', start_date: '', end_date: '' })}
-                                    className="text-[11px] font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
+                                    className="text-xs font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
                                 >
                                     + Agregar Fase
                                 </button>
@@ -339,11 +339,11 @@ export default function StrategyCreationDrawer({
                                     <input
                                         {...register(`phases.${i}.name`)}
                                         placeholder={`Fase ${i + 1}`}
-                                        className="flex-1 px-2.5 py-1.5 text-[12px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--info)/100%)] focus:outline-none"
+                                        className="flex-1 px-2.5 py-1.5 text-sm rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--info)/100%)] focus:outline-none"
                                     />
                                     <select
                                         {...register(`phases.${i}.type`)}
-                                        className="px-2 py-1.5 text-[11px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                                        className="px-2 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                                     >
                                         <option value="preparacion">Prep.</option>
                                         <option value="impacto">Impacto</option>
@@ -353,7 +353,7 @@ export default function StrategyCreationDrawer({
                                     <input
                                         type="date"
                                         {...register(`phases.${i}.start_date`)}
-                                        className="px-1.5 py-1.5 text-[11px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                                        className="px-1.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                                     />
                                     <button
                                         type="button"
@@ -371,20 +371,20 @@ export default function StrategyCreationDrawer({
                 {/* ── Sectorial fields ── */}
                 {typology === 'sectorial' && (
                     <div>
-                        <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
+                        <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                             Nicho Objetivo
                         </label>
                         <input
                             {...register('nicheObjective')}
                             placeholder="Ej: Universidades, Cárceles, Fundaciones"
-                            className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
+                            className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
                         />
                     </div>
                 )}
 
                 {/* ── Strategy Type ── */}
                 <div>
-                    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                         Tipo de Estrategia
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -393,7 +393,7 @@ export default function StrategyCreationDrawer({
                                 key={opt}
                                 type="button"
                                 onClick={() => setValue('strategyType', opt)}
-                                className={`px-3 py-2 rounded-lg text-[11px] font-bold transition-all text-left ${
+                                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all text-left ${
                                     watch('strategyType') === opt
                                         ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
                                         : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
@@ -407,19 +407,19 @@ export default function StrategyCreationDrawer({
 
                 {/* ── Name ── */}
                 <div>
-                    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                         Nombre
                     </label>
                     <input
                         {...register('name', { required: true })}
                         placeholder="Nombre de la estrategia..."
-                        className="w-full px-3 py-2 text-[14px] font-medium bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
+                        className="w-full px-3 py-2 text-md font-medium bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
                     />
                 </div>
 
                 {/* ── Dates ── */}
                 <div>
-                    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                         Periodo
                     </label>
                     <div className="flex items-center gap-3">
@@ -428,15 +428,15 @@ export default function StrategyCreationDrawer({
                             <input
                                 type="date"
                                 {...register('startDate')}
-                                className="flex-1 px-2.5 py-1.5 text-[12px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] cursor-pointer"
+                                className="flex-1 px-2.5 py-1.5 text-sm font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] cursor-pointer"
                             />
                         </div>
-                        <span className="text-[hsl(var(--text-secondary))] text-[11px] font-semibold">→</span>
+                        <span className="text-[hsl(var(--text-secondary))] text-xs font-semibold">→</span>
                         <div className="flex items-center gap-2 flex-1">
                             <input
                                 type="date"
                                 {...register('endDate')}
-                                className="flex-1 px-2.5 py-1.5 text-[12px] font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] cursor-pointer"
+                                className="flex-1 px-2.5 py-1.5 text-sm font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] cursor-pointer"
                             />
                         </div>
                     </div>
@@ -444,13 +444,13 @@ export default function StrategyCreationDrawer({
 
                 {/* ── Description ── */}
                 <div>
-                    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                         Descripción
                     </label>
                     <textarea
                         {...register('description')}
                         placeholder="Propósito u objetivos de la estrategia..."
-                        className="w-full min-h-[80px] px-3 py-2 text-[13px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] resize-none"
+                        className="w-full min-h-[80px] px-3 py-2 text-base bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] resize-none"
                     />
                 </div>
             </form>

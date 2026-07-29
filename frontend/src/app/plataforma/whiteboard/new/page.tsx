@@ -88,7 +88,7 @@ export default function NewWhiteboardPage() {
         <section className="grid w-full grid-cols-1 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-2xl dark:border-white/10 dark:bg-white/5 lg:grid-cols-[1fr_0.9fr]">
           <div className="space-y-3 p-4 lg:p-4">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
+              <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                 Lienzo colaborativo
               </p>
               <h1 className="mt-2 text-lg font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
@@ -101,7 +101,7 @@ export default function NewWhiteboardPage() {
             </div>
 
             <label className="block space-y-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+              <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 Nombre
               </span>
               <input
@@ -113,7 +113,7 @@ export default function NewWhiteboardPage() {
             </label>
 
             <label className="block space-y-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+              <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 Proyecto vinculado
               </span>
               {!token ? (
@@ -149,7 +149,7 @@ export default function NewWhiteboardPage() {
                             {project.title}
                           </p>
                           {project.description && (
-                            <p className="text-[11px] text-[hsl(var(--text-secondary))] line-clamp-1">
+                            <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-1">
                               {project.description}
                             </p>
                           )}
@@ -171,7 +171,7 @@ export default function NewWhiteboardPage() {
               <button
                 onClick={handleCreate}
                 disabled={!canCreate}
-                className="rounded-lg bg-[hsl(var(--primary))] px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-white shadow-xl shadow-[hsl(var(--info)/20%)] disabled:opacity-50"
+                className="rounded-lg bg-[hsl(var(--primary))] px-3 py-3 text-xs font-semibold uppercase tracking-wide text-white shadow-xl shadow-[hsl(var(--info)/20%)] disabled:opacity-50"
               >
                 {creating ? (
                   <span className="flex items-center gap-2">
@@ -183,7 +183,7 @@ export default function NewWhiteboardPage() {
               </button>
               <button
                 onClick={() => router.push("/plataforma/whiteboard")}
-                className="rounded-lg border border-[hsl(var(--border))] px-3 py-3 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10"
+                className="rounded-lg border border-[hsl(var(--border))] px-3 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10"
               >
                 Cancelar
               </button>
@@ -195,7 +195,7 @@ export default function NewWhiteboardPage() {
             <div className="relative flex h-full flex-col justify-between rounded-lg border border-white/10 bg-white/10 p-3 backdrop-blur">
               <Sparkles className="text-info-text" size={36} />
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--info))]">
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--info))]">
                   Preview
                 </p>
                 <h2 className="mt-2 text-xl font-bold">{previewTitle}</h2>

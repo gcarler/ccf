@@ -71,7 +71,7 @@ export default function TaskLabelManager({
                 const c = getLabelColor(label);
                 return (
                     <span key={label} className={clsx(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border',
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-bold border',
                         c.bg, c.text, c.border
                     )}>
                         <span className={clsx('size-1.5 rounded-full', c.dot)} />
@@ -90,7 +90,7 @@ export default function TaskLabelManager({
             <div className="relative">
                 <button
                     onClick={() => { setLabelPopoverOpen(v => !v); setTimeout(() => labelInputRef.current?.focus(), 50); }}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04] border border-dashed border-[hsl(var(--border))] dark:border-white/[0.1] transition-all"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04] border border-dashed border-[hsl(var(--border))] dark:border-white/[0.1] transition-all"
                 >
                     <Plus size={10} /> Añadir etiqueta
                 </button>
@@ -104,7 +104,7 @@ export default function TaskLabelManager({
                             transition={{ duration: 0.12 }}
                             className="absolute top-full left-0 mt-1.5 z-50 w-56 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-2xl p-3 space-y-2"
                         >
-                            <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nueva etiqueta</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nueva etiqueta</p>
                             <div className="flex gap-1.5">
                                 <input
                                     ref={labelInputRef}
@@ -116,12 +116,12 @@ export default function TaskLabelManager({
                                         if (e.key === 'Escape') { setLabelPopoverOpen(false); setNewLabelInput(''); }
                                     }}
                                     placeholder="Ej: Alabanza, Urgente..."
-                                    className="flex-1 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/40%)] transition-all"
+                                    className="flex-1 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/40%)] transition-all"
                                 />
                                 <button
                                     onClick={handleAddLabel}
                                     disabled={!newLabelInput.trim()}
-                                    className="px-2.5 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-bold hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="px-2.5 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-bold hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <Check size={11} strokeWidth={3} />
                                 </button>
@@ -131,7 +131,7 @@ export default function TaskLabelManager({
                                     <button
                                         key={s}
                                         onClick={() => { setNewLabelInput(s); labelInputRef.current?.focus(); }}
-                                        className={clsx('px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all hover:scale-105', getLabelColor(s).bg, getLabelColor(s).text, getLabelColor(s).border)}
+                                        className={clsx('px-2 py-0.5 rounded-full text-2xs font-bold border transition-all hover:scale-105', getLabelColor(s).bg, getLabelColor(s).text, getLabelColor(s).border)}
                                     >
                                         {s}
                                     </button>

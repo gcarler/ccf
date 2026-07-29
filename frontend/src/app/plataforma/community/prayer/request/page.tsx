@@ -82,7 +82,7 @@ export default function PrayerRequestForm() {
                     <ArrowLeft size={20} />
                 </button>
                 <div className="space-y-0.5">
-                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-[9px]">
+                    <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs">
                         <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
                         Interacción
                     </div>
@@ -99,7 +99,7 @@ export default function PrayerRequestForm() {
 
                 {/* Category Selector */}
                 <section className="space-y-3">
-                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-bold tracking-wide flex items-center gap-2">
+                    <h4 className="text-[hsl(var(--primary))] text-2xs uppercase font-bold tracking-wide flex items-center gap-2">
                         <div className="size-1.5 rounded-full bg-current"></div>
                         Motivo de Oración
                     </h4>
@@ -109,7 +109,7 @@ export default function PrayerRequestForm() {
                                 key={category}
                                 type="button"
                                 onClick={() => setSelectedCategory(category)}
-                                className={`h-8 px-4 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all border ${selectedCategory === category
+                                className={`h-8 px-4 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all border ${selectedCategory === category
                                     ? 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-primary/30 border-transparent scale-105'
                                     : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]'
                                     }`}
@@ -122,7 +122,7 @@ export default function PrayerRequestForm() {
 
                 {/* Text Area */}
                 <section className="space-y-3">
-                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-bold tracking-wide flex items-center gap-2">
+                    <h4 className="text-[hsl(var(--primary))] text-2xs uppercase font-bold tracking-wide flex items-center gap-2">
                         <div className="size-1.5 rounded-full bg-current"></div>
                         Tu Petición
                     </h4>
@@ -142,7 +142,7 @@ export default function PrayerRequestForm() {
 
                 {/* Privacy Options */}
                 <section className="space-y-4">
-                    <h4 className="text-[hsl(var(--primary))] text-[10px] uppercase font-bold tracking-wide flex items-center gap-2 mb-3">
+                    <h4 className="text-[hsl(var(--primary))] text-2xs uppercase font-bold tracking-wide flex items-center gap-2 mb-3">
                         <div className="size-1.5 rounded-full bg-current"></div>
                         Privacidad & Seguridad
                     </h4>
@@ -154,7 +154,7 @@ export default function PrayerRequestForm() {
                             </div>
                             <div className="flex flex-col pt-1">
                                 <span className={`font-black text-sm uppercase tracking-tight transition-colors ${isAnonymous ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-primary))]'}`}>Publicar como Anónimo</span>
-                                <span className="text-[hsl(var(--text-secondary))] text-[11px] font-medium mt-1">Tu identidad no será visible en el muro público.</span>
+                                <span className="text-[hsl(var(--text-secondary))] text-xs font-medium mt-1">Tu identidad no será visible en el muro público.</span>
                             </div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer shrink-0">
@@ -170,7 +170,7 @@ export default function PrayerRequestForm() {
                             </div>
                             <div className="flex flex-col pt-1">
                                 <span className={`font-black text-sm uppercase tracking-tight transition-colors ${isConfidential ? 'text-[hsl(var(--danger))]' : 'text-[hsl(var(--text-primary))]'}`}>Confidencial</span>
-                                <span className="text-[hsl(var(--text-secondary))] text-[11px] font-medium mt-1">Solo los pastores podrán ver esta petición.</span>
+                                <span className="text-[hsl(var(--text-secondary))] text-xs font-medium mt-1">Solo los pastores podrán ver esta petición.</span>
                             </div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer shrink-0">

@@ -299,22 +299,22 @@ export default function CmsPagesManagement() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</h3>
-                <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
+                <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</h3>
+                <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
               </div>
-              <div className="flex items-center gap-3 text-[11px] text-[hsl(var(--text-secondary))]">
+              <div className="flex items-center gap-3 text-xs text-[hsl(var(--text-secondary))]">
                 <span className="flex items-center gap-1"><Globe size={11} />/{page.slug}</span>
                 <span className="flex items-center gap-1"><Calendar size={11} />{page.updated_at ? new Date(page.updated_at).toLocaleDateString() : "Sin fecha"}</span>
               </div>
             </div>                    <button
                       onClick={(e) => { e.stopPropagation(); openPreview(page); }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] text-[9px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success-muted))] transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success-muted))] transition-all"
                     >
                       <Eye size={11} /> Preview
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`); }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
                     >
                       <PenTool size={11} /> Editar
                     </button>
@@ -331,8 +331,8 @@ export default function CmsPagesManagement() {
         return (
           <section key={column.status} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-4">
             <div className="flex items-center justify-between mb-4">
-              <span className={clsx("px-2.5 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
-              <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))]">{column.pages.length}</span>
+              <span className={clsx("px-2.5 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
+              <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">{column.pages.length}</span>
             </div>
             <div className="space-y-3">
               {column.pages.map((page) => (
@@ -342,7 +342,7 @@ export default function CmsPagesManagement() {
                   className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--info)/40%)] hover:shadow-lg transition-all"
                 >
                   <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</p>
-                  <p className="text-[10px] font-mono text-[hsl(var(--text-secondary))] mt-2 truncate">/{page.slug}</p>
+                  <p className="text-2xs font-mono text-[hsl(var(--text-secondary))] mt-2 truncate">/{page.slug}</p>
                 </button>
               ))}
             </div>
@@ -357,11 +357,11 @@ export default function CmsPagesManagement() {
       <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FileText size={16} className="text-[hsl(var(--primary))] shrink-0" />
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">Gestion de paginas</h2>
-          <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">{visiblePages.length}</span>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">Gestion de paginas</h2>
+          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">{visiblePages.length}</span>
         </div>
 
-        <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-1.5 text-[12px] shrink-0">
+        <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-1.5 text-sm shrink-0">
           {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
           {sites.map((site) => (
             <option key={site.site_key} value={site.site_key}>{site.name} ({site.site_key})</option>
@@ -375,7 +375,7 @@ export default function CmsPagesManagement() {
             placeholder="Buscar paginas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-lg text-[12px] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
+            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
           />
         </div>
 
@@ -384,7 +384,7 @@ export default function CmsPagesManagement() {
         <button
           onClick={() => setIsQuickAddOpen((prev) => !prev)}
           disabled={!canEdit}
-          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
+          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
         >
           <Plus size={14} /> Nueva pagina
         </button>
@@ -412,7 +412,7 @@ export default function CmsPagesManagement() {
                 disabled={!canEdit}
                 className="flex-1 bg-transparent border-none text-sm font-bold text-info-text dark:text-[hsl(var(--info))] placeholder:text-[hsl(var(--primary))] focus:ring-0"
               />
-              <button type="submit" disabled={!canEdit} className="bg-[hsl(var(--primary))] text-white px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wide disabled:opacity-50">Guardar</button>
+              <button type="submit" disabled={!canEdit} className="bg-[hsl(var(--primary))] text-white px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide disabled:opacity-50">Guardar</button>
             </form>
           </motion.div>
         )}
@@ -461,14 +461,14 @@ export default function CmsPagesManagement() {
 
                   <div className="flex-1 min-w-0 cursor-pointer" onClick={() => router.push(`/plataforma/cms/pages/${page.slug}`)}>
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</h3>
-                      <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
+                      <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</h3>
+                      <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--text-secondary))]"><Globe size={11} /><span>/{page.slug}</span></div>
+                      <div className="flex items-center gap-1 text-xs text-[hsl(var(--text-secondary))]"><Globe size={11} /><span>/{page.slug}</span></div>
                       {page.updated_at && <>
                         <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
-                        <div className="flex items-center gap-1 text-[11px] text-[hsl(var(--text-secondary))]"><Calendar size={11} /><span>{new Date(page.updated_at).toLocaleDateString()}</span></div>
+                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--text-secondary))]"><Calendar size={11} /><span>{new Date(page.updated_at).toLocaleDateString()}</span></div>
                       </>}
                     </div>
                   </div>
@@ -477,13 +477,13 @@ export default function CmsPagesManagement() {
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => openPreview(page)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] text-[9px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success-muted))] transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success-muted))] transition-all"
                     >
                       <Eye size={11} /> Preview
                     </button>
                     <button
                       onClick={() => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
                     >
                       <PenTool size={11} /> Editar
                     </button>
@@ -537,9 +537,9 @@ export default function CmsPagesManagement() {
                 <header className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Calendar size={14} className="text-[hsl(var(--primary))]" />
-                    <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Próximos 7 días</h3>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Próximos 7 días</h3>
                   </div>
-                  <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{upcomingSchedules.length} eventos</span>
+                  <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{upcomingSchedules.length} eventos</span>
                 </header>
                 <div className="space-y-2">
                   {upcomingSchedules.map((row) => {
@@ -562,11 +562,11 @@ export default function CmsPagesManagement() {
                         )} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{row.page.title}</p>
-                          <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5">
+                          <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5">
                             {isPublish ? "📅 Publicación" : "⏳ Auto-archivado"} · {new Date(target).toLocaleString()}
                           </p>
                         </div>
-                        <span className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">Abrir →</span>
+                        <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">Abrir →</span>
                       </button>
                     );
                   })}
@@ -599,11 +599,11 @@ export default function CmsPagesManagement() {
                       className="rounded"
                     />
                   </th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pagina</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Slug</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Actualizado</th>
-                  <th className="px-4 py-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acciones</th>
+                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pagina</th>
+                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Slug</th>
+                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
+                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Actualizado</th>
+                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
@@ -628,25 +628,25 @@ export default function CmsPagesManagement() {
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
-                        <span className="text-[11px] font-mono text-[hsl(var(--text-secondary))]">/{page.slug}</span>
+                        <span className="text-xs font-mono text-[hsl(var(--text-secondary))]">/{page.slug}</span>
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell">
-                        <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
+                        <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
                       </td>
                       <td className="px-4 py-3 hidden xl:table-cell">
-                        <span className="text-[11px] text-[hsl(var(--text-secondary))]">{page.updated_at ? new Date(page.updated_at).toLocaleDateString() : "-"}</span>
+                        <span className="text-xs text-[hsl(var(--text-secondary))]">{page.updated_at ? new Date(page.updated_at).toLocaleDateString() : "-"}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => openPreview(page)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] text-[9px] font-semibold uppercase hover:bg-[hsl(var(--success-muted))] transition-all"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] text-2xs font-semibold uppercase hover:bg-[hsl(var(--success-muted))] transition-all"
                           >
                             <Eye size={10} /> Preview
                           </button>
                           <button
                             onClick={() => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase hover:bg-[hsl(var(--info-muted))] transition-all"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase hover:bg-[hsl(var(--info-muted))] transition-all"
                           >
                             <PenTool size={10} /> Editar
                           </button>
@@ -672,15 +672,15 @@ export default function CmsPagesManagement() {
             {/* Bulk actions */}
             {selectedIds.size > 0 && (
               <div className="px-4 py-3 bg-info-soft dark:bg-[hsl(var(--info))]/10 border-t border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/30%)] flex items-center gap-3">
-                <span className="text-[10px] font-semibold text-[hsl(var(--primary))] uppercase tracking-wide">{selectedIds.size} seleccionadas</span>
+                <span className="text-2xs font-semibold text-[hsl(var(--primary))] uppercase tracking-wide">{selectedIds.size} seleccionadas</span>
                 <button
                   onClick={handleArchiveSelected}
                   disabled={!canEdit}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--warning))] text-white text-[9px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--warning))] transition-all disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--warning))] text-white text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--warning))] transition-all disabled:opacity-50"
                 >
                   <Archive size={10} /> Archivar seleccion
                 </button>
-                <button onClick={() => setSelectedIds(new Set())} className="text-[9px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
+                <button onClick={() => setSelectedIds(new Set())} className="text-2xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
                   Cancelar
                 </button>
               </div>
@@ -699,40 +699,40 @@ export default function CmsPagesManagement() {
         {selectedPage && (
           <div className="space-y-3">
             <section className="space-y-3">
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Configuracion general</label>
+              <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Configuracion general</label>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Titulo</span>
-                  <input type="text" value={selectedPage.title} onChange={(e) => setSelectedPage({ ...selectedPage, title: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md" disabled={!canEdit} />
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Titulo</span>
+                  <input type="text" value={selectedPage.title} onChange={(e) => setSelectedPage({ ...selectedPage, title: e.target.value })} className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md" disabled={!canEdit} />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Slug</span>
-                  <input type="text" value={selectedPage.slug} onChange={(e) => setSelectedPage({ ...selectedPage, slug: e.target.value })} className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md" disabled={!canEdit} />
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Slug</span>
+                  <input type="text" value={selectedPage.slug} onChange={(e) => setSelectedPage({ ...selectedPage, slug: e.target.value })} className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md" disabled={!canEdit} />
                 </div>
               </div>
             </section>
 
             <section className="space-y-3">
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">SEO (Optimizacion y redes)</label>
+              <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">SEO (Optimizacion y redes)</label>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Meta descripcion</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Meta descripcion</span>
                   <textarea
                     rows={3}
                     value={(selectedPage.seo_json?.meta_description as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), meta_description: e.target.value } })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
                     disabled={!canEdit}
                     placeholder="Breve descripcion para Google..."
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Imagen Open Graph (URL)</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Imagen Open Graph (URL)</span>
                   <input
                     type="url"
                     value={(selectedPage.seo_json?.meta_image as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), meta_image: e.target.value } })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                     placeholder="https://..."
                   />
@@ -743,23 +743,23 @@ export default function CmsPagesManagement() {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Canonical URL (opcional)</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Canonical URL (opcional)</span>
                   <input
                     type="url"
                     value={(selectedPage.seo_json?.canonical_url as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), canonical_url: e.target.value } })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                     placeholder="https://ejemplo.com/pagina-canonical"
                   />
-                  <p className="text-[10px] text-[hsl(var(--text-secondary))]">Si se deja vacío, se usa la URL automática de la página.</p>
+                  <p className="text-2xs text-[hsl(var(--text-secondary))]">Si se deja vacío, se usa la URL automática de la página.</p>
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Meta Robots (opcional)</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Meta Robots (opcional)</span>
                   <select
                     value={(selectedPage.seo_json?.robots_meta as string) || ""}
                     onChange={(e) => setSelectedPage({ ...selectedPage, seo_json: { ...(selectedPage.seo_json || {}), robots_meta: e.target.value || undefined } })}
-                    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
                     disabled={!canEdit}
                   >
                     <option value="">index, follow (por defecto)</option>
@@ -772,14 +772,14 @@ export default function CmsPagesManagement() {
             </section>
 
             <div className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
-              <button onClick={handleSavePage} disabled={!canEdit} className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
+              <button onClick={handleSavePage} disabled={!canEdit} className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
                 Guardar cambios
               </button>
               {selectedPage.status === "archived" ? (
                 <button
                   onClick={() => handleRestorePage(selectedPage)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-[hsl(var(--success)/25%)] text-success-text dark:text-success-text py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--success)/25%)] text-success-text dark:text-success-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <RotateCcw size={14} /> Restaurar a borrador
                 </button>
@@ -787,7 +787,7 @@ export default function CmsPagesManagement() {
                 <button
                   onClick={() => handleArchivePage(selectedPage)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-[hsl(var(--warning)/25%)] text-warning-text dark:text-warning-text py-3 rounded-md text-[11px] font-semibold uppercase tracking-wide hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--warning)/25%)] text-warning-text dark:text-warning-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Archive size={14} /> Archivar pagina
                 </button>
@@ -814,14 +814,14 @@ export default function CmsPagesManagement() {
             <div className="flex gap-2">
               <button
                 onClick={() => setPendingArchivePage(null)}
-                className="flex-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                className="flex-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmArchivePage}
                 disabled={!canEdit}
-                className="flex-1 rounded-md bg-[hsl(var(--warning))] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--warning))] disabled:opacity-50"
+                className="flex-1 rounded-md bg-[hsl(var(--warning))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--warning))] disabled:opacity-50"
               >
                 Archivar
               </button>

@@ -49,7 +49,7 @@ export default function StatusPicker({
                     setIsOpen(!isOpen);
                 }}
                 className={clsx(
-                    "flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-tight transition-all active:scale-95",
+                    "flex items-center gap-1.5 px-2 py-0.5 rounded text-2xs font-semibold uppercase tracking-tight transition-all active:scale-95",
                     activeOption.bg,
                     activeOption.text,
                     "border border-transparent hover:border-current/20"
@@ -79,7 +79,7 @@ export default function StatusPicker({
                                         setIsOpen(false);
                                     }}
                                     className={clsx(
-                                        "w-full flex items-center justify-between px-3 py-2 rounded-md text-[11px] font-bold transition-colors",
+                                        "w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-bold transition-colors",
                                         currentValue === option.value 
                                             ? "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white" 
                                             : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"

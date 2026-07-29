@@ -78,7 +78,7 @@ export default function PlanificadorPage() {
       <div className="flex flex-col items-center justify-center h-full gap-4 p-4 flex-1">
         <div className="size-10 rounded-xl bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white font-bold text-xs shadow-lg">CCF</div>
         <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} />
-        <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">Cargando calendario...</p>
+        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">Cargando calendario...</p>
       </div>
     }>
       <PlanificadorInner />
@@ -196,7 +196,7 @@ function PlanificadorInner() {
       <div className="flex flex-col items-center justify-center h-full gap-4 p-4 flex-1">
         <div className="size-10 rounded-xl bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white font-bold text-xs shadow-lg">CCF</div>
         <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={24} />
-        <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">Cargando {viewMeta.label}...</p>
+        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">Cargando {viewMeta.label}...</p>
       </div>
     );
   }
@@ -207,8 +207,8 @@ function PlanificadorInner() {
         <div className="size-12 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
           <AlertTriangle size={24} className="text-[hsl(var(--destructive))]" />
         </div>
-        <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{error}</p>
-        <button onClick={refresh} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)] hover:brightness-110 transition-all active:scale-95">
+        <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{error}</p>
+        <button onClick={refresh} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)] hover:brightness-110 transition-all active:scale-95">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
           Reintentar
         </button>
@@ -221,7 +221,7 @@ function PlanificadorInner() {
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="shrink-0 flex items-center justify-between px-3 py-2.5 border-b border-[hsl(var(--border))] dark:border-white/5 gap-2">
           <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide text-white" style={{ backgroundColor: viewMeta.color }}>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-2xs font-bold uppercase tracking-wide text-white" style={{ backgroundColor: viewMeta.color }}>
               {React.createElement(VIEW_ICONS[calendarView], { size: 11 })}
               {viewMeta.label}
             </div>
@@ -235,18 +235,18 @@ function PlanificadorInner() {
                   ? format(currentDate, 'MMMM yyyy', { locale: es })
                   : format(currentDate, "EEEE d 'de' MMMM", { locale: es })}
             </h2>
-            <button onClick={() => setCurrentDate(new Date())} className="px-2 py-1 rounded-md text-[10px] font-bold text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20">Hoy</button>
+            <button onClick={() => setCurrentDate(new Date())} className="px-2 py-1 rounded-md text-2xs font-bold text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20">Hoy</button>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="relative">
-              <button onClick={() => setShowViewDropdown(v => !v)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all capitalize">
+              <button onClick={() => setShowViewDropdown(v => !v)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all capitalize">
                 {timeMode === 'semana' ? 'Semana' : timeMode === 'mes' ? 'Mes' : 'Día'}<ChevronDown size={11} />
               </button>
               <AnimatePresence>
                 {showViewDropdown && (
                   <motion.div initial={{ opacity: 0, y: -4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.96 }} transition={{ duration: 0.12 }} className="absolute right-0 top-full mt-1.5 w-28 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-xl overflow-hidden z-50">
                     {(['semana', 'mes', 'dia'] as ViewMode[]).map(v => (
-                      <button key={v} onClick={() => { setTimeMode(v); setShowViewDropdown(false); }} className={clsx('w-full text-left px-3 py-1.5 text-[11px] font-bold transition-colors capitalize', timeMode === v ? 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5')}>
+                      <button key={v} onClick={() => { setTimeMode(v); setShowViewDropdown(false); }} className={clsx('w-full text-left px-3 py-1.5 text-xs font-bold transition-colors capitalize', timeMode === v ? 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5')}>
                         {v === 'semana' ? 'Semana' : v === 'mes' ? 'Mes' : 'Día'}
                       </button>
                     ))}
@@ -255,14 +255,14 @@ function PlanificadorInner() {
               </AnimatePresence>
             </div>
             <div className="relative">
-              <button onClick={() => setShowCreateDropdown(v => !v)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-white shadow-lg shadow-[hsl(var(--info)/20%)] hover:brightness-110 active:scale-95 transition-all" style={{ backgroundColor: viewMeta.color }}>
+              <button onClick={() => setShowCreateDropdown(v => !v)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-lg shadow-[hsl(var(--info)/20%)] hover:brightness-110 active:scale-95 transition-all" style={{ backgroundColor: viewMeta.color }}>
                 <Plus size={13} /> Crear<ChevronDown size={11} />
               </button>
               <AnimatePresence>
                 {showCreateDropdown && (
                   <motion.div initial={{ opacity: 0, y: -4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.96 }} transition={{ duration: 0.12 }} className="absolute right-0 top-full mt-1.5 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-xl overflow-hidden z-50">
                     {VIEW_CREATE_OPTIONS[calendarView].map((opt, i) => (
-                      <button key={i} onClick={() => openCreation(opt.kind, opt.preset)} className="w-full text-left px-3 py-2 text-[12px] font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5">{opt.label}</button>
+                      <button key={i} onClick={() => openCreation(opt.kind, opt.preset)} className="w-full text-left px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5">{opt.label}</button>
                     ))}
                   </motion.div>
                 )}
@@ -284,9 +284,9 @@ function PlanificadorInner() {
         <div className="shrink-0 border-t border-[hsl(var(--border))] dark:border-white/5 px-4 py-2">
           <div className="max-w-lg mx-auto flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[hsl(var(--text-secondary))] shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <input placeholder="Busca eventos, personas, actividades..." className="flex-1 text-[12px] bg-transparent outline-none text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]" />
+            <input placeholder="Busca eventos, personas, actividades..." className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]" />
             <div className="size-5 rounded-full flex items-center justify-center shrink-0 text-white" style={{ backgroundColor: viewMeta.color }}>
-              <span className="text-[10px] font-bold">✦</span>
+              <span className="text-2xs font-bold">✦</span>
             </div>
           </div>
         </div>

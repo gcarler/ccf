@@ -247,7 +247,7 @@ export default function GroupPage() {
  {/* Page Header Area */}
  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Evangelismo · Estrategia</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Evangelismo · Estrategia</p>
  <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">Grupos en Casa</h1>
  {activeSeason
  ? <p className="text-[hsl(var(--text-secondary))] text-sm font-medium flex items-center gap-1.5 mt-2">
@@ -284,9 +284,9 @@ export default function GroupPage() {
      {sendingReminders ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
     </div>
     <div className="flex-1 min-w-0">
-     <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Acción pastoral</p>
+     <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Acción pastoral</p>
      <p className="text-sm font-bold text-[hsl(var(--text-primary))] mt-0.5">Disparar recordatorios</p>
-     <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">Notifica a líderes sobre sesiones de mañana y reportes atrasados.</p>
+     <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 truncate">Notifica a líderes sobre sesiones de mañana y reportes atrasados.</p>
     </div>
    </button>
    <Link href="/plataforma/crm?counseling=open"
@@ -295,14 +295,14 @@ export default function GroupPage() {
      <Award size={18} />
     </div>
     <div className="flex-1 min-w-0">
-     <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Seguimiento pastoral</p>
+     <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Seguimiento pastoral</p>
      <p className="text-sm font-bold text-[hsl(var(--text-primary))] mt-0.5">
       Consejería pendiente
       {counselingCount !== null && (
-       <span className="ml-2 px-2 py-0.5 rounded-md bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/30 text-warning-text dark:text-warning-text text-[10px] font-bold">{counselingCount}</span>
+       <span className="ml-2 px-2 py-0.5 rounded-md bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/30 text-warning-text dark:text-warning-text text-2xs font-bold">{counselingCount}</span>
       )}
      </p>
-     <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">Tickets abiertos esperando respuesta pastoral.</p>
+     <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 truncate">Tickets abiertos esperando respuesta pastoral.</p>
     </div>
    </Link>
   </div>
@@ -311,7 +311,7 @@ export default function GroupPage() {
  <div className="space-y-3 pb-12">
  {/* Mis Grupos */}
  <section>
- <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Mis Grupos</h2>
+ <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Mis Grupos</h2>
  {houses.length === 0 ? (
  <EmptyState 
  icon={Home} 
@@ -340,7 +340,7 @@ export default function GroupPage() {
  {/* Temporadas */}
  {canManageEvangelism && (
  <section>
- <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Temporadas</h2>
+ <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Temporadas</h2>
  {seasons.length === 0 ? (
  <EmptyState 
  icon={Clock} 
@@ -358,12 +358,12 @@ export default function GroupPage() {
  )}>
  <div className="flex items-start justify-between mb-4">
  <DSBadge tone={s.status === 'Activa' ? 'emerald' : 'slate'} label={s.status} />
- <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{PERIODICITY_LABEL[s.periodicity]}</span>
+ <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{PERIODICITY_LABEL[s.periodicity]}</span>
  </div>
  <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] mb-2 tracking-tight">{s.name}</h3>
  <p className="text-sm text-[hsl(var(--text-secondary))] font-bold mb-3">{s.start_date} → {s.end_date}</p>
  {s.status === 'Activa' && (
- <button onClick={() => handleCloseSeason(s.id)} className="w-full py-2 bg-red-50 text-[hsl(var(--destructive))] dark:bg-red-500/10 dark:text-[hsl(var(--destructive))] rounded-md text-[10px] font-semibold uppercase tracking-wide hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
+ <button onClick={() => handleCloseSeason(s.id)} className="w-full py-2 bg-red-50 text-[hsl(var(--destructive))] dark:bg-red-500/10 dark:text-[hsl(var(--destructive))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
  Finalizar Temporada
  </button>
  )}
@@ -377,11 +377,11 @@ export default function GroupPage() {
  {/* Desempeño por Grupo */}
  {canManageEvangelism && Boolean(analytics && analytics.per_group && analytics.per_group.length > 0) && (
  <section>
- <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Desempeño por Grupo · {activeSeason?.name}</h2>
+ <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Desempeño por Grupo · {activeSeason?.name}</h2>
  <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-lg">
  <div className="overflow-x-auto">
  <table className="w-full text-left">
- <thead className="bg-[hsl(var(--bg-secondary))] text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <thead className="bg-[hsl(var(--bg-secondary))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  <tr>
  <th className="px-4 py-1.5">Grupo</th>
  <th className="px-4 py-1.5 text-center">Sesiones</th>
@@ -425,10 +425,10 @@ export default function GroupPage() {
  subtitle="Configura una nueva temporada para Grupos en Casa"
  actions={
  <>
- <button disabled={savingSeason} onClick={() => setShowNewSeason(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
+ <button disabled={savingSeason} onClick={() => setShowNewSeason(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
  Cancelar
  </button>
- <button onClick={handleCreateSeason} disabled={savingSeason || !isSeasonFormValid} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60">
+ <button onClick={handleCreateSeason} disabled={savingSeason || !isSeasonFormValid} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60">
  {savingSeason ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Crear
  </button>
  </>
@@ -441,12 +441,12 @@ export default function GroupPage() {
  { label: 'Fecha de Cierre', key: 'end_date', type: 'date', placeholder: '' },
  ].map(f => (
  <div key={f.key} className="space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">{f.label}</label>
+ <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">{f.label}</label>
  <input type={f.type} placeholder={f.placeholder} value={seasonForm[f.key as keyof SeasonForm]} onChange={e => setSeasonForm(p => ({ ...p, [f.key]: e.target.value } as SeasonForm))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" />
  </div>
  ))}
  <div className="space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Periodicidad de Reporte</label>
+ <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Periodicidad de Reporte</label>
  <select value={seasonForm.periodicity} onChange={e => setSeasonForm(p => ({ ...p, periodicity: e.target.value as SeasonForm['periodicity'] }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none">
  <option value="SEMANAL">Semanal (Reporte cada semana)</option>
  <option value="MENSUAL">Mensual (Reporte cada mes)</option>
@@ -463,10 +463,10 @@ export default function GroupPage() {
  subtitle="Ingresa la asistencia y detalles de la reunión"
  actions={
  <>
- <button disabled={savingSession} onClick={() => setShowNewSession(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
+ <button disabled={savingSession} onClick={() => setShowNewSession(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
  Cancelar
  </button>
- <button onClick={handleCreateSession} disabled={savingSession || !isSessionFormValid} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60">
+ <button onClick={handleCreateSession} disabled={savingSession || !isSessionFormValid} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60">
  {savingSession ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={14} />} Registrar
  </button>
  </>
@@ -474,39 +474,39 @@ export default function GroupPage() {
  >
  <div className="space-y-3 mt-4">
  <div className="p-4 bg-info-soft dark:bg-[hsl(var(--info))]/20 rounded-lg border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)]">
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info-text mb-1">Temporada Activa</p>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info-text mb-1">Temporada Activa</p>
  <p className="text-sm font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{activeSeason?.name}</p>
  </div>
  
  <div className="space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Grupo</label>
+ <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Grupo</label>
  <select value={sessionForm.grupo_id} onChange={e => setSessionForm(p => ({ ...p, grupo_id: e.target.value, create_for_all_groups: e.target.value === 'all' }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none">
  <option value="">— Seleccionar Grupo —</option>
  {canManageEvangelism && <option value="all" className="font-bold">✨ TODOS LOS GRUPOS ACTIVOS</option>}
  {houses.map(h => <option key={h.id} value={h.id}>{h.name} {h.leader_name ? `· Líder: ${h.leader_name}` : ''}</option>)}
  </select>
  {sessionForm.grupo_id === 'all' && (
- <p className="text-[10px] text-[hsl(var(--primary))] font-bold mt-1">Se creará una sesión idéntica para todas las casas activas simultáneamente.</p>
+ <p className="text-2xs text-[hsl(var(--primary))] font-bold mt-1">Se creará una sesión idéntica para todas las casas activas simultáneamente.</p>
  )}
  </div>
  
  <div className="grid grid-cols-2 gap-4">
  <div className="space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre / Alias (Ej. S1)</label>
+ <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre / Alias (Ej. S1)</label>
  <input type="text" placeholder="S1" value={sessionForm.topic} onChange={e => setSessionForm(p => ({ ...p, topic: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" />
  </div>
  <div className="space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Fecha de la Reunión</label>
+ <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Fecha de la Reunión</label>
  <input type="date" value={sessionForm.session_date} onChange={e => setSessionForm(p => ({ ...p, session_date: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" />
  </div>
  </div>
 
  <div className="space-y-1.5">
- <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block flex items-center gap-2">
- Fecha y Hora Límite para Reportar <span className="px-1.5 py-0.5 rounded-md bg-[hsl(var(--bg-muted))] text-[8px] font-bold">OPCIONAL</span>
+ <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block flex items-center gap-2">
+ Fecha y Hora Límite para Reportar <span className="px-1.5 py-0.5 rounded-md bg-[hsl(var(--bg-muted))] text-2xs font-bold">OPCIONAL</span>
  </label>
  <input type="datetime-local" value={sessionForm.report_deadline} onChange={e => setSessionForm(p => ({ ...p, report_deadline: e.target.value }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" />
- <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-1">Si configuras este límite, los líderes no podrán guardar asistencia después de esta hora.</p>
+ <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1">Si configuras este límite, los líderes no podrán guardar asistencia después de esta hora.</p>
  </div>
  </div>
  </WorkspaceDrawer>

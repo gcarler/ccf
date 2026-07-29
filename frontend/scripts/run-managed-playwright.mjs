@@ -3,24 +3,16 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 
-const args = [...process.argv.slice(2)];
-const authFlagIndex = args.indexOf('--auth');
-const authEnabled = authFlagIndex >= 0;
-const academyRolesFlagIndex = args.indexOf('--academy-roles');
-const academyRolesEnabled = academyRolesFlagIndex >= 0;
-const reuseBuildFlagIndex = args.indexOf('--reuse-build');
-const reuseBuild = reuseBuildFlagIndex >= 0;
-const hasWorkersFlag = args.includes('--workers');
+const rawArgs = process.argv.slice(2);
+const authEnabled = rawArgs.includes('--auth');
+const academyRolesEnabled = rawArgs.includes('--academy-roles');
+const reuseBuild = rawArgs.includes('--reuse-build');
+const hasWorkersFlag = rawArgs.includes('--workers');
 
-if (authEnabled) {
-  args.splice(authFlagIndex, 1);
-}
-if (academyRolesEnabled) {
-  args.splice(academyRolesFlagIndex, 1);
-}
-if (reuseBuild) {
-  args.splice(reuseBuildFlagIndex, 1);
-}
+// Filter out managed-runner flags so they are not forwarded to playwright test.
+const args = rawArgs.filter(
+  (arg) => arg !== '--auth' && arg !== '--academy-roles' && arg !== '--reuse-build',
+);
 
 async function resolveManagedPort() {
   if (process.env.PLAYWRIGHT_PORT) {
@@ -83,16 +75,20 @@ if (!reuseBuild) {
   }
 }
 
+// Stabilise E2E suites by defaulting to a single Playwright worker unless the
+// caller explicitly requested a different value. Auth tests share login state
+// and public-contract tests hit the backend heavily, so serial execution keeps
+// both groups reliable.
+if (!hasWorkersFlag) {
+  args.unshift('1');
+  args.unshift('--workers');
+}
+
 if (authEnabled || academyRolesEnabled) {
   env.E2E_AUTH_ENABLED = process.env.E2E_AUTH_ENABLED || '1';
   env.E2E_API_URL = process.env.E2E_API_URL || apiBaseUrl;
   env.E2E_EMAIL = process.env.E2E_EMAIL || 'e2e.admin@ccf.local';
   env.E2E_PASSWORD = process.env.E2E_PASSWORD || 'E2E-admin-ccf-2026!';
-
-  if (!hasWorkersFlag) {
-    args.unshift('1');
-    args.unshift('--workers');
-  }
 }
 
 if (academyRolesEnabled) {

@@ -164,18 +164,18 @@ export default function FacturacionPage() {
               </button>
               <div>
                 <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase">Facturación</h1>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-0.5">Órdenes de venta · Facturas electrónicas · Pagos</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-0.5">Órdenes de venta · Facturas electrónicas · Pagos</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-bold">
+              <div className="flex rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 text-xs font-bold">
                 {(["invoices", "orders"] as const).map((t) => (
                   <button key={t} onClick={() => setTab(t)} className={clsx("px-3 py-1.5 transition-colors", tab === t ? "bg-[hsl(var(--primary))] text-white" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]")}>
                     {t === "invoices" ? "Facturas" : "Órdenes"}
                   </button>
                 ))}
               </div>
-              <button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold shadow-sm hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+              <button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold shadow-sm hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                 <Plus size={12} /> Nueva {tab === "invoices" ? "Factura" : "Orden"}
               </button>
             </div>
@@ -183,41 +183,41 @@ export default function FacturacionPage() {
 
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Buscar ${tab}...`} className="pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[12px] w-full focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]" />
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Buscar ${tab}...`} className="pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm w-full focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]" />
           </div>
 
           {showCreate && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 space-y-3">
               <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Nueva Factura</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <input type="text" placeholder="Cliente" value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                <input type="email" placeholder="Email" value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                <input type="text" placeholder="NIT / Tax ID" value={form.customer_tax_id} onChange={(e) => setForm({ ...form, customer_tax_id: e.target.value })} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                <input type="text" placeholder="Cliente" value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                <input type="email" placeholder="Email" value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                <input type="text" placeholder="NIT / Tax ID" value={form.customer_tax_id} onChange={(e) => setForm({ ...form, customer_tax_id: e.target.value })} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input type="date" value={form.issue_date} onChange={(e) => setForm({ ...form, issue_date: e.target.value })} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                <input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                <input type="date" value={form.issue_date} onChange={(e) => setForm({ ...form, issue_date: e.target.value })} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                <input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
               </div>
               <div className="space-y-2">
                 {form.items.map((item, idx) => (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                    <input type="text" placeholder="Descripción" value={item.description} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, description: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                    <input type="number" min={0} placeholder="Cantidad" value={item.quantity} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, quantity: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                    <input type="number" min={0} placeholder="Precio unitario" value={item.unit_price} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, unit_price: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="text" placeholder="Descripción" value={item.description} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, description: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="number" min={0} placeholder="Cantidad" value={item.quantity} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, quantity: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="number" min={0} placeholder="Precio unitario" value={item.unit_price} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, unit_price: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
                     <button type="button" onClick={() => { if (window.confirm('Eliminar esta línea?')) { setForm({ ...form, items: form.items.filter((_, i) => i !== idx) }); } }} className="p-2 text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-lg"><Trash2 size={14} /></button>
                   </div>
                 ))}
-                <button type="button" onClick={() => setForm({ ...form, items: [...form.items, { description: "", quantity: 1, unit_price: 0 }] })} className="text-[11px] font-semibold text-[hsl(var(--primary))] hover:underline">+ Agregar línea</button>
+                <button type="button" onClick={() => setForm({ ...form, items: [...form.items, { description: "", quantity: 1, unit_price: 0 }] })} className="text-xs font-semibold text-[hsl(var(--primary))] hover:underline">+ Agregar línea</button>
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-semibold">Cancelar</button>
-                <button type="button" onClick={handleCreateInvoice} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[11px] font-semibold">Crear Factura</button>
+                <button type="button" onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-semibold">Cancelar</button>
+                <button type="button" onClick={handleCreateInvoice} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold">Crear Factura</button>
               </div>
             </motion.div>
           )}
 
           <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-sm overflow-hidden">
-            <div className="px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 grid grid-cols-12 gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <div className="px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 grid grid-cols-12 gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
               <div className="col-span-3">{tab === "invoices" ? "Factura" : "Orden"}</div>
               <div className="col-span-3">Cliente</div>
               <div className="col-span-2">Total</div>
@@ -237,13 +237,13 @@ export default function FacturacionPage() {
                 return (
                   <div key={item.id} className="px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 grid grid-cols-12 gap-2 items-center hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] transition-colors">
                     <div className="col-span-3">
-                      <p className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-white">{number}</p>
-                      <p className="text-[10px] text-[hsl(var(--text-secondary))]">{isInvoice ? (item as Invoice).issue_date : (item as SalesOrder).order_date}</p>
+                      <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{number}</p>
+                      <p className="text-2xs text-[hsl(var(--text-secondary))]">{isInvoice ? (item as Invoice).issue_date : (item as SalesOrder).order_date}</p>
                     </div>
-                    <div className="col-span-3 text-[12px] text-[hsl(var(--text-secondary))] truncate">{item.customer_name}</div>
-                    <div className="col-span-2 text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-white">{fmtCOP(Number(total))}</div>
+                    <div className="col-span-3 text-sm text-[hsl(var(--text-secondary))] truncate">{item.customer_name}</div>
+                    <div className="col-span-2 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{fmtCOP(Number(total))}</div>
                     <div className="col-span-2">
-                      <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide",
+                      <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wide",
                         itemStatus === "paid" || itemStatus === "completed" ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" :
                         itemStatus === "partial" ? "bg-blue-100 text-blue-800 border-blue-300" :
                         itemStatus === "overdue" || itemStatus === "cancelled" ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" :
@@ -268,18 +268,18 @@ export default function FacturacionPage() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
               <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 w-full max-w-md space-y-3">
                 <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Registrar Pago</h3>
-                <input type="number" placeholder="Monto" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })} className="w-full px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                <input type="date" value={paymentForm.payment_date} onChange={(e) => setPaymentForm({ ...paymentForm, payment_date: e.target.value })} className="w-full px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                <select value={paymentForm.payment_method} onChange={(e) => setPaymentForm({ ...paymentForm, payment_method: e.target.value })} className="w-full px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
+                <input type="number" placeholder="Monto" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                <input type="date" value={paymentForm.payment_date} onChange={(e) => setPaymentForm({ ...paymentForm, payment_date: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                <select value={paymentForm.payment_method} onChange={(e) => setPaymentForm({ ...paymentForm, payment_method: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
                   <option value="transfer">Transferencia</option>
                   <option value="cash">Efectivo</option>
                   <option value="card">Tarjeta</option>
                   <option value="check">Cheque</option>
                 </select>
-                <input type="text" placeholder="Referencia" value={paymentForm.reference} onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })} className="w-full px-3 py-2 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                <input type="text" placeholder="Referencia" value={paymentForm.reference} onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
                 <div className="flex gap-2">
-                  <button onClick={() => setShowPayment(null)} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-semibold">Cancelar</button>
-                  <button onClick={() => handlePayment(showPayment)} className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--success))] text-white text-[11px] font-semibold">Guardar Pago</button>
+                  <button onClick={() => setShowPayment(null)} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-semibold">Cancelar</button>
+                  <button onClick={() => handlePayment(showPayment)} className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--success))] text-white text-xs font-semibold">Guardar Pago</button>
                 </div>
               </div>
             </motion.div>

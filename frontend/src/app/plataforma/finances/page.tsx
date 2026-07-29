@@ -126,12 +126,12 @@ export default function FinancesPage() {
                         <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase">
                             Centro Financiero
                         </h1>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-0.5">
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-0.5">
                             Gestión de Recursos Ministeriales
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-0.5 text-[10px] font-semibold">
+                        <div className="flex items-center gap-1 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-0.5 text-2xs font-semibold">
                             {(['Semana', 'Mes', 'Año']).map((p) => (
                                 <button key={p} className={clsx(
                                     'px-2 py-1 rounded-md transition-colors',
@@ -139,10 +139,10 @@ export default function FinancesPage() {
                                 )}>{p}</button>
                             ))}
                         </div>
-                        <button className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[10px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10 transition-all">
+                        <button className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-2xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10 transition-all">
                             <Download size={12} /> Exportar
                         </button>
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-[10px] font-semibold shadow-sm hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold shadow-sm hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                             <Plus size={12} /> Registro
                         </button>
                     </div>
@@ -165,13 +165,13 @@ export default function FinancesPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 relative z-10">
                         <div className="lg:col-span-2">
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Comparativa Mensual de Ingresos</h3>
+                                <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Comparativa Mensual de Ingresos</h3>
                                 <DSChart type="area" data={dashboard?.monthly_series} color="hsl(var(--success))" height={220} />
                             </DSCard>
                         </div>
                         <div>
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Distribución por Categoría</h3>
+                                <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Distribución por Categoría</h3>
                                 <DSChart type="bar" data={dashboard?.income_by_category} color="hsl(var(--info))" height={220} />
                             </DSCard>
                         </div>
@@ -193,10 +193,10 @@ export default function FinancesPage() {
                                             value={search}
                                             onChange={e => setSearch(e.target.value)}
                                             placeholder="Buscar..."
-                                            className="pl-8 pr-3 py-1.5 text-[12px] bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-40"
+                                            className="pl-8 pr-3 py-1.5 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-40"
                                         />
                                     </div>
-                                    <div className="flex rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-bold">
+                                    <div className="flex rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 text-xs font-bold">
                                         {(['all', 'ingreso', 'egreso'] as const).map(f => (
                                             <button
                                                 key={f}
@@ -241,8 +241,8 @@ export default function FinancesPage() {
                                                 <Icon size={15} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{tx.description}</p>
-                                                <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium">{tx.category} · {tx.date ? new Date(tx.date).toLocaleDateString('es-CO') : '—'}</p>
+                                                <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{tx.description}</p>
+                                                <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">{tx.category} · {tx.date ? new Date(tx.date).toLocaleDateString('es-CO') : '—'}</p>
                                             </div>
                                             <span className={clsx(
                                                 'text-sm font-semibold shrink-0 tabular-nums',
@@ -273,7 +273,7 @@ export default function FinancesPage() {
                                             return (
                                                 <div key={label}>
                                                     <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
+                                                        <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
                                                         <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white tabular-nums">{fmt(amount)}</span>
                                                     </div>
                                                     <div className="h-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
@@ -284,7 +284,7 @@ export default function FinancesPage() {
                                                             className={clsx('h-full rounded-full', COLORS[i % COLORS.length])}
                                                         />
                                                     </div>
-                                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 text-right font-bold">{pct}%</p>
+                                                    <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 text-right font-bold">{pct}%</p>
                                                 </div>
                                             );
                                         });
@@ -297,7 +297,7 @@ export default function FinancesPage() {
                                 <div className="absolute top-0 right-0 size-10 bg-[hsl(var(--primary))/0.2] rounded-full blur-2xl" />
                                 <Landmark size={24} className="text-[hsl(var(--primary))] mb-3 relative z-10" />
                                 <h3 className="font-semibold relative z-10 mb-1">Informe de Transparencia</h3>
-                                <p className="text-[11px] text-[hsl(var(--text-secondary))] relative z-10 mb-4 leading-relaxed">
+                                <p className="text-xs text-[hsl(var(--text-secondary))] relative z-10 mb-4 leading-relaxed">
                                     Reportes auditados disponibles para la congregación.
                                 </p>
                                 <button className="flex items-center gap-2 font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))/0.7] transition-colors relative z-10">

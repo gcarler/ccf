@@ -36,7 +36,7 @@ export default function ShareButtons({ title, className = '' }: ShareButtonsProp
 
     return (
         <div className={`flex items-center gap-2 ${className}`}>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mr-1">
+            <span className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mr-1">
                 Compartir
             </span>
 

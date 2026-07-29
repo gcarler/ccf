@@ -207,7 +207,7 @@ export default function MultiplicationPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">
               Herramientas y Gestión
             </p>
             <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight flex items-center gap-2">
@@ -216,7 +216,7 @@ export default function MultiplicationPage() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <label htmlFor="umbral-select" className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <label htmlFor="umbral-select" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
               Umbral:
             </label>
             <select
@@ -236,7 +236,7 @@ export default function MultiplicationPage() {
 
         {/* Multiplication Check */}
         <section>
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
             <Users size={14} />
             Análisis de Grupos
           </h2>
@@ -281,17 +281,17 @@ export default function MultiplicationPage() {
                         <DSBadge tone="emerald" label="Listo para dividir" />
                       )}
                     </div>
-                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
+                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
                       {check.lider_nombre || 'Sin líder'} · {check.total_personas} personas
                     </p>
-                    <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5">
+                    <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5">
                       {check.sugerencia}
                     </p>
                   </div>
                   {check.excede_umbral && (
                     <button
                       onClick={() => openSplitDrawer(check)}
-                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--success))] text-white rounded-lg text-[10px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all"
+                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--success))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all"
                     >
                       <Scissors size={14} />
                       Dividir
@@ -315,7 +315,7 @@ export default function MultiplicationPage() {
                   {eligibleGroups.length} grupo{eligibleGroups.length > 1 ? 's' : ''} listo
                   {eligibleGroups.length > 1 ? 's' : ''} para multiplicar
                 </p>
-                <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+                <p className="text-2xs text-[hsl(var(--text-secondary))]">
                   Superan el umbral de {umbral} personas. Revisa cada grupo y ejecuta la división
                   cuando el líder esté preparado.
                 </p>
@@ -326,7 +326,7 @@ export default function MultiplicationPage() {
 
         {/* Multiplication History */}
         <section>
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
             <History size={14} />
             Historial de Multiplicaciones
           </h2>
@@ -359,14 +359,14 @@ export default function MultiplicationPage() {
                       </p>
                       <DSBadge tone="blue" label="Hijo" />
                     </div>
-                    <p className="text-[10px] text-[hsl(var(--text-secondary))] font-medium">
+                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
                       {item.parent_group_nombre
                         ? `Nacido de: ${item.parent_group_nombre}`
                         : 'Grupo raíz'}
                       {item.lider_nombre ? ` · Líder: ${item.lider_nombre}` : ''}
                     </p>
                     {item.notes_historial && (
-                      <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">
+                      <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 truncate">
                         {item.notes_historial}
                       </p>
                     )}
@@ -374,7 +374,7 @@ export default function MultiplicationPage() {
                   <div className="shrink-0 text-right">
                     <p className="text-lg font-bold text-[hsl(var(--text-primary))]">
                       {item.personas_actuales}
-                    </p>                      <p className="text-[9px] text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">
+                    </p>                      <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">
                         personas
                       </p>
                   </div>
@@ -396,14 +396,14 @@ export default function MultiplicationPage() {
             <button
               disabled={savingSplit}
               onClick={() => setSplitDrawerOpen(false)}
-              className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60"
+              className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60"
             >
               Cancelar
             </button>
             <button
               onClick={handleSplit}
               disabled={savingSplit || !nuevoNombre.trim() || !nuevoLiderId}
-              className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60"
+              className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60"
             >
               {savingSplit ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -417,7 +417,7 @@ export default function MultiplicationPage() {
       >
         <div className="space-y-4 mt-4">
           <div className="p-4 bg-warning-soft dark:bg-[hsl(var(--warning))]/20 rounded-lg border border-[hsl(var(--warning)/20%)] dark:border-[hsl(var(--warning)/100%)]/30">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-warning-text dark:text-warning-text mb-1">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-warning-text dark:text-warning-text mb-1">
               Acción irreversible
             </p>
             <p className="text-sm text-warning-text dark:text-[hsl(var(--warning))]">
@@ -428,7 +428,7 @@ export default function MultiplicationPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">
               Nombre del Nuevo Grupo
             </label>
             <input
@@ -441,7 +441,7 @@ export default function MultiplicationPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">
               Nuevo Líder
             </label>
             {loadingPersonas ? (
@@ -468,7 +468,7 @@ export default function MultiplicationPage() {
                 className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
               />
             )}
-            <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+            <p className="text-2xs text-[hsl(var(--text-secondary))]">
               Selecciona una persona del grupo para liderar la nueva célula.
             </p>
           </div>

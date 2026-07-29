@@ -47,7 +47,7 @@ describe('DSSectionHeader', () => {
     it('renders eyebrow with correct styling', () => {
         render(<DSSectionHeader eyebrow="Eyebrow" title="Title" />);
         const eyebrow = screen.getByText('Eyebrow');
-        expect(eyebrow.className).toContain('text-[10px]');
+        expect(eyebrow.className).toContain('text-2xs');
         expect(eyebrow.className).toContain('uppercase');
     });
 

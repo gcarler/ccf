@@ -66,7 +66,7 @@ export default function AcademyTeachersPage() {
                 rightActions={
                     <button
                         onClick={() => router.push("/plataforma/academy/teacher")}
-                        className="rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
+                        className="rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
                     >
                         Panel docente
                     </button>
@@ -83,7 +83,7 @@ export default function AcademyTeachersPage() {
                 <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-sm dark:border-white/10 dark:bg-white/5">
                     <header className="flex flex-col gap-4 border-b border-[hsl(var(--border))] p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Equipo academico</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Equipo academico</p>
                             <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Facilitadores</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
@@ -143,7 +143,7 @@ function Metric({ icon: Icon, label, value }: { icon: LucideIcon; label: string;
             <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10">
                 <Icon size={20} />
             </div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
             <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
         </div>
     );

@@ -138,7 +138,7 @@ export default function AdminSettingsSessionsPage() {
                         </div>
                         <div>
                             <h1 className="text-sm font-bold text-white">Sesiones Activas</h1>
-                            <p className="text-[11px] text-[hsl(var(--text-secondary))]">Dispositivos conectados a tu cuenta</p>
+                            <p className="text-xs text-[hsl(var(--text-secondary))]">Dispositivos conectados a tu cuenta</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -152,7 +152,7 @@ export default function AdminSettingsSessionsPage() {
                         {sessions.length > 1 && (
                             <button
                                 onClick={handleRevokeAll}
-                                className="px-3 py-1.5 rounded-lg bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/100%)]/20 text-[hsl(var(--danger))] text-[11px] font-semibold hover:bg-[hsl(var(--danger))]/20 transition-colors flex items-center gap-1.5"
+                                className="px-3 py-1.5 rounded-lg bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/100%)]/20 text-[hsl(var(--danger))] text-xs font-semibold hover:bg-[hsl(var(--danger))]/20 transition-colors flex items-center gap-1.5"
                             >
                                 <LogOut size={13} />
                                 Revocar todas
@@ -208,7 +208,7 @@ export default function AdminSettingsSessionsPage() {
                                                     {browser}
                                                 </span>
                                                 {session.is_current && (
-                                                    <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] text-[10px] font-bold uppercase">
+                                                    <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] text-2xs font-bold uppercase">
                                                         Actual
                                                     </span>
                                                 )}
@@ -216,7 +216,7 @@ export default function AdminSettingsSessionsPage() {
                                             <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">
                                                 {os} · {device.label}
                                             </p>
-                                            <div className="flex items-center gap-4 mt-2 text-[11px] text-[hsl(var(--text-secondary))]">
+                                            <div className="flex items-center gap-4 mt-2 text-xs text-[hsl(var(--text-secondary))]">
                                                 {session.ip_address && (
                                                     <span className="flex items-center gap-1">
                                                         <MapPin size={11} />

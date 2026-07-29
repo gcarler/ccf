@@ -34,12 +34,12 @@ export default function SupportTutorialsPage() {
         <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
             <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-4 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
                 <FileText size={16} className="text-[hsl(var(--info))]" />
-                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex-1">Tutoriales de la Plataforma</h1>
+                <h1 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex-1">Tutoriales de la Plataforma</h1>
                 <div className="relative">
                     <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                     <input value={search} onChange={e => setSearch(e.target.value)}
                         placeholder="Buscar tutorial..."
-                        className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-md text-[12px] focus:ring-2 focus:ring-[hsl(var(--info)/20%)] w-56 transition-all text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" />
+                        className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-md text-sm focus:ring-2 focus:ring-[hsl(var(--info)/20%)] w-56 transition-all text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" />
                 </div>
             </header>
 
@@ -48,12 +48,12 @@ export default function SupportTutorialsPage() {
                 <Filter size={12} className="text-[hsl(var(--text-secondary))]" />
                 {['all', 'Básico', 'Intermedio', 'Avanzado'].map(level => (
                     <button key={level} onClick={() => setSelectedLevel(level)}
-                        className={clsx("px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
+                        className={clsx("px-3 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all",
                             selectedLevel === level ? "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-info-text" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]")}>
                         {level === 'all' ? 'Todos' : level}
                     </button>
                 ))}
-                <span className="ml-auto text-[10px] text-[hsl(var(--text-secondary))]">{filtered.length} tutoriales</span>
+                <span className="ml-auto text-2xs text-[hsl(var(--text-secondary))]">{filtered.length} tutoriales</span>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3">
@@ -72,30 +72,30 @@ export default function SupportTutorialsPage() {
                                     <Play size={22} className="text-white ml-0.5" />
                                 </div>
                                 {!t.free && (
-                                    <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur rounded-lg text-[9px] text-white font-semibold uppercase tracking-wide">
+                                    <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur rounded-lg text-2xs text-white font-semibold uppercase tracking-wide">
                                         <Lock size={9} /> Pro
                                     </div>
                                 )}
-                                <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur rounded-lg text-[9px] text-white font-bold">
+                                <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur rounded-lg text-2xs text-white font-bold">
                                     <Clock size={9} /> {t.duration}
                                 </div>
                             </div>
 
                             <div className="p-4 space-y-3">
                                 <div className="flex items-center gap-2">
-                                    <span className={clsx("px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide", LEVEL_COLOR[t.level])}>
+                                    <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", LEVEL_COLOR[t.level])}>
                                         {t.level}
                                     </span>
-                                    <span className="text-[9px] text-[hsl(var(--text-secondary))] font-bold">{t.category}</span>
+                                    <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold">{t.category}</span>
                                 </div>
-                                <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug group-hover:text-info-text transition-colors">
+                                <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug group-hover:text-info-text transition-colors">
                                     {t.title}
                                 </p>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-1">
                                         <Star size={11} className="text-[hsl(var(--warning))] fill-[hsl(var(--warning))]" />
-                                        <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))]">{t.rating}</span>
-                                        <span className="text-[10px] text-[hsl(var(--text-secondary))] ml-1">{t.views} vistas</span>
+                                        <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{t.rating}</span>
+                                        <span className="text-2xs text-[hsl(var(--text-secondary))] ml-1">{t.views} vistas</span>
                                     </div>
                                     <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--info))] transition-colors" />
                                 </div>

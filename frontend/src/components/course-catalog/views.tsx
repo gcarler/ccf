@@ -28,7 +28,7 @@ function CourseAccessBadge({ course }: { course: Course }) {
     if (!course.access_level || course.access_level === "persona") return null;
     return (
         <span
-            className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+            className={`text-2xs font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
                 ACCESS_COLOR[course.access_level] ?? ACCESS_COLOR.persona
             }`}
         >
@@ -53,7 +53,7 @@ export function GridView({ courses, enrolledCourseIds, onEnrollClick }: CourseVi
                                 <h3 className="font-bold text-base text-white truncate pr-2">{course.title}</h3>
                                 <div className="flex items-center gap-1 shrink-0">
                                     <CourseAccessBadge course={course} />
-                                    <span className="text-[9px] font-bold text-primary px-2 py-0.5 rounded bg-primary/10 uppercase tracking-wider">{course.code}</span>
+                                    <span className="text-2xs font-bold text-primary px-2 py-0.5 rounded bg-primary/10 uppercase tracking-wider">{course.code}</span>
                                 </div>
                             </div>
                             <p className="text-[hsl(var(--text-secondary))] text-xs line-clamp-2 pr-2 leading-relaxed">{course.description}</p>
@@ -61,7 +61,7 @@ export function GridView({ courses, enrolledCourseIds, onEnrollClick }: CourseVi
                     </div>
                     <div className="flex items-center gap-4 py-3 border-t border-b border-white/5">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 flex items-center gap-1">
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 flex items-center gap-1">
                                 <Clock size={10} /> Tiempo
                             </span>
                             <span className="text-xs font-bold text-white">
@@ -70,7 +70,7 @@ export function GridView({ courses, enrolledCourseIds, onEnrollClick }: CourseVi
                         </div>
                         <div className="w-px h-6 bg-white/10" />
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 flex items-center gap-1">
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 flex items-center gap-1">
                                 <School size={10} /> Lecciones
                             </span>
                             <span className="text-xs font-bold text-white">{course.lesson_count} módulos</span>
@@ -121,7 +121,7 @@ export function ListView({ courses, enrolledCourseIds, onEnrollClick }: CourseVi
                     </div>
                     <button
                         onClick={() => onEnrollClick(course.id)}
-                        className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all flex items-center gap-1.5 ${
                             enrolledCourseIds.includes(course.id) ? "bg-white/10 text-white" : "bg-primary text-white"
                         }`}
                     >
@@ -139,11 +139,11 @@ export function TableView({ courses, enrolledCourseIds, onEnrollClick }: CourseV
             <table className="w-full text-left border-collapse">
                 <thead>
                     <tr className="border-b border-white/10">
-                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Curso</th>
-                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Código</th>
-                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Duración</th>
-                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo</th>
-                        <th className="pb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] text-right">Acción</th>
+                        <th className="pb-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Curso</th>
+                        <th className="pb-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Código</th>
+                        <th className="pb-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Duración</th>
+                        <th className="pb-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo</th>
+                        <th className="pb-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] text-right">Acción</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -154,14 +154,14 @@ export function TableView({ courses, enrolledCourseIds, onEnrollClick }: CourseV
                                 <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-1 mt-0.5">{course.description}</p>
                             </td>
                             <td className="py-1.5 pr-4">
-                                <span className="text-[10px] font-bold text-primary px-2 py-0.5 rounded bg-primary/10 uppercase">{course.code}</span>
+                                <span className="text-2xs font-bold text-primary px-2 py-0.5 rounded bg-primary/10 uppercase">{course.code}</span>
                             </td>
                             <td className="py-1.5 pr-4 text-sm text-[hsl(var(--text-secondary))] font-bold">{course.duration_hours}h</td>
                             <td className="py-1.5 pr-4 text-xs text-[hsl(var(--text-secondary))]">{course.is_self_paced ? "Autoguiado" : "Cohorte"}</td>
                             <td className="py-1.5 text-right">
                                 <button
                                     onClick={() => onEnrollClick(course.id)}
-                                    className={`px-3 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all inline-flex items-center gap-1 ${
+                                    className={`px-3 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all inline-flex items-center gap-1 ${
                                         enrolledCourseIds.includes(course.id) ? "bg-white/10 text-white" : "bg-primary text-white"
                                     }`}
                                 >
@@ -195,7 +195,7 @@ export function BoardView({ courses, enrolledCourseIds, onEnrollClick }: CourseV
             {columns.map((column) => (
                 <div key={column.key} className="rounded-lg border border-white/10 bg-[hsl(var(--bg-muted))]/30 p-3">
                     <div className="mb-3 flex items-center justify-between">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.label}</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.label}</p>
                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.items.length}</span>
                     </div>
                     <div className="space-y-2">
@@ -206,11 +206,11 @@ export function BoardView({ courses, enrolledCourseIds, onEnrollClick }: CourseV
                                 className="w-full text-left rounded-md border border-white/10 bg-white/5 p-3 hover:border-primary/40 transition-all"
                             >
                                 <p className="text-xs font-semibold text-white">{course.title}</p>
-                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{course.code} · {course.duration_hours}h</p>
+                                <p className="text-2xs text-[hsl(var(--text-secondary))]">{course.code} · {course.duration_hours}h</p>
                             </button>
                         ))}
                         {column.items.length === 0 && (
-                            <div className="py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vacío</div>
+                            <div className="py-2 text-center text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vacío</div>
                         )}
                     </div>
                 </div>
@@ -231,7 +231,7 @@ export function CalendarView({ courses, onEnrollClick }: CourseViewProps) {
         <div className="space-y-4 px-4">
             {buckets.map(([bucket, items]) => (
                 <div key={bucket} className="rounded-lg border border-white/10 bg-[hsl(var(--bg-muted))]/30 p-4">
-                    <p className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{bucket}</p>
+                    <p className="mb-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{bucket}</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {items.map((course) => (
                             <button
@@ -240,7 +240,7 @@ export function CalendarView({ courses, onEnrollClick }: CourseViewProps) {
                                 className="rounded-md border border-white/10 bg-white/5 p-3 text-left hover:border-primary/40 transition-all"
                             >
                                 <p className="text-sm font-semibold text-white">{course.title}</p>
-                                <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+                                <p className="text-2xs text-[hsl(var(--text-secondary))]">
                                     {course.code} · {course.is_self_paced ? "Autoguiado" : "Cohorte"}
                                 </p>
                             </button>
@@ -259,12 +259,12 @@ export function GanttView({ courses }: CourseViewProps) {
     return (
         <div className="px-4">
             <div className="rounded-lg border border-white/10 bg-[hsl(var(--bg-muted))]/30 p-4 space-y-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso sugerido por curso</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso sugerido por curso</p>
                 {courses.map((course) => {
                     const progress = Math.min(100, Math.max(15, Math.round((course.lesson_count / 12) * 100)));
                     return (
                         <div key={course.id} className="space-y-1">
-                            <div className="flex items-center justify-between text-[11px]">
+                            <div className="flex items-center justify-between text-xs">
                                 <span className="font-bold text-[hsl(var(--text-secondary))]">{course.title}</span>
                                 <span className="font-semibold text-[hsl(var(--text-secondary))]">{progress}%</span>
                             </div>
@@ -292,7 +292,7 @@ export function WikiView({
     return (
         <div className="px-4">
             <div className="rounded-lg border border-white/10 bg-[hsl(var(--bg-muted))]/30 p-4 space-y-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki del catálogo</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki del catálogo</p>
                 <textarea
                     value={wikiNotes}
                     onChange={(e) => onWikiNotesChange(e.target.value)}

@@ -90,7 +90,7 @@ export default function SpiritualLifePage() {
                                 <div className="size-8 rounded-md bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/30 flex items-center justify-center">
                                     <Heart size={16} className="text-danger-text" fill="currentColor" />
                                 </div>
-                                <span className="text-[10px] font-semibold uppercase tracking-wide text-danger-text">Vida Espiritual</span>
+                                <span className="text-2xs font-semibold uppercase tracking-wide text-danger-text">Vida Espiritual</span>
                             </div>
                             <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
                                 Tu Caminar con Cristo
@@ -103,7 +103,7 @@ export default function SpiritualLifePage() {
                         <Link href="/plataforma/spiritual-life/timeline">
                             <motion.button
                                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                                className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/25%)]"
+                                className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/25%)]"
                             >
                                 <Calendar size={14} /> Ver Línea de Tiempo
                             </motion.button>
@@ -126,7 +126,7 @@ export default function SpiritualLifePage() {
                                     <kpi.icon size={17} className={kpi.color} />
                                 </div>
                                 <div className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{kpi.value}</div>
-                                <div className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mt-0.5">{kpi.label}</div>
+                                <div className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mt-0.5">{kpi.label}</div>
                             </motion.div>
                         ))}
                     </div>
@@ -137,8 +137,8 @@ export default function SpiritualLifePage() {
                         {/* Left: Milestones journey ── */}
                         <div className="lg:col-span-2 space-y-4">
                             <div className="flex items-center justify-between mb-1">
-                                <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Hitos Espirituales</h2>
-                                <span className="text-[10px] font-bold text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20 px-2 py-0.5 rounded-full">
+                                <h2 className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Hitos Espirituales</h2>
+                                <span className="text-2xs font-bold text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20 px-2 py-0.5 rounded-full">
                                     {milestones.length} alcanzados
                                 </span>
                             </div>
@@ -163,9 +163,9 @@ export default function SpiritualLifePage() {
                                             {/* Text */}
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{m.label}</p>
+                                                    <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{m.label}</p>
                                                     {isNext && (
-                                                        <span className="px-2 py-0.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] text-[9px] font-semibold uppercase tracking-wide rounded-full">
+                                                        <span className="px-2 py-0.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide rounded-full">
                                                             Siguiente
                                                         </span>
                                                     )}
@@ -188,7 +188,7 @@ export default function SpiritualLifePage() {
                             {/* Spiritual progress bar */}
                             <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/7 rounded-lg p-3 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso espiritual</span>
+                                    <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso espiritual</span>
                                     <span className="font-semibold text-[hsl(var(--primary))]">{progressPct}%</span>
                                 </div>
                                 <div className="h-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
@@ -199,7 +199,7 @@ export default function SpiritualLifePage() {
                                         transition={{ duration: 1.2, ease: 'easeOut' }}
                                     />
                                 </div>
-                                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-2">
+                                <p className="text-xs text-[hsl(var(--text-secondary))] mt-2">
                                     {nextMilestone
                                         ? `Próximo hito: ${nextMilestone.label}`
                                         : '¡Has completado todos los hitos! 🎉'
@@ -214,7 +214,7 @@ export default function SpiritualLifePage() {
                             {/* Discipleship path */}
                             <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/7 rounded-lg overflow-hidden shadow-sm">
                                 <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
-                                    <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ruta de Discipulado</h3>
+                                    <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ruta de Discipulado</h3>
                                     <span className="font-semibold text-[hsl(var(--text-secondary))]">{discipuladoDone}/5</span>
                                 </div>
                                 <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
@@ -235,8 +235,8 @@ export default function SpiritualLifePage() {
                                                 }
                                             </div>
                                             <div>
-                                                <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{step.label}</p>
-                                                <p className="text-[10px] text-[hsl(var(--text-secondary))] leading-snug">{step.desc}</p>
+                                                <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{step.label}</p>
+                                                <p className="text-2xs text-[hsl(var(--text-secondary))] leading-snug">{step.desc}</p>
                                             </div>
                                         </div>
                                     ))}
@@ -251,8 +251,8 @@ export default function SpiritualLifePage() {
                                             <Calendar size={16} className="text-[hsl(var(--primary))]" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white">Línea de Tiempo</p>
-                                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">Todos tus hitos cronológicos</p>
+                                            <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Línea de Tiempo</p>
+                                            <p className="text-2xs text-[hsl(var(--text-secondary))]">Todos tus hitos cronológicos</p>
                                         </div>
                                         <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:translate-x-1 transition-transform" />
                                     </div>
@@ -264,8 +264,8 @@ export default function SpiritualLifePage() {
                                             <Award size={16} className="text-[hsl(var(--domain-cyan)/90%)]" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white">Mis Certificados</p>
-                                            <p className="text-[10px] text-[hsl(var(--text-secondary))]">Descarga tus actas y diplomas</p>
+                                            <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Mis Certificados</p>
+                                            <p className="text-2xs text-[hsl(var(--text-secondary))]">Descarga tus actas y diplomas</p>
                                         </div>
                                         <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:translate-x-1 transition-transform" />
                                     </div>
@@ -277,8 +277,8 @@ export default function SpiritualLifePage() {
                                             <Sparkles size={16} className="text-white" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[13px] font-bold text-white">Academia CCF</p>
-                                            <p className="text-[10px] text-white/70">Continúa tu formación ministerial</p>
+                                            <p className="text-base font-bold text-white">Academia CCF</p>
+                                            <p className="text-2xs text-white/70">Continúa tu formación ministerial</p>
                                         </div>
                                         <ChevronRight size={14} className="text-white/60 group-hover:translate-x-1 transition-transform" />
                                     </div>

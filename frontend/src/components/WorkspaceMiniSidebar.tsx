@@ -95,7 +95,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                 className="size-10 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-[hsl(var(--info)/40%)] group relative mb-4"
             >
                 <Plus size={20} />
-                <div className="absolute left-14 px-2 py-1 bg-[hsl(var(--surface-2))] text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-[100]">
+                <div className="absolute left-14 px-2 py-1 bg-[hsl(var(--surface-2))] text-white text-2xs font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-[100]">
                     Creación Rápida
                 </div>
             </button>

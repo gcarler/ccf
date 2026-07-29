@@ -14,7 +14,7 @@ interface SettingInputProps {
 export default function SettingInput({ label, value, onChange, placeholder, type = "text", disabled = false }: SettingInputProps) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-1">{label}</label>
+      <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-1">{label}</label>
       <input
         type={type}
         value={value}

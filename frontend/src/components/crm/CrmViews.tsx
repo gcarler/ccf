@@ -67,14 +67,14 @@ function PersonaCard({ persona, index, onClick }: { persona: Persona, index: num
                         <h4 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white leading-none mb-1 truncate max-w-[150px]">
                             {persona.nombre_completo}
                         </h4>
-                        <span className="px-2 py-0.5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <span className="px-2 py-0.5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             {persona.church_role || 'Persona'}
                         </span>
                     </div>
                 </div>
                 <div className="flex items-center gap-1 px-3 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/20 rounded-md">
                     <Heart size={12} className="text-[hsl(var(--primary))]" fill="currentColor" />
-                    <span className="text-[10px] font-bold text-[hsl(var(--primary))]">{Math.round((persona.spiritual_health || 0.8) * 100)}%</span>
+                    <span className="text-2xs font-bold text-[hsl(var(--primary))]">{Math.round((persona.spiritual_health || 0.8) * 100)}%</span>
                 </div>
             </div>
 
@@ -91,10 +91,10 @@ function PersonaCard({ persona, index, onClick }: { persona: Persona, index: num
 
             <div className="pt-4 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
                 <div className="flex -space-x-2">
-                    <div className="size-6 rounded-full bg-[hsl(var(--success-muted))] border-2 border-white dark:border-[#1e1f21] flex items-center justify-center text-success-text"><Star size={10} fill="currentColor" /></div>
-                    <div className="size-6 rounded-full bg-[hsl(var(--info-muted))] border-2 border-white dark:border-[#1e1f21] flex items-center justify-center text-[hsl(var(--primary))]"><GraduationCap size={10} /></div>
+                    <div className="size-6 rounded-full bg-[hsl(var(--success-muted))] border-2 border-white dark:border-[hsl(var(--border))] flex items-center justify-center text-success-text"><Star size={10} fill="currentColor" /></div>
+                    <div className="size-6 rounded-full bg-[hsl(var(--info-muted))] border-2 border-white dark:border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))]"><GraduationCap size={10} /></div>
                 </div>
-                <span className="text-[9px] font-bold uppercase text-[hsl(var(--text-secondary))]">Ver Perfil <ChevronRight size={10} className="inline ml-1" /></span>
+                <span className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">Ver Perfil <ChevronRight size={10} className="inline ml-1" /></span>
             </div>
         </motion.div>
     );
@@ -123,8 +123,8 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
                                 {initials}
                             </div>
                             <div>
-                                <div className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{data?.nombre_completo}</div>
-                                <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">ID: #{data?.id}</div>
+                                <div className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{data?.nombre_completo}</div>
+                                <div className="text-2xs font-bold text-[hsl(var(--text-secondary))]">ID: #{data?.id}</div>
                             </div>
                         </div>
                     );
@@ -143,7 +143,7 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
                 field: 'church_role', headerName: 'Rol', width: 140,
                 cellRenderer: ({ value }: any) => {
                     const isLeader = String(value ?? '').toLowerCase().includes('líder') || String(value ?? '').toLowerCase().includes('lider');
-                    return <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30'}`}>{value || 'Persona'}</span>;
+                    return <span className={`px-2.5 py-0.5 rounded-lg text-2xs font-bold uppercase tracking-wider ${isLeader ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30'}`}>{value || 'Persona'}</span>;
                 },
             },
         ];
@@ -152,7 +152,7 @@ export function CrmTableView({ personas, onSelect, isList = false }: TableProps)
             cols.splice(2, 0, {
                 field: 'spiritual_status', headerName: 'Estado Espiritual', width: 160,
                 cellRenderer: ({ value }: any) => (
-                    <span className="px-2.5 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-lg text-[10px] font-bold uppercase text-[hsl(var(--text-secondary))] tracking-wider">
+                    <span className="px-2.5 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-lg text-2xs font-bold uppercase text-[hsl(var(--text-secondary))] tracking-wider">
                         {value || 'Nuevo'}
                     </span>
                 ),
@@ -216,7 +216,7 @@ export function CrmKanbanView({ personas, onSelect }: CrmViewProps) {
                         <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                             {col.title}
                         </h3>
-                        <span className="px-2 py-0.5 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-xs font-bold text-[hsl(var(--text-secondary))]">
+                        <span className="px-2 py-0.5 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-xs font-bold text-[hsl(var(--text-secondary))]">
                             {col.items.length}
                         </span>
                     </div>
@@ -226,7 +226,7 @@ export function CrmKanbanView({ personas, onSelect }: CrmViewProps) {
                             <div
                                 key={m.id}
                                 onClick={() => onSelect?.(m)}
-                                className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--info)/100%)]/50 cursor-pointer transition-all group"
+                                className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--info)/100%)]/50 cursor-pointer transition-all group"
                             >
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-colors">
@@ -239,10 +239,10 @@ export function CrmKanbanView({ personas, onSelect }: CrmViewProps) {
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between mt-2">
-                                    <span className="text-[10px] font-bold uppercase text-[hsl(var(--text-secondary))] tracking-wider">
+                                    <span className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))] tracking-wider">
                                         {m.church_role || 'Persona'}
                                     </span>
-                                    <div className="flex gap-1 text-[10px] font-bold text-success-text">
+                                    <div className="flex gap-1 text-2xs font-bold text-success-text">
                                         <Heart size={12} fill="currentColor" /> {Math.round((m.spiritual_health || 0.8) * 100)}%
                                     </div>
                                 </div>
@@ -268,13 +268,13 @@ export function CrmCalendarView({ personas, onSelect }: CrmViewProps) {
     const days = Array.from({ length: 35 }, (_, i) => i + 1);
 
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))] dark:border-white/10 rounded-md overflow-hidden animate-fade-in shadow-sm">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md overflow-hidden animate-fade-in shadow-sm">
             <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
                 <h3 className="text-sm font-bold tracking-tight"><Calendar size={20} className="inline mr-2 text-[hsl(var(--text-secondary))]" /> Calendario de Registros</h3>
             </div>
             <div className="grid grid-cols-7 gap-px bg-[hsl(var(--surface-3))] dark:bg-white/10">
                 {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => (
-                    <div key={d} className="bg-[hsl(var(--surface-1))] dark:bg-[#1a1c1e] p-3 text-center text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    <div key={d} className="bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] p-3 text-center text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         {d}
                     </div>
                 ))}
@@ -287,14 +287,14 @@ export function CrmCalendarView({ personas, onSelect }: CrmViewProps) {
                     });
 
                     return (
-                        <div key={d} className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] min-h-12 p-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
+                        <div key={d} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] min-h-12 p-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                             <span className="text-xs font-bold text-[hsl(var(--text-secondary))] mb-2 block">{d > 31 ? d - 31 : d}</span>
                             <div className="space-y-1">
                                 {dayPersonas.map(m => (
                                     <div
                                         key={m.id}
                                         onClick={() => onSelect?.(m)}
-                                        className="text-[10px] font-bold px-2 py-1 bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 rounded truncate cursor-pointer hover:bg-[hsl(var(--info-muted))]"
+                                        className="text-2xs font-bold px-2 py-1 bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 rounded truncate cursor-pointer hover:bg-[hsl(var(--info-muted))]"
                                     >
                                         {m.nombre_completo}
                                     </div>
@@ -316,16 +316,16 @@ export function CrmGanttView({ personas }: CrmViewProps) {
     const sorted = [...personas].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).slice(0, 15);
 
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] shadow-sm rounded-md border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden animate-fade-in py-1.5 px-3">
+        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-sm rounded-md border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden animate-fade-in py-1.5 px-3">
             <h3 className="text-sm font-bold tracking-tight mb-3">Timeline de Integración (Últimos 15)</h3>
             <div className="space-y-3 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent via-[hsl(var(--surface-2))] dark:before:via-white/5 before:to-transparent">
                 {sorted.map(m => (
                     <div key={m.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                        <div className="flex items-center justify-center w-6 h-6 rounded-full border-4 border-white dark:border-[#1e1f21] bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
+                        <div className="flex items-center justify-center w-6 h-6 rounded-full border-4 border-white dark:border-[hsl(var(--border))] bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
                         <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shadow-sm">
                             <div className="flex items-center justify-between mb-1">
                                 <div className="font-bold text-sm text-[hsl(var(--text-primary))] dark:text-white">{m.nombre_completo}</div>
-                                <time className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase">{new Date(m.created_at).toLocaleDateString()}</time>
+                                <time className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">{new Date(m.created_at).toLocaleDateString()}</time>
                             </div>
                             <div className="text-xs text-[hsl(var(--text-secondary))] font-bold">{m.church_role || 'Persona'} ({m.spiritual_status || 'Nuevo'})</div>
                         </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import ProjectsCalendarView from './ProjectsCalendarView';
-import type { ProjectRecord } from '@/types/projects';
+import { createMockProject } from '@/test-utils/factories';
 
 vi.mock('@/components/ui/UniversalCalendarView', () => ({
     default: ({ events, title, onEventClick }: { events: Array<{ id: string; title: string }>; title: string; onEventClick?: (event: { id: string; title: string }) => void }) => (
@@ -19,8 +19,8 @@ vi.mock('@/components/ui/UniversalCalendarView', () => ({
     ),
 }));
 
-const projects: ProjectRecord[] = [
-    {
+const projects = [
+    createMockProject({
         id: 'p1',
         title: 'Campamento Juventud',
         description: 'Organización del campamento',
@@ -30,8 +30,8 @@ const projects: ProjectRecord[] = [
         created_at: '2025-06-15T10:00:00Z',
         updated_at: '2025-06-15T10:00:00Z',
         tasks: [],
-    } as ProjectRecord,
-    {
+    }),
+    createMockProject({
         id: 'p2',
         title: 'Retiro Pastoral',
         description: 'Planificación del retiro',
@@ -41,7 +41,7 @@ const projects: ProjectRecord[] = [
         created_at: '2025-06-16T10:00:00Z',
         updated_at: '2025-06-16T10:00:00Z',
         tasks: [],
-    } as ProjectRecord,
+    }),
 ];
 
 describe('ProjectsCalendarView', () => {

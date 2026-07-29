@@ -74,7 +74,7 @@ export default function ProjectSettingsDrawer({
 
                         <div className="flex-1 overflow-y-auto p-4 space-y-5">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     Título
                                 </label>
                                 <InlineTextInput
@@ -85,7 +85,7 @@ export default function ProjectSettingsDrawer({
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     Descripción
                                 </label>
                                 <InlineTextArea
@@ -97,7 +97,7 @@ export default function ProjectSettingsDrawer({
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     Estado
                                 </label>
                                 <InlineProjectStatusPicker
@@ -107,7 +107,7 @@ export default function ProjectSettingsDrawer({
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     Responsable
                                 </label>
                             <div className="flex items-center gap-2">
@@ -119,7 +119,7 @@ export default function ProjectSettingsDrawer({
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     Color
                                 </label>
                                 <div className="flex items-center gap-3">
@@ -129,7 +129,7 @@ export default function ProjectSettingsDrawer({
                                         onChange={(e) => setDraft((prev) => ({ ...prev, color: e.target.value }))}
                                         className="h-10 w-20 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent cursor-pointer"
                                     />
-                                    <span className="text-[12px] font-mono text-[hsl(var(--text-secondary))]">
+                                    <span className="text-sm font-mono text-[hsl(var(--text-secondary))]">
                                         {draft.color || DEFAULT_PROJECT_COLOR}
                                     </span>
                                 </div>
@@ -139,13 +139,13 @@ export default function ProjectSettingsDrawer({
                         <div className="p-4 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-end gap-2">
                             <button
                                 onClick={onClose}
-                                className="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors"
+                                className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-[11px] font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all"
                             >
                                 <Save size={14} /> Guardar Cambios
                             </button>

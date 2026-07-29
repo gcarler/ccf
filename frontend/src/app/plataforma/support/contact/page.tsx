@@ -71,7 +71,7 @@ export default function SupportContactPage() {
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="text-center">
                 <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">Mensaje Enviado</h2>
                 <p className="text-sm text-[hsl(var(--text-secondary))]">Nuestro equipo te respondera en menos de 24 horas.</p>
-                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-1">Numero de caso: CCF-{ticketId}</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Numero de caso: CCF-{ticketId}</p>
             </motion.div>
             <button onClick={resetForm}
                 className="px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-semibold hover:bg-[hsl(var(--primary))] transition-all shadow-lg shadow-[hsl(var(--info)/20%)]">
@@ -84,7 +84,7 @@ export default function SupportContactPage() {
         <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
             <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
                 <LifeBuoy size={16} className="text-[hsl(var(--danger))]" />
-                <h1 className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contacto Directo</h1>
+                <h1 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contacto Directo</h1>
             </header>
 
             <div className="flex-1 overflow-y-auto p-4">
@@ -96,9 +96,9 @@ export default function SupportContactPage() {
                                 <div className={clsx('size-6 rounded-md flex items-center justify-center mb-3', channel.color)}>
                                     <channel.icon size={20} />
                                 </div>
-                                <p className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{channel.label}</p>
-                                <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-0.5">{channel.desc}</p>
-                                <span className={clsx('mt-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wide', channel.color)}>
+                                <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{channel.label}</p>
+                                <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">{channel.desc}</p>
+                                <span className={clsx('mt-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide', channel.color)}>
                                     <Clock size={8} /> {channel.badge}
                                 </span>
                             </motion.div>
@@ -107,7 +107,7 @@ export default function SupportContactPage() {
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                         className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 p-4 shadow-sm">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Enviar Mensaje</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Enviar Mensaje</p>
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
@@ -142,7 +142,7 @@ export default function SupportContactPage() {
                                 <div className="flex gap-3">
                                     {['normal', 'alta', 'urgente'].map((priority) => (
                                         <button type="button" key={priority} onClick={() => setForm((current) => ({ ...current, priority }))}
-                                            className={clsx('flex-1 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border-2 transition-all',
+                                            className={clsx('flex-1 py-2.5 rounded-md text-2xs font-semibold uppercase tracking-wide border-2 transition-all',
                                                 form.priority === priority ? 'border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]'
                                                     : 'border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]')}>
                                             {priority}
@@ -159,7 +159,7 @@ export default function SupportContactPage() {
                             </div>
 
                             <button type="submit" disabled={submitting}
-                                className="w-full flex items-center justify-center gap-2 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-[12px] uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--info)/20%)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
+                                className="w-full flex items-center justify-center gap-2 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg font-black text-sm uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--info)/20%)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
                                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                                 {submitting ? 'Enviando...' : 'Enviar Mensaje'}
                             </button>

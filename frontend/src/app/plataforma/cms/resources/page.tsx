@@ -376,7 +376,7 @@ export default function CmsResourcesPage() {
         <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-[hsl(var(--admin-bg-primary))]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--primary)/0.2)] bg-[hsl(var(--info-muted))] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:border-[hsl(var(--primary)/0.2)] dark:bg-[hsl(var(--primary)/0.1)]">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--primary)/0.2)] bg-[hsl(var(--info-muted))] px-2.5 py-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:border-[hsl(var(--primary)/0.2)] dark:bg-[hsl(var(--primary)/0.1)]">
                 <PackageOpen size={13} />
                 Biblioteca CMS
               </div>
@@ -398,7 +398,7 @@ export default function CmsResourcesPage() {
                 <div key={flow} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                   <Icon size={16} className="text-[hsl(var(--text-secondary))]" />
                   <p className="mt-2 text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{flowCounts[flow]}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{FLOW_LABEL[flow]}</p>
+                  <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{FLOW_LABEL[flow]}</p>
                 </div>
               ))}
             </div>
@@ -430,7 +430,7 @@ export default function CmsResourcesPage() {
                   )}
                 >
                   {item}
-                  <span className="text-[10px] text-[hsl(var(--text-secondary))]">
+                  <span className="text-2xs text-[hsl(var(--text-secondary))]">
                     {item === "Todos" ? RESOURCES.length : RESOURCES.filter((resource) => resource.category === item).length}
                   </span>
                 </button>
@@ -461,10 +461,10 @@ export default function CmsResourcesPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <h2 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{item.title}</h2>
-                          <span className={clsx("rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide", FLOW_CLASS[item.flow])}>
+                          <span className={clsx("rounded-full border px-2 py-0.5 text-2xs font-bold uppercase tracking-wide", FLOW_CLASS[item.flow])}>
                             {FLOW_LABEL[item.flow]}
                           </span>
-                          <span className="rounded-full border border-[hsl(var(--border))] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
+                          <span className="rounded-full border border-[hsl(var(--border))] px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
                             {READINESS_LABEL[item.readiness]}
                           </span>
                         </div>
@@ -474,31 +474,31 @@ export default function CmsResourcesPage() {
 
                     <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                       <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Superficie publica</p>
+                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Superficie publica</p>
                         <p className="mt-1 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.publicSurface}</p>
                       </div>
                       <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente / destino</p>
+                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente / destino</p>
                         <p className="mt-1 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.platformSource}</p>
                       </div>
                     </div>
 
                     <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                       <div>
-                        <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <p className="mb-2 flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                           <FileText size={13} />
                           Campos esperados
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {item.fields.map((field) => (
-                            <span key={field} className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1 text-[10px] font-semibold text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
+                            <span key={field} className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-1 text-2xs font-semibold text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
                               {field}
                             </span>
                           ))}
                         </div>
                       </div>
                       <div>
-                        <p className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <p className="mb-2 flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                           <ShieldCheck size={13} />
                           Guardrails
                         </p>
@@ -515,19 +515,19 @@ export default function CmsResourcesPage() {
 
                     <div className="mt-4 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] p-3 dark:border-white/10">
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <p className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                           <Layers3 size={13} />
                           Ejemplo de configuracion
                         </p>
                         <button
                           onClick={() => copyExample(item)}
-                          className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-white/15"
+                          className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-2xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-white/15"
                         >
                           <Copy size={12} />
                           {copiedId === item.id ? "Copiado" : "Copiar"}
                         </button>
                       </div>
-                      <pre className="max-h-44 overflow-auto whitespace-pre-wrap text-[11px] leading-relaxed text-[hsl(var(--text-secondary))]">
+                      <pre className="max-h-44 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-[hsl(var(--text-secondary))]">
                         {prettyJson(item.example)}
                       </pre>
                     </div>

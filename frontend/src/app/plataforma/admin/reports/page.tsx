@@ -80,7 +80,7 @@ export default function AdvancedBIReports() {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as ReportTab)}
                         className={clsx(
-                            "flex items-center gap-3 px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all active:scale-95",
+                            "flex items-center gap-3 px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all active:scale-95",
                             activeTab === tab.id 
                                 ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-xl shadow-[hsl(var(--info)/10%)]" 
                                 : "text-[hsl(var(--text-secondary))] hover:bg-white/50 dark:hover:bg-white/5"
@@ -101,17 +101,17 @@ export default function AdvancedBIReports() {
                         <div className="relative z-10 flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-3 mb-4">
-                                    <div className="px-3 py-1 bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] border border-[hsl(var(--info)/100%)]/30 rounded-full text-[9px] font-semibold uppercase tracking-wide flex items-center gap-2">
+                                    <div className="px-3 py-1 bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] border border-[hsl(var(--info)/100%)]/30 rounded-full text-2xs font-semibold uppercase tracking-wide flex items-center gap-2">
                                         <Layers size={12} /> Perspectiva de {activeTab}
                                     </div>
-                                    <span className="text-[hsl(var(--text-secondary))] text-[10px] font-bold uppercase tracking-wide">Actulizado hace 2 min</span>
+                                    <span className="text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide">Actulizado hace 2 min</span>
                                 </div>
                                 <h3 className="text-lg font-bold tracking-tighter leading-none mb-2">Indicador de Eficacia</h3>
                                 <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-md">Análisis predictivo basado en el comportamiento del último trimestre.</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
                                 <span className="text-xl font-bold text-white tracking-tighter">84.2%</span>
-                                <div className="flex items-center gap-1.5 text-[hsl(var(--success))] text-[10px] font-semibold uppercase tracking-wide">
+                                <div className="flex items-center gap-1.5 text-[hsl(var(--success))] text-2xs font-semibold uppercase tracking-wide">
                                     <TrendingUp size={14} /> +5.4% este mes
                                 </div>
                             </div>
@@ -150,14 +150,14 @@ export default function AdvancedBIReports() {
                                 <h4 className="text-lg font-bold tracking-tight">76% Finalización</h4>
                             </div>
                             <div className="space-y-3">
-                                <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <span>Formal</span>
                                     <span>92%</span>
                                 </div>
                                 <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-[hsl(var(--primary))] w-[92%]" />
                                 </div>
-                                <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <span>No Formal</span>
                                     <span>64%</span>
                                 </div>
@@ -179,7 +179,7 @@ export default function AdvancedBIReports() {
                                 <h4 className="text-lg font-bold tracking-tight">$12.50 / mes</h4>
                             </div>
                             <div className="p-4 bg-[hsl(var(--success-muted))] rounded-lg border border-[hsl(var(--success)/0.3)]">
-                                <p className="text-[10px] font-bold text-[hsl(var(--success))] leading-relaxed uppercase tracking-wider">
+                                <p className="text-2xs font-bold text-[hsl(var(--success))] leading-relaxed uppercase tracking-wider">
                                     Optimus AI: &quot;Reducción del 15% en costos operativos mediante automatización de actas.&quot;
                                 </p>
                             </div>
@@ -202,8 +202,8 @@ export default function AdvancedBIReports() {
                                         <Calendar size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Filtro Temporal</p>
-                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">Últimos 6 meses</p>
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Filtro Temporal</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))]">Últimos 6 meses</p>
                                     </div>
                                 </div>
                                 <ArrowUpRight size={16} className="text-[hsl(var(--text-secondary))]" />
@@ -215,8 +215,8 @@ export default function AdvancedBIReports() {
                                         <BookOpen size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Segmento</p>
-                                        <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">Modalidad Formal</p>
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Segmento</p>
+                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))]">Modalidad Formal</p>
                                     </div>
                                 </div>
                                 <ArrowUpRight size={16} className="text-[hsl(var(--text-secondary))]" />
@@ -243,21 +243,21 @@ export default function AdvancedBIReports() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
-                                        <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Educativo</span>
+                                        <span className="text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Educativo</span>
                                     </div>
                                     <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">65%</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <div className="size-2 rounded-full bg-[hsl(var(--surface-2))]" />
-                                        <span className="text-[11px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Donaciones</span>
+                                        <span className="text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Donaciones</span>
                                     </div>
                                     <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">35%</span>
                                 </div>
                             </div>
                         </div>
 
-                        <button className="w-full py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
+                        <button className="w-full py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
                             Generar PDF Inteligente
                         </button>
                     </div>

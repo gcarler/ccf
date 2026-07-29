@@ -129,7 +129,7 @@ export default function AuditPage() {
                 <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))]">{log.entity_type}</td>
                 <td className="px-4 py-3 text-xs">{log.entity_slug || log.entity_id || "-"}</td>
                 <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))] font-mono">{log.ip_address || "-"}</td>
-                <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${SEVERITY_COLORS[log.severity] || "bg-[hsl(var(--surface-2))]"}`}>{log.severity}</span></td>
+                <td className="px-4 py-3"><span className={`text-2xs font-bold px-2 py-0.5 rounded-full ${SEVERITY_COLORS[log.severity] || "bg-[hsl(var(--surface-2))]"}`}>{log.severity}</span></td>
               </tr>
             ))}
           </tbody>

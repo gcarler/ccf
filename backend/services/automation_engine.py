@@ -431,9 +431,10 @@ class AutomationEngine:
                         if (edge.condition_type and isinstance(edge.condition_type, str))
                         else ""
                     )
+                    found = False
                     if cond_type_str == "always":
                         # Always matches regardless of key/value
-                        pass
+                        found = True
                     elif edge.condition_key:
                         val = None
                         found = False
@@ -456,7 +457,7 @@ class AutomationEngine:
                             val = getattr(persona, edge.condition_key)
                             found = True
 
-                        if not found or not evaluate_condition(edge.condition_type, val, edge.condition_value):
+                        if cond_type_str != "always" and (not found or not evaluate_condition(edge.condition_type, val, edge.condition_value)):
                             # Skip this edge since condition evaluates to False
                             logger.info(f"Skipping edge {edge.id} due to condition mismatch: {edge.condition_key}")
                             continue
@@ -478,6 +479,7 @@ class AutomationEngine:
 
                 logger.error(f"Failed to execute CRM automation {automation.id}: {e}\n{traceback.format_exc()}")
                 action.status = "failed"
+        db.commit()
 
     def trigger_crm_automation(self, db: Session, automation_id: str, target_persona_id: str):
         from backend.models_crm import CrmAutomation, PendingCrmAction

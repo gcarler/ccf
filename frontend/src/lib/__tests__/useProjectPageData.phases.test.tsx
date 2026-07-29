@@ -90,7 +90,7 @@ describe("useProjectPageData — phase sync reset (PEND-QUALITY-PHASE-SYNC-001)"
   });
 
   it("A) carga inicial del proyecto A → phases se hidratan correctamente", async () => {
-    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation(async (url: string) => {
+    vi.mocked(apiFetch).mockImplementation(async (url: string) => {
       if (url === "/projects/__placeholder__") {
         return { id: "__placeholder__", title: "Proyecto A" };
       }
@@ -113,7 +113,7 @@ describe("useProjectPageData — phase sync reset (PEND-QUALITY-PHASE-SYNC-001)"
   it("B) recarga con [] reemplaza estado (no conserva el anterior)", async () => {
     // 1ra carga: 3 fases; 2da carga: 0 fases.
     let phasesCalls = 0;
-    (apiFetch as ReturnType<typeof vi.fn>).mockImplementation(async (url: string) => {
+    vi.mocked(apiFetch).mockImplementation(async (url: string) => {
       if (url === "/projects/__placeholder__") {
         return { id: "__placeholder__", title: "Proyecto A" };
       }

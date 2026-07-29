@@ -83,13 +83,13 @@ export default function CRMClient() {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                                 <div className="lg:col-span-2">
                                     <DSCard>
-                                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Crecimiento de Participación</h3>
+                                        <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Crecimiento de Participación</h3>
                                         <DSChart type="area" data={dashboard?.growth_chart} color="hsl(var(--success))" height={220} />
                                     </DSCard>
                                 </div>
                                 <div>
                                     <DSCard>
-                                        <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Distribución por Rol</h3>
+                                        <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Distribución por Rol</h3>
                                         <DSChart type="bar" data={dashboard?.pipeline_funnel} color="hsl(var(--primary))" height={220} />
                                     </DSCard>
                                 </div>
@@ -107,7 +107,7 @@ export default function CRMClient() {
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Directorio de Personas</h4>
-                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium mt-0.5">Gestiona y filtra las personas registradas</p>
+                                            <p className="text-xs text-[hsl(var(--text-secondary))] font-medium mt-0.5">Gestiona y filtra las personas registradas</p>
                                         </div>
                                     </div>
                                     <ArrowUpRight className="absolute top-3 right-3 size-4 text-[hsl(var(--text-secondary))] group-hover:text-ccf-blue transition-colors" />
@@ -123,7 +123,7 @@ export default function CRMClient() {
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Pipeline de Consolidación</h4>
-                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium mt-0.5">Seguimiento de casos activos</p>
+                                            <p className="text-xs text-[hsl(var(--text-secondary))] font-medium mt-0.5">Seguimiento de casos activos</p>
                                         </div>
                                     </div>
                                     <ArrowUpRight className="absolute top-3 right-3 size-4 text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--success))] transition-colors" />
@@ -139,7 +139,7 @@ export default function CRMClient() {
                                         </div>
                                         <div>
                                             <h4 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Consejería y Citas</h4>
-                                            <p className="text-[11px] text-[hsl(var(--text-secondary))] font-medium mt-0.5">Agenda de acompañamiento pastoral</p>
+                                            <p className="text-xs text-[hsl(var(--text-secondary))] font-medium mt-0.5">Agenda de acompañamiento pastoral</p>
                                         </div>
                                     </div>
                                     <ArrowUpRight className="absolute top-3 right-3 size-4 text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />

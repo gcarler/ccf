@@ -21,7 +21,7 @@ export function DSBadge({ tone = 'slate', label, className, ...props }: DSBadgeP
     return (
         <span
             className={clsx(
-                'px-1.5 py-0.5 inline-flex items-center justify-center text-[9px] font-semibold uppercase tracking-wide',
+                'px-1.5 py-0.5 inline-flex items-center justify-center text-2xs font-semibold uppercase tracking-wide',
                 'rounded font-sans border border-white/10 shadow-sm backdrop-blur',
                 toneStyles[tone],
                 className

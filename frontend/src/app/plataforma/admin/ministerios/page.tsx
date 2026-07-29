@@ -14,7 +14,7 @@ import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-white/20";
-const LABEL = "text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]";
+const LABEL = "text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]";
 
 interface Ministry {
     id: number;
@@ -130,7 +130,7 @@ export default function MinisteriosPage() {
                 onSearch={setSearch}
                 rightActions={
                     <button onClick={openCreate}
-                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                         <Plus size={16} strokeWidth={3} /> Nuevo Ministerio
                     </button>
                 }
@@ -154,7 +154,7 @@ export default function MinisteriosPage() {
                                 </div>
                                 <div>
                                     <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">{stat.value}</p>
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</p>
                                 </div>
                             </motion.div>
                         );
@@ -181,7 +181,7 @@ export default function MinisteriosPage() {
                         </div>
                         {!search && (
                             <button onClick={openCreate}
-                                className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                                className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                                 <Plus size={16} strokeWidth={3} /> Nuevo Ministerio
                             </button>
                         )}
@@ -193,7 +193,7 @@ export default function MinisteriosPage() {
                                 <thead className="bg-[hsl(var(--surface-1))] dark:bg-black/20">
                                     <tr>
                                         {['Ministerio', 'Descripción', 'Líder', 'Personas', 'Acciones'].map(h => (
-                                            <th key={h} className="py-2.5 px-4 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] border-b border-[hsl(var(--border))] dark:border-white/5">
+                                            <th key={h} className="py-2.5 px-4 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] border-b border-[hsl(var(--border))] dark:border-white/5">
                                                 {h}
                                             </th>
                                         ))}
@@ -225,7 +225,7 @@ export default function MinisteriosPage() {
                                                         {m.leader_name}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-white/20 font-bold">Sin asignar</span>
+                                                    <span className="text-2xs text-[hsl(var(--text-secondary))] dark:text-white/20 font-bold">Sin asignar</span>
                                                 )}
                                             </td>
                                             <td className="py-3 px-4">
@@ -283,7 +283,7 @@ export default function MinisteriosPage() {
                                     </div>
                                     {m.leader_name && (
                                         <div className="flex items-center gap-1.5 font-semibold text-[hsl(var(--primary))] uppercase tracking-wider">
-                                            <div className="size-4 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center text-[7px]">{m.leader_name.charAt(0)}</div>
+                                            <div className="size-4 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center text-2xs">{m.leader_name.charAt(0)}</div>
                                             {m.leader_name}
                                         </div>
                                     )}
@@ -301,7 +301,7 @@ export default function MinisteriosPage() {
                                 <div className="size-10 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0"><Church size={18} /></div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{m.name}</p>
-                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">{m.description || 'Sin descripción'}</p>
+                                    <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 truncate">{m.description || 'Sin descripción'}</p>
                                 </div>
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => openEdit(m)} className="p-2 hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
@@ -332,7 +332,7 @@ export default function MinisteriosPage() {
                                         <Church size={16} />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{editing ? 'Editar' : 'Nuevo'} Ministerio</p>
+                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{editing ? 'Editar' : 'Nuevo'} Ministerio</p>
                                         <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{editing ? editing.name : 'Sin nombre'}</h3>
                                     </div>
                                 </div>
@@ -354,17 +354,17 @@ export default function MinisteriosPage() {
                                 <div className="space-y-2">
                                     <label className={LABEL}>ID del Líder (Persona)</label>
                                     <input type="number" min={1} placeholder="ID del persona líder" value={form.leader_id} onChange={set('leader_id')} className={INPUT} />
-                                    <p className="text-[10px] text-[hsl(var(--text-secondary))] ml-4">Ingresa el ID del persona que liderará este ministerio.</p>
+                                    <p className="text-2xs text-[hsl(var(--text-secondary))] ml-4">Ingresa el ID del persona que liderará este ministerio.</p>
                                 </div>
                             </form>
 
                             <div className="flex items-center gap-3 px-3 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
                                 <button type="button" onClick={() => setDrawerOpen(false)}
-                                    className="flex-1 py-3 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all">
+                                    className="flex-1 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all">
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-[hsl(var(--primary))] text-white rounded-md text-[11px] font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
+                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
                                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                     {saving ? 'Guardando...' : (editing ? 'Actualizar' : 'Crear')}
                                 </button>
@@ -387,11 +387,11 @@ export default function MinisteriosPage() {
                             <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">¿Eliminar ministerio?</h3>
                             <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 mb-5">Esta acción no se puede deshacer.</p>
                             <div className="flex gap-3">
-                                <button onClick={() => setDeleteId(null)} className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">
+                                <button onClick={() => setDeleteId(null)} className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">
                                     Cancelar
                                 </button>
                                 <button onClick={() => handleDelete(deleteId!)}
-                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--danger))] text-white text-[11px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--danger))] active:scale-95 transition-all shadow-lg shadow-[hsl(var(--danger)/20%)]">
+                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--danger))] text-white text-xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--danger))] active:scale-95 transition-all shadow-lg shadow-[hsl(var(--danger)/20%)]">
                                     Eliminar
                                 </button>
                             </div>

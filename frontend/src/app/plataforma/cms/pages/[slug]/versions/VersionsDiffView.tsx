@@ -89,10 +89,10 @@ function DiffSummary({
             <GitCompare size={16} />
           </div>
           <div>
-            <h2 className="text-[14px] font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+            <h2 className="text-md font-semibold text-[hsl(var(--text-primary))] dark:text-white">
               Resumen del diff
             </h2>
-            <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-0.5">
+            <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">
               Comparación semántica entre la versión <span className="font-mono">#{before.version_number}</span>{" "}
               y la <span className="font-mono">#{after.version_number}</span>
               {isForward ? "" : " (orden inverso)"}.
@@ -102,7 +102,7 @@ function DiffSummary({
         {canRollback && onRollback && (
           <button
             onClick={() => onRollback(before.id)}
-            className="inline-flex items-center gap-2 rounded-md border border-[hsl(var(--warning)/30%)] dark:border-[hsl(var(--warning)/100%)]/40 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-warning-text dark:text-warning-text hover:bg-[hsl(var(--warning-muted))] dark:hover:bg-[hsl(var(--warning))]/20 transition-all"
+            className="inline-flex items-center gap-2 rounded-md border border-[hsl(var(--warning)/30%)] dark:border-[hsl(var(--warning)/100%)]/40 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-warning-text dark:text-warning-text hover:bg-[hsl(var(--warning-muted))] dark:hover:bg-[hsl(var(--warning))]/20 transition-all"
           >
             <ArrowDown size={12} /> Restaurar v{before.version_number}
           </button>
@@ -126,7 +126,7 @@ function DiffSummary({
           <button
             onClick={onToggleHideUnchanged}
             aria-pressed={hideUnchanged}
-            className="inline-flex items-center gap-1.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
+            className="inline-flex items-center gap-1.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2.5 py-1 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
           >
             {hideUnchanged ? "Mostrar secciones sin cambios" : "Ocultar secciones sin cambios"}
           </button>
@@ -158,10 +158,10 @@ function SummaryStat({
         tone === "muted" && "border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-2))] dark:bg-white/[0.02]",
       )}
     >
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+      <div className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
         <Icon size={11} /> {label}
       </div>
-      <div className="mt-1 text-[18px] font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</div>
+      <div className="mt-1 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</div>
     </div>
   );
 }
@@ -181,7 +181,7 @@ function PageMetaCard({ diff }: { diff: PageVersionDiff }) {
     <section className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-4 space-y-4">
       <header className="flex items-center gap-2">
         <FileText size={14} className="text-[hsl(var(--primary))]" />
-        <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))] dark:text-white">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))] dark:text-white">
           Metadatos de la página
         </h3>
       </header>
@@ -191,7 +191,7 @@ function PageMetaCard({ diff }: { diff: PageVersionDiff }) {
         <FieldDiffRow label="Estado" diff={diff.pageMeta.status} layout="inline" />
         {Object.entries(diff.pageMeta.seo).length > 0 && (
           <div className="space-y-3 pt-3 border-t border-[hsl(var(--border))] dark:border-white/5">
-            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+            <h4 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
               SEO
             </h4>
             {Object.entries(diff.pageMeta.seo)
@@ -221,19 +221,19 @@ function SectionsCard({ sections, totalSections }: { sections: SectionDiffT[]; t
     <section className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-4 space-y-3">
       <header className="flex items-center gap-2">
         <GitCompare size={14} className="text-[hsl(var(--primary))]" />
-        <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))] dark:text-white">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))] dark:text-white">
           Secciones ({sections.length}
           {hidden > 0 ? ` de ${totalSections}` : ""})
         </h3>
         {hidden > 0 && (
-          <span className="text-[10px] text-[hsl(var(--text-secondary))]">
+          <span className="text-2xs text-[hsl(var(--text-secondary))]">
             ({hidden} sin cambios ocultas)
           </span>
         )}
       </header>
       <div className="space-y-2">
         {sections.length === 0 && (
-          <div className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-6 text-center text-[12px] text-[hsl(var(--text-secondary))]">
+          <div className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-6 text-center text-sm text-[hsl(var(--text-secondary))]">
             Ninguna de las dos versiones contiene secciones.
           </div>
         )}
@@ -259,21 +259,21 @@ function SectionRow({ section }: { section: SectionDiffT }) {
         <div className="flex items-center gap-2 min-w-0">
           <span
             className={clsx(
-              "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
+              "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide",
               tone.badge,
             )}
           >
             <Icon size={10} /> {sectionStatusLabel(section.status)}
           </span>
-          <span className="font-mono text-[11px] text-[hsl(var(--text-secondary))] truncate">
+          <span className="font-mono text-xs text-[hsl(var(--text-secondary))] truncate">
             {section.section_key}
           </span>
-          <span className="text-[10px] text-[hsl(var(--text-secondary))]">
+          <span className="text-2xs text-[hsl(var(--text-secondary))]">
             · {section.type}
           </span>
         </div>
         {(section.status === "reordered" || section.status === "visibility-changed" || section.status === "status-changed") && (
-          <span className="text-[10px] text-[hsl(var(--text-secondary))]">
+          <span className="text-2xs text-[hsl(var(--text-secondary))]">
             {section.status === "reordered" && section.sort_before !== undefined && section.sort_after !== undefined && (
               <span className="inline-flex items-center gap-1">
                 orden #{section.sort_before}
@@ -436,7 +436,7 @@ function SectionPreview({
 }) {
   if (!props) {
     return (
-      <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">
+      <p className="text-xs text-[hsl(var(--text-secondary))] italic">
         (sin props_json)
       </p>
     );
@@ -461,7 +461,7 @@ function SectionPreview({
       {title && (
         <p
           className={clsx(
-            "text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-white",
+            "text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white",
             side === "before" && "line-through",
           )}
         >
@@ -471,7 +471,7 @@ function SectionPreview({
       {body && (
         <p
           className={clsx(
-            "text-[11px] text-[hsl(var(--text-secondary))] whitespace-pre-wrap break-words line-clamp-3",
+            "text-xs text-[hsl(var(--text-secondary))] whitespace-pre-wrap break-words line-clamp-3",
             side === "before" && "line-through",
           )}
         >
@@ -479,21 +479,21 @@ function SectionPreview({
         </p>
       )}
       {image && (
-        <p className="text-[10px] font-mono text-[hsl(var(--text-secondary))] truncate">
+        <p className="text-2xs font-mono text-[hsl(var(--text-secondary))] truncate">
           🖼 {image}
         </p>
       )}
       {(ctaLabel || ctaHref) && (
-        <p className="text-[10px] text-[hsl(var(--text-secondary))]">
+        <p className="text-2xs text-[hsl(var(--text-secondary))]">
           {ctaLabel && <span className="font-semibold">[{ctaLabel}]</span>} {ctaHref}
         </p>
       )}
       {items && (
-        <div className="text-[10px] text-[hsl(var(--text-secondary))]">
+        <div className="text-2xs text-[hsl(var(--text-secondary))]">
           {items.length} ítem{items.length === 1 ? "" : "es"} en ``items``
         </div>
       )}
-      <p className="text-[9px] uppercase tracking-wider text-[hsl(var(--text-secondary))] opacity-70">
+      <p className="text-2xs uppercase tracking-wider text-[hsl(var(--text-secondary))] opacity-70">
         type: {sectionType}
       </p>
     </div>

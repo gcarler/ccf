@@ -106,7 +106,7 @@ function TreeNode({
 
                 {/* Label */}
                 <span className={clsx(
-                    'flex-1 text-[12px] truncate',
+                    'flex-1 text-sm truncate',
                     isActive ? 'font-bold' : 'font-medium'
                 )}>
                     {node.label}
@@ -164,7 +164,7 @@ export default function TaskRouteTree({
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.06]">
-                <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Ruta de la tarea</p>
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Ruta de la tarea</p>
 
                 {/* Breadcrumb path */}
                 <div className="flex flex-col gap-1">
@@ -178,7 +178,7 @@ export default function TaskRouteTree({
                                     <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/[0.08] shrink-0 -ml-px" />
                                 )}
                                 <div className={clsx(
-                                    'flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px]',
+                                    'flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs',
                                     isLast
                                         ? 'font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10'
                                         : 'font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
@@ -198,7 +198,7 @@ export default function TaskRouteTree({
                     {(Object.entries(TYPE_COLOR) as [RouteNode['type'], string][]).map(([type, color]) => {
                         const Icon = TYPE_ICON[type];
                         return (
-                            <span key={type} className={clsx('flex items-center gap-1 text-[10px] font-medium', color)}>
+                            <span key={type} className={clsx('flex items-center gap-1 text-2xs font-medium', color)}>
                                 <Icon size={10} />
                                 <span className="text-[hsl(var(--text-secondary))] capitalize">{type}</span>
                             </span>
@@ -210,7 +210,7 @@ export default function TaskRouteTree({
             {/* Tree */}
             <div className="flex-1 overflow-y-auto py-2 px-2">
                 {tree.length === 0 ? (
-                    <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-2">
+                    <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-2">
                         No hay datos de ruta disponibles.
                     </p>
                 ) : (

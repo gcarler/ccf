@@ -185,7 +185,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
     <div className="relative flex flex-col flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))]">
       {error && (
         <div className="mx-4 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-          <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+          <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
         </div>
       )}
       {messages.length === 0 ? (
@@ -204,7 +204,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
                 shouldAutoScroll.current = true;
                 scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
               }}
-              className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-white text-[10px] font-bold uppercase tracking-wide shadow-lg hover:scale-105 transition-all"
+              className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg hover:scale-105 transition-all"
             >
               Nuevos mensajes ↓
             </button>
@@ -230,14 +230,14 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
                     }`}
                   >
                     {!isOwn && showSender && (
-                      <p className="text-[11px] font-bold mb-1 opacity-70">
+                      <p className="text-xs font-bold mb-1 opacity-70">
                         {msg.sender_name}
                       </p>
                     )}
                     <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
                     <div className="flex items-center justify-end gap-1.5 mt-1">
                       <span
-                        className={`text-[10px] ${
+                        className={`text-2xs ${
                           isOwn ? "text-[hsl(var(--info))]" : "text-[hsl(var(--text-secondary))]"
                         }`}
                       >
@@ -281,7 +281,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
             )}
           </div>
         </div>
-        <p className="text-[10px] text-[hsl(var(--text-secondary))] text-center mt-1.5 opacity-50">
+        <p className="text-2xs text-[hsl(var(--text-secondary))] text-center mt-1.5 opacity-50">
           Enter para enviar · Shift+Enter para salto de línea
         </p>
       </div>

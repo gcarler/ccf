@@ -268,7 +268,7 @@ export default function LeadDetail() {
                 <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
                 >
                     Reintentar
                 </button>
@@ -294,7 +294,7 @@ export default function LeadDetail() {
             rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCallDrawerOpen(true)}
-                    className="inline-flex h-8 items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm transition-all active:scale-95"
+                    className="inline-flex h-8 items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-all active:scale-95"
                 >
                     <Plus size={14} />
                     Interacción
@@ -313,7 +313,7 @@ export default function LeadDetail() {
                                     <h1 className="truncate text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
                                         {lead?.nombre_completo || 'Contacto sin nombre'}
                                     </h1>
-                                    <span className={clsx('rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide', STAGE_BADGES[stage])}>
+                                    <span className={clsx('rounded-full border px-2.5 py-1 text-2xs font-bold uppercase tracking-wide', STAGE_BADGES[stage])}>
                                         {STAGE_LABELS[stage] ?? stage}
                                     </span>
                                 </div>
@@ -328,7 +328,7 @@ export default function LeadDetail() {
                         <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={() => router.push('/plataforma/crm/pipeline')}
-                                className="inline-flex h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                                className="inline-flex h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
                             >
                                 <Link2 size={14} />
                                 Pipeline
@@ -338,7 +338,7 @@ export default function LeadDetail() {
                                     <button
                                         onClick={() => setIsStageOpen(value => !value)}
                                         disabled={isSavingStage}
-                                        className="inline-flex h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] disabled:opacity-60 dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                                        className="inline-flex h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] disabled:opacity-60 dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
                                     >
                                         {isSavingStage ? <Loader2 size={14} className="animate-spin" /> : <ChevronDown size={14} />}
                                         Cambiar etapa
@@ -350,7 +350,7 @@ export default function LeadDetail() {
                                                     key={item}
                                                     onClick={() => handleStageChange(item)}
                                                     className={clsx(
-                                                        'flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-bold uppercase tracking-wide transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5',
+                                                        'flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold uppercase tracking-wide transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5',
                                                         stage === item ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
                                                     )}
                                                 >
@@ -375,7 +375,7 @@ export default function LeadDetail() {
                         <div key={stat.label} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</p>
+                                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</p>
                                     <p className="mt-1 text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{stat.value}</p>
                                 </div>
                                 <div className="flex size-9 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] dark:bg-white/5">
@@ -396,7 +396,7 @@ export default function LeadDetail() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as 'history' | 'notes')}
                                 className={clsx(
-                                    'relative px-3 py-3 text-[11px] font-bold uppercase tracking-wide transition-colors',
+                                    'relative px-3 py-3 text-xs font-bold uppercase tracking-wide transition-colors',
                                     activeTab === tab.id
                                         ? 'text-[hsl(var(--primary))]'
                                         : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]'
@@ -411,7 +411,7 @@ export default function LeadDetail() {
                     {activeTab === 'notes' && (
                         <div className="border-b border-[hsl(var(--border))] p-4 dark:border-white/10">
                             <form onSubmit={handleSaveNote} className="space-y-3">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nueva nota</label>
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nueva nota</label>
                                 <textarea
                                     value={noteText}
                                     onChange={event => setNoteText(event.target.value)}
@@ -423,7 +423,7 @@ export default function LeadDetail() {
                                     <button
                                         type="submit"
                                         disabled={isSavingNote || !noteText.trim()}
-                                        className="inline-flex h-8 items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm transition-all disabled:opacity-50 active:scale-95"
+                                        className="inline-flex h-8 items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-all disabled:opacity-50 active:scale-95"
                                     >
                                         {isSavingNote ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                                         Guardar nota
@@ -447,7 +447,7 @@ export default function LeadDetail() {
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-start justify-between gap-2">
                                                 <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{item.title}</h3>
-                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                                <span className="inline-flex items-center gap-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                     <Calendar size={11} />
                                                     {formatDate(item.time)}
                                                 </span>
@@ -455,7 +455,7 @@ export default function LeadDetail() {
                                             <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.message}</p>
                                             {item.prayer && (
                                                 <div className="mt-3 rounded-md border border-[hsl(var(--success)/25%)] bg-success-soft p-3 text-xs text-success-text dark:border-[hsl(var(--success)/100%)]/20 dark:bg-[hsl(var(--success))]/10 dark:text-[hsl(var(--success))]">
-                                                    <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide">
+                                                    <p className="mb-1 flex items-center gap-1.5 text-2xs font-bold uppercase tracking-wide">
                                                         <Heart size={11} />
                                                         Motivo de oración
                                                     </p>
@@ -469,7 +469,7 @@ export default function LeadDetail() {
                         ) : (
                             <div className="py-10 text-center">
                                 <History size={34} className="mx-auto text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
-                                <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin registros todavía</p>
+                                <p className="mt-3 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin registros todavía</p>
                             </div>
                         )}
                     </div>
@@ -483,14 +483,14 @@ export default function LeadDetail() {
                 subtitle="Llamadas, seguimientos y motivos de oración"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsCallDrawerOpen(false)} className="px-4 py-2 text-[11px] font-bold text-[hsl(var(--text-secondary))]">
+                        <button type="button" onClick={() => setIsCallDrawerOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))]">
                             Cancelar
                         </button>
                         <button
                             form="call-form"
                             type="submit"
                             disabled={isSavingCall}
-                            className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm transition-all disabled:opacity-60 active:scale-95"
+                            className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-all disabled:opacity-60 active:scale-95"
                         >
                             {isSavingCall ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
@@ -500,7 +500,7 @@ export default function LeadDetail() {
             >
                 <form id="call-form" onSubmit={handleRegisterCall} className="space-y-3">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo / resultado</label>
+                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo / resultado</label>
                         <select
                             value={callForm.outcome}
                             onChange={event => setCallForm({ ...callForm, outcome: event.target.value })}
@@ -512,7 +512,7 @@ export default function LeadDetail() {
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Notas</label>
+                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Notas</label>
                         <textarea
                             value={callForm.notes}
                             onChange={event => setCallForm({ ...callForm, notes: event.target.value })}
@@ -522,7 +522,7 @@ export default function LeadDetail() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Motivo de oración</label>
+                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Motivo de oración</label>
                         <textarea
                             value={callForm.prayer_requests}
                             onChange={event => setCallForm({ ...callForm, prayer_requests: event.target.value })}

@@ -95,7 +95,7 @@ export default function AuditDetailPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         <div className="lg:col-span-2 space-y-3">
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Descripción del Evento</h3>
+                                <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Descripción del Evento</h3>
                                 <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
                                     {JSON.stringify({
                                         action: log.action,
@@ -107,7 +107,7 @@ export default function AuditDetailPage() {
                             </DSCard>
 
                             <DSCard>
-                                <h3 className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Metadatos de la Transacción</h3>
+                                <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Metadatos de la Transacción</h3>
                                 <div className="bg-[hsl(var(--bg-muted))] rounded-lg p-3 overflow-x-auto">
                                     <pre className="text-[hsl(var(--success))] text-xs font-mono">
                                         {JSON.stringify(log, null, 4)}
@@ -120,7 +120,7 @@ export default function AuditDetailPage() {
                             <DSCard>
                                 <div className="space-y-3">
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Actor</p>
+                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Actor</p>
                                         <div className="flex items-center gap-2">
                                             <div className="size-8 rounded-lg bg-[hsl(var(--bg-muted))] text-white flex items-center justify-center">
                                                 <User size={16} />
@@ -130,14 +130,14 @@ export default function AuditDetailPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Marca de Tiempo</p>
+                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Marca de Tiempo</p>
                                         <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                             <Clock size={14} /> {new Date(log.timestamp).toLocaleString()}
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Feature</p>
+                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Feature</p>
                                         <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                             <Globe size={14} /> {log.feature_id || 'global'}
                                         </div>

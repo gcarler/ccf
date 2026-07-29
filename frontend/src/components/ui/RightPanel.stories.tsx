@@ -31,15 +31,15 @@ export const Default: Story = {
       <div className="p-4 space-y-3">
         <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
           <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Juan Pérez</p>
-          <p className="text-[10px] text-[hsl(var(--text-secondary))]">Se unió al grupo &quot;Jóvenes&quot;</p>
+          <p className="text-2xs text-[hsl(var(--text-secondary))]">Se unió al grupo &quot;Jóvenes&quot;</p>
         </div>
         <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
           <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">María González</p>
-          <p className="text-[10px] text-[hsl(var(--text-secondary))]">Completó la lección 5</p>
+          <p className="text-2xs text-[hsl(var(--text-secondary))]">Completó la lección 5</p>
         </div>
         <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
           <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Carlos López</p>
-          <p className="text-[10px] text-[hsl(var(--text-secondary))]">Actualizó su perfil</p>
+          <p className="text-2xs text-[hsl(var(--text-secondary))]">Actualizó su perfil</p>
         </div>
       </div>
     ),
@@ -56,7 +56,7 @@ export const WidePanel: Story = {
       <div className="p-4 space-y-3">
         <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
           <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Cambio reciente</p>
-          <p className="text-[10px] text-[hsl(var(--text-secondary))]">Detalles adicionales del cambio realizado en el sistema</p>
+          <p className="text-2xs text-[hsl(var(--text-secondary))]">Detalles adicionales del cambio realizado en el sistema</p>
         </div>
       </div>
     ),

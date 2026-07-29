@@ -116,7 +116,7 @@ def add_persona_ministry(
 ) -> Optional[dict]:
     from backend.models_kernel import PersonaMinistry
 
-    pid = uuid.UUID(persona_id)
+    pid = uuid.UUID(str(persona_id))
     existing = (
         db.query(PersonaMinistry)
         .filter(PersonaMinistry.persona_id == pid, PersonaMinistry.ministry == ministry)
@@ -128,11 +128,13 @@ def add_persona_ministry(
     if is_primary:
         db.query(PersonaMinistry).filter(PersonaMinistry.persona_id == pid).update({"is_primary": False})
 
+    rec_id = uuid.UUID(str(recognized_by_persona_id)) if recognized_by_persona_id else None
+
     row = PersonaMinistry(
         persona_id=pid,
         ministry=ministry,
         is_primary=is_primary,
-        recognized_by_persona_id=recognized_by_persona_id,
+        recognized_by_persona_id=rec_id,
         notes=notes,
     )
     db.add(row)
@@ -152,7 +154,7 @@ def remove_persona_ministry(db: Session, persona_id: str, ministry: str) -> bool
     row = (
         db.query(PersonaMinistry)
         .filter(
-            PersonaMinistry.persona_id == uuid.UUID(persona_id),
+            PersonaMinistry.persona_id == uuid.UUID(str(persona_id)),
             PersonaMinistry.ministry == ministry,
         )
         .first()
@@ -172,7 +174,7 @@ def remove_persona_ministry(db: Session, persona_id: str, ministry: str) -> bool
 def get_persona_church_role(db: Session, persona_id: str) -> Optional[dict]:
     from backend.models_kernel import PersonaRoleAssignment
 
-    row = db.query(PersonaRoleAssignment).filter(PersonaRoleAssignment.persona_id == uuid.UUID(persona_id)).first()
+    row = db.query(PersonaRoleAssignment).filter(PersonaRoleAssignment.persona_id == uuid.UUID(str(persona_id))).first()
     if not row:
         return None
     return {
@@ -194,13 +196,14 @@ def set_persona_church_role(
 ) -> Optional[dict]:
     from backend.models_kernel import PersonaRoleAssignment, PersonaRoleHistory
 
-    pid = uuid.UUID(persona_id)
+    pid = uuid.UUID(str(persona_id))
+    chg_id = uuid.UUID(str(changed_by_persona_id)) if changed_by_persona_id else None
     current = db.query(PersonaRoleAssignment).filter(PersonaRoleAssignment.persona_id == pid).first()
     old_role = current.church_role if current else None
 
     if current:
         current.church_role = church_role
-        current.assigned_by_persona_id = changed_by_persona_id
+        current.assigned_by_persona_id = chg_id
         if notes:
             current.notes = notes
         row = current
@@ -208,7 +211,7 @@ def set_persona_church_role(
         row = PersonaRoleAssignment(
             persona_id=pid,
             church_role=church_role,
-            assigned_by_persona_id=changed_by_persona_id,
+            assigned_by_persona_id=chg_id,
             notes=notes,
         )
         db.add(row)
@@ -219,7 +222,7 @@ def set_persona_church_role(
             from_role=old_role,
             to_role=church_role,
             reason=reason,
-            changed_by_persona_id=changed_by_persona_id,
+            changed_by_persona_id=chg_id,
         )
     )
     db.commit()

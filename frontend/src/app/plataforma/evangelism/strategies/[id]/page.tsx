@@ -106,7 +106,7 @@ function RoleSelect({ value, options, colorClass, onChange }: {
  onClick={() => setOpen(o => !o)}
  aria-expanded={open}
  aria-haspopup="listbox"
- className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded cursor-pointer ${colorClass}`}
+ className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded cursor-pointer ${colorClass}`}
  >
  {current?.label ?? value}
  <ChevronDown size={10} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -120,7 +120,7 @@ function RoleSelect({ value, options, colorClass, onChange }: {
  role="option"
  aria-selected={value === opt.value}
  onClick={() => { onChange(opt.value); setOpen(false); }}
- className={`w-full text-left px-3 py-1.5 text-[11px] font-semibold hover:bg-[hsl(var(--bg-muted))] transition-colors ${value === opt.value ? 'opacity-60' : ''}`}
+ className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--bg-muted))] transition-colors ${value === opt.value ? 'opacity-60' : ''}`}
  >
  {opt.label}
  </button>
@@ -924,7 +924,7 @@ export default function StrategyDetailPage() {
  </div>
 
  {!canManageStrategySurface && (
- <div className="rounded-lg border border-[hsl(var(--info-muted))] bg-[hsl(var(--info-muted))] px-3 py-2 text-[11px] font-medium text-[hsl(var(--info))]">
+ <div className="rounded-lg border border-[hsl(var(--info-muted))] bg-[hsl(var(--info-muted))] px-3 py-2 text-xs font-medium text-[hsl(var(--info))]">
   Vista en modo lectura. Las acciones de edición y gestión quedan reservadas para usuarios con `evangelism:manage`.
  </div>
  )}
@@ -1064,7 +1064,7 @@ export default function StrategyDetailPage() {
  editable: false,
  filterable: true,
  render: (v: unknown) => (
- <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[11px] font-semibold">
+ <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-xs font-semibold">
  <Users size={10} />{String(v ?? '—')}
  </span>
  ),
@@ -1107,13 +1107,13 @@ export default function StrategyDetailPage() {
  <div className="flex items-center gap-1">
  <button
  onClick={(e) => { e.stopPropagation(); openPersonaDrawer(item); }}
- className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors"
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-2xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors"
  >
  <Users size={10} /> Personas
  </button>
  <button
  onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/evangelism/groups/${item.id}`); }}
- className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors"
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-2xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors"
  >
  <Calendar size={10} /> Detalle
  </button>
@@ -1206,7 +1206,7 @@ export default function StrategyDetailPage() {
  <div className="flex items-center gap-1">
  <button
  onClick={(e) => { e.stopPropagation(); openAttendanceDrawer(item); }}
- className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[10px] font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
+ className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-2xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
  >
  <Users size={10} /> Asistencia
  </button>
@@ -1214,7 +1214,7 @@ export default function StrategyDetailPage() {
  <button
  onClick={(e) => { e.stopPropagation(); toggleSessionHabilitacion(item); }}
  title={item.estado_habilitacion === 'HABILITADO' ? 'Cerrar sesión' : 'Abrir sesión'}
- className={`w-6 h-6 inline-flex items-center justify-center rounded font-bold text-[11px] transition-colors ${
+ className={`w-6 h-6 inline-flex items-center justify-center rounded font-bold text-xs transition-colors ${
  item.estado_habilitacion === 'HABILITADO'
  ? 'bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]'
  : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] hover:bg-[hsl(var(--success)/0.2)] hover:text-[hsl(var(--success))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]'
@@ -1250,7 +1250,7 @@ export default function StrategyDetailPage() {
  <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{g.name}</p>
  <p className="text-xs text-[hsl(var(--text-secondary))]">{g.personas_count} personas{g.zone ? ` · ${g.zone}` : ''}</p>
  </div>
- <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">Grupo</span>
+ <span className="px-2 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">Grupo</span>
  </div>
  ))}
  {(activeTab === 'sessions' || activeTab === 'overview') && sessions.map(s => (
@@ -1260,7 +1260,7 @@ export default function StrategyDetailPage() {
  <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{s.topic || `Sesión #${s.id}`}</p>
  <p className="text-xs text-[hsl(var(--text-secondary))]">{groupName(s.grupo_id)} · {formatDate(s.session_date)}</p>
  </div>
- <span className="px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? 'hsl(var(--success)/0.125)' : '#3B82F620', color: s.status === 'Realizada' ? 'hsl(var(--success))' : 'hsl(var(--info))' }}>{s.status}</span>
+ <span className="px-2 py-0.5 rounded text-2xs font-bold" style={{ backgroundColor: s.status === 'Realizada' ? 'hsl(var(--success)/0.125)' : '#3B82F620', color: s.status === 'Realizada' ? 'hsl(var(--success))' : 'hsl(var(--info))' }}>{s.status}</span>
  </div>
  ))}
  </div>
@@ -1290,7 +1290,7 @@ export default function StrategyDetailPage() {
  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{groupName(s.grupo_id)}</p>
  <div className="flex items-center justify-between mt-3">
  <span className="text-xs text-[hsl(var(--text-secondary))]">{formatDate(s.session_date)}</span>
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: s.status === 'Realizada' ? 'hsl(var(--success)/0.125)' : '#3B82F620', color: s.status === 'Realizada' ? 'hsl(var(--success))' : 'hsl(var(--info))' }}>{s.status}</span>
+ <span className="px-1.5 py-0.5 rounded text-2xs font-bold" style={{ backgroundColor: s.status === 'Realizada' ? 'hsl(var(--success)/0.125)' : '#3B82F620', color: s.status === 'Realizada' ? 'hsl(var(--success))' : 'hsl(var(--info))' }}>{s.status}</span>
  </div>
  </div>
  ))}
@@ -1323,7 +1323,7 @@ export default function StrategyDetailPage() {
  <div>
  <h2 className="text-sm font-bold text-[hsl(var(--text-primary))]">Grupos de esta estrategia</h2>
  {strategy.typology === 'relacional' && (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] mt-0.5">
+ <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">
  Config: {strategy.recurrence} · {strategy.day_of_week ? `Día: ${strategy.day_of_week}` : ''} {strategy.start_time ? `Hora: ${strategy.start_time}` : ''}
  </p>
  )}
@@ -1380,7 +1380,7 @@ export default function StrategyDetailPage() {
  onClick={e => e.stopPropagation()}
  className="absolute top-7 right-0 w-52 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl py-1"
  >
- <p className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-3 py-1.5">Compartir enlace del grupo</p>
+ <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-3 py-1.5">Compartir enlace del grupo</p>
  <button onClick={() => shareGroupLink(g.id, g.name, 'copy')}
  className="w-full text-left px-3 py-2 text-xs font-medium text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] flex items-center gap-2">
  <Copy size={12} className="shrink-0" /> Copiar enlace
@@ -1520,7 +1520,7 @@ export default function StrategyDetailPage() {
  </select>
  )}
  {/* Contador */}
- <span className="ml-auto text-[11px] text-[hsl(var(--text-secondary))]">
+ <span className="ml-auto text-xs text-[hsl(var(--text-secondary))]">
  {filteredSessions.length !== sessions.length
  ? `${filteredSessions.length} de ${sessions.length} sesiones`
   : `${sessions.length} sesión${sessions.length !== 1 ? 'es' : ''}`}
@@ -1557,21 +1557,21 @@ export default function StrategyDetailPage() {
  <span className="text-xs font-bold text-[hsl(var(--text-primary))]">
  {new Date(s.session_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
  </span>
- <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">
+ <span className="px-1.5 py-0.5 rounded text-2xs font-semibold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">
  {s.status}
  </span>
  {/* Badge de habilitación */}
  {s.estado_habilitacion === 'HABILITADO' && (
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">Abierta</span>
+ <span className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">Abierta</span>
  )}
  {s.estado_habilitacion === 'CERRADO' && (
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Cerrada</span>
+ <span className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Cerrada</span>
  )}
  {(!s.estado_habilitacion || s.estado_habilitacion === 'DESHABILITADO') && (
- <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]">Bloqueada</span>
+ <span className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]">Bloqueada</span>
  )}
  </div>
- <div className="flex items-center gap-3 mt-0.5 text-[11px] text-[hsl(var(--text-secondary))]">
+ <div className="flex items-center gap-3 mt-0.5 text-xs text-[hsl(var(--text-secondary))]">
  <span>{groupName(s.grupo_id)}</span>
  {s.topic && <span>· {s.topic}</span>}
  {s.offering_amount != null && <span>· Ofrenda: ${s.offering_amount.toLocaleString()}</span>}
@@ -1583,7 +1583,7 @@ export default function StrategyDetailPage() {
  <button
  onClick={() => toggleSessionHabilitacion(s)}
  title={s.estado_habilitacion === 'HABILITADO' ? 'Bloquear sesión' : 'Habilitar sesión'}
- className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-[11px] font-bold ${
+ className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-xs font-bold ${
  s.estado_habilitacion === 'HABILITADO'
  ? 'bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]'
  : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] hover:bg-[hsl(var(--success)/0.2)] hover:text-[hsl(var(--success))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]'
@@ -1594,7 +1594,7 @@ export default function StrategyDetailPage() {
  ) : null}
  {canManageStrategySurface ? (
  <button onClick={() => openAttendanceDrawer(s)}
- className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-[11px] font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+ className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
  <Users size={12} />Asistencia
  </button>
  ) : null}
@@ -1628,7 +1628,7 @@ export default function StrategyDetailPage() {
  {viewType === 'dashboard' && activeTab === 'attendance' && (
   <div className="space-y-4">
    <div className="flex items-center justify-between">
-    <p className="text-[11px] font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+    <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
      Grupos — sesiones recientes
     </p>
     {sessionsLoading && <Loader2 size={14} className="animate-spin text-[hsl(var(--text-secondary))]" />}
@@ -1657,7 +1657,7 @@ export default function StrategyDetailPage() {
            {isHabilitado && <span className="size-1.5 rounded-full bg-[hsl(var(--success))] animate-pulse shrink-0" />}
            <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{grp.name}</p>
           </div>
-          <div className="flex items-center gap-3 mt-0.5 text-[11px] text-[hsl(var(--text-secondary))]">
+          <div className="flex items-center gap-3 mt-0.5 text-xs text-[hsl(var(--text-secondary))]">
            {grp.leader_name && <span>{grp.leader_name}</span>}
            <span>{grp.personas_count} personas</span>
           </div>
@@ -1665,7 +1665,7 @@ export default function StrategyDetailPage() {
          {latest && isHabilitado && canManageStrategySurface && (
           <button
            onClick={() => openAttendanceDrawer(latest)}
-           className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all active:scale-95 bg-[hsl(var(--primary))] text-white hover:opacity-90 shadow-sm"
+           className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all active:scale-95 bg-[hsl(var(--primary))] text-white hover:opacity-90 shadow-sm"
           >
            <ClipboardList size={12} />
            Registrar
@@ -1690,10 +1690,10 @@ export default function StrategyDetailPage() {
           return (
            <div key={s.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[hsl(var(--bg-muted))] transition-colors">
             <div className="flex-1 min-w-0 flex items-center gap-2">
-             <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide ${habColor}`}>
+             <span className={`shrink-0 px-1.5 py-0.5 rounded text-2xs font-bold uppercase tracking-wide ${habColor}`}>
               {s.estado_habilitacion ?? 'DESHABILITADO'}
              </span>
-             <p className="text-[12px] text-[hsl(var(--text-secondary))] capitalize truncate">
+             <p className="text-sm text-[hsl(var(--text-secondary))] capitalize truncate">
               {dateStr}{s.topic ? ` · ${s.topic}` : ''}
              </p>
             </div>
@@ -1702,7 +1702,7 @@ export default function StrategyDetailPage() {
               {canManageStrategySurface && s.estado_habilitacion !== 'HABILITADO' && (
                <button
                 onClick={() => toggleSessionHabilitacion(s)}
-                className="text-[11px] font-semibold text-[hsl(var(--warning))] hover:text-[hsl(var(--success))] transition-colors whitespace-nowrap"
+                className="text-xs font-semibold text-[hsl(var(--warning))] hover:text-[hsl(var(--success))] transition-colors whitespace-nowrap"
                >
                 Habilitar
                </button>
@@ -1710,7 +1710,7 @@ export default function StrategyDetailPage() {
               {canManageStrategySurface && s.estado_habilitacion === 'HABILITADO' && (
                <button
                 onClick={() => openAttendanceDrawer(s)}
-                className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
+                className="text-xs font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
                >
                 Reportar
                </button>
@@ -1760,7 +1760,7 @@ export default function StrategyDetailPage() {
  { label: 'Inasistencias', value: metrics.summary.total_absences, cls: 'text-[hsl(var(--destructive))]' },
  ].map(stat => (
  <div key={stat.label} className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
- <p className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{stat.label}</p>
+ <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{stat.label}</p>
  <p className={`text-2xl font-black mt-1 ${stat.cls || 'text-[hsl(var(--text-primary))]'}`}>{stat.value}</p>
  </div>
  ))}
@@ -1774,7 +1774,7 @@ export default function StrategyDetailPage() {
  {viewType === 'dashboard' && activeTab === 'overview' && (
  <>
  <div className="bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
- <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Información</h3>
+ <h3 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Información</h3>
  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
  <div><p className="text-[hsl(var(--text-secondary))] font-medium">ID</p><p className="text-[hsl(var(--text-primary))] font-bold">{strategy.codigo ? strategy.codigo : `#${strategy.id}`}</p></div>
  <div><p className="text-[hsl(var(--text-secondary))] font-medium">Inicio</p><p className="text-[hsl(var(--text-primary))] font-bold">{formatDate(strategy.start_date)}</p></div>
@@ -1805,24 +1805,24 @@ export default function StrategyDetailPage() {
  {/* ── Seguimiento Pendiente ── */}
  <div className="bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
  <div className="flex items-center justify-between mb-3">
- <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Seguimiento Pendiente</h3>
- <span className="text-[10px] font-bold px-2 py-0.5 bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] rounded-full">
+ <h3 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Seguimiento Pendiente</h3>
+ <span className="text-2xs font-bold px-2 py-0.5 bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] rounded-full">
  {followUps.filter(f => !f.estado_completado).length}
  </span>
  </div>
  {loadingFollowUps ? (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Cargando...</p>
+ <p className="text-xs text-[hsl(var(--text-secondary))] italic">Cargando...</p>
  ) : followUps.filter(f => !f.estado_completado).length === 0 ? (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] italic">Sin seguimientos pendientes</p>
+ <p className="text-xs text-[hsl(var(--text-secondary))] italic">Sin seguimientos pendientes</p>
  ) : (
  <div className="space-y-1.5 max-h-48 overflow-y-auto">
  {followUps.filter(f => !f.estado_completado).slice(0, 10).map(f => (
  <div key={f.id} className="flex items-center justify-between px-2.5 py-1.5 bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))]">
  <div className="flex items-center gap-2">
- <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${(f.tipo ?? '').toLowerCase().includes('llamada') ? 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]' : (f.tipo ?? '').toLowerCase().includes('visita') ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]' : (f.tipo ?? '').toLowerCase().includes('oracion') ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
+ <span className={`text-2xs font-bold px-1.5 py-0.5 rounded-full ${(f.tipo ?? '').toLowerCase().includes('llamada') ? 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]' : (f.tipo ?? '').toLowerCase().includes('visita') ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]' : (f.tipo ?? '').toLowerCase().includes('oracion') ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
  {f.tipo}
  </span>
- <span className="text-[11px] text-[hsl(var(--text-secondary))]">{f.observaciones || '—'}</span>
+ <span className="text-xs text-[hsl(var(--text-secondary))]">{f.observaciones || '—'}</span>
  </div>
  {canManageStrategySurface ? (
  <button onClick={async () => {
@@ -1834,7 +1834,7 @@ export default function StrategyDetailPage() {
  toast.success('Seguimiento completado');
  fetchFollowUps();
  } catch { toast.error('Error al actualizar'); }
- }} className="px-2 py-0.5 text-[10px] font-bold text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success)/0.15)] rounded transition-colors">
+ }} className="px-2 py-0.5 text-2xs font-bold text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success)/0.15)] rounded transition-colors">
  Completar
  </button>
  ) : null}
@@ -1876,16 +1876,16 @@ export default function StrategyDetailPage() {
  title="Gestionar Personas" subtitle={selectedGroup?.name || ''}
  actions={<>
  <button onClick={() => setIsPersonaDrawerOpen(false)}
- className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
+ className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
  <button onClick={handleSavePersonas} disabled={personaSaving}
- className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+ className="px-4 py-1.5 text-sm font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
  {personaSaving ? <><Loader2 size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar ({groupPersonas.length})</>}
  </button>
  </>}>
  <div ref={personaSplitRef} className="flex flex-col" style={{ height: 'calc(100vh - 16rem)' }}>
  {/* Panel superior: personas asignadas */}
  <div id="persona-list" className="overflow-y-auto shrink-0 pb-2" style={{ height: personaSplitHeight }}>
-  <label htmlFor="persona-list" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-2">
+  <label htmlFor="persona-list" className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-2">
    Personas ({groupPersonas.length})
   </label>
  {groupPersonas.length === 0 ? (
@@ -1928,7 +1928,7 @@ export default function StrategyDetailPage() {
 
  {/* Panel inferior: agregar personas */}
  <div className="flex-1 min-h-0 flex flex-col pt-3">
-  <label htmlFor="persona-search" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block shrink-0">Agregar personas</label>
+  <label htmlFor="persona-search" className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block shrink-0">Agregar personas</label>
  <div className="relative mb-2 shrink-0">
  {personaSearchLoading
  ? <Loader2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--primary))] animate-spin" />
@@ -1936,20 +1936,20 @@ export default function StrategyDetailPage() {
   <input id="persona-search" value={personaSearch}
  onChange={e => setPersonaSearch(e.target.value)}
  placeholder="Filtrar por nombre..."
- className="w-full pl-9 pr-3 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
+ className="w-full pl-9 pr-3 py-2 text-sm bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div className="flex-1 min-h-0 overflow-y-auto space-y-1">
  {(() => {
  if (personaSearchLoading) return (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Cargando personas...</p>
+ <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-3">Cargando personas...</p>
  );
  const q = personaSearch.trim();
  const available = personaSearchResults.filter(m => !groupPersonas.find(gm => String(gm.id) === String(m.id)));
  if (q.length < 3) return (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">Escribe al menos 3 caracteres para buscar</p>
+ <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-3">Escribe al menos 3 caracteres para buscar</p>
  );
  if (available.length === 0) return (
- <p className="text-[11px] text-[hsl(var(--text-secondary))] text-center py-3">
+ <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-3">
  Sin coincidencias
  </p>
  );
@@ -1973,43 +1973,43 @@ export default function StrategyDetailPage() {
  title="Registrar sesión" subtitle={`Estrategia: ${strategy?.name}`}
  actions={<>
  <button onClick={() => setIsNewSessionDrawerOpen(false)}
- className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
+ className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
  <button onClick={handleCreateSession} disabled={sessionSaving}
- className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+ className="px-4 py-1.5 text-sm font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
  {sessionSaving ? <><Loader2 size={14} className="animate-spin" />Guardando...</> : <><Save size={14} />Guardar</>}
  </button>
  </>}>
  <div className="space-y-4">
  <div>
-  <label htmlFor="session-group" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Grupo *</label>
+  <label htmlFor="session-group" className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Grupo *</label>
   <select id="session-group" value={sessionForm.grupo_id} onChange={e => setSessionForm(f => ({ ...f, grupo_id: e.target.value }))}
- className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]">
+ className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]">
  <option value="">Seleccionar grupo...</option>
  {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
  </select>
  </div>
  <div>
-  <label htmlFor="session-date" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Fecha de la sesión *</label>
+  <label htmlFor="session-date" className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Fecha de la sesión *</label>
   <input id="session-date" type="date" value={sessionForm.session_date} onChange={e => setSessionForm(f => ({ ...f, session_date: e.target.value }))}
- className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
+ className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div>
-  <label htmlFor="session-topic" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Tema de la sesión</label>
+  <label htmlFor="session-topic" className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Tema de la sesión</label>
   <input id="session-topic" value={sessionForm.topic} onChange={e => setSessionForm(f => ({ ...f, topic: e.target.value }))}
  placeholder="Ej: La fe que mueve montañas"
- className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
+ className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div>
-  <label htmlFor="session-offering" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Ofrenda recogida</label>
+  <label htmlFor="session-offering" className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Ofrenda recogida</label>
   <input id="session-offering" type="number" value={sessionForm.offering_amount} onChange={e => setSessionForm(f => ({ ...f, offering_amount: e.target.value }))}
  placeholder="0.00"
- className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
+ className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
  </div>
  <div>
-  <label htmlFor="session-notes" className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Notas de la sesión</label>
+  <label htmlFor="session-notes" className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Notas de la sesión</label>
   <textarea id="session-notes" value={sessionForm.report_notes} onChange={e => setSessionForm(f => ({ ...f, report_notes: e.target.value }))} rows={3}
  placeholder="Observaciones, peticiones de oración, novedades..."
- className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))] resize-none" />
+ className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))] resize-none" />
  </div>
  </div>
  </WorkspaceDrawer>

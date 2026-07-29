@@ -13,7 +13,7 @@ interface SelectFieldProps {
 export default function SelectField({ label, value, onChange, options, placeholder }: SelectFieldProps) {
   return (
     <div className="space-y-2">
-      <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</label>
+      <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</label>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}

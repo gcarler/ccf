@@ -127,7 +127,7 @@ export default function CursosPage() {
                       <Image src={heroImageUrl || "/og-default.png"} alt={course.title} fill className="object-cover" />
                     </div>
                     <div className="p-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide mb-3" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide mb-3" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
                         {course.modality || "Academia"}
                       </span>
                       <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white line-clamp-2">{course.title}</h3>
@@ -151,7 +151,7 @@ export default function CursosPage() {
           {rest.slice(3).map((course) => (
             <Link key={course.id} href={`/academy/courses/${course.id}`} className="rounded-lg border p-5 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/10 hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between gap-3 mb-3">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide" style={{ background: "var(--site-surface-container)", color: "var(--site-primary)" }}>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide" style={{ background: "var(--site-surface-container)", color: "var(--site-primary)" }}>
                   {course.modality || "Academia"}
                 </span>
                 <CheckCircle2 size={16} className="text-[hsl(var(--primary))]" />

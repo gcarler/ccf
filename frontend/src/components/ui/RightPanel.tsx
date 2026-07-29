@@ -83,7 +83,7 @@ function RightPanel({
         >
             {/* Panel header */}
             <div className="h-10 flex items-center justify-between px-4 border-b border-[hsl(var(--border))] dark:border-white/5 shrink-0">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     {title}
                 </span>
                 <div className="flex items-center gap-1">

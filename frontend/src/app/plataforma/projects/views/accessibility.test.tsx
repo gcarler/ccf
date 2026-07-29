@@ -9,10 +9,10 @@ vi.mock('@/context/AuthContext', () => ({
 import ProjectsGridView from './ProjectsGridView';
 import ProjectsListView from './ProjectsListView';
 import ProjectsBoardView from './ProjectsBoardView';
-import type { ProjectRecord } from '@/types/projects';
+import { createMockProject } from '@/test-utils/factories';
 
-const projects: ProjectRecord[] = [
-    {
+const projects = [
+    createMockProject({
         id: 'p1',
         title: 'Campamento Juventud',
         description: 'Organización del campamento',
@@ -21,7 +21,7 @@ const projects: ProjectRecord[] = [
         owner_id: 'u1',
         created_at: '2025-06-15T10:00:00Z',
         tasks: [],
-    } as ProjectRecord,
+    }),
 ];
 
 describe('Projects views accessibility', () => {

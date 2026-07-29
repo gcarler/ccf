@@ -176,7 +176,7 @@ export default function CourseViewPage() {
                                         </div>
                                         <div className="min-w-0">
                                             <p className={clsx("font-semibold leading-tight mb-1", isActive ? "text-[hsl(var(--text-primary))] dark:text-white" : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]")}>{lesson.title}</p>
-                                            <div className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                            <div className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                 <Clock size={10} /> {lesson.duration_minutes} min
                                             </div>
                                         </div>
@@ -215,7 +215,7 @@ export default function CourseViewPage() {
                         <DSTooltip content="Compartir curso"><button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><Share2 size={18} /></button></DSTooltip>
                         <DSTooltip content="Ayuda"><button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"><HelpCircle size={18} /></button></DSTooltip>
                         <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-2" />
-                        <button onClick={() => router.push('/plataforma/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] rounded-md text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all active:scale-95">Salir</button>
+                        <button onClick={() => router.push('/plataforma/academy')} className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] rounded-md text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all active:scale-95">Salir</button>
                     </div>
                 }
             />
@@ -229,7 +229,7 @@ export default function CourseViewPage() {
                             <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-4 text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:border-[hsl(var(--info)/30%)] transition-all">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Lección {lesson.order_index}</p>
+                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Lección {lesson.order_index}</p>
                                         <h3 className="mt-2 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{lesson.title}</h3>
                                     </div>
                                     <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{lesson.duration_minutes} min</span>
@@ -243,7 +243,7 @@ export default function CourseViewPage() {
  <section className="w-full p-4 lg:p-4">
                         <div className="overflow-x-auto rounded-md border border-[hsl(var(--border))] dark:border-white/10">
                             <table className="w-full text-left min-w-[480px]">
-                                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <tr>
                                         <th className="px-4 py-2">Orden</th>
                                         <th className="px-4 py-2">Lección</th>
@@ -281,7 +281,7 @@ export default function CourseViewPage() {
                                         {lessons.map((lesson) => (
                                             <button key={lesson.id} onClick={() => setActiveLesson(lesson)} className="w-full rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-black/20 p-4 text-left shadow-sm">
                                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{lesson.title}</p>
-                                                <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{lesson.duration_minutes} min</p>
+                                                <p className="mt-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{lesson.duration_minutes} min</p>
                                             </button>
                                         ))}
                                     </div>
@@ -351,8 +351,8 @@ export default function CourseViewPage() {
                                         initialTime={progress?.last_position_seconds || 0}
                                     />
                                     <div className="absolute top-4 left-6 flex gap-2">
-                                        <div className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[9px] font-semibold uppercase tracking-wide text-white">4K ULTRA HD</div>
-                                        <div className="px-3 py-1 bg-[hsl(var(--info))]/80 backdrop-blur-md rounded-full text-[9px] font-semibold uppercase tracking-wide text-white flex items-center gap-1.5"><Sparkles size={10} /> Optimus Enhanced</div>
+                                        <div className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-2xs font-semibold uppercase tracking-wide text-white">4K ULTRA HD</div>
+                                        <div className="px-3 py-1 bg-[hsl(var(--info))]/80 backdrop-blur-md rounded-full text-2xs font-semibold uppercase tracking-wide text-white flex items-center gap-1.5"><Sparkles size={10} /> Optimus Enhanced</div>
                                     </div>
                                 </>
                             )}
@@ -388,7 +388,7 @@ export default function CourseViewPage() {
                                     <div className="flex items-center gap-3">
                                         <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/30 px-3 py-1 rounded-lg uppercase tracking-wide">Lección {activeLesson?.order_index}</span>
                                         <div className="size-1 rounded-full bg-[hsl(var(--surface-2))]" />
-                                        <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{activeLesson?.duration_minutes} Minutos de contenido</span>
+                                        <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{activeLesson?.duration_minutes} Minutos de contenido</span>
                                     </div>
                                     <h2 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
                                         {activeLesson?.title}
@@ -400,7 +400,7 @@ export default function CourseViewPage() {
                                         onClick={handleLessonComplete}
                                         disabled={activeLesson?.is_completed}
                                         className={clsx(
-                                            "px-3 py-2 rounded-lg font-black text-[11px] uppercase tracking-wide transition-all active:scale-95 flex items-center gap-3 shadow-xl",
+                                            "px-3 py-2 rounded-lg font-black text-xs uppercase tracking-wide transition-all active:scale-95 flex items-center gap-3 shadow-xl",
                                             activeLesson?.is_completed
                                                 ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] cursor-not-allowed"
                                                 : "bg-[hsl(var(--primary))] text-white shadow-[hsl(var(--info)/20%)] hover:scale-[1.02]"
@@ -430,7 +430,7 @@ export default function CourseViewPage() {
                                     </div>
                                 </div>
                                 <div className="flex -space-x-3">
-                                    {[1, 2, 3].map((item) => <div key={item} className="size-8 rounded-full border-2 border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-center text-[10px] font-bold text-[hsl(var(--text-secondary))]">JD</div>)}
+                                    {[1, 2, 3].map((item) => <div key={item} className="size-8 rounded-full border-2 border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-center text-2xs font-bold text-[hsl(var(--text-secondary))]">JD</div>)}
                                     <div className="size-8 rounded-full border-2 border-[hsl(var(--border))] bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white">+12</div>
                                 </div>
                             </section>

@@ -64,15 +64,15 @@ export default function GroupCreationDrawer({
     title="Nuevo Grupo" subtitle={`Estrategia: ${strategy?.name}`}
     actions={<>
     <button onClick={onClose}
-    className="px-4 py-1.5 text-[12px] font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
+    className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
     <button onClick={onCreateGroup} disabled={groupSaving || !groupForm.name.trim()}
-    className="px-4 py-1.5 text-[12px] font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+    className="px-4 py-1.5 text-sm font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
     {groupSaving ? <><Loader2 size={14} className="animate-spin" />Creando...</> : <><Plus size={14} />Crear Grupo</>}
     </button>
     </>}>
     <div className="space-y-4">
     {strategy?.typology === 'relacional' && (
-    <div className="px-3 py-2 bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] rounded-lg text-[11px] text-[hsl(var(--primary))] dark:text-info-text">
+    <div className="px-3 py-2 bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] rounded-lg text-xs text-[hsl(var(--primary))] dark:text-info-text">
     <p className="font-semibold">Config. heredada:</p>
     <p>Recurrencia: {strategy.recurrence} · Día: {strategy.day_of_week} · Hora: {strategy.start_time}</p>
     </div>
@@ -83,39 +83,39 @@ export default function GroupCreationDrawer({
     { label: 'Dirección', field: 'address', placeholder: 'Dirección completa' },
     ] as const).map(({ label, field, placeholder }) => (
     <div key={field}>
-    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">{label}</label>
+    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">{label}</label>
     <input value={groupForm[field]} onChange={e => setGroupForm(f => ({ ...f, [field]: e.target.value }))}
     placeholder={placeholder}
-    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
+    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
     </div>
     ))}
     <div>
-    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Capacidad</label>
+    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Capacidad</label>
     <input type="number" value={groupForm.capacity} onChange={e => setGroupForm(f => ({ ...f, capacity: parseInt(e.target.value) || 15 }))}
-    className="w-full px-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
+    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]" />
     </div>
     <div className="grid grid-cols-3 gap-2">
     <div>
-    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Día</label>
+    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Día</label>
     <select value={groupForm.day_of_week} onChange={e => setGroupForm(f => ({ ...f, day_of_week: e.target.value }))}
-    className="w-full px-2 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none">
+    className="w-full px-2 py-2 text-sm bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none">
     <option value="">—</option>
     {['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map(d => <option key={d} value={d}>{d}</option>)}
     </select>
     </div>
     <div>
-    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Inicio</label>
+    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Inicio</label>
     <input type="time" value={groupForm.start_time} onChange={e => setGroupForm(f => ({ ...f, start_time: e.target.value }))}
-    className="w-full px-2 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
+    className="w-full px-2 py-2 text-sm bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
     </div>
     <div>
-    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Fin</label>
+    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">Fin</label>
     <input type="time" value={groupForm.end_time} onChange={e => setGroupForm(f => ({ ...f, end_time: e.target.value }))}
-    className="w-full px-2 py-2 text-[12px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
+    className="w-full px-2 py-2 text-sm bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
     </div>
     </div>
     {customRoles.length === 0 ? (
-    <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft px-3 py-2 text-[12px] font-medium text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text">
+    <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft px-3 py-2 text-sm font-medium text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text">
     Esta estrategia no tiene roles definidos. El grupo se creará sin cargos de servicio por defecto.
     </div>
     ) : customRoles.map((role) => {
@@ -131,7 +131,7 @@ export default function GroupCreationDrawer({
     const isLoading = Boolean(roleLoading[field]);
     return (
     <div key={field} className="relative">
-    <label className="text-[11px] font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">{label}</label>
+    <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">{label}</label>
     <div className="relative">
     <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] pointer-events-none" />
     <input
@@ -144,7 +144,7 @@ export default function GroupCreationDrawer({
     }}
     onBlur={() => setTimeout(() => setRoleDropdown(null), 150)}
     onChange={e => setRoleSearch(s => ({ ...s, [field]: e.target.value }))}
-    className="w-full pl-8 pr-3 py-2 text-[13px] bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]"
+    className="w-full pl-8 pr-3 py-2 text-base bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]"
     />
     {selectedId && (
     <button
@@ -161,14 +161,14 @@ export default function GroupCreationDrawer({
     <button
     type="button"
     onMouseDown={() => { setGroupRoleAssignments(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}
-    className="w-full text-left px-3 py-2 text-[12px] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 border-b border-[hsl(var(--border-primary))]"
+    className="w-full text-left px-3 py-2 text-sm text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 border-b border-[hsl(var(--border-primary))]"
     >
     Sin asignar
     </button>
     {isLoading ? (
-    <div className="px-3 py-3 text-[12px] text-[hsl(var(--text-secondary))] text-center">Buscando...</div>
+    <div className="px-3 py-3 text-sm text-[hsl(var(--text-secondary))] text-center">Buscando...</div>
     ) : results.length === 0 ? (
-    <div className="px-3 py-3 text-[12px] text-[hsl(var(--text-secondary))] text-center">Sin resultados</div>
+    <div className="px-3 py-3 text-sm text-[hsl(var(--text-secondary))] text-center">Sin resultados</div>
     ) : results.map(m => {
     const name = m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim();
     return (
@@ -181,10 +181,10 @@ export default function GroupCreationDrawer({
     setRoleDropdown(null);
     setRoleSearch(s => ({ ...s, [field]: '' }));
     }}
-    className="w-full text-left px-3 py-2 text-[12px] text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 flex items-center justify-between gap-2"
+    className="w-full text-left px-3 py-2 text-sm text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 flex items-center justify-between gap-2"
     >
     <span className="font-medium">{name}</span>
-    {m.church_role && <span className="text-[10px] text-[hsl(var(--text-secondary))] shrink-0">{m.church_role}</span>}
+    {m.church_role && <span className="text-2xs text-[hsl(var(--text-secondary))] shrink-0">{m.church_role}</span>}
     </button>
     );
     })}

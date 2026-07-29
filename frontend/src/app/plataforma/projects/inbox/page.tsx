@@ -104,7 +104,7 @@ export default function ProjectsInboxPage() {
         >
             {error && (
                 <div className="mx-4 mt-4 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                    <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
             <div className="flex px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
@@ -127,11 +127,11 @@ export default function ProjectsInboxPage() {
                         <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 max-w-md">No hay mensajes ni notificaciones pendientes en esta vista.</p>
                     </div>
                 ) : viewType === 'table' ? (
-                    <div className="p-3"><div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Usuario</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Proyecto</th><th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{filteredMessages.map((msg) => <tr key={msg.id}><td className="px-3 py-2 text-sm font-medium">{msg.user}</td><td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{msg.project}</td><td className="px-3 py-2 text-[11px] text-[hsl(var(--text-secondary))]">{msg.is_read ? 'Leído' : 'Pendiente'}</td></tr>)}</tbody></table></div></div>
+                    <div className="p-3"><div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Usuario</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Proyecto</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{filteredMessages.map((msg) => <tr key={msg.id}><td className="px-3 py-2 text-sm font-medium">{msg.user}</td><td className="px-3 py-2 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{msg.project}</td><td className="px-3 py-2 text-xs text-[hsl(var(--text-secondary))]">{msg.is_read ? 'Leído' : 'Pendiente'}</td></tr>)}</tbody></table></div></div>
                 ) : viewType === 'grid' ? (
-                    <div className="p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{filteredMessages.map((msg) => <article key={msg.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5"><p className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{msg.project}</p><h3 className="font-bold mt-1">{msg.user}</h3><p className="text-sm mt-1 line-clamp-3">{msg.content}</p></article>)}</div>
+                    <div className="p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">{filteredMessages.map((msg) => <article key={msg.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5"><p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{msg.project}</p><h3 className="font-bold mt-1">{msg.user}</h3><p className="text-sm mt-1 line-clamp-3">{msg.content}</p></article>)}</div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="p-3 grid grid-cols-1 lg:grid-cols-2 gap-3">{groupedMessages.map((group) => <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span><span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{group.rows.length}</span></div><div className="space-y-2">{group.rows.map((msg) => <div key={msg.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-2 text-sm">{msg.content}</div>)}</div></section>)}</div>
+                    <div className="p-3 grid grid-cols-1 lg:grid-cols-2 gap-3">{groupedMessages.map((group) => <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><div className="flex justify-between mb-3"><span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span><span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{group.rows.length}</span></div><div className="space-y-2">{group.rows.map((msg) => <div key={msg.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-2 text-sm">{msg.content}</div>)}</div></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <div className="p-3"><UniversalCalendarView events={calendarEvents} title="Calendario de inbox" /></div>
                 ) : viewType === 'gantt' ? (
@@ -163,20 +163,20 @@ export default function ProjectsInboxPage() {
                                             <div className="size-1 rounded-full bg-[hsl(var(--surface-2))]" />
                                             <span className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide">{msg.project}</span>
                                         </div>
-                                        <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{formatRelative(msg.created_at)}</span>
+                                        <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{formatRelative(msg.created_at)}</span>
                                     </div>
                                     <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">{msg.content}</p>
                                     <div className="pt-3 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                             onClick={() => handleRespond(msg)}
-                                            className="px-3 py-1 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[10px] font-semibold uppercase text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                                            className="px-3 py-1 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                                         >
                                             Responder
                                         </button>
                                         <button
                                             onClick={() => handleResolve(msg)}
                                             disabled={resolvingId === msg.id}
-                                            className="px-3 py-1 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase shadow-lg disabled:opacity-50"
+                                            className="px-3 py-1 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase shadow-lg disabled:opacity-50"
                                         >
                                             {resolvingId === msg.id ? 'Resolviendo...' : 'Resolver'}
                                         </button>
@@ -207,6 +207,6 @@ function formatRelative(rawDate: string) {
 
 function Tab({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
     return (
-        <button onClick={onClick} className={clsx("px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-all border-b-2", active ? "text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]")}>{label}</button>
+        <button onClick={onClick} className={clsx("px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-all border-b-2", active ? "text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))]")}>{label}</button>
     );
 }

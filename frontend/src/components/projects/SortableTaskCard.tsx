@@ -103,8 +103,8 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                             value={task.title}
                             onChange={(v) => onUpdate?.(String(task.id), { title: v })}
                             placeholder="Título de la tarea"
-                            className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug line-clamp-2"
-                            inputClassName="text-[13px]"
+                            className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug line-clamp-2"
+                            inputClassName="text-base"
                         />
                     </div>
                 </div>
@@ -127,7 +127,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                     {/* Right: comments + assignee avatar */}
                     <div className="flex items-center gap-2 shrink-0">
                         {commentCount > 0 && (
-                            <span className="flex items-center gap-1 text-[10px] font-bold text-[hsl(var(--text-secondary))]">
+                            <span className="flex items-center gap-1 text-2xs font-bold text-[hsl(var(--text-secondary))]">
                                 <MessageSquare size={11} />
                                 {commentCount}
                             </span>
@@ -154,7 +154,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                                 >
                                     <DropdownMenu.Item
                                         onClick={(e) => { e.stopPropagation(); onOpen(task); setMenuOpen(false); }}
-                                        className="flex items-center gap-2 px-2.5 py-2 text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-lg cursor-pointer outline-none"
+                                        className="flex items-center gap-2 px-2.5 py-2 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-lg cursor-pointer outline-none"
                                     >
                                         <Eye size={13} /> Ver detalle
                                     </DropdownMenu.Item>
@@ -163,7 +163,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                                             <DropdownMenu.Separator className="h-px bg-[hsl(var(--border))] dark:bg-white/10 my-1" />
                                             <DropdownMenu.Item
                                                 onClick={handleDelete}
-                                                className="flex items-center gap-2 px-2.5 py-2 text-[12px] font-semibold text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 rounded-lg cursor-pointer outline-none"
+                                                className="flex items-center gap-2 px-2.5 py-2 text-sm font-semibold text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 rounded-lg cursor-pointer outline-none"
                                             >
                                                 <Trash2 size={13} /> Eliminar
                                             </DropdownMenu.Item>

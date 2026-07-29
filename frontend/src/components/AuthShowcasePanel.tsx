@@ -89,7 +89,7 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
 
             <div className="relative space-y-3">
                 <div>
-                    <p className="text-[hsl(var(--text-secondary))] text-[11px] font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <p className="text-[hsl(var(--text-secondary))] text-xs font-semibold uppercase tracking-wide mb-3 flex items-center gap-2">
                         <Sparkles className="w-4 h-4" /> {copy.eyebrow}
                     </p>
                     <h2 className="text-xl font-bold leading-tight tracking-tight text-white mb-2">{copy.title}</h2>
@@ -101,7 +101,7 @@ export function AuthShowcasePanel({ mode = "login", className }: AuthShowcasePan
                         <div key={stat.label} className="rounded-lg bg-white/5 border border-white/10 p-4">
                             <p className="text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">{stat.label}</p>
                             <p className="text-lg font-bold text-white">{stat.value}</p>
-                            <p className="text-[11px] text-[hsl(var(--success))] font-semibold mt-1">{stat.trend}</p>
+                            <p className="text-xs text-[hsl(var(--success))] font-semibold mt-1">{stat.trend}</p>
                         </div>
                     ))}
                 </div>

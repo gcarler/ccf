@@ -114,7 +114,7 @@ export default function NosotrosPage() {
                                 <div className="absolute top-6 right-6 opacity-[0.06] text-site-primary">
                                     <Target size={100} />
                                 </div>
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-[10px] font-bold uppercase tracking-widest mb-5">
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-2xs font-bold uppercase tracking-widest mb-5">
                                     <Target size={11} /> Visión
                                 </div>
                                 {visionTitle && (
@@ -143,7 +143,7 @@ export default function NosotrosPage() {
                                 <div className="absolute top-6 right-6 opacity-10">
                                     <Sparkles size={100} className="text-white" />
                                 </div>
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest mb-5">
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-white text-2xs font-bold uppercase tracking-widest mb-5">
                                     <Sparkles size={11} /> Misión
                                 </div>
                                 {misionTitle && (
@@ -188,7 +188,7 @@ export default function NosotrosPage() {
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                                     <div className="absolute bottom-3 left-3 right-3">
                                         <p className="text-white text-xs font-bold drop-shadow-sm">{founder1Name}</p>
-                                        <p className="text-white/70 text-[10px] font-medium uppercase tracking-wider drop-shadow-sm">{founder1Role}</p>
+                                        <p className="text-white/70 text-2xs font-medium uppercase tracking-wider drop-shadow-sm">{founder1Role}</p>
                                     </div>
                                 </div>
                                 <div className="absolute right-0 bottom-0 w-[55%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-site-outline-variant/20 z-20">
@@ -209,7 +209,7 @@ export default function NosotrosPage() {
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                                     <div className="absolute bottom-3 left-3 right-3">
                                         <p className="text-white text-xs font-bold drop-shadow-sm">{founder2Name}</p>
-                                        <p className="text-white/70 text-[10px] font-medium uppercase tracking-wider drop-shadow-sm">{founder2Role}</p>
+                                        <p className="text-white/70 text-2xs font-medium uppercase tracking-wider drop-shadow-sm">{founder2Role}</p>
                                     </div>
                                 </div>
                                 <div

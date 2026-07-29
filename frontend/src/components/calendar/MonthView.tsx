@@ -39,7 +39,7 @@ export default function MonthView({ currentDate, events, onSave, onEventClick }:
         {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => (
           <div
             key={d}
-            className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
+            className="py-2.5 text-center text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
           >
             {d}
           </div>
@@ -68,7 +68,7 @@ export default function MonthView({ currentDate, events, onSave, onEventClick }:
               >
                 <span
                   className={clsx(
-                    'inline-flex size-6 items-center justify-center rounded-full text-[11px] font-bold transition-all',
+                    'inline-flex size-6 items-center justify-center rounded-full text-xs font-bold transition-all',
                     isToday(day)
                       ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-[hsl(var(--info))]'
                       : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white'
@@ -84,15 +84,15 @@ export default function MonthView({ currentDate, events, onSave, onEventClick }:
                     style={{ backgroundColor: e.color }}
                   >
                     <div className="flex items-center gap-1">
-                      <span className="text-[7px] font-semibold uppercase tracking-wide opacity-80">
+                      <span className="text-2xs font-semibold uppercase tracking-wide opacity-80">
                         {EVENT_TYPE_META[e.type].label}
                       </span>
-                      <span className="truncate text-[9px] font-bold">{e.title}</span>
+                      <span className="truncate text-2xs font-bold">{e.title}</span>
                     </div>
                   </div>
                 ))}
                 {dayEvents.length > 2 && (
-                  <span className="text-[9px] text-[hsl(var(--text-secondary))] font-bold pl-0.5">
+                  <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold pl-0.5">
                     +{dayEvents.length - 2} más
                   </span>
                 )}

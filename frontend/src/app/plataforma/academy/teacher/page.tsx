@@ -135,7 +135,7 @@ export default function TeacherWorkspace() {
                     availableViews={['grid', 'table', 'list', 'wiki']}
                     rightActions={
                         <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 {pending.length} revisiones pendientes
                             </span>
                             <div className="h-4 w-px bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
@@ -196,7 +196,7 @@ export default function TeacherWorkspace() {
                                                 key={m}
                                                 onClick={() => setViewMode(m)}
                                                 className={clsx(
-                                                    "px-4 py-2 rounded-md text-[10px] font-semibold uppercase tracking-wide transition-all",
+                                                    "px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all",
                                                     viewMode === m 
                                                         ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]" 
                                                         : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
@@ -224,21 +224,21 @@ export default function TeacherWorkspace() {
                                         {courses.map(course => (
                                             <div key={course.id} className="p-3 rounded-lg border-2 border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 group hover:border-[hsl(var(--info)/100%)]/30 transition-all hover:shadow-xl hover:shadow-[hsl(var(--info)/5%)]">
                                                 <div className="flex justify-between items-start mb-3">
-                                                    <span className="px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/30 rounded-lg text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{course.code}</span>
+                                                    <span className="px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/30 rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{course.code}</span>
                                                     <DSBadge tone="emerald" label={course.modality} />
                                                 </div>
                                                 <h4 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mb-4 tracking-tight leading-none">{course.title}</h4>
                                                 <div className="flex items-center gap-4 mb-3">
-                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] text-[10px] font-bold uppercase tracking-wide">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide">
                                                         <Users size={14} className="text-[hsl(var(--primary))]" /> {course.students_count || 0} Alumnos
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] text-[10px] font-bold uppercase tracking-wide">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide">
                                                         <BookOpen size={14} className="text-[hsl(var(--primary))]" /> {course.lessons_count || 0} Lecciones
                                                     </div>
                                                 </div>
                                                 <button 
                                                     onClick={() => router.push(`/plataforma/academy/courses/${course.id}/manage`)}
-                                                    className="w-full py-3 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-[10px] font-semibold uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-lg"
+                                                    className="w-full py-3 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-lg"
                                                 >
                                                     Gestionar Programa
                                                 </button>
@@ -269,7 +269,7 @@ export default function TeacherWorkspace() {
                                                         {submission.student_name}
                                                     </h3>
                                                     <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-2 font-medium bg-[hsl(var(--surface-2))]/50 dark:bg-black/20 p-4 rounded-md italic">&quot;{submission.comment || 'Sin comentarios adicionales'}&quot;</p>
-                                                    <div className="flex items-center gap-4 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                                    <div className="flex items-center gap-4 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                         <div className="flex items-center gap-2"><Loader2 size={12} className="text-[hsl(var(--warning))]" /> Pendiente</div>
                                                         <div className="size-1 rounded-full bg-[hsl(var(--surface-3))]" />
                                                         <div>{new Date(submission.submitted_at).toLocaleString()}</div>
@@ -279,7 +279,7 @@ export default function TeacherWorkspace() {
                                                     <a
                                                         href={submission.file_url}
                                                         target="_blank"
-                                                        className="inline-flex items-center gap-2 px-3 py-2.5 rounded-md border-2 border-[hsl(var(--border))] dark:border-white/5 text-[10px] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all active:scale-95"
+                                                        className="inline-flex items-center gap-2 px-3 py-2.5 rounded-md border-2 border-[hsl(var(--border))] dark:border-white/5 text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all active:scale-95"
                                                         rel="noopener noreferrer"
                                                     >
                                                         <FileText size={14} /> Abrir
@@ -288,7 +288,7 @@ export default function TeacherWorkspace() {
                                                         disabled={gradingId === submission.id}
                                                         onClick={() => handleQuickGrade(submission, 'approve')}
                                                         className={clsx(
-                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--success))] text-white shadow-xl shadow-[hsl(var(--success))/0.2] hover:scale-105 active:scale-95 transition-all',
+                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--success))] text-white shadow-xl shadow-[hsl(var(--success))/0.2] hover:scale-105 active:scale-95 transition-all',
                                                             gradingId === submission.id && 'opacity-50 cursor-wait'
                                                         )}
                                                     >
@@ -298,7 +298,7 @@ export default function TeacherWorkspace() {
                                                         disabled={gradingId === submission.id}
                                                         onClick={() => handleQuickGrade(submission, 'review')}
                                                         className={clsx(
-                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--destructive))] text-white shadow-xl shadow-[hsl(var(--destructive))/0.2] hover:scale-105 active:scale-95 transition-all',
+                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--destructive))] text-white shadow-xl shadow-[hsl(var(--destructive))/0.2] hover:scale-105 active:scale-95 transition-all',
                                                             gradingId === submission.id && 'opacity-50 cursor-wait'
                                                         )}
                                                     >
@@ -313,7 +313,7 @@ export default function TeacherWorkspace() {
                                 {viewMode === 'history' && (
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left">
-                                            <thead className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02] text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                            <thead className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                 <tr>
                                                     <th className="px-4 py-1.5">Lección / Estudiante</th>
                                                     <th className="px-4 py-1.5">Nota Final</th>
@@ -333,7 +333,7 @@ export default function TeacherWorkspace() {
                                                     <tr key={submission.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.01] transition-colors">
                                                         <td className="px-4 py-2">
                                                             <div className="font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{submission.student_name}</div>
-                                                            <div className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">{submission.lesson_title}</div>
+                                                            <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">{submission.lesson_title}</div>
                                                         </td>
                                                         <td className="px-4 py-2">
                                                             <span className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{submission.grade?.toFixed(1) ?? 'N/A'}</span>

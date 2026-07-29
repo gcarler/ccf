@@ -18,7 +18,7 @@ export default function PanelSection({ title, children, collapsible }: PanelSect
         onClick={() => collapsible && setOpen(v => !v)}
         className={clsx('flex items-center justify-between', collapsible && 'cursor-pointer')}
       >
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+        <span className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
           {title}
         </span>
         {collapsible && (

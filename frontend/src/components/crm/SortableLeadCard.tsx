@@ -61,7 +61,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             onClick={onClick}
             className={clsx(
                 "group relative p-4 mb-3 rounded-lg transition-all cursor-grab active:cursor-grabbing",
-                "bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] border border-[hsl(var(--border))]/50 dark:border-white/5",
+                "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]/50 dark:border-white/5",
                 "hover:border-[hsl(var(--info)/100%)]/30 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]",
                 "hover:-translate-y-1 active:scale-[0.98]",
                 isDragging && "opacity-0",
@@ -111,7 +111,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                     </div>
 
                     {isSlaOverdue && (
-                        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-[hsl(var(--warning))] border-2 border-white dark:border-[#1e1f21] z-20 animate-bounce" />
+                        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-[hsl(var(--warning))] border-2 border-white dark:border-[hsl(var(--border))] z-20 animate-bounce" />
                     )}
                 </div>
                 
@@ -122,7 +122,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                         </h4>
                         <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:translate-x-1 transition-all" />
                     </div>
-                    <p className="text-[11px] text-[hsl(var(--text-secondary))] font-bold flex items-center gap-1 mt-1">
+                    <p className="text-xs text-[hsl(var(--text-secondary))] font-bold flex items-center gap-1 mt-1">
                         <Phone size={10} strokeWidth={3} />
                         {lead.phone}
                     </p>
@@ -153,8 +153,8 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             {/* Footer Metadata */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className="px-2 py-0.5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[9px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1.5">
-                        <span className="text-[12px]">{SOURCES[lead.source] ?? '📌'}</span>
+                    <div className="px-2 py-0.5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 text-2xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1.5">
+                        <span className="text-sm">{SOURCES[lead.source] ?? '📌'}</span>
                         {lead.source}
                     </div>
                 </div>
@@ -162,7 +162,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                 <div className="flex items-center gap-2">
                     {daysSince !== null && (
                         <div className={clsx(
-                            "flex items-center gap-1 text-[10px] font-bold",
+                            "flex items-center gap-1 text-2xs font-bold",
                             daysSince > 14 ? 'text-[hsl(var(--danger))]' :
                             daysSince > 7 ? 'text-[hsl(var(--warning))]' :
                             'text-[hsl(var(--text-secondary))]'

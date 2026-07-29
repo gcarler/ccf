@@ -47,7 +47,7 @@ function AvatarInitial({ name, size = "md" }: { name: string; size?: "sm" | "md"
         <div className={clsx(
             "rounded-lg bg-gradient-to-br flex items-center justify-center text-white font-bold shrink-0",
             color,
-            size === "sm" ? "size-7 text-[9px]" : "size-8 text-[10px]"
+            size === "sm" ? "size-7 text-2xs" : "size-8 text-2xs"
         )}>
             {initials}
         </div>
@@ -257,12 +257,12 @@ export default function MessagesPage() {
             {/* Header */}
             <div className="h-10 px-3 flex items-center justify-between shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
                 <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
                         <MessageCircle size={12} />
                         <span className="hidden xs:inline">Mensajes</span>
                     </span>
                     {totalUnread > 0 && (
-                        <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-[hsl(var(--danger))] text-white text-[9px] font-bold">
+                        <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-[hsl(var(--danger))] text-white text-2xs font-bold">
                             {totalUnread}
                         </span>
                     )}
@@ -287,7 +287,7 @@ export default function MessagesPage() {
                         onChange={(e) => setConversationFilter(e.target.value)}
                         placeholder="Buscar..."
                         aria-label="Buscar conversaciones"
-                        className="w-full pl-7 pr-3 py-1.5 text-[11px] bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
+                        className="w-full pl-7 pr-3 py-1.5 text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
                     />
                 </div>
             </div>
@@ -297,21 +297,21 @@ export default function MessagesPage() {
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-10 gap-2 text-[hsl(var(--text-secondary))]">
                         <Loader2 size={16} className="animate-spin" />
-                        <p className="text-[11px]">Cargando...</p>
+                        <p className="text-xs">Cargando...</p>
                     </div>
                 ) : filteredConversations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 gap-3 px-3 text-center">
                         <div className="size-10 rounded-xl bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
                             <MessageCircle size={18} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
                         </div>
-                        <p className="text-[11px] font-semibold text-[hsl(var(--text-secondary))]">
+                        <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">
                             {conversationFilter ? "Sin resultados" : "Sin conversaciones"}
                         </p>
                         {!conversationFilter && (
                             <button
                                 onClick={openNewConvDrawer}
                                 aria-label="Iniciar nueva conversación"
-                                className="flex items-center gap-1.5 text-[11px] font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+                                className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
                             >
                                 <UserPlus size={12} /> Iniciar chat
                             </button>
@@ -337,23 +337,23 @@ export default function MessagesPage() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between gap-1">
                                         <p className={clsx(
-                                            "text-[12px] font-semibold truncate",
+                                            "text-sm font-semibold truncate",
                                             isActive ? "text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" : "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
                                         )}>
                                             {other?.username || "Usuario"}
                                         </p>
                                         {conv.last_message_at && (
-                                            <span className="text-[9px] text-[hsl(var(--text-secondary))] shrink-0">
+                                            <span className="text-2xs text-[hsl(var(--text-secondary))] shrink-0">
                                                 {new Date(conv.last_message_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                                             </span>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-1.5 mt-0.5">
-                                        <p className="text-[11px] text-[hsl(var(--text-secondary))] truncate flex-1">
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] truncate flex-1">
                                             {conv.last_message_content || "Sin mensajes"}
                                         </p>
                                         {conv.unread_count > 0 && (
-                                            <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-[hsl(var(--primary))] text-white text-[9px] font-bold shrink-0">
+                                            <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-[hsl(var(--primary))] text-white text-2xs font-bold shrink-0">
                                                 {conv.unread_count}
                                             </span>
                                         )}
@@ -382,12 +382,12 @@ export default function MessagesPage() {
                         </div>
                         <div>
                             <p className="text-sm font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Selecciona una conversación</p>
-                            <p className="text-[12px] text-[hsl(var(--text-secondary))] mt-1">o empieza una nueva desde el panel izquierdo</p>
+                            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">o empieza una nueva desde el panel izquierdo</p>
                         </div>
                         <button
                             onClick={openNewConvDrawer}
                             aria-label="Crear nueva conversación"
-                            className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wide bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all shadow-sm shadow-[hsl(var(--info)/20%)] mt-1"
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wide bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all shadow-sm shadow-[hsl(var(--info)/20%)] mt-1"
                         >
                             <Plus size={13} /> Nueva conversación
                         </button>
@@ -406,10 +406,10 @@ export default function MessagesPage() {
                             </button>
                             <AvatarInitial name={getOtherParticipant(activeConv)?.username || "U"} />
                             <div className="flex-1 min-w-0">
-                                <p className="text-[12px] font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">
+                                <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">
                                     {getOtherParticipant(activeConv)?.username || "Usuario"}
                                 </p>
-                                <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--text-secondary))]">
+                                <div className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
                                     {wsStatus === "open" ? (
                                         <>
                                             <Circle size={7} className="fill-[hsl(var(--success))] text-[hsl(var(--success))]" />
@@ -442,15 +442,15 @@ export default function MessagesPage() {
                             {loadingMessages ? (
                                 <div className="flex flex-col items-center justify-center h-full gap-3 text-[hsl(var(--text-secondary))]">
                                     <Loader2 size={20} className="animate-spin" />
-                                    <p className="text-[12px]">Cargando mensajes...</p>
+                                    <p className="text-sm">Cargando mensajes...</p>
                                 </div>
                             ) : messages.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full gap-3 text-[hsl(var(--text-secondary))]">
                                     <div className="size-10 rounded-xl bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
                                         <MessageCircle size={18} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
                                     </div>
-                                    <p className="text-[12px] font-semibold text-[hsl(var(--text-secondary))]">Sin mensajes aún</p>
-                                    <p className="text-[11px] text-[hsl(var(--text-secondary))]">Sé el primero en escribir</p>
+                                    <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">Sin mensajes aún</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">Sé el primero en escribir</p>
                                 </div>
                             ) : (
                                 messages.map((msg) => {
@@ -467,12 +467,12 @@ export default function MessagesPage() {
                                             )}
                                             <div className={clsx("space-y-0.5", isOwn ? "max-w-[80%] md:max-w-[68%]" : "max-w-[85%] md:max-w-[68%]")}>
                                                 {!isOwn && (
-                                                    <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1">
+                                                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1">
                                                         {msg.sender_name}
                                                     </p>
                                                 )}
                                                 <div className={clsx(
-                                                    "px-3 md:px-3.5 py-2 rounded-2xl text-[13px] md:text-sm leading-relaxed",
+                                                    "px-3 md:px-3.5 py-2 rounded-2xl text-base md:text-sm leading-relaxed",
                                                     isOwn
                                                         ? "bg-[hsl(var(--primary))] text-white rounded-br-md"
                                                         : "bg-[hsl(var(--bg-primary))] dark:bg-white/[0.07] border border-[hsl(var(--border))] dark:border-white/[0.06] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-bl-md shadow-sm"
@@ -481,13 +481,13 @@ export default function MessagesPage() {
                                                 </div>
                                                 <div className={clsx("flex items-center gap-1", isOwn ? "justify-end pr-1" : "pl-1")}>
                                                     <span className={clsx(
-                                                        "text-[10px]",
+                                                        "text-2xs",
                                                         isOwn ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"
                                                     )}>
                                                         {new Date(msg.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                                                     </span>
                                                     {isOwn && (
-                                                        <span className="text-[10px] text-[hsl(var(--primary))]">{msg.is_read ? "✓✓" : "✓"}</span>
+                                                        <span className="text-2xs text-[hsl(var(--primary))]">{msg.is_read ? "✓✓" : "✓"}</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -577,7 +577,7 @@ export default function MessagesPage() {
                                     <AvatarInitial name={u.username} />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{u.username}</p>
-                                        <p className="text-[11px] text-[hsl(var(--text-secondary))] truncate">{u.email}</p>
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{u.email}</p>
                                     </div>
                                     {creatingConv && <Loader2 size={14} className="animate-spin text-[hsl(var(--primary))] shrink-0" />}
                                 </button>
@@ -586,7 +586,7 @@ export default function MessagesPage() {
                             <div className="flex flex-col items-center justify-center py-8 text-[hsl(var(--text-secondary))] gap-2">
                                 <Search size={24} className="opacity-20" />
                                 <p className="text-sm">{searchQuery.trim().length >= 2 ? "Sin resultados" : "Escribe para buscar"}</p>
-                                {searchQuery.trim().length < 2 && <p className="text-[11px]">Mínimo 2 caracteres</p>}
+                                {searchQuery.trim().length < 2 && <p className="text-xs">Mínimo 2 caracteres</p>}
                             </div>
                         )}
                     </div>

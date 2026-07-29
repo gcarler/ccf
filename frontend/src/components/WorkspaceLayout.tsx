@@ -309,7 +309,7 @@ function WorkspaceLayoutInner({
     }, [closeLayer, isCompactViewport]);
 
     if (!isMounted) return (
-        <div className="h-screen w-full bg-[hsl(var(--bg-primary))] dark:bg-[#111213] flex items-center justify-center">
+        <div className="h-screen w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
                 <div className="size-8 rounded-xl bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white font-bold text-xs">
                     CCF
@@ -380,7 +380,7 @@ function WorkspaceLayoutInner({
 
     return (
         <ProtectedRoute allowedRoles={allowedRoles} allowedPermissions={allowedPermissions}>
-            <div className="workspace-platform flex h-[100dvh] w-full flex-col overflow-hidden bg-[hsl(var(--surface-1))] font-display transition-colors duration-500 dark:bg-[#111213]">
+            <div className="workspace-platform flex h-[100dvh] w-full flex-col overflow-hidden bg-[hsl(var(--surface-1))] font-display transition-colors duration-500 dark:bg-[hsl(var(--surface-2))]">
 
                 <motion.div
                     className="absolute top-0 left-0 right-0 h-[2px] bg-[hsl(var(--primary))] z-[10000]"
@@ -428,7 +428,7 @@ function WorkspaceLayoutInner({
                             onAddOption={onAddOption}
                         />
                     ) : (
-                        <header className="h-10 border-b border-[hsl(var(--border))]/80 dark:border-white/[0.05] flex items-center px-3 gap-2 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#141517] relative">
+                        <header className="h-10 border-b border-[hsl(var(--border))]/80 dark:border-white/[0.05] flex items-center px-3 gap-2 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] relative">
                             {responsiveNavigationActions}
                             {depth > 1 && (
                                 <button
@@ -524,7 +524,7 @@ function WorkspaceLayoutInner({
                             )}
                         </div>
 
-                        <div className="flex-1 flex flex-col min-w-0 bg-[hsl(var(--bg-primary))] dark:bg-[#141517] shadow-[inset_1px_0_0_rgba(0,0,0,0.03)] dark:shadow-none relative z-10 border-l border-[hsl(var(--border))] dark:border-white/5 overflow-hidden">
+                        <div className="flex-1 flex flex-col min-w-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-[inset_1px_0_0_rgba(0,0,0,0.03)] dark:shadow-none relative z-10 border-l border-[hsl(var(--border))] dark:border-white/5 overflow-hidden">
                             <div className="workspace-content flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin relative">
                                 <ErrorBoundary moduleName={displayTitle}>
                                     {children}
@@ -545,10 +545,10 @@ function WorkspaceLayoutInner({
                             aria-label="Abrir MESH AI"
                         >
                             <Bot size={20} className="group-hover:animate-pulse" />
-                            <div className="absolute -top-1 -right-1 size-4 bg-[hsl(var(--success))] rounded-full border-2 border-white dark:border-[#111213]" />
+                            <div className="absolute -top-1 -right-1 size-4 bg-[hsl(var(--success))] rounded-full border-2 border-white dark:border-[hsl(var(--border))]" />
                         </motion.button>
 
-                        <div className="fixed bottom-4 left-1/2 z-[520] flex -translate-x-1/2 items-center gap-1 rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[#141517]/95 md:hidden">
+                        <div className="fixed bottom-4 left-1/2 z-[520] flex -translate-x-1/2 items-center gap-1 rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--surface-2))]/95 md:hidden">
                             <button
                                 onClick={openPrimaryNavigation}
                                 className="flex h-10 min-w-12 items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
@@ -631,7 +631,7 @@ function WorkspaceLayoutInner({
                             onClick={() => closeLayer('S2')}
                         >
                             <motion.div
-                                className="absolute bottom-0 left-0 top-0 w-[min(88vw,360px)] bg-[hsl(var(--bg-primary))] shadow-2xl dark:bg-[#0f1113]"
+                                className="absolute bottom-0 left-0 top-0 w-[min(88vw,360px)] bg-[hsl(var(--bg-primary))] shadow-2xl dark:bg-[hsl(var(--surface-2))]"
                                 initial={{ x: '-100%' }}
                                 animate={{ x: 0 }}
                                 exit={{ x: '-100%' }}
@@ -678,10 +678,10 @@ function UserMenuDropdown({ displayName, username, logout }: { displayName: stri
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-1.5 h-7 pl-2 pr-1 bg-[hsl(var(--surface-1))] dark:bg-white/[0.06] border border-[hsl(var(--border))] dark:border-white/[0.07] rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all group"
             >
-                <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white transition-colors max-w-[80px] truncate">
+                <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white transition-colors max-w-[80px] truncate">
                     {displayName}
                 </span>
-                <div className="size-5 rounded-md bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white font-bold text-[8px]">
+                <div className="size-5 rounded-md bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white font-bold text-2xs">
                     {displayName?.substring(0, 2).toUpperCase()}
                 </div>
             </button>
@@ -693,11 +693,11 @@ function UserMenuDropdown({ displayName, username, logout }: { displayName: stri
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 5, scale: 0.96 }}
                         transition={{ duration: 0.12, ease: "easeOut" }}
-                        className="absolute top-9 right-0 w-56 bg-[hsl(var(--bg-primary))] dark:bg-[#252628] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-xl py-2 z-[100] origin-top-right"
+                        className="absolute top-9 right-0 w-56 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-xl py-2 z-[100] origin-top-right"
                     >
                         <div className="px-3 pb-2 mb-1 border-b border-[hsl(var(--border))] dark:border-white/5">
                             <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white">{displayName}</p>
-                            <p className="text-[10px] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate">{username}</p>
+                            <p className="text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate">{username}</p>
                         </div>
 
                         <div className="px-1.5 flex flex-col gap-0.5">

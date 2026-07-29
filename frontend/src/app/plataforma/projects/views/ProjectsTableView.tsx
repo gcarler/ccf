@@ -32,10 +32,10 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
                                     value={project.title}
                                     onChange={(v) => onUpdate(project.id, { title: v })}
                                     placeholder="Título del proyecto"
-                                    className="text-[13px] font-bold text-[hsl(var(--text-primary))] dark:text-white truncate"
-                                    inputClassName="text-[13px]"
+                                    className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate"
+                                    inputClassName="text-base"
                                 />
-                                <p className="text-[11px] text-[hsl(var(--text-secondary))] truncate">
+                                <p className="text-xs text-[hsl(var(--text-secondary))] truncate">
                                     {project.description || 'Sin descripción'}
                                 </p>
                             </div>

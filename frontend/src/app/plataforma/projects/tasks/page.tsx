@@ -139,7 +139,7 @@ export default function ProjectsTasksPage() {
         >
             {error && (
                 <div className="mx-4 mt-4 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-                    <p className="text-[11px] font-bold uppercase tracking-wide">{error}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
 
@@ -149,7 +149,7 @@ export default function ProjectsTasksPage() {
                         key={value}
                         onClick={() => setStatus(value)}
                         className={clsx(
-                            'px-3 py-1 rounded-full text-[10px] uppercase tracking-wide font-black border transition-colors',
+                            'px-3 py-1 rounded-full text-2xs uppercase tracking-wide font-black border transition-colors',
                             status === value
                                 ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
                                 : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
@@ -174,12 +174,12 @@ export default function ProjectsTasksPage() {
                         <table className="w-full text-left">
                             <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
                                 <tr>
-                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tarea</th>
+                                    <th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tarea</th>
                                     {taskScope === 'all' && (
-                                        <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Proyecto</th>
+                                        <th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Proyecto</th>
                                     )}
-                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Estado</th>
-                                    <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Prioridad</th>
+                                    <th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Estado</th>
+                                    <th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Prioridad</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
@@ -187,10 +187,10 @@ export default function ProjectsTasksPage() {
                                     <tr key={task.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
                                         <td className="px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">{task.title}</td>
                                         {taskScope === 'all' && (
-                                            <td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{task.project_title || 'Sin proyecto'}</td>
+                                            <td className="px-3 py-2 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{task.project_title || 'Sin proyecto'}</td>
                                         )}
-                                        <td className="px-3 py-2 hidden md:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{task.status}</td>
-                                        <td className="px-3 py-2 hidden lg:table-cell text-[11px] text-[hsl(var(--text-secondary))]">{task.priority}</td>
+                                        <td className="px-3 py-2 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{task.status}</td>
+                                        <td className="px-3 py-2 hidden lg:table-cell text-xs text-[hsl(var(--text-secondary))]">{task.priority}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -202,7 +202,7 @@ export default function ProjectsTasksPage() {
                             <article key={task.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
                                 <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{task.title}</h3>
                                 {taskScope === 'all' && (
-                                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{task.project_title || 'Sin proyecto'}</p>
+                                    <p className="mt-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{task.project_title || 'Sin proyecto'}</p>
                                 )}
                                 <p className="text-xs text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">{task.status} · {task.priority}</p>
                             </article>
@@ -213,8 +213,8 @@ export default function ProjectsTasksPage() {
                         {groupedTasks.map((group) => (
                             <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
                                 <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
-                                    <span className="text-[10px] font-bold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
+                                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
                                 </div>
                                 <div className="space-y-2">
                                     {group.rows.map((task) => <div key={task.id} className="rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-2 text-sm font-medium">{task.title}</div>)}
@@ -237,14 +237,14 @@ export default function ProjectsTasksPage() {
                                         <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{task.title}</h3>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">Estado: {task.status} · Prioridad: {task.priority}</p>
                                         {taskScope === 'all' && (
-                                            <p className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                            <p className="mt-1 inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                 <FolderOpen size={10} /> {task.project_title || 'Sin proyecto'}
                                             </p>
                                         )}
                                     </div>
                                     <button
                                         onClick={() => moveForward(task)}
-                                        className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-[10px] uppercase tracking-wide font-black"
+                                        className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs uppercase tracking-wide font-black"
                                     >
                                         Siguiente estado
                                     </button>

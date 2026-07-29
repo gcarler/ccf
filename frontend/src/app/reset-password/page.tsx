@@ -38,7 +38,7 @@ function ResetPasswordContent() {
             </p>
             <button
               onClick={() => router.push("/auth/forgot")}
-              className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[hsl(var(--primary))] transition-all"
+              className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-xs uppercase tracking-wide border-none cursor-pointer hover:bg-[hsl(var(--primary))] transition-all"
             >
               Solicitar nuevo enlace
             </button>
@@ -125,7 +125,7 @@ function ResetPasswordContent() {
               <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round"/>
               <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
             </svg>
-            <span className="text-white font-bold uppercase tracking-wide text-[10px]">
+            <span className="text-white font-bold uppercase tracking-wide text-2xs">
               Ministerio Internacional
             </span>
           </div>
@@ -182,7 +182,7 @@ function ResetPasswordContent() {
             <h2 className="text-[clamp(1.8rem,3.5vw,2.5rem)] font-extrabold text-[hsl(var(--primary))] tracking-[-0.02em] leading-none m-0 mb-4">
               Restablecer contraseña
             </h2>
-            <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-[10px] m-0">
+            <p className="text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide text-2xs m-0">
               Crea una nueva clave segura
             </p>
           </motion.div>
@@ -194,7 +194,7 @@ function ResetPasswordContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.45 }}
             >
-              <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
+              <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
                 Nueva contraseña
               </label>
               <div className="relative">
@@ -223,7 +223,7 @@ function ResetPasswordContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.55 }}
             >
-              <label className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
+              <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider block mb-3 ml-2">
                 Confirmar contraseña
               </label>
               <div className="relative">
@@ -244,7 +244,7 @@ function ResetPasswordContent() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="px-3 py-1.5 bg-[hsl(var(--destructive)/0.08)] border-2 border-[hsl(var(--destructive)/0.2)] rounded-lg text-[hsl(var(--destructive))] text-[11px] font-bold text-center uppercase tracking-wider"
+                className="px-3 py-1.5 bg-[hsl(var(--destructive)/0.08)] border-2 border-[hsl(var(--destructive)/0.2)] rounded-lg text-[hsl(var(--destructive))] text-xs font-bold text-center uppercase tracking-wider"
               >
                 {error}
               </motion.div>
@@ -257,7 +257,7 @@ function ResetPasswordContent() {
               transition={{ delay: 0.65 }}
               type="submit"
               disabled={loading}
-              className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-[11px] uppercase tracking-wide border-none cursor-pointer hover:bg-[hsl(var(--primary))] transition-all mt-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-xs uppercase tracking-wide border-none cursor-pointer hover:bg-[hsl(var(--primary))] transition-all mt-2 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
               {loading ? (
                 <Loader2 className="animate-spin" size={20} />

@@ -86,7 +86,7 @@ export default function WebVitalsAnalyticsPage() {
             <div className="max-h-[520px] overflow-y-auto overflow-x-auto">
               <table className="w-full text-left text-sm min-w-[520px]">
                 <thead className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-surface)]">
-                  <tr className="text-[10px] uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                  <tr className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     <th className="py-2">Metrica</th>
                     <th className="py-2">Valor</th>
                     <th className="py-2">Ruta</th>
@@ -118,7 +118,7 @@ function VitalCard({ metric, unit, summary }: { metric: string; unit: string; su
   return (
     <article className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric}</p>
+        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric}</p>
         <Activity size={14} className="text-[hsl(var(--primary))]" />
       </div>
       <dl className="space-y-1">

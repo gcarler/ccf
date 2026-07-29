@@ -199,11 +199,11 @@ export default function PageVersionsDiffPage() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-12 gap-3 text-[hsl(var(--text-secondary))]">
             <Loader2 size={28} className="animate-spin" />
-            <p className="text-[12px]">Cargando versiones…</p>
+            <p className="text-sm">Cargando versiones…</p>
           </div>
         )}
         {error && !loading && (
-          <div className="rounded-lg border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 p-4 text-danger-text dark:text-[hsl(var(--danger))] text-[12px]">
+          <div className="rounded-lg border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 p-4 text-danger-text dark:text-[hsl(var(--danger))] text-sm">
             <p className="font-semibold mb-1">No se pudieron cargar las versiones</p>
             <p className="opacity-80">{error}</p>
           </div>
@@ -236,7 +236,7 @@ export default function PageVersionsDiffPage() {
         )}
       </div>
       {rollingBack && (
-        <div className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--warning)/30%)] bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-3 py-2 text-[12px] text-warning-text dark:text-[hsl(var(--warning))] shadow-lg">
+        <div className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--warning)/30%)] bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-3 py-2 text-sm text-warning-text dark:text-[hsl(var(--warning))] shadow-lg">
           <Loader2 size={14} className="animate-spin" /> Restaurando versión…
         </div>
       )}
@@ -267,20 +267,20 @@ function Header({
     <header className="h-12 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-4 gap-3 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
       <button
         onClick={onBackToBuilder}
-        className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
       >
         <ArrowLeft size={14} /> Volver al builder
       </button>
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <History size={16} className="text-[hsl(var(--primary))] shrink-0" />
-        <h1 className="text-[12px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white truncate">
+        <h1 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white truncate">
           Diff de versiones — /{slug}
         </h1>
       </div>
       <select
         value={siteKey}
         onChange={(e) => onSiteKeyChange(e.target.value)}
-        className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2.5 py-1 text-[12px]"
+        className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2.5 py-1 text-sm"
       >
         {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
         {sites.map((s) => (
@@ -292,7 +292,7 @@ function Header({
       <button
         onClick={onReload}
         disabled={loading}
-        className="inline-flex items-center gap-1.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all disabled:opacity-50"
       >
         <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Recargar
       </button>
@@ -318,7 +318,7 @@ function VersionToolbar({
   if (versions.length < 2) return null;
   return (
     <div className="h-10 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-4 gap-3 shrink-0 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02]">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+      <span className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
         Comparar
       </span>
       <VersionPicker
@@ -367,14 +367,14 @@ function VersionPicker({
           : "border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30 bg-success-soft/60 dark:bg-[hsl(var(--success))]/5",
       )}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+      <span className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
         {label}
       </span>
       <select
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="appearance-none bg-transparent pr-5 pl-1 text-[12px] font-semibold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none"
+        className="appearance-none bg-transparent pr-5 pl-1 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none"
       >
         {versions.map((v) => (
           <option key={v.id} value={v.id}>
@@ -384,7 +384,7 @@ function VersionPicker({
       </select>
       <ChevronDown size={12} className="absolute right-2 pointer-events-none text-[hsl(var(--text-secondary))]" />
       {current?.notes && (
-        <span className="hidden md:inline text-[10px] italic text-[hsl(var(--text-secondary))] max-w-[200px] truncate">
+        <span className="hidden md:inline text-2xs italic text-[hsl(var(--text-secondary))] max-w-[200px] truncate">
           — {current.notes}
         </span>
       )}
@@ -406,17 +406,17 @@ function EmptyState({
       <div className="inline-flex size-10 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]">
         <History size={20} />
       </div>
-      <p className="text-[13px] font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+      <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white">
         Esta página aún no tiene versiones publicadas
       </p>
-      <p className="text-[12px] text-[hsl(var(--text-secondary))] max-w-md mx-auto">
+      <p className="text-sm text-[hsl(var(--text-secondary))] max-w-md mx-auto">
         Las versiones se generan automáticamente cada vez que publicas la página{" "}
         <span className="font-mono">/{slug}</span> en <span className="font-mono">{siteKey}</span>.
         Vuelve después de la primera publicación para ver el diff.
       </p>
       <button
         onClick={onBackToBuilder}
-        className="inline-flex items-center gap-1.5 mt-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+        className="inline-flex items-center gap-1.5 mt-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
       >
         <ArrowLeft size={12} /> Ir al builder
       </button>
@@ -435,18 +435,18 @@ function SingleVersionState({
     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-6 space-y-3">
       <div className="flex items-center gap-2">
         <History size={16} className="text-[hsl(var(--primary))]" />
-        <p className="text-[12px] font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))] dark:text-white">
+        <p className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))] dark:text-white">
           Solo hay una versión publicada
         </p>
       </div>
-      <p className="text-[12px] text-[hsl(var(--text-secondary))]">
+      <p className="text-sm text-[hsl(var(--text-secondary))]">
         La versión <span className="font-mono">#{version.version_number}</span> del{" "}
         {new Date(version.created_at).toLocaleString()} es la única referencia. Publica de nuevo
         para empezar a comparar.
       </p>
       <button
         onClick={onBackToBuilder}
-        className="inline-flex items-center gap-1.5 rounded-md bg-[hsl(var(--primary))] text-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:opacity-90"
+        className="inline-flex items-center gap-1.5 rounded-md bg-[hsl(var(--primary))] text-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:opacity-90"
       >
         <RotateCcw size={12} /> Ir al builder
       </button>

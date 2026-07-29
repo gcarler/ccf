@@ -116,7 +116,7 @@ export default function TagArchivePage() {
                     </div>
                   )}
                   <div className="p-6">
-                    <div className="flex items-center gap-3 mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                    <div className="flex items-center gap-3 mb-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
                       {post.published_at && (
                         <span className="flex items-center gap-1">
                           <Calendar size={12} />

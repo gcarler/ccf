@@ -29,7 +29,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                     ) : (
                         <Sun size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                     )}
-                    <span className="text-[13px] font-bold leading-none">
+                    <span className="text-base font-bold leading-none">
                         {isNight ? "Modo Oscuro" : "Modo Claro"}
                     </span>
                 </div>

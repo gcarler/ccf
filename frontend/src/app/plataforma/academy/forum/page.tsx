@@ -101,7 +101,7 @@ export default function AcademyForumPage() {
                 rightActions={
                     <button
                         onClick={() => setIsCreateOpen(true)}
-                        className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-white shadow-xl shadow-[hsl(var(--info)/20%)] transition-all active:scale-95"
+                        className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-xl shadow-[hsl(var(--info)/20%)] transition-all active:scale-95"
                     >
                         <Plus size={14} /> Iniciar Debate
                     </button>
@@ -112,14 +112,14 @@ export default function AcademyForumPage() {
                 <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 lg:grid-cols-12">
                     <aside className="space-y-3 lg:col-span-3">
                         <section className="space-y-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
-                            <h3 className="px-2 text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Categorias</h3>
+                            <h3 className="px-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Categorias</h3>
                             <div className="space-y-1">
                                 {categories.map((category) => (
                                     <button
                                         key={category}
                                         onClick={() => setActiveCategory(category)}
                                         className={clsx(
-                                            "flex w-full items-center justify-between rounded-lg p-4 text-[12px] font-bold transition-all",
+                                            "flex w-full items-center justify-between rounded-lg p-4 text-sm font-bold transition-all",
                                             activeCategory === category
                                                 ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10"
                                                 : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
@@ -137,7 +137,7 @@ export default function AcademyForumPage() {
                             <div className="relative z-10 space-y-4">
                                 <div className="flex items-center gap-3">
                                     <Bot size={20} fill="currentColor" />
-                                    <h4 className="text-[11px] font-semibold uppercase tracking-wide">IA Moderator</h4>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wide">IA Moderator</h4>
                                 </div>
                                 <p className="text-xs font-medium italic leading-relaxed text-[hsl(var(--info))]">
                                     Optimus sugiere revisar los debates recientes antes de abrir uno nuevo para evitar duplicados.
@@ -182,20 +182,20 @@ export default function AcademyForumPage() {
                                         </div>
                                         <div className="flex-1 space-y-3">
                                             <div className="flex items-center gap-3">
-                                                <span className="rounded-full bg-info-soft px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20 dark:text-[hsl(var(--primary))]">{thread.category}</span>
-                                                {thread.is_resolved && <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-[9px] font-semibold uppercase tracking-wide text-success-text dark:bg-[hsl(var(--success))]/20"><CheckCircle2 size={12} /> Resuelto</span>}
+                                                <span className="rounded-full bg-info-soft px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20 dark:text-[hsl(var(--primary))]">{thread.category}</span>
+                                                {thread.is_resolved && <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-success-text dark:bg-[hsl(var(--success))]/20"><CheckCircle2 size={12} /> Resuelto</span>}
                                             </div>
                                             <h4 className="text-base font-bold tracking-tight text-[hsl(var(--text-primary))] transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">{thread.title}</h4>
                                             <div className="flex items-center gap-4 text-[hsl(var(--text-secondary))]">
-                                                <div className="flex items-center gap-1.5"><User size={14} /><span className="text-[11px] font-bold">{thread.author}</span></div>
+                                                <div className="flex items-center gap-1.5"><User size={14} /><span className="text-xs font-bold">{thread.author}</span></div>
                                                 <div className="size-1 rounded-full bg-[hsl(var(--surface-2))]" />
-                                                <div className="flex items-center gap-1.5"><Clock size={14} /><span className="text-[11px] font-bold">{thread.last_activity}</span></div>
+                                                <div className="flex items-center gap-1.5"><Clock size={14} /><span className="text-xs font-bold">{thread.last_activity}</span></div>
                                             </div>
                                         </div>
                                         <div className="flex shrink-0 items-center gap-4 md:border-l md:border-[hsl(var(--border))] md:pl-8 dark:md:border-white/5">
                                             <div className="text-center">
                                                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{thread.replies}</p>
-                                                <p className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Respuestas</p>
+                                                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Respuestas</p>
                                             </div>
                                             <ChevronRight size={24} className="text-[hsl(var(--text-secondary))] transition-all group-hover:translate-x-1 group-hover:text-[hsl(var(--primary))]" />
                                         </div>
@@ -215,7 +215,7 @@ export default function AcademyForumPage() {
             >
                 <form onSubmit={handleCreateThread} className="space-y-2">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Titulo</label>
+                        <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Titulo</label>
                         <input
                             required
                             value={newThread.title}
@@ -225,7 +225,7 @@ export default function AcademyForumPage() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Categoria</label>
+                        <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Categoria</label>
                         <select
                             value={newThread.category}
                             onChange={(event) => setNewThread((prev) => ({ ...prev, category: event.target.value }))}
@@ -234,7 +234,7 @@ export default function AcademyForumPage() {
                             {categories.filter((category) => category !== "Todos").map((category) => <option key={category} value={category}>{category}</option>)}
                         </select>
                     </div>
-                    <button disabled={saving} className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white disabled:opacity-60">
+                    <button disabled={saving} className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-60">
                         {saving ? "Publicando..." : "Publicar debate"}
                     </button>
                 </form>

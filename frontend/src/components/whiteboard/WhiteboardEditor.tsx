@@ -596,13 +596,13 @@ export default function WhiteboardEditor({
                         />
                         {showGridMenu && (
                             <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))] min-w-[140px]">
-                                <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estilo</p>
+                                <p className="px-2 pb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estilo</p>
                                 {GRID_OPTIONS.map((opt) => (
                                     <button
                                         key={opt.value}
                                         onClick={() => { setGridStyle(opt.value); setShowGridMenu(false); }}
                                         className={clsx(
-                                            "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-all",
+                                            "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all",
                                             gridStyle === opt.value
                                                 ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.1)]"
                                                 : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
@@ -613,13 +613,13 @@ export default function WhiteboardEditor({
                                     </button>
                                 ))}
                                 <div className="my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
-                                <p className="px-2 pb-1 text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tamaño</p>
+                                <p className="px-2 pb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tamaño</p>
                                 {GRID_SIZES.map((opt) => (
                                     <button
                                         key={opt.value}
                                         onClick={() => { setGridSize(opt.value); setShowGridMenu(false); }}
                                         className={clsx(
-                                            "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition-all",
+                                            "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all",
                                             gridSize === opt.value
                                                 ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.1)]"
                                                 : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
@@ -650,10 +650,10 @@ export default function WhiteboardEditor({
                 </main>
 
                 {/* ── Right property panel ── */}
-                <aside className="w-80 shrink-0 overflow-y-auto border-l border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[#111418]">
+                <aside className="w-80 shrink-0 overflow-y-auto border-l border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]">
                     {/* Info section */}
                     <section className="space-y-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Objetivo</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Objetivo</p>
                         <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{title}</h1>
                         <p className="text-xs font-medium leading-5 text-[hsl(var(--text-secondary))]">Sin objetivo documentado.</p>
                     </section>
@@ -661,13 +661,13 @@ export default function WhiteboardEditor({
                     {/* ── Object properties ── */}
                     {isObjectSelected && (
                         <section className="mt-5 space-y-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/50 p-3 dark:border-white/5 dark:bg-white/[0.03]">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 Propiedades — {String(selectedObjectProps?.type || "objeto")}
                             </p>
 
                             {/* Fill color */}
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Relleno</label>
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Relleno</label>
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="color"
@@ -693,7 +693,7 @@ export default function WhiteboardEditor({
 
                             {/* Stroke color */}
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Borde</label>
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Borde</label>
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="color"
@@ -719,9 +719,9 @@ export default function WhiteboardEditor({
 
                             {/* Stroke width slider */}
                             <div className="space-y-1.5">
-                                <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="flex items-center justify-between text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <span>Grosor de borde</span>
-                                    <span className="font-mono text-[11px]">{strokeWidth}px</span>
+                                    <span className="font-mono text-xs">{strokeWidth}px</span>
                                 </label>
                                 <input
                                     type="range"
@@ -735,9 +735,9 @@ export default function WhiteboardEditor({
 
                             {/* Opacity slider */}
                             <div className="space-y-1.5">
-                                <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="flex items-center justify-between text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <span>Opacidad</span>
-                                    <span className="font-mono text-[11px]">{opacity}%</span>
+                                    <span className="font-mono text-xs">{opacity}%</span>
                                 </label>
                                 <input
                                     type="range"
@@ -754,11 +754,11 @@ export default function WhiteboardEditor({
                                 <>
                                     {/* Font family dropdown */}
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</label>
+                                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</label>
                                         <select
                                             value={textFontFamily}
                                             onChange={(e) => { setTextFontFamily(e.target.value); applyProperty("fontFamily", e.target.value); }}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-[12px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-sm font-semibold outline-none dark:border-white/10 dark:bg-black/20"
                                         >
                                             {FONT_FAMILIES.map((f) => (
                                                 <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
@@ -770,9 +770,9 @@ export default function WhiteboardEditor({
 
                                     {/* Font size */}
                                     <div className="space-y-1.5">
-                                        <label className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                        <label className="flex items-center justify-between text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             <span>Tamaño</span>
-                                            <span className="font-mono text-[11px]">{textFontSize}px</span>
+                                            <span className="font-mono text-xs">{textFontSize}px</span>
                                         </label>
                                         <input
                                             type="range"
@@ -788,7 +788,7 @@ export default function WhiteboardEditor({
                                                     key={s}
                                                     onClick={() => { setTextFontSize(s); applyProperty("fontSize", s); }}
                                                     className={clsx(
-                                                        "rounded-md px-2 py-0.5 text-[10px] font-bold transition-all",
+                                                        "rounded-md px-2 py-0.5 text-2xs font-bold transition-all",
                                                         textFontSize === s
                                                             ? "bg-[hsl(var(--primary))] text-white"
                                                             : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"
@@ -802,7 +802,7 @@ export default function WhiteboardEditor({
 
                                     {/* Text color */}
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Color texto</label>
+                                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Color texto</label>
                                         <input
                                             type="color"
                                             value={textColor}
@@ -816,7 +816,7 @@ export default function WhiteboardEditor({
                                         <button
                                             onClick={() => { const v = textBold ? "normal" : "bold"; setTextBold(!textBold); applyProperty("fontWeight", v); }}
                                             className={clsx(
-                                                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all",
+                                                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
                                                 textBold ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5"
                                             )}
                                         >
@@ -825,7 +825,7 @@ export default function WhiteboardEditor({
                                         <button
                                             onClick={() => { const v = textItalic ? "" : "italic"; setTextItalic(!textItalic); applyProperty("fontStyle", v); }}
                                             className={clsx(
-                                                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all",
+                                                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
                                                 textItalic ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5"
                                             )}
                                         >
@@ -838,52 +838,52 @@ export default function WhiteboardEditor({
                             {/* Position & size */}
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">X</label>
+                                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">X</label>
                                     <input
                                         type="number"
                                         value={objLeft}
                                         onChange={(e) => { const v = Number(e.target.value); setObjLeft(v); applyProperty("left", v); }}
-                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-xs font-semibold outline-none dark:border-white/10 dark:bg-black/20"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Y</label>
+                                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Y</label>
                                     <input
                                         type="number"
                                         value={objTop}
                                         onChange={(e) => { const v = Number(e.target.value); setObjTop(v); applyProperty("top", v); }}
-                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-xs font-semibold outline-none dark:border-white/10 dark:bg-black/20"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ancho</label>
+                                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ancho</label>
                                     <input
                                         type="number"
                                         value={objWidth}
                                         onChange={(e) => { const v = Number(e.target.value); setObjWidth(v); applyProperty("width", v); }}
-                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-xs font-semibold outline-none dark:border-white/10 dark:bg-black/20"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Alto</label>
+                                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Alto</label>
                                     <input
                                         type="number"
                                         value={objHeight}
                                         onChange={(e) => { const v = Number(e.target.value); setObjHeight(v); applyProperty("height", v); }}
-                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-[11px] font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-xs font-semibold outline-none dark:border-white/10 dark:bg-black/20"
                                     />
                                 </div>
                             </div>
 
                             {/* Order actions */}
                             <div className="flex gap-2">
-                                <button onClick={bringForward} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
+                                <button onClick={bringForward} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
                                     <BringToFront size={12} /> Al frente
                                 </button>
-                                <button onClick={sendBackward} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
+                                <button onClick={sendBackward} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
                                     <SendToBack size={12} /> Atrás
                                 </button>
-                                <button onClick={duplicateSelection} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-[10px] font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
+                                <button onClick={duplicateSelection} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
                                     <Copy size={12} /> Duplicar
                                 </button>
                             </div>
@@ -891,7 +891,7 @@ export default function WhiteboardEditor({
                             {/* Delete button */}
                             <button
                                 onClick={removeSelection}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[hsl(var(--destructive)/0.08)] py-2 text-[10px] font-bold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/0.15)] dark:bg-[hsl(var(--destructive)/0.1)]"
+                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[hsl(var(--destructive)/0.08)] py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/0.15)] dark:bg-[hsl(var(--destructive)/0.1)]"
                             >
                                 <Trash2 size={14} /> Eliminar objeto
                             </button>
@@ -900,7 +900,7 @@ export default function WhiteboardEditor({
 
                     {/* ── Layers ── */}
                     <section data-testid="whiteboard-layers" className={clsx("space-y-3", isObjectSelected ? "mt-5" : "mt-6")}>
-                        <h3 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                        <h3 className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             <Layers size={12} /> Capas reales
                         </h3>
                         <div className="space-y-1.5">
@@ -908,16 +908,16 @@ export default function WhiteboardEditor({
                                 <button
                                     key={`${layer.type}-${layer.index}`}
                                     onClick={() => focusLayer(layer.index)}
-                                    className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] p-2.5 text-left text-[11px] font-medium text-[hsl(var(--text-secondary))] transition-all hover:border-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--info-muted))] dark:border-white/5 dark:hover:bg-[hsl(var(--primary)/0.1)]"
+                                    className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] p-2.5 text-left text-xs font-medium text-[hsl(var(--text-secondary))] transition-all hover:border-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--info-muted))] dark:border-white/5 dark:hover:bg-[hsl(var(--primary)/0.1)]"
                                 >
                                     <span className="flex items-center gap-2">
                                         <History size={12} /> {layer.label}
                                     </span>
-                                    <span className="text-[8px] font-bold opacity-40">#{layer.index + 1}</span>
+                                    <span className="text-2xs font-bold opacity-40">#{layer.index + 1}</span>
                                 </button>
                             ))}
                             {layers.length === 0 && (
-                                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-[11px] font-semibold text-[hsl(var(--text-secondary))] dark:border-white/10">
+                                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-xs font-semibold text-[hsl(var(--text-secondary))] dark:border-white/10">
                                     No hay objetos en el lienzo.
                                 </div>
                             )}
@@ -994,7 +994,7 @@ function ExportButton({
             disabled={disabled}
             data-testid={dataTestid}
             className={clsx(
-                "group relative flex h-8 items-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold text-[hsl(var(--text-secondary))] transition-all",
+                "group relative flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all",
                 disabled
                     ? "cursor-not-allowed opacity-40"
                     : "hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] dark:hover:bg-white/5"
@@ -1040,7 +1040,7 @@ function ToolbarButton({
             )}
         >
             <Icon size={20} />
-            <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg bg-[hsl(var(--bg-muted))] px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg bg-[hsl(var(--bg-muted))] px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white opacity-0 transition-opacity group-hover:opacity-100">
                 {label}
             </span>
         </button>

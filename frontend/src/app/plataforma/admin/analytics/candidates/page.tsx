@@ -102,10 +102,10 @@ export default function CandidatesDashboard() {
             header: 'Estudiante',
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-md bg-[hsl(var(--bg-muted))] dark:bg-white/10 flex items-center justify-center text-white text-[10px] font-semibold uppercase border border-white/10">{row.original.username.charAt(0)}</div>
+                    <div className="size-8 rounded-md bg-[hsl(var(--bg-muted))] dark:bg-white/10 flex items-center justify-center text-white text-2xs font-semibold uppercase border border-white/10">{row.original.username.charAt(0)}</div>
                     <div className="flex flex-col">
                         <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase leading-none">{row.original.username}</span>
-                        <span className="text-[10px] text-[hsl(var(--text-secondary))] font-bold tracking-wide mt-1">{row.original.email}</span>
+                        <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold tracking-wide mt-1">{row.original.email}</span>
                     </div>
                 </div>
             )
@@ -132,7 +132,7 @@ export default function CandidatesDashboard() {
             header: 'Calificación IA',
             cell: ({ row }) => (
                 <span className={clsx(
-                    "px-4 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wide border",
+                    "px-4 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border",
                     row.original.status === 'ready' ? "bg-success-soft text-success-text border-[hsl(var(--success)/20%)] dark:bg-[hsl(var(--success))]/20 dark:border-[hsl(var(--success)/100%)]" : "bg-info-soft text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:bg-[hsl(var(--info))]/20 dark:border-[hsl(var(--info)/100%)]"
                 )}>
                     {row.original.status === 'ready' ? 'Óptimo para Hito' : 'En Discipulado'}
@@ -178,7 +178,7 @@ export default function CandidatesDashboard() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-4">
                         <div>
                             <h3 className="text-xl font-bold tracking-tighter uppercase leading-none dark:text-white">Nómina de Candidatos</h3>
-                            <p className="text-[10px] font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-2">Basado en el rendimiento de los últimos 30 días</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-2">Basado en el rendimiento de los últimos 30 días</p>
                         </div>
                         <div className="relative w-full md:w-96 group">
                             <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />

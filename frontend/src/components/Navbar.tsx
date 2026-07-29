@@ -46,7 +46,7 @@ export default function Navbar() {
         <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${isScrolled ? 'py-2' : 'py-3'}`}>
             <div className="container mx-auto px-4">
                 <div className={`glass-card flex items-center justify-between px-4 py-2 transition-all duration-300 rounded-lg ${isScrolled
-                    ? 'bg-white/80 dark:bg-[#1E1F21]/80 backdrop-blur-xl shadow-lg border border-[hsl(var(--border))]/50 dark:border-white/5'
+                    ? 'bg-white/80 dark:bg-[hsl(var(--surface-2))]/80 backdrop-blur-xl shadow-lg border border-[hsl(var(--border))]/50 dark:border-white/5'
                     : 'bg-transparent border border-transparent'
                     }`}>
                     {/* Logo */}
@@ -134,12 +134,12 @@ export default function Navbar() {
             {/* Mobile Menu */}
             {mobileMenuOpen && (
                 <div className="lg:hidden px-4 mt-2">
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg p-4 space-y-1.5 shadow-xl border border-[hsl(var(--border))]/50 dark:border-white/5 animate-in slide-in-from-top-4 duration-200 max-h-[70vh] overflow-y-auto">
+                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg p-4 space-y-1.5 shadow-xl border border-[hsl(var(--border))]/50 dark:border-white/5 animate-in slide-in-from-top-4 duration-200 max-h-[70vh] overflow-y-auto">
                         {navItems.map((item: any) => (
                             <div key={item.label}>
                                 {item.submenu ? (
                                     <div className="space-y-1 py-1">
-                                        <div className="text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 mb-0.5">{item.label}</div>
+                                        <div className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 mb-0.5">{item.label}</div>
                                         {item.submenu.map((sub: any) => (
                                             <Link
                                                 key={sub.href}
@@ -193,7 +193,7 @@ function NavDropdown({ label, items, active }: { label: string, items: any[], ac
 
             {/* Dropdown Menu */}
             <div className={`absolute top-full left-0 mt-1 w-48 pt-1 transition-all duration-200 origin-top-left ${isOpen ? 'opacity-100 translate-y-0 scale-100 visible' : 'opacity-0 -translate-y-1 scale-95 invisible'}`}>
-                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg shadow-lg border border-[hsl(var(--border))]/50 dark:border-white/5 p-1 overflow-hidden">
+                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg shadow-lg border border-[hsl(var(--border))]/50 dark:border-white/5 p-1 overflow-hidden">
                     {items.map((sub) => (
                         <Link
                             key={sub.href}

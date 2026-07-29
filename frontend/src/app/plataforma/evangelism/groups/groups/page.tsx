@@ -521,7 +521,7 @@ if (!cancelled) setLoading(false);
  <div className="min-w-0 flex-1">
  <div className="flex items-center gap-2 flex-wrap">
  <span className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{h.name}</span>
- {h.code && <span className="text-[10px] font-mono text-[hsl(var(--text-secondary))]">{h.code}</span>}
+ {h.code && <span className="text-2xs font-mono text-[hsl(var(--text-secondary))]">{h.code}</span>}
  </div>
  <div className="flex items-center gap-3 mt-1 text-xs text-[hsl(var(--text-secondary))]">
  {h.zone && <span><MapPin size={11} className="inline mr-1" />{h.zone}</span>}
@@ -530,7 +530,7 @@ if (!cancelled) setLoading(false);
  ) : (
  <span className="text-warning font-semibold">Sin líder</span>
  )}
- <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
+ <span className={`px-1.5 py-0.5 rounded text-2xs font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
  {h.status}
  </span>
  </div>
@@ -572,9 +572,9 @@ if (!cancelled) setLoading(false);
  <div className="flex items-start justify-between gap-2">
  <div className="min-w-0">
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{h.name}</p>
- {h.code && <p className="text-[10px] font-mono text-[hsl(var(--text-secondary))]">{h.code}</p>}
+ {h.code && <p className="text-2xs font-mono text-[hsl(var(--text-secondary))]">{h.code}</p>}
  </div>
- <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
+ <span className={`shrink-0 px-2 py-0.5 rounded text-2xs font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
  {h.status}
  </span>
  </div>
@@ -584,9 +584,9 @@ if (!cancelled) setLoading(false);
  {h.address && <p className="truncate opacity-60">{h.address}</p>}
  </div>
  <div className="flex items-center gap-2 pt-2 border-t border-[hsl(var(--border-primary))]">
- <span className="text-[10px] text-[hsl(var(--text-secondary))]">Cap. {h.capacity || '—'}</span>
- {h.day_of_week && <span className="text-[10px] text-[hsl(var(--text-secondary))]">{h.day_of_week}</span>}
- {h.start_time && <span className="text-[10px] text-[hsl(var(--text-secondary))]">{h.start_time}</span>}
+ <span className="text-2xs text-[hsl(var(--text-secondary))]">Cap. {h.capacity || '—'}</span>
+ {h.day_of_week && <span className="text-2xs text-[hsl(var(--text-secondary))]">{h.day_of_week}</span>}
+ {h.start_time && <span className="text-2xs text-[hsl(var(--text-secondary))]">{h.start_time}</span>}
  </div>
  </button>
  ))}
@@ -620,7 +620,7 @@ if (!cancelled) setLoading(false);
  <div key={zone} className="flex-shrink-0 w-72 bg-[hsl(var(--bg-muted))] rounded-lg border border-[hsl(var(--border-primary))] flex flex-col">
  <div className="px-3 py-2 border-b border-[hsl(var(--border-primary))] flex items-center justify-between">
  <span className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{zone}</span>
- <span className="text-[10px] font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))] px-2 py-0.5 rounded-full">{zoneHouses.length}</span>
+ <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))] px-2 py-0.5 rounded-full">{zoneHouses.length}</span>
  </div>
  <div className="flex-1 overflow-y-auto p-2 space-y-2">
  {zoneHouses.map(h => (
@@ -640,15 +640,15 @@ if (!cancelled) setLoading(false);
  >
  <div className="flex items-start justify-between gap-1">
  <p className="text-xs font-bold text-[hsl(var(--text-primary))] truncate">{h.name}</p>
- <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
+ <span className={`shrink-0 px-1.5 py-0.5 rounded text-2xs font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
  {h.status}
  </span>
  </div>
- <div className="text-[10px] text-[hsl(var(--text-secondary))] space-y-1">
+ <div className="text-2xs text-[hsl(var(--text-secondary))] space-y-1">
  <p><Users size={10} className="inline mr-1" />{h.leader_id ? getPersonaName(h.leader_id) : <span className="text-warning">Sin líder</span>}</p>
  {h.address && <p className="truncate opacity-60">{h.address}</p>}
  </div>
- <div className="flex items-center gap-2 text-[9px] text-[hsl(var(--text-secondary))]">
+ <div className="flex items-center gap-2 text-2xs text-[hsl(var(--text-secondary))]">
  <span>Cap. {h.capacity || '—'}</span>
  {h.day_of_week && <span>{h.day_of_week}</span>}
  </div>
@@ -719,7 +719,7 @@ if (!cancelled) setLoading(false);
  <td className="px-4 py-2.5 text-center text-[hsl(var(--text-secondary))]">{h.capacity || '—'}</td>
  <td className="px-4 py-2.5 text-center text-[hsl(var(--text-secondary))]">{h.day_of_week || '—'}</td>
  <td className="px-4 py-2.5 text-center">
- <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
+ <span className={`px-2 py-0.5 rounded text-2xs font-semibold ${h.status === 'Activo' ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]' : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'}`}>
  {h.status}
  </span>
  </td>
@@ -789,7 +789,7 @@ if (!cancelled) setLoading(false);
  ) : filteredHouses.length === 0 ? (
  <div className="py-1.5 px-4 text-center">
  <Search size={24} className="mx-auto text-[hsl(var(--text-secondary))] mb-3" />
- <p className="text-[11px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin resultados</p>
+ <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin resultados</p>
  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">No hay grupos que coincidan.</p>
  </div>
  ) : (
@@ -835,11 +835,11 @@ if (!cancelled) setLoading(false);
  {h.name}
  </p>
  <div className="mt-1 flex items-center justify-between">
- <p className="text-[10px] font-medium text-[hsl(var(--text-secondary))] truncate">
+ <p className="text-2xs font-medium text-[hsl(var(--text-secondary))] truncate">
  {h.zone || 'Sin zona'}
  </p>
  {h.leader_id && (
- <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-info-soft text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] shrink-0">
+ <span className="text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-info-soft text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] shrink-0">
  {getPersonaName(h.leader_id).split(' ')[0]}
  </span>
  )}
@@ -935,14 +935,14 @@ if (!cancelled) setLoading(false);
  {!isCreating && (
  <div className="mb-5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5 flex items-start justify-between gap-4">
  <div>
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  {MODE_CONFIG[mode].title}
  </p>
  <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-1">
  {MODE_CONFIG[mode].description}
  </p>
  </div>
- <span className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  Edición
  </span>
  </div>
@@ -955,7 +955,7 @@ if (!cancelled) setLoading(false);
  {/* Identidad */}
  <div className="space-y-4">
  <div>
- <label htmlFor="group-code" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor="group-code" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  Código del Grupo
  </label>
  <input
@@ -972,7 +972,7 @@ if (!cancelled) setLoading(false);
  />
  </div>
  <div>
- <label htmlFor="group-name" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor="group-name" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  Nombre o Número del Grupo
  </label>
  <input
@@ -987,7 +987,7 @@ if (!cancelled) setLoading(false);
  </div>
  <div className="grid grid-cols-2 gap-4">
  <div>
- <label htmlFor="group-zone" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
+ <label htmlFor="group-zone" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
  <MapPin size={11} /> Zona/Barrio
  </label>
  <input
@@ -1001,7 +1001,7 @@ if (!cancelled) setLoading(false);
  />
  </div>
  <div>
- <label htmlFor="group-address" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
+ <label htmlFor="group-address" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
  <MapPin size={11} /> Dirección
  </label>
  <input
@@ -1019,7 +1019,7 @@ if (!cancelled) setLoading(false);
 
  {/* Roles */}
  <div>
- <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-4 flex items-center gap-2">
+ <h3 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-4 flex items-center gap-2">
  <Users size={12} className="text-[hsl(var(--primary))]" /> Roles del
  Grupo
  </h3>
@@ -1030,7 +1030,7 @@ if (!cancelled) setLoading(false);
  { key: 'host_id', label: 'Anfitrión' },
  ].map(({ key, label }) => (
  <div key={key}>
- <label htmlFor={`group-role-${key}`} className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor={`group-role-${key}`} className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  {label}
  </label>
  <select
@@ -1062,12 +1062,12 @@ if (!cancelled) setLoading(false);
 
  {/* Logística */}
  <div>
- <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-4 flex items-center gap-2">
+ <h3 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-4 flex items-center gap-2">
  <Calendar size={12} className="text-[hsl(var(--primary))]" /> Logística
  </h3>
  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
  <div className="col-span-2">
- <label htmlFor="group-day" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
+ <label htmlFor="group-day" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
  <Clock size={11} /> Día de Reunión
  </label>
  <select
@@ -1098,7 +1098,7 @@ if (!cancelled) setLoading(false);
  </select>
  </div>
  <div>
- <label htmlFor="group-start-time" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor="group-start-time" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  Hora Inicio
  </label>
  <input
@@ -1115,7 +1115,7 @@ if (!cancelled) setLoading(false);
  />
  </div>
  <div>
- <label htmlFor="group-end-time" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor="group-end-time" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  Hora Fin
  </label>
  <input
@@ -1129,7 +1129,7 @@ if (!cancelled) setLoading(false);
  />
  </div>
  <div>
- <label htmlFor="group-capacity" className="block text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
+ <label htmlFor="group-capacity" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
  Capacidad
  </label>
  <input
@@ -1152,7 +1152,7 @@ if (!cancelled) setLoading(false);
  <div className="space-y-4">
  <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 border-t border-[hsl(var(--border-primary))] pt-8 mt-4">
  <div>
- <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1 flex items-center gap-2">
+ <h3 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1 flex items-center gap-2">
  <Users size={12} className="text-[hsl(var(--primary))]" /> Personas actuales ({selectedPersonaIds.size})
  </h3>
  <p className="text-xs text-[hsl(var(--text-secondary))]">
@@ -1162,7 +1162,7 @@ if (!cancelled) setLoading(false);
  <button
  type="button"
  onClick={() => setIsAddingPersonas(!isAddingPersonas)}
- className={`px-4 py-2 text-[11px] font-semibold uppercase tracking-wide rounded-lg transition-colors flex items-center gap-2 ${
+ className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg transition-colors flex items-center gap-2 ${
  isAddingPersonas
  ? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/20'
  : 'bg-info-soft text-[hsl(var(--primary))] hover:bg-info-muted dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--primary))]'
@@ -1179,7 +1179,7 @@ if (!cancelled) setLoading(false);
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
  {persona.nombre_completo}
  </p>
- <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">
+ <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 truncate">
  {persona.church_role || 'Sin rol'}
  </p>
  </div>
@@ -1223,7 +1223,7 @@ if (!cancelled) setLoading(false);
                                       type="button"
                                       onClick={() => downloadGroupAttendancePdf(selectedHouse.id)}
                                       title="Descargar reporte de asistencia (PDF)"
-                                      className="px-2.5 py-2.5 bg-danger-soft text-[hsl(var(--destructive))] dark:text-danger border border-danger-muted dark:border-[hsl(var(--danger)/0.3)] hover:bg-danger-muted dark:hover:bg-[hsl(var(--danger)/0.15)] rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5"
+                                      className="px-2.5 py-2.5 bg-danger-soft text-[hsl(var(--destructive))] dark:text-danger border border-danger-muted dark:border-[hsl(var(--danger)/0.3)] hover:bg-danger-muted dark:hover:bg-[hsl(var(--danger)/0.15)] rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
                                     >
                                       <FileText size={13} /> PDF
                                     </button>
@@ -1231,7 +1231,7 @@ if (!cancelled) setLoading(false);
                                       type="button"
                                       onClick={() => downloadGroupAttendanceExcel(selectedHouse.id)}
                                       title="Descargar reporte de asistencia (Excel)"
-                                      className="px-2.5 py-2.5 bg-success-soft text-[hsl(var(--secondary))] dark:text-success border border-success-muted dark:border-[hsl(var(--success)/0.3)] hover:bg-success-soft dark:hover:bg-[hsl(var(--success)/0.15)] rounded-md text-[11px] font-bold transition-all flex items-center gap-1.5"
+                                      className="px-2.5 py-2.5 bg-success-soft text-[hsl(var(--secondary))] dark:text-success border border-success-muted dark:border-[hsl(var(--success)/0.3)] hover:bg-success-soft dark:hover:bg-[hsl(var(--success)/0.15)] rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
                                     >
                                       <FileSpreadsheet size={13} /> XLSX
                                     </button>
@@ -1299,7 +1299,7 @@ if (!cancelled) setLoading(false);
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
  {persona.nombre_completo}
  </p>
- <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-0.5 truncate">
+ <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 truncate">
  {persona.church_role || 'Sin rol'}
  </p>
  </div>
@@ -1349,7 +1349,7 @@ if (!cancelled) setLoading(false);
  {mode === 'personas' && summary ? (
  <div className="p-4 space-y-3">
  <div className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5">
- <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
  Asignación rápida
  </p>
  <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-1">
@@ -1374,7 +1374,7 @@ if (!cancelled) setLoading(false);
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
  {persona.name}
  </p>
- <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-1">
+ <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1">
  {persona.church_role || 'Sin rol'} · Sin grupo
  asignado
  </p>
@@ -1399,7 +1399,7 @@ if (!cancelled) setLoading(false);
  <button
  onClick={() => handleQuickAssignPersona(persona.id)}
  disabled={saving}
- className="px-4 py-2.5 rounded-md bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-[11px] font-semibold uppercase tracking-wide disabled:opacity-50"
+ className="px-4 py-2.5 rounded-md bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-xs font-semibold uppercase tracking-wide disabled:opacity-50"
  >
  Asignar
  </button>
