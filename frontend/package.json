@@ -45,8 +45,8 @@
     "test:visual": "playwright test -c playwright.visual.config.ts",
     "test:visual:update": "playwright test -c playwright.visual.config.ts --update-snapshots",
     "test:visual:ci": "npm run build-storybook && npm run test:visual",
-    "test:visual:update:ci": "npm run build-storybook && npm run test:visual:update",
-    "quality:gate": "node scripts/quality-gate.mjs"
+    "test:visual:update:ci": "npm run build-storybook && npm run test:visual:update",        "quality:nested-components": "node scripts/find-nested-components.js",
+        "quality:gate": "node scripts/quality-gate.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
