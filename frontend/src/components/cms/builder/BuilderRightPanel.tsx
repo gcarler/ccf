@@ -100,11 +100,11 @@ function JsonLdPreview({ pageTitle, slug, seoTitle, seoDescription, seoImage, ca
         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
           Vista previa JSON-LD (Schema.org)
         </p>
-        <span className="text-2xs font-bold px-1.5 py-0.5 rounded bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]">
+        <span data-testid="json-ld-type" className="text-2xs font-bold px-1.5 py-0.5 rounded bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]">
           {faqItems.length > 0 ? "FAQPage" : hasArticle ? "Article" : "WebPage"}
         </span>
       </div>
-      <pre className="text-2xs font-mono bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-2 max-h-40 overflow-y-auto whitespace-pre-wrap break-all">
+      <pre data-testid="json-ld-code" className="text-2xs font-mono bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md p-2 max-h-40 overflow-y-auto whitespace-pre-wrap break-all">
         <code>{jsonString}</code>
       </pre>
       <p className="text-2xs text-[hsl(var(--text-secondary))]">

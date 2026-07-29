@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { PageBuilderState } from "@/hooks/usePageBuilder";
 import type { CmsPage } from "@/types/cms-v2";
+import { createMockCmsSection } from "@/test-utils/factories";
 import BuilderRightPanel from "./BuilderRightPanel";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -21,6 +22,10 @@ vi.mock("@/lib/cms/v2", () => ({
     daily_views: [{ views: 100 }, { views: 200 }],
     days: 7,
   }),
+}));
+
+vi.mock("@/lib/site-config", () => ({
+  SITE_URL: "",
 }));
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -311,5 +316,209 @@ describe("BuilderRightPanel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /archivar pagina/i }));
     expect(togglePageArchive).toHaveBeenCalled();
+  });
+
+  it("renders JSON-LD WebPage schema when no FAQ or article sections exist", () => {
+    const builder = createMockBuilder({ activeRightTab: "seo", sections: [] });
+    render(<BuilderRightPanel builder={builder} />);
+
+    expect(screen.getByTestId("json-ld-type")).toHaveTextContent("WebPage");
+    expect(screen.getByTestId("json-ld-code")).toHaveTextContent('"@type": "WebPage"');
+  });
+
+  it("includes canonical URL and SEO image in JSON-LD when provided", () => {
+    const builder = createMockBuilder({
+      activeRightTab: "seo",
+      activePage: { id: "page-1", site_id: "site-1", slug: "home", title: "Home", status: "draft", seo_json: {}, published_version_id: null, publish_at: null, expires_at: null, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" } as CmsPage,
+      seoCanonicalDraft: "https://example.com/home",
+      seoImageDraft: "https://example.com/hero.jpg",
+      sections: [],
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    expect(screen.getByTestId("json-ld-code")).toHaveTextContent('"url": "https://example.com/home"');
+    expect(screen.getByTestId("json-ld-code")).toHaveTextContent('"image": "https://example.com/hero.jpg"');
+  });
+
+  it("falls back to site URL and slug when canonical URL is empty", () => {
+    const builder = createMockBuilder({
+      activeRightTab: "seo",
+      activePage: { id: "page-1", site_id: "site-1", slug: "home", title: "Home", status: "draft", seo_json: {}, published_version_id: null, publish_at: null, expires_at: null, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" } as CmsPage,
+      seoCanonicalDraft: "",
+      siteKey: "ccf",
+      sections: [],
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    expect(screen.getByTestId("json-ld-code")).toHaveTextContent('"url": "https://ccf/home"');
+  });
+
+  it("renders JSON-LD FAQPage schema when a faq section is present", () => {
+    const builder = createMockBuilder({
+      activeRightTab: "seo",
+      sections: [
+        createMockCmsSection("faq", {
+          id: "faq-1",
+          props_json: {
+            items: [{ q: "¿Dónde?", a: "En la iglesia" }],
+          },
+        }),
+      ],
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    expect(screen.getByTestId("json-ld-type")).toHaveTextContent("FAQPage");
+    expect(screen.getByTestId("json-ld-code")).toHaveTextContent('"@type": "FAQPage"');
+    expect(screen.getByTestId("json-ld-code")).toHaveTextContent("¿Dónde?");
+  });
+
+  it("renders JSON-LD Article schema when a rich_text section is present", () => {
+    const builder = createMockBuilder({
+      activeRightTab: "seo",
+      sections: [
+        createMockCmsSection("rich_text", {
+          id: "rt-1",
+          props_json: { body: "Lorem ipsum dolor sit amet" },
+        }),
+      ],
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    expect(screen.getByTestId("json-ld-type")).toHaveTextContent("Article");
+    expect(screen.getByTestId("json-ld-code")).toHaveTextContent('"@type": "Article"');
+  });
+
+  it("renders AI image generator and triggers image generation", () => {
+    const setAiImagePrompt = vi.fn();
+    const handleAiImageGenerate = vi.fn();
+    const builder = createMockBuilder({
+      activeRightTab: "ai",
+      aiImagePrompt: "Prompt inicial",
+      setAiImagePrompt,
+      handleAiImageGenerate,
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    const input = screen.getByPlaceholderText(/jóvenes cantando/i);
+    fireEvent.change(input, { target: { value: "Jóvenes cantando" } });
+    expect(setAiImagePrompt).toHaveBeenCalledWith("Jóvenes cantando");
+
+    fireEvent.click(screen.getByRole("button", { name: /generar imagen premium/i }));
+    expect(handleAiImageGenerate).toHaveBeenCalled();
+  });
+
+  it("uses AI generated image for SEO", () => {
+    const setSeoImageDraft = vi.fn();
+    const setAiImageResult = vi.fn();
+    const builder = createMockBuilder({
+      activeRightTab: "ai",
+      aiImageResult: "https://example.com/ai.jpg",
+      setSeoImageDraft,
+      setAiImageResult,
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /usar en seo/i }));
+    expect(setSeoImageDraft).toHaveBeenCalledWith("https://example.com/ai.jpg");
+    expect(setAiImageResult).toHaveBeenCalledWith("");
+  });
+
+  it("displays AI generated image preview when aiImageResult is present", () => {
+    const builder = createMockBuilder({
+      activeRightTab: "ai",
+      aiImageResult: "https://example.com/ai.jpg",
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    expect(screen.getByAltText(/resultado ia/i)).toHaveAttribute("src", "https://example.com/ai.jpg");
+    expect(screen.getByRole("button", { name: /usar en seo/i })).toBeInTheDocument();
+  });
+
+  it("uses AI generated image in the active section", () => {
+    const updateSectionPropsLocal = vi.fn();
+    const saveSectionProps = vi.fn();
+    const setAiImageResult = vi.fn();
+    const activeSection = createMockCmsSection("hero", { id: "hero-1", props_json: { title: "Hero" } });
+
+    const builder = createMockBuilder({
+      activeRightTab: "ai",
+      aiImageResult: "https://example.com/ai.jpg",
+      activeSectionId: "hero-1",
+      activeSection,
+      updateSectionPropsLocal,
+      saveSectionProps,
+      setAiImageResult,
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /usar en sección/i }));
+    expect(updateSectionPropsLocal).toHaveBeenCalledWith({ ...activeSection.props_json, image_url: "https://example.com/ai.jpg" });
+    expect(saveSectionProps).toHaveBeenCalledWith({ ...activeSection.props_json, image_url: "https://example.com/ai.jpg" });
+    expect(setAiImageResult).toHaveBeenCalledWith("");
+  });
+
+  it("disables 'Usar en Sección' when no section is active", () => {
+    const builder = createMockBuilder({
+      activeRightTab: "ai",
+      aiImageResult: "https://example.com/ai.jpg",
+      activeSectionId: null,
+      activeSection: null,
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    expect(screen.getByRole("button", { name: /usar en sección/i })).toBeDisabled();
+  });
+
+  it("toggles A/B testing on and off", () => {
+    const setAbTestingActive = vi.fn();
+    const builder = createMockBuilder({
+      activeRightTab: "analytics",
+      abTestingActive: false,
+      setAbTestingActive,
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /inactivo/i }));
+    expect(setAbTestingActive).toHaveBeenCalledWith(true);
+  });
+
+  it("deactivates A/B testing when currently active", () => {
+    const setAbTestingActive = vi.fn();
+    const builder = createMockBuilder({
+      activeRightTab: "analytics",
+      abTestingActive: true,
+      setAbTestingActive,
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /activo/i }));
+    expect(setAbTestingActive).toHaveBeenCalledWith(false);
+  });
+
+  it("adjusts A/B traffic split with the slider", () => {
+    const setAbTrafficSplit = vi.fn();
+    const builder = createMockBuilder({
+      activeRightTab: "analytics",
+      abTestingActive: true,
+      abTrafficSplit: 50,
+      setAbTrafficSplit,
+    });
+
+    render(<BuilderRightPanel builder={builder} />);
+
+    const slider = screen.getByRole("slider");
+    fireEvent.change(slider, { target: { value: "75" } });
+    expect(setAbTrafficSplit).toHaveBeenCalledWith(75);
   });
 });
