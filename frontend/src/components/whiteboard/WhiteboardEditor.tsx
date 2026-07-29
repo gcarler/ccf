@@ -246,6 +246,21 @@ export default function WhiteboardEditor({
         };
     }, [projectId, token]);
 
+    // Keep a stable ref to history methods so the canvas-init effect does not
+    // depend on the `history` object (which changes identity every time
+    // canUndo / canRedo state is toggled, causing the effect to re-run and
+    // destroy the canvas).
+    const historyRef = useRef(history);
+    historyRef.current = history;
+
+    // Same pattern for `save` / `saveNow` — they are already stable in
+    // practice, but using a ref removes them from the dep array and
+    // guarantees the canvas is only created once per projectId+token pair.
+    const saveRef = useRef(save);
+    saveRef.current = save;
+    const saveNowRef = useRef(saveNow);
+    saveNowRef.current = saveNow;
+
     // ── Init Fabric canvas ──
     useEffect(() => {
         if (!canvasRef.current || typeof window === "undefined" || !projectId || !token) return;
@@ -276,32 +291,32 @@ export default function WhiteboardEditor({
             try {
                 const board = await fetchProjectWhiteboard(projectId, token);
                 if (board?.elements_json && board.elements_json !== "[]") {
-                    history.restoringRef.current = true;
+                    historyRef.current.restoringRef.current = true;
                     await canvas.loadFromJSON(JSON.parse(board.elements_json));
                     canvas.renderAll();
                     syncLayers();
                 } else {
                     addStarterObjects(canvas);
                     syncLayers();
-                    saveNow(canvas);
+                    saveNowRef.current(canvas);
                 }
             } catch {
                 addStarterObjects(canvas);
                 syncLayers();
-                saveNow(canvas);
+                saveNowRef.current(canvas);
             } finally {
-                history.restoringRef.current = false;
-                history.clearHistory();
-                history.pushHistory(canvas);
+                historyRef.current.restoringRef.current = false;
+                historyRef.current.clearHistory();
+                historyRef.current.pushHistory(canvas);
             }
         };
         loadSaved();
 
         const handleChanged = () => {
-            if (!history.restoringRef.current) {
-                history.pushHistory(canvas);
+            if (!historyRef.current.restoringRef.current) {
+                historyRef.current.pushHistory(canvas);
                 syncLayers();
-                save(canvas);
+                saveRef.current(canvas);
             }
         };
 
@@ -318,7 +333,10 @@ export default function WhiteboardEditor({
             fabricCanvas.current = null;
             setIsCanvasReady(false);
         };
-    }, [history, projectId, save, saveNow, syncLayers, token, updateSelectedProps]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- history/save/saveNow
+        // are accessed via stable refs to avoid re-creating the canvas on every
+        // undo/redo state change.
+    }, [projectId, syncLayers, token, updateSelectedProps]);
 
     // ── Keyboard shortcuts ──
     useEffect(() => {
