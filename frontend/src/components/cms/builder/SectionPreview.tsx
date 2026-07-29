@@ -12,7 +12,7 @@ import {
 
 // ── Render error boundary ───────────────────────────────────────────────────
 
-class SectionRenderErrorBoundary extends React.Component<
+export class SectionRenderErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { error: boolean }
 > {
@@ -48,6 +48,7 @@ export function SectionRenderPreview({
 }) {
   return (
     <div
+      data-testid="section-render-preview"
       style={tokens ?? CANVAS_PREVIEW_TOKENS}
       className={`rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))]${mobile ? " max-w-[420px] mx-auto" : ""}`}
     >
@@ -69,7 +70,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
 
   const TypeBadge = () => (
     <span
-      className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wide"
+      className="inline-flex items-center px-2 py-0.5 rounded-md text-2xs font-semibold uppercase tracking-wide"
       style={{ backgroundColor: 'var(--site-primary)', color: 'var(--site-on-primary)' }}
     >
       {typeLabel}
@@ -85,12 +86,12 @@ export function SectionPreview({ section }: { section: CmsSection }) {
         </h3>
         <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-2">{body || "Subtítulo o descripción principal"}</p>
         {ctaLabel && (
-          <span className="inline-block mt-1 px-3 py-1 bg-[hsl(var(--primary))] text-white rounded-lg text-[10px] font-semibold uppercase">
+          <span className="inline-block mt-1 px-3 py-1 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase">
             {ctaLabel}
           </span>
         )}
         {section.type === "video_hero" && (
-          <p className="text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase">🎬 Video de fondo configurado</p>
+          <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase">🎬 Video de fondo configurado</p>
         )}
       </div>
     );
@@ -112,13 +113,13 @@ export function SectionPreview({ section }: { section: CmsSection }) {
             {items.slice(0, 3).map((item, idx) => (
               <span
                 key={idx}
-                className="px-2 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-lg text-[9px] font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                className="px-2 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-lg text-2xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
               >
                 {safeString(item.title) || `Item ${idx + 1}`}
               </span>
             ))}
             {items.length > 3 && (
-              <span className="text-[9px] text-[hsl(var(--text-secondary))]">
+              <span className="text-2xs text-[hsl(var(--text-secondary))]">
                 +{items.length - 3} más
               </span>
             )}
@@ -140,7 +141,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
             className="w-full h-24 object-cover rounded-md"
           />
         ) : (
-          <div className="w-full h-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase">
+          <div className="w-full h-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase">
             Sin imagen configurada
           </div>
         )}
@@ -156,7 +157,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
         </p>
         <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-1">{body || "Subtítulo"}</p>
         {ctaLabel && (
-          <span className="inline-block px-3 py-1 text-white rounded-lg text-[10px] font-semibold uppercase" style={{ backgroundColor: 'var(--site-primary)' }}>
+          <span className="inline-block px-3 py-1 text-white rounded-lg text-2xs font-semibold uppercase" style={{ backgroundColor: 'var(--site-primary)' }}>
             {ctaLabel}
           </span>
         )}
@@ -196,7 +197,7 @@ export function SectionPreview({ section }: { section: CmsSection }) {
                 <p className="text-base font-semibold" style={{ color: 'var(--site-primary)' }}>
                   {safeString(s.value) || "—"}
                 </p>
-                <p className="text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase">
+                <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase">
                   {safeString(s.label) || "Métrica"}
                 </p>
               </div>
@@ -238,14 +239,14 @@ export function SectionPreview({ section }: { section: CmsSection }) {
               <div className="size-10 rounded-md bg-[hsl(var(--destructive))] flex items-center justify-center text-white font-semibold text-sm">
                 00
               </div>
-              <p className="text-[8px] text-[hsl(var(--text-secondary))] mt-0.5 font-bold uppercase">
+              <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 font-bold uppercase">
                 {u}
               </p>
             </div>
           ))}
         </div>
         {target && (
-          <p className="text-[9px] text-[hsl(var(--text-secondary))]">Hasta: {target}</p>
+          <p className="text-2xs text-[hsl(var(--text-secondary))]">Hasta: {target}</p>
         )}
       </div>
     );
@@ -279,11 +280,11 @@ export function SectionPreview({ section }: { section: CmsSection }) {
       <div className="rounded-lg border border-dashed p-4 space-y-2" style={{ borderColor: 'var(--site-primary)' }}>
         <TypeBadge />
         {embedUrl ? (
-          <p className="text-[10px] text-[hsl(var(--text-secondary))] font-mono truncate">
+          <p className="text-2xs text-[hsl(var(--text-secondary))] font-mono truncate">
             {embedUrl}
           </p>
         ) : (
-          <div className="w-full h-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[9px] text-[hsl(var(--text-secondary))] font-bold uppercase">
+          <div className="w-full h-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase">
             Sin URL configurada
           </div>
         )}
