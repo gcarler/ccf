@@ -67,7 +67,7 @@ checkout-benchmark:
       fetch-depth: [0, 1]
 ```
 
-Cada ejecución escribe su duración en el job summary (`GITHUB_STEP_SUMMARY`), por lo que se puede comparar directamente en la UI de GitHub Actions. Una vez recolectados los datos, este job puede eliminarse (ver el comentario `TODO` en el archivo).
+Cada ejecución escribe su duración en el job summary (`GITHUB_STEP_SUMMARY`), por lo que se puede comparar directamente en la UI de GitHub Actions. Además, un segundo job temporal `checkout-benchmark-report` depende del anterior, descarga los artefactos `checkout-duration-*` y genera una tabla única comparando ambos fetch-depth. Una vez recolectados los datos, ambos jobs pueden eliminarse (ver los comentarios `TODO` en el archivo).
 
 ## Monitoreo post-merge: Codecov con `fetch-depth: 1`
 
