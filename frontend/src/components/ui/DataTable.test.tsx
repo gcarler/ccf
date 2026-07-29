@@ -11,7 +11,7 @@ interface Row {
 }
 
 describe('DataTable', () => {
-    const columns: ColumnDef<Row, any>[] = [
+    const columns: ColumnDef<Row, string>[] = [
         { header: 'ID', accessorKey: 'id' },
         { header: 'Nombre', accessorKey: 'name' },
     ];

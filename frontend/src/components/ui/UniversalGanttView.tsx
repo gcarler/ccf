@@ -218,8 +218,8 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
 
                 <div className="flex items-center gap-2">
                     <div className="flex gap-1.5 mr-4">
-                        <button onClick={() => scroll('left')} className="p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={16} /></button>
-                        <button onClick={() => scroll('right')} className="p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={16} /></button>
+                        <button aria-label="Desplazar izquierda" onClick={() => scroll('left')} className="p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={16} /></button>
+                        <button aria-label="Desplazar derecha" onClick={() => scroll('right')} className="p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={16} /></button>
                     </div>
                     {onOptimize && (
                         <button

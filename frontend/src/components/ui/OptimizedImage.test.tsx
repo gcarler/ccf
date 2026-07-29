@@ -1,14 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { axe } from 'jest-axe';
+import type { ImageProps } from 'next/image';
 import OptimizedImage from './OptimizedImage';
 
 vi.mock('next/image', () => ({
     __esModule: true,
-    default: (props: any) => {
-        const { alt, ...rest } = props;
-        // eslint-disable-next-line @next/next/no-img-element
-        return <img alt={alt} {...rest} />;
+    default: (props: ImageProps) => {
+        const { alt, src, ...rest } = props;
+        return <img alt={alt} src={src as string} {...rest} />;
     },
 }));
 
@@ -32,5 +34,11 @@ describe('OptimizedImage', () => {
         render(<OptimizedImage src="" alt="Missing" />);
         expect(screen.queryByRole('img')).not.toBeInTheDocument();
         expect(screen.getByLabelText('Missing')).toBeInTheDocument();
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(<OptimizedImage src="/img.png" alt="Accessible" />);
+        const results = await axe(container);
+        expect(results.violations).toHaveLength(0);
     });
 });

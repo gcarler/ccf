@@ -100,6 +100,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                     </div>
                     {onCreate && (
                         <button
+                            aria-label="Crear nuevo"
                             onClick={onCreate}
                             className="p-4 bg-[hsl(var(--bg-muted))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg shadow-xl shadow-black/20 hover:scale-105 transition-all"
                         >

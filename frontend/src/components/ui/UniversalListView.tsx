@@ -127,6 +127,7 @@ export default function UniversalListView({
                             />
                             {searchQuery && (
                                 <button
+                                    aria-label="Limpiar búsqueda"
                                     onClick={() => setSearchQuery("")}
                                     className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                                 >
@@ -184,6 +185,7 @@ export default function UniversalListView({
                                         >
                                             {/* Expand Icon */}
                                             <button
+                                                aria-label={isExpanded ? "Contraer" : "Expandir"}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     toggleExpand(item.id);

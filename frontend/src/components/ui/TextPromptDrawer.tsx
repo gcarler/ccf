@@ -2,6 +2,7 @@
 
 import React from "react";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
+import { useId } from "react";
 
 interface TextPromptDrawerProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ export default function TextPromptDrawer({
   cancelLabel = "Cancelar",
   inputType = "text",
 }: TextPromptDrawerProps) {
+  const inputId = useId();
+
   return (
     <WorkspaceDrawer
       isOpen={isOpen}
@@ -58,10 +61,11 @@ export default function TextPromptDrawer({
       }
     >
       <div className="space-y-3">
-        <label className="block text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+        <label htmlFor={inputId} className="block text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
           {label}
         </label>
         <input
+          id={inputId}
           type={inputType}
           value={value}
           onChange={(e) => onChange(e.target.value)}

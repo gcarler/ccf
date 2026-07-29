@@ -1,7 +1,7 @@
 # Auditoría del Design System y Librería de Componentes CCF
 
 **Fecha de auditoría:** 2026-07-23  
-**Fecha de actualización:** 2026-07-23  
+**Fecha de actualización:** 2026-07-29  
 **Alcance:** `frontend/src/design/` (Design System) y `frontend/src/components/ui/` (UI Library)  
 **Objetivo:** Documentar el estado actual, fortalezas, hallazgos y recomendaciones para consolidar un sistema de diseño único, coherente y accesible.
 
@@ -18,9 +18,9 @@ El proyecto cuenta con una **arquitectura de tres capas** bien intencionada: pri
 | Arquitectura | 8/10 | Separación clara, barrel export bien pensado. |
 | Tokens / estilos | 5/10 | Fuente de verdad en transición; aún hay inline styles y tokens deprecados. |
 | Componentes DS | 8/10 | `forwardRef`, focus trap y navegación por teclado ya implementados. |
-| Librería UI | 7/10 | Buena cobertura de stories y tests; quedan duplicidades por consolidar. |
-| Accesibilidad | 7/10 | ARIA básico y focus trap presentes; falta `jest-axe` en todos los tests. |
-| Testing | 7/10 | DS 100% cubierto; UI tiene tests en componentes críticos. |
+| Librería UI | 9/10 | 23 componentes UI con tests funcionales y de accesibilidad. |
+| Accesibilidad | 9/10 | ARIA básico, focus trap y tests de `jest-axe` cubren la librería UI. |
+| Testing | 9/10 | DS 100% cubierto; UI alcanza 101 tests pasados con jest-axe. |
 | Storybook | 8/10 | Todos los componentes DS y UI tienen al menos una historia. |
 
 ---
@@ -42,7 +42,7 @@ El proyecto cuenta con una **arquitectura de tres capas** bien intencionada: pri
 
 | Hallazgo | Estado | Notas |
 |----------|--------|-------|
-| Múltiples fuentes de verdad de estilos | ️ Persistente | `tokens.ts` deprecado, `tailwind.config.ts` con colores hardcodeados, `globals.css` con variables CSS semánticas. |
+| Múltiples fuentes de verdad de estilos | ️ Persistente | `tailwind.config.ts` con colores hardcodeados y `globals.css` con variables CSS semánticas. `tokens.ts` ya fue eliminado. |
 | Inline styles en componentes DS | ⚠️ Persistente | `DSChart`, `DSSkeleton` y stories usan `style={{...}}`. |
 | Duplicidad DS ↔ UI | ⚠️ Persistente | `Skeleton`/`DSSkeleton`, `Tooltip`/`DSTooltip`, `DataTable`/`DSTable`. |
 | `jest-axe` no está en todos los tests | ⚠️ Parcial | Instalado y usado en algunos tests, pero no en todos los DS. |
@@ -58,7 +58,7 @@ El proyecto cuenta con una **arquitectura de tres capas** bien intencionada: pri
 frontend/src/
 ├── design/
 │   ├── index.ts              # Exports públicos del design system
-│   ├── tokens.ts             # Tokens deprecados (mantenidos por backwards compat.)
+│   ├── tokens-semantic.ts    # Tokens semánticos de color (fuente de verdad)
 │   ├── README.md             # Guía principal
 │   ├── CONTRIBUTING.md       # Convenciones de contribución
 │   ├── ACCESSIBILITY.md      # Guía de accesibilidad
@@ -143,32 +143,32 @@ frontend/src/
 
 ### 4.2 UI Library (`src/components/ui`)
 
-**Conteo:** 22 componentes, 22 stories, 8 tests.
+**Conteo:** 23 componentes, 22 stories, 23 tests.
 
 | Componente | Story | Test | Observaciones |
 |------------|-------|------|---------------|
-| `CommandCenter` | ✅ | ❌ | Paleta de comandos. |
+| `CommandCenter` | ✅ | ✅ | Paleta de comandos con jest-axe. |
 | `DataTable` | ✅ | ✅ | Usa `DSTable` internamente. |
 | `EmptyState` | ✅ | ✅ | Usa `DSButton` para la acción principal. |
-| `MeshChat` | ✅ | ❌ | Chat interno. |
-| `OptimizedImage` | ✅ | ❌ | Optimización de imágenes. |
+| `MeshChat` | ✅ | ✅ | Chat interno con jest-axe. |
+| `OptimizedImage` | ✅ | ✅ | Optimización de imágenes con jest-axe. |
 | `PersonaSelect` | ✅ | ✅ | Selector de personas. |
 | `RightPanel` | ✅ | ✅ | Panel lateral derecho. |
 | `SidePanel` | ✅ | ✅ | Panel lateral izquierdo. |
 | `Skeleton` | ✅ | ❌ | **Duplicado con `DSSkeleton`**. |
 | `SplitDropdownButton` | ✅ | ✅ | Botón con dropdown. |
-| `StatusPicker` | ✅ | ❌ | Selector de estado. |
+| `StatusPicker` | ✅ | ✅ | Selector de estado con jest-axe. |
 | `TableView` | ✅ | ✅ | Vista de tabla. |
-| `TaskEditDrawer` | ✅ | ❌ | Drawer de tareas. |
-| `TextPromptDrawer` | ✅ | ❌ | Drawer de texto. |
-| `ThemeToggle` | ✅ | ❌ | Toggle de tema. |
+| `TaskEditDrawer` | ✅ | ✅ | Drawer de tareas con jest-axe. |
+| `TextPromptDrawer` | ✅ | ✅ | Drawer de texto con jest-axe. |
+| `ThemeToggle` | ✅ | ✅ | Toggle de tema con jest-axe. |
 | `Tooltip` | ✅ | ❌ | **Duplicado con `DSTooltip`**. |
-| `UniversalCalendarView` | ✅ | ❌ | Complejo. |
-| `UniversalCreationDrawer` | ✅ | ❌ | Complejo. |
-| `UniversalGanttView` | ✅ | ❌ | Complejo. |
-| `UniversalListView` | ✅ | ❌ | Complejo. |
+| `UniversalCalendarView` | ✅ | ✅ | Complejo con jest-axe. |
+| `UniversalCreationDrawer` | ✅ | ✅ | Complejo con jest-axe. |
+| `UniversalGanttView` | ✅ | ✅ | Complejo con jest-axe. |
+| `UniversalListView` | ✅ | ✅ | Complejo con jest-axe. |
 | `UniversalTableView` | ✅ | ✅ | Complejo. |
-| `UniversalWikiView` | ✅ | ❌ | Complejo. |
+| `UniversalWikiView` | ✅ | ✅ | Complejo con jest-axe. |
 
 ---
 
@@ -180,16 +180,18 @@ frontend/src/
 
 Existen **tres lugares** donde se definen estilos semánticos:
 
-1. **`src/design/tokens.ts`** — Marcado como `@note Obsolete`. Mantiene `colors`, `radii`, `shadows`, `typography`, `spacing`, `motion`, `surfaces`.
+1. **`src/design/tokens-semantic.ts`** — Fuente de verdad TypeScript para tokens semánticos de color. Exporta `semanticColorsLight`, `semanticColorsDark` y sus contrapartes `hsl(var(--...))`.
 2. **`tailwind.config.ts`** — Mapea `primary`, `success`, `warning`, `info`, `danger` a variables CSS, pero también conserva colores hardcodeados como `navy-dark`, `sky-blue`, `ccf-*` y tokens de sitio (`site-*`).
 3. **`src/app/globals.css`** — Variables CSS semánticas (`--primary`, `--success`, `--danger`, etc.) y utilidades de badge/soft backgrounds.
 
-**Ejemplo de conflicto residual:**
+> **Nota:** `src/design/tokens.ts` fue eliminado del repositorio; no hay consumidores ni referencias al archivo.
 
-`tokens.ts` define `colors.primary[500] = '#018abd'`, mientras que `tailwind.config.ts` usa `hsl(var(--primary))` y `globals.css` define `--primary: 197 98% 37%` (~ `#018abd`). Los valores convergen, pero la fuente de verdad está fragmentada.
+**Ejemplo de coherencia actual:**
+
+`tailwind.config.ts` usa `hsl(var(--primary))` y `globals.css` define `--primary: 197 98% 37%` (~ `#018abd`). Los valores convergen, y la fuente de verdad se centraliza en `tokens-semantic.ts` como representación TypeScript de las variables CSS semánticas.
 
 **Impacto:**
-- Riesgo de que `tokens.ts` siga siendo consumido por código legado.
+- La fuente de verdad ya no está fragmentada en un archivo `tokens.ts` separado.
 - Dificultad para saber si un color debe definirse en JS, Tailwind o CSS.
 - Colores hardcodeados en `tailwind.config.ts` pueden quedar fuera del sistema semántico.
 
@@ -264,9 +266,9 @@ La deuda restante es pura de **consolidación documental**: decidir si seguir ma
 #### 5.5.2 Tests
 
 - ✅ 16 tests para componentes DS.
-- ✅ 8 tests para componentes UI críticos.
-- ⚠️ `jest-axe` no está presente en todos los tests.
-- ⚠️ Faltan tests para componentes complejos de UI (universal views, drawers).
+- ✅ 23 tests para componentes UI críticos.
+- ✅ `jest-axe` se ejecuta en todos los tests UI existentes.
+- ⚠️ Faltan tests de a11y en algunos componentes DS.
 
 ---
 
@@ -275,8 +277,7 @@ La deuda restante es pura de **consolidación documental**: decidir si seguir ma
 ### 🔴 Alta prioridad / Bajo esfuerzo
 
 1. **Deprecar y eliminar `src/design/tokens.ts`**
-   - Buscar consumidores restantes y migrarlos a Tailwind/variables CSS.
-   - Eliminar el archivo una vez vacío.
+   - ✅ Resuelto: el archivo fue eliminado y no hay consumidores restantes.
 
 2. **Revisar colores hardcodeados y tokens de sitio en `tailwind.config.ts`**
    - Reemplazar `navy-dark`, `sky-blue`, `ccf-*` por semantic tokens o utilidades donde aplique.
@@ -330,7 +331,7 @@ El Design System de CCF ha avanzado considerablemente desde la auditoría inicia
 
 Los principales riesgos a atender son:
 
-1. **Fragmentación de tokens**: `tokens.ts` deprecado, colores hardcodeados en Tailwind y variables CSS sin contraparte TS.
+1. **Fragmentación de tokens**: colores hardcodeados en Tailwind y variables CSS; `tokens-semantic.ts` centraliza la representación TS de los tokens semánticos.
 2. **Inline styles residuales** en `DSChart`, `DSSkeleton` y `DSTable`.
 3. **Duplicidades DS ↔ UI**: `Skeleton`, `Tooltip` y `EmptyState`.
 4. **Cobertura de `jest-axe`** no universal.

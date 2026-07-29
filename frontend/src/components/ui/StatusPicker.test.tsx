@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { axe } from 'jest-axe';
+import { filterMotionProps } from '@/test-utils/filter-motion-props';
 import StatusPicker from './StatusPicker';
 import type { StatusOption } from './StatusPicker';
 
@@ -10,15 +13,6 @@ vi.mock('framer-motion', () => ({
     },
     AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
-
-function filterMotionProps(props: Record<string, any>): Record<string, any> {
-    const skip = new Set(['initial', 'animate', 'exit', 'transition', 'whileHover', 'whileTap', 'layout']);
-    const out: Record<string, any> = {};
-    for (const [k, v] of Object.entries(props)) {
-        if (!skip.has(k)) out[k] = v;
-    }
-    return out;
-}
 
 const options: StatusOption[] = [
     { label: 'Pendiente', value: 'todo', color: 'bg-gray-400', text: 'text-gray-600', bg: 'bg-gray-100' },
@@ -45,5 +39,11 @@ describe('StatusPicker', () => {
         fireEvent.click(screen.getByText('Pendiente'));
         fireEvent.click(screen.getByText('Completado'));
         expect(onSelect).toHaveBeenCalledWith('completed');
+    });
+
+    it('has no accessibility violations', async () => {
+        const { container } = render(<StatusPicker currentValue="todo" options={options} onSelect={vi.fn()} />);
+        const results = await axe(container);
+        expect(results.violations).toHaveLength(0);
     });
 });

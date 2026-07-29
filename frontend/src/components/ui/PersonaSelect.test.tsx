@@ -5,6 +5,7 @@ import { axe } from 'jest-axe';
 import PersonaSelect from './PersonaSelect';
 import * as AuthContext from '@/context/AuthContext';
 import * as HttpModule from '@/lib/http';
+import { createMockPersonaSelectOption } from '@/test-utils/factories';
 
 const mockApiFetch = vi.spyOn(HttpModule, 'apiFetch');
 
@@ -14,7 +15,7 @@ describe('PersonaSelect', () => {
         mockApiFetch.mockResolvedValue([]);
         vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
             token: 'test-token',
-        } as any);
+        } as Partial<AuthContext.AuthContextType> as AuthContext.AuthContextType);
     });
 
     it('renders placeholder when no value is selected', async () => {
@@ -25,8 +26,8 @@ describe('PersonaSelect', () => {
 
     it('opens dropdown and displays personas after fetching', async () => {
         mockApiFetch.mockResolvedValueOnce([
-            { id: '1', first_name: 'Juan', last_name: 'Pérez', church_role: 'Pastor' },
-            { id: '2', first_name: 'María', last_name: 'Gómez' },
+            createMockPersonaSelectOption({ id: '1', first_name: 'Juan', last_name: 'Pérez', church_role: 'Pastor' }),
+            createMockPersonaSelectOption({ id: '2', first_name: 'María', last_name: 'Gómez' }),
         ]);
 
         render(<PersonaSelect value={null} onChange={() => {}} />);
@@ -40,7 +41,7 @@ describe('PersonaSelect', () => {
     });
 
     it('calls onChange with the selected persona id', async () => {
-        mockApiFetch.mockResolvedValueOnce([{ id: '1', first_name: 'Juan', last_name: 'Pérez' }]);
+        mockApiFetch.mockResolvedValueOnce([createMockPersonaSelectOption({ id: '1', first_name: 'Juan', last_name: 'Pérez' })]);
         const handleChange = vi.fn();
 
         render(<PersonaSelect value={null} onChange={handleChange} />);
@@ -55,8 +56,8 @@ describe('PersonaSelect', () => {
 
     it('filters personas when typing in the search input', async () => {
         mockApiFetch.mockResolvedValueOnce([
-            { id: '1', first_name: 'Juan', last_name: 'Pérez' },
-            { id: '2', first_name: 'María', last_name: 'Gómez' },
+            createMockPersonaSelectOption({ id: '1', first_name: 'Juan', last_name: 'Pérez' }),
+            createMockPersonaSelectOption({ id: '2', first_name: 'María', last_name: 'Gómez' }),
         ]);
 
         render(<PersonaSelect value={null} onChange={() => {}} />);
@@ -74,14 +75,14 @@ describe('PersonaSelect', () => {
     });
 
     it('shows the selected persona name when a value is provided', async () => {
-        mockApiFetch.mockResolvedValueOnce([{ id: '1', first_name: 'Juan', last_name: 'Pérez' }]);
+        mockApiFetch.mockResolvedValueOnce([createMockPersonaSelectOption({ id: '1', first_name: 'Juan', last_name: 'Pérez' })]);
         render(<PersonaSelect value="1" onChange={() => {}} />);
 
         await waitFor(() => expect(screen.getByText('Juan Pérez')).toBeInTheDocument());
     });
 
     it('has no accessibility violations', async () => {
-        mockApiFetch.mockResolvedValueOnce([{ id: '1', first_name: 'Juan', last_name: 'Pérez' }]);
+        mockApiFetch.mockResolvedValueOnce([createMockPersonaSelectOption({ id: '1', first_name: 'Juan', last_name: 'Pérez' })]);
         const { container } = render(<PersonaSelect value={null} onChange={() => {}} />);
         const results = await axe(container);
         expect(results.violations).toHaveLength(0);

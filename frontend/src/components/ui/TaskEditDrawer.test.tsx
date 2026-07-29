@@ -1,6 +1,9 @@
 import React from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { axe } from 'jest-axe';
+import { filterMotionProps } from '@/test-utils/filter-motion-props';
 import TaskEditDrawer from './TaskEditDrawer';
 import type { TaskDetail } from './TaskEditDrawer';
 
@@ -12,15 +15,6 @@ vi.mock('framer-motion', () => ({
     },
     AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
-
-function filterMotionProps(props: Record<string, any>): Record<string, any> {
-    const skip = new Set(['initial', 'animate', 'exit', 'transition', 'whileHover', 'whileTap', 'layout']);
-    const out: Record<string, any> = {};
-    for (const [k, v] of Object.entries(props)) {
-        if (!skip.has(k)) out[k] = v;
-    }
-    return out;
-}
 
 vi.mock('@/lib/http', () => ({
     apiFetch: vi.fn().mockResolvedValue({}),
@@ -81,5 +75,18 @@ describe('TaskEditDrawer', () => {
         );
         expect(screen.getAllByText('Media').length).toBeGreaterThan(0);
         expect(screen.getAllByText('Pendiente').length).toBeGreaterThan(0);
+    });
+
+    it('has no accessibility violations when open', async () => {
+        const { container } = render(
+            <TaskEditDrawer
+                task={mockTask}
+                onClose={vi.fn()}
+                onTaskUpdated={vi.fn()}
+                onTaskDeleted={vi.fn()}
+            />
+        );
+        const results = await axe(container);
+        expect(results.violations).toHaveLength(0);
     });
 });

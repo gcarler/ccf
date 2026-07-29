@@ -169,8 +169,6 @@ export function CommandCenter() {
                                     </Command.Group>
                                 )}
 
-                                {groupedCommands.length > 0 && <Command.Separator className="my-4 h-[1px] bg-[hsl(var(--surface-2))] dark:border-white/5" />}
-
                                 {groupedCommands.map(([groupName, commands]) => (
                                     <Command.Group key={groupName} heading={groupName} className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         {commands.map((cmd) => (
