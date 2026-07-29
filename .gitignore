@@ -61,6 +61,7 @@ frontend/.lighthouseci/
 frontend/.next/
 frontend/.next.backup-*/
 frontend/coverage/
+frontend/coverage-cms/
 frontend/crm-lh.json
 frontend/eslint_report.json
 frontend/frontend-dev.log
