@@ -110,6 +110,10 @@ export default function MediaPicker({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Selector de medios"
+      data-testid="media-picker"
       className="fixed inset-0 z-50 bg-[hsl(var(--bg-muted))]/50 backdrop-blur-sm p-4 flex items-center justify-center"
       onClick={onClose}
     >
@@ -123,7 +127,7 @@ export default function MediaPicker({
               <ImageIcon size={18} />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+              <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 Biblioteca CMS
               </p>
               <h2 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white">
@@ -132,6 +136,7 @@ export default function MediaPicker({
             </div>
           </div>
           <button
+            aria-label="Cerrar modal"
             onClick={onClose}
             className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10"
           >
@@ -152,7 +157,7 @@ export default function MediaPicker({
               className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent py-2 pl-9 pr-3 text-sm outline-none focus:border-[hsl(var(--info)/100%)]"
             />
           </div>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-white disabled:opacity-50">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-white disabled:opacity-50">
             <Upload size={14} />
             {uploading ? "Subiendo..." : "Subir imagen"}
             <input
@@ -184,6 +189,8 @@ export default function MediaPicker({
                 return (
                   <button
                     key={item.id}
+                    data-testid="media-item-button"
+                    aria-pressed={isSelected}
                     onClick={() => onSelect(item)}
                     className={`group text-left rounded-lg border overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] transition-all ${isSelected ? "border-[hsl(var(--info)/100%)] ring-2 ring-[hsl(var(--primary))]/20" : "border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--info)/30%)]"}`}
                   >
@@ -205,7 +212,7 @@ export default function MediaPicker({
                       <p className="truncate text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
                         {item.filename || "Imagen CMS"}
                       </p>
-                      <p className="mt-1 truncate text-[10px] text-[hsl(var(--text-secondary))]">
+                      <p className="mt-1 truncate text-2xs text-[hsl(var(--text-secondary))]">
                         {item.alt_text || item.section || "Sin alt text"}
                       </p>
                     </div>
