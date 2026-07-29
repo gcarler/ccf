@@ -267,4 +267,116 @@ describe("BuilderSectionInspector", () => {
     expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { price: "$20" });
     expect(saveSectionProps).toHaveBeenCalled();
   });
+
+  it("calls upsertArrayItem and saveSectionProps when editing a stats item value", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("stats", {
+      props_json: {
+        items: [{ value: "10K+", label: "Miembros" }],
+      },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("10K+");
+    fireEvent.change(input, { target: { value: "20K+" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { value: "20K+" });
+
+    fireEvent.blur(input, { target: { value: "20K+" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { value: "20K+" });
+    expect(saveSectionProps).toHaveBeenCalled();
+  });
+
+  it("calls upsertArrayItem and saveSectionProps when editing a gallery image URL", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("gallery", {
+      props_json: {
+        items: [{ url: "https://old.jpg", alt: "Old", caption: "Old caption" }],
+      },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("https://old.jpg");
+    fireEvent.change(input, { target: { value: "https://new.jpg" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { url: "https://new.jpg" });
+
+    fireEvent.blur(input, { target: { value: "https://new.jpg" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { url: "https://new.jpg" });
+    expect(saveSectionProps).toHaveBeenCalled();
+  });
+
+  it("calls upsertArrayItem and saveSectionProps when editing a timeline milestone title", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("timeline", {
+      props_json: {
+        items: [{ year: "2020", title: "Inicio", body: "Descripción" }],
+      },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("Inicio");
+    fireEvent.change(input, { target: { value: "Lanzamiento" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { title: "Lanzamiento" });
+
+    fireEvent.blur(input, { target: { value: "Lanzamiento" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { title: "Lanzamiento" });
+    expect(saveSectionProps).toHaveBeenCalled();
+  });
+
+  it("calls upsertArrayItem and saveSectionProps when editing an icon_grid item title", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("icon_grid", {
+      props_json: {
+        items: [{ icon: "🎯", title: "Meta", body: "Descripción breve" }],
+      },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("Meta");
+    fireEvent.change(input, { target: { value: "Objetivo" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { title: "Objetivo" });
+
+    fireEvent.blur(input, { target: { value: "Objetivo" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { title: "Objetivo" });
+    expect(saveSectionProps).toHaveBeenCalled();
+  });
+
+  it("calls updateSectionPropsLocal and saveSectionField when popup_banner dismiss_mode changes", () => {
+    const updateSectionPropsLocal = vi.fn();
+    const saveSectionField = vi.fn();
+    const section = createMockCmsSection("popup_banner", {
+      props_json: { dismiss_mode: "local" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.updateSectionPropsLocal = updateSectionPropsLocal;
+    builder.saveSectionField = saveSectionField;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const select = screen.getByDisplayValue("Persistente (localStorage)");
+    fireEvent.change(select, { target: { value: "session" } });
+    expect(updateSectionPropsLocal).toHaveBeenCalledWith(
+      expect.objectContaining({ dismiss_mode: "session" })
+    );
+    expect(saveSectionField).toHaveBeenCalledWith("dismiss_mode", "session");
+  });
 });
