@@ -3,7 +3,7 @@
 > ⚠️ **Nota:** este reporte se genera automáticamente. No edites los valores a mano.
 > Regenerarlo con: `cd /root/ccf/frontend && npm run test:cms:coverage`
 
-**Fecha:** 2026-07-29 18:07:46 UTC  
+**Fecha:** 2026-07-29 19:02:18 UTC  
 **Configuración:** `frontend/vitest.cms.config.ts`  
 **Comando para reproducir:**
 
@@ -16,10 +16,10 @@ npm run test:cms:coverage
 
 | Métrica     | Porcentaje |
 |-------------|------------|
-| Statements  | 18.65%     |
-| Branches    | 63.26%     |
-| Functions   | 26.65%     |
-| Lines       | 18.65%     |
+| Statements  | 19.11%     |
+| Branches    | 62.84%     |
+| Functions   | 27.12%     |
+| Lines       | 19.11%     |
 
 > **Nota metodológica:** El reporte no aplica umbrales (thresholds) porque es informativo. La cobertura baja se debe a que gran parte de las páginas administrativas del CMS aún no tienen tests unitarios. El área del builder sí está parcialmente cubierta gracias a los tests recientes.
 
@@ -86,8 +86,8 @@ Cobertura general buena pero con oportunidades:
 - **BuilderRightPanel.tsx** (93.93% stmts, 52.5% funcs)
   - Cubrir flujo de analytics con `getPageAnalytics`.
   - Cubrir preview links (`window.open`).
-- **BuilderSectionInspector.tsx** (39.2% stmts, 10% funcs, 38.38% branches)
-  - Subió de ~29.6% a 39.2% en statements tras agregar tests para `countdown`, `popup_banner`, `team`, `image_text` y `pricing`.
+- **BuilderSectionInspector.tsx** (45.27% stmts, 13.1% funcs, 43.16% branches)
+  - Subió de ~29.6% a 45.27% en statements tras agregar tests para `countdown`, `popup_banner`, `team`, `image_text`, `pricing`, `stats`, `gallery`, `timeline`, `icon_grid` y `dismiss_mode`.
   - Aún es el archivo más crítico dentro del builder; seguir cubriendo edición de props por tipo de sección y manipulación de arrays.
 - **SectionPreview.tsx** (70.83% stmts)
   - Cubrir variantes restantes y error boundary.
