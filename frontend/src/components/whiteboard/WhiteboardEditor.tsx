@@ -84,6 +84,30 @@ const GRID_SIZES: { label: string; value: GridSize }[] = [
     { label: "32px", value: 32 },
 ];
 
+/**
+ * Convert any CSS color string (rgba, rgb, hex, named) to #rrggbb
+ * so it can be used as the `value` of an <input type="color">.
+ */
+function toHex(color: string): string {
+    if (!color) return "#000000";
+    // Already hex
+    if (/^#[0-9a-fA-F]{6}$/.test(color)) return color;
+    if (/^#[0-9a-fA-F]{3}$/.test(color)) {
+        const [, r, g, b] = color.match(/^#(.)(.)(.)$/)!;
+        return `#${r}${r}${g}${g}${b}${b}`;
+    }
+    // Use an off-screen canvas to resolve any CSS color
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) return "#000000";
+    ctx.fillStyle = color;
+    const resolved = ctx.fillStyle; // browser normalises to #rrggbb or rgb()
+    if (resolved.startsWith("#")) return resolved;
+    const match = resolved.match(/\d+/g);
+    if (!match) return "#000000";
+    const [r, g, b] = match.map(Number);
+    return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
 function getGridBackground(style: GridStyle, size: GridSize, isDark: boolean): string {
     const color = isDark ? WHITEBOARD_COLORS.gridDark : WHITEBOARD_COLORS.gridLight;
     const dotColor = isDark ? WHITEBOARD_COLORS.gridDarkDot : WHITEBOARD_COLORS.gridLightDot;
@@ -194,8 +218,8 @@ export default function WhiteboardEditor({
             return;
         }
         setSelectedObjectProps({ type: active.type });
-        setFillColor((active.fill as string) || WHITEBOARD_COLORS.primary);
-        setStrokeColor((active.stroke as string) || WHITEBOARD_COLORS.primary);
+        setFillColor(toHex((active.fill as string) || WHITEBOARD_COLORS.primary));
+        setStrokeColor(toHex((active.stroke as string) || WHITEBOARD_COLORS.primary));
         setStrokeWidth((active.strokeWidth as number) || 2);
         setOpacity(Math.round(((active.opacity as number) ?? 1) * 100));
         setObjLeft(Math.round((active.left as number) || 0));
