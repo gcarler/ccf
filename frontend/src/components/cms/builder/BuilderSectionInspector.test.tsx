@@ -207,7 +207,8 @@ describe("BuilderSectionInspector", () => {
   });
 
   it("calls upsertArrayItem and saveSectionProps when archiving a team member", () => {
-    const upsertArrayItem = vi.fn(() => ({}));
+    const nextProps = { items: [{ name: "Ana", role: "Pastor", status: "archived" }] };
+    const upsertArrayItem = vi.fn(() => nextProps);
     const saveSectionProps = vi.fn();
     const section = createMockCmsSection("team", {
       props_json: {
@@ -222,7 +223,7 @@ describe("BuilderSectionInspector", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /archivar persona/i }));
     expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { status: "archived" });
-    expect(saveSectionProps).toHaveBeenCalled();
+    expect(saveSectionProps).toHaveBeenCalledWith(nextProps);
   });
 
   it("calls updateSectionPropsLocal and saveSectionField when image_side changes", () => {
@@ -246,7 +247,8 @@ describe("BuilderSectionInspector", () => {
   });
 
   it("calls upsertArrayItem and saveSectionProps when editing a pricing plan price", () => {
-    const upsertArrayItem = vi.fn(() => ({}));
+    const nextProps = { items: [{ name: "Plan", price: "$20" }] };
+    const upsertArrayItem = vi.fn(() => nextProps);
     const saveSectionProps = vi.fn();
     const section = createMockCmsSection("pricing", {
       props_json: {
@@ -265,7 +267,7 @@ describe("BuilderSectionInspector", () => {
 
     fireEvent.blur(input, { target: { value: "$20" } });
     expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { price: "$20" });
-    expect(saveSectionProps).toHaveBeenCalled();
+    expect(saveSectionProps).toHaveBeenCalledWith(nextProps);
   });
 
   it("calls upsertArrayItem and saveSectionProps when editing a stats item value", () => {
