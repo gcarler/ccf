@@ -25,6 +25,10 @@ import {
     FileJson,
     Image as ImageIcon,
     FileCode,
+    ArrowUpRight,
+    Diamond,
+    Pill,
+    Hexagon,
 } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -38,8 +42,25 @@ import {
 import { exportToPng, exportToSvg, exportToJson } from "@/lib/whiteboardExport";
 import { useWhiteboardHistory } from "@/hooks/useWhiteboardHistory";
 import { useWhiteboardSave } from "@/hooks/useWhiteboardSave";
+import {
+    type AnchorPosition,
+    generateShapeId,
+    findShapeNearPoint,
+    createConnectorLine,
+    updateConnectors,
+    ensureShapeIds,
+    renderArrowheads,
+    renderAnchors,
+} from "@/lib/whiteboard/connectors";
+import {
+    createProcess,
+    createDiamond,
+    createPill,
+    createData,
+    createCircleNode,
+} from "@/lib/whiteboard/flowchartShapes";
 
-type WhiteboardTool = "select" | "draw";
+type WhiteboardTool = "select" | "draw" | "connector";
 
 interface LayerRow {
     index: number;
@@ -178,6 +199,12 @@ export default function WhiteboardEditor({
 
     const [isCanvasReady, setIsCanvasReady] = useState(false);
     const [isDark, setIsDark] = useState(false);
+
+    // Connector tool state
+    const connectorFromRef = useRef<{ shapeId: string; anchor: AnchorPosition } | null>(null);
+    const connectorPreviewRef = useRef<fabric.Line | null>(null);
+    const hoveredShapeIdRef = useRef<string | null>(null);
+    const toolRef = useRef<WhiteboardTool>("select");
 
     // Detect dark mode
     useEffect(() => {
@@ -332,6 +359,7 @@ export default function WhiteboardEditor({
                 historyRef.current.restoringRef.current = false;
                 historyRef.current.clearHistory();
                 historyRef.current.pushHistory(canvas);
+                ensureShapeIds(canvas);
             }
         };
         loadSaved();
@@ -350,6 +378,93 @@ export default function WhiteboardEditor({
         canvas.on("selection:created", updateSelectedProps);
         canvas.on("selection:updated", updateSelectedProps);
         canvas.on("selection:cleared", () => setSelectedObjectProps(null));
+
+        // Connector mode handlers
+        canvas.on("mouse:move", (opt) => {
+            if (toolRef.current !== "connector") return;
+            const pointer = opt.scenePoint;
+            // Update hover
+            const near = findShapeNearPoint(canvas, pointer, 50);
+            hoveredShapeIdRef.current = (near?.shape.data?.shapeId as string) || null;
+            // Update preview line
+            if (connectorFromRef.current && connectorPreviewRef.current) {
+                const snap = findShapeNearPoint(canvas, pointer, 28);
+                const end = snap ? snap.anchorPoint : pointer;
+                connectorPreviewRef.current.set({ x2: end.x, y2: end.y });
+                connectorPreviewRef.current.setCoords();
+            }
+            canvas.requestRenderAll();
+        });
+
+        canvas.on("mouse:down", (opt) => {
+            if (toolRef.current !== "connector") return;
+            const pointer = opt.scenePoint;
+            const target = findShapeNearPoint(canvas, pointer, 28);
+            
+            if (!connectorFromRef.current) {
+                // Start connector
+                if (target) {
+                    connectorFromRef.current = { shapeId: target.shape.data!.shapeId as string, anchor: target.anchor };
+                    const preview = new fabric.Line(
+                        [target.anchorPoint.x, target.anchorPoint.y, target.anchorPoint.x, target.anchorPoint.y],
+                        { stroke: "#2563eb", strokeWidth: 2, strokeDashArray: [6, 4], selectable: false, evented: false }
+                    );
+                    canvas.add(preview);
+                    connectorPreviewRef.current = preview;
+                }
+            } else {
+                // Complete connector
+                if (target && (target.shape.data!.shapeId as string) !== connectorFromRef.current.shapeId) {
+                    const line = createConnectorLine(
+                        canvas,
+                        connectorFromRef.current.shapeId,
+                        target.shape.data!.shapeId as string,
+                        connectorFromRef.current.anchor,
+                        target.anchor,
+                    );
+                    if (line) canvas.add(line);
+                }
+                // Cleanup
+                if (connectorPreviewRef.current) {
+                    canvas.remove(connectorPreviewRef.current);
+                    connectorPreviewRef.current = null;
+                }
+                connectorFromRef.current = null;
+                canvas.requestRenderAll();
+            }
+        });
+
+        // Update connectors when shapes move
+        canvas.on("object:moving", () => {
+            updateConnectors(canvas);
+            canvas.requestRenderAll();
+        });
+
+        // Render arrowheads and anchors overlay
+        canvas.on("after:render", (opt: { ctx: CanvasRenderingContext2D }) => {
+            renderArrowheads(canvas, opt.ctx);
+            if (toolRef.current === "connector") {
+                renderAnchors(canvas, opt.ctx, {
+                    hoveredShapeId: hoveredShapeIdRef.current,
+                    connectingFromId: connectorFromRef.current?.shapeId || null,
+                });
+            }
+        });
+
+        // Double-click to edit text inside Groups
+        canvas.on("mouse:dblclick", (opt) => {
+            const target = opt.target;
+            if (!target || toolRef.current === "connector") return;
+            if (target instanceof fabric.Group) {
+                const textChild = target.getObjects().find((o) => o.type === "i-text" || o.type === "textbox");
+                if (textChild && textChild instanceof fabric.IText) {
+                    // Enter sub-editing
+                    canvas.setActiveObject(textChild);
+                    textChild.enterEditing();
+                    textChild.selectAll();
+                }
+            }
+        });
 
         return () => {
             window.removeEventListener("resize", resizeCanvas);
@@ -372,10 +487,14 @@ export default function WhiteboardEditor({
             const canvas = fabricCanvas.current;
             if (!canvas) return;
 
-            const { activateTool, addRect, addCircle, addText, removeSelection, history } = keyboardActionsRef.current;
+            const { activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, removeSelection, history } = keyboardActionsRef.current;
 
             if (e.key === "v" || e.key === "V") activateTool("select");
             else if (e.key === "p" || e.key === "P") activateTool("draw");
+            else if (e.key === "a" || e.key === "A") activateTool("connector");
+            else if (e.key === "d" || e.key === "D") addDiamondShape();
+            else if (e.key === "s" || e.key === "S") addPillShape();
+            else if (e.key === "i" || e.key === "I") addDataShape();
             else if (e.key === "r" || e.key === "R") addRect();
             else if (e.key === "c" || e.key === "C") addCircle();
             else if (e.key === "t" || e.key === "T") addText();
@@ -400,7 +519,26 @@ export default function WhiteboardEditor({
     const activateTool = (next: WhiteboardTool) => {
         const canvas = fabricCanvas.current;
         setTool(next);
+        toolRef.current = next;
         if (!canvas) return;
+        
+        if (next === "connector") {
+            canvas.isDrawingMode = false;
+            canvas.selection = false;
+            canvas.defaultCursor = "crosshair";
+            canvas.hoverCursor = "crosshair";
+            canvas.discardActiveObject();
+        } else {
+            canvas.selection = true;
+            canvas.defaultCursor = "default";
+            canvas.hoverCursor = "move";
+            connectorFromRef.current = null;
+            if (connectorPreviewRef.current) {
+                canvas.remove(connectorPreviewRef.current);
+                connectorPreviewRef.current = null;
+            }
+        }
+
         canvas.isDrawingMode = next === "draw";
         if (next === "draw") {
             canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
@@ -434,6 +572,7 @@ export default function WhiteboardEditor({
             fill: "rgba(37, 99, 235, 0.25)",
             stroke: WHITEBOARD_COLORS.primary,
             strokeWidth: 2,
+            data: { shapeId: generateShapeId() },
         });
         canvas.add(rect);
         canvas.setActiveObject(rect);
@@ -452,6 +591,7 @@ export default function WhiteboardEditor({
             fill: "rgba(16, 185, 129, 0.25)",
             stroke: WHITEBOARD_COLORS.success,
             strokeWidth: 2,
+            data: { shapeId: generateShapeId() },
         });
         canvas.add(circle);
         canvas.setActiveObject(circle);
@@ -469,12 +609,46 @@ export default function WhiteboardEditor({
             fontSize: 24,
             fill: isDark ? "#e2e8f0" : WHITEBOARD_COLORS.textPrimary,
             fontFamily: "Manrope",
+            data: { shapeId: generateShapeId() },
         });
         canvas.add(text);
         canvas.setActiveObject(text);
         canvas.requestRenderAll();
         text.enterEditing();
         text.selectAll();
+        activateTool("select");
+    };
+
+    const addDiamondShape = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
+        const group = createDiamond({ left: cx - 55, top: cy - 55 });
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        canvas.requestRenderAll();
+        activateTool("select");
+    };
+
+    const addPillShape = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
+        const group = createPill({ left: cx - 75, top: cy - 26 });
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        canvas.requestRenderAll();
+        activateTool("select");
+    };
+
+    const addDataShape = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
+        const group = createData({ left: cx - 85, top: cy - 34 });
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        canvas.requestRenderAll();
         activateTool("select");
     };
 
@@ -568,8 +742,8 @@ export default function WhiteboardEditor({
 
     // Keep a live ref to canvas actions so the keyboard shortcut handler
     // always invokes the latest functions without re-attaching the listener.
-    const keyboardActionsRef = useRef({ activateTool, addRect, addCircle, addText, removeSelection, history });
-    keyboardActionsRef.current = { activateTool, addRect, addCircle, addText, removeSelection, history };
+    const keyboardActionsRef = useRef({ activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, removeSelection, history });
+    keyboardActionsRef.current = { activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, removeSelection, history };
 
     const handleSaveNow = useCallback(() => {
         const canvas = fabricCanvas.current;
@@ -621,10 +795,14 @@ export default function WhiteboardEditor({
                 <div className="absolute left-6 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-2 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
                     <ToolbarButton icon={MousePointer2} active={tool === "select"} onClick={() => activateTool("select")} label="Seleccionar (V)" />
                     <ToolbarButton icon={Pencil} active={tool === "draw"} onClick={() => activateTool("draw")} label="Dibujo libre (P)" />
+                    <ToolbarButton icon={ArrowUpRight} active={tool === "connector"} onClick={() => activateTool("connector")} label="Conector (A)" />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <ToolbarButton icon={Square} active={false} onClick={addRect} label="Rectángulo (R)" data-testid="whiteboard-add-rect" />
                     <ToolbarButton icon={Circle} active={false} onClick={addCircle} label="Círculo (C)" data-testid="whiteboard-add-circle" />
                     <ToolbarButton icon={Type} active={false} onClick={addText} label="Texto (T)" data-testid="whiteboard-add-text" />
+                    <ToolbarButton icon={Diamond} active={false} onClick={addDiamondShape} label="Diamante (D)" />
+                    <ToolbarButton icon={Pill} active={false} onClick={addPillShape} label="Terminal (S)" />
+                    <ToolbarButton icon={Hexagon} active={false} onClick={addDataShape} label="Datos (I)" />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <ToolbarButton icon={Eraser} active={false} onClick={removeSelection} label="Borrar selección" />
                     <ToolbarButton icon={Trash2} active={false} onClick={clearCanvas} label="Limpiar lienzo" tone="danger" />
