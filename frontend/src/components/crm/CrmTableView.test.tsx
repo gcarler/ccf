@@ -2,27 +2,28 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import CrmTableView from './CrmTableView';
+import { createMockCrmPersona } from '@/test-utils/factories';
 
 vi.mock('@/lib/agGrid', () => ({}));
 vi.mock('ag-grid-react', async () => import('../../__mocks__/ag-grid-react'));
 
 const personas = [
-  {
+  createMockCrmPersona({
     id: '1',
     nombre_completo: 'Ana Martínez',
     email: 'ana@example.com',
     phone: '3001234567',
     church_role: 'líder',
     spiritual_status: 'creyente',
-  },
-  {
+  }),
+  createMockCrmPersona({
     id: '2',
     nombre_completo: 'Carlos López',
     email: 'carlos@example.com',
     phone: '3007654321',
     church_role: 'persona',
     spiritual_status: 'visita',
-  },
+  }),
 ];
 
 describe('CrmTableView', () => {
