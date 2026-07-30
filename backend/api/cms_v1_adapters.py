@@ -159,6 +159,7 @@ def get_announcement_post_by_id(
         .join(models.CmsPost.categories)
         .filter(models.CmsCategory.slug == ANNOUNCEMENT_CATEGORY_SLUG)
         .filter(models.CmsPost.id == post_id)
+        .filter(models.CmsPost.status != "archived")
     )
     resolved_sede_id = _as_uuid(sede_id)
     if resolved_sede_id is not None:
@@ -377,6 +378,7 @@ def get_testimonial_post_by_id(
         .join(models.CmsPost.categories)
         .filter(models.CmsCategory.slug == TESTIMONIAL_CATEGORY_SLUG)
         .filter(models.CmsPost.id == post_id)
+        .filter(models.CmsPost.status != "archived")
     )
     resolved_sede_id = _as_uuid(sede_id)
     if resolved_sede_id is not None:
