@@ -4,7 +4,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { apiFetch } from '@/lib/http';
+import { SITE_KEY } from '@/lib/site-config';
+import {
+    listAnnouncements,
+    setAnnouncementStatus,
+    type V1AnnouncementShape,
+} from '@/lib/cms/v2';
 import {
     Plus,
     Calendar,
@@ -29,7 +34,8 @@ import type { CSSAuraProperties } from '@/types/admin';
 const ANNOUNCEMENT_VIEWS: ViewType[] = ['grid', 'list', 'table', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
 interface Announcement {
-    id: number;
+    id: string;
+    slug: string;
     title: string;
     content: string;
     category: string;
@@ -38,32 +44,21 @@ interface Announcement {
     status: 'draft' | 'published' | 'archived';
 }
 
-interface RawAnnouncement {
-    id: number;
-    title?: string;
-    content?: string;
-    category?: string;
-    is_featured?: boolean;
-    featured?: boolean;
-    published_at?: string;
-    created_at?: string;
-    status?: 'draft' | 'published' | 'archived';
-}
-
 const STATUS_LABELS: Record<Announcement['status'], string> = {
     draft: 'Borrador',
     published: 'Publicado',
     archived: 'Archivado'
 };
 
-const normalizeAnnouncement = (item: RawAnnouncement): Announcement => ({
+const normalizeAnnouncement = (item: V1AnnouncementShape): Announcement => ({
     id: item.id,
+    slug: item.slug,
     title: item.title || 'Comunicado',
     content: item.content || '',
     category: item.category || 'General',
-    featured: Boolean(item.is_featured ?? item.featured),
+    featured: Boolean(item.is_featured),
     date: item.published_at || item.created_at || new Date().toISOString(),
-    status: item.status || 'published',
+    status: (item.status === 'archived' ? 'archived' : item.status === 'published' || item.is_active ? 'published' : 'draft') as Announcement['status'],
 });
 
 export default function AnnouncementsAdmin() {
@@ -78,7 +73,7 @@ export default function AnnouncementsAdmin() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await apiFetch<RawAnnouncement[]>('/admin/announcements', { token, cache: 'no-store', signal });
+            const data = await listAnnouncements(SITE_KEY, { include_archived: true }, token);
             setAnnouncements(Array.isArray(data) ? data.map(normalizeAnnouncement) : []);
         } catch (err) {
             console.error(err);
@@ -98,11 +93,8 @@ export default function AnnouncementsAdmin() {
     const handleStatusChange = async (ann: Announcement, status: Announcement['status']) => {
         if (!token) return;
         try {
-            const updated = await apiFetch<RawAnnouncement>(`/admin/announcements/${ann.id}`, {
-                method: 'PATCH',
-                token,
-                body: { status },
-            });
+            const v1Status = status === 'published' ? 'active' : status === 'draft' ? 'draft' : 'archived';
+            const updated = await setAnnouncementStatus(SITE_KEY, ann.slug, v1Status as 'draft' | 'active' | 'archived', token);
             setAnnouncements((items) => items.map((item) => item.id === ann.id ? normalizeAnnouncement(updated) : item));
             addToast(`Comunicado marcado como ${STATUS_LABELS[status].toLowerCase()}`, "success");
         } catch (err) {
