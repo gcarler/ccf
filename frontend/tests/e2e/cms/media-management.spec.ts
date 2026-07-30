@@ -93,17 +93,18 @@ async function installMediaMocks(page: Page, { emptyMedia = false }: { emptyMedi
 
     // POST to /media/<id>/optimize — handle it here so it doesn't fall through
     if (method === 'POST' && url.includes('/optimize')) {
-      const updatedItem = mediaState.find((item) => item.id === mediaId);
-      if (updatedItem) {
-        mediaState = mediaState.map((item) =>
-          item.id === mediaId
-            ? { ...item, file_size: Math.round((item.file_size || 0) * 0.7) } as typeof item
-            : item
-        );
+      const index = mediaState.findIndex((item) => item.id === mediaId);
+      if (index === -1) {
+        await route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ error: 'not found' }) });
+        return;
       }
+      mediaState[index] = {
+        ...mediaState[index],
+        file_size: Math.round((mediaState[index].file_size || 0) * 0.7),
+      } as typeof mediaState[number];
       await route.fulfill({
         status: 200, contentType: 'application/json',
-        body: JSON.stringify({ ...updatedItem, optimized: true }),
+        body: JSON.stringify({ ...mediaState[index], optimized: true }),
       });
       return;
     }
