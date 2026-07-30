@@ -113,6 +113,10 @@ class VersionNotFoundError(CmsNotFoundError):
     detail: str = "Version not found"
 
 
+class PopupNotFoundError(CmsNotFoundError):
+    detail: str = "Popup not found"
+
+
 # ── 409: Conflict ────────────────────────────────────────────────────────────
 
 

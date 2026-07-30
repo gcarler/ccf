@@ -707,3 +707,42 @@ class CmsSeoSnapshotRead(BaseModel):
     by_severity_json: Dict[str, Any] = Field(default_factory=dict)
 
     model_config = orm_config
+
+
+# ── Native Popups (R3-BE) ───────────────────────────────────────────────────
+
+TriggerType = Literal["time_delay", "scroll_percent", "exit_intent", "on_load"]
+
+
+class CmsPopupCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    content_html: str = Field(..., description="HTML content for the popup")
+    trigger_type: TriggerType = Field(default="on_load")
+    trigger_value: Optional[int] = Field(default=None, ge=0)
+    is_active: bool = Field(default=True)
+    show_on_pages: List[str] = Field(default_factory=list)
+
+
+class CmsPopupUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    content_html: Optional[str] = None
+    trigger_type: Optional[TriggerType] = None
+    trigger_value: Optional[int] = Field(default=None, ge=0)
+    is_active: Optional[bool] = None
+    show_on_pages: Optional[List[str]] = None
+
+
+class CmsPopupRead(BaseModel):
+    id: UUID
+    site_id: UUID
+    name: str
+    content_html: str
+    trigger_type: str
+    trigger_value: Optional[int] = None
+    is_active: bool
+    show_on_pages: List[str] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = orm_config
+

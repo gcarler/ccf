@@ -285,3 +285,28 @@ export interface CmsPublicPage {
    */
   blocks?: CmsPageBlocks;
 }
+
+export type PopupTriggerType = "on_load" | "time_delay" | "scroll_percent" | "exit_intent";
+
+export interface CmsPopup {
+  id: string;
+  site_id: string;
+  name: string;
+  content_html: string;
+  trigger_type: PopupTriggerType;
+  trigger_value: number | null;
+  is_active: boolean;
+  show_on_pages: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsPublicPopup {
+  id: string;
+  name: string;
+  content_html: string;
+  trigger_type: PopupTriggerType;
+  trigger_value: number | null;
+  show_on_pages: string[];
+}
+

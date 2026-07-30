@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/http";
-import { CmsCategory, CmsMenu, CmsMenuItem, CmsPage, CmsPageVersion, CmsPostWithTaxonomies, CmsPublicPost, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsTag, CmsTheme } from "@/types/cms-v2";
+import { CmsCategory, CmsMenu, CmsMenuItem, CmsPage, CmsPageVersion, CmsPopup, CmsPublicPopup, CmsPostWithTaxonomies, CmsPublicPost, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsTag, CmsTheme, PopupTriggerType } from "@/types/cms-v2";
 
 export async function listCmsSites(token?: string | null) {
   return apiFetch<CmsSite[]>("/cms/v2/sites", { token });
@@ -1138,3 +1138,56 @@ export async function listPublicAnnouncements(
   const posts = await getCmsPublicPosts(siteKey, { category_slug: "announcements", ...options });
   return Array.isArray(posts) ? posts.map(publicPostToAnnouncement) : [];
 }
+
+// ── Popups ──────────────────────────────────────────────────────────────────
+
+export async function listCmsPopups(siteKey: string, token?: string | null): Promise<CmsPopup[]> {
+  const res = await apiFetch<{ items: CmsPopup[]; total: number } | CmsPopup[]>(`/cms/v2/sites/${siteKey}/popups`, { token });
+  return Array.isArray(res) ? res : res?.items ?? [];
+}
+
+export async function createCmsPopup(
+  siteKey: string,
+  payload: {
+    name: string;
+    content_html: string;
+    trigger_type: PopupTriggerType;
+    trigger_value?: number | null;
+    is_active?: boolean;
+    show_on_pages?: string[];
+  },
+  token?: string | null,
+): Promise<CmsPopup> {
+  return apiFetch<CmsPopup>(`/cms/v2/sites/${siteKey}/popups`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function patchCmsPopup(
+  siteKey: string,
+  popupId: string,
+  payload: Partial<CmsPopup>,
+  token?: string | null,
+): Promise<CmsPopup> {
+  return apiFetch<CmsPopup>(`/cms/v2/sites/${siteKey}/popups/${popupId}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsPopup(siteKey: string, popupId: string, token?: string | null): Promise<void> {
+  await apiFetch<void>(`/cms/v2/sites/${siteKey}/popups/${popupId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export async function listPublicPopups(siteKey: string = "default"): Promise<CmsPublicPopup[]> {
+  return apiFetch<CmsPublicPopup[]>(`/cms/v2/public/popups`, {
+    query: { site_key: siteKey },
+  });
+}
+

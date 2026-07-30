@@ -10,10 +10,10 @@ interface AvatarInitialProps {
 
 const COLORS = [
     "from-[hsl(var(--primary))] to-[hsl(var(--info))]",
-    "from-[hsl(var(--domain-fuchsia))] to-[hsl(var(--info))]",
-    "from-[hsl(var(--success))] to-[hsl(var(--success))]",
-    "from-[hsl(var(--danger))] to-[hsl(var(--danger))]",
-    "from-[hsl(var(--warning))] to-[hsl(var(--warning))]",
+    "from-[hsl(var(--info))] to-[hsl(var(--primary))]",
+    "from-[hsl(var(--success))] to-[hsl(var(--info))]",
+    "from-[hsl(var(--warning))] to-[hsl(var(--primary))]",
+    "from-[hsl(var(--danger))] to-[hsl(var(--warning))]",
 ];
 
 export function AvatarInitial({ name, size = "md", className }: AvatarInitialProps) {

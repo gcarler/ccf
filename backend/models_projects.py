@@ -156,6 +156,8 @@ class ProjectComment(Base):
     task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="SET NULL"), nullable=True)
     author_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     content = Column(Text, nullable=False)
+    attachments = Column(JSON, default=list, nullable=False)
+    mentions = Column(JSON, default=list, nullable=False)
     is_resolved = Column(Boolean, default=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)

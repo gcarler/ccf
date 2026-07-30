@@ -2624,3 +2624,61 @@ def _apply_cleanup_orphan_cms_media(
     if purged:
         db.commit()
     return purged
+
+
+# ── Native Popups (R3-BE) ───────────────────────────────────────────────────
+
+
+def list_cms_popups(
+    db: Session, site_id: uuid.UUID, *, only_active: bool = False
+) -> list[models.CmsPopup]:
+    query = db.query(models.CmsPopup).filter(models.CmsPopup.site_id == site_id)
+    if only_active:
+        query = query.filter(models.CmsPopup.is_active.is_(True))
+    return query.order_by(models.CmsPopup.created_at.desc()).all()
+
+
+def get_cms_popup(
+    db: Session, site_id: uuid.UUID, popup_id: uuid.UUID
+) -> models.CmsPopup | None:
+    return (
+        db.query(models.CmsPopup)
+        .filter(models.CmsPopup.site_id == site_id, models.CmsPopup.id == popup_id)
+        .first()
+    )
+
+
+def create_cms_popup(
+    db: Session, site_id: uuid.UUID, payload: schemas.CmsPopupCreate
+) -> models.CmsPopup:
+    row = models.CmsPopup(
+        site_id=site_id,
+        name=payload.name,
+        content_html=payload.content_html,
+        trigger_type=payload.trigger_type,
+        trigger_value=payload.trigger_value,
+        is_active=payload.is_active,
+        show_on_pages=payload.show_on_pages,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_cms_popup(
+    db: Session, row: models.CmsPopup, payload: schemas.CmsPopupUpdate
+) -> models.CmsPopup:
+    data = payload.model_dump(exclude_unset=True)
+    for field, val in data.items():
+        setattr(row, field, val)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_cms_popup(db: Session, row: models.CmsPopup) -> bool:
+    db.delete(row)
+    db.commit()
+    return True
+

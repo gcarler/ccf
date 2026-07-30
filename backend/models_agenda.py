@@ -71,6 +71,8 @@ class EventoAgenda(Base):
                                  cascade="all, delete-orphan")
     reservas = relationship("ReservaRecurso", back_populates="evento",
                             cascade="all, delete-orphan")
+    comments = relationship("AgendaEventComment", back_populates="evento",
+                            cascade="all, delete-orphan")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -120,3 +122,20 @@ class ReservaRecurso(Base):
     # EXCLUDE USING gist (recurso_id WITH =, tstzrange(bloqueo_inicio, bloqueo_fin) WITH &&)
     # WHERE (bloqueo_inicio IS NOT NULL AND bloqueo_fin IS NOT NULL);
     # Requiere: CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+
+class AgendaEventComment(Base):
+    __tablename__ = "agenda_event_comments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    event_id = Column(UUID(as_uuid=True), ForeignKey("agenda_eventos.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    content = Column(Text, nullable=False)
+    attachments = Column(JSON, default=list, nullable=False)
+    mentions = Column(JSON, default=list, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow_tz, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow_tz, onupdate=_utcnow_tz)
+
+    evento = relationship("EventoAgenda", back_populates="comments")
+    author = relationship("Persona", foreign_keys=[author_id])

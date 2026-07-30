@@ -114,3 +114,8 @@ router.include_router(_posts_mod.router)
 from backend.api.cms_v2 import analytics_ops as _analytics_ops_mod  # noqa: E402
 
 router.include_router(_analytics_ops_mod.router)
+
+from backend.api.cms_v2 import popups as _popups_mod  # noqa: E402
+
+router.include_router(_popups_mod.router)
+

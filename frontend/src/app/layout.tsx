@@ -38,6 +38,7 @@ import { CommandCenterProvider } from "@/context/CommandCenterContext";
 import { CreationProvider } from "@/context/CreationContext";
 import { SidebarLayerProvider } from "@/context/SidebarLayerContext";
 import SiteBrandAssets from "@/components/SiteBrandAssets";
+import { PopupManager } from "@/components/cms/PopupManager";
 
 const _siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "Mi Comunidad";
 
@@ -96,6 +97,7 @@ export default function RootLayout({
                                             <ClientBootstrap />
                                             <Toaster position="bottom-right" expand={false} richColors />
                                             <CommandCenter />
+                                            <PopupManager />
                                             {children}
                                         </SidebarLayerProvider>
                                     </CreationProvider>
