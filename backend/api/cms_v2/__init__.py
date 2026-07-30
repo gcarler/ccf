@@ -2268,6 +2268,193 @@ def delete_post(
     crud.delete_cms_post(db, row, actor_user_id=str(current_user.id))
 
 
+# ── Posts by Canonical Category (Testimonials / Announcements) ──────────────
+# Estos endpoints reemplazan los shims v1 (/cms/testimonials, /cms/announcements)
+# y usan el site principal (ccf) con categorías canónicas.
+
+CANONICAL_CATEGORIES = {
+    "testimonials": ("Testimonials", "Testimonios de la comunidad"),
+    "announcements": ("Announcements", "Anuncios oficiales"),
+}
+
+
+def _get_main_site(db: Session) -> models.CmsSite:
+    """Obtiene el site principal CCF (site_key='ccf')."""
+    site = crud.get_cms_site_by_key(db, "ccf")
+    if not site:
+        raise HTTPException(status_code=404, detail="main site not found")
+    return site
+
+
+def _ensure_canonical_category(db: Session, site_id: UUID, category_slug: str) -> models.CmsCategory:
+    """Asegura que la categoría canónica exista en el site principal."""
+    name, description = CANONICAL_CATEGORIES.get(category_slug, (category_slug.title(), ""))
+    cat = crud.get_or_create_canonical_category(db, site_id, category_slug, name, description)
+    return cat
+
+
+def _validate_canonical_category(category_slug: str) -> None:
+    if category_slug not in CANONICAL_CATEGORIES:
+        raise HTTPException(status_code=422, detail="invalid canonical category")
+
+
+@router.get(
+    "/sites/{site_key}/posts-by-category",
+    response_model=PaginatedResponse[schemas.CmsPostReadWithTaxonomies],
+)
+def list_posts_by_category(
+    site_key: str,
+    category: str = Query(..., description="Canonical category: testimonials or announcements"),
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    status: str | None = Query(None),
+    include_archived: bool = Query(False),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Lista posts filtrados por categoría canónica (testimonials/announcements)."""
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    _validate_canonical_category(category)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
+    cat = _ensure_canonical_category(db, site.id, category)
+    items, total = crud.list_cms_posts_by_category(
+        db,
+        site_id=site.id,
+        category_slug=category,
+        skip=skip,
+        limit=limit,
+        status=status,
+        include_archived=include_archived,
+    )
+    post_ids = [post.id for post in items]
+    cats_by_post = crud.get_posts_categories_batch(db, post_ids)
+    tags_by_post = crud.get_posts_tags_batch(db, post_ids)
+    enriched = []
+    for post in items:
+        p = schemas.CmsPostReadWithTaxonomies.model_validate(post)
+        p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in cats_by_post.get(str(post.id), [])]
+        p.tags = [schemas.CmsTagRead.model_validate(t) for t in tags_by_post.get(str(post.id), [])]
+        enriched.append(p)
+    return PaginatedResponse[schemas.CmsPostReadWithTaxonomies](items=enriched, total=total, skip=skip, limit=limit)
+
+
+@router.post(
+    "/sites/{site_key}/posts-by-category",
+    response_model=schemas.CmsPostReadWithTaxonomies,
+    status_code=201,
+)
+def create_post_by_category(
+    site_key: str,
+    category: str = Query(..., description="Canonical category: testimonials or announcements"),
+    payload: schemas.CmsPostCreate = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
+):
+    """Crea un post asignándolo automáticamente a la categoría canónica."""
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    _validate_canonical_category(category)
+    if payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
+        raise HTTPException(status_code=422, detail="invalid status")
+    site = _get_scoped_site_or_404(db, site_key, current_user)
+    cat = _ensure_canonical_category(db, site.id, category)
+    payload.slug = _slugify(payload.slug) or f"{category}-{uuid.uuid4().hex[:8]}"
+    if crud.get_cms_post(db, site.id, payload.slug):
+        raise HTTPException(status_code=409, detail="slug already exists")
+    # Forzar category_ids a la categoría canónica
+    payload.category_ids = [cat.id]
+    try:
+        row = crud.create_cms_post(db, site.id, payload, current_user.id, actor_user_id=str(current_user.id))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
+    p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, row.id)]
+    p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, row.id)]
+    return p
+
+
+@router.get(
+    "/sites/{site_key}/posts-by-category/{slug}",
+    response_model=schemas.CmsPostReadWithTaxonomies,
+)
+def get_post_by_category(
+    site_key: str,
+    slug: str,
+    category: str = Query(..., description="Canonical category: testimonials or announcements"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Obtiene un post por slug validando que pertenezca a la categoría canónica."""
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    _validate_canonical_category(category)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
+    cat = _ensure_canonical_category(db, site.id, category)
+    row = crud.get_cms_post_by_slug_and_category(db, site.id, slug, category)
+    if not row:
+        raise HTTPException(status_code=404, detail="post not found")
+    p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
+    p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, row.id)]
+    p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, row.id)]
+    return p
+
+
+@router.patch(
+    "/sites/{site_key}/posts-by-category/{slug}",
+    response_model=schemas.CmsPostReadWithTaxonomies,
+)
+def patch_post_by_category(
+    site_key: str,
+    slug: str,
+    category: str = Query(..., description="Canonical category: testimonials or announcements"),
+    payload: schemas.CmsPostUpdate = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
+):
+    """Actualiza un post manteniendo su categoría canónica."""
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    _validate_canonical_category(category)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
+    row = crud.get_cms_post_by_slug_and_category(db, site.id, slug, category)
+    if not row:
+        raise HTTPException(status_code=404, detail="post not found")
+    if payload.status is not None and payload.status.strip().lower() not in {
+        "draft",
+        "in_review",
+        "approved",
+        "published",
+        "archived",
+    }:
+        raise HTTPException(status_code=422, detail="invalid status")
+    # Evitar cambio de categoría canónica
+    if payload.category_ids is not None:
+        raise HTTPException(status_code=422, detail="cannot change canonical category")
+    try:
+        updated = crud.update_cms_post(db, row, payload, current_user.id, actor_user_id=str(current_user.id))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    p = schemas.CmsPostReadWithTaxonomies.model_validate(updated)
+    p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, updated.id)]
+    p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, updated.id)]
+    return p
+
+
+@router.delete("/sites/{site_key}/posts-by-category/{slug}", status_code=204)
+def delete_post_by_category(
+    site_key: str,
+    slug: str,
+    category: str = Query(..., description="Canonical category: testimonials or announcements"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
+):
+    """Elimina (archiva) un post validando su categoría canónica."""
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    _validate_canonical_category(category)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
+    row = crud.get_cms_post_by_slug_and_category(db, site.id, slug, category)
+    if not row:
+        raise HTTPException(status_code=404, detail="post not found")
+    crud.delete_cms_post(db, row, actor_user_id=str(current_user.id))
+
+
 # ── Posts (Public) ────────────────────────────────────────────────────────
 
 
