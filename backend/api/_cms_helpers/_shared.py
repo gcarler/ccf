@@ -52,36 +52,6 @@ def _actor_sede_or_none(db: Session, current_user: models.User) -> Optional[str]
     return get_user_sede_id(db, user_id)
 
 
-def _scope_cms_testimonials_by_user_sede(
-    db: Session, current_user: models.User, query
-):
-    """Filtra un query de ``models.Testimonial`` por ``sede_id == user_sede``.
-
-    Si el actor canónico no tiene sede (superadmin), retorna el query sin
-    modificar y conserva el alcance administrativo global.
-
-    Testimonial exige ``sede_id`` propio desde la migración 2026-07-01. El
-    scope se aplica de forma directa sin necesidad de JOIN.
-    """
-    user_sede = _actor_sede_or_none(db, current_user)
-    if user_sede:
-        query = query.filter(models.Testimonial.sede_id == user_sede)
-    return query
-
-
-def _scope_cms_announcements_by_user_sede(
-    db: Session, current_user: models.User, query
-):
-    """Filtra un query de ``models.Announcement`` por ``sede_id == user_sede``.
-
-    Announcement exige ``sede_id`` + ``created_by_persona_id`` no nulos.
-    """
-    user_sede = _actor_sede_or_none(db, current_user)
-    if user_sede:
-        query = query.filter(models.Announcement.sede_id == user_sede)
-    return query
-
-
 def _scope_cms_media_by_user_sede(
     db: Session, current_user: models.User, query
 ):
@@ -113,51 +83,6 @@ def _scope_cms_pastoral_team_by_user_sede(
             (models.Persona.sede_id == user_sede) | (models.Persona.sede_id.is_(None))
         )
     return query
-
-
-def _get_scoped_cms_testimonial(
-    db: Session, current_user: models.User, testimonial_id
-) -> models.Testimonial:
-    """Devuelve el Testimonial o raise ``HTTPException(404)``.
-
-    Existence-leak safe: devuelve 404 tanto si el testimonial no existe
-    como si pertenece a otra sede. Mismo patrón que
-    ``_get_scoped_persona``.
-
-    Si el actor es superadmin sin sede, retorna cualquier Testimonial no
-    archivado (consistente con el resto de Axioma 3).
-    """
-    try:
-        tid = _uuid.UUID(str(testimonial_id))
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=404, detail="Testimonial no encontrado")
-
-    query = db.query(models.Testimonial).filter(models.Testimonial.id == tid)
-    query = _scope_cms_testimonials_by_user_sede(db, current_user, query)
-    row = query.first()
-    if not row:
-        raise HTTPException(status_code=404, detail="Testimonial no encontrado")
-    return row
-
-
-def _get_scoped_cms_announcement(
-    db: Session, current_user: models.User, announcement_id
-) -> models.Announcement:
-    """Devuelve el Announcement o raise ``HTTPException(404)``.
-
-    Existence-leak safe (mismo patrón que Testimonial).
-    """
-    try:
-        aid = _uuid.UUID(str(announcement_id))
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=404, detail="Announcement no encontrado")
-
-    query = db.query(models.Announcement).filter(models.Announcement.id == aid)
-    query = _scope_cms_announcements_by_user_sede(db, current_user, query)
-    row = query.first()
-    if not row:
-        raise HTTPException(status_code=404, detail="Announcement no encontrado")
-    return row
 
 
 def _get_scoped_cms_media(
