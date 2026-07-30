@@ -1,9 +1,11 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Headphones, ImageIcon, LinkIcon, PlayCircle, Send, Smile } from "lucide-react";
 import { apiFetch } from "@/lib/http";
+import { SITE_KEY } from "@/lib/site-config";
+import { createCmsPostByCategory } from "@/lib/cms/v2";
 import {
   activeTestimonialMediaAssets,
   TestimonialMediaAsset,
@@ -17,11 +19,7 @@ interface TestimonialFormProps {
   onSubmitted?: () => void;
 }
 
-const isUuid = (value: unknown) =>
-  typeof value === "string" &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-
-export default function TestimonialForm({ userId, authorPersonaId, token, onSubmitted }: TestimonialFormProps) {
+export default function TestimonialForm({ userId: _userId, authorPersonaId: _authorPersonaId, token, onSubmitted }: TestimonialFormProps) {
   const [content, setContent] = useState("");
   const [emotion, setEmotion] = useState("Feliz");
   const [mediaType, setMediaType] = useState<TestimonialMediaType>("text");
@@ -84,33 +82,46 @@ export default function TestimonialForm({ userId, authorPersonaId, token, onSubm
     const submittedMediaType = mediaType === "text" || !activeMediaUrl.trim() ? "text" : mediaType;
     const submittedMediaUrl = submittedMediaType === "text" ? null : activeMediaUrl.trim();
 
-	    try {
-	      const authorPayload = {
-	        ...(authorPersonaId || isUuid(userId) ? { author_persona_id: authorPersonaId || String(userId) } : {}),
-	      };
-      await apiFetch("/cms/testimonials", {
-        method: "POST",
-        token,
-        body: {
-          content,
-          emotion,
-          media_type: submittedMediaType,
-          media_url: submittedMediaUrl,
-          image_url: submittedMediaType === "image" ? submittedMediaUrl : null,
-          video_url: submittedMediaType === "video" ? submittedMediaUrl : null,
-          podcast_url: submittedMediaType === "podcast" ? submittedMediaUrl : null,
-          ...authorPayload,
-        },
-      });
+    try {
+      const imageUrl = submittedMediaType === "image" ? submittedMediaUrl : null;
+      const videoUrl = submittedMediaType === "video" ? submittedMediaUrl : null;
+      const podcastUrl = submittedMediaType === "podcast" ? submittedMediaUrl : null;
 
-        setMessage("Gracias. Tu testimonio fue enviado para moderacion.");
-        setContent("");
-        setImageUrl("");
-        setVideoUrl("");
-        setPodcastUrl("");
-        setMediaType("text");
-        setMediaSearch("");
-        if (onSubmitted) onSubmitted();
+      // Endpoint v2 nativo: el backend resuelve author_persona_id desde
+      // current_user y asigna automáticamente la categoría canónica
+      // "testimonials". Los campos v1 (emotion, media_type, ...) viajan
+      // dentro de seo_json; el adaptador postToTestimonial los desplana.
+      await createCmsPostByCategory(
+        SITE_KEY,
+        "testimonials",
+        {
+          title: `Testimonio · ${emotion}`,
+          content,
+          excerpt: content.slice(0, 200) || null,
+          featured_image_url: imageUrl,
+          status: "draft",
+          seo_json: {
+            emotion,
+            media_type: submittedMediaType,
+            media_url: submittedMediaType === "text" ? null : submittedMediaUrl,
+            image_url: imageUrl,
+            video_url: videoUrl,
+            podcast_url: podcastUrl,
+            show_on_home: false,
+            content_type: "testimonial",
+          },
+        },
+        token,
+      );
+
+      setMessage("Gracias. Tu testimonio fue enviado para moderacion.");
+      setContent("");
+      setImageUrl("");
+      setVideoUrl("");
+      setPodcastUrl("");
+      setMediaType("text");
+      setMediaSearch("");
+      if (onSubmitted) onSubmitted();
     } catch (error) {
       console.error("testimonial error", error);
       setMessage("Hubo un error al enviar el testimonio.");
