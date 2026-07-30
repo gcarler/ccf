@@ -3,9 +3,8 @@
 import { AvatarInitial } from '@/components/ui/AvatarInitial';
 import { apiFetch } from '@/lib/http';
 import type { DirectMessageItem } from '@/types/directMessages';
-import clsx from 'clsx';
 import { FileText, Loader2, Music, Paperclip, Send, Video, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SearchedUser } from '../_hooks/useUserSearch';
 
 interface MentionCandidate {
