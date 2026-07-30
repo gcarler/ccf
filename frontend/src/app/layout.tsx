@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Roboto, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 // ── Typography: Load production fonts via next/font/google (self-hosted, no FOUC) ──
-const spaceGrotesk = Space_Grotesk({
+const roboto = Roboto({
     subsets: ["latin"],
-    weight: ["300", "400", "500", "600", "700"],
-    variable: "--font-space-grotesk",
+    weight: ["300", "400", "500", "700"],
+    variable: "--font-roboto",
     display: "swap",
     preload: true,
 });
@@ -61,7 +61,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="es" suppressHydrationWarning className={`${spaceGrotesk.variable} ${plusJakartaSans.variable} ${inter.variable}`}>
+        <html lang="es" suppressHydrationWarning className={`${roboto.variable} ${plusJakartaSans.variable} ${inter.variable}`}>
             <head>
                 <script
                     dangerouslySetInnerHTML={{

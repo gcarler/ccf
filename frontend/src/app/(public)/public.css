@@ -223,7 +223,7 @@
 
     /* ── Public Typography Tokens ──────────────────────────────────────────
      * PUBLIC pages use a DIFFERENT typographic scope than the platform:
-     *   · Display / Headlines → var(--font-headline) = Space Grotesk
+     *   · Display / Headlines → var(--font-headline) = Roboto
      *   · Body / Copy         → var(--font-body)    = Inter
      *   · Base rem            → 18px on large screens (editorial scale)
      *   · Scale               → fluid clamp() — NOT constrained to 1.125rem
@@ -231,7 +231,7 @@
      * The platform (.workspace-platform) stays at 13px base (var(--text-base))
      * and is capped at var(--text-xl) = 1.125rem.
      * ────────────────────────────────────────────────────────────────────── */
-    --ccf-font-display:  var(--font-headline, 'Space Grotesk', 'Plus Jakarta Sans', sans-serif);
+    --ccf-font-display:  var(--font-headline, 'Roboto', 'Plus Jakarta Sans', sans-serif);
     --ccf-font-body:     var(--font-body, 'Inter', sans-serif);
 
     /* Public type scale: fluid, editorial. NOT the same as platform tokens. */
@@ -328,7 +328,7 @@
 }
 
 /* ── Public heading typography ────────────────────────────────────────────
- * h1, h2 → Display family (Space Grotesk) for editorial authority
+ * h1, h2 → Display family (Roboto) for editorial authority
  * h3, h4 → Display family, tighter weights for substructure
  * p, copy → Body family (Inter) for optimal reading legibility
  * ────────────────────────────────────────────────────────────────────────── */

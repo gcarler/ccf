@@ -1,6 +1,6 @@
 """Adapters for the v1→v2 CMS compatibility layer (testimonials).
 
-This module maps the legacy ``Testimonial`` contract used by the v1 API
+This module maps the v1-compat ``Testimonial`` contract used by the v1 API
 (``backend/api/cms.py``) onto the v2 ``CmsPost`` model. The public v1
 endpoints keep returning ``schemas.TestimonialRead`` while internally
 reading/writing ``CmsPost`` rows categorized as testimonials.
@@ -28,7 +28,7 @@ ANNOUNCEMENT_CATEGORY_SLUG = "announcements"
 
 
 # ── Status mapping ─────────────────────────────────────────────────────────
-# Legacy Testimonial.status ∈ {"pending", "approved", "archived"}
+# V1-compat Testimonial.status ∈ {"pending", "approved", "archived"}
 # v2 CmsPost.status      ∈ {"draft", "published", "archived", ...}
 
 
@@ -74,17 +74,17 @@ def _post_status_from_testimonial(*, is_approved: bool, status: str | None) -> s
 def get_or_create_announcement_site(
     db: "Session", sede_id: uuid.UUID | str
 ) -> models.CmsSite:
-    """Return an active site for ``sede_id``; create a legacy one if needed."""
+    """Return an active site for ``sede_id``; create a v1-compat one if needed."""
     site = get_site_for_sede(db, sede_id)
     if site is not None:
         return site
 
     short = str(sede_id).split("-")[0]
-    site_key = f"legacy-announcements-{short}"
+    site_key = f"v1-compat-announcements-{short}"
     site = models.CmsSite(
         site_key=site_key,
-        name="Legacy Announcements Site",
-        base_path=f"/legacy-announcements-{short}",
+        name="V1-compat Announcements Site",
+        base_path=f"/v1-compat-announcements-{short}",
         is_active=True,
         sede_id=sede_id if isinstance(sede_id, uuid.UUID) else uuid.UUID(str(sede_id)),
     )
@@ -112,7 +112,7 @@ def get_or_create_announcement_category(
         site_id=site_id,
         slug=ANNOUNCEMENT_CATEGORY_SLUG,
         name="Announcements",
-        description="Legacy announcements migrated to CmsPost",
+        description="V1-compat announcements migrated to CmsPost",
         is_active=True,
     )
     db.add(cat)
@@ -264,7 +264,7 @@ def get_site_for_sede(db: "Session", sede_id: uuid.UUID | str | None) -> models.
     """Return the first active CmsSite belonging to ``sede_id``.
 
     ``None`` is returned when no site matches. Callers decide whether to
-    create a legacy site or raise an error.
+    create a v1-compat site or raise an error.
     """
     if sede_id is None:
         return None
@@ -279,21 +279,21 @@ def get_site_for_sede(db: "Session", sede_id: uuid.UUID | str | None) -> models.
 def get_or_create_testimonial_site(
     db: "Session", sede_id: uuid.UUID | str
 ) -> models.CmsSite:
-    """Return an active site for ``sede_id``; create a legacy one if needed.
+    """Return an active site for ``sede_id``; create a v1-compat one if needed.
 
     This keeps the v1 API working even when a sede has no CMS site yet.
-    The created site is clearly marked as legacy so admins can identify it.
+    The created site is clearly marked as v1-compat so admins can identify it.
     """
     site = get_site_for_sede(db, sede_id)
     if site is not None:
         return site
 
     short = str(sede_id).split("-")[0]
-    site_key = f"legacy-testimonials-{short}"
+    site_key = f"v1-compat-testimonials-{short}"
     site = models.CmsSite(
         site_key=site_key,
-        name="Legacy Testimonials Site",
-        base_path=f"/legacy-testimonials-{short}",
+        name="V1-compat Testimonials Site",
+        base_path=f"/v1-compat-testimonials-{short}",
         is_active=True,
         sede_id=sede_id if isinstance(sede_id, uuid.UUID) else uuid.UUID(str(sede_id)),
     )
@@ -322,7 +322,7 @@ def get_or_create_testimonial_category(
         site_id=site_id,
         slug=TESTIMONIAL_CATEGORY_SLUG,
         name="Testimonials",
-        description="Legacy testimonials migrated to CmsPost",
+        description="V1-compat testimonials migrated to CmsPost",
         is_active=True,
     )
     db.add(cat)
