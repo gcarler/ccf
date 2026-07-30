@@ -32,6 +32,8 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { SITE_BLOCKS } from "@/lib/cms/blocks";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
+import { listTestimonials } from "@/lib/cms/v2";
+import { SITE_KEY } from "@/lib/site-config";
 
 interface CmsStats {
   testimonials: number;
@@ -56,7 +58,7 @@ interface CmsStats {
 }
 
 interface TestimonialPreview {
-  id: number;
+  id: string;
   content: string;
   emotion: string;
   created_at: string;
@@ -225,16 +227,14 @@ export default function CmsHomePage() {
       setDataIssue(null);
 
       const [testimonialsResult, metricsResult, mediaResult, dashboardResult] = await Promise.allSettled([
-        apiFetch<TestimonialPreview[]>("/admin/testimonials", { token, cache: "no-store" }),
+        listTestimonials(SITE_KEY, undefined, token),
         apiFetch<CmsMetricsResponse>("/cms/metrics", { token, cache: "no-store" }),
         apiFetch<{ items: MediaPreview[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: true } }),
         apiFetch<CmsDashboardResponse>("/dashboard/cms", { token, cache: "no-store" }),
       ]);
 
       const loadIssues: string[] = [];
-      const testimonials = testimonialsResult.status === "fulfilled" && Array.isArray(testimonialsResult.value)
-        ? testimonialsResult.value
-        : [];
+      const testimonials = testimonialsResult.status === "fulfilled" ? testimonialsResult.value : [];
       const metrics = metricsResult.status === "fulfilled" ? metricsResult.value : null;
       const media = mediaResult.status === "fulfilled" && mediaResult.value?.items
         ? mediaResult.value.items

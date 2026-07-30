@@ -502,6 +502,10 @@ export async function createCmsPost(
   });
 }
 
+export async function getCmsPost(siteKey: string, slug: string, token?: string | null) {
+  return apiFetch<CmsPostWithTaxonomies>(`/cms/v2/sites/${siteKey}/posts/${slug}`, { token });
+}
+
 export async function patchCmsPost(
   siteKey: string,
   slug: string,
@@ -549,6 +553,9 @@ export async function getCmsPublicPost(siteKey: string, slug: string) {
 
 // ── Posts by Canonical Category (Testimonials / Announcements) ──────────────
 // Replaces v1 shim endpoints: /cms/testimonials, /cms/announcements
+// These wrap the generic post CRUD, filtering by category client-side since
+// the backend stores testimonials/announcements as CmsPost rows with a
+// canonical category association.
 
 export type CanonicalCategory = "testimonials" | "announcements";
 
@@ -557,15 +564,12 @@ export async function listCmsPostsByCategory(
   category: CanonicalCategory,
   options?: { status?: string; skip?: number; limit?: number; include_archived?: boolean },
   token?: string | null,
-) {
-  const res = await apiFetch<{ items: CmsPostWithTaxonomies[]; total: number } | CmsPostWithTaxonomies[]>(
-    `/cms/v2/sites/${siteKey}/posts-by-category`,
-    {
-      token,
-      query: { category, ...options },
-    }
-  );
-  return Array.isArray(res) ? res : res?.items ?? [];
+): Promise<CmsPostWithTaxonomies[]> {
+  const cats = await listCmsCategories(siteKey, token);
+  const cat = cats.find((c) => c.slug === category);
+  if (!cat) return [];
+  const posts = await listCmsPosts(siteKey, token);
+  return posts.filter((p) => p.categories?.some((c) => c.id === cat.id));
 }
 
 export async function createCmsPostByCategory(
@@ -585,15 +589,10 @@ export async function createCmsPostByCategory(
   },
   token?: string | null,
 ) {
-  return apiFetch<CmsPostWithTaxonomies>(
-    `/cms/v2/sites/${siteKey}/posts-by-category`,
-    {
-      method: "POST",
-      token,
-      query: { category },
-      body: payload,
-    }
-  );
+  const cats = await listCmsCategories(siteKey, token);
+  const existing = cats.find((c) => c.slug === category);
+  const catId = existing ? existing.id : (await createCmsCategory(siteKey, { slug: category, name: category, is_active: true }, token)).id;
+  return createCmsPost(siteKey, { ...payload, slug: payload.slug ?? `${category}-${Date.now()}`, category_ids: [catId] }, token);
 }
 
 export async function getCmsPostByCategory(
@@ -601,14 +600,11 @@ export async function getCmsPostByCategory(
   slug: string,
   category: CanonicalCategory,
   token?: string | null,
-) {
-  return apiFetch<CmsPostWithTaxonomies>(
-    `/cms/v2/sites/${siteKey}/posts-by-category/${slug}`,
-    {
-      token,
-      query: { category },
-    }
-  );
+): Promise<CmsPostWithTaxonomies | null> {
+  const post = await getCmsPost(siteKey, slug, token).catch(() => null);
+  if (!post) return null;
+  if (!post.categories?.some((c) => c.slug === category)) return null;
+  return post;
 }
 
 export async function patchCmsPostByCategory(
@@ -629,31 +625,171 @@ export async function patchCmsPostByCategory(
   },
   token?: string | null,
 ) {
-  return apiFetch<CmsPostWithTaxonomies>(
-    `/cms/v2/sites/${siteKey}/posts-by-category/${slug}`,
-    {
-      method: "PATCH",
-      token,
-      query: { category },
-      body: payload,
-    }
-  );
+  return patchCmsPost(siteKey, slug, payload, token);
 }
 
 export async function deleteCmsPostByCategory(
   siteKey: string,
   slug: string,
-  category: CanonicalCategory,
+  _category: CanonicalCategory,
   token?: string | null,
 ) {
-  await apiFetch<void>(
-    `/cms/v2/sites/${siteKey}/posts-by-category/${slug}`,
+  await deleteCmsPost(siteKey, slug, token);
+}
+
+// ── v1-compat adapters: CmsPostWithTaxonomies ⇄ Testimonial/Announcement ────
+// Frontend shim: testimonials and announcements now live as CmsPost rows
+// categorised by canonical "testimonials"/"announcements" categories, with
+// emotion/media_type/etc. flattened into ``seo_json``. These adapters keep
+// the v1-shaped objects the admin UI still expects (TestimonialRead /
+// AnnouncementRead) so pages can migrate to the v2 endpoints without a large
+// UI rewrite. Once the UI reads the v2 shape (CmsPostReadWithTaxonomies)
+// directly, these can be removed.
+
+export interface V1TestimonialShape {
+  id: string;
+  slug: string;
+  content: string;
+  emotion: string;
+  media_type?: "text" | "image" | "video" | "podcast" | string;
+  media_url?: string | null;
+  image_url?: string | null;
+  video_url?: string | null;
+  podcast_url?: string | null;
+  created_at: string;
+  author_persona_id?: string | null;
+  published?: boolean;
+  is_approved?: boolean;
+  show_on_home?: boolean;
+  status?: "pending" | "approved" | "archived" | string;
+}
+
+export interface V1AnnouncementShape {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  category: string;
+  image_url?: string | null;
+  is_active: boolean;
+  is_featured: boolean;
+  status: string;
+  created_at: string;
+  published_at?: string;
+}
+
+function _testimonialStatusFromPost(status: string | undefined | null): string {
+  if (status === "published") return "approved";
+  if (status === "archived") return "archived";
+  return "pending";
+}
+
+/** Convert a v2 CmsPost into the v1 TestimonialRead shape the admin UI expects. */
+export function postToTestimonial(post: CmsPostWithTaxonomies): V1TestimonialShape {
+  const seo = (post.seo_json ?? {}) as Record<string, unknown>;
+  const emotion = (seo.emotion as string) || "Testimonio";
+  const mediaType = (seo.media_type as string) || "text";
+  const mediaUrl = (seo.media_url as string | null | undefined) ?? null;
+  const isApproved = post.status === "published";
+  return {
+    id: post.id,
+    slug: post.slug,
+    content: post.content ?? "",
+    emotion,
+    media_type: mediaType as V1TestimonialShape["media_type"],
+    media_url: mediaUrl,
+    image_url: post.featured_image_url ?? null,
+    video_url: (seo.video_url as string | null | undefined) ?? null,
+    podcast_url: (seo.podcast_url as string | null | undefined) ?? null,
+    created_at: post.created_at,
+    author_persona_id: post.author_persona_id ?? null,
+    published: isApproved,
+    is_approved: isApproved,
+    show_on_home: Boolean(seo.show_on_home),
+    status: _testimonialStatusFromPost(post.status),
+  };
+}
+
+/** High-level wrapper: list testimonials via v2, returning v1 TestimonialRead shape. */
+export async function listTestimonials(
+  siteKey: string,
+  options?: { status?: string; include_archived?: boolean; skip?: number; limit?: number },
+  token?: string | null,
+): Promise<V1TestimonialShape[]> {
+  const posts = await listCmsPostsByCategory(siteKey, "testimonials", options, token);
+  return posts.map(postToTestimonial);
+}
+
+/** High-level wrapper: get one testimonial by slug via v2, returning v1 shape. */
+export async function getTestimonialBySlug(
+  siteKey: string,
+  slug: string,
+  token?: string | null,
+): Promise<V1TestimonialShape> {
+  const post = await getCmsPostByCategory(siteKey, slug, "testimonials", token);
+  if (!post) throw new Error(`Testimonial not found: ${slug}`);
+  return postToTestimonial(post);
+}
+
+/** Toggle testimonial status between pending/approved/archived via v2. */
+export async function setTestimonialStatus(
+  siteKey: string,
+  slug: string,
+  v1Status: "pending" | "approved" | "archived",
+  token?: string | null,
+): Promise<V1TestimonialShape> {
+  const v2Status = v1Status === "approved" ? "published" : v1Status === "archived" ? "archived" : "draft";
+  const post = await patchCmsPostByCategory(siteKey, slug, "testimonials", { status: v2Status }, token);
+  return postToTestimonial(post);
+}
+
+/** Archive (soft-delete) a testimonial via v2. */
+export async function archiveTestimonial(
+  siteKey: string,
+  slug: string,
+  token?: string | null,
+): Promise<void> {
+  await deleteCmsPostByCategory(siteKey, slug, "testimonials", token);
+}
+
+/** Save a testimonial edit via v2, mapping v1 flat fields back to content+seo_json. */
+export async function saveTestimonial(
+  siteKey: string,
+  slug: string,
+  data: {
+    content: string;
+    emotion: string;
+    media_type: string;
+    media_url?: string | null;
+    image_url?: string | null;
+    video_url?: string | null;
+    podcast_url?: string | null;
+    show_on_home?: boolean;
+    status?: string;
+  },
+  token?: string | null,
+): Promise<V1TestimonialShape> {
+  const post = await patchCmsPostByCategory(
+    siteKey,
+    slug,
+    "testimonials",
     {
-      method: "DELETE",
-      token,
-      query: { category },
-    }
+      content: data.content,
+      featured_image_url: data.media_type === "image" ? (data.image_url ?? data.media_url ?? null) : null,
+      status: data.status === "approved" ? "published" : data.status === "archived" ? "archived" : "draft",
+      seo_json: {
+        emotion: data.emotion,
+        media_type: data.media_type,
+        media_url: data.media_type === "text" ? null : (data.media_url ?? null),
+        image_url: data.media_type === "image" ? (data.image_url ?? null) : null,
+        video_url: data.media_type === "video" ? (data.video_url ?? null) : null,
+        podcast_url: data.media_type === "podcast" ? (data.podcast_url ?? null) : null,
+        show_on_home: data.show_on_home ?? false,
+      },
+    },
+    token,
   );
+  return postToTestimonial(post);
 }
 
 // ── Scheduled publish + auto-archive helpers (2026-07-06) ────────────────
