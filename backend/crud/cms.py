@@ -2320,6 +2320,96 @@ def get_public_cms_post(db: Session, site_id: uuid.UUID, slug: str):
     )
 
 
+def get_or_create_canonical_category(
+    db: Session, site_id: uuid.UUID, slug: str, name: str, description: str | None = None
+) -> models.CmsCategory:
+    """Obtiene o crea una categoría canónica (testimonials/announcements) para un site."""
+    cat = (
+        db.query(models.CmsCategory)
+        .filter(models.CmsCategory.site_id == site_id, models.CmsCategory.slug == slug)
+        .first()
+    )
+    if cat:
+        return cat
+    cat = models.CmsCategory(
+        site_id=site_id,
+        slug=slug,
+        name=name,
+        description=description or f"Categoría canónica para {name}",
+        is_active=True,
+    )
+    db.add(cat)
+    db.commit()
+    db.refresh(cat)
+    return cat
+
+
+def list_cms_posts_by_category(
+    db: Session,
+    site_id: uuid.UUID,
+    category_slug: str,
+    skip: int = 0,
+    limit: int = 50,
+    status: str | None = None,
+    include_archived: bool = False,
+):
+    """Lista posts filtrados por slug de categoría (para categorías canónicas)."""
+    query = (
+        db.query(models.CmsPost)
+        .join(models.CmsPostCategory)
+        .join(models.CmsCategory)
+        .filter(
+            models.CmsPost.site_id == site_id,
+            models.CmsCategory.slug == category_slug,
+        )
+    )
+    if status:
+        query = query.filter(models.CmsPost.status == status)
+    if not include_archived:
+        query = query.filter(models.CmsPost.status != "archived")
+    total = query.count()
+    items = (
+        query.order_by(models.CmsPost.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return items, total
+
+
+def get_cms_post_by_slug_and_category(
+    db: Session, site_id: uuid.UUID, slug: str, category_slug: str
+) -> models.CmsPost | None:
+    """Obtiene un post por slug validando que pertenezca a la categoría canónica."""
+    return (
+        db.query(models.CmsPost)
+        .join(models.CmsPostCategory)
+        .join(models.CmsCategory)
+        .filter(
+            models.CmsPost.site_id == site_id,
+            models.CmsPost.slug == slug,
+            models.CmsCategory.slug == category_slug,
+        )
+        .first()
+    )
+
+
+def _assert_canonical_category_unchanged(
+    existing_category_ids: list[uuid.UUID],
+    new_category_ids: list[uuid.UUID] | None,
+    canonical_category_id: uuid.UUID,
+) -> None:
+    """Valida que la categoría canónica no se cambie en updates."""
+    if new_category_ids is None:
+        return
+    existing_set = set(existing_category_ids)
+    new_set = set(new_category_ids)
+    if canonical_category_id not in new_set:
+        raise ValueError("Cannot remove canonical category from post")
+    if existing_set != new_set:
+        raise ValueError("Cannot change canonical category assignment")
+
+
 # ── F-08 (errorescms.md): limpieza periodica de CmsPublishLog ────────
 # La tabla ``cms_publish_logs`` crece indefinidamente: cada transicion de
 # ``CmsPage`` (publish/archive/schedule) y ``CmsPost`` (archive) genera un

@@ -670,6 +670,31 @@ class CmsPostReadWithTaxonomies(CmsPostRead):
     tags: List[CmsTagRead] = Field(default_factory=list)
 
 
+class CmsPostCreateWithCategory(CmsPostCreate):
+    """Create payload for posts that must belong to a canonical category."""
+    category_slug: Literal["testimonials", "announcements"]
+
+
+class CmsTestimonialRead(CmsPostReadWithTaxonomies):
+    """Shape compatible con TestimonialRead v1 para migración gradual frontend."""
+    emotion: str = Field(..., alias="seo_json.emotion")
+    media_type: str = Field(..., alias="seo_json.media_type")
+    media_url: Optional[str] = Field(None, alias="seo_json.media_url")
+    image_url: Optional[str] = Field(None, alias="featured_image_url")
+    video_url: Optional[str] = Field(None, alias="seo_json.video_url")
+    podcast_url: Optional[str] = Field(None, alias="seo_json.podcast_url")
+    is_approved: bool = Field(..., alias="status")
+    show_on_home: bool = Field(..., alias="seo_json.show_on_home")
+
+
+class CmsAnnouncementRead(CmsPostReadWithTaxonomies):
+    """Shape compatible con AnnouncementRead v1 para migración gradual frontend."""
+    category: str = Field(..., alias="seo_json.category")
+    is_featured: bool = Field(..., alias="seo_json.is_featured")
+    image_url: Optional[str] = Field(None, alias="featured_image_url")
+    is_active: bool = Field(..., alias="status")
+
+
 class CmsPublicPostRead(BaseModel):
     site_key: Optional[str] = None
     slug: str
