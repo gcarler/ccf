@@ -64,7 +64,7 @@ async function installChatAdminMocks(page: Page) {
     },
   });
 
-  await page.route('**/api/chat/my-messages', async (route) => {
+  await page.route('**/api/chat/my-messages**', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -72,7 +72,7 @@ async function installChatAdminMocks(page: Page) {
     });
   });
 
-  await page.route('**/api/chat/mentions', async (route) => {
+  await page.route('**/api/chat/mentions**', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',

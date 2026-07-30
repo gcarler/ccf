@@ -17,6 +17,7 @@ import {
   useSortable,
   verticalListSortingStrategy,
   sortableKeyboardCoordinates,
+  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion, AnimatePresence } from "framer-motion";
@@ -420,6 +421,7 @@ export default function BuilderCanvas({
       const oldIndex = sections.findIndex((s) => s.id === active.id);
       const newIndex = sections.findIndex((s) => s.id === over.id);
       if (oldIndex !== -1 && newIndex !== -1) {
+        const newSections = arrayMove(sections, oldIndex, newIndex);
         await moveSectionToIndex(active.id as string, newIndex);
       }
     }
