@@ -73,7 +73,6 @@ import {
 } from "@/lib/whiteboard/flowchartShapes";
 
 import {
-    applySnapToGrid,
     calculateGuides,
     renderGuides,
     type Guide,
@@ -183,7 +182,6 @@ export default function WhiteboardEditor({
     const history = useWhiteboardHistory({ maxStates: 50 });
     
     const [snapEnabled, setSnapEnabled] = useState(true);
-    const [smartGuides, setSmartGuides] = useState<Guide[]>([]);
     const [showShapePicker, setShowShapePicker] = useState(false);
     const snapEnabledRef = useRef(true);
     const smartGuidesRef = useRef<Guide[]>([]);
@@ -237,6 +235,8 @@ export default function WhiteboardEditor({
     const lastPanPointRef = useRef<{ x: number; y: number } | null>(null);
     const spaceDownRef = useRef(false);
     const [zoomLevel, setZoomLevel] = useState(100);
+    // Inline connector label editor
+    const [connectorLabelState, setConnectorLabelState] = useState<{ obj: fabric.Line; value: string; x: number; y: number } | null>(null);
 
     // Detect dark mode
     useEffect(() => {
@@ -406,7 +406,18 @@ export default function WhiteboardEditor({
 
         canvas.on("object:added", handleChanged);
         canvas.on("object:modified", () => { smartGuidesRef.current = []; canvas.requestRenderAll(); handleChanged(); });
-        canvas.on("object:removed", handleChanged);
+        canvas.on("object:removed", (opt) => {
+            // Remove orphan connectors whose fromShape or toShape was deleted
+            const removedId = (opt.target as fabric.FabricObject)?.data?.shapeId as string | undefined;
+            if (removedId) {
+                const orphans = canvas.getObjects().filter(
+                    o => o.data?.type === 'connector' &&
+                    (o.data.fromShapeId === removedId || o.data.toShapeId === removedId)
+                );
+                orphans.forEach(o => canvas.remove(o));
+            }
+            handleChanged();
+        });
         canvas.on("selection:created", updateSelectedProps);
         canvas.on("selection:updated", updateSelectedProps);
         canvas.on("selection:cleared", () => { smartGuidesRef.current = []; setSelectedObjectProps(null); });
@@ -463,7 +474,7 @@ export default function WhiteboardEditor({
             const target = findShapeNearPoint(canvas, pointer, 28);
             
             if (!connectorFromRef.current) {
-                // Start connector
+                // Start connector — requires clicking on a shape anchor
                 if (target) {
                     connectorFromRef.current = { shapeId: target.shape.data!.shapeId as string, anchor: target.anchor };
                     const preview = new fabric.Line(
@@ -473,6 +484,7 @@ export default function WhiteboardEditor({
                     canvas.add(preview);
                     connectorPreviewRef.current = preview;
                 }
+                // Click on empty space: do nothing (no connector started)
             } else {
                 // Complete connector
                 if (target && (target.shape.data!.shapeId as string) !== connectorFromRef.current.shapeId) {
@@ -485,7 +497,7 @@ export default function WhiteboardEditor({
                     );
                     if (line) canvas.add(line);
                 }
-                // Cleanup
+                // Click on empty space or same shape: cancel connector
                 if (connectorPreviewRef.current) {
                     canvas.remove(connectorPreviewRef.current);
                     connectorPreviewRef.current = null;
@@ -507,9 +519,10 @@ export default function WhiteboardEditor({
             const delta = opt.e.deltaY;
             let zoom = canvas.getZoom();
             zoom *= 0.999 ** delta;
-            zoom = Math.min(Math.max(0.1, zoom), 5);
+            zoom = Math.min(Math.max(0.2, zoom), 5);
             canvas.zoomToPoint(new fabric.Point(opt.e.offsetX, opt.e.offsetY), zoom);
-            setZoomLevel(Math.round(canvas.getZoom() * 100));
+            // Use rAF so getZoom() reflects the updated value
+            requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
             opt.e.preventDefault();
             opt.e.stopPropagation();
         });
@@ -546,23 +559,29 @@ export default function WhiteboardEditor({
             }
         });
 
-        // Double-click to edit text inside Groups
+        // Double-click to edit text inside Groups or connector labels
         canvas.on("mouse:dblclick", (opt) => {
             const target = opt.target;
             if (!target || toolRef.current === "connector") return;
             if (target?.data?.type === 'connector') {
-                const currentLabel = (target.data.label as string) || '';
-                const newLabel = prompt('Etiqueta del conector:', currentLabel);
-                if (newLabel !== null) {
-                    target.data.label = newLabel;
-                    canvas.requestRenderAll();
-                }
+                // Show inline label editor at connector midpoint
+                const line = target as fabric.Line;
+                const vpt = canvas.viewportTransform || [1,0,0,1,0,0];
+                const mx = ((line.x1 || 0) + (line.x2 || 0)) / 2;
+                const my = ((line.y1 || 0) + (line.y2 || 0)) / 2;
+                const sx = mx * vpt[0] + vpt[4];
+                const sy = my * vpt[3] + vpt[5];
+                setConnectorLabelState({
+                    obj: line,
+                    value: (target.data.label as string) || '',
+                    x: sx,
+                    y: sy,
+                });
                 return;
             }
             if (target instanceof fabric.Group) {
                 const textChild = target.getObjects().find((o) => o.type === "i-text" || o.type === "textbox");
                 if (textChild && textChild instanceof fabric.IText) {
-                    // Enter sub-editing
                     canvas.setActiveObject(textChild);
                     textChild.enterEditing();
                     textChild.selectAll();
@@ -597,6 +616,16 @@ export default function WhiteboardEditor({
             else if (e.key === "p" || e.key === "P") activateTool("draw");
             else if (e.key === "a" || e.key === "A") activateTool("connector");
             else if (e.key === "h" || e.key === "H") activateTool("pan");
+            else if (e.key === "Escape") {
+                // Cancel connector in progress
+                if (connectorFromRef.current && fabricCanvas.current) {
+                    const cv = fabricCanvas.current;
+                    if (connectorPreviewRef.current) { cv.remove(connectorPreviewRef.current); connectorPreviewRef.current = null; }
+                    connectorFromRef.current = null;
+                    cv.requestRenderAll();
+                }
+                setShowShapePicker(false);
+            }
             else if (e.key === ' ' && !e.repeat) {
                 spaceDownRef.current = true;
                 if (fabricCanvas.current) {
@@ -1097,41 +1126,112 @@ export default function WhiteboardEditor({
 
                 {/* ── Zoom controls (bottom-right) ── */}
                 <div className="absolute right-[340px] bottom-6 z-20 flex items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-white/90 p-1 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
+                    {/* Fit to screen */}
+                    <button
+                        className="rounded-md px-2 py-1 text-xs font-medium hover:bg-[hsl(var(--surface-1))] transition-colors"
+                        title="Ajustar a pantalla"
+                        onClick={() => {
+                            const canvas = fabricCanvas.current;
+                            if (!canvas) return;
+                            const objects = canvas.getObjects().filter(o => o.data?.type !== 'connector');
+                            if (objects.length === 0) {
+                                canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+                                requestAnimationFrame(() => setZoomLevel(100));
+                                return;
+                            }
+                            // Get bounding box of all objects
+                            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                            objects.forEach(o => {
+                                const br = o.getBoundingRect();
+                                minX = Math.min(minX, br.left); minY = Math.min(minY, br.top);
+                                maxX = Math.max(maxX, br.left + br.width); maxY = Math.max(maxY, br.top + br.height);
+                            });
+                            const pad = 60;
+                            const scaleX = (canvas.width || 800) / (maxX - minX + pad * 2);
+                            const scaleY = (canvas.height || 600) / (maxY - minY + pad * 2);
+                            const scale = Math.min(scaleX, scaleY, 2);
+                            const cx = ((canvas.width || 800) - (maxX - minX) * scale) / 2 - minX * scale + pad * scale;
+                            const cy = ((canvas.height || 600) - (maxY - minY) * scale) / 2 - minY * scale + pad * scale;
+                            canvas.setViewportTransform([scale, 0, 0, scale, cx, cy]);
+                            requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
+                        }}
+                    >⊡</button>
+                    <div className="h-4 w-px bg-[hsl(var(--surface-2))]" />
                     <button
                         className="rounded-md px-2 py-1 text-xs font-medium hover:bg-[hsl(var(--surface-1))] transition-colors"
                         onClick={() => {
                             const canvas = fabricCanvas.current;
                             if (!canvas) return;
-                            const zoom = Math.max(0.1, canvas.getZoom() - 0.1);
+                            const zoom = Math.max(0.2, canvas.getZoom() - 0.15);
                             canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
-                            setZoomLevel(Math.round(canvas.getZoom() * 100));
+                            requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
                         }}
                     >−</button>
                     <span
-                        className="min-w-[50px] text-center text-xs font-mono cursor-pointer"
+                        className="min-w-[50px] text-center text-xs font-mono cursor-pointer select-none"
                         onClick={() => {
                             const canvas = fabricCanvas.current;
                             if (!canvas) return;
                             canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-                            setZoomLevel(Math.round(canvas.getZoom() * 100));
+                            requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
                         }}
-                        title="Reset zoom"
+                        title="Reset zoom (100%)"
                     >{zoomLevel}%</span>
                     <button
                         className="rounded-md px-2 py-1 text-xs font-medium hover:bg-[hsl(var(--surface-1))] transition-colors"
                         onClick={() => {
                             const canvas = fabricCanvas.current;
                             if (!canvas) return;
-                            const zoom = Math.min(5, canvas.getZoom() + 0.1);
+                            const zoom = Math.min(5, canvas.getZoom() + 0.15);
                             canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
-                            setZoomLevel(Math.round(canvas.getZoom() * 100));
+                            requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
                         }}
                     >+</button>
                 </div>
 
+                {/* ── Inline connector label editor ── */}
+                {connectorLabelState && (
+                    <div
+                        className="absolute z-50 pointer-events-none"
+                        style={{ left: connectorLabelState.x + 80, top: connectorLabelState.y + 96 }}
+                    >
+                        <div className="pointer-events-auto flex items-center gap-1 rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95">
+                            <input
+                                autoFocus
+                                type="text"
+                                value={connectorLabelState.value}
+                                onChange={e => setConnectorLabelState(s => s ? { ...s, value: e.target.value } : null)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        if (connectorLabelState.obj.data) {
+                                            connectorLabelState.obj.data.label = connectorLabelState.value;
+                                            fabricCanvas.current?.requestRenderAll();
+                                        }
+                                        setConnectorLabelState(null);
+                                    } else if (e.key === 'Escape') {
+                                        setConnectorLabelState(null);
+                                    }
+                                    e.stopPropagation();
+                                }}
+                                onBlur={() => {
+                                    if (connectorLabelState.obj.data) {
+                                        connectorLabelState.obj.data.label = connectorLabelState.value;
+                                        fabricCanvas.current?.requestRenderAll();
+                                    }
+                                    setConnectorLabelState(null);
+                                }}
+                                className="h-7 w-40 rounded-lg border border-[hsl(var(--border))] bg-transparent px-2 text-xs font-medium text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] dark:border-white/10 dark:text-white"
+                                placeholder="Etiqueta del conector…"
+                            />
+                            <span className="text-2xs text-[hsl(var(--text-secondary))]">↵</span>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Canvas area ── */}
                 <main
                     className="flex-1 overflow-auto p-4 pl-24"
+                    onClick={() => setShowShapePicker(false)}
                     style={{
                         background: gridStyle === "none"
                             ? "hsl(var(--bg-primary))"
