@@ -3,7 +3,7 @@
 import WorkspaceLayout from "@/components/WorkspaceLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
-import { ChevronLeft, Circle, Loader2, MessageCircle, Plus } from "lucide-react";
+import { ChevronLeft, Circle, MessageCircle, Plus } from "lucide-react";
 import { useCallback, useState } from "react";
 import { ConversationSidebar } from "./_components/ConversationSidebar";
 import { MessageInput } from "./_components/MessageInput";
@@ -50,7 +50,6 @@ export default function MessagesPage() {
     } = useChatThread({
         token,
         activeConv,
-        userPersonaId: userId,
         onMessage: (convId, msg) => {
             const isActive = activeConv?.id === convId;
             updateConversationFromMessage(convId, msg, isActive);

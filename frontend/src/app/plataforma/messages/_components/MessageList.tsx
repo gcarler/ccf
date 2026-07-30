@@ -2,7 +2,7 @@
 
 import type { DirectMessageItem } from '@/types/directMessages';
 import { Loader2, MessageCircle } from 'lucide-react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { MessageBubble } from './MessageBubble';
 
 interface MessageListProps {
@@ -17,19 +17,21 @@ export function MessageList({ messages, loading, currentUserId, onLoadOlder, onR
     const scrollRef = useRef<HTMLDivElement>(null);
     const shouldAutoScroll = useRef(true);
 
-    const handleScroll = useCallback(() => {
-        const el = scrollRef.current;
-        if (!el) return;
-        const threshold = 100;
-        const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-        shouldAutoScroll.current = nearBottom;
-    }, []);
-
     useEffect(() => {
         if (!shouldAutoScroll.current || !scrollRef.current) return;
         const el = scrollRef.current;
         el.scrollTop = el.scrollHeight;
     }, [messages]);
+
+    const handleScroll = () => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+        shouldAutoScroll.current = nearBottom;
+        if (el.scrollTop < 60) {
+            onLoadOlder();
+        }
+    };
 
     return (
         <div
