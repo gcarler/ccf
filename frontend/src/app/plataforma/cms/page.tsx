@@ -419,20 +419,41 @@ export default function CmsHomePage() {
 
         {/* Metric cards */}
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {metricCards.map((metric) => {
+          {loading ? (
+            Array.from({ length: 10 }).map((_, i) => (
+              <div key={`skel-metric-${i}`} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 shadow-sm h-24 animate-pulse dark:border-white/10" />
+            ))
+          ) : metricCards.map((metric) => {
             const Icon = metric.icon;
             return (
-              <Link key={metric.label} href={metric.href} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))] transition-colors hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]/50">
+              <Link key={metric.label} href={metric.href} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))] transition-colors hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]/50 group">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric.label}</p>
-                  <Icon size={15} className="text-[hsl(var(--text-secondary))]" />
+                  <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">{metric.label}</p>
+                  <Icon size={15} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                 </div>
-                <p className="mt-3 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">
-                  {metricValue(metric.value, loading)}
+                <p className="mt-3 text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                  {metric.value}
                 </p>
               </Link>
             );
           })}
+        </section>
+
+        {/* Quick Actions (C1) */}
+        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Crear Post", href: "/plataforma/cms/posts?new=true", icon: BookOpen, color: "bg-[hsl(var(--primary))]" },
+            { label: "Crear Página", href: "/plataforma/cms/pages", icon: FileText, color: "bg-[hsl(var(--secondary))]" },
+            { label: "Subir Media", href: "/plataforma/cms/media", icon: ImageIcon, color: "bg-[hsl(var(--info))]" },
+            { label: "Nuevo Anuncio", href: "/plataforma/cms/announcements", icon: Megaphone, color: "bg-[hsl(var(--warning))]" },
+          ].map(action => (
+            <Link key={action.label} href={action.href} className="flex items-center gap-3 p-3 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all active:scale-95 group">
+              <div className={`p-2 rounded-lg ${action.color} text-white shadow-md group-hover:scale-110 transition-transform`}>
+                <action.icon size={16} />
+              </div>
+              <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{action.label}</span>
+            </Link>
+          ))}
         </section>
 
         {/* Charts row */}
@@ -442,7 +463,9 @@ export default function CmsHomePage() {
               <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tendencias</p>
               <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Publicaciones por mes</h2>
             </div>
-            {pubsChart.length > 0 ? (
+            {loading ? (
+              <div className="h-40 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />
+            ) : pubsChart.length > 0 ? (
               <div className="flex items-end gap-2 h-40">
                 {pubsChart.map((d) => (
                   <div key={d.label} className="flex-1 flex flex-col items-center gap-1">
@@ -456,7 +479,10 @@ export default function CmsHomePage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[hsl(var(--text-secondary))]">Sin datos de publicación.</p>
+              <div className="h-40 flex flex-col items-center justify-center text-[hsl(var(--text-secondary))] opacity-60">
+                <TrendingUp size={24} className="mb-2" />
+                <p className="text-sm">Sin datos de publicación</p>
+              </div>
             )}
           </div>
 
@@ -465,7 +491,11 @@ export default function CmsHomePage() {
               <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contenido</p>
               <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Secciones por tipo</h2>
             </div>
-            {contentTypeChart.length > 0 ? (
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map(i => <div key={i} className="h-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded animate-pulse" />)}
+              </div>
+            ) : contentTypeChart.length > 0 ? (
               <div className="space-y-2">
                 {contentTypeChart.map((d) => (
                   <div key={d.label} className="flex items-center gap-3">
@@ -481,7 +511,10 @@ export default function CmsHomePage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[hsl(var(--text-secondary))]">Sin datos de secciones.</p>
+              <div className="h-40 flex flex-col items-center justify-center text-[hsl(var(--text-secondary))] opacity-60">
+                <Layers3 size={24} className="mb-2" />
+                <p className="text-sm">Sin datos de secciones</p>
+              </div>
             )}
           </div>
         </section>
@@ -580,26 +613,28 @@ export default function CmsHomePage() {
               </div>
               <Eye className="h-5 w-5 text-[hsl(var(--primary))]" />
             </div>
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-2 min-h-32">
               {loading ? (
-                <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando...</p>
+                Array.from({ length: 5 }).map((_, i) => <div key={`page-skel-${i}`} className="h-12 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />)
               ) : topPages.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
-                  Sin vistas registradas.
-                </p>
+                <div className="h-full flex flex-col items-center justify-center py-6 text-[hsl(var(--text-secondary))] opacity-60">
+                  <Eye size={24} className="mb-2" />
+                  <p className="text-sm font-semibold">Sin vistas registradas</p>
+                  <p className="text-xs">No hay actividad reciente.</p>
+                </div>
               ) : (
                 topPages.map((page, idx) => (
-                  <div key={page.slug} className="flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
+                  <div key={page.slug} className="flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded bg-[hsl(var(--surface-1))] text-2xs font-bold text-[hsl(var(--text-secondary))] dark:bg-white/5">
+                      <span className="flex h-6 w-6 items-center justify-center rounded bg-[hsl(var(--surface-2))] text-2xs font-bold text-[hsl(var(--text-secondary))] dark:bg-white/10">
                         {idx + 1}
                       </span>
                       <div>
-                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate max-w-[140px]">{page.title}</p>
-                        <p className="text-xs text-[hsl(var(--text-secondary))]">/{page.slug}</p>
+                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate max-w-[140px]">{page.title}</p>
+                        <p className="text-xs text-[hsl(var(--text-secondary))] font-mono">/{page.slug}</p>
                       </div>
                     </div>
-                    <span className="text-sm font-bold text-[hsl(var(--primary))]">{page.views}</span>
+                    <span className="text-sm font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary))]/10 px-2 py-0.5 rounded-full">{page.views}</span>
                   </div>
                 ))
               )}
@@ -655,25 +690,26 @@ export default function CmsHomePage() {
               </div>
               <Clock3 className="h-5 w-5 text-[hsl(var(--primary))]" />
             </div>
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-3 min-h-32">
               {loading ? (
-                <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando actividad...</p>
+                Array.from({ length: 4 }).map((_, i) => <div key={`act-skel-${i}`} className="h-14 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />)
               ) : recentActivity.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
-                  Sin actividad reciente.
-                </p>
+                <div className="h-full flex flex-col items-center justify-center py-6 text-[hsl(var(--text-secondary))] opacity-60">
+                  <Clock3 size={24} className="mb-2" />
+                  <p className="text-sm font-semibold">Sin actividad reciente</p>
+                </div>
               ) : (
                 recentActivity.map((activity, idx) => (
-                  <div key={idx} className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
-                    <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--primary))]" />
+                  <div key={idx} className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
+                    <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--primary))]" />
                     <div className="min-w-0">
-                      <p className="text-sm text-[hsl(var(--text-primary))] dark:text-white">{activityLabel(activity)}</p>
+                      <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">{activityLabel(activity)}</p>
                       {activity.from_status && activity.to_status && (
-                        <p className="mt-0.5 text-xs text-[hsl(var(--text-secondary))]">
+                        <p className="mt-0.5 text-xs text-[hsl(var(--text-secondary))] font-mono bg-[hsl(var(--surface-2))] dark:bg-white/5 px-1.5 py-0.5 rounded inline-block">
                           {activity.from_status} → {activity.to_status}
                         </p>
                       )}
-                      <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{activity.created_at}</p>
+                      <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">{activity.created_at}</p>
                     </div>
                   </div>
                 ))

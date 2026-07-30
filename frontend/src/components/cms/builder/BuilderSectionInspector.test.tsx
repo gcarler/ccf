@@ -854,7 +854,7 @@ describe("BuilderSectionInspector", () => {
     const upsertArrayItem = vi.fn(() => ({}));
     const section = createMockCmsSection("testimonials", {
       props_json: {
-        items: [{ author: "Juan", content: "Testimonio", role: "Miembro" }],
+        items: [{ author: "Juan", content: "Testimonio", role: "Voluntario" }],
       },
     });
     const builder = createMockBuilder({ activeSection: section });

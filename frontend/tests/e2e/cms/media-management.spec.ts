@@ -64,6 +64,9 @@ const MEDIA_FIXTURE = [
 ];
 
 async function installMediaMocks(page: Page, { emptyMedia = false }: { emptyMedia?: boolean } = {}) {
+  // Clear any previously registered mocks to avoid stale handlers across tests
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+
   let mediaState = emptyMedia ? [] : MEDIA_FIXTURE.map((m) => ({ ...m, tags: [...m.tags] }));
 
   await installMockPlatformSession(page, {
@@ -72,32 +75,72 @@ async function installMediaMocks(page: Page, { emptyMedia = false }: { emptyMedi
   });
 
   // ── Specific media routes FIRST ────────────────────────────────────────
-  // Media item CRUD: matches /api/cms/v2/media/<uuid> (GET, PATCH, DELETE)
-  // Registered first so it wins over the list route for paths with /<id>.
-  await page.route(`**/api/cms/v2/media/*`, async (route, request) => {
+  // The media page uses apiFetch("/cms/media", ...), which resolves to
+  // apiUrl("/cms/media") => /api/cms/media (no "v2" prefix).
+  // Playwright dispatches handlers in registration order; most specific routes
+  // must be registered BEFORE more general ones to win.
+
+  // Media upload endpoint: most specific sub-path, registered first
+  await page.route(`**/api/cms/media/upload`, async (route) => {
+    await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+  });
+
+  // Media item CRUD: matches /api/cms/media/<id> (GET, PATCH, POST, DELETE)
+  await page.route(`**/api/cms/media/*`, async (route, request) => {
     const method = request.method();
     const url = request.url();
-    if (method === 'DELETE') {
-      const mediaId = url.split('/media/')[1]?.split('?')[0] ?? '';
-      mediaState = mediaState.filter((item) => item.id !== mediaId);
-      await route.fulfill({ status: 204 });
+    const mediaId = url.split('/media/')[1]?.split('?')[0] ?? '';
+
+    // POST to /media/<id>/optimize — handle it here so it doesn't fall through
+    if (method === 'POST' && url.includes('/optimize')) {
+      const updatedItem = mediaState.find((item) => item.id === mediaId);
+      if (updatedItem) {
+        mediaState = mediaState.map((item) =>
+          item.id === mediaId
+            ? { ...item, file_size: Math.round((item.file_size || 0) * 0.7) } as typeof item
+            : item
+        );
+      }
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ ...updatedItem, optimized: true }),
+      });
       return;
     }
+
+    if (method === 'DELETE') {
+      if (url.includes('permanent=true')) {
+        mediaState = mediaState.filter((item) => item.id !== mediaId);
+      } else {
+        mediaState = mediaState.map((item) =>
+          item.id === mediaId ? { ...item, status: 'archived' } : item
+        );
+      }
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+      return;
+    }
+
     if (method === 'PATCH') {
-      const mediaId = url.split('/media/')[1]?.split('?')[0] ?? '';
       const body = request.postDataJSON() as Record<string, unknown>;
-      mediaState = mediaState.map((item) => (item.id === mediaId ? { ...item, ...body } as typeof item : item));
+      mediaState = mediaState.map((item) =>
+        item.id === mediaId ? { ...item, ...body } as typeof item : item
+      );
       const updated = mediaState.find((item) => item.id === mediaId);
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(updated) });
       return;
     }
+
     await route.continue();
   });
 
-  // Media list: matches /api/cms/v2/media and /api/cms/v2/media?query=...
-  // The trailing `*` matches query params but NOT `/123` (Playwright `*` ≠ `/`).
-  await page.route(`**/api/cms/v2/media*`, async (route) => {
+  // Media list: matches /api/cms/media and /api/cms/media?query=...
+  await page.route(`**/api/cms/media*`, async (route) => {
     const url = new URL(route.request().url());
+    // If URL has a path segment after /media/ (like /media/123), skip — handled above
+    if (url.pathname.replace(/\/$/, '').split('/media/')[1]?.length) {
+      await route.fallback();
+      return;
+    }
     const searchQuery = url.searchParams.get('query')?.toLowerCase() || '';
     if (searchQuery) {
       const filtered = mediaState.filter(
@@ -129,20 +172,132 @@ test.describe('CMS media management', () => {
     await installMediaMocks(page);
     await page.goto(`/plataforma/cms/media?site=${SITE_KEY}`, { waitUntil: 'load' });
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.locator('body')).toBeVisible();
+
+    // Verify header
+    await expect(page.getByText('Biblioteca de Medios')).toBeVisible();
+
+    // Verify file count badge shows correct number
+    await expect(page.getByText('3 archivos')).toBeVisible();
+
+    // Verify all three media filenames are visible
+    await expect(page.getByText('hero-banner.jpg', { exact: false })).toBeVisible();
+    await expect(page.getByText('pastor-photo.jpg', { exact: false })).toBeVisible();
+    await expect(page.getByText('evento-especial.pdf', { exact: false })).toBeVisible();
+
+    // Verify upload button is present
+    await expect(page.getByText('Subir Archivos')).toBeVisible();
+
+    // Verify filter buttons are present
+    await expect(page.getByText('Imágenes')).toBeVisible();
+    await expect(page.getByText('Documentos')).toBeVisible();
   });
 
   test('shows empty state when no media is available', async ({ page }) => {
     await installMediaMocks(page, { emptyMedia: true });
     await page.goto(`/plataforma/cms/media?site=${SITE_KEY}`, { waitUntil: 'load' });
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.locator('body')).toBeVisible();
+
+    // Verify empty state message
+    await expect(page.getByText('Biblioteca vacía')).toBeVisible();
+
+    // Verify the "Subir primer archivo" button is shown on empty state
+    await expect(page.getByText('Subir primer archivo')).toBeVisible();
+
+    // Verify count shows zero
+    await expect(page.getByText('0 archivos')).toBeVisible();
   });
 
-  test('handles media item deletion gracefully', async ({ page }) => {
+  test('handles media item deletion and confirms removal from list', async ({ page }) => {
     await installMediaMocks(page);
     await page.goto(`/plataforma/cms/media?site=${SITE_KEY}`, { waitUntil: 'load' });
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.locator('body')).toBeVisible();
+
+    // Verify initial file count
+    await expect(page.getByText('3 archivos')).toBeVisible();
+
+    // Hover over the first media item to reveal action buttons
+    // The delete button has aria-label="Eliminar"
+    const firstItem = page.locator('text=hero-banner.jpg').first();
+    await firstItem.hover();
+
+    // Click the "Eliminar" button
+    const deleteButton = page.locator('[aria-label="Eliminar"]').first();
+    await expect(deleteButton).toBeVisible();
+    await deleteButton.click();
+
+    // Confirmation dialog should appear
+    await expect(page.getByText('¿Eliminar permanentemente?')).toBeVisible();
+    await expect(page.getByText('Esta acción no se puede deshacer.')).toBeVisible();
+
+    // Cancel the action — item should still be in the list
+    await page.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(page.getByText('hero-banner.jpg', { exact: false })).toBeVisible();
+    await expect(page.getByText('3 archivos')).toBeVisible();
+
+    // Re-open the delete dialog and confirm
+    await firstItem.hover();
+    await deleteButton.click();
+    await expect(page.getByText('¿Eliminar permanentemente?')).toBeVisible();
+
+    // Confirm deletion
+    await page.getByRole('button', { name: 'Eliminar' }).click();
+
+    // The item should disappear from the list and count should decrease
+    await expect(page.getByText('hero-banner.jpg', { exact: false })).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('2 archivos')).toBeVisible();
+  });
+
+  test('filters media by search query', async ({ page }) => {
+    await installMediaMocks(page);
+    await page.goto(`/plataforma/cms/media?site=${SITE_KEY}`, { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
+
+    // All 3 files visible initially
+    await expect(page.getByText('3 archivos')).toBeVisible();
+
+    // Type in search box to filter by filename
+    const searchInput = page.getByPlaceholder('Buscar archivos');
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill('pastor');
+    await page.waitForTimeout(300); // Debounce on search
+
+    // Only pastor-photo should remain
+    await expect(page.getByText('pastor-photo.jpg', { exact: false })).toBeVisible();
+    await expect(page.getByText('hero-banner.jpg', { exact: false })).not.toBeVisible();
+    await expect(page.getByText('evento-especial.pdf', { exact: false })).not.toBeVisible();
+    await expect(page.getByText('1 archivos')).toBeVisible();
+
+    // Clear search — all should return
+    await searchInput.fill('');
+    await page.waitForTimeout(300);
+    await expect(page.getByText('3 archivos')).toBeVisible();
+  });
+
+  test('filters media by type tab (Imágenes)', async ({ page }) => {
+    await installMediaMocks(page);
+    await page.goto(`/plataforma/cms/media?site=${SITE_KEY}`, { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
+
+    // Click the "Imágenes" filter tab
+    await page.getByText('Imágenes').click();
+    await page.waitForTimeout(300);
+
+    // Only image files should remain (hero-banner.jpg, pastor-photo.jpg)
+    await expect(page.getByText('hero-banner.jpg', { exact: false })).toBeVisible();
+    await expect(page.getByText('pastor-photo.jpg', { exact: false })).toBeVisible();
+    await expect(page.getByText('evento-especial.pdf', { exact: false })).not.toBeVisible();
+
+    // Click "Documentos" filter
+    await page.getByText('Documentos').click();
+    await page.waitForTimeout(300);
+
+    // Only PDF should remain
+    await expect(page.getByText('hero-banner.jpg', { exact: false })).not.toBeVisible();
+    await expect(page.getByText('evento-especial.pdf', { exact: false })).toBeVisible();
+
+    // Click "Todos" to reset
+    await page.getByText('Todos').click();
+    await page.waitForTimeout(300);
+    await expect(page.getByText('3 archivos')).toBeVisible();
   });
 });

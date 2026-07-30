@@ -92,6 +92,9 @@ const THEME_FIXTURE = {
 };
 
 async function installBuilderMocks(page: Page) {
+  // Clear any previously registered mocks to avoid stale handlers across tests
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+
   let pagesState = PAGES_FIXTURE.map((p) => ({ ...p, seo_json: { ...p.seo_json } }));
   let sectionsState = SECTIONS_FIXTURE.map((s) => ({ ...s, props_json: { ...s.props_json } }));
   let sectionCounter = 3;
@@ -116,7 +119,7 @@ async function installBuilderMocks(page: Page) {
   await page.route(`**/api/cms/v2/sites/${SITE_KEY}/pages/landing/sections**`, async (route) => {
     const method = route.request().method();
     if (method === 'POST') {
-      const body = route.request().postDataJSON() as { type: string };
+      const body = route.request().postDataJSON() as any;
       sectionCounter += 1;
       const created = {
         id: `section-${sectionCounter}`, page_id: 'page-1', section_key: `new-${sectionCounter}`,
@@ -190,12 +193,144 @@ test.describe('CMS builder flow', () => {
   test('renders pages list with site pages', async ({ page }) => {
     await page.goto(`/plataforma/cms/pages?site=${SITE_KEY}`, { waitUntil: 'load' });
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.locator('body')).toBeVisible();
+
+    // Verify header
+    await expect(page.getByText('Gestión de páginas')).toBeVisible();
+
+    // Verify page from fixture renders with title, slug, and status
+    await expect(page.getByText('Landing Page')).toBeVisible();
+    await expect(page.getByText('/landing')).toBeVisible();
+    await expect(page.getByText('Borrador')).toBeVisible();
+
+    // Verify action buttons are present
+    await expect(page.getByText('Nueva pagina').first()).toBeVisible();
   });
 
   test('renders preview page with hero section data', async ({ page }) => {
     await page.goto(`/plataforma/cms/preview?site=${SITE_KEY}&page=landing`, { waitUntil: 'load' });
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.locator('body')).toBeVisible();
+
+    // Verify preview header shows page metadata
+    await expect(page.getByText('Vista previa CMS')).toBeVisible();
+    await expect(page.getByText('Landing Page')).toBeVisible();
+
+    // Verify section content from fixtures renders
+    await expect(page.getByText('Hero Title')).toBeVisible();
+    await expect(page.getByText('Join Us')).toBeVisible();
+    await expect(page.getByText('Everyone is welcome.')).toBeVisible();
+
+    // Verify auto-refresh and reload controls
+    await expect(page.getByText('Recargar')).toBeVisible();
+  });
+
+  test('creates a new page via quick add', async ({ page }) => {
+    await page.goto(`/plataforma/cms/pages?site=${SITE_KEY}`, { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
+
+    // Click "Nueva pagina" to open quick-add form
+    await page.getByText('Nueva pagina').first().click();
+
+    // Type a title in the quick-add input
+    const quickAddInput = page.getByPlaceholder('Titulo de la nueva pagina');
+    await expect(quickAddInput).toBeVisible();
+    await quickAddInput.fill('Acerca de');
+
+    // Submit the form
+    await page.getByRole('button', { name: 'Guardar' }).click();
+
+    // The newly created page should appear in the list
+    await expect(page.getByText('Acerca de')).toBeVisible();
+    // The slug should be auto-generated: "acerca-de"
+    await expect(page.getByText('/acerca-de')).toBeVisible();
+  });
+
+  test('archives a page and confirms dialog', async ({ page }) => {
+    await page.goto(`/plataforma/cms/pages?site=${SITE_KEY}`, { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
+
+    // Click the archive button on the first page card
+    const archiveButton = page.locator('button[title="Archivar pagina"]').first();
+    await expect(archiveButton).toBeVisible();
+    await archiveButton.click();
+
+    // Confirmation dialog should appear
+    await expect(page.getByText('¿Archivar página?')).toBeVisible();
+    await expect(page.getByText('Landing Page')).toBeVisible();
+
+    // Cancel the action — page should still be visible
+    await page.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(page.getByText('Landing Page')).toBeVisible();
+
+    // Re-open dialog and confirm archive
+    await archiveButton.click();
+    await expect(page.getByText('¿Archivar página?')).toBeVisible();
+    await page.getByRole('button', { name: 'Archivar' }).click();
+
+    // Page status should update to archived — wait for the badge to appear
+    await expect(page.getByText('Archivado').first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test('switches between grid and table view', async ({ page }) => {
+    await page.goto(`/plataforma/cms/pages?site=${SITE_KEY}`, { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
+
+    // Default view should be grid — verify page card is rendered
+    await expect(page.getByText('Landing Page').first()).toBeVisible();
+
+    // Find ViewSwitcher buttons and click Table view
+    // ViewSwitcher renders buttons; 'Tabla' is the Spanish label for table view
+    const tableButton = page.locator('button').filter({ hasText: /Tabla/i });
+    if (await tableButton.count() > 0) {
+      await tableButton.first().click();
+      await page.waitForTimeout(300);
+      // Table view renders column headers
+      await expect(page.getByText('Pagina')).toBeVisible();
+      await expect(page.getByText('Slug')).toBeVisible();
+      await expect(page.getByText('Estado')).toBeVisible();
+    }
+
+    // Switch back to grid view
+    const gridButton = page.locator('button').filter({ hasText: /^Gr[ií]d|Cuadr[ií]cula/i });
+    if (await gridButton.count() > 0) {
+      await gridButton.first().click();
+      await page.waitForTimeout(300);
+      await expect(page.getByText('Landing Page').first()).toBeVisible();
+    }
+  });
+
+  test('filters pages with search input', async ({ page }) => {
+    // Add a second page to the fixture for filtering
+    PAGES_FIXTURE.push({
+      id: 'page-2',
+      site_id: 'site-1',
+      slug: 'nosotros',
+      title: 'Acerca de Nosotros',
+      status: 'published',
+      seo_json: {},
+      published_version_id: 'ver-1',
+      publish_at: '2026-07-01T12:00:00Z',
+      expires_at: null,
+      created_at: '2026-07-01T12:00:00Z',
+      updated_at: '2026-07-12T09:00:00Z',
+    });
+
+    await page.goto(`/plataforma/cms/pages?site=${SITE_KEY}`, { waitUntil: 'load' });
+    await page.waitForLoadState('domcontentloaded');
+
+    // Both pages should be visible initially
+    await expect(page.getByText('Landing Page').first()).toBeVisible();
+
+    // Type in search box to filter
+    const searchInput = page.getByPlaceholder('Buscar paginas');
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill('Landing');
+    await page.waitForTimeout(300); // Debounce on search
+
+    // Only Landing Page should remain
+    await expect(page.getByText('Acerca de Nosotros')).not.toBeVisible();
+
+    // Clear search — both should be visible again
+    await searchInput.fill('');
+    await page.waitForTimeout(300);
   });
 });

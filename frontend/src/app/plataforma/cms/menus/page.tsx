@@ -53,6 +53,7 @@ export default function CmsMenusManagement() {
     const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [draggedId, setDraggedId] = useState<string | null>(null);
+    const [showConfirmDeactivate, setShowConfirmDeactivate] = useState(false);
     const canEdit = canEditCms(user?.role);
     const selectedMenu = useMemo(() => menus.find((menu) => menu.menu_key === menuKey) || null, [menus, menuKey]);
 
@@ -195,18 +196,25 @@ export default function CmsMenusManagement() {
             setNewMenuName("");
             setNewMenuKey("");
             setNavConfig({ items: [] });
+            toast.success("Menú creado exitosamente");
         } catch (error) {
-      toast.error("Error al crear menú");
+            toast.error("Error al crear menú");
         }
     };
 
     const handleToggleMenuActive = async () => {
         if (!token || !canEdit || !siteKey || !selectedMenu) return;
+        if (selectedMenu.is_active && !showConfirmDeactivate) {
+            setShowConfirmDeactivate(true);
+            return;
+        }
+        setShowConfirmDeactivate(false);
         try {
             const updated = await patchCmsMenu(siteKey, selectedMenu.menu_key, { is_active: !selectedMenu.is_active }, token);
             setMenus((prev) => prev.map((menu) => menu.id === updated.id ? updated : menu));
+            toast.success(updated.is_active ? "Menú activado" : "Menú desactivado");
         } catch (error) {
-      toast.error("Error al actualizar menú");
+            toast.error("Error al actualizar menú");
         }
     };
 
@@ -230,6 +238,7 @@ export default function CmsMenusManagement() {
             setNewItemLabel("");
             setNewItemHref("");
             setIsQuickAddOpen(false);
+            toast.success("Enlace creado exitosamente");
             fetchNav();
         } catch (error) {
             toast.error('Error al crear item');
@@ -276,6 +285,7 @@ export default function CmsMenusManagement() {
                 token,
             );
             setSelectedItem(updatedItem);
+            toast.success("Enlace actualizado exitosamente");
             fetchNav();
         } catch (error) {
             toast.error('Error al actualizar item');
@@ -299,6 +309,7 @@ export default function CmsMenusManagement() {
                 normalized.map((item) => ({ id: item.id, parent_id: item.parent_id ?? null, sort_order: item.sort_order ?? 0 })),
                 token,
             );
+            toast.success("Orden guardado exitosamente");
             fetchNav();
         } catch (error) {
             toast.error('Error al reordenar');
@@ -316,6 +327,7 @@ export default function CmsMenusManagement() {
                 normalized.map((item) => ({ id: item.id, parent_id: item.parent_id ?? null, sort_order: item.sort_order ?? 0 })),
                 token,
             );
+            toast.success("Orden guardado exitosamente");
             fetchNav();
         } catch (error) {
             toast.error('Error al aplicar orden');
@@ -803,6 +815,31 @@ export default function CmsMenusManagement() {
                     </div>
                 )}
             </SidePanel>
+            
+            {showConfirmDeactivate && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10">
+                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Desactivar menú?</h3>
+                        <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
+                            El menú dejará de ser visible públicamente en el sitio.
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowConfirmDeactivate(false)}
+                                className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleToggleMenuActive}
+                                className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
+                            >
+                                Desactivar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

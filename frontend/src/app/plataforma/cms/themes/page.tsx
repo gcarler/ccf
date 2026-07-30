@@ -20,6 +20,7 @@ import {
   Upload,
   Wand2,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import {
   activateCmsTheme,
@@ -96,6 +97,7 @@ export default function CmsThemesPage() {
   const [showPreview, setShowPreview] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
+  const [pendingArchive, setPendingArchive] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const canEdit = canEditCms(user?.role);
@@ -173,11 +175,16 @@ export default function CmsThemesPage() {
     } catch { toast.error("Error al activar tema"); }
   };
 
-  const archive = async (themeId: string) => {
-    if (!token || !canPublish) return;
+  const archive = (themeId: string) => {
+    if (!canPublish) return;
+    setPendingArchive(themeId);
+  };
+
+  const confirmArchive = async () => {
+    if (!token || !canPublish || !pendingArchive) return;
     try {
-      await archiveCmsTheme(siteKey, themeId, token);
-      if (editingThemeId === themeId) {
+      await archiveCmsTheme(siteKey, pendingArchive, token);
+      if (editingThemeId === pendingArchive) {
         setEditingThemeId(null);
         setName("Tema personalizado");
         setTokens(buildDefaultTokens());
@@ -185,6 +192,7 @@ export default function CmsThemesPage() {
       setMessage({ text: "Tema archivado.", type: "info" });
       await load(siteKey);
     } catch { toast.error("Error al archivar tema"); }
+    finally { setPendingArchive(null); }
   };
 
   const restore = async (themeId: string) => {
@@ -715,6 +723,38 @@ export default function CmsThemesPage() {
           </button>
         </div>
       </div>
+      
+      <AnimatePresence>
+        {pendingArchive && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+            >
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar tema?</h3>
+              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
+                El tema dejará de estar disponible para uso, pero podrás restaurarlo luego.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setPendingArchive(null)}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmArchive}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
+                >
+                  Archivar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

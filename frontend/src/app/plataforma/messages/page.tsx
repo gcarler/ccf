@@ -37,6 +37,9 @@ interface SearchedUser {
 }
 function AvatarInitial({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
     const safeName = (name || "U").slice(0, 2).toUpperCase();
+    const colors = [
+        "from-[hsl(var(--primary))] to-[hsl(var(--info))]",
+        "from-[hsl(var(--domain-fuchsia))] to-[hsl(var(--info))]",
         "from-[hsl(var(--success))] to-[hsl(var(--success))]",
         "from-[hsl(var(--danger))] to-[hsl(var(--danger))]",
         "from-[hsl(var(--warning))] to-[hsl(var(--warning))]",
@@ -48,7 +51,7 @@ function AvatarInitial({ name, size = "md" }: { name: string; size?: "sm" | "md"
             color,
             size === "sm" ? "size-7 text-2xs" : "size-8 text-2xs"
         )}>
-            {initials}
+            {safeName}
         </div>
     );
 }
@@ -634,7 +637,7 @@ export default function MessagesPage() {
                                              : attachmentPreview.type === 'audio' ? <Music size={18} className="text-[hsl(var(--success))]" />
                                              : <LucideFile size={18} className="text-[hsl(var(--primary))]" />}
                                             {attachmentPreview.type === 'pdf' ? <FileText size={18} className="text-red-500" />
-                                             : attachmentPreview.type === 'video' ? <Video size={18} className="text-purple-500" />
+                                             : attachmentPreview.type === 'video' ? <Video size={18} className="text-[hsl(var(--info))]" />
                                              : attachmentPreview.type === 'audio' ? <Music size={18} className="text-green-500" />
                                              : <LucideFile size={18} className="text-blue-500" />}
                                         </div>
