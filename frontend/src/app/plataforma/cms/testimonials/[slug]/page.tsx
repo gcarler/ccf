@@ -22,9 +22,10 @@ import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { SITE_KEY } from '@/lib/site-config';
 import {
-    getTestimonialBySlug,
-    setTestimonialStatus,
-    archiveTestimonial,
+    getCmsPostByCategory,
+    patchCmsPostByCategory,
+    deleteCmsPostByCategory,
+    postToTestimonial,
 } from '@/lib/cms/v2';
 import { DSCard } from '@/design';
 import { DSBadge } from '@/design';
@@ -75,7 +76,7 @@ export default function CmsTestimonialDetailPage() {
         const loadTestimonial = async () => {
             try {
                 setLoading(true);
-                const data = await getTestimonialBySlug(SITE_KEY, slug, token).catch(() => null);
+                const data = await getCmsPostByCategory(SITE_KEY, slug, "testimonials", token).then(p => p ? postToTestimonial(p) : null);
                 const authorPersonaId = data?.author_persona_id ? String(data.author_persona_id) : null;
                 const normalized = data ? {
                     ...data,
@@ -98,15 +99,16 @@ export default function CmsTestimonialDetailPage() {
     const handleAction = async (newStatus: string) => {
         try {
             if (newStatus === 'archived') {
-                await archiveTestimonial(SITE_KEY, slug, token);
+                await deleteCmsPostByCategory(SITE_KEY, slug, "testimonials", token);
                 setTestimonial((prev) => prev ? { ...prev, is_approved: false, show_on_home: false, status: 'archived' } : null);
             } else {
-                const updated = await setTestimonialStatus(
+                const updated = postToTestimonial(await patchCmsPostByCategory(
                     SITE_KEY,
                     slug,
-                    newStatus === 'approved' ? 'approved' : 'pending',
+                    "testimonials",
+                    { status: newStatus === 'approved' ? 'published' : 'draft' },
                     token,
-                );
+                ));
                 setTestimonial({
                     ...testimonial,
                     ...updated,

@@ -8,6 +8,8 @@ import { ArrowLeft, Quote, Share2, Heart, Send, CheckCircle2, Loader2, X, Headph
 import { motion, AnimatePresence } from "framer-motion";
 import { Testimonial } from "@/lib/data/testimonios";
 import { apiFetch } from "@/lib/http";
+import { SITE_KEY } from "@/lib/site-config";
+import { getCmsPublicPost } from "@/lib/cms/v2";
 import { Header, Footer_Simple } from "@/components/public/Shared";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { toast } from "sonner";
@@ -27,7 +29,7 @@ function getTestimonialMediaUrl(t: Testimonial): string {
 export default function TestimonioDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const id = Number(params?.id);
+    const slug = (params?.id as string) ?? "";
 
     const [testimonial, setTestimonial] = useState<Testimonial | null>(null);
     const [loading, setLoading] = useState(true);
@@ -43,17 +45,35 @@ export default function TestimonioDetailPage() {
     const cms = cmsPage?.blocks?.detail_template as Record<string, unknown> | undefined;
 
     useEffect(() => {
-        if (!Number.isFinite(id)) {
+        if (!slug) {
             setTestimonial(null);
             setLoading(false);
             return;
         }
 
-        apiFetch<Testimonial>(`/cms/testimonials/${id}`, { silent: true })
-            .then((data) => setTestimonial(data))
+        // v2: el "id" de la ruta es en realidad el slug del CmsPost.
+        // CmsPublicPost mapea emotion/media_* desde seo_json; author_name es string.
+        getCmsPublicPost(SITE_KEY, slug)
+            .then((post) => {
+                if (!post) { setTestimonial(null); return; }
+                const seo = (post.seo_json ?? {}) as Record<string, unknown>;
+                setTestimonial({
+                    id: 0,
+                    content: post.content ?? "",
+                    emotion: (seo.emotion as string) || undefined,
+                    media_type: (seo.media_type as string) || "text",
+                    media_url: (seo.media_url as string | null) ?? null,
+                    image_url: post.featured_image_url ?? (seo.image_url as string | null) ?? null,
+                    video_url: (seo.video_url as string | null) ?? null,
+                    podcast_url: (seo.podcast_url as string | null) ?? null,
+                    author: post.author_name ? { id: 0, username: post.author_name } : null,
+                    is_approved: true,
+                    show_on_home: Boolean(seo.show_on_home),
+                });
+            })
             .catch(() => setTestimonial(null))
             .finally(() => setLoading(false));
-    }, [id]);
+    }, [slug]);
 
     if (loading) {
         return (
