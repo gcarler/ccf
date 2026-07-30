@@ -3,11 +3,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Megaphone, Sparkles, Pin } from 'lucide-react';
-import { apiFetch } from '@/lib/http';
-import { useAuth } from '@/context/AuthContext';
+import { SITE_KEY } from '@/lib/site-config';
+import { listPublicAnnouncements } from '@/lib/cms/v2';
 
 interface AnnouncementItem {
-    id: number;
+    id: string;
     title: string;
     excerpt: string;
     date: string;
@@ -16,10 +16,9 @@ interface AnnouncementItem {
 }
 
 export default function AnnouncementsPage() {
-    const { token } = useAuth();
     const [announcements, setAnnouncements] = React.useState<AnnouncementItem[]>([
         {
-            id: 1,
+            id: "fallback-1",
             title: "Congreso de Jóvenes: 'Inquebrantables'",
             excerpt: "Prepárate para un fin de semana transformador. Inscripciones abiertas en el lobby.",
             date: "Hace 2 horas",
@@ -27,7 +26,7 @@ export default function AnnouncementsPage() {
             isPinned: true
         },
         {
-            id: 2,
+            id: "fallback-2",
             title: "Nueva Serie de Predicas: 'Caminando por Fe'",
             excerpt: "Acompáñanos este domingo para el inicio de nuestra nueva serie enfocada en la vida de Abraham.",
             date: "Hace 5 horas",
@@ -35,7 +34,7 @@ export default function AnnouncementsPage() {
             isPinned: false
         },
         {
-            id: 3,
+            id: "fallback-3",
             title: "Oportunidad de Voluntariado: Media & Producción",
             excerpt: "¿Te apasiona la tecnología? Únete a nuestro equipo de producción para los servicios dominicales.",
             date: "Ayer",
@@ -47,16 +46,16 @@ export default function AnnouncementsPage() {
     React.useEffect(() => {
         const load = async () => {
             try {
-                const rows = await apiFetch<any[]>('/cms/announcements', { token: token || undefined, cache: 'no-store' });
+                const rows = await listPublicAnnouncements(SITE_KEY);
                 if (!Array.isArray(rows) || rows.length === 0) return;
                 setAnnouncements(
                     rows.map((item, index) => ({
-                        id: Number(item.id || index + 1),
+                        id: String(item.id || `ann-${index + 1}`),
                         title: item.title || 'Anuncio',
-                        excerpt: item.content || item.excerpt || '',
-                        date: (item.published_at || item.created_at) ? new Date(item.published_at || item.created_at).toLocaleDateString('es-MX') : 'Reciente',
+                        excerpt: item.content || '',
+                        date: (item.published_at || item.created_at) ? new Date(item.published_at || item.created_at || '').toLocaleDateString('es-MX') : 'Reciente',
                         category: item.category || 'General',
-                        isPinned: Boolean(item.is_featured || item.featured || item.is_pinned)
+                        isPinned: Boolean(item.is_featured)
                     }))
                 );
             } catch {
@@ -64,7 +63,7 @@ export default function AnnouncementsPage() {
             }
         };
         load();
-    }, [token]);
+    }, []);
 
     return (
  <div className="w-full space-y-3 pb-4 animate-in fade-in duration-700">
