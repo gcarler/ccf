@@ -76,3 +76,23 @@ class DirectMessageItem(BaseModel):
     reply_preview: Optional[ReplyPreview] = None
     mentions: Optional[List[str]] = None
     model_config = orm_config
+
+
+class ChatMessageAdminRead(BaseModel):
+    """Read model used by the message admin center (sent messages and mentions)."""
+
+    id: UUID
+    conversation_id: UUID
+    conversation_name: str = ""
+    sender_id: UUID
+    sender_name: str = ""
+    content: str
+    created_at: datetime
+    is_read: bool = False
+    attachment_url: Optional[str] = None
+    attachment_type: Optional[str] = None
+    attachment_name: Optional[str] = None
+    attachment_size: Optional[int] = None
+    reply_to_id: Optional[UUID] = None
+    mentions: Optional[List[str]] = None
+    model_config = orm_config

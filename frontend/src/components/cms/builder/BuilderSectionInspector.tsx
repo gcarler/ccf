@@ -1517,10 +1517,10 @@ export default function BuilderSectionInspector({
                   <button onClick={() => setSectionVisibility(!activeSection.is_visible)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
                     {activeSection.is_visible ? <EyeOff size={11} /> : <Eye size={11} />} {activeSection.is_visible ? "Ocultar" : "Mostrar"}
                   </button>
-                  <button onClick={duplicateSection} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
+                  <button onClick={() => duplicateSection()} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1">
                     <Copy size={11} /> Duplicar
                   </button>
-                  <button onClick={toggleSectionArchive} className={`col-span-2 rounded-lg border px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
+                  <button onClick={() => toggleSectionArchive()} className={`col-span-2 rounded-lg border px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide inline-flex items-center justify-center gap-1 ${activeSection.status === "archived" ? "border-[hsl(var(--success)/25%)] text-success-text" : "border-[hsl(var(--warning)/25%)] text-warning-text"}`}>
                     {activeSection.status === "archived" ? <RotateCcw size={11} /> : <Archive size={11} />}
                     {activeSection.status === "archived" ? "Restaurar seccion" : "Archivar seccion"}
                   </button>

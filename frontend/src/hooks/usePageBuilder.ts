@@ -29,7 +29,7 @@ import {
   pageBuilderReducer,
 } from "./pageBuilderReducer";
 
-export type CanvasMode = "esquema" | "render";
+export type CanvasMode = "esquema" | "render" | "wysiwyg";
 export type PreviewDevice = "desktop" | "mobile";
 export type RightTab = "config" | "seo" | "ai" | "analytics";
 export type Timeframe = "7d" | "30d" | "all";
@@ -487,9 +487,10 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     notifyPreviewSync({ type: "section-saved", siteKey, slug: activeSlug, sectionId: activeSection.id });
   }, [token, activeSection, activeSlug, canEdit, siteKey, loadSectionsAndVersions]);
 
-  const updateSectionPropsLocal = useCallback((nextProps: Record<string, unknown>) => {
-    if (!activeSection) return;
-    dispatch({ type: "UPDATE_SECTION_PROPS", sectionId: activeSection.id, props: nextProps });
+  const updateSectionPropsLocal = useCallback((nextProps: Record<string, unknown>, targetSectionId?: string) => {
+    const id = targetSectionId || activeSection?.id;
+    if (!id) return;
+    dispatch({ type: "UPDATE_SECTION_PROPS", sectionId: id, props: nextProps });
   }, [activeSection]);
 
   const moveSection = useCallback(async (sectionId: string, direction: "up" | "down") => {
@@ -525,15 +526,17 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     await loadSectionsAndVersions(activeSlug);
   }, [canEdit, sections, token, activeSlug, siteKey, loadSectionsAndVersions]);
 
-  const duplicateSection = useCallback(async () => {
-    if (!token || !activeSlug || !activeSection || !canEdit) return;
+  const duplicateSection = useCallback(async (targetId?: string | React.SyntheticEvent) => {
+    const actualTargetId = typeof targetId === "string" ? targetId : undefined;
+    const target = actualTargetId ? sections.find((s) => s.id === actualTargetId) : activeSection;
+    if (!token || !activeSlug || !target || !canEdit) return;
     await createCmsSection(siteKey, activeSlug, {
-      type: activeSection.type,
+      type: target.type,
       sort_order: sections.length,
-      props_json: { ...(activeSection.props_json || {}) },
+      props_json: { ...(target.props_json || {}) },
     }, token);
     await loadSectionsAndVersions(activeSlug);
-  }, [token, activeSlug, activeSection, canEdit, siteKey, sections.length, loadSectionsAndVersions]);
+  }, [token, activeSlug, activeSection, sections, canEdit, siteKey, loadSectionsAndVersions]);
 
   const toggleSectionArchive = useCallback(async () => {
     if (!token || !activeSection || !activeSlug || !canEdit) return;

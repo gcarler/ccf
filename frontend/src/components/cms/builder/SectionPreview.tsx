@@ -1,5 +1,9 @@
 import React from "react";
 import type { CmsSection } from "@/types/cms-v2";
+import type { CanvasMode, PageBuilderState } from "@/hooks/usePageBuilder";
+import { updateCmsSectionProps } from "@/lib/cms/v2";
+import { toast } from "sonner";
+import { Check, X } from "lucide-react";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer";
 import {
@@ -35,26 +39,301 @@ export class SectionRenderErrorBoundary extends React.Component<
   }
 }
 
+// ── Quick Floating Inline Editor Panel ──────────────────────────────────────
+
+interface InlineEditorPanelProps {
+  section: CmsSection;
+  builder: PageBuilderState;
+  onClose: () => void;
+}
+
+export function InlineEditorPanel({ section, builder, onClose }: InlineEditorPanelProps) {
+  const [propsJson, setPropsJson] = React.useState<Record<string, any>>(() => ({
+    ...(section.props_json || {}),
+  }));
+  const [saveStatus, setSaveStatus] = React.useState<string | null>(null);
+  const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    setPropsJson({ ...(section.props_json || {}) });
+  }, [section.props_json]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  React.useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleFieldChange = (key: string, value: string) => {
+    const nextProps = { ...propsJson, [key]: value };
+
+    if (key === "headline") nextProps.title = value;
+    if (key === "title" && section.type === "cta_banner") nextProps.headline = value;
+    if (key === "subtext") {
+      nextProps.subtitle = value;
+      nextProps.body = value;
+    }
+    if (key === "subtitle") {
+      nextProps.subtext = value;
+      nextProps.body = value;
+    }
+    if (key === "cta_text") nextProps.cta_label = value;
+    if (key === "cta_label") nextProps.cta_text = value;
+    if (key === "cta_url") nextProps.cta_href = value;
+    if (key === "cta_href") nextProps.cta_url = value;
+
+    setPropsJson(nextProps);
+    setSaveStatus("Guardando...");
+
+    if (builder.updateSectionPropsLocal) {
+      builder.updateSectionPropsLocal(nextProps, section.id);
+    }
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        if (builder.siteKey && builder.activeSlug) {
+          await updateCmsSectionProps(
+            builder.siteKey,
+            builder.activeSlug,
+            section.id,
+            nextProps,
+            builder.token
+          );
+          setSaveStatus("✓ Guardado");
+        } else {
+          setSaveStatus("✓ Guardado");
+        }
+      } catch (err) {
+        toast.error("No se pudo guardar los cambios");
+        setSaveStatus(null);
+      }
+    }, 800);
+  };
+
+  const handleSaveImmediate = async () => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setSaveStatus("Guardando...");
+    try {
+      if (builder.siteKey && builder.activeSlug) {
+        await updateCmsSectionProps(
+          builder.siteKey,
+          builder.activeSlug,
+          section.id,
+          propsJson,
+          builder.token
+        );
+      }
+      setSaveStatus("✓ Guardado");
+      onClose();
+    } catch (err) {
+      toast.error("No se pudo guardar los cambios");
+      setSaveStatus(null);
+    }
+  };
+
+  const fields = React.useMemo(() => {
+    const type = section.type;
+    switch (type) {
+      case "hero":
+      case "video_hero":
+        return [
+          { key: "title", label: "Título", type: "input", value: safeString(propsJson.title) },
+          { key: "subtitle", label: "Subtítulo", type: "input", value: safeString(propsJson.subtitle || propsJson.body) },
+          { key: "cta_text", label: "Texto CTA", type: "input", value: safeString(propsJson.cta_text || propsJson.cta_label) },
+          { key: "cta_url", label: "URL CTA", type: "input", value: safeString(propsJson.cta_url || propsJson.cta_href) },
+        ];
+      case "cards":
+      case "pricing":
+        return [
+          { key: "title", label: "Título", type: "input", value: safeString(propsJson.title) },
+          { key: "subtitle", label: "Subtítulo", type: "input", value: safeString(propsJson.subtitle || propsJson.body) },
+        ];
+      case "rich_text":
+      case "rich_text_columns":
+        return [
+          { key: "title", label: "Título", type: "input", value: safeString(propsJson.title) },
+          { key: "body", label: "Contenido", type: "textarea", value: safeString(propsJson.body) },
+        ];
+      case "cta_banner":
+        return [
+          { key: "headline", label: "Titular", type: "input", value: safeString(propsJson.headline || propsJson.title) },
+          { key: "subtext", label: "Subtexto", type: "input", value: safeString(propsJson.subtext || propsJson.subtitle || propsJson.body) },
+          { key: "cta_text", label: "Texto CTA", type: "input", value: safeString(propsJson.cta_text || propsJson.cta_label) },
+          { key: "cta_url", label: "URL CTA", type: "input", value: safeString(propsJson.cta_url || propsJson.cta_href) },
+        ];
+      case "stats":
+        return [
+          { key: "title", label: "Título", type: "input", value: safeString(propsJson.title) },
+        ];
+      case "team":
+        return [
+          { key: "title", label: "Título", type: "input", value: safeString(propsJson.title) },
+          { key: "subtitle", label: "Subtítulo", type: "input", value: safeString(propsJson.subtitle || propsJson.body) },
+        ];
+      case "testimonials":
+        return [
+          { key: "title", label: "Título", type: "input", value: safeString(propsJson.title) },
+        ];
+      case "faq":
+        return [
+          { key: "title", label: "Título", type: "input", value: safeString(propsJson.title) },
+        ];
+      default: {
+        const res = [];
+        res.push({ key: "title", label: "Título", type: "input", value: safeString(propsJson.title) });
+        if ("subtitle" in propsJson || "body" in propsJson || "subtext" in propsJson) {
+          res.push({ key: "subtitle", label: "Subtítulo", type: "input", value: safeString(propsJson.subtitle || propsJson.subtext || propsJson.body) });
+        }
+        return res;
+      }
+    }
+  }, [section.type, propsJson]);
+
+  return (
+    <div
+      className="absolute inset-0 z-40 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-xl rounded-lg border-2 border-primary overflow-y-auto flex flex-col justify-between"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div>
+        <div className="flex items-center justify-between gap-2 border-b border-[hsl(var(--border))] dark:border-white/10 pb-2 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded text-2xs font-bold uppercase bg-primary/20 text-primary">
+              Inline Editor · {section.type}
+            </span>
+            {saveStatus && (
+              <span
+                className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                  saveStatus.includes("Guardado")
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 animate-pulse"
+                }`}
+              >
+                {saveStatus}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleSaveImmediate}
+              className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold transition-colors"
+              title="Guardar cambios"
+            >
+              <Check size={13} /> ✓ Guardar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+                onClose();
+              }}
+              className="inline-flex items-center gap-1 px-2 py-1 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded text-xs font-semibold transition-colors"
+              title="Cerrar sin guardar"
+            >
+              <X size={13} /> ✕ Cerrar
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {fields.map((f) => (
+            <div key={f.key} className="space-y-1 text-left">
+              <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                {f.label}
+              </label>
+              {f.type === "textarea" ? (
+                <textarea
+                  value={f.value}
+                  onChange={(e) => handleFieldChange(f.key, e.target.value)}
+                  rows={3}
+                  className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/20 bg-background dark:bg-gray-950 px-3 py-1.5 text-xs text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={f.value}
+                  onChange={(e) => handleFieldChange(f.key, e.target.value)}
+                  className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/20 bg-background dark:bg-gray-950 px-3 py-1.5 text-xs text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      <p className="text-[10px] text-[hsl(var(--text-secondary))] mt-3 text-right">
+        Presiona Esc para cerrar el editor inline.
+      </p>
+    </div>
+  );
+}
+
 // ── Full render preview (uses PublicSectionRenderer) ────────────────────────
 
 export function SectionRenderPreview({
   section,
   mobile,
   tokens,
+  canvasMode,
+  builder,
 }: {
   section: CmsSection;
   mobile: boolean;
   tokens?: React.CSSProperties;
+  canvasMode?: CanvasMode;
+  builder?: PageBuilderState;
 }) {
+  const [inlineEditing, setInlineEditing] = React.useState(false);
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (canvasMode === "wysiwyg") {
+      e.stopPropagation();
+      setInlineEditing(true);
+    }
+  };
+
   return (
     <div
       data-testid="section-render-preview"
       style={tokens ?? CANVAS_PREVIEW_TOKENS}
-      className={`rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))]${mobile ? " max-w-[420px] mx-auto" : ""}`}
+      className={`relative rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))]${
+        mobile ? " max-w-[420px] mx-auto" : ""
+      }`}
+      onDoubleClick={handleDoubleClick}
     >
       <SectionRenderErrorBoundary>
         <PublicSectionRenderer section={section} />
       </SectionRenderErrorBoundary>
+
+      {canvasMode === "wysiwyg" && inlineEditing && builder && (
+        <InlineEditorPanel
+          section={section}
+          builder={builder}
+          onClose={() => setInlineEditing(false)}
+        />
+      )}
     </div>
   );
 }

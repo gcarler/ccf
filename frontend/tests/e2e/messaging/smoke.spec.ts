@@ -7,6 +7,11 @@ const MESSAGING_ROUTES = [
     expectedText: /mensajes|conversaciones|nuevo chat|mis mensajes/i,
   },
   {
+    id: 'messaging-chat-admin',
+    path: '/plataforma/inbox/chat',
+    expectedText: /centro de mensajes|mis mensajes|menciones/i,
+  },
+  {
     id: 'messaging-direct',
     path: '/plataforma/messages',
     expectedText: /mensajes|conversaciones|nueva conversaci[oó]n|chat/i,

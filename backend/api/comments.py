@@ -110,6 +110,8 @@ def list_my_created_comments(
                 updated_at=comment.updated_at,
                 attachments=comment.attachments or [],
                 mentions=comment.mentions or [],
+                module_type="project",
+                context_title=project.title if project else None,
             ))
 
     if not type_filter or type_filter == "agenda":
@@ -137,6 +139,8 @@ def list_my_created_comments(
                 updated_at=comment.updated_at,
                 attachments=comment.attachments or [],
                 mentions=comment.mentions or [],
+                module_type="agenda",
+                context_title=event.titulo if event else None,
             ))
 
     results.sort(key=lambda x: x.created_at, reverse=True)
@@ -181,6 +185,8 @@ def list_my_mentions(
                     updated_at=comment.updated_at,
                     attachments=comment.attachments or [],
                     mentions=comment.mentions or [],
+                    module_type="project",
+                    context_title=project.title if project else None,
                 ))
 
     if not type_filter or type_filter == "agenda":
@@ -209,6 +215,8 @@ def list_my_mentions(
                     updated_at=comment.updated_at,
                     attachments=comment.attachments or [],
                     mentions=comment.mentions or [],
+                    module_type="agenda",
+                    context_title=event.titulo if event else None,
                 ))
 
     results.sort(key=lambda x: x.created_at, reverse=True)

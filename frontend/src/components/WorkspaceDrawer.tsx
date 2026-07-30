@@ -52,6 +52,7 @@ export default function WorkspaceDrawer({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+                        data-testid="workspace-drawer-backdrop"
                         className="fixed inset-x-0 bottom-0 top-10 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
                         style={{ backgroundColor: 'hsl(var(--bg-primary) / 0.35)' }}
                         onClick={onClose}

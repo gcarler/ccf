@@ -169,7 +169,7 @@ export function MessageInput({
                         <p className="text-2xs font-bold text-[hsl(var(--primary))]">Respondiendo a {replyTo.sender_name}</p>
                         <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{replyTo.content || '📎 Adjunto'}</p>
                     </div>
-                    <button onClick={onClearReply} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors">
+                    <button onClick={onClearReply} aria-label="Cerrar respuesta" className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors">
                         <X size={13} />
                     </button>
                 </div>
@@ -191,7 +191,7 @@ export function MessageInput({
                         <p className="text-xs font-semibold text-[hsl(var(--text-primary))] truncate">{attachment.name}</p>
                         <p className="text-2xs text-[hsl(var(--text-secondary))]">{(attachment.size / 1024).toFixed(0)} KB</p>
                     </div>
-                    <button onClick={clearAttachment} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors">
+                    <button onClick={clearAttachment} aria-label="Eliminar adjunto" className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors">
                         <X size={13} />
                     </button>
                 </div>
@@ -223,6 +223,7 @@ export function MessageInput({
                 <input
                     ref={fileInputRef}
                     type="file"
+                    aria-label="Adjuntar archivo"
                     className="hidden"
                     onChange={handleFileSelect}
                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,video/mp4,video/webm,audio/mpeg,audio/ogg,audio/wav"
