@@ -551,6 +551,60 @@ export async function getCmsPublicPost(siteKey: string, slug: string) {
   return apiFetch<CmsPublicPost>(`/cms/v2/public/sites/${siteKey}/posts/${slug}`, { silent: true });
 }
 
+/** v2 public helper: fetch testimonials via public API, return v1-compatible shape.
+ *
+ * The backend stores testimonials as CmsPost rows categorised as ``testimonials``.
+ * This function maps the public CmsPublicPost shape (which has ``author_name``
+ * instead of an author object, and v1 fields in ``seo_json``) into a flat shape
+ * that the existing public UI components can consume without modification.
+ *
+ * NOTE: ``author.avatarUrl`` and ``author.role`` are not available via the public
+ * endpoint; the UI gracefully falls back to initials / "Persona".
+ */
+export interface PublicTestimonialItem {
+  id: string;
+  slug: string;
+  content: string;
+  emotion: string;
+  media_type: string;
+  media_url: string | null;
+  image_url: string | null;
+  video_url: string | null;
+  podcast_url: string | null;
+  author: { username: string; avatarUrl?: string; role?: string } | null;
+  is_approved?: boolean;
+  show_on_home?: boolean;
+  created_at?: string;
+}
+
+export async function getPublicTestimonials(
+  siteKey: string,
+): Promise<PublicTestimonialItem[]> {
+  const posts = await getCmsPublicPosts(siteKey, {
+    category_slug: "testimonials",
+  });
+  return posts.map(_publicPostToTestimonial);
+}
+
+function _publicPostToTestimonial(post: CmsPublicPost): PublicTestimonialItem {
+  const seo = (post.seo_json ?? {}) as Record<string, unknown>;
+  return {
+    id: post.slug,
+    slug: post.slug,
+    content: post.content ?? "",
+    emotion: (seo.emotion as string) || "Testimonio",
+    media_type: (seo.media_type as string) || "text",
+    media_url: null,
+    image_url: post.featured_image_url,
+    video_url: (seo.video_url as string | null) ?? null,
+    podcast_url: (seo.podcast_url as string | null) ?? null,
+    author: post.author_name ? { username: post.author_name } : null,
+    is_approved: true,
+    show_on_home: Boolean(seo.show_on_home),
+    created_at: post.published_at ?? undefined,
+  };
+}
+
 // ── Posts by Canonical Category (Testimonials / Announcements) ──────────────
 // Replaces v1 shim endpoints: /cms/testimonials, /cms/announcements
 // These wrap the generic post CRUD, filtering by category client-side since
@@ -707,6 +761,25 @@ export function postToTestimonial(post: CmsPostWithTaxonomies): V1TestimonialSha
     is_approved: isApproved,
     show_on_home: Boolean(seo.show_on_home),
     status: _testimonialStatusFromPost(post.status),
+  };
+}
+
+/** Convert a v2 CmsPost into the v1 AnnouncementRead shape the admin UI expects. */
+export function postToAnnouncement(post: CmsPostWithTaxonomies): V1AnnouncementShape {
+  const seo = (post.seo_json ?? {}) as Record<string, unknown>;
+  const isActive = post.status === "published";
+  return {
+    id: post.id,
+    slug: post.slug,
+    title: post.title ?? "",
+    content: post.content ?? "",
+    category: (seo.category as string) || "announcements",
+    image_url: post.featured_image_url ?? null,
+    is_active: isActive,
+    is_featured: Boolean(seo.is_featured),
+    status: post.status ?? "draft",
+    created_at: post.created_at,
+    published_at: post.published_at ?? undefined,
   };
 }
 
@@ -990,4 +1063,174 @@ export async function getPageAnalytics(
     token,
     cache: "no-store",
   });
+}
+
+// ── Public testimonials (replaces GET /cms/testimonials) ───────────────────
+// The public v2 posts endpoint returns only status=="published" rows and uses
+// the CmsPublicPost shape (no numeric id, no status; seo_json holds the v1
+// flat fields). These adapters restore the shape the public/community pages
+// consumed from the legacy shim.
+
+export interface PublicTestimonial {
+  id: string;
+  slug: string;
+  content: string;
+  emotion: string;
+  media_type?: "text" | "image" | "video" | "podcast" | string;
+  media_url?: string | null;
+  image_url?: string | null;
+  video_url?: string | null;
+  podcast_url?: string | null;
+  author_name?: string | null;
+  author_username?: string | null;
+  is_approved?: boolean;
+  show_on_home?: boolean;
+  created_at?: string;
+  published_at?: string | null;
+}
+
+export function publicPostToTestimonial(post: CmsPublicPost): PublicTestimonial {
+  const seo = (post.seo_json ?? {}) as Record<string, unknown>;
+  return {
+    id: post.slug,
+    slug: post.slug,
+    content: post.content ?? "",
+    emotion: (seo.emotion as string) || "General",
+    media_type: (seo.media_type as string) || "text",
+    media_url: (seo.media_url as string | null | undefined) ?? null,
+    image_url: post.featured_image_url ?? (seo.image_url as string | null | undefined) ?? null,
+    video_url: (seo.video_url as string | null | undefined) ?? null,
+    podcast_url: (seo.podcast_url as string | null | undefined) ?? null,
+    author_name: post.author_name ?? null,
+    author_username: post.author_name ?? null,
+    is_approved: true,
+    show_on_home: Boolean(seo.show_on_home),
+    created_at: post.published_at ?? undefined,
+    published_at: post.published_at,
+  };
+}
+
+/** List published testimonials via the public v2 endpoint (no token required). */
+export async function listPublicTestimonials(
+  siteKey: string,
+  options?: { skip?: number; limit?: number },
+): Promise<PublicTestimonial[]> {
+  const posts = await getCmsPublicPosts(siteKey, { category_slug: "testimonials", ...options });
+  return Array.isArray(posts) ? posts.map(publicPostToTestimonial) : [];
+}
+
+// ── Announcement wrappers (replaces GET/POST /cms/announcements, /admin/announcements) ──
+
+/** High-level wrapper: list announcements via v2, returning v1 AnnouncementRead shape. */
+export async function listAnnouncements(
+  siteKey: string,
+  options?: { status?: string; include_archived?: boolean; skip?: number; limit?: number },
+  token?: string | null,
+): Promise<V1AnnouncementShape[]> {
+  const posts = await listCmsPostsByCategory(siteKey, "announcements", options, token);
+  return posts.map(postToAnnouncement);
+}
+
+/** High-level wrapper: get one announcement by slug via v2, returning v1 shape. */
+export async function getAnnouncementBySlug(
+  siteKey: string,
+  slug: string,
+  token?: string | null,
+): Promise<V1AnnouncementShape> {
+  const post = await getCmsPostByCategory(siteKey, slug, "announcements", token);
+  if (!post) throw new Error(`Announcement not found: ${slug}`);
+  return postToAnnouncement(post);
+}
+
+/** Toggle announcement status between draft/published/archived via v2. */
+export async function setAnnouncementStatus(
+  siteKey: string,
+  slug: string,
+  v1Status: "draft" | "active" | "archived",
+  token?: string | null,
+): Promise<V1AnnouncementShape> {
+  const v2Status = v1Status === "active" ? "published" : v1Status === "archived" ? "archived" : "draft";
+  const post = await patchCmsPostByCategory(siteKey, slug, "announcements", { status: v2Status }, token);
+  return postToAnnouncement(post);
+}
+
+/** Archive (soft-delete) an announcement via v2. */
+export async function archiveAnnouncement(
+  siteKey: string,
+  slug: string,
+  token?: string | null,
+): Promise<void> {
+  await deleteCmsPostByCategory(siteKey, slug, "announcements", token);
+}
+
+/** Save an announcement edit via v2, mapping v1 flat fields back to title/content+seo_json. */
+export async function saveAnnouncement(
+  siteKey: string,
+  slug: string,
+  data: {
+    title: string;
+    content: string;
+    category?: string;
+    image_url?: string | null;
+    is_active?: boolean;
+    is_featured?: boolean;
+    status?: string;
+  },
+  token?: string | null,
+): Promise<V1AnnouncementShape> {
+  const post = await patchCmsPostByCategory(
+    siteKey,
+    slug,
+    "announcements",
+    {
+      title: data.title,
+      content: data.content,
+      featured_image_url: data.image_url ?? null,
+      status: data.is_active === false || data.status === "archived" ? "archived" : data.is_active === true || data.status === "active" ? "published" : "draft",
+      seo_json: {
+        category: data.category ?? "announcements",
+        is_featured: data.is_featured ?? false,
+      },
+    },
+    token,
+  );
+  return postToAnnouncement(post);
+}
+
+// ── Public announcements (replaces GET /cms/announcements) ─────────────────
+
+export interface PublicAnnouncement {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  category: string;
+  image_url?: string | null;
+  is_featured: boolean;
+  created_at?: string;
+  published_at?: string | null;
+}
+
+export function publicPostToAnnouncement(post: CmsPublicPost): PublicAnnouncement {
+  const seo = (post.seo_json ?? {}) as Record<string, unknown>;
+  return {
+    id: post.slug,
+    slug: post.slug,
+    title: post.title,
+    content: post.content ?? "",
+    category: (seo.category as string) || "announcements",
+    image_url: post.featured_image_url ?? null,
+    is_featured: Boolean(seo.is_featured),
+    created_at: post.published_at ?? undefined,
+    published_at: post.published_at,
+  };
+}
+
+/** List published announcements via the public v2 endpoint (no token required). */
+export async function listPublicAnnouncements(
+  siteKey: string,
+  options?: { skip?: number; limit?: number },
+): Promise<PublicAnnouncement[]> {
+  const posts = await getCmsPublicPosts(siteKey, { category_slug: "announcements", ...options });
+  return Array.isArray(posts) ? posts.map(publicPostToAnnouncement) : [];
 }
