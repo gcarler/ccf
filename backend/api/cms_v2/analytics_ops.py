@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -20,6 +20,11 @@ from backend.api.cms_v2._shared import CMS_PUBLISHER_ROLES, _assert_role, _get_s
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
 from backend.core.rate_limit import rate_limiter
+from backend.exceptions.cms import (
+    CmsServiceUnavailableError,
+    MediaNotFoundError,
+    PageNotFoundError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +66,7 @@ def get_page_analytics(
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     page = db.query(models.CmsPage).join(models.CmsSite).filter(models.CmsPage.slug == page_key).first()
     if not page:
-        raise HTTPException(status_code=404, detail="Page not found")
+        raise PageNotFoundError()
     total = db.query(func.count(models.CmsPageView.id)).filter(models.CmsPageView.page_id == page.id, models.CmsPageView.created_at >= cutoff).scalar() or 0
     daily = (
         db.query(func.date(models.CmsPageView.created_at).label("date"), func.count(models.CmsPageView.id).label("views"))
@@ -87,7 +92,7 @@ def schedule_page_publish(
     parsed = payload.scheduled_at
     page = db.query(models.CmsPage).filter(models.CmsPage.id == page_id, models.CmsPage.site_id == site.id).first()
     if not page:
-        raise HTTPException(status_code=404, detail="Page not found")
+        raise PageNotFoundError()
     page.publish_at = parsed
     seo = page.seo_json if isinstance(page.seo_json, dict) else {}
     if isinstance(seo, dict) and "_scheduled_at" in seo:
@@ -119,7 +124,7 @@ def get_resized_image(
         media_query = media_query.filter(models.CmsMediaItem.sede_id == ccf_site.sede_id)
     media = media_query.first()
     if not media or (media.status or "") == "archived":
-        raise HTTPException(status_code=404, detail="Media not found")
+        raise MediaNotFoundError()
     return {"url": media.url, "width": width, "height": height, "quality": quality}
 
 
@@ -134,20 +139,20 @@ async def optimize_uploaded_image(
 ):
     media = _get_scoped_cms_media(db, current_user, media_id)
     if (media.status or "") == "archived":
-        raise HTTPException(status_code=404, detail="Media not found")
+        raise MediaNotFoundError()
     try:
         from PIL import Image  # noqa: F811
     except ImportError as exc:
-        raise HTTPException(
-            status_code=503,
-            detail="Pillow (PIL) no instalado en el servidor — instale el paquete ``pillow`` para habilitar /images/optimize.",
+        raise CmsServiceUnavailableError(
+            "Pillow (PIL) no instalado en el servidor — instale el paquete ``pillow`` para habilitar /images/optimize.",
+            error_code="pillow_not_installed",
         ) from exc
     from backend.core.config import get_settings
 
     settings = get_settings()
     orig_path = os.path.join(settings.uploads_dir, media.filename)
     if not os.path.exists(orig_path):
-        raise HTTPException(status_code=404, detail="File not found")
+        raise MediaNotFoundError("File not found")
 
     def _do_optimize():
         img = Image.open(orig_path)

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
@@ -20,6 +20,11 @@ from backend.api.cms_v2._shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
+from backend.exceptions.cms import (
+    CmsValidationError,
+    SectionTypeAlreadyExistsError,
+    SectionTypeNotFoundError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +42,7 @@ def _get_section_type_or_404(db: Session, name: str) -> models.CmsSectionType:
     """Look up by name (the public identifier) or raise 404."""
     row = db.query(models.CmsSectionType).filter(models.CmsSectionType.name == name.strip().lower()).first()
     if not row:
-        raise HTTPException(status_code=404, detail="section type not found")
+        raise SectionTypeNotFoundError()
     return row
 
 
@@ -89,9 +94,9 @@ def create_section_type(
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     name = payload.name.strip().lower()
     if not name:
-        raise HTTPException(status_code=422, detail="name is required")
+        raise CmsValidationError("Name is required", error_code="name_required")
     if db.query(models.CmsSectionType).filter(models.CmsSectionType.name == name).first():
-        raise HTTPException(status_code=409, detail="section type already exists")
+        raise SectionTypeAlreadyExistsError()
     row = models.CmsSectionType(
         name=name,
         description=payload.description,

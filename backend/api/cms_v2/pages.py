@@ -8,7 +8,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session, lazyload
 
@@ -37,6 +37,19 @@ from backend.core.seo import (
     auto_json_ld_for_page,
     build_breadcrumb_items_from_slug,
     build_breadcrumb_list_json_ld,
+)
+from backend.exceptions.cms import (
+    CmsValidationError,
+    DraftRequiredError,
+    InvalidSlugError,
+    InvalidWorkflowActionError,
+    SectionConflictError,
+    SectionNotFoundError,
+    SlugConflictError,
+    SlugMismatchError,
+    UnsupportedSectionStatusError,
+    UnsupportedSectionTypeError,
+    VersionNotFoundError,
 )
 from backend.schemas import cms as cms_schemas
 from backend.schemas._common import PaginatedResponse
@@ -77,16 +90,16 @@ def create_page(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.status.strip().lower() != "draft":
-        raise HTTPException(status_code=422, detail="new pages must start in draft")
+        raise DraftRequiredError()
     site = _get_scoped_site_or_404(db, site_key, current_user)
     payload.slug = _slugify(payload.slug)
     if not payload.slug:
-        raise HTTPException(status_code=422, detail="slug is required")
+        raise InvalidSlugError()
     if crud.get_cms_page(db, site.id, payload.slug):
-        raise HTTPException(status_code=409, detail="slug already exists")
+        raise SlugConflictError()
     row = crud.create_cms_page(db, site.id, payload, current_user.id, commit_with_conflict_check=True)
     if row is None:
-        raise HTTPException(status_code=409, detail="slug already exists")
+        raise SlugConflictError()
     return row
 
 
@@ -111,9 +124,9 @@ def patch_page(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.status is not None:
-        raise HTTPException(status_code=422, detail="use workflow endpoint to change status")
+        raise CmsValidationError("Use workflow endpoint to change status", error_code="status_via_workflow")
     if payload.publish_at is not None and payload.expires_at is not None and payload.expires_at < payload.publish_at:
-        raise HTTPException(status_code=422, detail="expires_at must be >= publish_at")
+        raise CmsValidationError("expires_at must be >= publish_at", error_code="invalid_expires_at")
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_page_or_404(db, site.id, slug)
     updated = crud.update_cms_page(db, row, payload, current_user.id)
@@ -151,14 +164,14 @@ def clone_page(
     source = _get_page_or_404(db, site.id, slug)
     new_slug = _slugify(payload.new_slug)
     if not new_slug:
-        raise HTTPException(status_code=422, detail="new_slug is required")
+        raise InvalidSlugError("New slug is required")
     if new_slug == source.slug:
-        raise HTTPException(status_code=422, detail="new_slug must differ from source slug")
+        raise SlugMismatchError()
     if crud.get_cms_page(db, site.id, new_slug):
-        raise HTTPException(status_code=409, detail="slug already exists")
+        raise SlugConflictError()
     cloned = crud.clone_cms_page(db, source, new_slug, current_user.id, new_title=payload.new_title)
     if cloned is None:
-        raise HTTPException(status_code=409, detail="slug already exists")
+        raise SlugConflictError()
     return cloned
 
 
@@ -195,20 +208,20 @@ def create_section(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     allowed_types = get_allowed_section_types(db)
     if payload.type not in allowed_types:
-        raise HTTPException(status_code=422, detail="unsupported section type")
+        raise UnsupportedSectionTypeError()
     try:
         validated_props = validate_section_props(payload.type, payload.props_json or {})
         payload.props_json = validated_props
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise CmsValidationError(str(e))
     payload.status = (payload.status or "active").strip().lower()
     if payload.status not in {"active", "archived"}:
-        raise HTTPException(status_code=422, detail="unsupported section status")
+        raise UnsupportedSectionStatusError()
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     row = crud.create_cms_section(db, page.id, payload, commit_with_conflict_check=True)
     if row is None:
-        raise HTTPException(status_code=409, detail="section conflict")
+        raise SectionConflictError()
     return row
 
 
@@ -224,22 +237,22 @@ def patch_section(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     allowed_types = get_allowed_section_types(db)
     if payload.type is not None and payload.type not in allowed_types:
-        raise HTTPException(status_code=422, detail="unsupported section type")
+        raise UnsupportedSectionTypeError()
     if payload.status is not None:
         payload.status = payload.status.strip().lower()
         if payload.status not in {"active", "archived"}:
-            raise HTTPException(status_code=422, detail="unsupported section status")
+            raise UnsupportedSectionStatusError()
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     row = crud.get_cms_section(db, page.id, section_id, site_id=site.id)
     if not row:
-        raise HTTPException(status_code=404, detail="section not found")
+        raise SectionNotFoundError()
     if payload.props_json is not None:
         effective_type = (payload.type or row.type or "").strip().lower() or "rich_text"
         try:
             payload.props_json = validate_section_props(effective_type, payload.props_json)
         except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+            raise CmsValidationError(str(exc)) from exc
     return crud.update_cms_section(db, row, payload)
 
 
@@ -256,7 +269,7 @@ def delete_section(
     page = _get_page_or_404(db, site.id, slug)
     row = crud.get_cms_section(db, page.id, section_id, site_id=site.id)
     if not row:
-        raise HTTPException(status_code=404, detail="section not found")
+        raise SectionNotFoundError()
     crud.archive_cms_section(db, row)
 
 
@@ -531,7 +544,7 @@ def rollback_page(
     wf = PageWorkflowService(db)
     result = wf.rollback(page, version_id, user_id=current_user.id)
     if not result:
-        raise HTTPException(status_code=404, detail="version not found")
+        raise VersionNotFoundError()
     return result
 
 
@@ -553,5 +566,5 @@ def workflow_page(
     page = _get_page_or_404(db, site.id, slug)
     row = wf.transition(page, action, current_user.id, notes=payload.notes)
     if not row:
-        raise HTTPException(status_code=422, detail="invalid workflow action")
+        raise InvalidWorkflowActionError()
     return row

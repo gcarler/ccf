@@ -20,12 +20,22 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, lazyload
 
 from backend import crud, models, schemas
 from backend.core.permissions import normalize_role
+from backend.exceptions.cms import (
+    CategoryNotFoundError,
+    CmsConflictError,
+    CmsPermissionError,
+    CmsValidationError,
+    MenuNotFoundError,
+    PageNotFoundError,
+    PostNotFoundError,
+    SiteNotFoundError,
+    TagNotFoundError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +87,7 @@ def _commit_or_raise_conflict(db: Session, detail: str = "resource already exist
         if not is_unique_violation:
             raise
         logger.debug("Swallowed concurrent create unique-key conflict: %s", exc)
-        raise HTTPException(status_code=409, detail=detail)
+        raise CmsConflictError(detail=detail)
 
 
 # ── Role assertion ──────────────────────────────────────────────────────────
@@ -98,7 +108,7 @@ def _assert_role(user: models.User, allowed_roles: set[str], detail: str = "Not 
     if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
         role = normalize_role(user.rol_plataforma.nombre)
     if role not in allowed_roles:
-        raise HTTPException(status_code=403, detail=detail)
+        raise CmsPermissionError(detail=detail)
 
 
 # ── String / slug helpers ───────────────────────────────────────────────────
@@ -136,7 +146,7 @@ def _get_site_or_404(db: Session, site_key: str) -> models.CmsSite:
     """
     row = crud.get_cms_site_by_key(db, site_key.strip().lower())
     if not row:
-        raise HTTPException(status_code=404, detail="site not found")
+        raise SiteNotFoundError()
     return row
 
 
@@ -190,11 +200,11 @@ def _assert_site_sede_scope(
     if _is_global_admin(current_user):
         return
     if actor_sede is None:
-        raise HTTPException(status_code=404, detail="site not found")
+        raise SiteNotFoundError()
     if site.sede_id is None:
-        raise HTTPException(status_code=404, detail="site not found")
+        raise SiteNotFoundError()
     if site.sede_id != actor_sede:
-        raise HTTPException(status_code=404, detail="site not found")
+        raise SiteNotFoundError()
 
 
 def _get_scoped_site_or_404(
@@ -228,9 +238,9 @@ def _get_public_site_or_404(db: Session, site_key: str) -> models.CmsSite:
         .first()
     )
     if not row:
-        raise HTTPException(status_code=404, detail="site not found")
+        raise SiteNotFoundError()
     if not row.is_active:
-        raise HTTPException(status_code=404, detail="site not found")
+        raise SiteNotFoundError()
     return row
 
 
@@ -246,7 +256,7 @@ def _get_menu_or_404(db: Session, site_id: UUID, menu_key: str) -> models.CmsMen
         .first()
     )
     if not row:
-        raise HTTPException(status_code=404, detail="menu not found")
+        raise MenuNotFoundError()
     return row
 
 
@@ -258,7 +268,7 @@ def _get_page_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsPage:
         .first()
     )
     if not row:
-        raise HTTPException(status_code=404, detail="page not found")
+        raise PageNotFoundError()
     return row
 
 
@@ -492,7 +502,7 @@ def _get_category_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsCat
         .first()
     )
     if not row:
-        raise HTTPException(status_code=404, detail="category not found")
+        raise CategoryNotFoundError()
     return row
 
 
@@ -504,7 +514,7 @@ def _get_tag_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsTag:
         .first()
     )
     if not row:
-        raise HTTPException(status_code=404, detail="tag not found")
+        raise TagNotFoundError()
     return row
 
 
@@ -516,7 +526,7 @@ def _get_post_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsPost:
         .first()
     )
     if not row:
-        raise HTTPException(status_code=404, detail="post not found")
+        raise PostNotFoundError()
     return row
 
 
@@ -532,7 +542,7 @@ def _get_main_site(db: Session) -> models.CmsSite:
     """Obtiene el site principal CCF (site_key='ccf')."""
     site = crud.get_cms_site_by_key(db, "ccf")
     if not site:
-        raise HTTPException(status_code=404, detail="main site not found")
+        raise SiteNotFoundError("Main site not found")
     return site
 
 
@@ -545,4 +555,4 @@ def _ensure_canonical_category(db: Session, site_id: UUID, category_slug: str) -
 
 def _validate_canonical_category(category_slug: str) -> None:
     if category_slug not in CANONICAL_CATEGORIES:
-        raise HTTPException(status_code=422, detail="invalid canonical category")
+        raise CmsValidationError("Invalid canonical category", error_code="invalid_canonical_category")

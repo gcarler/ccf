@@ -6,7 +6,7 @@ import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
-import { listTestimonials } from "@/lib/cms/v2";
+import { listCmsPostsByCategory, postToTestimonial } from "@/lib/cms/v2";
 import { SITE_KEY } from "@/lib/site-config";
 import clsx from "clsx";
 import { motion } from 'framer-motion';
@@ -88,7 +88,7 @@ export default function AdminDashboardPage() {
       setLoading(true);
       try {
         const [testRes, taskRes, insightRes, statsRes] = await Promise.allSettled([
-          listTestimonials(SITE_KEY, undefined, token),
+          listCmsPostsByCategory(SITE_KEY, "testimonials", undefined, token).then(posts => posts.map(postToTestimonial)),
           apiFetch<AgentTask[]>("/agents/tasks", { token, cache: 'no-store', signal }),
           apiFetch<AgentInsight[]>("/agents/insights", { token, cache: 'no-store', signal }),
           apiFetch<AdminStats>("/admin/stats", { token, cache: 'no-store', signal }),
