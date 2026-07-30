@@ -91,6 +91,13 @@ export interface ProjectActivityItem {
   created_at: string;
 }
 
+export interface ProjectCommentAttachment {
+  url: string;
+  type: string;
+  name: string;
+  size: number;
+}
+
 export interface ProjectCommentItem {
   id: string;
   project_id: string;
@@ -102,6 +109,8 @@ export interface ProjectCommentItem {
   is_resolved: boolean;
   created_at: string;
   updated_at: string;
+  attachments?: ProjectCommentAttachment[];
+  mentions?: string[];
 }
 
 export interface ProjectPortfolioSummaryRow {
