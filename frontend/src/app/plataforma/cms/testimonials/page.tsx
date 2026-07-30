@@ -20,7 +20,9 @@ import {
   Search, Plus, Users, ChevronRight, X, ImageIcon, PlayCircle, Headphones, Save, RotateCcw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import TestimonialForm from "@/components/TestimonialForm";
+import RichEditor from "@/components/cms/RichEditor";
 import clsx from "clsx";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
@@ -109,6 +111,7 @@ export default function CmsTestimonialsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState<Testimonial | null>(null);
+  const [pendingArchive, setPendingArchive] = useState<Testimonial | null>(null);
   const [processing, setProcessing] = useState<string | null>(null);
   const [viewType, setViewType] = useState<ViewType>("grid");
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
@@ -168,8 +171,10 @@ export default function CmsTestimonialsPage() {
       const normalized = { ...updated, status: updated.status || (updated.is_approved ? "approved" : "pending"), published: updated.is_approved ?? next ?? false };
       setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, ...normalized } : i));
       if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
+      toast.success(`Testimonio ${next ? "aprobado" : "rechazado"}`);
     } catch {
       setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: t.published } : i));
+      toast.error("Error al cambiar estado");
     } finally {
       setProcessing(null);
     }
@@ -178,19 +183,37 @@ export default function CmsTestimonialsPage() {
   const toggleArchive = async (t: Testimonial) => {
     if (!token) return;
     const restore = t.status === "archived";
+    if (!restore) {
+      setPendingArchive(t);
+      return;
+    }
     setProcessing(t.id);
     try {
-      if (restore) {
-        const updated = postToTestimonial(await patchCmsPostByCategory(SITE_KEY, t.slug, "testimonials", { status: "draft" }, token));
-        const normalized = { ...updated, published: false, status: "pending" };
-        setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...normalized } : item));
-        if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
-      } else {
-        await deleteCmsPostByCategory(SITE_KEY, t.slug, "testimonials", token);
-        const archived = { ...t, published: false, is_approved: false, show_on_home: false, status: "archived" };
-        setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...archived } : item));
-        if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...archived } : null);
-      }
+      const updated = postToTestimonial(await patchCmsPostByCategory(SITE_KEY, t.slug, "testimonials", { status: "draft" }, token));
+      const normalized = { ...updated, published: false, status: "pending" };
+      setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...normalized } : item));
+      if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
+      toast.success("Testimonio restaurado");
+    } catch {
+      toast.error("Error al restaurar");
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const confirmArchive = async () => {
+    const t = pendingArchive;
+    if (!token || !t) return;
+    setProcessing(t.id);
+    setPendingArchive(null);
+    try {
+      await deleteCmsPostByCategory(SITE_KEY, t.slug, "testimonials", token);
+      const archived = { ...t, published: false, is_approved: false, show_on_home: false, status: "archived" };
+      setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...archived } : item));
+      if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...archived } : null);
+      toast.success("Testimonio archivado");
+    } catch {
+      toast.error("Error al archivar");
     } finally {
       setProcessing(null);
     }
@@ -221,6 +244,9 @@ export default function CmsTestimonialsPage() {
       const normalized = { ...updated, status: updated.status || (updated.is_approved ? "approved" : "pending"), published: updated.is_approved ?? selected.published ?? false };
       setSelected(prev => prev ? { ...prev, ...normalized } : prev);
       setTestimonials(prev => prev.map(item => item.id === selected.id ? { ...item, ...normalized } : item));
+      toast.success("Testimonio guardado");
+    } catch {
+      toast.error("Error al guardar");
     } finally {
       setProcessing(null);
     }
@@ -673,11 +699,12 @@ export default function CmsTestimonialsPage() {
               <div className="p-3 flex-1 space-y-4">
                 <div className="space-y-2">
                   <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Contenido completo</p>
-                  <textarea
-                    value={selected.content}
-                    onChange={event => setSelected(prev => prev ? { ...prev, content: event.target.value } : prev)}
-                    rows={5}
-                    className="w-full resize-none text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg p-4 border border-[hsl(var(--border))] dark:border-white/10 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
+                  <RichEditor
+                    content={selected.content}
+                    onChange={(html) => setSelected(prev => prev ? { ...prev, content: html } : prev)}
+                    readOnly={!canEdit}
+                    placeholder="Contenido del testimonio..."
+                    minHeight="150px"
                   />
                 </div>
 
@@ -860,21 +887,19 @@ export default function CmsTestimonialsPage() {
         </AnimatePresence>
       </div>
 
-      {/* ── DRAWER New testimonial form ── */}
+      {/* Form Drawer */}
       <WorkspaceDrawer
-          isOpen={showForm}
-          onClose={() => setShowForm(false)}
-          title="Nuevo Testimonio"
-          subtitle="Registrar experiencia"
+        isOpen={showForm}
+        onClose={() => setShowForm(false)}
+        title="Crear Testimonio"
       >
-          <div className="mt-4">
-              <TestimonialForm
-                userId={(user as { id?: string })?.id ?? null}
-                authorPersonaId={(user as { persona_id?: string })?.persona_id ?? null}
-                token={token ?? ''}
-                onSubmitted={() => { setShowForm(false); fetchTestimonials(); }}
-              />
-          </div>
+        <TestimonialForm
+          token={token!}
+          onSubmitted={() => {
+            setShowForm(false);
+            if (SITE_KEY) fetchTestimonials();
+          }}
+        />
       </WorkspaceDrawer>
     </div>
   );

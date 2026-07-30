@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
+import RichEditor from "@/components/cms/RichEditor";
 import clsx from "clsx";
 import {
   createCmsPost,
@@ -601,13 +602,12 @@ export default function CmsPostsManagement() {
                 </div>
                 <div className="space-y-1.5">
                   <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Contenido</span>
-                  <textarea
-                    rows={8}
-                    value={selectedPost.content || ""}
-                    onChange={(e) => setSelectedPost({ ...selectedPost, content: e.target.value })}
-                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar font-mono"
-                    disabled={!canEdit}
-                    placeholder="Contenido del post (puede ser Markdown o HTML)..."
+                  <RichEditor
+                    content={selectedPost.content || ""}
+                    onChange={(html) => setSelectedPost({ ...selectedPost, content: html })}
+                    readOnly={!canEdit}
+                    placeholder="Contenido del post..."
+                    minHeight="300px"
                   />
                 </div>
                 <div className="space-y-1.5">

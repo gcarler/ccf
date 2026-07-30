@@ -44,6 +44,7 @@ export default function CmsPagesManagement() {
   const [newTitle, setNewTitle] = useState("");
   const [selectedPage, setSelectedPage] = useState<CmsPage | null>(null);
   const [pendingArchivePage, setPendingArchivePage] = useState<CmsPage | null>(null);
+  const [pendingArchiveSelected, setPendingArchiveSelected] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const canEdit = canEditCms(user?.role);
 
@@ -230,7 +231,12 @@ export default function CmsPagesManagement() {
     }
   };
 
-  const handleArchiveSelected = async () => {
+  const handleArchiveSelected = () => {
+    if (!token || !canEdit || selectedIds.size === 0) return;
+    setPendingArchiveSelected(true);
+  };
+
+  const confirmArchiveSelected = async () => {
     if (!token || !canEdit || selectedIds.size === 0) return;
     const selectedPages = pages.filter((page) => selectedIds.has(page.id) && page.status !== "archived");
     try {
@@ -243,6 +249,8 @@ export default function CmsPagesManagement() {
       await fetchPages(siteKey);
     } catch (error) {
       toast.error("Error al archivar páginas seleccionadas");
+    } finally {
+      setPendingArchiveSelected(false);
     }
   };
 
@@ -797,38 +805,67 @@ export default function CmsPagesManagement() {
         )}
       </SidePanel>
 
-      <SidePanel
-        isOpen={!!pendingArchivePage}
-        onClose={() => setPendingArchivePage(null)}
-        title="Archivar pagina"
-        subtitle={pendingArchivePage ? `/${pendingArchivePage.slug}` : undefined}
-      >
+      <AnimatePresence>
         {pendingArchivePage && (
-          <div className="space-y-4">
-            <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-4 text-warning-text dark:border-[hsl(var(--warning)/100%)]/30 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
-              <p className="text-sm font-semibold">{pendingArchivePage.title}</p>
-              <p className="mt-2 text-xs leading-5 text-warning-text dark:text-[hsl(var(--warning))]">
-                La pagina quedara archivada y podras restaurarla despues.
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+            >
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar página?</h3>
+              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
+                La página "{pendingArchivePage.title}" quedará archivada y podrás restaurarla después.
               </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPendingArchivePage(null)}
-                className="flex-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmArchivePage}
-                disabled={!canEdit}
-                className="flex-1 rounded-md bg-[hsl(var(--warning))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--warning))] disabled:opacity-50"
-              >
-                Archivar
-              </button>
-            </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setPendingArchivePage(null)}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmArchivePage}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
+                >
+                  Archivar
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
-      </SidePanel>
+
+        {pendingArchiveSelected && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+            >
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar {selectedIds.size} páginas?</h3>
+              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
+                Las páginas seleccionadas quedarán archivadas y podrás restaurarlas después.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setPendingArchiveSelected(false)}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmArchiveSelected}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
+                >
+                  Archivar todas
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

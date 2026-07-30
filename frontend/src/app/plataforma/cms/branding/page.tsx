@@ -17,6 +17,7 @@ import { listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
 import { canEditCms } from "@/lib/cms/permissions";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface CmsMediaItem {
   id: number;
@@ -39,6 +40,7 @@ export default function CmsBrandingPage() {
   const [uploading, setUploading] = useState(false);
   const [mediaItems, setMediaItems] = useState<CmsMediaItem[]>([]);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [pendingRemoveLogo, setPendingRemoveLogo] = useState(false);
 
   // Initialize from current branding
   useEffect(() => {
@@ -124,8 +126,13 @@ export default function CmsBrandingPage() {
       toast.error("No tienes permisos para editar el branding");
       return;
     }
+    setPendingRemoveLogo(true);
+  };
+
+  const confirmRemoveLogo = () => {
     setLogoUrl("");
     toast.success("Logo eliminado (se usará el fallback)");
+    setPendingRemoveLogo(false);
   };
 
   return (
@@ -364,6 +371,38 @@ export default function CmsBrandingPage() {
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {pendingRemoveLogo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+            >
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Eliminar logo?</h3>
+              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
+                Se usará un fallback de texto en su lugar. Recuerda hacer clic en "Guardar" para aplicar los cambios.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setPendingRemoveLogo(false)}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmRemoveLogo}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--danger))] hover:opacity-90 text-white transition-colors"
+                >
+                  Eliminar logo
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

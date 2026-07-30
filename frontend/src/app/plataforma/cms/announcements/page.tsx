@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
+import { toast } from 'sonner';
 import { SITE_KEY } from '@/lib/site-config';
 import {
     listAnnouncements,
@@ -20,7 +20,8 @@ import {
     Edit3,
     X,
     CheckCircle2,
-    Archive
+    Archive,
+    Search
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
@@ -62,12 +63,13 @@ const normalizeAnnouncement = (item: V1AnnouncementShape): Announcement => ({
 });
 
 export default function AnnouncementsAdmin() {
-    const { token, isAuthenticated } = useAuth();
-    const { addToast } = useToast();
     const router = useRouter();
+    const { token, isAuthenticated } = useAuth();
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewType, setViewType] = useState<ViewType>('grid');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [pendingArchive, setPendingArchive] = useState<Announcement | null>(null);
 
     const fetchAnnouncements = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
@@ -77,11 +79,11 @@ export default function AnnouncementsAdmin() {
             setAnnouncements(Array.isArray(data) ? data.map(normalizeAnnouncement) : []);
         } catch (err) {
             console.error(err);
-            addToast("Error al sincronizar comunicados", "error");
+            toast.error("Error al sincronizar comunicados");
         } finally {
             setLoading(false);
         }
-    }, [token, addToast]);
+    }, [token]);
 
     useEffect(() => {
         if (!isAuthenticated) return;
@@ -92,19 +94,36 @@ export default function AnnouncementsAdmin() {
 
     const handleStatusChange = async (ann: Announcement, status: Announcement['status']) => {
         if (!token) return;
+        if (status === 'archived') {
+            setPendingArchive(ann);
+            return;
+        }
         try {
             const v1Status = status === 'published' ? 'active' : status === 'draft' ? 'draft' : 'archived';
             const updated = await setAnnouncementStatus(SITE_KEY, ann.slug, v1Status as 'draft' | 'active' | 'archived', token);
             setAnnouncements((items) => items.map((item) => item.id === ann.id ? normalizeAnnouncement(updated) : item));
-            addToast(`Comunicado marcado como ${STATUS_LABELS[status].toLowerCase()}`, "success");
+            toast.success(`Comunicado marcado como ${STATUS_LABELS[status].toLowerCase()}`);
         } catch (err) {
             console.error(err);
-            addToast("Error al actualizar el comunicado", "error");
+            toast.error("Error al actualizar el comunicado");
+        }
+    };
+
+    const confirmArchive = async () => {
+        if (!token || !pendingArchive) return;
+        try {
+            const updated = await setAnnouncementStatus(SITE_KEY, pendingArchive.slug, 'archived', token);
+            setAnnouncements((items) => items.map((item) => item.id === pendingArchive.id ? normalizeAnnouncement(updated) : item));
+            toast.success("Comunicado archivado");
+        } catch (err) {
+            toast.error("Error al archivar");
+        } finally {
+            setPendingArchive(null);
         }
     };
 
     const featuredAnn = announcements.find(a => a.featured && a.status === 'published') || announcements.find(a => a.status === 'published') || announcements[0];
-    const normalAnnouncements = announcements.filter(a => a.id !== featuredAnn?.id);
+    const normalAnnouncements = announcements.filter(a => a.id !== featuredAnn?.id && (a.title.toLowerCase().includes(searchQuery.toLowerCase()) || a.content.toLowerCase().includes(searchQuery.toLowerCase())));
     const groupedAnnouncements = [
         { id: 'published', label: 'Publicados', items: announcements.filter((ann) => ann.status === 'published') },
         { id: 'draft', label: 'Borradores', items: announcements.filter((ann) => ann.status === 'draft') },
@@ -323,12 +342,26 @@ export default function AnnouncementsAdmin() {
                             )}
 
                             {/* Feed Grid */}
-                            <section className="space-y-3">
-                                <div className="flex items-center justify-between px-4">
-                                    <h3 className="text-[hsl(var(--text-primary))] dark:text-white text-xl font-bold tracking-wide uppercase flex items-center gap-3">
+                            <section className="space-y-4">
+                                <div className="flex flex-col md:flex-row items-center justify-between px-4 gap-4">
+                                    <h3 className="text-[hsl(var(--text-primary))] dark:text-white text-xl font-bold tracking-wide uppercase flex items-center gap-3 shrink-0">
                                         <Megaphone size={20} className="text-[hsl(var(--primary))]" /> Últimas Actualizaciones
                                     </h3>
-                                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{announcements.filter((ann) => ann.status === 'published').length} Comunicados Publicados</span>
+                                    <div className="flex items-center gap-4 w-full md:w-auto flex-1 justify-end">
+                                        <div className="relative w-full md:max-w-xs">
+                                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
+                                            <input 
+                                                type="text"
+                                                placeholder="Buscar por título o contenido..."
+                                                value={searchQuery}
+                                                onChange={e => setSearchQuery(e.target.value)}
+                                                className="w-full pl-9 pr-4 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm focus:border-[hsl(var(--primary))] outline-none transition-colors"
+                                            />
+                                        </div>
+                                        <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide hidden lg:block">
+                                            {announcements.filter((ann) => ann.status === 'published').length} Publicados
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -394,6 +427,37 @@ export default function AnnouncementsAdmin() {
                     )}
                 </div>
             </main>
+            <AnimatePresence>
+                {pendingArchive && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+                        >
+                            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar comunicado?</h3>
+                            <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
+                                El comunicado dejará de estar visible inmediatamente.
+                            </p>
+                            <div className="flex gap-3 justify-end">
+                                <button
+                                    onClick={() => setPendingArchive(null)}
+                                    className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={confirmArchive}
+                                    className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
+                                >
+                                    Archivar
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

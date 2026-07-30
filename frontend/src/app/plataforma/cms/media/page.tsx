@@ -96,6 +96,7 @@ export default function CmsMediaLibrary() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [optimizingId, setOptimizingId] = useState<number | null>(null);
   const [_metadataSaving, setMetadataSaving] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ item: MediaItem, action: 'archive' | 'delete' } | null>(null);
   const [tagsText, setTagsText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -192,31 +193,48 @@ export default function CmsMediaLibrary() {
 
   const toggleArchiveItem = async (item: MediaItem) => {
     if (!token) return;
+    if (item.status !== "archived") {
+      setPendingAction({ item, action: 'archive' });
+      return;
+    }
     setDeletingId(item.id);
     try {
-      const nextStatus = item.status === "archived" ? "active" : "archived";
-      const updated = item.status === "archived"
-        ? await apiFetch<MediaItem>(`/cms/media/${item.id}`, { method: "PATCH", token, body: { status: nextStatus } })
-        : await apiFetch<MediaItem | undefined>(`/cms/media/${item.id}`, { method: "DELETE", token }).then(() => ({ ...item, status: "archived" }));
-      setItems(prev => prev.map(i => i.id === item.id ? { ...i, ...updated, status: nextStatus } : i));
-      if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, ...updated, status: nextStatus } : prev);
+      const updated = await apiFetch<MediaItem>(`/cms/media/${item.id}`, { method: "PATCH", token, body: { status: "active" } });
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, ...updated, status: "active" } : i));
+      if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, ...updated, status: "active" } : prev);
+      toast.success("Archivo restaurado");
     } catch (err) {
-      toast.error("Error al archivar medio");
+      toast.error("Error al restaurar medio");
     } finally {
       setDeletingId(null);
     }
   };
 
   const deleteItem = async (item: MediaItem) => {
-    if (!token || !confirm("¿Eliminar permanentemente este archivo? Esta acción no se puede deshacer.")) return;
+    if (!token) return;
+    setPendingAction({ item, action: 'delete' });
+  };
+
+  const confirmAction = async () => {
+    if (!token || !pendingAction) return;
+    const { item, action } = pendingAction;
+    setPendingAction(null);
     setDeletingId(item.id);
+    
     try {
-      await apiFetch(`/cms/media/${item.id}?permanent=true`, { method: "DELETE", token });
-      setItems(prev => prev.filter(i => i.id !== item.id));
-      if (selectedItem?.id === item.id) setSelectedItem(null);
-      toast.success("Archivo eliminado permanentemente");
+      if (action === 'archive') {
+        await apiFetch<MediaItem | undefined>(`/cms/media/${item.id}`, { method: "DELETE", token });
+        setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: "archived" } : i));
+        if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, status: "archived" } : prev);
+        toast.success("Archivo archivado");
+      } else {
+        await apiFetch(`/cms/media/${item.id}?permanent=true`, { method: "DELETE", token });
+        setItems(prev => prev.filter(i => i.id !== item.id));
+        if (selectedItem?.id === item.id) setSelectedItem(null);
+        toast.success("Archivo eliminado permanentemente");
+      }
     } catch (err) {
-      toast.error("Error al eliminar archivo");
+      toast.error(action === 'archive' ? "Error al archivar" : "Error al eliminar archivo");
     } finally {
       setDeletingId(null);
     }
@@ -627,6 +645,45 @@ export default function CmsMediaLibrary() {
           )}
         </div>
       </div>
+      
+      <AnimatePresence>
+        {pendingAction && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+            >
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">
+                {pendingAction.action === 'archive' ? '¿Archivar archivo?' : '¿Eliminar permanentemente?'}
+              </h3>
+              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
+                {pendingAction.action === 'archive' 
+                  ? 'El archivo se moverá a la papelera (archivos inactivos).' 
+                  : 'Esta acción no se puede deshacer. Se borrará permanentemente de los servidores.'}
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setPendingAction(null)}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmAction}
+                  className={clsx(
+                    "px-4 py-2 rounded-lg text-sm font-semibold transition-colors text-white",
+                    pendingAction.action === 'archive' ? "bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))]" : "bg-[hsl(var(--danger))] hover:opacity-90"
+                  )}
+                >
+                  {pendingAction.action === 'archive' ? 'Archivar' : 'Eliminar'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

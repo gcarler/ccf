@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { SITE_KEY } from "@/lib/site-config";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Archive,
   FolderOpen,
@@ -41,6 +41,7 @@ export default function CmsCategoriesManagement() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CmsCategory | null>(null);
+  const [pendingArchive, setPendingArchive] = useState<CmsCategory | null>(null);
   const canEdit = canEditCms(user?.role);
 
   const fetchData = useCallback(async (targetSite: string) => {
@@ -107,14 +108,24 @@ export default function CmsCategoriesManagement() {
     }
   };
 
-  const handleArchive = async (cat: CmsCategory) => {
-    if (!token || !canEdit) return;
+  const handleArchive = (cat: CmsCategory) => {
+    if (!canEdit) return;
+    setPendingArchive(cat);
+  };
+
+  const confirmArchive = async () => {
+    if (!token || !canEdit || !pendingArchive) return;
     try {
-      await deleteCmsCategory(siteKey, cat.slug, token);
+      await deleteCmsCategory(siteKey, pendingArchive.slug, token);
       toast.success("Categoría archivada");
       await fetchData(siteKey);
+      if (selectedCategory?.id === pendingArchive.id) {
+        setSelectedCategory({ ...selectedCategory, is_active: false });
+      }
     } catch (error) {
       toast.error("Error al archivar categoría");
+    } finally {
+      setPendingArchive(null);
     }
   };
 
@@ -435,6 +446,38 @@ export default function CmsCategoriesManagement() {
           </div>
         )}
       </SidePanel>
+
+      <AnimatePresence>
+        {pendingArchive && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+            >
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar categoría?</h3>
+              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
+                La categoría dejará de estar disponible, pero podrás restaurarla luego.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setPendingArchive(null)}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmArchive}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
+                >
+                  Archivar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
