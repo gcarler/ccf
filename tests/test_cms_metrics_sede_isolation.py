@@ -59,18 +59,47 @@ def _persona_in(db, sede_id, email_suffix):
     return p
 
 
-def _seed_testimonial_in_sede(db, author_persona, sede_id, content):
-    t = models.Testimonial(
-        id=_uuid.uuid4(),
-        content=content,
-        author_persona_id=author_persona.id if author_persona else None,
-        sede_id=sede_id,
-        status="pending",
-        is_approved=False,
+def _seed_testimonial_in_sede(
+    db, author_persona, sede_id, content, is_approved=False
+):
+    """Seed a CmsPost categorized as testimonials.
+
+    The v1→v2 migration moved testimonials to CmsPost; this helper
+    creates one directly to test the API-layer without the legacy table.
+    """
+    from backend.api.cms_v1_adapters import (
+        get_or_create_testimonial_category,
+        get_or_create_testimonial_site,
     )
-    db.add(t)
+
+    site = get_or_create_testimonial_site(db, sede_id)
+    category = get_or_create_testimonial_category(db, site.id)
+
+    post_status = "published" if is_approved else "draft"
+    post = models.CmsPost(
+        id=_uuid.uuid4(),
+        site_id=site.id,
+        slug=f"testimonial-{_uuid.uuid4().hex[:8]}",
+        title=content[:50] or "Testimonial",
+        excerpt=content[:200] if content else None,
+        content=content,
+        featured_image_url=None,
+        status=post_status,
+        seo_json={
+            "emotion": "Gratitud",
+            "media_type": "text",
+            "show_on_home": False,
+            "content_type": "testimonial",
+        },
+        author_persona_id=author_persona.id if author_persona else None,
+        created_by_persona_id=author_persona.id if author_persona else None,
+        updated_by_persona_id=author_persona.id if author_persona else None,
+    )
+    db.add(post)
     db.flush()
-    return t
+    post.categories.append(category)
+    db.flush()
+    return post
 
 
 def _seed_announcement_in_sede(db, persona, sede_id, title, content):
@@ -202,10 +231,20 @@ def test_content_metrics_overview_superadmin_sees_all(
     package) para que ``_scope_cms_*_by_user_sede`` aplique la rama
     superadmin.
     """
+    # Patch _actor_sede_or_none in both the definition module AND the
+    # modules that import it directly so that all call sites see None.
+    from backend.api import cms as _cms_api_module
     from backend.api._cms_helpers import _shared as _cms_shared_module
 
     monkeypatch.setattr(
         _cms_shared_module,
+        "_actor_sede_or_none",
+        lambda db, current_user: None,
+    )
+    # cms.py already imported _actor_sede_or_none at module load time,
+    # so its local reference must be patched too.
+    monkeypatch.setattr(
+        _cms_api_module,
         "_actor_sede_or_none",
         lambda db, current_user: None,
     )
@@ -243,15 +282,13 @@ def test_agents_analytics_summary_pending_testimonials_scoped_by_sede(
     testimonios del platform, sumando el leak como ``pending``.
     """
     (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
-    # sede_a: 1 pending, 1 approved
-    t_a_pending = _seed_testimonial_in_sede(
+    # sede_a: 1 pending (default), 1 approved
+    _seed_testimonial_in_sede(
         db_session, persona_a, sede_a.id, "a-pending"
     )
-    t_a_pending.is_approved = False
-    t_a_approved = _seed_testimonial_in_sede(
-        db_session, persona_a, sede_a.id, "a-approved"
+    _seed_testimonial_in_sede(
+        db_session, persona_a, sede_a.id, "a-approved", is_approved=True
     )
-    t_a_approved.is_approved = True
     # sede_b: 2 pending (NO deben contar para admin A)
     _seed_testimonial_in_sede(db_session, persona_b, sede_b.id, "b-pending-1")
     _seed_testimonial_in_sede(db_session, persona_b, sede_b.id, "b-pending-2")
@@ -281,10 +318,19 @@ def test_agents_analytics_summary_superadmin_sees_all_pending(
     ``test_cms_pastoral_team_list_allows_both_for_superadmin`` en
     ``test_cms_sede_isolation.py``.
     """
+    # Patch _actor_sede_or_none in the definition module AND in the
+    # importing modules (agents, cms_helpers, etc.).
+    from backend.api import agents as _agents_module
     from backend.api._cms_helpers import _shared as _cms_shared_module
 
     monkeypatch.setattr(
         _cms_shared_module,
+        "_actor_sede_or_none",
+        lambda db, current_user: None,
+    )
+    # agents.py already imported _actor_sede_or_none at module load time.
+    monkeypatch.setattr(
+        _agents_module,
         "_actor_sede_or_none",
         lambda db, current_user: None,
     )
