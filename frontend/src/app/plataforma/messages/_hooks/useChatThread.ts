@@ -5,7 +5,7 @@ import { useWorkspaceSocket } from '@/hooks/useWorkspaceSocket';
 import { apiFetch } from '@/lib/http';
 import type { ConversationRead, DirectMessageItem, WsEvent } from '@/types/directMessages';
 
-interface AttachmentMeta {
+export interface AttachmentMeta {
     url: string;
     type: string;
     name: string;
@@ -15,7 +15,6 @@ interface AttachmentMeta {
 interface UseChatThreadOptions {
     token: string | null;
     activeConv: ConversationRead | null;
-    userPersonaId: string;
     onMessage?: (conversationId: string, message: DirectMessageItem) => void;
 }
 
@@ -25,8 +24,9 @@ export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOpt
     const [sending, setSending] = useState(false);
     const [replyTo, setReplyTo] = useState<DirectMessageItem | null>(null);
     const messagesRef = useRef<DirectMessageItem[]>([]);
-
+    const activeConvIdRef = useRef<string | null>(null);
     const activeConvId = activeConv?.id ?? null;
+    activeConvIdRef.current = activeConvId;
     messagesRef.current = messages;
 
     // Load messages when conversation changes
@@ -74,28 +74,23 @@ export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOpt
         }
     }, [activeConvId, loading, token]);
 
-    const handleSocketEvent = useCallback(
-        (payload: WsEvent) => {
-            if (
-                payload.event === 'direct_message' &&
-                'conversation_id' in payload &&
-                'message' in payload
-            ) {
-                const evt = payload as { conversation_id: string; message: DirectMessageItem };
-                if (evt.conversation_id === activeConvIdRef.current) {
-                    setMessages((prev) => {
-                        if (prev.some((m) => m.id === evt.message.id)) return prev;
-                        return [...prev, evt.message];
-                    });
-                }
-                onMessage?.(evt.conversation_id, evt.message);
+    const handleSocketEvent = useCallback((payload: WsEvent) => {
+        if (
+            payload.event === 'direct_message' &&
+            'conversation_id' in payload &&
+            'message' in payload
+        ) {
+            const evt = payload as { conversation_id: string; message: DirectMessageItem };
+            const currentId = activeConvIdRef.current;
+            if (evt.conversation_id === currentId) {
+                setMessages((prev) => {
+                    if (prev.some((m) => m.id === evt.message.id)) return prev;
+                    return [...prev, evt.message];
+                });
             }
-        },
-        [onMessage]
-    );
-
-    const activeConvIdRef = useRef<string | null>(null);
-    activeConvIdRef.current = activeConvId;
+            onMessage?.(evt.conversation_id, evt.message);
+        }
+    }, [onMessage]);
 
     const { status: wsStatus } = useWorkspaceSocket({
         rooms: activeConvId ? [`dm_${activeConvId}`] : [],
@@ -103,31 +98,21 @@ export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOpt
         onEvent: handleSocketEvent,
     });
 
-    const uploadAttachment = useCallback(
-        async (file: File, onUpload?: (att: AttachmentMeta) => Promise<void>) => {
-            if (!token) return null;
-            const formData = new FormData();
-            formData.append('file', file);
-            const att = await apiFetch<AttachmentMeta>('/chat/upload-attachment', {
-                method: 'POST',
-                token,
-                body: formData,
-            });
-            await onUpload?.(att);
-            return att;
-        },
-        [token]
-    );
-
     const sendMessage = useCallback(
         async (content: string, opts: { attachment?: File; replyTo?: DirectMessageItem; mentions: string[] }) => {
-            if (!token || !activeConvId || sending) return;
+            if (!token || !activeConvId) return { error: 'send' as const };
             setSending(true);
 
             let att: AttachmentMeta | null = null;
             if (opts.attachment) {
                 try {
-                    const uploaded = await uploadAttachment(opts.attachment);
+                    const formData = new FormData();
+                    formData.append('file', opts.attachment);
+                    const uploaded = await apiFetch<AttachmentMeta>('/chat/upload-attachment', {
+                        method: 'POST',
+                        token,
+                        body: formData,
+                    });
                     if (uploaded) att = uploaded;
                 } catch {
                     setSending(false);
@@ -159,7 +144,7 @@ export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOpt
                 setSending(false);
             }
         },
-        [activeConvId, sending, token, uploadAttachment]
+        [activeConvId, token]
     );
 
     return {
