@@ -14,8 +14,10 @@ import {
     Maximize2,
     Info,
     Link2,
-    Plus
+    Plus,
+    Crop
 } from 'lucide-react';
+import CmsImageEditorModal from '@/components/cms/CmsImageEditorModal';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -56,6 +58,7 @@ export default function CmsMediaDetailPage() {
     const [saving, setSaving] = useState(false);
     const [tagsText, setTagsText] = useState('');
     const [pendingDelete, setPendingDelete] = useState(false);
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
 
     useEffect(() => {
         if (!token || !id) return;
@@ -160,6 +163,11 @@ export default function CmsMediaDetailPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
+                        {item.mime_type?.includes('image') && (
+                            <button onClick={() => setIsEditorOpen(true)} title="Editor de imagen (Crop/Recorte, Rotate/Rotación, Canvas, Brightness/Brillo, Flip/Voltear)" className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 shadow-lg transition-all">
+                                <Crop size={14} /> Editar imagen
+                            </button>
+                        )}
                         <button onClick={toggleArchiveItem} className={`p-2 rounded-md transition-all ${item.status === 'archived' ? 'text-success-text hover:bg-[hsl(var(--success))]/10' : 'text-warning-text hover:bg-[hsl(var(--warning))]/10'}`}>
                             {item.status === 'archived' ? <RotateCcw size={20} /> : <Archive size={20} />}
                         </button>
@@ -205,11 +213,16 @@ export default function CmsMediaDetailPage() {
                             </div>
                         </div>
 
-                        <div className="flex gap-4">
-                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all">
+                        <div className="flex flex-wrap gap-3">
+                            {item.mime_type?.includes('image') && (
+                                <button onClick={() => setIsEditorOpen(true)} title="Recorte/Crop, Rotación/Rotate, Canvas, Brillo/Brightness, Voltear/Flip" className="flex-1 min-w-[140px] py-3 bg-blue-600 text-white rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-blue-500 transition-all shadow">
+                                    <Crop size={14} /> Editar Imagen
+                                </button>
+                            )}
+                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 min-w-[140px] py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all">
                                 <Download size={14} /> Descargar Original
                             </button>
-                            <button onClick={copyUrl} className="flex-1 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all">
+                            <button onClick={copyUrl} className="flex-1 min-w-[140px] py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all">
                                 <Link2 size={14} /> Copiar URL
                             </button>
                         </div>
@@ -304,6 +317,16 @@ export default function CmsMediaDetailPage() {
                         </div>
                     </div>
                 </div>
+            )}
+            {isEditorOpen && item && (
+                <CmsImageEditorModal
+                    item={item}
+                    token={token}
+                    onClose={() => setIsEditorOpen(false)}
+                    onSaveSuccess={(newItem) => {
+                        router.push(`/plataforma/cms/media/${newItem.id}`);
+                    }}
+                />
             )}
         </div>
     );

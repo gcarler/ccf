@@ -746,3 +746,151 @@ class CmsPopupRead(BaseModel):
 
     model_config = orm_config
 
+
+# ── Contact Forms (R1-BE) ───────────────────────────────────────────────────
+
+class CmsFormCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=500)
+    fields: List[Dict[str, Any]] = Field(default_factory=list)
+    submit_button_text: str = Field(default="Enviar", max_length=100)
+    success_message: str = Field(default="¡Gracias por tu mensaje!", max_length=255)
+    notify_emails: List[str] = Field(default_factory=list)
+    is_active: bool = Field(default=True)
+
+
+class CmsFormUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=500)
+    fields: Optional[List[Dict[str, Any]]] = None
+    submit_button_text: Optional[str] = Field(default=None, max_length=100)
+    success_message: Optional[str] = Field(default=None, max_length=255)
+    notify_emails: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+
+
+class CmsFormRead(BaseModel):
+    id: UUID
+    site_id: UUID
+    name: str
+    description: Optional[str] = None
+    fields: List[Dict[str, Any]] = Field(default_factory=list)
+    submit_button_text: str = "Enviar"
+    success_message: str = "¡Gracias por tu mensaje!"
+    notify_emails: List[str] = Field(default_factory=list)
+    is_active: bool = True
+    created_at: datetime
+    updated_at: datetime
+    submission_count: Optional[int] = None
+
+    model_config = orm_config
+
+
+class CmsFormSubmissionCreate(BaseModel):
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CmsFormSubmissionRead(BaseModel):
+    id: UUID
+    form_id: UUID
+    data: Dict[str, Any]
+    submitted_at: datetime
+    ip_address: Optional[str] = None
+
+    model_config = orm_config
+
+
+class CmsFormSubmissionPaginated(BaseModel):
+    page: int
+    page_size: int
+    total: int
+    items: List[CmsFormSubmissionRead]
+
+
+# ── Email Marketing / Newsletter (R2-BE) ───────────────────────────────────
+
+NewsletterStatus = Literal["draft", "scheduled", "sent"]
+SubscriberSource = Literal["form", "manual", "import"]
+
+
+class CmsNewsletterCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    subject: str = Field(..., min_length=1, max_length=255)
+    content_html: str = Field(..., description="HTML content of newsletter")
+    status: NewsletterStatus = Field(default="draft")
+    scheduled_at: Optional[datetime] = None
+
+
+class CmsNewsletterUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    subject: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    content_html: Optional[str] = None
+    status: Optional[NewsletterStatus] = None
+    scheduled_at: Optional[datetime] = None
+
+
+class CmsNewsletterRead(BaseModel):
+    id: UUID
+    site_id: UUID
+    name: str
+    subject: str
+    content_html: str
+    status: str
+    scheduled_at: Optional[datetime] = None
+    sent_at: Optional[datetime] = None
+    recipient_count: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = orm_config
+
+
+class CmsSubscriberCreate(BaseModel):
+    email: str = Field(..., min_length=3, max_length=255)
+    name: Optional[str] = Field(default=None, max_length=255)
+    is_active: bool = Field(default=True)
+    source: SubscriberSource = Field(default="manual")
+
+
+class CmsSubscriberUpdate(BaseModel):
+    email: Optional[str] = Field(default=None, min_length=3, max_length=255)
+    name: Optional[str] = Field(default=None, max_length=255)
+    is_active: Optional[bool] = None
+    source: Optional[SubscriberSource] = None
+
+
+class CmsSubscriberRead(BaseModel):
+    id: UUID
+    site_id: UUID
+    email: str
+    name: Optional[str] = None
+    is_active: bool = True
+    subscribed_at: datetime
+    unsubscribed_at: Optional[datetime] = None
+    source: str = "manual"
+
+    model_config = orm_config
+
+
+class CmsSubscriberImportItem(BaseModel):
+    email: str
+    name: Optional[str] = None
+
+
+class CmsSubscriberImportPayload(BaseModel):
+    emails: Optional[List[str]] = None
+    subscribers: Optional[List[CmsSubscriberImportItem]] = None
+    csv_content: Optional[str] = None
+
+
+class CmsPublicSubscribeRequest(BaseModel):
+    site_key: Optional[str] = None
+    email: str = Field(..., min_length=3, max_length=255)
+    name: Optional[str] = Field(default=None, max_length=255)
+
+
+class CmsPublicUnsubscribeRequest(BaseModel):
+    site_key: Optional[str] = None
+    email: str = Field(..., min_length=3, max_length=255)
+
+

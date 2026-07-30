@@ -119,3 +119,13 @@ from backend.api.cms_v2 import popups as _popups_mod  # noqa: E402
 
 router.include_router(_popups_mod.router)
 
+from backend.api.cms_v2 import forms as _forms_mod  # noqa: E402
+
+router.include_router(_forms_mod.router)
+
+from backend.api.cms_v2 import newsletter as _newsletter_mod  # noqa: E402
+
+router.include_router(_newsletter_mod.router)
+
+
+

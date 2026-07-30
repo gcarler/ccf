@@ -40,6 +40,7 @@ from backend.crud.projects import (
 )
 from backend.mesh_websockets import manager
 from backend.services.comment_notifications import notify_mention
+from backend.services.mention_parser import resolve_mentions
 from backend.services.task_notifications import notify_task_assigned
 
 settings = get_settings()
@@ -87,8 +88,6 @@ def _notify_comment_mentions(
 ) -> None:
     if not comment.mentions:
         return
-    project = db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).first()
-    project_title = project.title if project else "Proyecto"
     task_title = ""
     if task_id:
         task = db.query(models.ProjectTask).filter(models.ProjectTask.id == _to_uuid(task_id)).first()
@@ -2034,13 +2033,20 @@ def create_comment(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     author_persona_id = get_user_persona_id(db, current_user.id)
+    resolved_mentions = resolve_mentions(
+        db,
+        content=content,
+        payload_mentions=payload.mentions or [],
+        author_id=author_persona_id,
+        user_sede=user_sede,
+    )
     comment = models.ProjectComment(
         project_id=_to_uuid(project_id),
         task_id=_to_uuid(task_id) if task_id else None,
         author_id=author_persona_id,
         content=content,
         attachments=[a.model_dump() for a in (payload.attachments or [])],
-        mentions=[_to_uuid(m) for m in (payload.mentions or []) if _to_uuid(m)],
+        mentions=resolved_mentions,
     )
     db.add(comment)
     _log_project_activity(
@@ -2068,13 +2074,20 @@ def create_project_comment(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     author_persona_id = get_user_persona_id(db, current_user.id)
+    resolved_mentions = resolve_mentions(
+        db,
+        content=payload.content,
+        payload_mentions=payload.mentions or [],
+        author_id=author_persona_id,
+        user_sede=user_sede,
+    )
     comment = models.ProjectComment(
         project_id=_to_uuid(project_id),
         task_id=_to_uuid(payload.task_id) if payload.task_id else None,
         author_id=author_persona_id,
         content=payload.content,
         attachments=[a.model_dump() for a in (payload.attachments or [])],
-        mentions=[_to_uuid(m) for m in (payload.mentions or []) if _to_uuid(m)],
+        mentions=resolved_mentions,
     )
     db.add(comment)
     _log_project_activity(
@@ -2113,10 +2126,31 @@ def update_project_comment(
         comment.is_resolved = payload.is_resolved
     if payload.attachments is not None:
         comment.attachments = [a.model_dump() for a in payload.attachments]
-    if payload.mentions is not None:
-        comment.mentions = [_to_uuid(m) for m in payload.mentions if _to_uuid(m)]
+    # Re-extract mentions from the updated content and merge with any
+    # explicit payload mentions so hand-written @mentions stay in sync.
+    previous_mentions = {str(m) for m in (comment.mentions or [])}
+    if payload.mentions is not None or payload.content is not None:
+        comment.mentions = resolve_mentions(
+            db,
+            content=comment.content,
+            payload_mentions=payload.mentions or [],
+            author_id=comment.author_id,
+            user_sede=user_sede,
+        )
     db.commit()
     db.refresh(comment)
+    # Notify only newly added mentions after an edit to avoid spamming
+    # users who were already mentioned in the original comment.
+    new_mentions = {str(m) for m in (comment.mentions or [])}
+    added_mentions = new_mentions - previous_mentions
+    if added_mentions:
+        added_uuids = [_to_uuid(m) for m in added_mentions]
+        comment.mentions = added_uuids
+        _notify_comment_mentions(
+            db, comment, str(comment.project_id), str(comment.task_id) if comment.task_id else None, user_sede
+        )
+        comment.mentions = [_to_uuid(m) for m in new_mentions]
+        db.commit()
     author = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()
     return _project_comment_to_schema(comment, author)
 
