@@ -181,7 +181,7 @@ def patch_admin_testimonial(
     post_update = testimonial_update_to_post_update(payload, post.status, post.seo_json)
     updated = crud.update_cms_post(
         db,
-        post=post,
+        post,
         payload=post_update,
         user_id=str(current_user.id),
     )
@@ -325,7 +325,7 @@ def patch_admin_announcement(
     )
     updated = crud.update_cms_post(
         db,
-        post=post,
+        post,
         payload=post_update,
         user_id=str(current_user.id),
     )
