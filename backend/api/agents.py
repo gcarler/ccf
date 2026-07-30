@@ -47,7 +47,6 @@ from pydantic import BaseModel
 from backend import crud, models, schemas
 from backend.agents.orchestrator import AgentOrchestrator
 from backend.api._cms_helpers import _actor_sede_or_none
-from backend.api.cms_v1_adapters import list_testimonial_posts
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import require_active_user, require_admin
@@ -104,9 +103,18 @@ def analytics_summary(
     # fue eliminada — contamos solo CmsPost.
     actor_sede = _actor_sede_or_none(db, current_user)
 
-    cms_testimonials = list_testimonial_posts(
-        db, sede_id=actor_sede, include_archived=True
+    # Inline query para testimonials (adapters v1 eliminados).
+    query = db.query(models.CmsPost).join(models.CmsPost.categories).filter(
+        models.CmsCategory.slug == "testimonials"
     )
+    if actor_sede is not None:
+        query = query.join(models.CmsSite).filter(
+            models.CmsSite.sede_id == actor_sede
+        )
+    cms_testimonials = query.distinct().order_by(
+        models.CmsPost.created_at.desc()
+    ).all()
+
     pending_testimonials = sum(
         1 for p in cms_testimonials if p.status == "draft"
     )

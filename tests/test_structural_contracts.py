@@ -280,7 +280,7 @@ def test_platform_frontend_uses_persona_uuid_for_cms_and_audit_identity_labels()
     root = Path(__file__).resolve().parents[1]
     files = [
         root / "frontend" / "src" / "app" / "plataforma" / "cms" / "testimonials" / "page.tsx",
-        root / "frontend" / "src" / "app" / "plataforma" / "cms" / "testimonials" / "[id]" / "page.tsx",
+        root / "frontend" / "src" / "app" / "plataforma" / "cms" / "testimonials" / "[slug]" / "page.tsx",
         root / "frontend" / "src" / "app" / "plataforma" / "admin" / "audit" / "page.tsx",
     ]
     violations = []
@@ -289,7 +289,7 @@ def test_platform_frontend_uses_persona_uuid_for_cms_and_audit_identity_labels()
         rel = path.relative_to(root).as_posix()
         if rel.endswith("cms/testimonials/page.tsx") and "author_persona_id" not in content:
             violations.append(f"{rel} does not use author_persona_id")
-        if rel.endswith("cms/testimonials/[id]/page.tsx") and "author_persona_id" not in content:
+        if rel.endswith("cms/testimonials/[slug]/page.tsx") and "author_persona_id" not in content:
             violations.append(f"{rel} does not use author_persona_id")
         if rel.endswith("admin/audit/page.tsx") and "actor_persona_id" not in content:
             violations.append(f"{rel} does not use actor_persona_id")

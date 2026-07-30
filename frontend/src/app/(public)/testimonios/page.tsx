@@ -8,15 +8,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
 
-import { apiFetch } from "@/lib/http";
-import { Testimonial } from "@/lib/data/testimonios";
+import { getPublicTestimonials, PublicTestimonialItem } from "@/lib/cms/v2";
+import { SITE_KEY } from "@/lib/site-config";
 
 const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", bounce: 0.4 } }
 };
 
-function getTestimonialMediaUrl(t: Testimonial): string {
+function getTestimonialMediaUrl(t: PublicTestimonialItem): string {
     if (t.media_type === "image") return t.image_url || t.media_url || "";
     if (t.media_type === "video") return t.video_url || t.media_url || "";
     if (t.media_type === "podcast") return t.podcast_url || t.media_url || "";
@@ -24,7 +24,7 @@ function getTestimonialMediaUrl(t: Testimonial): string {
 }
 
 // Extracted Component for Expandable Testimonial Card
-function TestimonialCard({ t, isHighlight }: { t: Testimonial; isHighlight: boolean }) {
+function TestimonialCard({ t, isHighlight }: { t: PublicTestimonialItem; isHighlight: boolean }) {
     const limit = isHighlight ? 180 : 120;
     const isLongText = t.content.length > limit;
     const mediaUrl = getTestimonialMediaUrl(t);
@@ -162,13 +162,13 @@ export default function TestimoniosPage() {
     const heroPage = useCmsV2Page('testimonials');
     const heroContent = heroPage?.blocks?.hero;
     const feedContent = heroPage?.blocks?.feed;
-    const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+    const [testimonials, setTestimonials] = useState<PublicTestimonialItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
-        apiFetch<Testimonial[]>("/cms/testimonials", { silent: true })
-            .then((data) => setTestimonials(Array.isArray(data) ? data : []))
+        getPublicTestimonials(SITE_KEY)
+            .then((data) => setTestimonials(data))
             .catch(() => setTestimonials([]))
             .finally(() => setLoading(false));
     }, []);

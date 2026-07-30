@@ -224,6 +224,30 @@ export interface CmsPublicPost {
   canonical_url?: string | null;
 }
 
+// ── v1-compat shapes (Testimonial / Announcement) ───────────────────────────
+// These mirror the backend CmsTestimonialRead / CmsAnnouncementRead schemas
+// which flatten seo_json fields for gradual frontend migration.
+
+export interface CmsTestimonial extends CmsPostWithTaxonomies {
+  emotion: string;
+  media_type: string;
+  media_url?: string | null;
+  image_url?: string | null;
+  video_url?: string | null;
+  podcast_url?: string | null;
+  is_approved: boolean;
+  show_on_home: boolean;
+}
+
+export interface CmsAnnouncement extends CmsPostWithTaxonomies {
+  category: string;
+  is_featured: boolean;
+  image_url?: string | null;
+  is_active: boolean;
+}
+
+export type CanonicalCategory = "testimonials" | "announcements";
+
 export interface BreadcrumbItem {
   name: string;
   item?: string;

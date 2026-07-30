@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 import unicodedata
 import uuid
 from datetime import datetime
@@ -33,6 +34,10 @@ logger = logging.getLogger(__name__)
 
 CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "pastor"}
 CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
+
+# ── Rate limiting ──────────────────────────────────────────────────────────────
+
+PUBLIC_CMS_RATE_LIMIT = 240
 
 
 # ── Commit / conflict helper ────────────────────────────────────────────────
@@ -294,3 +299,250 @@ def _snapshot_section_read(
         created_at=timestamp,
         updated_at=timestamp,
     )
+
+
+# ── System Variable cache ──────────────────────────────────────────────────────
+# Shared across the package so that ``_build_section_defaults`` (called from both
+# ``pages.preview_page`` and ``public.public_page``) uses a single in-memory cache.
+
+_system_var_cache: dict[str, tuple[float, str]] = {}
+_SYSTEM_VAR_TTL = 300  # 5 minutes
+
+
+def _get_system_var(db: Session, site_key: str, var_key: str, default: str = "") -> str:
+    """Read a single SystemVariable by key, with optional site_key prefix.
+    Cached for 5 minutes per site_key+var_key to avoid repeated DB hits."""
+    cache_key = f"{site_key}:{var_key}"
+    now = time.monotonic()
+    if cache_key in _system_var_cache:
+        cached_time, cached_val = _system_var_cache[cache_key]
+        if now - cached_time < _SYSTEM_VAR_TTL:
+            return cached_val
+    row = db.query(models.SystemVariable).filter(
+        models.SystemVariable.key == f"{site_key}_{var_key}",
+        models.SystemVariable.deleted_at.is_(None),
+    ).first()
+    val = row.value if row and row.value else default
+    _system_var_cache[cache_key] = (now, val)
+    return val
+
+
+def _get_system_vars_batch(
+    db: Session, site_key: str, var_keys: tuple[str, ...]
+) -> dict[str, str]:
+    """Batch-read multiple SystemVariable rows for a site in one query (N+1 fix)."""
+    now = time.monotonic()
+    cached: dict[str, str] = {}
+    missing: list[str] = []
+    for var_key in var_keys:
+        cache_key = f"{site_key}:{var_key}"
+        hit = _system_var_cache.get(cache_key)
+        if hit is not None and now - hit[0] < _SYSTEM_VAR_TTL:
+            cached[var_key] = hit[1]
+        else:
+            missing.append(var_key)
+    if missing:
+        db_keys = [f"{site_key}_{k}" for k in missing]
+        rows = (
+            db.query(models.SystemVariable.key, models.SystemVariable.value)
+            .filter(
+                models.SystemVariable.key.in_(db_keys),
+                models.SystemVariable.deleted_at.is_(None),
+            )
+            .all()
+        )
+        found: dict[str, str] = {}
+        for row in rows:
+            suffix = row.key[len(f"{site_key}_"):] if row.key.startswith(f"{site_key}_") else row.key
+            found[suffix] = row.value
+        now_mono = time.monotonic()
+        for var_key in missing:
+            cache_key = f"{site_key}:{var_key}"
+            value = found.get(var_key, "")
+            _system_var_cache[cache_key] = (now_mono, value)
+            cached[var_key] = value
+    return cached
+
+
+def _build_section_defaults(
+    db: Session, site_key: str, section_type: str, props: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Fill empty section props with data from SystemVariable / DB / hardcoded."""
+    if props and any(
+        key in props
+        for key in (
+            "title", "subtitle", "body", "content", "items", "personas",
+            "pastors", "stats", "testimonials", "faqs", "embed_url",
+            "map_url", "eyebrow", "title_lead", "primary_cta", "bg_image",
+        )
+    ):
+        return props or {}
+
+    _get_system_vars_batch(
+        db, site_key,
+        ("church_name", "mission_statement", "service_time", "address",
+         "map_embed_url", "welcome_title", "cta_text", "cta_link",
+         "cta_title", "cta_description"),
+    )
+    church_name = _get_system_var(db, site_key, "church_name", "Nuestra Iglesia")
+    mission = _get_system_var(db, site_key, "mission_statement", "Compartir el amor de Dios y hacer discípulos")
+    service_time = _get_system_var(db, site_key, "service_time", "Domingos 10:00 AM")
+    address = _get_system_var(db, site_key, "address", "Ciudad, País")
+    map_embed = _get_system_var(db, site_key, "map_embed_url", "")
+
+    if section_type == "hero":
+        welcome = _get_system_var(db, site_key, "welcome_title", "Bienvenidos a {church_name}")
+        return {
+            "title": welcome.replace("{church_name}", church_name),
+            "subtitle": mission,
+            "cta_text": _get_system_var(db, site_key, "cta_text", "Conócenos"),
+            "cta_link": _get_system_var(db, site_key, "cta_link", "/pastores"),
+        }
+    if section_type == "cta_banner":
+        return {
+            "title": _get_system_var(db, site_key, "cta_title", "Únete a nuestra comunidad"),
+            "description": _get_system_var(db, site_key, "cta_description",
+                                          "Te invitamos a ser parte de nuestra familia. Todos son bienvenidos."),
+            "button_text": "Visítanos",
+            "button_link": "/contacto",
+        }
+    if section_type == "stats":
+        active_personas = db.query(models.Persona).filter(models.Persona.estado_vital == "ACTIVO").count()
+        group_count = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.status == "Activo").count()
+        return {
+            "stats": [
+                {"label": "Miembros Activos", "value": str(active_personas or 0)},
+                {"label": "Grupos de Casa", "value": str(group_count or 0)},
+                {"label": "Años de Ministerio", "value": "25+"},
+            ]
+        }
+    if section_type == "team":
+        leaders = (
+            db.query(models.Persona)
+            .filter(models.Persona.is_pastoral_leader.is_(True))
+            .order_by(models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc())
+            .all()
+        )
+        personas = []
+        for p in leaders:
+            name = p.nombre_completo
+            slug = _slugify(name)
+            personas.append({
+                "name": name, "role": "Pastor Principal" if p.is_main_pastor else "Pastor",
+                "photo_url": p.photo_url or "", "slug": slug, "bio_short": p.bio_short or "",
+            })
+        if not personas:
+            personas = [{"name": "Pastor", "role": "Pastor Principal", "photo_url": "",
+                        "slug": "pastor", "bio_short": ""}]
+        return {"personas": personas, "title": "Nuestro Equipo Pastoral"}
+    if section_type == "testimonials":
+        rows = (
+            db.query(models.CmsPost)
+            .join(models.CmsPost.categories)
+            .filter(models.CmsCategory.slug == "testimonials", models.CmsPost.status == "published")
+            .order_by(models.CmsPost.published_at.desc(), models.CmsPost.created_at.desc())
+            .limit(6).all()
+        )
+        testimonials = []
+        for post in rows:
+            author_name = post.author_persona.nombre_completo if post.author_persona else "Anónimo"
+            testimonials.append({
+                "content": post.content or "", "author": author_name,
+                "emotion": (post.seo_json or {}).get("emotion", "Gratitud"),
+                "image_url": post.featured_image_url or "",
+            })
+        if not testimonials:
+            testimonials = [{"content": "Dios ha sido fiel en cada etapa. Bendigo a esta iglesia por su amor y apoyo.",
+                           "author": "Miembro de la Iglesia", "emotion": "Gratitud", "image_url": ""}]
+        return {"testimonials": testimonials, "title": "Testimonios"}
+    if section_type == "faq":
+        return {
+            "faqs": [
+                {"question": "¿A qué hora son los servicios?", "answer": service_time},
+                {"question": "¿Dónde están ubicados?", "answer": address},
+                {"question": "¿Qué debo esperar en mi primera visita?",
+                 "answer": "Una comunidad cálida que te recibirá con los brazos abiertos. Ven tal como eres."},
+                {"question": "¿Tienen grupos de estudio?",
+                 "answer": "Sí, tenemos grupos de casa que se reúnen durante la semana. Contáctanos para más información."},
+            ],
+            "title": "Preguntas Frecuentes",
+        }
+    if section_type == "embed":
+        return {"embed_url": map_embed or "", "title": church_name, "description": address}
+    return props or {}
+
+
+# ── Pastoral role helper ───────────────────────────────────────────────────────
+
+def _pastoral_role(persona: models.Persona) -> str:
+    """Derive the pastoral role label from a Persona record."""
+    role = (getattr(persona, "church_role", None) or "").strip()
+    if role:
+        return role
+    return "Pastor Principal" if persona.is_main_pastor else "Pastor"
+
+
+# ── Taxonomy / post lookup helpers ──────────────────────────────────────────────
+
+def _get_category_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsCategory:
+    row = (
+        db.query(models.CmsCategory)
+        .options(lazyload("*"))
+        .filter(models.CmsCategory.site_id == site_id, models.CmsCategory.slug == _slugify(slug))
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="category not found")
+    return row
+
+
+def _get_tag_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsTag:
+    row = (
+        db.query(models.CmsTag)
+        .options(lazyload("*"))
+        .filter(models.CmsTag.site_id == site_id, models.CmsTag.slug == _slugify(slug))
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="tag not found")
+    return row
+
+
+def _get_post_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsPost:
+    row = (
+        db.query(models.CmsPost)
+        .options(lazyload("*"))
+        .filter(models.CmsPost.site_id == site_id, models.CmsPost.slug == _slugify(slug))
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="post not found")
+    return row
+
+
+# ── Canonical categories (testimonials / announcements) ─────────────────────────
+
+CANONICAL_CATEGORIES = {
+    "testimonials": ("Testimonials", "Testimonios de la comunidad"),
+    "announcements": ("Announcements", "Anuncios oficiales"),
+}
+
+
+def _get_main_site(db: Session) -> models.CmsSite:
+    """Obtiene el site principal CCF (site_key='ccf')."""
+    site = crud.get_cms_site_by_key(db, "ccf")
+    if not site:
+        raise HTTPException(status_code=404, detail="main site not found")
+    return site
+
+
+def _ensure_canonical_category(db: Session, site_id: UUID, category_slug: str) -> models.CmsCategory:
+    """Asegura que la categoría canónica exista en el site principal."""
+    name, description = CANONICAL_CATEGORIES.get(category_slug, (category_slug.title(), ""))
+    cat = crud.get_or_create_canonical_category(db, site_id, category_slug, name, description)
+    return cat
+
+
+def _validate_canonical_category(category_slug: str) -> None:
+    if category_slug not in CANONICAL_CATEGORIES:
+        raise HTTPException(status_code=422, detail="invalid canonical category")

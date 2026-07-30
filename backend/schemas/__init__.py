@@ -143,9 +143,6 @@ from backend.schemas.chat import (
 
 # ── CMS ──────────────────────────────────────────────────────────────────────
 from backend.schemas.cms import (
-                                     AnnouncementCreate,
-                                     AnnouncementRead,
-                                     AnnouncementUpdate,
                                      CmsCategoryCreate,
                                      CmsCategoryRead,
                                      CmsCategoryUpdate,
@@ -200,10 +197,6 @@ from backend.schemas.cms import (
                                      SeoFinding,
                                      SeoFindingSeverity,
                                      SiteSeoStats,
-                                     TestimonialAuthorRead,
-                                     TestimonialCreate,
-                                     TestimonialRead,
-                                     TestimonialUpdate,
 )
 from backend.schemas.crm.base import (
                                      EVENT_TYPES,

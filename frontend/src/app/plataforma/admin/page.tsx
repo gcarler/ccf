@@ -6,6 +6,8 @@ import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
+import { listTestimonials } from "@/lib/cms/v2";
+import { SITE_KEY } from "@/lib/site-config";
 import clsx from "clsx";
 import { motion } from 'framer-motion';
 import {
@@ -32,7 +34,7 @@ import { useEffect, useState } from "react";
 import type { KpiCardProps, AdminTaskRowProps, LogItemProps } from "@/types/admin";
 
 interface AdminTestimonial {
-  id: number;
+  id: string;
   title?: string;
   content?: string;
   is_approved?: boolean;
@@ -86,13 +88,13 @@ export default function AdminDashboardPage() {
       setLoading(true);
       try {
         const [testRes, taskRes, insightRes, statsRes] = await Promise.allSettled([
-          apiFetch<AdminTestimonial[]>("/admin/testimonials", { token, cache: 'no-store', signal }),
+          listTestimonials(SITE_KEY, undefined, token),
           apiFetch<AgentTask[]>("/agents/tasks", { token, cache: 'no-store', signal }),
           apiFetch<AgentInsight[]>("/agents/insights", { token, cache: 'no-store', signal }),
           apiFetch<AdminStats>("/admin/stats", { token, cache: 'no-store', signal }),
         ]);
 
-        setTestimonials(testRes.status === 'fulfilled' && Array.isArray(testRes.value) ? testRes.value : []);
+        setTestimonials(testRes.status === 'fulfilled' ? testRes.value : []);
         setAgentTasks(taskRes.status === 'fulfilled' && Array.isArray(taskRes.value) ? taskRes.value : []);
         setAgentInsights(insightRes.status === 'fulfilled' && Array.isArray(insightRes.value) ? insightRes.value : []);
         setStats(statsRes.status === 'fulfilled' && statsRes.value ? statsRes.value : null);
