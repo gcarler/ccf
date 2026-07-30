@@ -23,6 +23,7 @@ import { SITE_KEY } from "@/lib/site-config";
 import { safeString, asObject } from "@/components/cms/builder/utils";
 import { toast } from "sonner";
 import { notifyPreviewSync } from "@/lib/cms/preview-sync";
+import { arrayMove } from "@dnd-kit/sortable";
 import {
   createSetters,
   initialPageBuilderState,
@@ -499,16 +500,46 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     if (idx < 0) return;
     const targetIdx = direction === "up" ? idx - 1 : idx + 1;
     if (targetIdx < 0 || targetIdx >= sections.length) return;
-    const next = [...sections];
-    const temp = next[idx];
-    next[idx] = next[targetIdx];
-    next[targetIdx] = temp;
-    const payload = next.map((item, index) => ({ id: item.id, sort_order: index }));
+
+    const previousSections = sections;
+    const next = arrayMove(sections, idx, targetIdx);
+
+    // Optimistic UI update
     dispatch({ type: "REORDER_SECTIONS", sections: next });
-    if (!token || !activeSlug) return;
-    await reorderCmsSections(siteKey, activeSlug, payload, token);
-    await loadSectionsAndVersions(activeSlug);
     notifyPreviewSync({ type: "section-reordered", siteKey, slug: activeSlug });
+
+    if (!token || !activeSlug) return;
+
+    try {
+      const payload = next.map((item, index) => ({ id: item.id, sort_order: index }));
+      await reorderCmsSections(siteKey, activeSlug, payload, token);
+      toast.success(direction === "up" ? "Sección movida hacia arriba" : "Sección movida hacia abajo");
+      await loadSectionsAndVersions(activeSlug);
+    } catch {
+      dispatch({ type: "REORDER_SECTIONS", sections: previousSections });
+      notifyPreviewSync({ type: "section-reordered", siteKey, slug: activeSlug });
+      toast.error("Error al mover la sección. Se han restaurado los cambios.");
+    }
+  }, [canEdit, sections, token, activeSlug, siteKey, loadSectionsAndVersions]);
+
+  const reorderSectionsOptimistic = useCallback(async (newSections: CmsSection[]) => {
+    if (!canEdit) return;
+    const previousSections = sections;
+    dispatch({ type: "REORDER_SECTIONS", sections: newSections });
+    notifyPreviewSync({ type: "section-reordered", siteKey, slug: activeSlug });
+
+    if (!token || !activeSlug) return;
+
+    try {
+      const payload = newSections.map((item, index) => ({ id: item.id, sort_order: index }));
+      await reorderCmsSections(siteKey, activeSlug, payload, token);
+      toast.success("Sección movida");
+      await loadSectionsAndVersions(activeSlug);
+    } catch {
+      dispatch({ type: "REORDER_SECTIONS", sections: previousSections });
+      notifyPreviewSync({ type: "section-reordered", siteKey, slug: activeSlug });
+      toast.error("No se pudo reordenar");
+    }
   }, [canEdit, sections, token, activeSlug, siteKey, loadSectionsAndVersions]);
 
   const moveSectionToIndex = useCallback(async (sourceId: string, targetId: string) => {
@@ -516,15 +547,10 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     const sourceIndex = sections.findIndex((s) => s.id === sourceId);
     const targetIndex = sections.findIndex((s) => s.id === targetId);
     if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
-    const next = [...sections];
-    const [moved] = next.splice(sourceIndex, 1);
-    next.splice(targetIndex, 0, moved);
-    const payload = next.map((item, index) => ({ id: item.id, sort_order: index }));
-    dispatch({ type: "REORDER_SECTIONS", sections: next });
-    if (!token || !activeSlug) return;
-    await reorderCmsSections(siteKey, activeSlug, payload, token);
-    await loadSectionsAndVersions(activeSlug);
-  }, [canEdit, sections, token, activeSlug, siteKey, loadSectionsAndVersions]);
+
+    const next = arrayMove(sections, sourceIndex, targetIndex);
+    await reorderSectionsOptimistic(next);
+  }, [canEdit, sections, reorderSectionsOptimistic]);
 
   const duplicateSection = useCallback(async (targetId?: string | React.SyntheticEvent) => {
     const actualTargetId = typeof targetId === "string" ? targetId : undefined;
@@ -823,6 +849,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     updateSectionPropsLocal,
     moveSection,
     moveSectionToIndex,
+    reorderSectionsOptimistic,
     duplicateSection,
     toggleSectionArchive,
     setSectionVisibility,

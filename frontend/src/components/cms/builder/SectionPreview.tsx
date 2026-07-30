@@ -215,6 +215,8 @@ export function InlineEditorPanel({ section, builder, onClose }: InlineEditorPan
   return (
     <div
       className="absolute inset-0 z-40 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-xl rounded-lg border-2 border-primary overflow-y-auto flex flex-col justify-between"
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
       <div>
