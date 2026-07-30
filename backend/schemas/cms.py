@@ -360,122 +360,6 @@ class CmsPublicPageRead(BaseModel):
     breadcrumb_json_ld: Optional[Dict[str, Any]] = None
 
 
-# ── Announcements ───────────────────────────────────────
-
-AnnouncementStatus = Literal["draft", "published", "archived"]
-TestimonialStatus = Literal["pending", "approved", "archived"]
-
-
-class AnnouncementCreate(BaseModel):
-    title: str
-    content: str
-    category: str = "General"
-    image_url: Optional[str] = None
-    is_featured: bool = False
-    status: AnnouncementStatus = "published"
-
-
-class AnnouncementUpdate(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
-    category: Optional[str] = None
-    image_url: Optional[str] = None
-    is_featured: Optional[bool] = None
-    # H-06 (errorescms.md): el modelo ``Announcement`` tiene ``is_active``
-    # (models_cms.py:347) pero el schema no lo exponia. Sin este campo no
-    # se podia desactivar un announcement por API sin cambiar su status a
-    # "archived" — inconsistencia semantica entre el modelo y el contrato.
-    is_active: Optional[bool] = None
-    status: Optional[AnnouncementStatus] = None
-
-
-class AnnouncementRead(BaseModel):
-    id: UUID
-    title: str
-    content: str
-    category: str
-    image_url: Optional[str] = None
-    is_active: bool = True
-    is_featured: bool
-    status: AnnouncementStatus
-    # Axioma 3 — Multi-Tenant: expone ``sede_id`` y ``created_by_persona_id``
-    # read-only para audit. No editables vía Create/Update.
-    sede_id: Optional[UUID] = None
-    created_by_persona_id: Optional[UUID] = None
-    published_at: datetime
-    created_at: datetime
-    model_config = orm_config
-
-
-# ── Testimonials ────────────────────────────────────────
-
-
-class TestimonialCreate(BaseModel):
-    content: str
-    emotion: str = "Gratitud"
-    media_type: str = "text"
-    media_url: Optional[str] = None
-    image_url: Optional[str] = None
-    video_url: Optional[str] = None
-    podcast_url: Optional[str] = None
-    is_approved: bool = False
-    show_on_home: bool = False
-    status: Optional[TestimonialStatus] = None
-    author_persona_id: Optional[UUID] = None
-
-
-class TestimonialUpdate(BaseModel):
-    content: Optional[str] = None
-    emotion: Optional[str] = None
-    media_type: Optional[str] = None
-    media_url: Optional[str] = None
-    image_url: Optional[str] = None
-    video_url: Optional[str] = None
-    podcast_url: Optional[str] = None
-    is_approved: Optional[bool] = None
-    show_on_home: Optional[bool] = None
-    status: Optional[TestimonialStatus] = None
-
-
-class TestimonialAuthorRead(BaseModel):
-    """Schema representation of a ``Testimonial.author`` (``Persona``).
-
-    Nota: ``username`` es ``Optional`` porque el modelo ``Persona`` no
-    expone ese atributo. La intención original era un apodo legible,
-    pero como todavía no está en el modelo, retornamos ``None`` cuando
-    no exista (Pydantic ``from_attributes`` rellena con ``None`` vía
-    ``Optional``). Si en el futuro el modelo incluye ``username``,
-    basta cambiar el default a un str derivado. Mantener
-    ``id`` como obligatorio porque es la FK de la relación.
-    """
-
-    id: UUID
-    username: Optional[str] = None
-    model_config = orm_config
-
-
-class TestimonialRead(BaseModel):
-    id: UUID
-    content: str
-    emotion: str
-    media_type: str = "text"
-    media_url: Optional[str] = None
-    image_url: Optional[str] = None
-    video_url: Optional[str] = None
-    podcast_url: Optional[str] = None
-    is_approved: bool
-    show_on_home: bool
-    status: TestimonialStatus = "pending"
-    author_persona_id: Optional[UUID] = None
-    # Axioma 3 — Multi-Tenant: ``sede_id`` read-only. Backfilled desde
-    # ``author.sede_id`` en la migración; si author fue None queda NULL
-    # y el row sólo es visible a superadmins sin sede asignada.
-    sede_id: Optional[UUID] = None
-    author: Optional[TestimonialAuthorRead] = None
-    created_at: datetime
-    model_config = orm_config
-
-
 # ── Pastoral Profile ───────────────────────────────────────────────────────
 
 
@@ -668,6 +552,11 @@ class CmsPostRead(BaseModel):
 class CmsPostReadWithTaxonomies(CmsPostRead):
     categories: List[CmsCategoryRead] = Field(default_factory=list)
     tags: List[CmsTagRead] = Field(default_factory=list)
+
+
+class CmsPostCreateWithCategory(CmsPostCreate):
+    """Create payload for posts that must belong to a canonical category."""
+    category_slug: Literal["testimonials", "announcements"]
 
 
 class CmsPublicPostRead(BaseModel):

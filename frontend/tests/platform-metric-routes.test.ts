@@ -9,7 +9,7 @@ describe('platform metric routes', () => {
         expect(getPlatformMetricHref('Proyectos')).toBe(PROJECTS_LIST_ROUTE);
         expect(getPlatformMetricHref('8 proyectos')).toBe(PROJECTS_LIST_ROUTE);
         expect(getPlatformMetricHref('Pendientes')).toBe('/plataforma/tasks');
-        expect(getPlatformMetricHref('Testimonios')).toBe('/plataforma/admin/testimonials');
+        expect(getPlatformMetricHref('Testimonios')).toBe('/plataforma/cms/testimonials');
         expect(getPlatformMetricHref('4 activos')).toBeNull();
     });
 

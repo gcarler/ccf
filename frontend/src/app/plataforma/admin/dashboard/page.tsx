@@ -107,7 +107,7 @@ export default function AdminDashboard() {
                 description="Monitorea el crecimiento espiritual y académico de la comunidad en tiempo real. Optimus Brain está analizando las tendencias de participación."
                 tags={['Dashboard', 'Real-time', 'BI']}
                 watchers={['Admin Team', 'Optimus Brain']}
-                primaryAction={{ label: 'Nueva Campaña', icon: Zap, onClick: () => router.push('/plataforma/admin/announcements/new') }}
+                primaryAction={{ label: 'Nueva Campaña', icon: Zap, onClick: () => router.push('/plataforma/cms/announcements/new') }}
                 secondaryAction={{ label: 'Ver Reportes', icon: TrendingUp, onClick: () => router.push('/plataforma/admin/reports') }}
             />
 

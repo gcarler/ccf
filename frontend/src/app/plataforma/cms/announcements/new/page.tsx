@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { apiFetch } from '@/lib/http';
+import { SITE_KEY } from '@/lib/site-config';
+import { createCmsPostByCategory } from '@/lib/cms/v2';
 import AdminShell from '@/components/admin/AdminShell';
 import AdminHero from '@/components/admin/AdminHero';
 
@@ -38,13 +39,20 @@ export default function NewAnnouncementPage() {
         }
         setLoading(true);
         try {
-            await apiFetch('/cms/announcements', {
-                method: 'POST',
-                token,
-                body: { ...formData, status: 'published' }
-            });
+            // Endpoint v2 nativo: la categoria canonica "announcements" se asigna
+            // server-side. Los campos v1 (category, is_featured) van en seo_json.
+            await createCmsPostByCategory(SITE_KEY, 'announcements', {
+                title: formData.title,
+                excerpt: formData.content.slice(0, 200) || null,
+                content: formData.content,
+                status: 'published',
+                seo_json: {
+                    category: formData.category,
+                    is_featured: formData.is_featured,
+                },
+            }, token);
             addToast('Anuncio publicado correctamente', 'success');
-            router.push('/plataforma/admin/announcements');
+            router.push('/plataforma/cms/announcements');
         } catch {
             addToast('Error al publicar el anuncio', 'error');
         } finally {
@@ -54,18 +62,23 @@ export default function NewAnnouncementPage() {
 
     const handleSaveDraft = async () => {
         if (!formData.title || !formData.content) {
-            addToast('Completa el tÃ­tulo y el contenido', 'warning');
+            addToast('Completa el título y el contenido', 'warning');
             return;
         }
         setLoading(true);
         try {
-            await apiFetch('/cms/announcements', {
-                method: 'POST',
-                token,
-                body: { ...formData, status: 'draft' }
-            });
+            await createCmsPostByCategory(SITE_KEY, 'announcements', {
+                title: formData.title,
+                excerpt: formData.content.slice(0, 200) || null,
+                content: formData.content,
+                status: 'draft',
+                seo_json: {
+                    category: formData.category,
+                    is_featured: formData.is_featured,
+                },
+            }, token);
             addToast('Borrador guardado en CMS', 'success');
-            router.push('/plataforma/admin/announcements');
+            router.push('/plataforma/cms/announcements');
         } catch {
             addToast('Error al guardar el borrador', 'error');
         } finally {

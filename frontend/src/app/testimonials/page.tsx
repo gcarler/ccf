@@ -5,15 +5,14 @@ import Navbar from '@/components/Navbar';
 import { motion } from 'framer-motion';
 import { Heart, Search, User } from 'lucide-react';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import { apiFetch } from '@/lib/http';
+import { getPublicTestimonials } from '@/lib/cms/v2';
+import { SITE_KEY } from '@/lib/site-config';
 
 interface Testimonial {
-    id: number;
+    id: string;
     content: string;
     emotion?: string;
-    author?: { id: number; username: string } | null;
-    is_approved?: boolean;
-    show_on_home?: boolean;
+    author?: { username: string } | null;
     created_at?: string;
 }
 
@@ -25,8 +24,8 @@ export default function TestimonialsPage() {
     const [selected, setSelected] = useState<Testimonial | null>(null);
 
     useEffect(() => {
-        apiFetch<Testimonial[]>("/cms/testimonials")
-            .then((data) => setTestimonials(Array.isArray(data) ? data : []))
+        getPublicTestimonials(SITE_KEY)
+            .then((data) => setTestimonials(data))
             .catch(() => setTestimonials([]))
             .finally(() => setLoading(false));
     }, []);

@@ -62,18 +62,9 @@ def _persona_in(db, sede_id, email_suffix):
 def _seed_testimonial_in_sede(
     db, author_persona, sede_id, content, is_approved=False
 ):
-    """Seed a CmsPost categorized as testimonials.
-
-    The v1→v2 migration moved testimonials to CmsPost; this helper
-    creates one directly to test the API-layer without the legacy table.
-    """
-    from backend.api.cms_v1_adapters import (
-        get_or_create_testimonial_category,
-        get_or_create_testimonial_site,
-    )
-
-    site = get_or_create_testimonial_site(db, sede_id)
-    category = get_or_create_testimonial_category(db, site.id)
+    """Seed a CmsPost categorized as testimonials (direct ORM, no adapters)."""
+    site = _seed_site_for_sede(db, sede_id, "testimonials")
+    category = _seed_category(db, site.id, "testimonials", "Testimonials")
 
     post_status = "published" if is_approved else "draft"
     post = models.CmsPost(
@@ -103,18 +94,9 @@ def _seed_testimonial_in_sede(
 
 
 def _seed_announcement_in_sede(db, persona, sede_id, title, content):
-    """Seed a CmsPost categorized as announcements.
-
-    The v1→v2 migration moved announcements to CmsPost; this helper
-    creates one directly to test via the API-layer.
-    """
-    from backend.api.cms_v1_adapters import (
-        get_or_create_announcement_category,
-        get_or_create_announcement_site,
-    )
-
-    site = get_or_create_announcement_site(db, sede_id)
-    category = get_or_create_announcement_category(db, site.id)
+    """Seed a CmsPost categorized as announcements (direct ORM, no adapters)."""
+    site = _seed_site_for_sede(db, sede_id, "announcements")
+    category = _seed_category(db, site.id, "announcements", "Announcements")
 
     post = models.CmsPost(
         id=_uuid.uuid4(),
@@ -134,6 +116,37 @@ def _seed_announcement_in_sede(db, persona, sede_id, title, content):
     post.categories.append(category)
     db.flush()
     return post
+
+
+def _seed_site_for_sede(db, sede_id, prefix):
+    """Inline CmsSite creation (replaces removed adapter helpers)."""
+    uid = _uuid.uuid4().hex[:12]
+    site = models.CmsSite(
+        id=_uuid.uuid4(),
+        site_key=f"test-{prefix}-{uid}",
+        name=f"Test {prefix.title()} Site",
+        base_path=f"/test-{prefix}-{uid}",
+        is_active=True,
+        sede_id=sede_id,
+    )
+    db.add(site)
+    db.flush()
+    return site
+
+
+def _seed_category(db, site_id, slug, name):
+    """Inline CmsCategory creation (replaces removed adapter helpers)."""
+    cat = models.CmsCategory(
+        id=_uuid.uuid4(),
+        site_id=site_id,
+        slug=slug,
+        name=name,
+        description=f"Test {name}",
+        is_active=True,
+    )
+    db.add(cat)
+    db.flush()
+    return cat
 
 
 def _seed_media_in_sede(db, persona, sede_id, url, mime_type="image/png"):

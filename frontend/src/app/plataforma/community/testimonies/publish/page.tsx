@@ -6,12 +6,9 @@ import { useAuth } from '@/context/AuthContext';
 import { ArrowLeft, Send, Camera, Globe } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
-import { apiFetch } from '@/lib/http';
+import { SITE_KEY } from '@/lib/site-config';
+import { createCmsPostByCategory } from '@/lib/cms/v2';
 import { motion } from 'framer-motion';
-
-const isUuid = (value: unknown) =>
-    typeof value === 'string' &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 export default function PublishTestimony() {
     const { isAuthenticated, user, token } = useAuth();
@@ -33,19 +30,26 @@ export default function PublishTestimony() {
 
         setIsSubmitting(true);
         try {
-            const authorPayload = {
-                ...(isUuid(user.id) ? { author_persona_id: user.id } : {}),
-            };
-            await apiFetch('/cms/testimonials', {
-                method: 'POST',
-                token: token || undefined,
-                body: {
-                    ...authorPayload,
+            // Endpoint v2 nativo: el backend resuelve author_persona_id desde
+            // current_user y asigna la categoria canonica "testimonials".
+            // Los campos v1 (emotion) viajan en seo_json; status "draft" para
+            // moderacion (equivale a is_approved: false del shim v1).
+            await createCmsPostByCategory(
+                SITE_KEY,
+                'testimonials',
+                {
+                    title: `Testimonio · ${selectedCategory}`,
                     content: testimonyText,
-                    emotion: selectedCategory,
-                    is_approved: false // Default to unapproved for moderation
-                }
-            });
+                    excerpt: testimonyText.slice(0, 200) || null,
+                    status: 'draft',
+                    seo_json: {
+                        emotion: selectedCategory,
+                        content_type: 'testimonial',
+                        show_on_home: false,
+                    },
+                },
+                token,
+            );
 
             addToast('¡Gracias por compartir tu historia! Será revisada por moderación.', 'success');
             router.push('/plataforma/community/testimonies');
