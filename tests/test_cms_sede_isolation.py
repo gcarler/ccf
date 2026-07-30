@@ -109,24 +109,55 @@ def _pastor_in(db, sede_id, name_suffix, is_main_pastor=False):
     return p
 
 
-def _seed_testimonial_in_sede(db, author_persona, sede_id, content="Testimonio local"):
-    """Sembrado directo de Testimonial con sede_id ya colocado.
+def _seed_testimonial_in_sede(
+    db,
+    author_persona,
+    sede_id,
+    content="Testimonio local",
+    is_approved=False,
+):
+    """Sembrado directo de CmsPost con sede_id ya colocado.
 
-    Equivalente a llamar ``create_testimonial`` con un actor de la sede
-    y luego backfillear ``sede_id``. Bypasseando el path API-layer para
-    test específicamente la rama "shell test cross-sede contra una fila
-    pre-existente que es de otra sede".
+    Los endpoints v1 de testimonials ahora leen ``CmsPost`` categorizados
+    como ``testimonials``. Este helper crea ese row directamente para
+    testear el API-layer sin depender de la tabla legacy ``testimonials``.
     """
-    t = models.Testimonial(
-        id=_uuid.uuid4(),
-        content=content,
-        author_persona_id=author_persona.id if author_persona else None,
-        sede_id=sede_id,
-        status="pending",
+    from backend.api.cms_v1_adapters import (
+        get_or_create_testimonial_category,
+        get_or_create_testimonial_site,
     )
-    db.add(t)
+
+    site = get_or_create_testimonial_site(db, sede_id)
+    category = get_or_create_testimonial_category(db, site.id)
+
+    post_status = "published" if is_approved else "draft"
+    post = models.CmsPost(
+        id=_uuid.uuid4(),
+        site_id=site.id,
+        slug=f"testimonial-{_uuid.uuid4().hex[:8]}",
+        title=content[:50] or "Testimonial",
+        excerpt=content[:200] if content else None,
+        content=content,
+        featured_image_url=None,
+        status=post_status,
+        seo_json={
+            "emotion": "Gratitud",
+            "media_type": "text",
+            "show_on_home": False,
+            "content_type": "testimonial",
+        },
+        author_persona_id=author_persona.id if author_persona else None,
+        created_by_persona_id=author_persona.id if author_persona else None,
+        updated_by_persona_id=author_persona.id if author_persona else None,
+    )
+    db.add(post)
     db.flush()
-    return t
+    db.refresh(post)
+    post.categories.append(category)
+    db.flush()
+    return post
+
+
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -317,7 +348,7 @@ def test_patch_admin_testimonial_blocks_cross_sede(client, db_session):
         f"(status {resp.status_code}): {resp.text}"
     )
     db_session.refresh(t_b)
-    assert t_b.status == "pending", (
+    assert t_b.status == "draft", (
         "FUGA: status mutado cross-sede pese al 404"
     )
     assert t_b.content == "Testimonio secreto patch target", (
@@ -341,7 +372,7 @@ def test_delete_admin_testimonial_blocks_cross_sede(client, db_session):
         f"(status {resp.status_code}): {resp.text}"
     )
     db_session.refresh(t_b)
-    assert t_b.status == "pending", (
+    assert t_b.status == "draft", (
         "FUGA: testimonial archivado cross-sede pese al 404"
     )
 
@@ -1088,14 +1119,12 @@ def test_public_testimonials_feed_remains_global(client, db_session):
     de la home pública."""
     (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
 
-    t_a = _seed_testimonial_in_sede(
-        db_session, persona_a, sede_a.id, "Aprobado leg sede_a — publica"
+    _seed_testimonial_in_sede(
+        db_session, persona_a, sede_a.id, "Aprobado leg sede_a — publica", is_approved=True
     )
-    t_a.is_approved = True
-    t_b = _seed_testimonial_in_sede(
-        db_session, persona_b, sede_b.id, "Aprobado leg sede_b — publica"
+    _seed_testimonial_in_sede(
+        db_session, persona_b, sede_b.id, "Aprobado leg sede_b — publica", is_approved=True
     )
-    t_b.is_approved = True
     db_session.commit()
 
     resp = client.get("/api/cms/testimonials")  # sin auth — publico
