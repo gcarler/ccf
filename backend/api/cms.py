@@ -14,22 +14,6 @@ from backend.api._cms_helpers import (
     _scope_cms_media_by_user_sede,
     collect_section_media_ids,
 )
-from backend.api.cms_v1_adapters import (
-    announcement_create_to_post_create,
-    announcement_update_to_post_update,
-    get_announcement_post_by_id,
-    get_or_create_announcement_category,
-    get_or_create_announcement_site,
-    get_or_create_testimonial_category,
-    get_or_create_testimonial_site,
-    get_testimonial_post_by_id,
-    list_announcement_posts,
-    list_testimonial_posts,
-    post_to_announcement_read,
-    post_to_testimonial_read,
-    testimonial_create_to_post_create,
-    testimonial_update_to_post_update,
-)
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
@@ -55,295 +39,9 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-# ── Testimonials (v1→v2 shim) ──────────────────────────
-# v1 Testimonial endpoints now read/write CmsPost rows categorized
-# as ``testimonials``. The response contract (TestimonialRead) is kept
-# unchanged for frontend compatibility.
-
-
-@router.get("/cms/testimonials", response_model=list[schemas.TestimonialRead])
-def list_cms_testimonials(db: Session = Depends(get_db)):
-    """Public feed: testimonios aprobados (status=published)."""
-    posts = list_testimonial_posts(
-        db, status="published", include_archived=False
-    )
-    return [post_to_testimonial_read(post) for post in posts]
-
-
-@router.post(
-    "/cms/testimonials", response_model=schemas.TestimonialRead, status_code=201
-)
-def create_cms_testimonial(
-    payload: schemas.TestimonialCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "edit")),
-):
-    """Create a new testimonial as a v2 CmsPost.
-
-    ``sede_id`` se deriva de la persona del actor y se mapea a un
-    ``CmsSite`` para cumplir el modelo v2.
-    """
-    author_persona_id = payload.author_persona_id
-    if not author_persona_id:
-        author_persona_id = crud.resolve_persona_id_for_user(
-            db, getattr(current_user, "id", None)
-        )
-
-    actor_sede = _actor_sede_or_none(db, current_user)
-    if actor_sede is None:
-        raise HTTPException(
-            status_code=409,
-            detail="CMS content requires an attributed persona and sede",
-        )
-
-    site = get_or_create_testimonial_site(db, actor_sede)
-    category = get_or_create_testimonial_category(db, site.id)
-
-    post_create = testimonial_create_to_post_create(
-        payload, site_id=site.id, author_persona_id=author_persona_id
-    )
-    post = crud.create_cms_post(
-        db,
-        site_id=site.id,
-        payload=post_create,
-        user_id=str(current_user.id),
-    )
-    # ``create_cms_post`` does not consume ``author_persona_id`` from the
-    # payload; set it explicitly to honour the v1 contract.
-    post.author_persona_id = author_persona_id
-    # Associate the post with the testimonials category.
-    post.categories.append(category)
-    db.commit()
-    db.refresh(post)
-    return post_to_testimonial_read(post)
-
-
-@router.get("/admin/testimonials", response_model=list[schemas.TestimonialRead])
-def list_admin_testimonials(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
-):
-    """Axioma 3 — Multi-Tenant: filtro por sede del staff."""
-    actor_sede = _actor_sede_or_none(db, current_user)
-    posts = list_testimonial_posts(
-        db,
-        sede_id=actor_sede,
-        include_archived=True,
-    )
-    return [post_to_testimonial_read(post) for post in posts]
-
-
-@router.get(
-    "/cms/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead
-)
-def get_cms_testimonial(
-    testimonial_id: uuid.UUID,
-    db: Session = Depends(get_db),
-):
-    """Public GET: solo publicados y no archivados."""
-    post = get_testimonial_post_by_id(db, testimonial_id)
-    if not post or post.status != "published":
-        raise HTTPException(status_code=404, detail="testimonial not found")
-    return post_to_testimonial_read(post)
-
-
-@router.get(
-    "/admin/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead
-)
-def get_admin_testimonial(
-    testimonial_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
-):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede o inexistente."""
-    actor_sede = _actor_sede_or_none(db, current_user)
-    post = get_testimonial_post_by_id(db, testimonial_id, sede_id=actor_sede)
-    if not post:
-        raise HTTPException(status_code=404, detail="testimonial not found")
-    return post_to_testimonial_read(post)
-
-
-@router.patch(
-    "/admin/testimonials/{testimonial_id}", response_model=schemas.TestimonialRead
-)
-def patch_admin_testimonial(
-    testimonial_id: uuid.UUID,
-    payload: schemas.TestimonialUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "edit")),
-):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede."""
-    actor_sede = _actor_sede_or_none(db, current_user)
-    post = get_testimonial_post_by_id(db, testimonial_id, sede_id=actor_sede)
-    if not post:
-        raise HTTPException(status_code=404, detail="testimonial not found")
-
-    post_update = testimonial_update_to_post_update(payload, post.status, post.seo_json)
-    updated = crud.update_cms_post(
-        db,
-        post,
-        payload=post_update,
-        user_id=str(current_user.id),
-    )
-    return post_to_testimonial_read(updated)
-
-
-@router.delete("/admin/testimonials/{testimonial_id}", status_code=204)
-def delete_admin_testimonial(
-    testimonial_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "edit")),
-):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede antes de soft-delete."""
-    actor_sede = _actor_sede_or_none(db, current_user)
-    post = get_testimonial_post_by_id(db, testimonial_id, sede_id=actor_sede)
-    if not post:
-        raise HTTPException(status_code=404, detail="testimonial not found")
-    crud.delete_cms_post(db, post, actor_user_id=str(current_user.id))
-
-
-# ── Announcements (v1→v2 shim) ──────────────────────────
-# v1 Announcement endpoints now read/write CmsPost rows categorized
-# as ``announcements``. The response contract (AnnouncementRead) is kept
-# unchanged for frontend compatibility.
-
-
-@router.get("/cms/announcements", response_model=list[schemas.AnnouncementRead])
-def list_cms_announcements(db: Session = Depends(get_db)):
-    """Public feed: anuncios publicados (status=published)."""
-    posts = list_announcement_posts(
-        db, status="published", include_archived=False
-    )
-    return [post_to_announcement_read(post) for post in posts]
-
-
-@router.post(
-    "/cms/announcements", response_model=schemas.AnnouncementRead, status_code=201
-)
-def create_cms_announcement(
-    payload: schemas.AnnouncementCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "edit")),
-):
-    """Create a new announcement as a v2 CmsPost.
-
-    ``sede_id`` se deriva de la persona del actor y se mapea a un
-    ``CmsSite`` para cumplir el modelo v2.
-    """
-    author_persona_id = crud.resolve_persona_id_for_user(
-        db, getattr(current_user, "id", None)
-    )
-
-    actor_sede = _actor_sede_or_none(db, current_user)
-    if actor_sede is None:
-        raise HTTPException(
-            status_code=409,
-            detail="CMS content requires an attributed persona and sede",
-        )
-
-    site = get_or_create_announcement_site(db, actor_sede)
-    category = get_or_create_announcement_category(db, site.id)
-
-    post_create = announcement_create_to_post_create(
-        payload, site_id=site.id, author_persona_id=author_persona_id
-    )
-    post = crud.create_cms_post(
-        db,
-        site_id=site.id,
-        payload=post_create,
-        user_id=str(current_user.id),
-    )
-    post.created_by_persona_id = author_persona_id
-    post.categories.append(category)
-    db.commit()
-    db.refresh(post)
-    return post_to_announcement_read(post)
-
-
-@router.get("/admin/announcements", response_model=list[schemas.AnnouncementRead])
-def list_admin_announcements(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
-):
-    """Axioma 3 — Multi-Tenant: filtro por sede del staff."""
-    actor_sede = _actor_sede_or_none(db, current_user)
-    posts = list_announcement_posts(
-        db,
-        sede_id=actor_sede,
-        include_archived=True,
-    )
-    return [post_to_announcement_read(post) for post in posts]
-
-
-@router.get(
-    "/cms/announcements/{announcement_id}", response_model=schemas.AnnouncementRead
-)
-def get_cms_announcement(
-    announcement_id: uuid.UUID,
-    db: Session = Depends(get_db),
-):
-    """Public GET: solo publicados y no archivados."""
-    post = get_announcement_post_by_id(db, announcement_id)
-    if not post or post.status != "published":
-        raise HTTPException(status_code=404, detail="announcement not found")
-    return post_to_announcement_read(post)
-
-
-@router.get(
-    "/admin/announcements/{announcement_id}", response_model=schemas.AnnouncementRead
-)
-def get_admin_announcement(
-    announcement_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "read")),
-):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede o inexistente."""
-    actor_sede = _actor_sede_or_none(db, current_user)
-    post = get_announcement_post_by_id(db, announcement_id, sede_id=actor_sede)
-    if not post:
-        raise HTTPException(status_code=404, detail="announcement not found")
-    return post_to_announcement_read(post)
-
-
-@router.patch(
-    "/admin/announcements/{announcement_id}", response_model=schemas.AnnouncementRead
-)
-def patch_admin_announcement(
-    announcement_id: uuid.UUID,
-    payload: schemas.AnnouncementUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "edit")),
-):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede."""
-    actor_sede = _actor_sede_or_none(db, current_user)
-    post = get_announcement_post_by_id(db, announcement_id, sede_id=actor_sede)
-    if not post:
-        raise HTTPException(status_code=404, detail="announcement not found")
-
-    post_update = announcement_update_to_post_update(
-        payload, post.status, post.seo_json
-    )
-    updated = crud.update_cms_post(
-        db,
-        post,
-        payload=post_update,
-        user_id=str(current_user.id),
-    )
-    return post_to_announcement_read(updated)
-
-
-@router.delete("/admin/announcements/{announcement_id}", status_code=204)
-def delete_admin_announcement(
-    announcement_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("cms", "edit")),
-):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede antes de soft-delete."""
-    actor_sede = _actor_sede_or_none(db, current_user)
-    post = get_announcement_post_by_id(db, announcement_id, sede_id=actor_sede)
-    if not post:
-        raise HTTPException(status_code=404, detail="announcement not found")
-    crud.delete_cms_post(db, post, actor_user_id=str(current_user.id))
+# NOTE: v1 testimonials and announcements endpoints removed.
+# The frontend was fully migrated to the v2 API.
+# Legacy schemas (TestimonialRead, AnnouncementRead, etc.) were deleted.
 
 
 # ── CMS Media ───────────────────────────────────────────
@@ -549,13 +247,19 @@ def get_cms_metrics(
     # Las tablas legacy (testimonials, announcements) fueron eliminadas.
     actor_sede = _actor_sede_or_none(db, current_user)
 
-    cms_testimonials = list_testimonial_posts(
-        db, sede_id=actor_sede, include_archived=True
-    )
+    # Inline queries para testimonials y announcements (adapters v1 eliminados).
+    def _cms_posts_by_category(slug: str) -> list[models.CmsPost]:
+        q = db.query(models.CmsPost).join(models.CmsPost.categories).filter(
+            models.CmsCategory.slug == slug
+        )
+        if actor_sede is not None:
+            q = q.join(models.CmsSite).filter(
+                models.CmsSite.sede_id == actor_sede
+            )
+        return q.distinct().order_by(models.CmsPost.created_at.desc()).all()
 
-    cms_announcements = list_announcement_posts(
-        db, sede_id=actor_sede, include_archived=True
-    )
+    cms_testimonials = _cms_posts_by_category("testimonials")
+    cms_announcements = _cms_posts_by_category("announcements")
 
     m_query = db.query(models.CmsMediaItem)
     m_query = _scope_cms_media_by_user_sede(db, current_user, m_query)
