@@ -41,7 +41,7 @@ def _now_iso() -> str:
 
 # NOTE: v1 testimonials and announcements endpoints removed.
 # The frontend was fully migrated to the v2 API.
-# Legacy schemas (TestimonialRead, AnnouncementRead, etc.) were deleted.
+# V1 schemas (TestimonialRead, AnnouncementRead, etc.) were deleted.
 
 
 # ── CMS Media ───────────────────────────────────────────
@@ -244,7 +244,7 @@ def get_cms_metrics(
 
     # Axioma 3 — Multi-Tenant: pre-filtramos métricas por sede del staff.
     # Testimonials y announcements viven como CmsPost categorizados.
-    # Las tablas legacy (testimonials, announcements) fueron eliminadas.
+    # Las tablas antiguas (testimonials, announcements) fueron eliminadas.
     actor_sede = _actor_sede_or_none(db, current_user)
 
     # Inline queries para testimonials y announcements (adapters v1 eliminados).

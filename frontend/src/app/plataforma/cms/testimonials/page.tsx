@@ -340,7 +340,7 @@ export default function CmsTestimonialsPage() {
               </div>
               <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1 mt-1">{t.content}</p>
             </div>
-            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{new Date(t.created_at).toLocaleDateString("es-CO")}</span>
+            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO") : 'N/A'}</span>
           </button>
         );
       })}
@@ -365,7 +365,7 @@ export default function CmsTestimonialsPage() {
               <td className="px-4 py-3 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1 max-w-[420px]">{t.content}</td>
               <td className="px-4 py-3 hidden md:table-cell text-xs font-bold text-[hsl(var(--text-secondary))]">{t.emotion || "—"}</td>
               <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
-              <td className="px-4 py-3 hidden xl:table-cell text-xs text-[hsl(var(--text-secondary))]">{new Date(t.created_at).toLocaleDateString("es-CO")}</td>
+              <td className="px-4 py-3 hidden xl:table-cell text-xs text-[hsl(var(--text-secondary))]">{t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO") : 'N/A'}</td>
               <td className="px-4 py-3">
                 <button onClick={e => { e.stopPropagation(); toggleArchive(t); }} disabled={processing === t.id} className="text-2xs font-semibold uppercase tracking-wide text-warning-text disabled:opacity-50">{t.status === "archived" ? "Restaurar" : "Archivar"}</button>
               </td>
@@ -606,7 +606,7 @@ export default function CmsTestimonialsPage() {
                     {/* Footer */}
                     <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border))] dark:border-white/5">
                       <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">
-                        {new Date(t.created_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                        {t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" }) : 'N/A'}
                       </p>
                       <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
@@ -833,7 +833,7 @@ export default function CmsTestimonialsPage() {
                 <div className="flex items-center justify-between text-2xs font-bold text-[hsl(var(--text-secondary))]">
                   <span className="flex items-center gap-1">
                     <Clock size={11} />
-                    {new Date(selected.created_at).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}
+                    {selected.created_at ? new Date(selected.created_at).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }) : 'N/A'}
                   </span>
                   <span className="flex items-center gap-1">
                     <Heart size={11} />
@@ -901,6 +901,39 @@ export default function CmsTestimonialsPage() {
           }}
         />
       </WorkspaceDrawer>
+
+      {/* Archive Confirmation Modal */}
+      <AnimatePresence>
+        {pendingArchive && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+            >
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar testimonio?</h3>
+              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
+                El testimonio se marcará como archivado, pero podrás restaurarlo luego.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setPendingArchive(null)}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmArchive}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
+                >
+                  Archivar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

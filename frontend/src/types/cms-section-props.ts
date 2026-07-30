@@ -85,6 +85,7 @@ export interface CardItem {
   body?: string | null;
   href?: string | null;
   icon?: string | null;
+  status?: string | null;
 }
 
 export interface GalleryItem {
@@ -123,6 +124,7 @@ export interface PricingItem {
   features?: string | null;
   btn?: string | null;
   btn_href?: string | null;
+  featured?: string | null;
 }
 
 export interface TimelineEntryItem {
@@ -244,6 +246,7 @@ export interface HeroProps {
   bg_image?: string;
   image_url?: string;
   image_alt?: string;
+  scroll_indicator?: string;
   slides?: HeroSlideItem[] | HeroSlideItem[];
   items?: HeroSlideItem[];
 }

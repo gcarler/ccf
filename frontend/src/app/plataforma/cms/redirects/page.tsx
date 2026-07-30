@@ -60,7 +60,7 @@ export default function RedirectsPage() {
 
   const filteredRedirects = useMemo(() => {
     return redirects.filter(r => {
-      const matchSearch = r.from_path.toLowerCase().includes(search.toLowerCase()) || r.to_path.toLowerCase().includes(search.toLowerCase());
+      const matchSearch = (r.from_path || '').toLowerCase().includes(search.toLowerCase()) || (r.to_path || '').toLowerCase().includes(search.toLowerCase());
       const matchType = typeFilter === "all" || r.status_code.toString() === typeFilter;
       return matchSearch && matchType;
     });

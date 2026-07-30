@@ -71,7 +71,7 @@ export default function AnnouncementsAdmin() {
     const [searchQuery, setSearchQuery] = useState('');
     const [pendingArchive, setPendingArchive] = useState<Announcement | null>(null);
 
-    const fetchAnnouncements = useCallback(async (signal?: AbortSignal) => {
+    const fetchAnnouncements = useCallback(async (_signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
         try {
@@ -322,8 +322,8 @@ export default function AnnouncementsAdmin() {
                                     className="relative group overflow-hidden rounded-lg h-48 shadow-2xl border border-white/10"
                                 >
                                     <div
-                                        className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
-                                        style={{ backgroundImage: `linear-gradient(to top, rgba(10, 15, 22, 0.95) 0%, rgba(10, 15, 22, 0.4) 50%, transparent 100%), url('https://picsum.photos/seed/1438232992991-995b7058bbb3/800/600')` }}
+                                        className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--admin-bg-tertiary))] via-[hsl(var(--surface-2))] to-[hsl(var(--admin-bg-deep))] dark:from-[hsl(var(--admin-bg-secondary))] dark:via-[hsl(var(--admin-bg-tertiary))] dark:to-black transition-transform duration-1000 group-hover:scale-105"
+                                        style={{ backgroundImage: `linear-gradient(to top, rgba(10, 15, 22, 0.95) 0%, rgba(10, 15, 22, 0.4) 50%, transparent 100%), radial-gradient(circle at 80% 20%, hsl(var(--primary) / 0.18) 0%, transparent 60%)` }}
                                     />
                                     <div className="absolute inset-0 bg-[hsl(var(--info))]/5 mix-blend-overlay" />
                                     
