@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import List
 from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
@@ -27,6 +28,28 @@ class AgendaEventCreate(BaseModel):
 class AgendaEvent(AgendaEventCreate):
     id: UUID
     created_by_persona_id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class AgendaEventCommentAttachment(BaseModel):
+    url: str
+    type: str
+    name: str
+    size: int
+
+
+class AgendaEventCommentCreate(BaseModel):
+    content: str = Field(min_length=1)
+    attachments: List[AgendaEventCommentAttachment] = []
+    mentions: List[UUID] = []
+
+
+class AgendaEventCommentItem(AgendaEventCommentCreate):
+    id: UUID
+    event_id: UUID
+    author_id: UUID | None
+    author_name: str
     created_at: datetime
     updated_at: datetime
 

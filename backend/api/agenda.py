@@ -13,6 +13,8 @@ from backend.core.tenant import require_user_sede_id
 from backend.crud import agenda as crud
 from backend.schemas.agenda import (
     AgendaEvent,
+    AgendaEventCommentCreate,
+    AgendaEventCommentItem,
     AgendaEventCreate,
     EventParticipant,
     EventParticipantCreate,
@@ -21,6 +23,7 @@ from backend.schemas.agenda import (
     ResourceReservation,
     ResourceReservationCreate,
 )
+from backend.services.comment_notifications import notify_mention
 
 router = APIRouter(prefix="/agenda", tags=["Agenda"])
 
@@ -98,6 +101,26 @@ def _serialize_reservation(row: models.ReservaRecurso) -> dict:
         "starts_at": row.bloqueo_inicio,
         "ends_at": row.bloqueo_fin,
     }
+
+
+def _serialize_comment(row: models.AgendaEventComment, author: models.Persona | None = None) -> dict:
+    return {
+        "id": row.id,
+        "event_id": row.event_id,
+        "author_id": row.author_id,
+        "author_name": getattr(author, "nombre_completo", None) or getattr(author, "full_name", None) or "Usuario",
+        "content": row.content,
+        "attachments": row.attachments or [],
+        "mentions": [str(m) for m in (row.mentions or [])],
+        "created_at": row.created_at,
+        "updated_at": row.updated_at,
+    }
+
+
+def _author_name_agenda(persona: models.Persona | None) -> str:
+    if not persona:
+        return "Usuario"
+    return getattr(persona, "nombre_completo", None) or getattr(persona, "full_name", None) or "Usuario"
 
 
 @router.get("/events", response_model=list[AgendaEvent])
@@ -402,4 +425,124 @@ def archive_reservation(
     if not row or not crud.get_event(db, row.evento_id, _sede_id(db, current_user)):
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
     crud.archive_reservation(db, row)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/events/{event_id}/comments", response_model=list[AgendaEventCommentItem])
+def list_event_comments(
+    event_id: UUID,
+    limit: int = Query(default=100, ge=1, le=500),
+    db: Session = Depends(get_db),
+    current_user: models.User = AgendaReader,
+):
+    if not crud.get_event(db, event_id, _sede_id(db, current_user)):
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    rows = (
+        db.query(models.AgendaEventComment)
+        .filter(
+            models.AgendaEventComment.event_id == event_id,
+            models.AgendaEventComment.deleted_at.is_(None),
+        )
+        .order_by(models.AgendaEventComment.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    author_ids = {r.author_id for r in rows if r.author_id}
+    authors = {p.id: p for p in db.query(models.Persona).filter(models.Persona.id.in_(author_ids)).all()} if author_ids else {}
+    return [_serialize_comment(r, authors.get(r.author_id)) for r in rows]
+
+
+@router.post("/events/{event_id}/comments", response_model=AgendaEventCommentItem, status_code=status.HTTP_201_CREATED)
+def create_event_comment(
+    event_id: UUID,
+    payload: AgendaEventCommentCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = AgendaEditor,
+):
+    sede_id = _sede_id(db, current_user)
+    event = crud.get_event(db, event_id, sede_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    content = (payload.content or "").strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="content is required")
+    comment = models.AgendaEventComment(
+        event_id=event_id,
+        author_id=current_user.id,
+        content=content,
+        attachments=[a.model_dump() for a in (payload.attachments or [])],
+        mentions=[UUID(str(m)) for m in (payload.mentions or [])],
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    if comment.mentions:
+        notify_mention(
+            db,
+            mention_ids=comment.mentions,
+            author_id=comment.author_id,
+            title=f"Te mencionaron en un comentario de agenda: {event.titulo}",
+            content=f"{content[:120]}{'...' if len(content) > 120 else ''}",
+            url=f"/plataforma/agenda/eventos/{event_id}",
+            sede_id=sede_id,
+        )
+    return _serialize_comment(comment, comment.author)
+
+
+@router.patch("/events/{event_id}/comments/{comment_id}", response_model=AgendaEventCommentItem)
+def update_event_comment(
+    event_id: UUID,
+    comment_id: UUID,
+    payload: AgendaEventCommentCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = AgendaEditor,
+):
+    sede_id = _sede_id(db, current_user)
+    if not crud.get_event(db, event_id, sede_id):
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    comment = (
+        db.query(models.AgendaEventComment)
+        .filter(
+            models.AgendaEventComment.id == comment_id,
+            models.AgendaEventComment.event_id == event_id,
+            models.AgendaEventComment.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comentario no encontrado")
+    content = (payload.content or "").strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="content is required")
+    comment.content = content
+    comment.attachments = [a.model_dump() for a in (payload.attachments or [])]
+    comment.mentions = [UUID(str(m)) for m in (payload.mentions or [])]
+    db.commit()
+    db.refresh(comment)
+    return _serialize_comment(comment, comment.author)
+
+
+@router.delete("/events/{event_id}/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_event_comment(
+    event_id: UUID,
+    comment_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = AgendaEditor,
+):
+    sede_id = _sede_id(db, current_user)
+    if not crud.get_event(db, event_id, sede_id):
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    comment = (
+        db.query(models.AgendaEventComment)
+        .filter(
+            models.AgendaEventComment.id == comment_id,
+            models.AgendaEventComment.event_id == event_id,
+            models.AgendaEventComment.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comentario no encontrado")
+    comment.deleted_at = datetime.now()
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

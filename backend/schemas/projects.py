@@ -287,9 +287,18 @@ class ProjectActivityItem(BaseModel):
     created_at: datetime
 
 
+class CommentAttachment(BaseModel):
+    url: str
+    type: str
+    name: str
+    size: int
+
+
 class ProjectCommentBase(BaseModel):
     content: str
     task_id: Optional[UUIDStr] = None
+    attachments: List[CommentAttachment] = []
+    mentions: List[UUIDStr] = []
 
 
 class ProjectCommentCreate(ProjectCommentBase):
@@ -306,6 +315,8 @@ class ProjectCommentCreateWithProject(ProjectCommentBase):
 class ProjectCommentUpdate(BaseModel):
     content: Optional[str] = None
     is_resolved: Optional[bool] = None
+    attachments: Optional[List[CommentAttachment]] = None
+    mentions: Optional[List[UUIDStr]] = None
 
 
 class ProjectCommentItem(ProjectCommentBase):
