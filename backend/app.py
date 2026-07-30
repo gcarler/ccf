@@ -22,6 +22,7 @@ from backend.api import (
     chat,
     cms,
     cms_v2,
+    comments,
     community,
     crm,
     dashboard,
@@ -92,6 +93,7 @@ ROUTER_REGISTRY = [
     (youtube.router, "/api", ["youtube"]),
     (enterprise_cms.router, "/api", ["Enterprise CMS"]),
     (wiki.router, "/api", ["wiki"]),
+    (comments.router, "/api/comments", ["comments"]),
 ]
 
 

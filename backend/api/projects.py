@@ -39,6 +39,7 @@ from backend.crud.projects import (
     get_user_persona_id,
 )
 from backend.mesh_websockets import manager
+from backend.services.comment_notifications import notify_mention
 from backend.services.task_notifications import notify_task_assigned
 
 settings = get_settings()
@@ -59,6 +60,48 @@ def _author_name(persona) -> str:
     if not persona:
         return "Usuario"
     return getattr(persona, "nombre_completo", None) or getattr(persona, "full_name", None) or "Usuario"
+
+
+def _project_comment_to_schema(comment: models.ProjectComment, author: models.Persona | None = None) -> schemas.ProjectCommentItem:
+    return schemas.ProjectCommentItem(
+        id=comment.id,
+        project_id=str(comment.project_id) if comment.project_id is not None else None,
+        task_id=str(comment.task_id) if comment.task_id is not None else None,
+        content=comment.content,
+        author_id=str(comment.author_id) if comment.author_id is not None else None,
+        author_name=_author_name(author),
+        is_resolved=comment.is_resolved,
+        created_at=comment.created_at,
+        updated_at=comment.updated_at,
+        attachments=comment.attachments or [],
+        mentions=[str(m) for m in (comment.mentions or [])],
+    )
+
+
+def _notify_comment_mentions(
+    db: Session,
+    comment: models.ProjectComment,
+    project_id: str,
+    task_id: Optional[str],
+    user_sede: Optional[Any],
+) -> None:
+    if not comment.mentions:
+        return
+    project = db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).first()
+    project_title = project.title if project else "Proyecto"
+    task_title = ""
+    if task_id:
+        task = db.query(models.ProjectTask).filter(models.ProjectTask.id == _to_uuid(task_id)).first()
+        task_title = f" ({task.title})" if task else ""
+    notify_mention(
+        db,
+        mention_ids=comment.mentions or [],
+        author_id=comment.author_id,
+        title=f"Te mencionaron en un comentario{task_title}",
+        content=f"{comment.content[:120]}{'...' if len(comment.content) > 120 else ''}",
+        url=f"/plataforma/proyectos/{project_id}{'/tareas/' + str(task_id) if task_id else ''}",
+        sede_id=user_sede,
+    )
 
 
 def _assignment_changed(previous_assignee_id, current_assignee_id) -> bool:
@@ -897,6 +940,8 @@ def list_all_comments(
                 is_resolved=row.is_resolved,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
+                attachments=row.attachments or [],
+                mentions=[str(m) for m in (row.mentions or [])],
             )
         )
     return result
@@ -1994,6 +2039,8 @@ def create_comment(
         task_id=_to_uuid(task_id) if task_id else None,
         author_id=author_persona_id,
         content=content,
+        attachments=[a.model_dump() for a in (payload.attachments or [])],
+        mentions=[_to_uuid(m) for m in (payload.mentions or []) if _to_uuid(m)],
     )
     db.add(comment)
     _log_project_activity(
@@ -2005,18 +2052,9 @@ def create_comment(
     )
     db.commit()
     db.refresh(comment)
+    _notify_comment_mentions(db, comment, project_id, task_id, user_sede)
     persona = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first() if comment.author_id else None
-    return schemas.ProjectCommentItem(
-        id=comment.id,
-        project_id=str(comment.project_id) if comment.project_id is not None else None,
-        task_id=str(comment.task_id) if comment.task_id is not None else None,
-        content=comment.content,
-        author_id=str(comment.author_id) if comment.author_id is not None else None,
-        author_name=_author_name(persona),
-        is_resolved=comment.is_resolved,
-        created_at=comment.created_at,
-        updated_at=comment.updated_at,
-    )
+    return _project_comment_to_schema(comment, persona)
 
 
 @router.post("/{project_id}/comments", response_model=schemas.ProjectCommentItem)
@@ -2035,6 +2073,8 @@ def create_project_comment(
         task_id=_to_uuid(payload.task_id) if payload.task_id else None,
         author_id=author_persona_id,
         content=payload.content,
+        attachments=[a.model_dump() for a in (payload.attachments or [])],
+        mentions=[_to_uuid(m) for m in (payload.mentions or []) if _to_uuid(m)],
     )
     db.add(comment)
     _log_project_activity(
@@ -2046,18 +2086,9 @@ def create_project_comment(
     )
     db.commit()
     db.refresh(comment)
+    _notify_comment_mentions(db, comment, project_id, payload.task_id, user_sede)
     persona = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first() if comment.author_id else None
-    return schemas.ProjectCommentItem(
-        id=comment.id,
-        project_id=str(comment.project_id) if comment.project_id is not None else None,
-        task_id=str(comment.task_id) if comment.task_id is not None else None,
-        content=comment.content,
-        author_id=str(comment.author_id) if comment.author_id is not None else None,
-        author_name=_author_name(persona),
-        is_resolved=comment.is_resolved,
-        created_at=comment.created_at,
-        updated_at=comment.updated_at,
-    )
+    return _project_comment_to_schema(comment, persona)
 
 
 @router.patch("/comments/{comment_id}", response_model=schemas.ProjectCommentItem)
@@ -2080,20 +2111,14 @@ def update_project_comment(
         comment.content = payload.content
     if payload.is_resolved is not None:
         comment.is_resolved = payload.is_resolved
+    if payload.attachments is not None:
+        comment.attachments = [a.model_dump() for a in payload.attachments]
+    if payload.mentions is not None:
+        comment.mentions = [_to_uuid(m) for m in payload.mentions if _to_uuid(m)]
     db.commit()
     db.refresh(comment)
     author = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()
-    return schemas.ProjectCommentItem(
-        id=comment.id,
-        project_id=str(comment.project_id) if comment.project_id is not None else None,
-        task_id=str(comment.task_id) if comment.task_id is not None else None,
-        content=comment.content,
-        author_id=str(comment.author_id) if comment.author_id is not None else None,
-        author_name=_author_name(author),
-        is_resolved=comment.is_resolved,
-        created_at=comment.created_at,
-        updated_at=comment.updated_at,
-    )
+    return _project_comment_to_schema(comment, author)
 
 
 # ── TASK LIST PER PROJECT ──────────────────────────────────────────────────────
