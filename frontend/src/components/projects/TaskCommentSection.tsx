@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { apiFetch } from '@/lib/http';
-import type { ProjectTaskRecord, ProjectCommentItem } from '@/types/projects';
+import type { ProjectTaskRecord, ProjectCommentItem, ProjectCommentAttachment } from '@/types/projects';
 import { ChevronDown, Loader2, MessageSquare, Send, Trash2 } from 'lucide-react';
 
 interface Comment {
@@ -11,7 +11,7 @@ interface Comment {
     authorColor?: string;
     text: string;
     timestamp: Date;
-    attachments: { url: string; type: string; name: string; size: number }[];
+    attachments: ProjectCommentAttachment[];
     mentions?: string[];
 }
 
