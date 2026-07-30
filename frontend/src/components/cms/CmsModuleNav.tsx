@@ -29,6 +29,8 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
 import { apiFetch } from "@/lib/http";
+import { listTestimonials } from "@/lib/cms/v2";
+import { SITE_KEY } from "@/lib/site-config";
 
 const CMS_TABS = [
   { id: "resumen", label: "Resumen", href: "/plataforma/cms", icon: LayoutDashboard },
@@ -77,14 +79,14 @@ export function CmsModuleNav() {
     Promise.allSettled([
       apiFetch<{ items: unknown[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: "false" }, signal: controller.signal }),
       apiFetch<{ items: unknown[]; total: number }>("/cms/v2/sites/ccf/pages", { token, cache: "no-store", signal: controller.signal }),
-      apiFetch<unknown[]>("/admin/testimonials", { token, cache: "no-store", signal: controller.signal }),
+      listTestimonials(SITE_KEY, undefined, token),
       apiFetch<{ items: unknown[]; total: number }>("/cms/v2/sites/ccf/posts", { token, cache: "no-store", signal: controller.signal }),
     ]).then(([mediaRes, pagesRes, testRes, postsRes]) => {
       if (controller.signal.aborted) return;
       setStats({
         mediaTotal: mediaRes.status === "fulfilled" ? (mediaRes.value?.total ?? (Array.isArray(mediaRes.value) ? mediaRes.value.length : 0)) : 0,
         pagesTotal: pagesRes.status === "fulfilled" ? (pagesRes.value?.total ?? (Array.isArray(pagesRes.value) ? pagesRes.value.length : 0)) : 0,
-        testimonialsTotal: testRes.status === "fulfilled" ? (Array.isArray(testRes.value) ? testRes.value.length : 0) : 0,
+        testimonialsTotal: testRes.status === "fulfilled" ? testRes.value.length : 0,
         postsTotal: postsRes.status === "fulfilled" ? (postsRes.value?.total ?? (Array.isArray(postsRes.value) ? postsRes.value.length : 0)) : 0,
       });
     });
