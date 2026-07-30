@@ -52,7 +52,7 @@ export default function NewAnnouncementPage() {
                 },
             }, token);
             addToast('Anuncio publicado correctamente', 'success');
-            router.push('/plataforma/admin/announcements');
+            router.push('/plataforma/cms/announcements');
         } catch {
             addToast('Error al publicar el anuncio', 'error');
         } finally {
@@ -78,7 +78,7 @@ export default function NewAnnouncementPage() {
                 },
             }, token);
             addToast('Borrador guardado en CMS', 'success');
-            router.push('/plataforma/admin/announcements');
+            router.push('/plataforma/cms/announcements');
         } catch {
             addToast('Error al guardar el borrador', 'error');
         } finally {

@@ -54,7 +54,7 @@ const SIDEBAR_SECTIONS = [
         title: 'Gestor Web (CMS)',
         items: [
             { id: 'cms', label: 'Páginas Web', href: '/plataforma/admin/cms', icon: Globe },
-            { id: 'announcements', label: 'Anuncios', href: '/plataforma/admin/announcements', icon: Megaphone },
+            { id: 'announcements', label: 'Anuncios', href: '/plataforma/cms/announcements', icon: Megaphone },
         ]
     }
 ];
