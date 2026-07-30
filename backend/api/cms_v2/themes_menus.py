@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -20,6 +20,12 @@ from backend.api.cms_v2._shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
+from backend.exceptions.cms import (
+    MenuItemConflictError,
+    MenuItemNotFoundError,
+    MenuKeyConflictError,
+    ThemeNotFoundError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +55,7 @@ def get_theme(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
-        raise HTTPException(status_code=404, detail="theme not found")
+        raise ThemeNotFoundError()
     return row
 
 
@@ -81,7 +87,7 @@ def patch_theme(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
-        raise HTTPException(status_code=404, detail="theme not found")
+        raise ThemeNotFoundError()
     return crud.update_cms_theme(db, row, payload)
 
 
@@ -96,7 +102,7 @@ def activate_theme(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.activate_cms_theme(db, site.id, theme_id)
     if not row:
-        raise HTTPException(status_code=404, detail="theme not found")
+        raise ThemeNotFoundError()
     return row
 
 
@@ -112,7 +118,7 @@ def delete_theme(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
-        raise HTTPException(status_code=404, detail="theme not found")
+        raise ThemeNotFoundError()
     crud.archive_cms_theme(db, row)
     return None
 
@@ -140,10 +146,10 @@ def create_menu(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     if crud.get_cms_menu(db, site.id, payload.menu_key.strip().lower()):
-        raise HTTPException(status_code=409, detail="menu_key already exists")
+        raise MenuKeyConflictError()
     row = crud.create_cms_menu(db, site.id, payload, commit_with_conflict_check=True)
     if row is None:
-        raise HTTPException(status_code=409, detail="menu_key already exists")
+        raise MenuKeyConflictError()
     return row
 
 
@@ -221,7 +227,7 @@ def create_menu_item(
     menu = _get_menu_or_404(db, site.id, menu_key)
     row = crud.create_cms_menu_item(db, menu.id, payload, commit_with_conflict_check=True)
     if row is None:
-        raise HTTPException(status_code=409, detail="menu item conflict")
+        raise MenuItemConflictError()
     return row
 
 
@@ -242,7 +248,7 @@ def patch_menu_item(
     menu = _get_menu_or_404(db, site.id, menu_key)
     item = crud.get_cms_menu_item(db, menu.id, item_id, site_id=site.id)
     if not item:
-        raise HTTPException(status_code=404, detail="menu item not found")
+        raise MenuItemNotFoundError()
     return crud.update_cms_menu_item(db, item, payload)
 
 
@@ -260,7 +266,7 @@ def delete_menu_item(
     menu = _get_menu_or_404(db, site.id, menu_key)
     item = crud.get_cms_menu_item(db, menu.id, item_id, site_id=site.id)
     if not item:
-        raise HTTPException(status_code=404, detail="menu item not found")
+        raise MenuItemNotFoundError()
     crud.delete_cms_menu_item(db, item)
 
 

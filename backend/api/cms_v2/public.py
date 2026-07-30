@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session, lazyload
 
 from backend import crud, models, schemas
@@ -32,6 +32,12 @@ from backend.core.seo import (
     build_breadcrumb_list_json_ld,
     build_robots_txt,
     build_sitemap_xml,
+)
+from backend.exceptions.cms import (
+    MenuNotFoundError,
+    PageNotFoundError,
+    PostNotFoundError,
+    ThemeNotFoundError,
 )
 from backend.schemas._common import PaginatedResponse
 
@@ -58,7 +64,7 @@ def public_theme(site_key: str, db: Session = Depends(get_db)):
         .order_by(models.CmsTheme.updated_at.desc()).first()
     )
     if not row:
-        raise HTTPException(status_code=404, detail="active theme not found")
+        raise ThemeNotFoundError("Active theme not found")
     return schemas.CmsThemeRead.model_validate(row)
 
 
@@ -71,7 +77,7 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
     menu = _get_menu_or_404(db, site.id, menu_key)
     if not menu.is_active:
-        raise HTTPException(status_code=404, detail="menu not found")
+        raise MenuNotFoundError()
     all_items = (
         db.query(models.CmsMenuItem)
         .options(lazyload("*"))
@@ -127,7 +133,7 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         .first()
     )
     if not page:
-        raise HTTPException(status_code=404, detail="published page not found")
+        raise PageNotFoundError("Published page not found")
 
     published_version = None
     if page.published_version_id:
@@ -322,5 +328,5 @@ def public_post(site_key: str, slug: str, db: Session = Depends(get_db)):
         .first()
     )
     if not post:
-        raise HTTPException(status_code=404, detail="published post not found")
+        raise PostNotFoundError("Published post not found")
     return _enrich_public_posts(db, site_key, [post])[0]

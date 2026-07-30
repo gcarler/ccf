@@ -29,7 +29,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
 import { apiFetch } from "@/lib/http";
-import { listTestimonials } from "@/lib/cms/v2";
+import { listCmsPostsByCategory, postToTestimonial } from "@/lib/cms/v2";
 import { SITE_KEY } from "@/lib/site-config";
 
 const CMS_TABS = [
@@ -79,7 +79,7 @@ export function CmsModuleNav() {
     Promise.allSettled([
       apiFetch<{ items: unknown[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: "false" }, signal: controller.signal }),
       apiFetch<{ items: unknown[]; total: number }>("/cms/v2/sites/ccf/pages", { token, cache: "no-store", signal: controller.signal }),
-      listTestimonials(SITE_KEY, undefined, token),
+      listCmsPostsByCategory(SITE_KEY, "testimonials", undefined, token).then(posts => posts.map(postToTestimonial)),
       apiFetch<{ items: unknown[]; total: number }>("/cms/v2/sites/ccf/posts", { token, cache: "no-store", signal: controller.signal }),
     ]).then(([mediaRes, pagesRes, testRes, postsRes]) => {
       if (controller.signal.aborted) return;

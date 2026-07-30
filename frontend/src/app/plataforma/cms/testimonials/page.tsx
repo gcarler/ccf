@@ -6,10 +6,11 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import {
-  listTestimonials,
-  setTestimonialStatus,
-  archiveTestimonial,
+  listCmsPostsByCategory,
+  patchCmsPostByCategory,
+  deleteCmsPostByCategory,
   saveTestimonial as saveTestimonialV2,
+  postToTestimonial,
   type V1TestimonialShape,
 } from "@/lib/cms/v2";
 import OptimizedImage from "@/components/ui/OptimizedImage";
@@ -118,7 +119,7 @@ export default function CmsTestimonialsPage() {
     if (!token || !canEdit) { setLoading(false); return; }
     setLoading(true);
     try {
-      const data = await listTestimonials(SITE_KEY, { include_archived: true }, token);
+      const data = (await listCmsPostsByCategory(SITE_KEY, "testimonials", { include_archived: true }, token)).map(postToTestimonial);
       setTestimonials(
         Array.isArray(data)
           ? data.map(row => ({
@@ -163,7 +164,7 @@ export default function CmsTestimonialsPage() {
     setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: next, status: next ? "approved" : "pending" } : i));
     setProcessing(t.id);
     try {
-      const updated = await setTestimonialStatus(SITE_KEY, t.slug, next ? "approved" : "pending", token);
+      const updated = postToTestimonial(await patchCmsPostByCategory(SITE_KEY, t.slug, "testimonials", { status: next ? "published" : "draft" }, token));
       const normalized = { ...updated, status: updated.status || (updated.is_approved ? "approved" : "pending"), published: updated.is_approved ?? next ?? false };
       setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, ...normalized } : i));
       if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
@@ -180,12 +181,12 @@ export default function CmsTestimonialsPage() {
     setProcessing(t.id);
     try {
       if (restore) {
-        const updated = await setTestimonialStatus(SITE_KEY, t.slug, "pending", token);
+        const updated = postToTestimonial(await patchCmsPostByCategory(SITE_KEY, t.slug, "testimonials", { status: "draft" }, token));
         const normalized = { ...updated, published: false, status: "pending" };
         setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...normalized } : item));
         if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
       } else {
-        await archiveTestimonial(SITE_KEY, t.slug, token);
+        await deleteCmsPostByCategory(SITE_KEY, t.slug, "testimonials", token);
         const archived = { ...t, published: false, is_approved: false, show_on_home: false, status: "archived" };
         setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...archived } : item));
         if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...archived } : null);

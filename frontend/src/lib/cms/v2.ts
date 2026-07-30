@@ -783,48 +783,6 @@ export function postToAnnouncement(post: CmsPostWithTaxonomies): V1AnnouncementS
   };
 }
 
-/** High-level wrapper: list testimonials via v2, returning v1 TestimonialRead shape. */
-export async function listTestimonials(
-  siteKey: string,
-  options?: { status?: string; include_archived?: boolean; skip?: number; limit?: number },
-  token?: string | null,
-): Promise<V1TestimonialShape[]> {
-  const posts = await listCmsPostsByCategory(siteKey, "testimonials", options, token);
-  return posts.map(postToTestimonial);
-}
-
-/** High-level wrapper: get one testimonial by slug via v2, returning v1 shape. */
-export async function getTestimonialBySlug(
-  siteKey: string,
-  slug: string,
-  token?: string | null,
-): Promise<V1TestimonialShape> {
-  const post = await getCmsPostByCategory(siteKey, slug, "testimonials", token);
-  if (!post) throw new Error(`Testimonial not found: ${slug}`);
-  return postToTestimonial(post);
-}
-
-/** Toggle testimonial status between pending/approved/archived via v2. */
-export async function setTestimonialStatus(
-  siteKey: string,
-  slug: string,
-  v1Status: "pending" | "approved" | "archived",
-  token?: string | null,
-): Promise<V1TestimonialShape> {
-  const v2Status = v1Status === "approved" ? "published" : v1Status === "archived" ? "archived" : "draft";
-  const post = await patchCmsPostByCategory(siteKey, slug, "testimonials", { status: v2Status }, token);
-  return postToTestimonial(post);
-}
-
-/** Archive (soft-delete) a testimonial via v2. */
-export async function archiveTestimonial(
-  siteKey: string,
-  slug: string,
-  token?: string | null,
-): Promise<void> {
-  await deleteCmsPostByCategory(siteKey, slug, "testimonials", token);
-}
-
 /** Save a testimonial edit via v2, mapping v1 flat fields back to content+seo_json. */
 export async function saveTestimonial(
   siteKey: string,
@@ -1131,17 +1089,6 @@ export async function listAnnouncements(
   return posts.map(postToAnnouncement);
 }
 
-/** High-level wrapper: get one announcement by slug via v2, returning v1 shape. */
-export async function getAnnouncementBySlug(
-  siteKey: string,
-  slug: string,
-  token?: string | null,
-): Promise<V1AnnouncementShape> {
-  const post = await getCmsPostByCategory(siteKey, slug, "announcements", token);
-  if (!post) throw new Error(`Announcement not found: ${slug}`);
-  return postToAnnouncement(post);
-}
-
 /** Toggle announcement status between draft/published/archived via v2. */
 export async function setAnnouncementStatus(
   siteKey: string,
@@ -1151,49 +1098,6 @@ export async function setAnnouncementStatus(
 ): Promise<V1AnnouncementShape> {
   const v2Status = v1Status === "active" ? "published" : v1Status === "archived" ? "archived" : "draft";
   const post = await patchCmsPostByCategory(siteKey, slug, "announcements", { status: v2Status }, token);
-  return postToAnnouncement(post);
-}
-
-/** Archive (soft-delete) an announcement via v2. */
-export async function archiveAnnouncement(
-  siteKey: string,
-  slug: string,
-  token?: string | null,
-): Promise<void> {
-  await deleteCmsPostByCategory(siteKey, slug, "announcements", token);
-}
-
-/** Save an announcement edit via v2, mapping v1 flat fields back to title/content+seo_json. */
-export async function saveAnnouncement(
-  siteKey: string,
-  slug: string,
-  data: {
-    title: string;
-    content: string;
-    category?: string;
-    image_url?: string | null;
-    is_active?: boolean;
-    is_featured?: boolean;
-    status?: string;
-  },
-  token?: string | null,
-): Promise<V1AnnouncementShape> {
-  const post = await patchCmsPostByCategory(
-    siteKey,
-    slug,
-    "announcements",
-    {
-      title: data.title,
-      content: data.content,
-      featured_image_url: data.image_url ?? null,
-      status: data.is_active === false || data.status === "archived" ? "archived" : data.is_active === true || data.status === "active" ? "published" : "draft",
-      seo_json: {
-        category: data.category ?? "announcements",
-        is_featured: data.is_featured ?? false,
-      },
-    },
-    token,
-  );
   return postToAnnouncement(post);
 }
 

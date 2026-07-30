@@ -19,9 +19,13 @@ vi.mock("@/lib/http", () => ({
   apiFetch: vi.fn().mockResolvedValue({ items: [], total: 0 }),
 }));
 
-vi.mock("@/lib/cms/v2", () => ({
-  listTestimonials: vi.fn().mockResolvedValue([]),
-}));
+vi.mock("@/lib/cms/v2", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/lib/cms/v2")>();
+  return {
+    ...mod,
+    listCmsPostsByCategory: vi.fn().mockResolvedValue([]),
+  };
+});
 
 vi.mock("@/lib/site-config", () => ({
   SITE_KEY: "ccf",

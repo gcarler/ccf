@@ -1,5 +1,4 @@
 "use client";
-
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
 import { useAuth } from "@/context/AuthContext";
@@ -26,25 +25,18 @@ Video,
 X
 } from "lucide-react";
 import React,{ useCallback,useEffect,useRef,useState } from "react";
-
 /** Strip HTML tags for defense-in-depth (React already escapes JSX by default) */
 function sanitizeText(text: string): string {
     return text.replace(/<[^>]*>/g, "");
 }
-
 interface SearchedUser {
     id: string;
     username: string;
     email: string;
     avatar_url: string | null;
 }
-
 function AvatarInitial({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
     const safeName = (name || "U").slice(0, 2).toUpperCase();
-    const initials = safeName;
-    const colors = [
-        "from-[hsl(var(--info))] to-[hsl(var(--info))]",
-        "from-[hsl(var(--domain-cyan))] to-[hsl(var(--domain-cyan))]",
         "from-[hsl(var(--success))] to-[hsl(var(--success))]",
         "from-[hsl(var(--danger))] to-[hsl(var(--danger))]",
         "from-[hsl(var(--warning))] to-[hsl(var(--warning))]",
@@ -60,7 +52,6 @@ function AvatarInitial({ name, size = "md" }: { name: string; size?: "sm" | "md"
         </div>
     );
 }
-
 export default function MessagesPage() {
     const { token, user } = useAuth();
     const { addToast } = useToast();
@@ -77,21 +68,18 @@ export default function MessagesPage() {
     const inputRef = useRef<HTMLInputElement>(null);
     const messagesRef = useRef<DirectMessageItem[]>([]);
     const activeConvIdRef = useRef<string | null>(null);
-
     const [replyTo, setReplyTo] = useState<DirectMessageItem | null>(null);
     const [attachmentPreview, setAttachmentPreview] = useState<{
         file: File; url: string; type: string; name: string;
     } | null>(null);
     const [uploadingFile, setUploadingFile] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
     // Mention autocomplete
     const [mentionQuery, setMentionQuery] = useState("");
     const [mentionResults, setMentionResults] = useState<SearchedUser[]>([]);
     const [showMentionDropdown, setShowMentionDropdown] = useState(false);
     const [mentionStart, setMentionStart] = useState(-1);
     const [mentions, setMentions] = useState<SearchedUser[]>([]);
-
     // ── New conversation drawer ──────────────────────────────────────────
     const [showNewConvDrawer, setShowNewConvDrawer] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -101,11 +89,9 @@ export default function MessagesPage() {
     const [searchError, setSearchError] = useState("");
     const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
-
     // Keep refs in sync with state for stale-closure prevention
     messagesRef.current = messages;
     activeConvIdRef.current = activeConv?.id ?? null;
-
     const loadConversations = useCallback(() => {
         if (!token) { setLoading(false); return; }
         apiFetch<ConversationRead[]>("/chat/conversations", { token })
@@ -113,9 +99,7 @@ export default function MessagesPage() {
             .catch(() => { addToast("Error al cargar conversaciones", "error"); })
             .finally(() => setLoading(false));
     }, [token, addToast]);
-
     useEffect(() => { loadConversations(); }, [loadConversations]);
-
     useEffect(() => {
         const convId = activeConv?.id;
         if (!token || !convId) return;
@@ -132,7 +116,6 @@ export default function MessagesPage() {
             .catch(() => { addToast("No se pudo marcar como leído", "error"); });
         return () => controller.abort();
     }, [activeConv?.id, token, addToast]);
-
     const loadOlderMessages = useCallback(async () => {
         const convId = activeConv?.id;
         if (!token || !convId || loadingMessages || messagesRef.current.length === 0) return;
@@ -149,7 +132,6 @@ export default function MessagesPage() {
         } catch { /* silent */ }
         finally { setLoadingMessages(false); }
     }, [token, activeConv?.id, loadingMessages]);
-
     const handleSocketEvent = useCallback((payload: WsEvent) => {
         if (payload.event === "direct_message" && "conversation_id" in payload && "message" in payload) {
             const evt = payload as import("@/types/directMessages").WsDirectMessageEvent;
@@ -170,9 +152,7 @@ export default function MessagesPage() {
             }
         }
     }, []);
-
     const { status: wsStatus } = useWorkspaceSocket({ rooms: activeConv ? [`dm_${activeConv.id}`] : [], enabled: !!token && !!activeConv, onEvent: handleSocketEvent });
-
     useEffect(() => {
         if (scrollRef.current) {
             const el = scrollRef.current;
@@ -180,11 +160,9 @@ export default function MessagesPage() {
             if (isNearBottom) el.scrollTop = el.scrollHeight;
         }
     }, [messages]);
-
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
         setInput(val);
-        
         // Detect @ symbol
         const lastAt = val.lastIndexOf('@');
         if (lastAt !== -1) {
@@ -206,7 +184,6 @@ export default function MessagesPage() {
         }
         setShowMentionDropdown(false);
     };
-
     const selectMention = (user: SearchedUser) => {
         const before = input.slice(0, mentionStart);
         const after = input.slice(mentionStart + 1 + mentionQuery.length);
@@ -216,20 +193,16 @@ export default function MessagesPage() {
         setMentionResults([]);
         inputRef.current?.focus();
     };
-
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        
         const ALLOWED = ['image/', 'application/pdf', 'application/msword', 
             'application/vnd.openxmlformats', 'application/vnd.ms-excel',
             'text/plain', 'text/csv', 'video/mp4', 'video/webm', 
             'audio/mpeg', 'audio/ogg', 'audio/wav'];
-        
         const isAllowed = ALLOWED.some(t => file.type.startsWith(t));
         if (!isAllowed) { addToast('Tipo de archivo no soportado', 'error'); return; }
         if (file.size > 25 * 1024 * 1024) { addToast('El archivo supera 25 MB', 'error'); return; }
-        
         const url = URL.createObjectURL(file);
         const type = file.type.startsWith('image/') ? 'image' 
             : file.type === 'application/pdf' ? 'pdf'
@@ -238,15 +211,12 @@ export default function MessagesPage() {
             : 'document';
         setAttachmentPreview({ file, url, type, name: file.name });
     };
-
     const handleSend = async () => {
         if ((!input.trim() && !attachmentPreview) || !token || !activeConv || sending) return;
         const content = input.trim();
         setInput('');
         setSending(true);
-        
         let att: { url: string; type: string; name: string; size: number } | null = null;
-        
         if (attachmentPreview) {
             setUploadingFile(true);
             try {
@@ -258,6 +228,13 @@ export default function MessagesPage() {
                     body: formData,
                 });
                 att = attRes;
+                const res = await fetch('/api/chat/upload-attachment', {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` },
+                    body: formData,
+                });
+                if (!res.ok) throw new Error('Upload failed');
+                att = await res.json();
             } catch {
                 addToast('Error al subir archivo', 'error');
                 setSending(false);
@@ -269,13 +246,11 @@ export default function MessagesPage() {
                 setAttachmentPreview(null);
             }
         }
-        
         try {
             const body: Record<string, unknown> = { content };
             if (att) { body.attachment_url = att.url; body.attachment_type = att.type; body.attachment_name = att.name; body.attachment_size = att.size; }
             if (replyTo) { body.reply_to_id = replyTo.id; }
             if (mentions.length > 0) { body.mentions = mentions.map(m => m.id); }
-            
             const msg = await apiFetch<DirectMessageItem>(
                 `/chat/conversations/${activeConv.id}/messages`,
                 { method: 'POST', token, body }
@@ -290,7 +265,6 @@ export default function MessagesPage() {
             setSending(false);
         }
     };
-    
     function renderContent(content: string, mentions: string[] = []) {
         if (!mentions.length) return <p className="whitespace-pre-wrap break-words">{sanitizeText(content)}</p>;
         const parts = content.split(/(@\w+)/g);
@@ -300,10 +274,8 @@ export default function MessagesPage() {
                 : part
         )}</p>;
     }
-
     const getOtherParticipant = (conv: ConversationRead) =>
         conv.participants.find((p) => p.persona_id !== userId);
-
     const filteredConversations = conversationFilter.trim()
         ? conversations.filter((c) => {
             const other = getOtherParticipant(c);
@@ -311,7 +283,6 @@ export default function MessagesPage() {
             return name.includes(conversationFilter.toLowerCase());
           })
         : conversations;
-
     const handleSearchChange = (value: string) => {
         setSearchQuery(value);
         setSearchError("");
@@ -330,11 +301,9 @@ export default function MessagesPage() {
             } finally { setSearching(false); }
         }, 300);
     };
-
     useEffect(() => {
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, []);
-
     const handleCreateConversation = async (participantId: string) => {
         if (!token) return;
         setCreatingConv(true);
@@ -354,7 +323,6 @@ export default function MessagesPage() {
         } catch { setSearchError("Error al crear la conversación"); }
         finally { setCreatingConv(false); }
     };
-
     const openNewConvDrawer = () => {
         setShowNewConvDrawer(true);
         setSearchQuery("");
@@ -362,13 +330,10 @@ export default function MessagesPage() {
         setSearchError("");
         setTimeout(() => searchInputRef.current?.focus(), 200);
     };
-
     const selectConversation = (conv: ConversationRead) => {
         setActiveConv(conv);
     };
-
     const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
-
     // ── Conversation sidebar ─────────────────────────────────────────────
     const conversationSidebar = (
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/30 dark:bg-[#1a1b1d] border-r border-[hsl(var(--border))] dark:border-white/[0.05]">
@@ -394,7 +359,6 @@ export default function MessagesPage() {
                     <Plus size={13} />
                 </button>
             </div>
-
             {/* Search */}
             <div className="px-2 py-2 shrink-0">
                 <div className="relative">
@@ -409,7 +373,6 @@ export default function MessagesPage() {
                     />
                 </div>
             </div>
-
             {/* List */}
             <div className="flex-1 overflow-y-auto scrollbar-thin px-1">
                 {loading ? (
@@ -484,7 +447,6 @@ export default function MessagesPage() {
             </div>
         </div>
     );
-
     return (
         <WorkspaceLayout
             sidebarTitle="Mensajes"
@@ -547,7 +509,6 @@ export default function MessagesPage() {
                                 </div>
                             </div>
                         </div>
-
                         {/* ── Messages ── */}
                         <div
                             ref={scrollRef}
@@ -647,7 +608,6 @@ export default function MessagesPage() {
                                 })
                             )}
                         </div>
-
                         {/* ── Input bar ── */}
                         <div className="border-t border-[hsl(var(--border))] dark:border-white/[0.05] p-2 md:p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#141517] relative">
                             {/* Reply preview */}
@@ -662,7 +622,6 @@ export default function MessagesPage() {
                                     </button>
                                 </div>
                             )}
-                            
                             {/* Attachment preview */}
                             {attachmentPreview && (
                                 <div className="mx-2 mb-1 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg">
@@ -674,6 +633,10 @@ export default function MessagesPage() {
                                              : attachmentPreview.type === 'video' ? <Video size={18} className="text-[hsl(var(--info))]" />
                                              : attachmentPreview.type === 'audio' ? <Music size={18} className="text-[hsl(var(--success))]" />
                                              : <LucideFile size={18} className="text-[hsl(var(--primary))]" />}
+                                            {attachmentPreview.type === 'pdf' ? <FileText size={18} className="text-red-500" />
+                                             : attachmentPreview.type === 'video' ? <Video size={18} className="text-purple-500" />
+                                             : attachmentPreview.type === 'audio' ? <Music size={18} className="text-green-500" />
+                                             : <LucideFile size={18} className="text-blue-500" />}
                                         </div>
                                     )}
                                     <div className="flex-1 min-w-0">
@@ -685,7 +648,6 @@ export default function MessagesPage() {
                                     </button>
                                 </div>
                             )}
-                            
                             {/* Mention dropdown */}
                             {showMentionDropdown && mentionResults.length > 0 && (
                                 <div className="absolute bottom-[calc(100%+0.5rem)] left-2 right-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1d] shadow-2xl overflow-hidden z-50">
@@ -701,7 +663,6 @@ export default function MessagesPage() {
                                     ))}
                                 </div>
                             )}
-
                             <div className="flex items-end gap-2">
                                 {/* File attach button */}
                                 <button
@@ -714,7 +675,6 @@ export default function MessagesPage() {
                                 </button>
                                 <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect}
                                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,video/mp4,video/webm,audio/mpeg,audio/ogg,audio/wav" />
-                                
                                 <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-[hsl(var(--primary))]/20 transition-all">
                                     <input
                                         ref={inputRef}
@@ -735,7 +695,6 @@ export default function MessagesPage() {
                                         className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] min-w-0 disabled:opacity-50"
                                     />
                                 </div>
-                                
                                 <button
                                     onClick={handleSend}
                                     disabled={(!input.trim() && !attachmentPreview) || sending}
@@ -749,7 +708,6 @@ export default function MessagesPage() {
                     </>
                 )}
             </div>
-
             {/* ── New Conversation Drawer ─────────────────────────────────── */}
             <WorkspaceDrawer
                 isOpen={showNewConvDrawer}
@@ -778,7 +736,6 @@ export default function MessagesPage() {
                             autoComplete="off"
                         />
                     </div>
-
                     {/* Results */}
                     <div className="space-y-1">
                         {searching ? (

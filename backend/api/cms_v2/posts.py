@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -24,6 +24,13 @@ from backend.api.cms_v2._shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
+from backend.exceptions.cms import (
+    CmsValidationError,
+    InvalidSlugError,
+    InvalidStatusError,
+    PostNotFoundError,
+    SlugConflictError,
+)
 from backend.schemas._common import PaginatedResponse
 
 logger = logging.getLogger(__name__)
@@ -55,13 +62,13 @@ def create_category(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     payload.slug = _slugify(payload.slug)
     if not payload.slug:
-        raise HTTPException(status_code=422, detail="slug is required")
+        raise InvalidSlugError()
     if crud.get_cms_category(db, site.id, payload.slug):
-        raise HTTPException(status_code=409, detail="category slug already exists")
+        raise SlugConflictError("Category slug already exists")
     try:
         return crud.create_cms_category(db, site.id, payload, actor_user_id=str(current_user.id))
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise CmsValidationError(str(exc))
 
 
 @router.get("/sites/{site_key}/categories/{slug}", response_model=schemas.CmsCategoryRead)
@@ -89,7 +96,7 @@ def patch_category(
     try:
         return crud.update_cms_category(db, row, payload, actor_user_id=str(current_user.id))
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise CmsValidationError(str(exc))
 
 
 @router.delete("/sites/{site_key}/categories/{slug}", status_code=204)
@@ -129,9 +136,9 @@ def create_tag(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     payload.slug = _slugify(payload.slug)
     if not payload.slug:
-        raise HTTPException(status_code=422, detail="slug is required")
+        raise InvalidSlugError()
     if crud.get_cms_tag(db, site.id, payload.slug):
-        raise HTTPException(status_code=409, detail="tag slug already exists")
+        raise SlugConflictError("Tag slug already exists")
     return crud.create_cms_tag(db, site.id, payload, actor_user_id=str(current_user.id))
 
 
@@ -213,17 +220,17 @@ def create_post(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     if payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
-        raise HTTPException(status_code=422, detail="invalid status")
+        raise InvalidStatusError()
     site = _get_scoped_site_or_404(db, site_key, current_user)
     payload.slug = _slugify(payload.slug)
     if not payload.slug:
-        raise HTTPException(status_code=422, detail="slug is required")
+        raise InvalidSlugError()
     if crud.get_cms_post(db, site.id, payload.slug):
-        raise HTTPException(status_code=409, detail="slug already exists")
+        raise SlugConflictError()
     try:
         row = crud.create_cms_post(db, site.id, payload, current_user.id, actor_user_id=str(current_user.id))
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise CmsValidationError(str(exc))
     p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, row.id)]
     p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, row.id)]
@@ -257,11 +264,11 @@ def patch_post(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_post_or_404(db, site.id, slug)
     if payload.status is not None and payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
-        raise HTTPException(status_code=422, detail="invalid status")
+        raise InvalidStatusError()
     try:
         updated = crud.update_cms_post(db, row, payload, current_user.id, actor_user_id=str(current_user.id))
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise CmsValidationError(str(exc))
     p = schemas.CmsPostReadWithTaxonomies.model_validate(updated)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, updated.id)]
     p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, updated.id)]
@@ -330,17 +337,17 @@ def create_post_by_category(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     _validate_canonical_category(category)
     if payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
-        raise HTTPException(status_code=422, detail="invalid status")
+        raise InvalidStatusError()
     site = _get_scoped_site_or_404(db, site_key, current_user)
     cat = _ensure_canonical_category(db, site.id, category)
     payload.slug = _slugify(payload.slug) or f"{category}-{uuid.uuid4().hex[:8]}"
     if crud.get_cms_post(db, site.id, payload.slug):
-        raise HTTPException(status_code=409, detail="slug already exists")
+        raise SlugConflictError()
     payload.category_ids = [cat.id]
     try:
         row = crud.create_cms_post(db, site.id, payload, current_user.id, actor_user_id=str(current_user.id))
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise CmsValidationError(str(exc))
     p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, row.id)]
     p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, row.id)]
@@ -364,7 +371,7 @@ def get_post_by_category(
     _ensure_canonical_category(db, site.id, category)
     row = crud.get_cms_post_by_slug_and_category(db, site.id, slug, category)
     if not row:
-        raise HTTPException(status_code=404, detail="post not found")
+        raise PostNotFoundError()
     p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, row.id)]
     p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, row.id)]
@@ -388,15 +395,15 @@ def patch_post_by_category(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.get_cms_post_by_slug_and_category(db, site.id, slug, category)
     if not row:
-        raise HTTPException(status_code=404, detail="post not found")
+        raise PostNotFoundError()
     if payload.status is not None and payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
-        raise HTTPException(status_code=422, detail="invalid status")
+        raise InvalidStatusError()
     if payload.category_ids is not None:
-        raise HTTPException(status_code=422, detail="cannot change canonical category")
+        raise CmsValidationError("Cannot change canonical category", error_code="cannot_change_canonical_category")
     try:
         updated = crud.update_cms_post(db, row, payload, current_user.id, actor_user_id=str(current_user.id))
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise CmsValidationError(str(exc))
     p = schemas.CmsPostReadWithTaxonomies.model_validate(updated)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, updated.id)]
     p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, updated.id)]
@@ -416,5 +423,5 @@ def delete_post_by_category(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = crud.get_cms_post_by_slug_and_category(db, site.id, slug, category)
     if not row:
-        raise HTTPException(status_code=404, detail="post not found")
+        raise PostNotFoundError()
     crud.delete_cms_post(db, row, actor_user_id=str(current_user.id))

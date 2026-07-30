@@ -50,6 +50,7 @@ from backend.core.config import get_settings
 from backend.core.logging import observability_middleware
 from backend.core.rate_limit import academy_limiter
 from backend.core.security_headers import mount_security_headers
+from backend.exceptions.cms import CmsError
 from backend.middleware.module_isolation import register_module_isolation
 
 logging.basicConfig(level=logging.INFO)  # Fallback; configure_logging() in core/logging overrides
@@ -189,6 +190,12 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     else:
         logger.warning("HTTP %d on %s %s: %s", exc.status_code, request.method, request.url.path, exc.detail)
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=exc.headers)
+
+
+@app.exception_handler(CmsError)
+async def cms_exception_handler(request: Request, exc: CmsError):
+    """Map CMS domain exceptions to HTTP responses."""
+    return JSONResponse(status_code=exc.status_code, content=exc.to_dict())
 
 
 @app.exception_handler(Exception)

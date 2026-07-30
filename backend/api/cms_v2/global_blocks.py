@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -23,6 +23,11 @@ from backend.api.cms_v2._shared import (
 from backend.api.cms_v2.section_types import get_allowed_section_types
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
+from backend.exceptions.cms import (
+    BlockNotFoundError,
+    CmsValidationError,
+    UnsupportedSectionTypeError,
+)
 from backend.models_shared import _utcnow
 from backend.schemas._common import PaginatedResponse
 from backend.schemas.cms_v2_sections import validate_section_props
@@ -72,12 +77,12 @@ def create_global_block(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     allowed_types = get_allowed_section_types(db)
     if payload.type not in allowed_types:
-        raise HTTPException(status_code=422, detail="unsupported section type")
+        raise UnsupportedSectionTypeError()
     try:
         validated_props = validate_section_props(payload.type, payload.props_json or {})
         payload.props_json = validated_props
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise CmsValidationError(str(e))
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = (
         db.query(models.CmsPage)
@@ -122,7 +127,7 @@ def patch_global_block(
         .first()
     )
     if not block:
-        raise HTTPException(status_code=404, detail="Global block not found")
+        raise BlockNotFoundError()
     data = payload.model_dump(exclude_unset=True)
     for key in ["type", "props_json", "sort_order", "is_visible", "status", "is_global", "global_key"]:
         if key in data and data[key] is not None:
@@ -149,7 +154,7 @@ def delete_global_block(
         .first()
     )
     if not block:
-        raise HTTPException(status_code=404, detail="Global block not found")
+        raise BlockNotFoundError()
     block.deleted_at = _utcnow()
     db.commit()
     return None

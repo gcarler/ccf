@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -22,6 +22,10 @@ from backend.api.cms_v2._shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
+from backend.exceptions.cms import (
+    CmsValidationError,
+    SiteKeyAlreadyExistsError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +53,11 @@ def create_site(
 ):
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     if not payload.site_key.strip():
-        raise HTTPException(status_code=422, detail="site_key is required")
+        raise CmsValidationError("Site key is required", error_code="site_key_required")
     if not payload.base_path.strip().startswith("/"):
-        raise HTTPException(status_code=422, detail="base_path must start with '/'")
+        raise CmsValidationError("base_path must start with '/'")
     if crud.get_cms_site_by_key(db, payload.site_key.strip().lower()):
-        raise HTTPException(status_code=409, detail="site_key already exists")
+        raise SiteKeyAlreadyExistsError()
     # Axioma 3 — Multi-Tenant: si el actor tiene sede asignada, se fuerza
     # su sede_id (ignorando cualquier valor cross-sede del cliente). Si
     # el actor NO tiene sede (superadmin / anterior path), se respeta el
@@ -66,7 +70,7 @@ def create_site(
             payload.sede_id = actor_sede
     row = crud.create_cms_site(db, payload, commit_with_conflict_check=True)
     if row is None:
-        raise HTTPException(status_code=409, detail="site_key already exists")
+        raise SiteKeyAlreadyExistsError()
     return row
 
 
@@ -93,9 +97,9 @@ def patch_site(
     # sede_id de un site no debe cambiar via API para evitar que un
     # editor de sede_a "adopte" o "mueva" un site de sede_b.
     if payload.sede_id is not None:
-        raise HTTPException(
-            status_code=422,
-            detail="sede_id cannot be changed via site update; create a new site instead",
+        raise CmsValidationError(
+            "sede_id cannot be changed via site update; create a new site instead",
+            error_code="sede_id_immutable",
         )
     return crud.update_cms_site(db, row, payload)
 
