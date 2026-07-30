@@ -55,6 +55,7 @@ export default function CmsMediaDetailPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [tagsText, setTagsText] = useState('');
+    const [pendingDelete, setPendingDelete] = useState(false);
 
     useEffect(() => {
         if (!token || !id) return;
@@ -129,9 +130,14 @@ export default function CmsMediaDetailPage() {
         }
     };
 
+    const requestPermanentDelete = () => {
+        if (!token || !item) return;
+        setPendingDelete(true);
+    };
+
     const permanentDelete = async () => {
         if (!token || !item) return;
-        if (!confirm('¿Eliminar permanentemente este archivo? Se borrará el archivo y no se podrá recuperar.')) return;
+        setPendingDelete(false);
         try {
             await apiFetch(`/cms/media/${id}?permanent=true`, { method: 'DELETE', token });
             toast.success('Archivo eliminado permanentemente');
@@ -157,7 +163,7 @@ export default function CmsMediaDetailPage() {
                         <button onClick={toggleArchiveItem} className={`p-2 rounded-md transition-all ${item.status === 'archived' ? 'text-success-text hover:bg-[hsl(var(--success))]/10' : 'text-warning-text hover:bg-[hsl(var(--warning))]/10'}`}>
                             {item.status === 'archived' ? <RotateCcw size={20} /> : <Archive size={20} />}
                         </button>
-                        <button onClick={permanentDelete} className="p-2 rounded-md text-red-500 hover:bg-red-500/10 transition-all" title="Eliminar permanentemente">
+                        <button onClick={requestPermanentDelete} className="p-2 rounded-md text-red-500 hover:bg-red-500/10 transition-all" title="Eliminar permanentemente">
                             <Trash2 size={20} />
                         </button>
                         <button onClick={saveMetadata} disabled={saving} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50">
@@ -273,6 +279,32 @@ export default function CmsMediaDetailPage() {
                     </div>
                 </div>
             </main>
+            {pendingDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-md rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-6 shadow-xl dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                            ¿Eliminar permanentemente este archivo?
+                        </h3>
+                        <p className="mt-2 text-sm text-[hsl(var(--text-secondary))]">
+                            Se borrará el archivo y no se podrá recuperar.
+                        </p>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                onClick={() => setPendingDelete(false)}
+                                className="rounded-md border border-[hsl(var(--border))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={permanentDelete}
+                                className="rounded-md bg-red-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:bg-red-700"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
