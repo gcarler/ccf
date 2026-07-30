@@ -381,4 +381,699 @@ describe("BuilderSectionInspector", () => {
     );
     expect(saveSectionField).toHaveBeenCalledWith("dismiss_mode", "session");
   });
+
+  // ── Hero remaining fields ────────────────────────────────────────────────
+
+  it("renders and edits hero title_accent field", () => {
+    const saveSectionField = vi.fn();
+    const section = createMockCmsSection("hero", {
+      props_json: { title_accent: "Tu Guía," },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.saveSectionField = saveSectionField;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("Tu Guía,");
+    expect(input).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: "Nuestra Misión" } });
+    fireEvent.blur(input, { target: { value: "Nuestra Misión" } });
+    expect(saveSectionField).toHaveBeenCalledWith("title_accent", "Nuestra Misión");
+  });
+
+  it("renders hero description field", () => {
+    const section = createMockCmsSection("hero", {
+      props_json: { description: "Navegando juntos" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const textarea = screen.getByText(/navegando juntos/i);
+    expect(textarea).toBeInTheDocument();
+  });
+
+  it("renders hero primary_cta and secondary_cta fields", () => {
+    const section = createMockCmsSection("hero", {
+      props_json: { primary_cta: "Saber más", secondary_cta: "Ver eventos" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    expect(screen.getByDisplayValue("Saber más")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Ver eventos")).toBeInTheDocument();
+  });
+
+  it("renders hero primary_cta_href and secondary_cta_href fields", () => {
+    const section = createMockCmsSection("hero", {
+      props_json: { primary_cta_href: "/conocer", secondary_cta_href: "/predicas" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    expect(screen.getByDisplayValue("/conocer")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("/predicas")).toBeInTheDocument();
+  });
+
+  it("renders hero scroll_indicator field", () => {
+    const saveSectionField = vi.fn();
+    const section = createMockCmsSection("hero", {
+      props_json: { scroll_indicator: "Descubrir" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.saveSectionField = saveSectionField;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("Descubrir");
+    fireEvent.change(input, { target: { value: "Explorar" } });
+    fireEvent.blur(input, { target: { value: "Explorar" } });
+    expect(saveSectionField).toHaveBeenCalledWith("scroll_indicator", "Explorar");
+  });
+
+  // ── Standard section CTA fields ──────────────────────────────────────────
+
+  it("renders and edits standard section cta_label and cta_href", () => {
+    const saveSectionField = vi.fn();
+    const section = createMockCmsSection("rich_text", {
+      props_json: { title: "Título", cta_label: "Ver más", cta_href: "/page" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.saveSectionField = saveSectionField;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const ctaInput = screen.getByDisplayValue("Ver más");
+    fireEvent.change(ctaInput, { target: { value: "Saber más" } });
+    fireEvent.blur(ctaInput, { target: { value: "Saber más" } });
+    expect(saveSectionField).toHaveBeenCalledWith("cta_label", "Saber más");
+
+    const hrefInput = screen.getByDisplayValue("/page");
+    fireEvent.change(hrefInput, { target: { value: "/nueva-ruta" } });
+    fireEvent.blur(hrefInput, { target: { value: "/nueva-ruta" } });
+    expect(saveSectionField).toHaveBeenCalledWith("cta_href", "/nueva-ruta");
+  });
+
+  // ── Cards additional fields ──────────────────────────────────────────────
+
+  it("calls upsertArrayItem when editing cards item body", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("cards", {
+      props_json: { items: [{ title: "A", body: "Desc B" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const textarea = screen.getByDisplayValue("Desc B");
+    fireEvent.change(textarea, { target: { value: "Nueva desc" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { body: "Nueva desc" });
+  });
+
+  it("calls upsertArrayItem when editing cards item icon and href", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("cards", {
+      props_json: { items: [{ title: "A", icon: "🎯", href: "/link" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const iconInput = screen.getByDisplayValue("🎯");
+    fireEvent.change(iconInput, { target: { value: "⭐" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { icon: "⭐" });
+
+    // Blur icon field → should call upsertArrayItem + saveSectionProps
+    fireEvent.blur(iconInput, { target: { value: "⭐" } });
+    expect(saveSectionProps).toHaveBeenCalled();
+  });
+
+  // ── FAQ additional fields ────────────────────────────────────────────────
+
+  it("calls upsertArrayItem when editing FAQ question field", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("faq", {
+      props_json: { items: [{ q: "¿Qué es?", a: "Respuesta" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("¿Qué es?");
+    fireEvent.change(input, { target: { value: "¿Cómo?" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { q: "¿Cómo?" });
+  });
+
+  // ── Stats label field ────────────────────────────────────────────────────
+
+  it("calls upsertArrayItem when editing stats label", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("stats", {
+      props_json: { items: [{ value: "10K+", label: "Miembros" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("Miembros");
+    fireEvent.change(input, { target: { value: "Visitantes" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { label: "Visitantes" });
+  });
+
+  // ── Team additional fields ───────────────────────────────────────────────
+
+  it("calls upsertArrayItem when editing team member name", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("team", {
+      props_json: { items: [{ name: "Ana", role: "Pastor" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("Ana");
+    fireEvent.change(input, { target: { value: "María" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { name: "María" });
+  });
+
+  it("calls upsertArrayItem when editing team member role", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("team", {
+      props_json: { items: [{ name: "Ana", role: "Pastor" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("Pastor");
+    fireEvent.change(input, { target: { value: "Líder" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { role: "Líder" });
+  });
+
+  it("calls upsertArrayItem when editing team member image url", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("team", {
+      props_json: { items: [{ name: "Ana", image: "https://img.jpg" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("https://img.jpg");
+    fireEvent.change(input, { target: { value: "https://new.jpg" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { image: "https://new.jpg" });
+  });
+
+  // ── Pricing additional fields ────────────────────────────────────────────
+
+  it("calls upsertArrayItem when editing pricing plan name", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("pricing", {
+      props_json: { items: [{ name: "Básico", price: "$10" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("Básico");
+    fireEvent.change(input, { target: { value: "Premium" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { name: "Premium" });
+  });
+
+  it("calls upsertArrayItem when editing pricing features field", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("pricing", {
+      props_json: { items: [{ name: "Básico", features: "Acceso básico" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const textarea = screen.getByDisplayValue("Acceso básico");
+    fireEvent.change(textarea, { target: { value: "Acceso completo" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { features: "Acceso completo" });
+  });
+
+  it("calls upsertArrayItem when editing pricing btn field", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("pricing", {
+      props_json: { items: [{ name: "Básico", btn: "Comprar" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("Comprar");
+    fireEvent.change(input, { target: { value: "Suscribir" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { btn: "Suscribir" });
+  });
+
+  it("renders pricing featured checkbox and toggles it", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("pricing", {
+      props_json: { items: [{ name: "Premium", featured: "true" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const checkbox = screen.getByLabelText(/destacado/i);
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).toBeChecked();
+
+    fireEvent.click(checkbox);
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { featured: "false" });
+  });
+
+  // ── Gallery additional fields ────────────────────────────────────────────
+
+  it("calls upsertArrayItem when editing gallery alt and caption", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("gallery", {
+      props_json: { items: [{ url: "https://img.jpg", alt: "Alt text", caption: "Caption" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const altInput = screen.getByDisplayValue("Alt text");
+    fireEvent.change(altInput, { target: { value: "Nuevo alt" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { alt: "Nuevo alt" });
+
+    const captionInput = screen.getByDisplayValue("Caption");
+    fireEvent.change(captionInput, { target: { value: "Nuevo caption" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { caption: "Nuevo caption" });
+  });
+
+  // ── Timeline additional fields ───────────────────────────────────────────
+
+  it("calls upsertArrayItem when editing timeline year and body", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("timeline", {
+      props_json: { items: [{ year: "2020", title: "Inicio", body: "Desc" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const yearInput = screen.getByDisplayValue("2020");
+    fireEvent.change(yearInput, { target: { value: "2021" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { year: "2021" });
+
+    const bodyInput = screen.getByDisplayValue("Desc");
+    fireEvent.change(bodyInput, { target: { value: "Nueva desc" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { body: "Nueva desc" });
+  });
+
+  // ── Icon_grid additional fields ──────────────────────────────────────────
+
+  it("calls upsertArrayItem when editing icon_grid icon and body", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("icon_grid", {
+      props_json: { items: [{ icon: "🎯", title: "Meta", body: "Desc breve" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const iconInput = screen.getByDisplayValue("🎯");
+    fireEvent.change(iconInput, { target: { value: "⭐" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { icon: "⭐" });
+
+    const bodyInput = screen.getByDisplayValue("Desc breve");
+    fireEvent.change(bodyInput, { target: { value: "Nueva desc" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { body: "Nueva desc" });
+  });
+
+  // ── Popup additional fields ──────────────────────────────────────────────
+
+  it("renders popup_banner delay_ms and start_at fields", () => {
+    const section = createMockCmsSection("popup_banner", {
+      props_json: { delay_ms: "3000", start_at: "2024-01-01T00:00" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    expect(screen.getByDisplayValue("3000")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("2024-01-01T00:00")).toBeInTheDocument();
+  });
+
+  it("calls updateSectionPropsLocal for popup hide_on_paths", () => {
+    const updateSectionPropsLocal = vi.fn();
+    const section = createMockCmsSection("popup_banner", {
+      props_json: { hide_on_paths: ["/login"] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.updateSectionPropsLocal = updateSectionPropsLocal;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const textarea = screen.getByDisplayValue("/login");
+    fireEvent.change(textarea, { target: { value: "/login\n/admin" } });
+    expect(updateSectionPropsLocal).toHaveBeenCalledWith(
+      expect.objectContaining({ hide_on_paths: ["/login", "/admin"] })
+    );
+  });
+
+  it("renders popup dismiss_days and dismiss_key fields", () => {
+    const section = createMockCmsSection("popup_banner", {
+      props_json: { dismiss_days: "7", dismiss_key: "popup_1" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    expect(screen.getByDisplayValue("7")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("popup_1")).toBeInTheDocument();
+  });
+
+  // ── Video_hero section ───────────────────────────────────────────────────
+
+  it("renders video_hero section with video_url field", () => {
+    const saveSectionField = vi.fn();
+    const section = createMockCmsSection("video_hero", {
+      props_json: { video_url: "https://youtube.com/watch?v=abc" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.saveSectionField = saveSectionField;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("https://youtube.com/watch?v=abc");
+    expect(input).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: "https://new-video.com" } });
+    fireEvent.blur(input, { target: { value: "https://new-video.com" } });
+    expect(saveSectionField).toHaveBeenCalledWith("video_url", "https://new-video.com");
+  });
+
+  // ── Rich_text_columns section ─────────────────────────────────────────────
+
+  it("renders rich_text_columns section with body_2 field", () => {
+    const saveSectionField = vi.fn();
+    const section = createMockCmsSection("rich_text_columns", {
+      props_json: { body: "Col 1", body_2: "Col 2" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.saveSectionField = saveSectionField;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const textarea = screen.getByDisplayValue("Col 2");
+    expect(textarea).toBeInTheDocument();
+    fireEvent.change(textarea, { target: { value: "Nueva col 2" } });
+    fireEvent.blur(textarea, { target: { value: "Nueva col 2" } });
+    expect(saveSectionField).toHaveBeenCalledWith("body_2", "Nueva col 2");
+  });
+
+  // ── Newsletter section ───────────────────────────────────────────────────
+
+  it("renders newsletter section with action_url field", () => {
+    const saveSectionField = vi.fn();
+    const section = createMockCmsSection("newsletter", {
+      props_json: { action_url: "/api/subscribe" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.saveSectionField = saveSectionField;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const input = screen.getByDisplayValue("/api/subscribe");
+    expect(input).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: "/api/newsletter" } });
+    fireEvent.blur(input, { target: { value: "/api/newsletter" } });
+    expect(saveSectionField).toHaveBeenCalledWith("action_url", "/api/newsletter");
+  });
+
+  // ── CTA Banner section ───────────────────────────────────────────────────
+
+  it("renders cta_banner section with second button fields", () => {
+    const saveSectionField = vi.fn();
+    const section = createMockCmsSection("cta_banner", {
+      props_json: { cta_label_2: "Saber más", cta_href_2: "/info" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.saveSectionField = saveSectionField;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const labelInput = screen.getByDisplayValue("Saber más");
+    fireEvent.change(labelInput, { target: { value: "Ver más" } });
+    fireEvent.blur(labelInput, { target: { value: "Ver más" } });
+    expect(saveSectionField).toHaveBeenCalledWith("cta_label_2", "Ver más");
+
+    const hrefInput = screen.getByDisplayValue("/info");
+    fireEvent.change(hrefInput, { target: { value: "/nuevo" } });
+    fireEvent.blur(hrefInput, { target: { value: "/nuevo" } });
+    expect(saveSectionField).toHaveBeenCalledWith("cta_href_2", "/nuevo");
+  });
+
+  // ── Testimonials section ─────────────────────────────────────────────────
+
+  it("renders testimonials section with manual items", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("testimonials", {
+      props_json: {
+        items: [{ author: "Juan", content: "Testimonio", role: "Miembro" }],
+      },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    // Testimonials items use: author (not name), content (not quote), role
+    const authorInput = screen.getByDisplayValue(/juan/i);
+    expect(authorInput).toBeInTheDocument();
+
+    fireEvent.change(authorInput, { target: { value: "Pedro" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { author: "Pedro" });
+  });
+
+  // ── Restore archived items ───────────────────────────────────────────────
+
+  it("calls upsertArrayItem to restore an archived cards item", () => {
+    const nextProps = { items: [{ title: "A", status: "published" }] };
+    const upsertArrayItem = vi.fn(() => nextProps);
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("cards", {
+      props_json: { items: [{ title: "A", body: "B", status: "archived" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    expect(screen.getByText(/archivado/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /restaurar/i }));
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { status: "published" });
+    expect(saveSectionProps).toHaveBeenCalledWith(nextProps);
+  });
+
+  it("archives a stats item via first archive button", () => {
+    const nextProps = { items: [{ value: "10", label: "X", status: "archived" }] };
+    const upsertArrayItem = vi.fn(() => nextProps);
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("stats", {
+      props_json: { items: [{ value: "10", label: "X" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    // There are 2 archive buttons: one for item archive + one for "Añadir" buttons
+    // Use getAllByRole and pick the first archive button
+    const archiveButtons = screen.getAllByRole("button", { name: /archivar/i });
+    // The first archive button corresponds to the item's archive action
+    fireEvent.click(archiveButtons[0]);
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { status: "archived" });
+    expect(saveSectionProps).toHaveBeenCalledWith(nextProps);
+  });
+
+  // ── AddArrayItem for remaining types ─────────────────────────────────────
+
+  it("calls addArrayItem when adding a stats metric", () => {
+    const addArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("stats", {
+      props_json: { items: [{ value: "10", label: "X" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.addArrayItem = addArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    // Button text has no accent: "Añadir metrica"
+    fireEvent.click(screen.getByRole("button", { name: /añadir metrica/i }));
+    expect(addArrayItem).toHaveBeenCalledWith(
+      "items",
+      expect.objectContaining({ value: "0", label: "Nueva metrica" }),
+    );
+  });
+
+  it("calls addArrayItem when adding a gallery image", () => {
+    const addArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("gallery", {
+      props_json: { items: [{ url: "https://img.jpg" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.addArrayItem = addArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /añadir imagen/i }));
+    expect(addArrayItem).toHaveBeenCalledWith(
+      "items",
+      expect.objectContaining({ url: "", alt: "", caption: "" }),
+    );
+  });
+
+  it("calls addArrayItem when adding a timeline milestone", () => {
+    const addArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("timeline", {
+      props_json: { items: [{ year: "2020", title: "Inicio" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.addArrayItem = addArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /añadir hito/i }));
+    expect(addArrayItem).toHaveBeenCalledWith(
+      "items",
+      expect.objectContaining({ year: "2024", title: "Nuevo hito" }),
+    );
+  });
+
+  it("calls addArrayItem when adding an icon_grid item", () => {
+    const addArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("icon_grid", {
+      props_json: { items: [{ icon: "🎯", title: "Meta" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.addArrayItem = addArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /añadir item/i }));
+    expect(addArrayItem).toHaveBeenCalledWith(
+      "items",
+      expect.objectContaining({ icon: "✨", title: "Nuevo item", body: "Descripción" }),
+    );
+  });
+
+  // ── Hero bg_image field ──────────────────────────────────────────────────
+
+  it("renders OptimizedImage when hero has bg_image", () => {
+    const section = createMockCmsSection("hero", {
+      props_json: { bg_image: "https://example.com/bg.jpg" },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const img = screen.getByAltText("Imagen seleccionada");
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute("src", "https://example.com/bg.jpg");
+  });
+
+  it("opens media picker for image_text section", () => {
+    const setMediaPickerTarget = vi.fn();
+    const setMediaPickerOpen = vi.fn();
+    const section = createMockCmsSection("image_text", { props_json: {} });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.setMediaPickerTarget = setMediaPickerTarget;
+    builder.setMediaPickerOpen = setMediaPickerOpen;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const buttons = screen.getAllByRole("button", { name: /elegir imagen/i });
+    fireEvent.click(buttons[0]);
+    expect(setMediaPickerTarget).toHaveBeenCalledWith("section");
+  });
+
+  it("shows gallery OptimizedImage when gallery item has url", () => {
+    const section = createMockCmsSection("gallery", {
+      props_json: { items: [{ url: "https://img.jpg", alt: "Gallery img" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const img = screen.getByAltText("Gallery img");
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute("src", "https://img.jpg");
+  });
+
+  // ── Empty state for archived item ────────────────────────────────────────
+
+  it("shows archived label for archived card items", () => {
+    const section = createMockCmsSection("cards", {
+      props_json: { items: [{ title: "A", status: "archived" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const archivedLabels = screen.getAllByText(/archivado/i);
+    expect(archivedLabels.length).toBeGreaterThanOrEqual(1);
+  });
+
+  // ── AddArrayItem for team and pricing ────────────────────────────────────
+
+  it("calls addArrayItem when adding a team person", () => {
+    const addArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("team", {
+      props_json: { items: [{ name: "Ana" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.addArrayItem = addArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /añadir persona/i }));
+    expect(addArrayItem).toHaveBeenCalledWith(
+      "items",
+      expect.objectContaining({ name: "Nombre", role: "Rol" }),
+    );
+  });
+
+  it("calls addArrayItem when adding a pricing plan", () => {
+    const addArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("pricing", {
+      props_json: { items: [{ name: "Básico" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.addArrayItem = addArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /añadir plan/i }));
+    expect(addArrayItem).toHaveBeenCalledWith(
+      "items",
+      expect.objectContaining({ name: "Nuevo plan", price: "$0" }),
+    );
+  });
 });
