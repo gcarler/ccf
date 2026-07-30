@@ -55,8 +55,20 @@ export function getAnchorPoint(
 ): { x: number; y: number } {
   const w = (obj.width || 0) * (obj.scaleX || 1);
   const h = (obj.height || 0) * (obj.scaleY || 1);
-  const l = obj.left || 0;
-  const t = obj.top || 0;
+  
+  // Calculate actual top-left based on origin
+  let l = obj.left || 0;
+  let t = obj.top || 0;
+  
+  const ox = (obj as any).originX || 'left';
+  const oy = (obj as any).originY || 'top';
+  
+  if (ox === 'center') l -= w / 2;
+  else if (ox === 'right') l -= w;
+  
+  if (oy === 'center') t -= h / 2;
+  else if (oy === 'bottom') t -= h;
+
   switch (anchor) {
     case "top":    return { x: l + w / 2, y: t };
     case "bottom": return { x: l + w / 2, y: t + h };
