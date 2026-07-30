@@ -58,7 +58,7 @@ def _now_iso() -> str:
 
 
 # ── Testimonials (v1→v2 shim) ──────────────────────────
-# Legacy Testimonial endpoints now read/write CmsPost rows categorized
+# v1 Testimonial endpoints now read/write CmsPost rows categorized
 # as ``testimonials``. The response contract (TestimonialRead) is kept
 # unchanged for frontend compatibility.
 
@@ -205,7 +205,7 @@ def delete_admin_testimonial(
 
 
 # ── Announcements (v1→v2 shim) ──────────────────────────
-# Legacy Announcement endpoints now read/write CmsPost rows categorized
+# v1 Announcement endpoints now read/write CmsPost rows categorized
 # as ``announcements``. The response contract (AnnouncementRead) is kept
 # unchanged for frontend compatibility.
 
@@ -548,10 +548,10 @@ def get_cms_metrics(
 
     # Scoped queries para User-Generated content. Testimonials are now
     # stored as CmsPost rows; during the transition we also count any
-    # legacy Testimonial rows that have not been migrated yet.
-    # TODO (Phase 3): once the legacy ``testimonials`` table is dropped
+    # v1 Testimonial rows that have not been migrated yet.
+    # TODO (Phase 3): once the v1 ``testimonials`` table is dropped
     # (see planned follow-up migration after
-    # 20260729_0001_migrate_testimonials_to_cms_posts), remove the legacy
+    # 20260729_0001_migrate_testimonials_to_cms_posts), remove the v1
     # counting below and rely solely on CmsPost.
     actor_sede = _actor_sede_or_none(db, current_user)
 
@@ -562,17 +562,17 @@ def get_cms_metrics(
 
     t_query = db.query(models.Testimonial)
     t_query = _scope_cms_testimonials_by_user_sede(db, current_user, t_query)
-    legacy_testimonials = [
+    v1_testimonials = [
         t for t in t_query.all() if t.id not in cms_ids
     ]
 
-    testimonials = list(cms_testimonials) + legacy_testimonials
+    testimonials = list(cms_testimonials) + v1_testimonials
 
     # Announcements are now stored as CmsPost rows categorized as
-    # ``announcements``. During the transition we also count any legacy
+    # ``announcements``. During the transition we also count any v1
     # Announcement rows that have not been migrated yet.
-    # TODO (Phase 3.5): once the legacy ``announcements`` table is dropped,
-    # remove the legacy counting below and rely solely on CmsPost.
+    # TODO (Phase 3.5): once the v1 ``announcements`` table is dropped,
+    # remove the v1 counting below and rely solely on CmsPost.
     cms_announcements = list_announcement_posts(
         db, sede_id=actor_sede, include_archived=True
     )
@@ -580,16 +580,16 @@ def get_cms_metrics(
 
     a_query = db.query(models.Announcement)
     a_query = _scope_cms_announcements_by_user_sede(db, current_user, a_query)
-    legacy_announcements = [
+    v1_announcements = [
         a for a in a_query.all() if a.id not in a_cms_ids
     ]
 
-    announcements = list(cms_announcements) + legacy_announcements
+    announcements = list(cms_announcements) + v1_announcements
     announcements_active = (
         sum(1 for p in cms_announcements if p.status == "published")
         + sum(
             1
-            for a in legacy_announcements
+            for a in v1_announcements
             if a.status == "published"
         )
     )
@@ -600,7 +600,7 @@ def get_cms_metrics(
 
     approved_testimonials = (
         sum(1 for p in cms_testimonials if p.status == "published")
-        + sum(1 for t in legacy_testimonials if t.is_approved)
+        + sum(1 for t in v1_testimonials if t.is_approved)
     )
 
     return schemas.CmsMetrics(

@@ -103,12 +103,12 @@ def analytics_summary(
     # Sin este filtro, un admin de sede_a vería el backlog de testimonios
     # pendientes de sede_b en su dashboard — leak cross-sede.
     #
-    # Dual-counting (Fase 2): los testimonios legacy ahora viven como
+    # Dual-counting (Fase 2): los testimonios v1 ahora viven como
     # CmsPost categorizados ``testimonials``. Durante la transición
-    # contamos ambos orígenes (CmsPost + legacy) deduplicando por ID.
+    # contamos ambos orígenes (CmsPost + v1) deduplicando por ID.
     # TODO (Phase 3): una vez aplicada la migración
-    # 20260729_0001 y eliminada la tabla legacy ``testimonials``,
-    # eliminar el conteo legacy y usar solo CmsPost.
+    # 20260729_0001 y eliminada la tabla v1 ``testimonials``,
+    # eliminar el conteo v1 y usar solo CmsPost.
     actor_sede = _actor_sede_or_none(db, current_user)
 
     cms_testimonials = list_testimonial_posts(
@@ -122,12 +122,12 @@ def analytics_summary(
         db, current_user, db.query(models.Testimonial)
     )
     cms_ids = {post.id for post in cms_testimonials}
-    legacy_pending = sum(
+    v1_pending = sum(
         1 for t in pending_t_query.all()
         if not t.is_approved and t.id not in cms_ids
     )
 
-    pending_testimonials = cms_pending + legacy_pending
+    pending_testimonials = cms_pending + v1_pending
 
     return {
         "total_personas": total_personas,
