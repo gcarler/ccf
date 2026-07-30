@@ -15,19 +15,23 @@ const SITES_FIXTURE = [
   },
 ];
 
-const PAGES_FIXTURE = [
+const PAGES_FIXTURE: Array<{
+  id: string; site_id: string; slug: string; title: string; status: string;
+  seo_json: Record<string, unknown>;
+  published_version_id: string | null; publish_at: string | null; expires_at: string | null;
+  created_at: string; updated_at: string;
+}> = [
   {
-    id: 'page-1',
-    site_id: 'site-1',
-    slug: 'landing',
-    title: 'Landing Page',
-    status: 'draft',
-    seo_json: {},
-    published_version_id: null,
-    publish_at: null,
-    expires_at: null,
-    created_at: '2026-07-01T12:00:00Z',
-    updated_at: '2026-07-12T09:00:00Z',
+    id: 'page-1', site_id: 'site-1', slug: 'landing',
+    title: 'Landing Page', status: 'draft',
+    seo_json: {}, published_version_id: null, publish_at: null, expires_at: null,
+    created_at: '2026-07-01T12:00:00Z', updated_at: '2026-07-12T09:00:00Z',
+  },
+  {
+    id: 'page-2', site_id: 'site-1', slug: 'nosotros',
+    title: 'Acerca de Nosotros', status: 'published',
+    seo_json: {}, published_version_id: null, publish_at: null, expires_at: null,
+    created_at: '2026-07-01T12:00:00Z', updated_at: '2026-07-12T09:00:00Z',
   },
 ];
 
@@ -277,48 +281,32 @@ test.describe('CMS builder flow', () => {
     // Default view should be grid — verify page card is rendered
     await expect(page.getByText('Landing Page').first()).toBeVisible();
 
-    // Find ViewSwitcher buttons and click Table view
-    // ViewSwitcher renders buttons; 'Tabla' is the Spanish label for table view
-    const tableButton = page.locator('button').filter({ hasText: /Tabla/i });
-    if (await tableButton.count() > 0) {
-      await tableButton.first().click();
-      await page.waitForTimeout(300);
-      // Table view renders column headers
-      await expect(page.getByText('Pagina')).toBeVisible();
-      await expect(page.getByText('Slug')).toBeVisible();
-      await expect(page.getByText('Estado')).toBeVisible();
-    }
+    // Find ViewSwitcher button for Table view (uses title attribute from ViewSwitcher)
+    const tableButton = page.locator('button[title="Tabla"]');
+    await expect(tableButton).toBeVisible();
+    await tableButton.click();
+    await page.waitForTimeout(300);
+
+    // Table view renders column headers in the <thead>
+    await expect(page.getByText('Pagina')).toBeVisible();
+    await expect(page.getByText('Slug')).toBeVisible();
+    await expect(page.getByText('Estado')).toBeVisible();
 
     // Switch back to grid view
-    const gridButton = page.locator('button').filter({ hasText: /^Gr[ií]d|Cuadr[ií]cula/i });
-    if (await gridButton.count() > 0) {
-      await gridButton.first().click();
-      await page.waitForTimeout(300);
-      await expect(page.getByText('Landing Page').first()).toBeVisible();
-    }
+    const gridButton = page.locator('button[title="Grid"]');
+    await expect(gridButton).toBeVisible();
+    await gridButton.click();
+    await page.waitForTimeout(300);
+    await expect(page.getByText('Landing Page').first()).toBeVisible();
   });
 
   test('filters pages with search input', async ({ page }) => {
-    // Add a second page to the fixture for filtering
-    PAGES_FIXTURE.push({
-      id: 'page-2',
-      site_id: 'site-1',
-      slug: 'nosotros',
-      title: 'Acerca de Nosotros',
-      status: 'published',
-      seo_json: {},
-      published_version_id: 'ver-1',
-      publish_at: '2026-07-01T12:00:00Z',
-      expires_at: null,
-      created_at: '2026-07-01T12:00:00Z',
-      updated_at: '2026-07-12T09:00:00Z',
-    });
-
     await page.goto(`/plataforma/cms/pages?site=${SITE_KEY}`, { waitUntil: 'load' });
     await page.waitForLoadState('domcontentloaded');
 
-    // Both pages should be visible initially
+    // Both pages from fixture should be visible initially
     await expect(page.getByText('Landing Page').first()).toBeVisible();
+    await expect(page.getByText('Acerca de Nosotros')).toBeVisible();
 
     // Type in search box to filter
     const searchInput = page.getByPlaceholder('Buscar paginas');
@@ -332,5 +320,6 @@ test.describe('CMS builder flow', () => {
     // Clear search — both should be visible again
     await searchInput.fill('');
     await page.waitForTimeout(300);
+    await expect(page.getByText('Acerca de Nosotros')).toBeVisible();
   });
 });
