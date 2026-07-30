@@ -64,6 +64,9 @@ class CmsSite(Base):
     publish_logs = relationship("CmsPublishLog", back_populates="site", lazy="selectin")
     seo_snapshots = relationship("CmsSeoSnapshot", back_populates="site", lazy="selectin")
     popups = relationship("CmsPopup", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
+    forms = relationship("CmsForm", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
+    newsletters = relationship("CmsNewsletter", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
+    subscribers = relationship("CmsSubscriber", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
 
 
 class CmsTheme(Base):
@@ -609,3 +612,92 @@ class CmsPopup(Base):
 
     # Relationships
     site = relationship("CmsSite", back_populates="popups", lazy="joined")
+
+
+class CmsForm(Base):
+    __tablename__ = "cms_forms"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sites.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = Column(String(255), nullable=False)
+    description = Column(String(500), nullable=True)
+    fields = Column(JSON, default=list)
+    submit_button_text = Column(String(100), default="Enviar")
+    success_message = Column(String(255), default="¡Gracias por tu mensaje!")
+    notify_emails = Column(JSON, default=list)
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    # Relationships
+    site = relationship("CmsSite", back_populates="forms", lazy="joined")
+    submissions = relationship("CmsFormSubmission", back_populates="form", lazy="selectin", cascade="all, delete-orphan")
+
+
+class CmsFormSubmission(Base):
+    __tablename__ = "cms_form_submissions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    form_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_forms.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    data = Column(JSON, nullable=False)
+    submitted_at = Column(DateTime(timezone=True), default=_utcnow)
+    ip_address = Column(String(45), nullable=True)
+
+    # Relationships
+    form = relationship("CmsForm", back_populates="submissions", lazy="joined")
+
+
+class CmsNewsletter(Base):
+    __tablename__ = "cms_newsletters"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sites.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = Column(String(255), nullable=False)
+    subject = Column(String(255), nullable=False)
+    content_html = Column(Text, nullable=False)
+    status = Column(String(20), default="draft", nullable=False, index=True)
+    scheduled_at = Column(DateTime(timezone=True), nullable=True)
+    sent_at = Column(DateTime(timezone=True), nullable=True)
+    recipient_count = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+
+    site = relationship("CmsSite", back_populates="newsletters", lazy="joined")
+
+
+class CmsSubscriber(Base):
+    __tablename__ = "cms_subscribers"
+    __table_args__ = (
+        UniqueConstraint("site_id", "email", name="uq_cms_subscribers_site_email"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sites.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    email = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    subscribed_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    unsubscribed_at = Column(DateTime(timezone=True), nullable=True)
+    source = Column(String(50), default="manual", nullable=False)
+
+    site = relationship("CmsSite", back_populates="subscribers", lazy="joined")

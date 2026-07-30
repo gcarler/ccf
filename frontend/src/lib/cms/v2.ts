@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/http";
-import { CmsCategory, CmsMenu, CmsMenuItem, CmsPage, CmsPageVersion, CmsPopup, CmsPublicPopup, CmsPostWithTaxonomies, CmsPublicPost, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsTag, CmsTheme, PopupTriggerType } from "@/types/cms-v2";
+import { CmsCategory, CmsForm, CmsFormSubmission, CmsFormSubmissionPaginated, CmsMenu, CmsMenuItem, CmsNewsletter, CmsPage, CmsPageVersion, CmsPopup, CmsPublicPopup, CmsPostWithTaxonomies, CmsPublicPost, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsSubscriber, CmsTag, CmsTheme, PopupTriggerType } from "@/types/cms-v2";
+
 
 export async function listCmsSites(token?: string | null) {
   return apiFetch<CmsSite[]>("/cms/v2/sites", { token });
@@ -1190,4 +1191,190 @@ export async function listPublicPopups(siteKey: string = "default"): Promise<Cms
     query: { site_key: siteKey },
   });
 }
+
+// ── Contact Forms (R1-FE) ───────────────────────────────────────────────────
+
+export async function listCmsForms(siteKey: string, token?: string | null): Promise<CmsForm[]> {
+  return apiFetch<CmsForm[]>(`/cms/v2/sites/${siteKey}/forms`, { token });
+}
+
+export async function createCmsForm(
+  siteKey: string,
+  payload: Partial<CmsForm>,
+  token?: string | null,
+): Promise<CmsForm> {
+  return apiFetch<CmsForm>(`/cms/v2/sites/${siteKey}/forms`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function putCmsForm(
+  siteKey: string,
+  formId: string,
+  payload: Partial<CmsForm>,
+  token?: string | null,
+): Promise<CmsForm> {
+  return apiFetch<CmsForm>(`/cms/v2/sites/${siteKey}/forms/${formId}`, {
+    method: "PUT",
+    token,
+    body: payload,
+  });
+}
+
+export async function patchCmsForm(
+  siteKey: string,
+  formId: string,
+  payload: Partial<CmsForm>,
+  token?: string | null,
+): Promise<CmsForm> {
+  return apiFetch<CmsForm>(`/cms/v2/sites/${siteKey}/forms/${formId}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsForm(
+  siteKey: string,
+  formId: string,
+  token?: string | null,
+): Promise<void> {
+  await apiFetch<void>(`/cms/v2/sites/${siteKey}/forms/${formId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export async function listCmsFormSubmissions(
+  siteKey: string,
+  formId: string,
+  page: number = 1,
+  pageSize: number = 20,
+  token?: string | null,
+): Promise<CmsFormSubmissionPaginated> {
+  return apiFetch<CmsFormSubmissionPaginated>(`/cms/v2/sites/${siteKey}/forms/${formId}/submissions`, {
+    token,
+    query: { page: String(page), page_size: String(pageSize) },
+  });
+}
+
+// ── Newsletters (R2) ────────────────────────────────────────────────────────
+
+export async function listCmsNewsletters(
+  siteKey: string,
+  token?: string | null,
+): Promise<CmsNewsletter[]> {
+  return apiFetch<CmsNewsletter[]>(`/cms/v2/sites/${siteKey}/newsletters`, { token });
+}
+
+export async function createCmsNewsletter(
+  siteKey: string,
+  payload: { name: string; subject: string; content_html: string; status?: string; scheduled_at?: string | null },
+  token?: string | null,
+): Promise<CmsNewsletter> {
+  return apiFetch<CmsNewsletter>(`/cms/v2/sites/${siteKey}/newsletters`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function patchCmsNewsletter(
+  siteKey: string,
+  newsletterId: string,
+  payload: { name?: string; subject?: string; content_html?: string; status?: string; scheduled_at?: string | null },
+  token?: string | null,
+): Promise<CmsNewsletter> {
+  return apiFetch<CmsNewsletter>(`/cms/v2/sites/${siteKey}/newsletters/${newsletterId}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsNewsletter(
+  siteKey: string,
+  newsletterId: string,
+  token?: string | null,
+): Promise<void> {
+  await apiFetch<void>(`/cms/v2/sites/${siteKey}/newsletters/${newsletterId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export async function sendCmsNewsletter(
+  siteKey: string,
+  newsletterId: string,
+  token?: string | null,
+): Promise<CmsNewsletter> {
+  return apiFetch<CmsNewsletter>(`/cms/v2/sites/${siteKey}/newsletters/${newsletterId}/send`, {
+    method: "POST",
+    token,
+  });
+}
+
+// ── Subscribers (R2) ────────────────────────────────────────────────────────
+
+export async function listCmsSubscribers(
+  siteKey: string,
+  token?: string | null,
+): Promise<CmsSubscriber[]> {
+  return apiFetch<CmsSubscriber[]>(`/cms/v2/sites/${siteKey}/subscribers`, { token });
+}
+
+export async function createCmsSubscriber(
+  siteKey: string,
+  payload: { email: string; name?: string | null; is_active?: boolean; source?: string },
+  token?: string | null,
+): Promise<CmsSubscriber> {
+  return apiFetch<CmsSubscriber>(`/cms/v2/sites/${siteKey}/subscribers`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function patchCmsSubscriber(
+  siteKey: string,
+  subscriberId: string,
+  payload: { email?: string; name?: string | null; is_active?: boolean; source?: string },
+  token?: string | null,
+): Promise<CmsSubscriber> {
+  return apiFetch<CmsSubscriber>(`/cms/v2/sites/${siteKey}/subscribers/${subscriberId}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsSubscriber(
+  siteKey: string,
+  subscriberId: string,
+  token?: string | null,
+): Promise<void> {
+  await apiFetch<void>(`/cms/v2/sites/${siteKey}/subscribers/${subscriberId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export async function importCmsSubscribers(
+  siteKey: string,
+  payload: { emails?: string[]; subscribers?: Array<{ email: string; name?: string | null }>; csv_content?: string },
+  token?: string | null,
+): Promise<{ success: boolean; imported_count: number; total_subscribers: number }> {
+  return apiFetch<{ success: boolean; imported_count: number; total_subscribers: number }>(
+    `/cms/v2/sites/${siteKey}/subscribers/import`,
+    {
+      method: "POST",
+      token,
+      body: payload,
+    },
+  );
+}
+
+
 

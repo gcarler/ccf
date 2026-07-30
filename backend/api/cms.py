@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import uuid
 from datetime import datetime, timezone
 
@@ -222,6 +223,73 @@ async def upload_cms_media(
             alt_text=alt_text or file.filename or "",
             tags=parsed_tags,
             optimize=optimize,
+            actor_user_id=str(current_user.id),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/cms/media/{item_id}/edit", response_model=schemas.CmsMediaRead, status_code=201)
+async def edit_cms_media(
+    item_id: uuid.UUID,
+    file: UploadFile = File(...),
+    alt_text: str | None = Form(default=None),
+    section: str | None = Form(default=None),
+    tags: str | None = Form(default=None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
+):
+    """Edit an existing image asset (non-destructive).
+
+    Saves a new copy of the image with an `_edited` suffix appended to the filename
+    and creates a new CmsMediaItem DB record. The original item remains unchanged.
+    """
+    row = _get_scoped_cms_media(db, current_user, item_id)
+    content = await file.read()
+
+    original_name = row.filename or file.filename or "image.png"
+    base_name, ext = os.path.splitext(original_name)
+    if not ext:
+        c_type = file.content_type or row.mime_type or "image/png"
+        if "jpeg" in c_type or "jpg" in c_type:
+            ext = ".jpg"
+        elif "webp" in c_type:
+            ext = ".webp"
+        else:
+            ext = ".png"
+
+    if base_name.endswith("_edited"):
+        edited_filename = f"{base_name}{ext}"
+    else:
+        edited_filename = f"{base_name}_edited{ext}"
+
+    parsed_tags = (
+        [tag.strip() for tag in tags.split(",") if tag.strip()]
+        if tags is not None
+        else (row.tags or [])
+    )
+
+    if alt_text is not None and alt_text.strip():
+        final_alt = alt_text.strip()
+    else:
+        orig_alt = row.alt_text or base_name
+        if orig_alt.endswith("_edited"):
+            final_alt = orig_alt
+        else:
+            final_alt = f"{orig_alt}_edited"
+
+    final_section = section if section is not None else (row.section or "general")
+
+    try:
+        return _upload_cms_media(
+            db,
+            content=content,
+            filename=edited_filename,
+            content_type=file.content_type or row.mime_type,
+            section=final_section,
+            alt_text=final_alt,
+            tags=parsed_tags,
+            optimize=False,
             actor_user_id=str(current_user.id),
         )
     except ValueError as exc:

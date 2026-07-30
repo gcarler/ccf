@@ -11,6 +11,7 @@ from backend.core.database import get_db
 from backend.core.permissions import require_module_access
 from backend.core.tenant import require_user_sede_id
 from backend.crud import agenda as crud
+from backend.crud.projects import get_user_persona_id
 from backend.schemas.agenda import (
     AgendaEvent,
     AgendaEventCommentCreate,
@@ -24,6 +25,7 @@ from backend.schemas.agenda import (
     ResourceReservationCreate,
 )
 from backend.services.comment_notifications import notify_mention
+from backend.services.mention_parser import resolve_mentions
 
 router = APIRouter(prefix="/agenda", tags=["Agenda"])
 
@@ -466,12 +468,20 @@ def create_event_comment(
     content = (payload.content or "").strip()
     if not content:
         raise HTTPException(status_code=400, detail="content is required")
+    author_persona_id = get_user_persona_id(db, current_user.id)
+    resolved_mentions = resolve_mentions(
+        db,
+        content=content,
+        payload_mentions=payload.mentions or [],
+        author_id=author_persona_id,
+        user_sede=sede_id,
+    )
     comment = models.AgendaEventComment(
         event_id=event_id,
-        author_id=current_user.id,
+        author_id=author_persona_id,
         content=content,
         attachments=[a.model_dump() for a in (payload.attachments or [])],
-        mentions=[UUID(str(m)) for m in (payload.mentions or [])],
+        mentions=resolved_mentions,
     )
     db.add(comment)
     db.commit()
@@ -498,7 +508,8 @@ def update_event_comment(
     current_user: models.User = AgendaEditor,
 ):
     sede_id = _sede_id(db, current_user)
-    if not crud.get_event(db, event_id, sede_id):
+    event = crud.get_event(db, event_id, sede_id)
+    if not event:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
     comment = (
         db.query(models.AgendaEventComment)
@@ -516,9 +527,29 @@ def update_event_comment(
         raise HTTPException(status_code=400, detail="content is required")
     comment.content = content
     comment.attachments = [a.model_dump() for a in (payload.attachments or [])]
-    comment.mentions = [UUID(str(m)) for m in (payload.mentions or [])]
+    previous_mentions = {str(m) for m in (comment.mentions or [])}
+    comment.mentions = resolve_mentions(
+        db,
+        content=content,
+        payload_mentions=payload.mentions or [],
+        author_id=comment.author_id,
+        user_sede=sede_id,
+    )
     db.commit()
     db.refresh(comment)
+    # Notify only newly added mentions to avoid duplicate notifications.
+    new_mentions = {str(m) for m in (comment.mentions or [])}
+    added_mentions = new_mentions - previous_mentions
+    if added_mentions:
+        notify_mention(
+            db,
+            mention_ids=[UUID(m) for m in added_mentions],
+            author_id=comment.author_id,
+            title=f"Te mencionaron en un comentario de agenda: {event.titulo}",
+            content=f"{content[:120]}{'...' if len(content) > 120 else ''}",
+            url=f"/plataforma/agenda/eventos/{event_id}",
+            sede_id=sede_id,
+        )
     return _serialize_comment(comment, comment.author)
 
 

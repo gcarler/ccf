@@ -1,9 +1,8 @@
 # Original User Request
 
-## Initial Request — 2026-07-30T17:23:07Z
+## 2026-07-30T18:50:58Z
 
-Implementar 4 features que llevan el CMS de CCF (Next.js + FastAPI) a un nivel
-superior a WordPress en usabilidad y funcionalidad para crear páginas, posts y popups.
+Implementar 3 módulos nuevos en el CMS de CCF (FastAPI + Next.js) que faltan para estar al nivel de WordPress:
 
 Working directory: /root/ccf
 Integrity mode: development
@@ -12,133 +11,124 @@ Integrity mode: development
 
 ## Contexto técnico
 
-- Frontend: Next.js 14 App Router, TypeScript, en `frontend/src/`
-- CMS pages: `frontend/src/app/plataforma/cms/`
-- TipTap instalado: `@tiptap/*` en `frontend/package.json`
-- RichEditor en: `frontend/src/components/cms/RichEditor.tsx` (290 líneas)
-- Visual builder en: `frontend/src/app/plataforma/cms/builder/`
-- Media picker modal existente: busca `MediaPicker` o `media-picker` en `frontend/src/components/cms/`
-- API CMS v2: `backend/api/cms_v2/`
-- Posts page: `frontend/src/app/plataforma/cms/posts/page.tsx` (782 líneas)
+- Frontend: Next.js 14 App Router, TypeScript, `frontend/src/app/plataforma/cms/`
+- Backend: FastAPI, SQLAlchemy, PostgreSQL, `backend/api/cms_v2/`
+- Modelos CMS en: `backend/models_cms.py`
+- Migraciones Alembic en: `alembic/canonical_versions/`
+- Nav del CMS: `frontend/src/components/cms/CmsModuleNav.tsx`
+- Patrones existentes: ver `backend/api/cms_v2/popups.py` y `frontend/src/app/plataforma/cms/popups/page.tsx` como referencia de implementación
+- TipTap ya instalado, RichEditor en `frontend/src/components/cms/RichEditor.tsx`
+- API fetch en frontend: `import { apiFetch } from '@/lib/http'`
+- Auth en frontend: `import { useAuth } from '@/context/AuthContext'`
+- Toasts: `import { toast } from 'sonner'`
 
 ---
 
 ## Requirements
 
-### R1. TipTap conectado a la Media Library (no window.prompt)
+### R1. Módulo de Formularios de Contacto
 
-En `frontend/src/components/cms/RichEditor.tsx`, la inserción de imágenes
-actualmente usa `window.prompt()` para pedir una URL. Debe reemplazarse por
-un modal integrado que abra la biblioteca de medios.
+**Backend** (`backend/api/cms_v2/forms.py`):
+- Modelo `CmsForm` en `backend/models_cms.py`:
+  - id (UUID PK), site_id (FK cms_sites), name (str), description (str nullable)
+  - fields (JSON: array de {id, label, type: 'text'|'email'|'phone'|'textarea'|'select'|'checkbox', required: bool, options: list nullable})
+  - submit_button_text (str default 'Enviar'), success_message (str)
+  - notify_emails (JSON array de emails a notificar), is_active (bool default True)
+  - created_at, updated_at
+- Modelo `CmsFormSubmission` en `backend/models_cms.py`:
+  - id (UUID PK), form_id (FK cms_forms), data (JSON), submitted_at, ip_address (str nullable)
+- CRUD endpoints bajo `/api/cms/v2/sites/{site_key}/forms`
+- Endpoint público: `POST /api/cms/v2/public/forms/{form_id}/submit` — guarda submission y envía email si `notify_emails` configurado
+- Endpoint: `GET /api/cms/v2/sites/{site_key}/forms/{form_id}/submissions` — lista submissions con paginación
+- Migración Alembic: tablas `cms_forms` y `cms_form_submissions`
+- Registrar router en `backend/api/cms_v2/__init__.py` o donde corresponda
 
-Implementar:
-- Estado `showImagePicker: boolean` en RichEditor
-- Al hacer click en el botón de imagen de la toolbar, abrir un modal simple
-  con campo de URL + botón "Buscar en biblioteca"
-- Si existe un componente `MediaPicker` en el proyecto, reutilizarlo
-- Si no existe, crear un mini-modal en el propio RichEditor que muestre
-  los últimos 12 archivos de imagen de `/cms/media?type=image&limit=12`
-  como grid de thumbnails clicables
-- Al seleccionar una imagen del grid, insertar su URL en el editor
-- El modal debe tener campo de texto para escribir URL alternativa
-- Mismo fix para la inserción de links: reemplazar `window.prompt` por
-  un popover o input inline que aparezca sobre el texto seleccionado
+**Frontend** (`frontend/src/app/plataforma/cms/forms/page.tsx`):
+- Lista de formularios como tarjetas: nombre, número de campos, submissions count, estado activo/inactivo
+- Crear/editar form con:
+  - Campo nombre y descripción
+  - Constructor de campos drag-reorderable: botón "+ Agregar campo" con selector de tipo (texto, email, teléfono, área de texto, desplegable, checkbox)
+  - Cada campo tiene: label, placeholder, required toggle, opciones (si es select)
+  - Campo "Texto del botón de envío" y "Mensaje de éxito"
+  - Campo "Emails de notificación" (chips)
+- Tab "Respuestas" que muestra submissions en tabla paginada con fecha y datos
+- Skeleton loaders, estado vacío, toasts, modales de confirmación al eliminar
 
-Agregar también `BubbleMenu` de TipTap: menú flotante que aparece al
-seleccionar texto con botones de Bold, Italic, Underline, Link.
-Instalar si es necesario: `npm install @tiptap/extension-bubble-menu`
+**Agregar a CmsModuleNav**: entrada "Formularios" con ícono `ClipboardList`
 
-### R2. Editor de posts en pantalla completa
+### R2. Newsletter / Email Marketing
 
-En `frontend/src/app/plataforma/cms/posts/page.tsx`, el editor de contenido
-del post actualmente vive dentro de un `SidePanel` (panel lateral). Cuando
-el usuario hace click en "Editar" un post, debe poder cambiar entre dos modos:
+**Backend** (`backend/api/cms_v2/newsletter.py`):
+- Modelo `CmsNewsletter` en `backend/models_cms.py`:
+  - id (UUID PK), site_id (FK), name (str), subject (str), content_html (Text)
+  - status ('draft'|'scheduled'|'sent'), scheduled_at (datetime nullable)
+  - sent_at (datetime nullable), recipient_count (int default 0)
+  - created_at, updated_at
+- Modelo `CmsSubscriber` en `backend/models_cms.py`:
+  - id (UUID PK), site_id (FK), email (str unique por site), name (str nullable)
+  - is_active (bool default True), subscribed_at, unsubscribed_at (nullable)
+  - source ('form'|'manual'|'import' default 'manual')
+- CRUD endpoints bajo `/api/cms/v2/sites/{site_key}/newsletters`
+- CRUD endpoints bajo `/api/cms/v2/sites/{site_key}/subscribers`
+- Endpoint: `POST /api/cms/v2/public/subscribe` — suscripción pública (guarda subscriber)
+- Endpoint: `POST /api/cms/v2/public/unsubscribe?token=X` — desuscripción
+- Endpoint: `POST /api/cms/v2/sites/{site_key}/newsletters/{id}/send` — marca como sent, actualiza recipient_count (envío real via SMTP si configurado, si no: mock exitoso)
+- Migración Alembic: tablas `cms_newsletters` y `cms_subscribers`
 
-- **Modo compacto** (actual): SidePanel con metadatos + RichEditor pequeño
-- **Modo pantalla completa**: overlay/modal que ocupa toda la pantalla con:
-  - Columna izquierda (70%): RichEditor con `minHeight="calc(100vh - 120px)"`
-  - Columna derecha (30%): metadatos del post (título, categorías, tags,
-    estado, fecha de publicación)
-  - Barra superior: Botón volver al modo compacto | Botón Guardar | Botón Publicar
-  - Atajo de teclado: `Cmd/Ctrl + Shift + F` para toggle pantalla completa
+**Frontend** (`frontend/src/app/plataforma/cms/newsletter/page.tsx`):
+- Dos tabs: "Campañas" y "Suscriptores"
+- **Tab Campañas**: lista de newsletters con estado (badge: Borrador/Programado/Enviado), subject, fecha de envío, destinatarios
+  - Crear/editar newsletter con RichEditor para content_html, campo subject, selector de fecha de envío
+  - Botón "Enviar ahora" con modal de confirmación mostrando cuántos suscriptores recibirán
+  - Badge de estado con colores: draft=gris, scheduled=azul, sent=verde
+- **Tab Suscriptores**: tabla con email, nombre, fecha de suscripción, estado activo/inactivo
+  - Botón "+ Agregar" para suscriptor manual
+  - Botón "Importar CSV" (input file que lee emails del CSV)
+  - Toggle activo/inactivo por suscriptor
+  - Contador total visible
+- Skeleton loaders, estado vacío, toasts, modales de confirmación
 
-La transición debe ser suave (CSS transition). El modo pantalla completa debe
-usar `position: fixed; inset: 0; z-index: 100`.
+**Agregar a CmsModuleNav**: entrada "Newsletter" con ícono `Mail`
 
-### R3. Módulo de Popups nativo
+### R3. Editor de Imágenes en Media Library
 
-Crear un módulo completo de Popups en el CMS:
+En `frontend/src/app/plataforma/cms/media/[id]/page.tsx`, agregar un panel
+"Editar imagen" que aparece cuando el item es una imagen (`mime_type` contiene 'image').
 
-**Backend** (`backend/api/cms_v2/popups.py`):
-- Modelo `CmsPopup` en `backend/models_cms.py` con campos: id (UUID), site_id (FK a cms_sites), name (str), content_html (Text), trigger_type (str: 'time_delay'|'scroll_percent'|'exit_intent'|'on_load'), trigger_value (int, nullable), is_active (bool default True), show_on_pages (JSON array de slugs, vacío = todas), created_at, updated_at
-- CRUD endpoints bajo `/api/cms/v2/sites/{site_key}/popups`:
-  GET /popups (list), POST /popups (create), GET /popups/{id}, PATCH /popups/{id}, DELETE /popups/{id}
-- Endpoint público: `GET /api/cms/v2/public/popups?site_key=X` devuelve popups activos
-- Migración Alembic: nueva tabla `cms_popups`
-- Registrar el router en `backend/api/cms_v2/__init__.py` o `backend/app.py`
-
-**Frontend** (`frontend/src/app/plataforma/cms/popups/page.tsx`):
-- UI premium nivel enterprise igual al resto del CMS
-- Lista de popups como tarjetas con nombre, tipo de trigger (badge de color), estado activo/inactivo (toggle)
-- Crear/editar popup con SidePanel que tiene:
-  - Campo "Nombre" (interno)
-  - RichEditor para el contenido HTML del popup
-  - Selector visual de tipo de trigger:
-    - ⏱ Tiempo (X segundos después de cargar)
-    - 📜 Scroll (al llegar al X% de la página)
-    - 🚪 Exit Intent (al mover el cursor hacia arriba para cerrar)
-    - ⚡ Al cargar (inmediato)
-  - Campo numérico para el valor del trigger
-  - Toggle activo/inactivo
-- Skeleton loaders, estado vacío con ícono, toasts de éxito/error, modal confirmación al eliminar
-
-**PopupManager** (`frontend/src/components/cms/PopupManager.tsx`):
-- Componente cliente "use client" que:
-  1. Hace fetch a `/api/cms/v2/public/popups?site_key=default` al montar
-  2. Para cada popup activo, implementa el trigger:
-     - `on_load`: muestra inmediatamente
-     - `time_delay`: setTimeout(trigger_value * 1000)
-     - `scroll_percent`: window scroll listener
-     - `exit_intent`: mouseleave en document con clientY < 10
-  3. Renderiza overlay con backdrop oscuro, tarjeta centrada con el contenido HTML, botón X para cerrar
-  4. Guarda en sessionStorage `popup_shown_{id}` para no repetir en la sesión
-- Importar `PopupManager` en `frontend/src/app/layout.tsx` o en el layout de la plataforma pública
-
-**Nav**: Agregar "Popups" con ícono `Layers` a `frontend/src/components/cms/CmsModuleNav.tsx`
-
-### R4. TipTap mejoras adicionales
-
-En `RichEditor.tsx`, agregar:
-- Tablas: instalar `@tiptap/extension-table @tiptap/extension-table-row @tiptap/extension-table-header @tiptap/extension-table-cell` y agregar botón en toolbar
-- Color de texto: instalar `@tiptap/extension-color @tiptap/extension-text-style` y agregar 6 swatches de color en toolbar
-- Botón de "pantalla completa" en el propio editor (toggle `isFullscreen` state con `position: fixed; inset: 0`)
+Implementar usando la Web API nativa Canvas (sin librerías externas):
+- **Recorte (Crop)**: área seleccionable con handles en las esquinas. Muestra preview del recorte. Botón "Aplicar recorte".
+- **Rotación**: botones -90° y +90°. Preview en tiempo real.
+- **Brillo/Contraste**: sliders de -100 a +100. Preview en tiempo real usando CSS filter.
+- **Voltear (Flip)**: botones horizontal y vertical.
+- **Guardar cambios**: `POST /cms/media/{id}/edit` con el canvas resultado como blob (FormData con campo 'file'). Si el endpoint no existe en backend, crearlo en `backend/api/cms_v2/` o `backend/api/cms.py`.
+- La edición es **no destructiva**: guarda una copia editada, no sobreescribe el original. Agrega sufijo `_edited` al filename.
+- UI: modal de pantalla completa con el canvas en el centro y controles en sidebar derecho.
 
 ---
 
 ## Acceptance Criteria
 
-### R1 — TipTap + Media Library
-- [ ] `grep "window.prompt" frontend/src/components/cms/RichEditor.tsx` devuelve **0 resultados**
-- [ ] `grep -i "imagePicker\|showImage\|mediaPicker\|ImageModal" frontend/src/components/cms/RichEditor.tsx` devuelve ≥1 match
-- [ ] `grep "BubbleMenu\|bubble-menu" frontend/src/components/cms/RichEditor.tsx` devuelve ≥1 match
+### R1 — Formularios
+- [ ] `ls frontend/src/app/plataforma/cms/forms/page.tsx` existe
+- [ ] `ls backend/api/cms_v2/forms.py` existe
+- [ ] `grep 'CmsForm\|cms_forms' backend/models_cms.py` devuelve ≥2 matches
+- [ ] `grep 'CmsFormSubmission\|cms_form_submissions' backend/models_cms.py` devuelve ≥1 match
+- [ ] `grep 'forms\|Formularios' frontend/src/components/cms/CmsModuleNav.tsx` devuelve ≥1 match
+- [ ] `grep 'ClipboardList' frontend/src/components/cms/CmsModuleNav.tsx` devuelve ≥1 match
 
-### R2 — Editor pantalla completa
-- [ ] `grep -i "fullscreen\|fullScreen\|fixed.*inset\|isFullscreen" frontend/src/app/plataforma/cms/posts/page.tsx` devuelve ≥2 matches
-- [ ] `grep "Shift\|fullscreen" frontend/src/app/plataforma/cms/posts/page.tsx` devuelve ≥1 match
+### R2 — Newsletter
+- [ ] `ls frontend/src/app/plataforma/cms/newsletter/page.tsx` existe
+- [ ] `ls backend/api/cms_v2/newsletter.py` existe
+- [ ] `grep 'CmsNewsletter\|cms_newsletters' backend/models_cms.py` devuelve ≥2 matches
+- [ ] `grep 'CmsSubscriber\|cms_subscribers' backend/models_cms.py` devuelve ≥1 match
+- [ ] `grep 'newsletter\|Newsletter' frontend/src/components/cms/CmsModuleNav.tsx` devuelve ≥1 match
 
-### R3 — Módulo de Popups
-- [ ] `ls frontend/src/app/plataforma/cms/popups/page.tsx` existe
-- [ ] `ls backend/api/cms_v2/popups.py` existe
-- [ ] `grep "cms_popups\|CmsPopup" backend/api/cms_v2/popups.py` devuelve ≥2 matches
-- [ ] `grep "popups\|Popup" frontend/src/components/cms/CmsModuleNav.tsx` devuelve ≥1 match
-- [ ] `grep -ri "PopupManager\|trigger_type\|exit.intent" frontend/src/` devuelve ≥3 matches
-
-### R4 — TipTap mejoras
-- [ ] `grep "extension-table\|TableRow\|TableHeader" frontend/src/components/cms/RichEditor.tsx` devuelve ≥2 matches
-- [ ] `grep "extension-color\|TextStyle\|ColorPicker" frontend/src/components/cms/RichEditor.tsx` devuelve ≥2 matches
+### R3 — Editor de imágenes
+- [ ] `grep -i 'crop\|rotate\|canvas\|brightness\|flip' frontend/src/app/plataforma/cms/media/\[id\]/page.tsx` devuelve ≥5 matches
+- [ ] `grep 'cms/media.*edit\|media.*edit' backend/api/cms_v2/*.py backend/api/cms.py 2>/dev/null` devuelve ≥1 match
 
 ### Build y Deploy
-- [ ] `cd /root/ccf/frontend && npx next build 2>&1 | grep -c "error TS"` devuelve **0**
-- [ ] `cd /root/ccf && PYTHONPATH=. python3 -m pytest tests/test_structural_contracts.py -v 2>&1 | tail -3` muestra "passed"
+- [ ] `cd /root/ccf/frontend && npx tsc --noEmit 2>&1 | grep -c 'error TS'` devuelve **0**
+- [ ] `cd /root/ccf && PYTHONPATH=. python3 -m pytest tests/test_structural_contracts.py -v 2>&1 | tail -3` muestra 'passed'
 - [ ] `cd /root/ccf && git log --oneline -1` muestra commit con prefijo `feat(cms):`
-- [ ] `cd /root/ccf && git status` muestra "nothing to commit, working tree clean"
+- [ ] `cd /root/ccf && git status` muestra 'nothing to commit, working tree clean'

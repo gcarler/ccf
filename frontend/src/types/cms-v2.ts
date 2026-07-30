@@ -310,3 +310,71 @@ export interface CmsPublicPopup {
   show_on_pages: string[];
 }
 
+export type CmsFormFieldType = "text" | "email" | "phone" | "textarea" | "select" | "checkbox";
+
+export interface CmsFormField {
+  id: string;
+  type: CmsFormFieldType;
+  label: string;
+  placeholder?: string;
+  required: boolean;
+  options?: string[];
+}
+
+export interface CmsForm {
+  id: string;
+  site_id: string;
+  name: string;
+  description: string | null;
+  fields: CmsFormField[];
+  submit_button_text: string;
+  success_message: string;
+  notify_emails: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  submission_count?: number;
+}
+
+export interface CmsFormSubmission {
+  id: string;
+  form_id: string;
+  data: Record<string, unknown>;
+  submitted_at: string;
+  ip_address: string | null;
+}
+
+export interface CmsFormSubmissionPaginated {
+  page: number;
+  page_size: number;
+  total: number;
+  items: CmsFormSubmission[];
+}
+
+export interface CmsNewsletter {
+  id: string;
+  site_id: string;
+  name: string;
+  subject: string;
+  content_html: string;
+  status: "draft" | "scheduled" | "sent" | string;
+  scheduled_at: string | null;
+  sent_at: string | null;
+  recipient_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsSubscriber {
+  id: string;
+  site_id: string;
+  email: string;
+  name: string | null;
+  is_active: boolean;
+  subscribed_at: string;
+  unsubscribed_at: string | null;
+  source: "form" | "manual" | "import" | string;
+}
+
+
+

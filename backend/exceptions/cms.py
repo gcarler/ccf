@@ -117,6 +117,19 @@ class PopupNotFoundError(CmsNotFoundError):
     detail: str = "Popup not found"
 
 
+class FormNotFoundError(CmsNotFoundError):
+    detail: str = "Form not found"
+
+
+class NewsletterNotFoundError(CmsNotFoundError):
+    detail: str = "Newsletter not found"
+
+
+class SubscriberNotFoundError(CmsNotFoundError):
+    detail: str = "Subscriber not found"
+
+
+
 # ── 409: Conflict ────────────────────────────────────────────────────────────
 
 
