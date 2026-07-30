@@ -729,7 +729,7 @@ describe("BuilderSectionInspector", () => {
 
   it("renders popup_banner delay_ms and start_at fields", () => {
     const section = createMockCmsSection("popup_banner", {
-      props_json: { delay_ms: "3000", start_at: "2024-01-01T00:00" },
+      props_json: { delay_ms: 3000, start_at: "2024-01-01T00:00" },
     });
     const builder = createMockBuilder({ activeSection: section });
 
@@ -758,7 +758,7 @@ describe("BuilderSectionInspector", () => {
 
   it("renders popup dismiss_days and dismiss_key fields", () => {
     const section = createMockCmsSection("popup_banner", {
-      props_json: { dismiss_days: "7", dismiss_key: "popup_1" },
+      props_json: { dismiss_days: 7, dismiss_key: "popup_1" },
     });
     const builder = createMockBuilder({ activeSection: section });
 

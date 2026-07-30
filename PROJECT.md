@@ -1,23 +1,38 @@
 # Project: CCF Enterprise CMS
 
 ## Architecture
-- Enterprise CMS built with Next.js, React, Tailwind CSS, TypeScript, Sonner, TipTap.
-- Automated testing harness via pytest (`tests/test_structural_contracts.py`).
+- Enterprise CMS built with Next.js 15.5, React 18, Tailwind CSS, TypeScript, Sonner, TipTap.
+- Automated structural contract testing via pytest (`tests/test_structural_contracts.py`).
+- Design system modals via `DSModal` / `AnimatePresence` confirmation modals (raw Radix UI Dialog prohibited by contracts).
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | Architecture & Contract Exploration | Inspect codebase layout, existing components, tests, and current implementations | None | IN_PROGRESS |
-| 2 | R1: TipTap RichEditor Integration | Integrate TipTap RichEditor in Posts and Testimonials | M1 | PLANNED |
-| 3 | R2: Destructive Confirmation Modals | Implement native confirmation modals on destructive actions across media, categories, tags, themes, branding, announcements, pages, testimonials | M1 | PLANNED |
-| 4 | R3: Feedback Toasts (Sonner) | Add Sonner toast.success and toast.error on CRUD operations in menus, testimonials, webhooks, redirects | M1 | PLANNED |
-| 5 | R4: Webhooks & Redirects Redesign | Fix misplaced imports bug in redirects/page.tsx, implement UI components, badges, filters, skeletons, empty states | M1 | PLANNED |
-| 6 | R5: Dashboard CMS Enhancements | Add animate-pulse skeletons, Quick Actions card with 4 buttons, recent activity card backed by audit logs | M1 | PLANNED |
-| 7 | R6: Announcements Enhancements | Remove mock picsum images, add CSS gradient background, search field, state filters | M1 | PLANNED |
-| 8 | R7: Clean Build, Test & Git Delivery | Next.js build (0 TS errors), pytest tests/test_structural_contracts.py, pre-push verification, git commit feat(cms)/fix(cms), git push to main | M2-M7 | PLANNED |
+| 1 | Exploration & Architecture Assessment | Full codebase, UI components, structural test suite analysis | None | DONE |
+| 2 | R1 & R2 CMS Gaps | Verify TipTap R1; fix R2 Testimonials missing modal UI block | M1 | IN_PROGRESS |
+| 3 | R3 Feedback Toasts Gaps | Add Sonner toast.success to Menus item visibility toggle & TestimonialForm CRUD | M1 | PLANNED |
+| 4 | R4 & R6 Announcements & Redirects Polish | Remove line 326 picsum image in Announcements; verify Redirects/Webhooks components | M1 | PLANNED |
+| 5 | R5 Dashboard CMS Audit | Verify animate-pulse skeletons, 4-button Quick Actions, recent audit log activity | M1 | PLANNED |
+| 6 | R7 Structural Contracts Fixes | Fix purple tokens, legacy comment labels, and direct fetch calls for 100% pytest pass | M1-M5 | PLANNED |
+| 7 | R7 Build, Test Verification & Git Delivery | Run Next.js build (0 TS errors), full pytest verification, pre-push, git commit feat(cms)/fix(cms) and git push to main | M6 | PLANNED |
 
 ## Interface Contracts
-- To be refined post-exploration.
+- Toasts: Must use `sonner` (`toast.success`, `toast.error`).
+- Modals: Must use native `DSModal` or `AnimatePresence` confirm dialogs (no raw `<Dialog>` imports).
+- Editor: Must use TipTap (`RichEditor`).
+- Structural Contracts: Must strictly conform to `tests/test_structural_contracts.py` rules (no direct `fetch`, no forbidden color tokens, no `legacy` comments in active code).
 
 ## Code Layout
-- To be mapped post-exploration.
+- Frontend: `/root/ccf/frontend`
+  - CMS Pages: `/root/ccf/frontend/src/app/plataforma/cms`
+    - Posts: `posts/page.tsx`
+    - Testimonials: `testimonials/page.tsx`
+    - Menus: `menus/page.tsx`
+    - Webhooks: `webhooks/page.tsx`
+    - Redirects: `redirects/page.tsx`
+    - Announcements: `announcements/page.tsx`
+    - Dashboard: `/root/ccf/frontend/src/app/plataforma/cms/page.tsx`
+  - Components: `/root/ccf/frontend/src/components`
+  - Design System: `/root/ccf/frontend/src/design`
+- Backend: `/root/ccf/backend`
+- Structural Tests: `/root/ccf/tests/test_structural_contracts.py`

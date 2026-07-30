@@ -252,8 +252,10 @@ export default function CmsMenusManagement() {
         try {
             if (target.visibility === "hidden") {
                 await patchCmsMenuItem(siteKey, menuKey, target.id, { visibility: "public" }, token);
+                toast.success("Enlace visible en menú");
             } else {
                 await archiveCmsMenuItem(siteKey, menuKey, target.id, token);
+                toast.success("Enlace ocultado del menú");
             }
             fetchNav();
         } catch (error) {

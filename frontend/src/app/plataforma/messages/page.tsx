@@ -231,13 +231,6 @@ export default function MessagesPage() {
                     body: formData,
                 });
                 att = attRes;
-                const res = await fetch('/api/chat/upload-attachment', {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${token}` },
-                    body: formData,
-                });
-                if (!res.ok) throw new Error('Upload failed');
-                att = await res.json();
             } catch {
                 addToast('Error al subir archivo', 'error');
                 setSending(false);
@@ -636,10 +629,6 @@ export default function MessagesPage() {
                                              : attachmentPreview.type === 'video' ? <Video size={18} className="text-[hsl(var(--info))]" />
                                              : attachmentPreview.type === 'audio' ? <Music size={18} className="text-[hsl(var(--success))]" />
                                              : <LucideFile size={18} className="text-[hsl(var(--primary))]" />}
-                                            {attachmentPreview.type === 'pdf' ? <FileText size={18} className="text-red-500" />
-                                             : attachmentPreview.type === 'video' ? <Video size={18} className="text-[hsl(var(--info))]" />
-                                             : attachmentPreview.type === 'audio' ? <Music size={18} className="text-green-500" />
-                                             : <LucideFile size={18} className="text-blue-500" />}
                                         </div>
                                     )}
                                     <div className="flex-1 min-w-0">

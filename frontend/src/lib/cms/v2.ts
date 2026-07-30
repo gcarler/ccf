@@ -1027,7 +1027,7 @@ export async function getPageAnalytics(
 // The public v2 posts endpoint returns only status=="published" rows and uses
 // the CmsPublicPost shape (no numeric id, no status; seo_json holds the v1
 // flat fields). These adapters restore the shape the public/community pages
-// consumed from the legacy shim.
+// consumed from the v1 shim.
 
 export interface PublicTestimonial {
   id: string;

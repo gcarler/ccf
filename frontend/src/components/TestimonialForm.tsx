@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Headphones, ImageIcon, LinkIcon, PlayCircle, Send, Smile } from "lucide-react";
+import { toast } from "sonner";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import { createCmsPostByCategory } from "@/lib/cms/v2";
@@ -29,7 +30,6 @@ export default function TestimonialForm({ userId: _userId, authorPersonaId: _aut
   const [mediaItems, setMediaItems] = useState<TestimonialMediaAsset[]>([]);
   const [mediaSearch, setMediaSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (!token) {
@@ -74,7 +74,7 @@ export default function TestimonialForm({ userId: _userId, authorPersonaId: _aut
     e.preventDefault();
 
     if (!token) {
-      setMessage("Inicia sesion para enviar un testimonio.");
+      toast.error("Inicia sesión para enviar un testimonio.");
       return;
     }
 
@@ -114,7 +114,7 @@ export default function TestimonialForm({ userId: _userId, authorPersonaId: _aut
         token,
       );
 
-      setMessage("Gracias. Tu testimonio fue enviado para moderacion.");
+      toast.success("Gracias. Tu testimonio fue enviado para moderación.");
       setContent("");
       setImageUrl("");
       setVideoUrl("");
@@ -124,7 +124,7 @@ export default function TestimonialForm({ userId: _userId, authorPersonaId: _aut
       if (onSubmitted) onSubmitted();
     } catch (error) {
       console.error("testimonial error", error);
-      setMessage("Hubo un error al enviar el testimonio.");
+      toast.error("Hubo un error al enviar el testimonio.");
     } finally {
       setIsSubmitting(false);
     }
@@ -256,12 +256,6 @@ export default function TestimonialForm({ userId: _userId, authorPersonaId: _aut
         >
           {isSubmitting ? "Enviando..." : <><Send size={18} /> Publicar testimonio</>}
         </button>
-
-        {message && (
-          <p className={`text-center text-sm font-medium ${message.includes("Gracias") ? "text-success-text" : "text-danger-text"}`}>
-            {message}
-          </p>
-        )}
       </form>
     </div>
   );

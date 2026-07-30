@@ -257,7 +257,7 @@ export default function WebhooksPage() {
                     onClick={() => loadDeliveries(wh.id)}
                     className="w-full p-3 flex items-center justify-between text-xs font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors"
                   >
-                    <span>Últimas entregas ({deliveries.length && expandedId === wh.id ? deliveries.length : '?'})</span>
+                    <span>Últimas entregas ({expandedId === wh.id && deliveries.length > 0 ? deliveries.length : '?'})</span>
                     {expandedId === wh.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
                   
