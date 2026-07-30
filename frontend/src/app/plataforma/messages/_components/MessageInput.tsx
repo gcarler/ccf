@@ -144,7 +144,7 @@ export function MessageInput({
         if (!content && !attachment) return;
         const mentionIds = mentions.map((m) => m.id);
         const result = await onSend(content, { attachment: attachment || undefined, replyTo: replyTo || undefined, mentions: mentionIds });
-        if (result.error !== 'upload') {
+        if (result.error === null) {
             setInput('');
             setMentions([]);
             if (attachment) clearAttachment();
