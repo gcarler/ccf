@@ -547,6 +547,115 @@ export async function getCmsPublicPost(siteKey: string, slug: string) {
   return apiFetch<CmsPublicPost>(`/cms/v2/public/sites/${siteKey}/posts/${slug}`, { silent: true });
 }
 
+// ── Posts by Canonical Category (Testimonials / Announcements) ──────────────
+// Replaces v1 shim endpoints: /cms/testimonials, /cms/announcements
+
+export type CanonicalCategory = "testimonials" | "announcements";
+
+export async function listCmsPostsByCategory(
+  siteKey: string,
+  category: CanonicalCategory,
+  options?: { status?: string; skip?: number; limit?: number; include_archived?: boolean },
+  token?: string | null,
+) {
+  const res = await apiFetch<{ items: CmsPostWithTaxonomies[]; total: number } | CmsPostWithTaxonomies[]>(
+    `/cms/v2/sites/${siteKey}/posts-by-category`,
+    {
+      token,
+      query: { category, ...options },
+    }
+  );
+  return Array.isArray(res) ? res : res?.items ?? [];
+}
+
+export async function createCmsPostByCategory(
+  siteKey: string,
+  category: CanonicalCategory,
+  payload: {
+    slug?: string;
+    title: string;
+    excerpt?: string | null;
+    content?: string | null;
+    featured_image_url?: string | null;
+    status?: string;
+    seo_json?: Record<string, unknown>;
+    tag_ids?: string[];
+    published_at?: string | null;
+    expires_at?: string | null;
+  },
+  token?: string | null,
+) {
+  return apiFetch<CmsPostWithTaxonomies>(
+    `/cms/v2/sites/${siteKey}/posts-by-category`,
+    {
+      method: "POST",
+      token,
+      query: { category },
+      body: payload,
+    }
+  );
+}
+
+export async function getCmsPostByCategory(
+  siteKey: string,
+  slug: string,
+  category: CanonicalCategory,
+  token?: string | null,
+) {
+  return apiFetch<CmsPostWithTaxonomies>(
+    `/cms/v2/sites/${siteKey}/posts-by-category/${slug}`,
+    {
+      token,
+      query: { category },
+    }
+  );
+}
+
+export async function patchCmsPostByCategory(
+  siteKey: string,
+  slug: string,
+  category: CanonicalCategory,
+  payload: {
+    slug?: string;
+    title?: string;
+    excerpt?: string | null;
+    content?: string | null;
+    featured_image_url?: string | null;
+    status?: string;
+    seo_json?: Record<string, unknown>;
+    tag_ids?: string[];
+    published_at?: string | null;
+    expires_at?: string | null;
+  },
+  token?: string | null,
+) {
+  return apiFetch<CmsPostWithTaxonomies>(
+    `/cms/v2/sites/${siteKey}/posts-by-category/${slug}`,
+    {
+      method: "PATCH",
+      token,
+      query: { category },
+      body: payload,
+    }
+  );
+}
+
+export async function deleteCmsPostByCategory(
+  siteKey: string,
+  slug: string,
+  category: CanonicalCategory,
+  token?: string | null,
+) {
+  await apiFetch<void>(
+    `/cms/v2/sites/${siteKey}/posts-by-category/${slug}`,
+    {
+      method: "DELETE",
+      token,
+      query: { category },
+    }
+  );
+}
+
 // ── Scheduled publish + auto-archive helpers (2026-07-06) ────────────────
 //
 // Helper UI utilities for the calendar + detail views. Formatters convert
