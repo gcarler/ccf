@@ -12,7 +12,7 @@ export function getPlatformMetricHref(title: string): string | null {
         return '/plataforma/tasks';
     }
     if (normalized.includes('testimonio') || normalized.includes('testimonial')) {
-        return '/plataforma/admin/testimonials';
+        return '/plataforma/cms/testimonials';
     }
     return null;
 }

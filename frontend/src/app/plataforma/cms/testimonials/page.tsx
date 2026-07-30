@@ -4,6 +4,14 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
+import { SITE_KEY } from "@/lib/site-config";
+import {
+  listTestimonials,
+  setTestimonialStatus,
+  archiveTestimonial,
+  saveTestimonial as saveTestimonialV2,
+  type V1TestimonialShape,
+} from "@/lib/cms/v2";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import {
   Archive,
@@ -26,22 +34,7 @@ import {
   TestimonialMediaType,
 } from "@/lib/cms/testimonialMedia";
 
-interface Testimonial {
-  id: number;
-  content: string;
-  emotion: string;
-  media_type?: "text" | "image" | "video" | "podcast" | string;
-  media_url?: string | null;
-  image_url?: string | null;
-  video_url?: string | null;
-  podcast_url?: string | null;
-  created_at: string;
-  author_persona_id?: string | null;
-  published?: boolean;
-  is_approved?: boolean;
-  show_on_home?: boolean;
-  status?: "pending" | "approved" | "archived" | string;
-}
+type Testimonial = V1TestimonialShape;
 
 interface MediaItem {
   id: number;
@@ -115,7 +108,7 @@ export default function CmsTestimonialsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState<Testimonial | null>(null);
-  const [processing, setProcessing] = useState<number | null>(null);
+  const [processing, setProcessing] = useState<string | null>(null);
   const [viewType, setViewType] = useState<ViewType>("grid");
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
@@ -125,10 +118,14 @@ export default function CmsTestimonialsPage() {
     if (!token || !canEdit) { setLoading(false); return; }
     setLoading(true);
     try {
-      const data = await apiFetch<Testimonial[]>("/admin/testimonials", { token, cache: "no-store" });
+      const data = await listTestimonials(SITE_KEY, { include_archived: true }, token);
       setTestimonials(
         Array.isArray(data)
-          ? data.map(row => ({ ...row, status: row.status || (row.is_approved ? "approved" : "pending"), published: row.published ?? row.is_approved ?? false }))
+          ? data.map(row => ({
+              ...row,
+              status: row.status || (row.is_approved ? "approved" : "pending"),
+              published: row.published ?? row.is_approved ?? false,
+            }))
           : []
       );
     } catch {
@@ -163,14 +160,13 @@ export default function CmsTestimonialsPage() {
   const handleToggle = async (t: Testimonial) => {
     if (!token) return;
     const next = !t.published;
-    const nextStatus = next ? "approved" : "pending";
-    setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: next, status: nextStatus } : i));
+    setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: next, status: next ? "approved" : "pending" } : i));
     setProcessing(t.id);
     try {
-      const updated = await apiFetch<Testimonial>(`/admin/testimonials/${t.id}`, {
-        method: "PATCH", token, body: { status: nextStatus }
-      });
-      if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...updated, published: next, status: nextStatus } : null);
+      const updated = await setTestimonialStatus(SITE_KEY, t.slug, next ? "approved" : "pending", token);
+      const normalized = { ...updated, status: updated.status || (updated.is_approved ? "approved" : "pending"), published: updated.is_approved ?? next ?? false };
+      setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, ...normalized } : i));
+      if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
     } catch {
       setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: t.published } : i));
     } finally {
@@ -181,23 +177,18 @@ export default function CmsTestimonialsPage() {
   const toggleArchive = async (t: Testimonial) => {
     if (!token) return;
     const restore = t.status === "archived";
-    const nextStatus = restore ? "pending" : "archived";
     setProcessing(t.id);
     try {
       if (restore) {
-        const updated = await apiFetch<Testimonial>(`/admin/testimonials/${t.id}`, {
-          method: "PATCH",
-          token,
-          body: { status: nextStatus },
-        });
-        const normalized = { ...updated, published: false, status: nextStatus };
-        setTestimonials(prev => prev.map(item => item.id === t.id ? normalized : item));
-        if (selected?.id === t.id) setSelected(normalized);
+        const updated = await setTestimonialStatus(SITE_KEY, t.slug, "pending", token);
+        const normalized = { ...updated, published: false, status: "pending" };
+        setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...normalized } : item));
+        if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
       } else {
-        await apiFetch(`/admin/testimonials/${t.id}`, { method: "DELETE", token });
+        await archiveTestimonial(SITE_KEY, t.slug, token);
         const archived = { ...t, published: false, is_approved: false, show_on_home: false, status: "archived" };
-        setTestimonials(prev => prev.map(item => item.id === t.id ? archived : item));
-        if (selected?.id === t.id) setSelected(archived);
+        setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...archived } : item));
+        if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...archived } : null);
       }
     } finally {
       setProcessing(null);
@@ -210,24 +201,25 @@ export default function CmsTestimonialsPage() {
     const mediaType = normalizeTestimonialMediaType(selected.media_type);
     const mediaUrl = mediaType === "text" ? "" : getTestimonialMediaUrl(selected);
     try {
-      const updated = await apiFetch<Testimonial>(`/admin/testimonials/${selected.id}`, {
-        method: "PATCH",
-        token,
-        body: {
+      const updated = await saveTestimonialV2(
+        SITE_KEY,
+        selected.slug,
+        {
           content: selected.content,
           emotion: selected.emotion,
           media_type: mediaType,
-          media_url: mediaUrl || null,
-          image_url: mediaType === "image" ? mediaUrl || null : null,
-          video_url: mediaType === "video" ? mediaUrl || null : null,
-          podcast_url: mediaType === "podcast" ? mediaUrl || null : null,
-          status: selected.status === "archived" ? "archived" : selected.published ? "approved" : "pending",
+          media_url: mediaType === "text" ? null : (mediaUrl || null),
+          image_url: mediaType === "image" ? (mediaUrl || null) : null,
+          video_url: mediaType === "video" ? (mediaUrl || null) : null,
+          podcast_url: mediaType === "podcast" ? (mediaUrl || null) : null,
           show_on_home: selected.show_on_home ?? false,
+          status: selected.status === "archived" ? "archived" : selected.published ? "approved" : "pending",
         },
-      });
+        token,
+      );
       const normalized = { ...updated, status: updated.status || (updated.is_approved ? "approved" : "pending"), published: updated.is_approved ?? selected.published ?? false };
-      setSelected(normalized);
-      setTestimonials(prev => prev.map(item => item.id === selected.id ? normalized : item));
+      setSelected(prev => prev ? { ...prev, ...normalized } : prev);
+      setTestimonials(prev => prev.map(item => item.id === selected.id ? { ...item, ...normalized } : item));
     } finally {
       setProcessing(null);
     }

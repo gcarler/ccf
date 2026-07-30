@@ -20,7 +20,12 @@ import {
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
-import { apiFetch } from '@/lib/http';
+import { SITE_KEY } from '@/lib/site-config';
+import {
+    getTestimonialBySlug,
+    setTestimonialStatus,
+    archiveTestimonial,
+} from '@/lib/cms/v2';
 import { DSCard } from '@/design';
 import { DSBadge } from '@/design';
 import { toast } from 'sonner';
@@ -28,16 +33,17 @@ import clsx from 'clsx';
 
 interface TestimonialData {
   id: string;
+  slug?: string;
   created_at?: string;
   author_name?: string;
   author?: { username?: string };
-  author_persona_id?: string;
+  author_persona_id?: string | null;
   content?: string;
   media_type?: string;
-  image_url?: string;
-  media_url?: string;
-  video_url?: string;
-  podcast_url?: string;
+  image_url?: string | null;
+  media_url?: string | null;
+  video_url?: string | null;
+  podcast_url?: string | null;
   is_featured?: boolean;
   status?: string;
   category?: string;
@@ -58,22 +64,22 @@ function getTestimonialMediaUrl(testimonial: TestimonialData | null): string {
 
 export default function CmsTestimonialDetailPage() {
     const params = useParams();
-    const id = params?.id as string;
+    const slug = params?.slug as string;
     const { token } = useAuth();
     
     const [testimonial, setTestimonial] = useState<TestimonialData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!token || !id) return;
+        if (!token || !slug) return;
         const loadTestimonial = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<TestimonialData>(`/admin/testimonials/${id}`, { token }).catch(() => null);
+                const data = await getTestimonialBySlug(SITE_KEY, slug, token).catch(() => null);
                 const authorPersonaId = data?.author_persona_id ? String(data.author_persona_id) : null;
                 const normalized = data ? {
                     ...data,
-                    author_name: data.author?.username || (authorPersonaId ? `Persona ${authorPersonaId.slice(0, 8)}` : 'Anonimo'),
+                    author_name: authorPersonaId ? `Persona ${authorPersonaId.slice(0, 8)}` : 'Anonimo',
                     author_role: 'Persona de la comunidad',
                     status: data.status || (data.is_approved ? 'approved' : 'pending'),
                     rating: 5,
@@ -87,19 +93,20 @@ export default function CmsTestimonialDetailPage() {
             }
         };
         loadTestimonial();
-    }, [id, token]);
+    }, [slug, token]);
 
     const handleAction = async (newStatus: string) => {
         try {
             if (newStatus === 'archived') {
-                await apiFetch(`/admin/testimonials/${id}`, { method: 'DELETE', token });
+                await archiveTestimonial(SITE_KEY, slug, token);
                 setTestimonial((prev) => prev ? { ...prev, is_approved: false, show_on_home: false, status: 'archived' } : null);
             } else {
-                const updated = await apiFetch<TestimonialData>(`/admin/testimonials/${id}`, {
-                    method: 'PATCH',
+                const updated = await setTestimonialStatus(
+                    SITE_KEY,
+                    slug,
+                    newStatus === 'approved' ? 'approved' : 'pending',
                     token,
-                    body: { status: newStatus },
-                });
+                );
                 setTestimonial({
                     ...testimonial,
                     ...updated,
