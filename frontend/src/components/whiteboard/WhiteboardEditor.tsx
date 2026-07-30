@@ -29,6 +29,12 @@ import {
     Diamond,
     Pill,
     Hexagon,
+    Database,
+    FileText,
+    StickyNote,
+    GitBranch,
+    LayoutGrid,
+    AlignCenter,
 } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -49,7 +55,7 @@ import {
     createConnectorLine,
     updateConnectors,
     ensureShapeIds,
-    renderArrowheads,
+    renderConnectors,
     renderAnchors,
 } from "@/lib/whiteboard/connectors";
 import {
@@ -58,7 +64,20 @@ import {
     createPill,
     createData,
     createCircleNode,
+    createSubprocess,
+    createDatabase,
+    createDocument,
+    createHexagon,
+    createNote,
 } from "@/lib/whiteboard/flowchartShapes";
+
+import {
+    applySnapToGrid,
+    calculateGuides,
+    renderGuides,
+    type Guide,
+} from "@/lib/whiteboard/snapGuides";
+
 
 type WhiteboardTool = "select" | "draw" | "connector";
 
@@ -161,6 +180,13 @@ export default function WhiteboardEditor({
 
     // History hook for undo/redo
     const history = useWhiteboardHistory({ maxStates: 50 });
+    
+    const [snapEnabled, setSnapEnabled] = useState(true);
+    const [smartGuides, setSmartGuides] = useState<Guide[]>([]);
+    const [showShapePicker, setShowShapePicker] = useState(false);
+    const snapEnabledRef = useRef(true);
+    const smartGuidesRef = useRef<Guide[]>([]);
+
     const [title, setTitle] = useState(initialTitle);
     const [tool, setTool] = useState<WhiteboardTool>("select");
     const [layers, setLayers] = useState<LayerRow[]>([]);
@@ -373,11 +399,11 @@ export default function WhiteboardEditor({
         };
 
         canvas.on("object:added", handleChanged);
-        canvas.on("object:modified", handleChanged);
+        canvas.on("object:modified", () => { smartGuidesRef.current = []; canvas.requestRenderAll(); handleChanged(); });
         canvas.on("object:removed", handleChanged);
         canvas.on("selection:created", updateSelectedProps);
         canvas.on("selection:updated", updateSelectedProps);
-        canvas.on("selection:cleared", () => setSelectedObjectProps(null));
+        canvas.on("selection:cleared", () => { smartGuidesRef.current = []; setSelectedObjectProps(null); });
 
         // Connector mode handlers
         canvas.on("mouse:move", (opt) => {
@@ -435,14 +461,29 @@ export default function WhiteboardEditor({
         });
 
         // Update connectors when shapes move
-        canvas.on("object:moving", () => {
+        canvas.on("object:moving", (opt) => {
+            if (snapEnabledRef.current && opt.target) {
+                // Smart guides
+                const allObjs = canvas.getObjects()
+                    .filter(o => o !== opt.target && o.data?.type !== 'connector')
+                    .map(o => ({ left: o.left||0, top: o.top||0, width: o.width||0, height: o.height||0, scaleX: o.scaleX||1, scaleY: o.scaleY||1 }));
+                const t = opt.target;
+                const active = { left: t.left||0, top: t.top||0, width: t.width||0, height: t.height||0, scaleX: t.scaleX||1, scaleY: t.scaleY||1 };
+                const result = calculateGuides(active, allObjs);
+                smartGuidesRef.current = result.guides;
+                if (result.snapX !== null) opt.target.set({ left: result.snapX });
+                if (result.snapY !== null) opt.target.set({ top: result.snapY });
+            }
             updateConnectors(canvas);
             canvas.requestRenderAll();
         });
 
         // Render arrowheads and anchors overlay
         canvas.on("after:render", (opt: { ctx: CanvasRenderingContext2D }) => {
-            renderArrowheads(canvas, opt.ctx);
+            renderConnectors(canvas, opt.ctx);
+            if (smartGuidesRef.current.length > 0) {
+                renderGuides(opt.ctx, smartGuidesRef.current, canvas.width || 800, canvas.height || 600, canvas.viewportTransform || [1,0,0,1,0,0]);
+            }
             if (toolRef.current === "connector") {
                 renderAnchors(canvas, opt.ctx, {
                     hoveredShapeId: hoveredShapeIdRef.current,
@@ -455,6 +496,15 @@ export default function WhiteboardEditor({
         canvas.on("mouse:dblclick", (opt) => {
             const target = opt.target;
             if (!target || toolRef.current === "connector") return;
+            if (target?.data?.type === 'connector') {
+                const currentLabel = (target.data.label as string) || '';
+                const newLabel = prompt('Etiqueta del conector:', currentLabel);
+                if (newLabel !== null) {
+                    target.data.label = newLabel;
+                    canvas.requestRenderAll();
+                }
+                return;
+            }
             if (target instanceof fabric.Group) {
                 const textChild = target.getObjects().find((o) => o.type === "i-text" || o.type === "textbox");
                 if (textChild && textChild instanceof fabric.IText) {
@@ -652,6 +702,62 @@ export default function WhiteboardEditor({
         activateTool("select");
     };
 
+    
+    const addSubprocessShape = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
+        const group = createSubprocess({ left: cx - 90, top: cy - 40 });
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        canvas.requestRenderAll();
+        activateTool("select");
+    };
+
+    const addDatabaseShape = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
+        const group = createDatabase({ left: cx - 55, top: cy - 40 });
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        canvas.requestRenderAll();
+        activateTool("select");
+    };
+
+    const addDocumentShape = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
+        const group = createDocument({ left: cx - 80, top: cy - 40 });
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        canvas.requestRenderAll();
+        activateTool("select");
+    };
+
+    const addHexagonShape = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
+        const group = createHexagon({ left: cx - 80, top: cy - 40 });
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        canvas.requestRenderAll();
+        activateTool("select");
+    };
+
+    const addNoteShape = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        const { cx, cy } = getViewportCenter();
+        const group = createNote({ left: cx - 80, top: cy - 50 });
+        canvas.add(group);
+        canvas.setActiveObject(group);
+        canvas.requestRenderAll();
+        activateTool("select");
+    };
+
     const removeSelection = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
@@ -742,8 +848,8 @@ export default function WhiteboardEditor({
 
     // Keep a live ref to canvas actions so the keyboard shortcut handler
     // always invokes the latest functions without re-attaching the listener.
-    const keyboardActionsRef = useRef({ activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, removeSelection, history });
-    keyboardActionsRef.current = { activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, removeSelection, history };
+    const keyboardActionsRef = useRef({ activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, addSubprocessShape, addDatabaseShape, addDocumentShape, addHexagonShape, addNoteShape, removeSelection, history });
+    keyboardActionsRef.current = { activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, addSubprocessShape, addDatabaseShape, addDocumentShape, addHexagonShape, addNoteShape, removeSelection, history };
 
     const handleSaveNow = useCallback(() => {
         const canvas = fabricCanvas.current;
@@ -797,12 +903,35 @@ export default function WhiteboardEditor({
                     <ToolbarButton icon={Pencil} active={tool === "draw"} onClick={() => activateTool("draw")} label="Dibujo libre (P)" />
                     <ToolbarButton icon={ArrowUpRight} active={tool === "connector"} onClick={() => activateTool("connector")} label="Conector (A)" />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
-                    <ToolbarButton icon={Square} active={false} onClick={addRect} label="Rectángulo (R)" data-testid="whiteboard-add-rect" />
-                    <ToolbarButton icon={Circle} active={false} onClick={addCircle} label="Círculo (C)" data-testid="whiteboard-add-circle" />
+                    <div className="relative">
+                        <ToolbarButton 
+                            icon={LayoutGrid} 
+                            active={showShapePicker} 
+                            onClick={() => setShowShapePicker(p => !p)} 
+                            label="Formas" 
+                        />
+                        {showShapePicker && (
+                            <div className="absolute left-full ml-3 top-0 z-30 grid grid-cols-3 gap-1.5 rounded-xl border border-[hsl(var(--border))] bg-white/95 p-3 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95" style={{ minWidth: '220px' }}>
+                                <ShapePickerItem icon={Square} label="Rect" shortcut="R" onClick={() => { addRect(); setShowShapePicker(false); }} />
+                                <ShapePickerItem icon={Circle} label="Círculo" shortcut="C" onClick={() => { addCircle(); setShowShapePicker(false); }} />
+                                <ShapePickerItem icon={Diamond} label="Decisión" shortcut="D" onClick={() => { addDiamondShape(); setShowShapePicker(false); }} />
+                                <ShapePickerItem icon={Pill} label="Terminal" shortcut="S" onClick={() => { addPillShape(); setShowShapePicker(false); }} />
+                                <ShapePickerItem icon={Hexagon} label="Datos" shortcut="I" onClick={() => { addDataShape(); setShowShapePicker(false); }} />
+                                <ShapePickerItem icon={GitBranch} label="Subproc." onClick={() => { addSubprocessShape(); setShowShapePicker(false); }} />
+                                <ShapePickerItem icon={Database} label="BD" onClick={() => { addDatabaseShape(); setShowShapePicker(false); }} />
+                                <ShapePickerItem icon={FileText} label="Docum." onClick={() => { addDocumentShape(); setShowShapePicker(false); }} />
+                                <ShapePickerItem icon={StickyNote} label="Nota" onClick={() => { addNoteShape(); setShowShapePicker(false); }} />
+                            </div>
+                        )}
+                    </div>
                     <ToolbarButton icon={Type} active={false} onClick={addText} label="Texto (T)" data-testid="whiteboard-add-text" />
-                    <ToolbarButton icon={Diamond} active={false} onClick={addDiamondShape} label="Diamante (D)" />
-                    <ToolbarButton icon={Pill} active={false} onClick={addPillShape} label="Terminal (S)" />
-                    <ToolbarButton icon={Hexagon} active={false} onClick={addDataShape} label="Datos (I)" />
+                    <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                    <ToolbarButton 
+                        icon={AlignCenter} 
+                        active={snapEnabled} 
+                        onClick={() => { setSnapEnabled(p => !p); snapEnabledRef.current = !snapEnabledRef.current; }} 
+                        label={snapEnabled ? 'Snap activado' : 'Snap desactivado'} 
+                    />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <ToolbarButton icon={Eraser} active={false} onClick={removeSelection} label="Borrar selección" />
                     <ToolbarButton icon={Trash2} active={false} onClick={clearCanvas} label="Limpiar lienzo" tone="danger" />
@@ -1283,3 +1412,17 @@ function ToolbarButton({
         </button>
     );
 }
+
+function ShapePickerItem({ icon: Icon, label, shortcut, onClick }: { icon: React.ElementType; label: string; shortcut?: string; onClick: () => void }) {
+    return (
+        <button
+            onClick={onClick}
+            className="flex flex-col items-center gap-1 rounded-lg p-2 text-xs transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10"
+            title={shortcut ? `${label} (${shortcut})` : label}
+        >
+            <Icon size={20} />
+            <span className="text-[10px] opacity-70">{label}</span>
+        </button>
+    );
+}
+
