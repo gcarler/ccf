@@ -41,6 +41,7 @@ from backend.core.seo import (
 from backend.schemas import cms as cms_schemas
 from backend.schemas._common import PaginatedResponse
 from backend.schemas.cms_v2_sections import validate_section_props
+from backend.services.cms_workflow import PageWorkflowService
 
 logger = logging.getLogger(__name__)
 
@@ -116,10 +117,11 @@ def patch_page(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_page_or_404(db, site.id, slug)
     updated = crud.update_cms_page(db, row, payload, current_user.id)
-    if payload.publish_at is not None and updated.status in {"draft", "in_review", "approved"}:
-        updated.status = "scheduled"
-        db.commit()
-        db.refresh(updated)
+    # Schedule auto-flip: if publish_at is set on a non-terminal page,
+    # flip to "scheduled" so the cron scheduler picks it up.
+    if payload.publish_at is not None:
+        wf = PageWorkflowService(db)
+        updated = wf.apply_schedule(updated, publish_at=payload.publish_at, user_id=current_user.id)
     return updated
 
 
@@ -526,10 +528,11 @@ def rollback_page(
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
-    version = crud.get_cms_page_version(db, page.id, version_id)
-    if not version:
+    wf = PageWorkflowService(db)
+    result = wf.rollback(page, version_id, user_id=current_user.id)
+    if not result:
         raise HTTPException(status_code=404, detail="version not found")
-    return crud.restore_cms_page_version(db, page, version, user_id=current_user.id)
+    return result
 
 
 @router.post("/sites/{site_key}/pages/{slug}/workflow", response_model=schemas.CmsPageRead)
@@ -541,13 +544,14 @@ def workflow_page(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     action = payload.action.strip().lower()
-    if action in {"approve", "publish", "archive"}:
+    wf = PageWorkflowService(db)
+    if wf.requires_publisher_role(action):
         _assert_role(current_user, CMS_PUBLISHER_ROLES)
     else:
         _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
-    row = crud.transition_cms_page_status(db, page, payload.action, current_user.id, notes=payload.notes)
+    row = wf.transition(page, action, current_user.id, notes=payload.notes)
     if not row:
         raise HTTPException(status_code=422, detail="invalid workflow action")
     return row
