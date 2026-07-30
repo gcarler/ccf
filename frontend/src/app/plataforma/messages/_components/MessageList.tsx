@@ -11,13 +11,16 @@ interface MessageListProps {
     currentUserId: string;
     onLoadOlder: () => void;
     onReply: (msg: DirectMessageItem) => void;
+    hasMore?: boolean;
 }
 
-export function MessageList({ messages, loading, currentUserId, onLoadOlder, onReply }: MessageListProps) {
+export function MessageList({ messages, loading, currentUserId, onLoadOlder, onReply, hasMore = true }: MessageListProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const shouldAutoScroll = useRef(true);
     const lastMessageIdRef = useRef<string | null>(null);
     const topTriggerRef = useRef(false);
+    const preLoadHeightRef = useRef(0);
+    const preLoadFirstIdRef = useRef<string | null>(null);
 
     // Auto-scroll only when a new message is appended (last id changed), not when older messages prepend.
     useEffect(() => {
@@ -31,12 +34,38 @@ export function MessageList({ messages, loading, currentUserId, onLoadOlder, onR
         el.scrollTop = el.scrollHeight;
     }, [messages]);
 
+    // Reset the top trigger once the older-message load finishes.
+    useEffect(() => {
+        if (!loading) topTriggerRef.current = false;
+    }, [loading]);
+
+    // Preserve scroll position when older messages are prepended.
+    useEffect(() => {
+        if (loading && messages.length > 0) {
+            preLoadHeightRef.current = scrollRef.current?.scrollHeight ?? 0;
+            preLoadFirstIdRef.current = messages[0]?.id ?? null;
+        }
+    }, [loading, messages]);
+
+    useEffect(() => {
+        if (
+            !loading &&
+            preLoadFirstIdRef.current &&
+            preLoadFirstIdRef.current !== messages[0]?.id &&
+            scrollRef.current
+        ) {
+            const diff = (scrollRef.current.scrollHeight ?? 0) - preLoadHeightRef.current;
+            scrollRef.current.scrollTop += diff;
+            preLoadFirstIdRef.current = null;
+        }
+    }, [loading, messages]);
+
     const handleScroll = () => {
         const el = scrollRef.current;
         if (!el) return;
         const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
         shouldAutoScroll.current = nearBottom;
-        if (!loading && !topTriggerRef.current && el.scrollTop < 60) {
+        if (!loading && !topTriggerRef.current && hasMore && el.scrollTop < 60) {
             topTriggerRef.current = true;
             onLoadOlder();
         } else if (el.scrollTop >= 60) {

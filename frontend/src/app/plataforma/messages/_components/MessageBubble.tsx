@@ -21,13 +21,34 @@ function MentionSpan({ children }: { children: React.ReactNode }) {
     );
 }
 
-function renderContent(content: string, mentions: string[] = []) {
-    if (!mentions.length) return <p className="whitespace-pre-wrap break-words">{sanitizeText(content)}</p>;
-    const parts = content.split(/(@\w+)/g);
+function parseContent(content: string): Array<{ type: 'text' | 'mention'; value: string }> {
+    const tokens: Array<{ type: 'text' | 'mention'; value: string }> = [];
+    const regex = /@\S+/g;
+    let lastIndex = 0;
+    content.replace(regex, (match, offset) => {
+        const isAtStart = offset === 0;
+        const prevChar = content[offset - 1];
+        if (isAtStart || /\s/.test(prevChar)) {
+            if (offset > lastIndex) {
+                tokens.push({ type: 'text', value: content.slice(lastIndex, offset) });
+            }
+            tokens.push({ type: 'mention', value: match });
+            lastIndex = offset + match.length;
+        }
+        return match;
+    });
+    if (lastIndex < content.length) {
+        tokens.push({ type: 'text', value: content.slice(lastIndex) });
+    }
+    return tokens;
+}
+
+function renderContent(content: string) {
+    const tokens = parseContent(content);
     return (
         <p className="whitespace-pre-wrap break-words">
-            {parts.map((part, i) =>
-                part.startsWith('@') ? <MentionSpan key={i}>{part}</MentionSpan> : <span key={i}>{part}</span>
+            {tokens.map((token, i) =>
+                token.type === 'mention' ? <MentionSpan key={i}>{token.value}</MentionSpan> : <span key={i}>{sanitizeText(token.value)}</span>
             )}
         </p>
     );
@@ -75,7 +96,7 @@ export function MessageBubble({ message, isOwn, showSender, onReply }: MessageBu
                             {message.reply_preview.content || '📎 Adjunto'}
                         </div>
                     )}
-                    {renderContent(message.content, message.mentions || [])}
+                    {renderContent(message.content)}
                     {message.attachment_url && (
                         <div className="mt-1">
                             {message.attachment_type === 'image' ? (

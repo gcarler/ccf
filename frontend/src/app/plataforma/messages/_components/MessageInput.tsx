@@ -7,6 +7,10 @@ import { FileText, Loader2, Music, Paperclip, Send, Video, X } from 'lucide-reac
 import { useEffect, useRef, useState } from 'react';
 import type { SearchedUser } from '../_hooks/useUserSearch';
 
+function escapeRegExp(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 interface MentionCandidate {
     query: string;
     start: number;
@@ -74,6 +78,10 @@ export function MessageInput({
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const val = e.target.value;
         setInput(val);
+        // Keep only mentions whose @username still exists in the text.
+        setMentions((prev) =>
+            prev.filter((m) => new RegExp(`@${escapeRegExp(m.username)}(?![a-zA-Z0-9_])`).test(val))
+        );
         const selectionStart = e.target.selectionStart;
         const textBeforeCursor = val.slice(0, selectionStart);
         const lastAt = textBeforeCursor.lastIndexOf('@');

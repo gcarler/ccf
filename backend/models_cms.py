@@ -63,6 +63,7 @@ class CmsSite(Base):
     posts = relationship("CmsPost", back_populates="site", lazy="selectin")
     publish_logs = relationship("CmsPublishLog", back_populates="site", lazy="selectin")
     seo_snapshots = relationship("CmsSeoSnapshot", back_populates="site", lazy="selectin")
+    popups = relationship("CmsPopup", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
 
 
 class CmsTheme(Base):
@@ -585,3 +586,26 @@ class CmsSeoSnapshot(Base):
     # cerrada ``20260713_0001_backend_schema_drift_repair.py``, no se
     # toca por REGLAS.md §9.1). Limpieza DROP TABLE queda como deuda
     # separada (ver ADDENDUM en ``errorescms.md``).
+
+
+class CmsPopup(Base):
+    __tablename__ = "cms_popups"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sites.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = Column(String(255), nullable=False)
+    content_html = Column(Text, nullable=False, default="")
+    trigger_type = Column(String(50), nullable=False, default="on_load")
+    trigger_value = Column(Integer, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True, index=True)
+    show_on_pages = Column(JSON, nullable=False, default=list)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow)
+
+    # Relationships
+    site = relationship("CmsSite", back_populates="popups", lazy="joined")

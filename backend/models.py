@@ -74,6 +74,7 @@ from backend.models_cms import (  # noqa: F401
     CmsPage,
     CmsPageVersion,
     CmsPageView,
+    CmsPopup,
     CmsPost,
     CmsPostCategory,
     CmsPostTag,

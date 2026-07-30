@@ -18,6 +18,10 @@ import {
   Check,
   Tag,
   FolderOpen,
+  Maximize2,
+  Minimize2,
+  Save,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
@@ -63,9 +67,27 @@ export default function CmsPostsManagement() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [selectedPost, setSelectedPost] = useState<CmsPostWithTaxonomies | null>(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const [pendingArchivePost, setPendingArchivePost] = useState<CmsPostWithTaxonomies | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const canEdit = canEditCms(user?.role);
+
+  const handleCloseEditor = () => {
+    setSelectedPost(null);
+    setIsFullScreen(false);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedPost) return;
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === "f" || e.key === "F")) {
+        e.preventDefault();
+        setIsFullScreen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedPost]);
 
   const fetchData = useCallback(async (targetSite: string) => {
     if (!token) {
@@ -180,12 +202,13 @@ export default function CmsPostsManagement() {
     }
   };
 
-  const handleSavePost = async () => {
+  const handleSavePost = async (overrideStatus?: string) => {
     if (!token || !selectedPost || !canEdit) return;
     try {
       const nextSlug = slugify(selectedPost.slug);
       const categoryIds = selectedPost.categories?.map((c) => c.id) || [];
       const tagIds = selectedPost.tags?.map((t) => t.id) || [];
+      const targetStatus = overrideStatus || selectedPost.status;
       const updated = await patchCmsPost(
         siteKey,
         selectedPost.slug,
@@ -196,6 +219,7 @@ export default function CmsPostsManagement() {
           content: selectedPost.content,
           featured_image_url: selectedPost.featured_image_url,
           seo_json: selectedPost.seo_json,
+          status: targetStatus,
           category_ids: categoryIds,
           tag_ids: tagIds,
         },
@@ -203,7 +227,7 @@ export default function CmsPostsManagement() {
       );
       setSelectedPost(updated);
       await fetchData(siteKey);
-      toast.success("Post actualizado");
+      toast.success(overrideStatus === "published" ? "Post publicado exitosamente" : "Post actualizado");
     } catch (error) {
       toast.error("Error al actualizar post");
     }
@@ -557,17 +581,28 @@ export default function CmsPostsManagement() {
 
       {/* Edit Post SidePanel */}
       <SidePanel
-        isOpen={!!selectedPost}
-        onClose={() => setSelectedPost(null)}
+        isOpen={!!selectedPost && !isFullScreen}
+        onClose={handleCloseEditor}
         title={selectedPost?.title || ""}
         subtitle={selectedPost ? `Slug: /${selectedPost.slug}` : undefined}
       >
         {selectedPost && (
           <div className="space-y-4">
             <section className="space-y-3">
-              <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
-                Información básica
-              </label>
+              <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))] dark:border-white/5">
+                <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                  Información básica
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsFullScreen(true)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 text-xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"
+                  title="Modo pantalla completa (Ctrl+Shift+F)"
+                >
+                  <Maximize2 size={14} />
+                  <span>Pantalla completa</span>
+                </button>
+              </div>
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Título</span>
@@ -718,7 +753,7 @@ export default function CmsPostsManagement() {
             </section>
 
             <div className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
-              <button onClick={handleSavePost} disabled={!canEdit} className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
+              <button onClick={() => handleSavePost()} disabled={!canEdit} className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
                 Guardar cambios
               </button>
               {selectedPost.status === "archived" ? (
@@ -776,6 +811,260 @@ export default function CmsPostsManagement() {
           </div>
         )}
       </SidePanel>
+
+      {/* Fullscreen Overlay Post Editor */}
+      <AnimatePresence>
+        {selectedPost && isFullScreen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] flex flex-col overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Editor de post a pantalla completa"
+          >
+            {/* Top Bar */}
+            <header className="h-14 border-b border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-between px-6 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] shrink-0">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setIsFullScreen(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white hover:bg-[hsl(var(--surface-3))] transition-all"
+                  title="Volver a modo compacto (Ctrl+Shift+F)"
+                >
+                  <Minimize2 size={15} />
+                  <span>Modo compacto</span>
+                </button>
+                <div className="w-[1px] h-5 bg-[hsl(var(--border))] dark:bg-white/10" />
+                <div className="flex items-center gap-2">
+                  <span className={clsx("px-2.5 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", (STATUS_CONFIG[selectedPost.status] || STATUS_CONFIG.draft).color)}>
+                    {(STATUS_CONFIG[selectedPost.status] || STATUS_CONFIG.draft).label}
+                  </span>
+                  <span className="text-xs text-[hsl(var(--text-secondary))] font-mono truncate max-w-[200px]">
+                    /{selectedPost.slug}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-2xs text-[hsl(var(--text-secondary))] hidden md:inline">
+                  <kbd className="px-1.5 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-mono">
+                    Cmd/Ctrl+Shift+F
+                  </kbd>{" "}
+                  para alternar modo
+                </span>
+                <button
+                  onClick={() => handleSavePost()}
+                  disabled={!canEdit}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all disabled:opacity-50"
+                >
+                  <Save size={14} />
+                  <span>Guardar borrador</span>
+                </button>
+                <button
+                  onClick={() => handleSavePost("published")}
+                  disabled={!canEdit}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
+                >
+                  <Globe size={14} />
+                  <span>Publicar</span>
+                </button>
+                <button
+                  onClick={handleCloseEditor}
+                  className="p-2 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-lg transition-all"
+                  title="Cerrar editor"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </header>
+
+            {/* Main Grid: 70% Left Column / 30% Right Column */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-6 max-w-[1600px] mx-auto min-h-full">
+                {/* 70% Left Column */}
+                <div className="flex flex-col space-y-4">
+                  <div className="space-y-2 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] p-4 rounded-xl border border-[hsl(var(--border))] dark:border-white/10">
+                    <input
+                      type="text"
+                      value={selectedPost.title}
+                      onChange={(e) => setSelectedPost({ ...selectedPost, title: e.target.value })}
+                      placeholder="Título del post..."
+                      className="w-full text-2xl font-bold bg-transparent border-none focus:ring-0 text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))]/50 px-0"
+                      disabled={!canEdit}
+                    />
+                    <div className="flex items-center gap-2 text-xs font-mono text-[hsl(var(--text-secondary))] pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
+                      <span>Slug: /</span>
+                      <input
+                        type="text"
+                        value={selectedPost.slug}
+                        onChange={(e) => setSelectedPost({ ...selectedPost, slug: e.target.value })}
+                        className="bg-transparent border-none focus:ring-0 text-xs font-mono text-[hsl(var(--text-secondary))] flex-1 px-0"
+                        disabled={!canEdit}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex-1 flex flex-col min-h-[calc(100vh-220px)]">
+                    <RichEditor
+                      content={selectedPost.content || ""}
+                      onChange={(html) => setSelectedPost({ ...selectedPost, content: html })}
+                      readOnly={!canEdit}
+                      placeholder="Escribe el contenido completo de tu post aquí..."
+                      minHeight="calc(100vh - 120px)"
+                    />
+                  </div>
+                </div>
+
+                {/* 30% Right Column */}
+                <div className="space-y-6">
+                  {/* Status & Excerpt */}
+                  <div className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 space-y-4">
+                    <h4 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] border-b pb-2 border-[hsl(var(--border))] dark:border-white/5">
+                      Publicación & Estado
+                    </h4>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">Estado</label>
+                      <select
+                        value={selectedPost.status}
+                        onChange={(e) => setSelectedPost({ ...selectedPost, status: e.target.value as any })}
+                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white"
+                        disabled={!canEdit}
+                      >
+                        <option value="draft">Borrador</option>
+                        <option value="in_review">En revisión</option>
+                        <option value="approved">Aprobado</option>
+                        <option value="published">Publicado</option>
+                        <option value="archived">Archivado</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">Extracto / Resumen</label>
+                      <textarea
+                        rows={4}
+                        value={selectedPost.excerpt || ""}
+                        onChange={(e) => setSelectedPost({ ...selectedPost, excerpt: e.target.value })}
+                        placeholder="Resumen corto para listas y redes sociales..."
+                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white resize-none custom-scrollbar"
+                        disabled={!canEdit}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Taxonomies */}
+                  <div className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 space-y-4">
+                    <h4 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] border-b pb-2 border-[hsl(var(--border))] dark:border-white/5">
+                      Categorías & Etiquetas
+                    </h4>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">Categorías</label>
+                      <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto custom-scrollbar">
+                        {categories.map((cat) => {
+                          const isSelected = selectedPost.categories?.some((c) => c.id === cat.id);
+                          return (
+                            <button
+                              key={cat.id}
+                              onClick={() => {
+                                if (!canEdit) return;
+                                const current = selectedPost.categories || [];
+                                const next = isSelected ? current.filter((c) => c.id !== cat.id) : [...current, cat];
+                                setSelectedPost({ ...selectedPost, categories: next });
+                              }}
+                              disabled={!canEdit}
+                              className={clsx(
+                                "px-2.5 py-1 rounded-md text-2xs font-medium transition-all disabled:opacity-50",
+                                isSelected
+                                  ? "bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-success-text border border-[hsl(var(--success)/25%)]"
+                                  : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--success)/30%)]"
+                              )}
+                            >
+                              {cat.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">Etiquetas</label>
+                      <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto custom-scrollbar">
+                        {tags.map((tag) => {
+                          const isSelected = selectedPost.tags?.some((t) => t.id === tag.id);
+                          return (
+                            <button
+                              key={tag.id}
+                              onClick={() => {
+                                if (!canEdit) return;
+                                const current = selectedPost.tags || [];
+                                const next = isSelected ? current.filter((t) => t.id !== tag.id) : [...current, tag];
+                                setSelectedPost({ ...selectedPost, tags: next });
+                              }}
+                              disabled={!canEdit}
+                              className={clsx(
+                                "px-2.5 py-1 rounded-md text-2xs font-medium transition-all disabled:opacity-50",
+                                isSelected
+                                  ? "bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] dark:text-[hsl(var(--domain-fuchsia))] border border-[hsl(var(--domain-fuchsia)/30%)]"
+                                  : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--domain-fuchsia)/100%)]"
+                              )}
+                            >
+                              {tag.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Featured Image & SEO */}
+                  <div className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 space-y-4">
+                    <h4 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] border-b pb-2 border-[hsl(var(--border))] dark:border-white/5">
+                      Imagen Destacada & SEO
+                    </h4>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">URL Imagen Destacada</label>
+                      <input
+                        type="url"
+                        value={selectedPost.featured_image_url || ""}
+                        onChange={(e) => setSelectedPost({ ...selectedPost, featured_image_url: e.target.value })}
+                        placeholder="https://..."
+                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white"
+                        disabled={!canEdit}
+                      />
+                      {selectedPost.featured_image_url && (
+                        <div className="mt-2 rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 max-h-36">
+                          <img src={selectedPost.featured_image_url} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">Meta Descripción SEO</label>
+                      <textarea
+                        rows={3}
+                        value={(selectedPost.seo_json?.meta_description as string) || ""}
+                        onChange={(e) =>
+                          setSelectedPost({
+                            ...selectedPost,
+                            seo_json: { ...(selectedPost.seo_json || {}), meta_description: e.target.value },
+                          })
+                        }
+                        placeholder="Meta descripción para motores de búsqueda..."
+                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white resize-none custom-scrollbar"
+                        disabled={!canEdit}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

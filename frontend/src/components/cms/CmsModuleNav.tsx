@@ -25,6 +25,7 @@ import {
   RotateCcw,
   AlertTriangle,
   Gauge,
+  Layers,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
@@ -35,6 +36,7 @@ import { SITE_KEY } from "@/lib/site-config";
 const CMS_TABS = [
   { id: "resumen", label: "Resumen", href: "/plataforma/cms", icon: LayoutDashboard },
   { id: "paginas", label: "Paginas", href: "/plataforma/cms/pages", icon: FileText },
+  { id: "popups", label: "Popups", href: "/plataforma/cms/popups", icon: Layers },
   { id: "readiness", label: "Readiness", href: "/plataforma/cms/readiness", icon: Gauge },
   { id: "testimonios", label: "Testimonios", href: "/plataforma/cms/testimonials", icon: MessageCircle },
   { id: "menus", label: "Menus", href: "/plataforma/cms/menus", icon: Link2 },

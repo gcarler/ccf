@@ -47,6 +47,7 @@ export default function MessagesPage() {
         loadOlderMessages,
         sendMessage,
         wsStatus,
+        hasMoreOlder,
     } = useChatThread({
         token,
         activeConv,
@@ -135,6 +136,7 @@ export default function MessagesPage() {
                             currentUserId={userId}
                             onLoadOlder={loadOlderMessages}
                             onReply={setReplyTo}
+                            hasMore={hasMoreOlder}
                         />
                         <MessageInput
                             token={token}
