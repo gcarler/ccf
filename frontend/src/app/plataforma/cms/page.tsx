@@ -32,7 +32,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { SITE_BLOCKS } from "@/lib/cms/blocks";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
-import { listTestimonials } from "@/lib/cms/v2";
+import { listCmsPostsByCategory, postToTestimonial } from "@/lib/cms/v2";
 import { SITE_KEY } from "@/lib/site-config";
 
 interface CmsStats {
@@ -227,7 +227,7 @@ export default function CmsHomePage() {
       setDataIssue(null);
 
       const [testimonialsResult, metricsResult, mediaResult, dashboardResult] = await Promise.allSettled([
-        listTestimonials(SITE_KEY, undefined, token),
+        listCmsPostsByCategory(SITE_KEY, "testimonials", undefined, token).then(posts => posts.map(postToTestimonial)),
         apiFetch<CmsMetricsResponse>("/cms/metrics", { token, cache: "no-store" }),
         apiFetch<{ items: MediaPreview[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: true } }),
         apiFetch<CmsDashboardResponse>("/dashboard/cms", { token, cache: "no-store" }),

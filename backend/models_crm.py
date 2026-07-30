@@ -40,6 +40,13 @@ class ChatMessage(Base):
     is_read = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    
+    attachment_url = Column(Text, nullable=True)  # URL del archivo subido
+    attachment_type = Column(String(50), nullable=True)  # 'image', 'pdf', 'document', 'video', 'audio', 'other'
+    attachment_name = Column(String(255), nullable=True)  # nombre original del archivo
+    attachment_size = Column(Integer, nullable=True)  # tamaño en bytes
+    reply_to_id = Column(UUID(as_uuid=True), nullable=True)
+    mentions_raw = Column(Text, nullable=True)  # JSON array de UUIDs como string
 
 
 class Conversation(Base):

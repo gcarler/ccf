@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 0.0.0.0",        "prepare": "node -e \"try { require('husky')() } catch (e) { /* husky skipped in CI or non-git env */ }\"",
+    "dev": "next dev -H 0.0.0.0",
+    "prepare": "node -e \"try { require('husky')() } catch (e) { /* husky skipped in CI or non-git env */ }\"",
     "pre-commit": "lint-staged",
     "build": "node scripts/build-safe.mjs",
     "start": "next start",
@@ -31,7 +32,7 @@
     "test:e2e:agenda:deep": "node scripts/run-managed-playwright.mjs tests/e2e/agenda/calendar-events.spec.ts",
     "test:e2e:evangelism": "node scripts/run-managed-playwright.mjs tests/e2e/evangelism/smoke.spec.ts tests/e2e/evangelism/sessions-detail.spec.ts tests/e2e/evangelism/rankings-multiplication.spec.ts tests/e2e/evangelism/events-scanner.spec.ts",
     "test:e2e:evangelism:deep": "node scripts/run-managed-playwright.mjs tests/e2e/evangelism/sessions-detail.spec.ts tests/e2e/evangelism/rankings-multiplication.spec.ts tests/e2e/evangelism/events-scanner.spec.ts",
-    "test:e2e:cms": "node scripts/run-managed-playwright.mjs --auth tests/e2e/cms/smoke.spec.ts && node scripts/run-managed-playwright.mjs tests/e2e/cms/pages-preview.spec.ts",
+    "test:e2e:cms": "node scripts/run-managed-playwright.mjs --auth tests/e2e/cms/smoke.spec.ts && node scripts/run-managed-playwright.mjs tests/e2e/cms/pages-preview.spec.ts && node scripts/run-managed-playwright.mjs tests/e2e/cms/builder-flow.spec.ts && node scripts/run-managed-playwright.mjs tests/e2e/cms/media-management.spec.ts",
     "test:e2e:cms:deep": "node scripts/run-managed-playwright.mjs tests/e2e/cms/pages-preview.spec.ts",
     "test:e2e:cms:public": "node scripts/run-managed-playwright.mjs tests/e2e/cms-public-contract.spec.ts",
     "test:e2e:modules": "playwright test tests/e2e/projects/smoke.spec.ts tests/e2e/crm/smoke.spec.ts tests/e2e/academy/smoke.spec.ts tests/e2e/messaging/smoke.spec.ts tests/e2e/agenda/smoke.spec.ts tests/e2e/evangelism/smoke.spec.ts tests/e2e/cms/smoke.spec.ts tests/e2e/platform-critical-routes.spec.ts",
@@ -45,8 +46,11 @@
     "test:visual": "playwright test -c playwright.visual.config.ts",
     "test:visual:update": "playwright test -c playwright.visual.config.ts --update-snapshots",
     "test:visual:ci": "npm run build-storybook && npm run test:visual",
-    "test:visual:update:ci": "npm run build-storybook && npm run test:visual:update",        "quality:nested-components": "node scripts/find-nested-components.js",
-        "quality:gate": "node scripts/quality-gate.mjs"
+    "test:visual:update:ci": "npm run build-storybook && npm run test:visual:update",
+    "quality:nested-components": "node scripts/find-nested-components.js",
+    "quality:gate": "node scripts/quality-gate.mjs",
+    "test:e2e:cms:builder": "node scripts/run-managed-playwright.mjs tests/e2e/cms/builder-flow.spec.ts",
+    "test:e2e:cms:media": "node scripts/run-managed-playwright.mjs tests/e2e/cms/media-management.spec.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -127,8 +131,9 @@
     "storybook": "^10.3.3",
     "tailwindcss": "^3.4.19",
     "typescript": "^5",
-    "vitest": "^1.5.0"    },
-    "lint-staged": {
-        "*.{ts,tsx}": "eslint --max-warnings 0"
-    }
+    "vitest": "^1.5.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint --max-warnings 0"
+  }
 }

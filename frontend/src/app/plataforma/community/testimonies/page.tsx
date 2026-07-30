@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Star, Plus, Loader2, Share2, HeartHandshake } from 'lucide-react';
-import { apiFetch } from '@/lib/http';
+import { SITE_KEY } from '@/lib/site-config';
+import { getPublicTestimonials } from '@/lib/cms/v2';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function TestimoniesWall() {
-    const { isAuthenticated, token } = useAuth();
+    const { isAuthenticated } = useAuth();
     const [activeTab, setActiveTab] = useState('Todos');
     const [testimonials, setTestimonials] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -16,7 +17,7 @@ export default function TestimoniesWall() {
     useEffect(() => {
         const fetchTestimonials = async () => {
             try {
-                const data = await apiFetch<any[]>('/cms/testimonials', { token: token || undefined });
+                const data = await getPublicTestimonials(SITE_KEY);
                 setTestimonials(data);
             } catch (err) {
                 console.error('Error fetching testimonials:', err);
@@ -25,7 +26,7 @@ export default function TestimoniesWall() {
             }
         };
         fetchTestimonials();
-    }, [token]);
+    }, []);
 
     if (!isAuthenticated) return null;
 
