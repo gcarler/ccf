@@ -1518,24 +1518,25 @@ def _build_section_defaults(
 
     if section_type == "testimonials":
         rows = (
-            db.query(models.Testimonial)
+            db.query(models.CmsPost)
+            .join(models.CmsPost.categories)
             .filter(
-                models.Testimonial.is_approved.is_(True),
-                models.Testimonial.status == "published",
+                models.CmsCategory.slug == "testimonials",
+                models.CmsPost.status == "published",
             )
-            .order_by(models.Testimonial.created_at.desc())
+            .order_by(models.CmsPost.published_at.desc(), models.CmsPost.created_at.desc())
             .limit(6)
             .all()
         )
         testimonials = []
-        for t in rows:
-            author_name = t.author.nombre_completo if t.author else "Anónimo"
+        for post in rows:
+            author_name = post.author_persona.nombre_completo if post.author_persona else "Anónimo"
             testimonials.append(
                 {
-                    "content": t.content,
+                    "content": post.content or "",
                     "author": author_name,
-                    "emotion": t.emotion or "Gratitud",
-                    "image_url": t.image_url or "",
+                    "emotion": (post.seo_json or {}).get("emotion", "Gratitud"),
+                    "image_url": post.featured_image_url or "",
                 }
             )
         if not testimonials:

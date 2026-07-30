@@ -67,7 +67,6 @@ from backend.models_auth import (
     UsuarioRolModulo,
 )
 from backend.models_cms import (  # noqa: F401
-    Announcement,
     CmsCategory,
     CmsMediaItem,  # noqa: F401
     CmsMenu,
@@ -86,7 +85,6 @@ from backend.models_cms import (  # noqa: F401
     CmsTag,
     CmsTheme,
     SavedView,
-    Testimonial,
 )
 
 # Conversation Memory

@@ -103,17 +103,37 @@ def _seed_testimonial_in_sede(
 
 
 def _seed_announcement_in_sede(db, persona, sede_id, title, content):
-    a = models.Announcement(
+    """Seed a CmsPost categorized as announcements.
+
+    The v1→v2 migration moved announcements to CmsPost; this helper
+    creates one directly to test via the API-layer.
+    """
+    from backend.api.cms_v1_adapters import (
+        get_or_create_announcement_category,
+        get_or_create_announcement_site,
+    )
+
+    site = get_or_create_announcement_site(db, sede_id)
+    category = get_or_create_announcement_category(db, site.id)
+
+    post = models.CmsPost(
         id=_uuid.uuid4(),
+        site_id=site.id,
+        slug=f"announcement-{_uuid.uuid4().hex[:8]}",
         title=title,
         content=content,
-        sede_id=sede_id,
-        created_by_persona_id=persona.id,
+        featured_image_url=None,
         status="published",
+        seo_json={},
+        author_persona_id=persona.id,
+        created_by_persona_id=persona.id,
+        updated_by_persona_id=persona.id,
     )
-    db.add(a)
+    db.add(post)
     db.flush()
-    return a
+    post.categories.append(category)
+    db.flush()
+    return post
 
 
 def _seed_media_in_sede(db, persona, sede_id, url, mime_type="image/png"):

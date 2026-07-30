@@ -46,7 +46,7 @@ from pydantic import BaseModel
 
 from backend import crud, models, schemas
 from backend.agents.orchestrator import AgentOrchestrator
-from backend.api._cms_helpers import _actor_sede_or_none, _scope_cms_testimonials_by_user_sede
+from backend.api._cms_helpers import _actor_sede_or_none
 from backend.api.cms_v1_adapters import list_testimonial_posts
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
@@ -99,35 +99,17 @@ def analytics_summary(
     )
 
     # Axioma 3 — Multi-Tenant: el conteo de testimonios pendientes se
-    # acota por sede del staff al igual que el resto del endpoint.
-    # Sin este filtro, un admin de sede_a vería el backlog de testimonios
-    # pendientes de sede_b en su dashboard — leak cross-sede.
-    #
-    # Dual-counting (Fase 2): los testimonios v1 ahora viven como
-    # CmsPost categorizados ``testimonials``. Durante la transición
-    # contamos ambos orígenes (CmsPost + v1) deduplicando por ID.
-    # TODO (Phase 3): una vez aplicada la migración
-    # 20260729_0001 y eliminada la tabla v1 ``testimonials``,
-    # eliminar el conteo v1 y usar solo CmsPost.
+    # acota por sede del staff. Los testimonios viven como CmsPost
+    # categorizados ``testimonials``. La tabla legacy ``testimonials``
+    # fue eliminada — contamos solo CmsPost.
     actor_sede = _actor_sede_or_none(db, current_user)
 
     cms_testimonials = list_testimonial_posts(
         db, sede_id=actor_sede, include_archived=True
     )
-    cms_pending = sum(
+    pending_testimonials = sum(
         1 for p in cms_testimonials if p.status == "draft"
     )
-
-    pending_t_query = _scope_cms_testimonials_by_user_sede(
-        db, current_user, db.query(models.Testimonial)
-    )
-    cms_ids = {post.id for post in cms_testimonials}
-    v1_pending = sum(
-        1 for t in pending_t_query.all()
-        if not t.is_approved and t.id not in cms_ids
-    )
-
-    pending_testimonials = cms_pending + v1_pending
 
     return {
         "total_personas": total_personas,

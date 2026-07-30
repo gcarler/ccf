@@ -1,6 +1,6 @@
 import uuid
 
-from backend import crud, models, schemas
+from backend import crud, models
 
 
 def seed_user_and_persona(db_session):
@@ -70,17 +70,3 @@ def test_create_cms_media_item(db_session):
     assert item.id is not None
 
 
-def test_testimonial_accepts_explicit_author_persona_id(db_session):
-    user, persona = seed_user_and_persona(db_session)
-
-    testimonial = crud.create_testimonial(
-        db_session,
-        schemas.TestimonialCreate(
-            content="Testimonio UUID",
-            emotion="Gratitud",
-            author_persona_id=str(persona.id),
-        ),
-        actor_user_id=user.id,
-    )
-
-    assert testimonial.author_persona_id == persona.id

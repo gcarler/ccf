@@ -350,57 +350,7 @@ class SavedView(Base):
     persona = relationship("Persona", foreign_keys=[persona_id], lazy="joined")
 
 
-class Announcement(Base):
-    __tablename__ = "announcements"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    title = Column(String(200), nullable=False)
-    content = Column(Text, nullable=False)
-    category = Column(String(100), default="General")
-    image_url = Column(String(500), nullable=True)
-    is_active = Column(Boolean, default=True)
-    is_featured = Column(Boolean, default=False)
-    status = Column(String(20), default="published", index=True)
-    # Axioma 3 — Multi-Tenant (added 2026-07-01 via alembic migration):
-    # ``Announcement`` no tenía FK a persona ni filtro de sede. Un editor de
-    # sede_a podía crear/editar anuncios que aparecían en la home pública
-    # de sede_b. ``sede_id`` propio + ``created_by_persona_id`` permiten
-    # scope tanto en API como en CRUD layer (defense-in-depth).
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
-    created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
-    published_at = Column(DateTime(timezone=True), default=_utcnow)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
-
-    # ── Relationships (núcleo CMS) ──────────────────────────────────────
-    created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
-    sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")
-
-
-class Testimonial(Base):
-    __tablename__ = "testimonials"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    content = Column(Text, nullable=False)
-    emotion = Column(String(50), default="Gratitud")
-    media_type = Column(String(30), default="text")
-    media_url = Column(String(500), nullable=True)
-    image_url = Column(String(500), nullable=True)
-    video_url = Column(String(500), nullable=True)
-    podcast_url = Column(String(500), nullable=True)
-    is_approved = Column(Boolean, default=False)
-    show_on_home = Column(Boolean, default=False)
-    status = Column(String(20), default="pending", index=True)
-    author_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False)
-    # Axioma 3 — Multi-Tenant (added 2026-07-01 via alembic migration):
-    # ``Testimonial`` solo tenía FK a ``author_persona_id``. Sin sede_id
-    # propio, scope del CRUD/API requería JOIN con ``personas.sede_id``.
-    # Columna directa acelera queries y permite backfill estable desde
-    # author.sede_id. El contrato estricto exige autor y sede para impedir
-    # contenido sin ownership o aislamiento tenant verificable.
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-
-    author = relationship("Persona", foreign_keys=[author_persona_id], lazy="joined")
-    sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")
+# ── Posts & Taxonomías (Blog/Noticias) ─────────────────────────────────────
 
 
 # ── Posts & Taxonomías (Blog/Noticias) ─────────────────────────────────────

@@ -11,9 +11,7 @@ from backend import crud, models, schemas
 from backend.api._cms_helpers import (
     _actor_sede_or_none,
     _get_scoped_cms_media,
-    _scope_cms_announcements_by_user_sede,
     _scope_cms_media_by_user_sede,
-    _scope_cms_testimonials_by_user_sede,
     collect_section_media_ids,
 )
 from backend.api.cms_v1_adapters import (
@@ -546,68 +544,32 @@ def get_cms_metrics(
     """Axioma 3 — Multi-Tenant: pre-filtramos métricas por sede del staff.
     El superadmin canónico sin sede conserva totales globales."""
 
-    # Scoped queries para User-Generated content. Testimonials are now
-    # stored as CmsPost rows; during the transition we also count any
-    # v1 Testimonial rows that have not been migrated yet.
-    # TODO (Phase 3): once the v1 ``testimonials`` table is dropped
-    # (see planned follow-up migration after
-    # 20260729_0001_migrate_testimonials_to_cms_posts), remove the v1
-    # counting below and rely solely on CmsPost.
+    # Axioma 3 — Multi-Tenant: pre-filtramos métricas por sede del staff.
+    # Testimonials y announcements viven como CmsPost categorizados.
+    # Las tablas legacy (testimonials, announcements) fueron eliminadas.
     actor_sede = _actor_sede_or_none(db, current_user)
 
     cms_testimonials = list_testimonial_posts(
         db, sede_id=actor_sede, include_archived=True
     )
-    cms_ids = {post.id for post in cms_testimonials}
 
-    t_query = db.query(models.Testimonial)
-    t_query = _scope_cms_testimonials_by_user_sede(db, current_user, t_query)
-    v1_testimonials = [
-        t for t in t_query.all() if t.id not in cms_ids
-    ]
-
-    testimonials = list(cms_testimonials) + v1_testimonials
-
-    # Announcements are now stored as CmsPost rows categorized as
-    # ``announcements``. During the transition we also count any v1
-    # Announcement rows that have not been migrated yet.
-    # TODO (Phase 3.5): once the v1 ``announcements`` table is dropped,
-    # remove the v1 counting below and rely solely on CmsPost.
     cms_announcements = list_announcement_posts(
         db, sede_id=actor_sede, include_archived=True
-    )
-    a_cms_ids = {post.id for post in cms_announcements}
-
-    a_query = db.query(models.Announcement)
-    a_query = _scope_cms_announcements_by_user_sede(db, current_user, a_query)
-    v1_announcements = [
-        a for a in a_query.all() if a.id not in a_cms_ids
-    ]
-
-    announcements = list(cms_announcements) + v1_announcements
-    announcements_active = (
-        sum(1 for p in cms_announcements if p.status == "published")
-        + sum(
-            1
-            for a in v1_announcements
-            if a.status == "published"
-        )
     )
 
     m_query = db.query(models.CmsMediaItem)
     m_query = _scope_cms_media_by_user_sede(db, current_user, m_query)
     media = m_query.all()
 
-    approved_testimonials = (
-        sum(1 for p in cms_testimonials if p.status == "published")
-        + sum(1 for t in v1_testimonials if t.is_approved)
-    )
-
     return schemas.CmsMetrics(
-        testimonials_total=len(testimonials),
-        testimonials_approved=approved_testimonials,
-        announcements_total=len(announcements),
-        announcements_active=announcements_active,
+        testimonials_total=len(cms_testimonials),
+        testimonials_approved=sum(
+            1 for p in cms_testimonials if p.status == "published"
+        ),
+        announcements_total=len(cms_announcements),
+        announcements_active=sum(
+            1 for p in cms_announcements if p.status == "published"
+        ),
         media_total=len(media),
         media_images=sum(
             1 for row in media if (row.mime_type or "").startswith("image/")
