@@ -542,10 +542,10 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     }
   }, [canEdit, sections, token, activeSlug, siteKey, loadSectionsAndVersions]);
 
-  const moveSectionToIndex = useCallback(async (sourceId: string, targetId: string) => {
+  const moveSectionToIndex = useCallback(async (sourceId: string, targetIdOrIndex: string | number) => {
     if (!canEdit) return;
     const sourceIndex = sections.findIndex((s) => s.id === sourceId);
-    const targetIndex = sections.findIndex((s) => s.id === targetId);
+    const targetIndex = typeof targetIdOrIndex === "number" ? targetIdOrIndex : sections.findIndex((s) => s.id === targetIdOrIndex);
     if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
 
     const next = arrayMove(sections, sourceIndex, targetIndex);
