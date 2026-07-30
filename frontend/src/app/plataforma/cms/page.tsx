@@ -110,6 +110,9 @@ interface DashboardActivity {
   metadata: Record<string, unknown>;
 }
 
+/** AuditLog feed activity log item from /api/cms/v2/audit-logs */
+export type AuditLogItem = DashboardActivity;
+
 interface CmsDashboardResponse {
   cards: Array<{ title: string; value: string; trend?: string; tone?: string; icon?: string }>;
   page_views_total: number;
@@ -201,6 +204,7 @@ export default function CmsHomePage() {
   const [topPages, setTopPages] = useState<DashboardTopPage[]>([]);
   const [recentPosts, setRecentPosts] = useState<DashboardRecentPost[]>([]);
   const [recentActivity, setRecentActivity] = useState<DashboardActivity[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [pubsChart, setPubsChart] = useState<Array<{ label: string; value: number }>>([]);
   const [contentTypeChart, setContentTypeChart] = useState<Array<{ label: string; value: number }>>([]);
   const [loading, setLoading] = useState(true);
@@ -215,6 +219,7 @@ export default function CmsHomePage() {
         setTopPages([]);
         setRecentPosts([]);
         setRecentActivity([]);
+        setAuditLogs([]);
         setPubsChart([]);
         setContentTypeChart([]);
         setStats(EMPTY_STATS);
@@ -255,6 +260,7 @@ export default function CmsHomePage() {
       setTopPages(dashboard?.top_pages ?? []);
       setRecentPosts(dashboard?.recent_posts ?? []);
       setRecentActivity(dashboard?.recent_activity ?? []);
+      setAuditLogs(dashboard?.recent_activity ?? []);
       setPubsChart(dashboard?.publicaciones_por_mes ?? []);
       setContentTypeChart(dashboard?.contenido_por_tipo ?? []);
       setStats({

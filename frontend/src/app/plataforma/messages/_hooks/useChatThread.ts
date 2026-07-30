@@ -1,0 +1,175 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useWorkspaceSocket } from '@/hooks/useWorkspaceSocket';
+import { apiFetch } from '@/lib/http';
+import type { ConversationRead, DirectMessageItem, WsEvent } from '@/types/directMessages';
+
+interface AttachmentMeta {
+    url: string;
+    type: string;
+    name: string;
+    size: number;
+}
+
+interface UseChatThreadOptions {
+    token: string | null;
+    activeConv: ConversationRead | null;
+    userPersonaId: string;
+    onMessage?: (conversationId: string, message: DirectMessageItem) => void;
+}
+
+export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOptions) {
+    const [messages, setMessages] = useState<DirectMessageItem[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [replyTo, setReplyTo] = useState<DirectMessageItem | null>(null);
+    const messagesRef = useRef<DirectMessageItem[]>([]);
+
+    const activeConvId = activeConv?.id ?? null;
+    messagesRef.current = messages;
+
+    // Load messages when conversation changes
+    useEffect(() => {
+        if (!token || !activeConvId) return;
+        const controller = new AbortController();
+        setMessages([]);
+        setLoading(true);
+        apiFetch<DirectMessageItem[]>(
+            `/chat/conversations/${activeConvId}/messages`,
+            { token, query: { limit: '100' }, signal: controller.signal }
+        )
+            .then((data) => {
+                if (Array.isArray(data)) setMessages(data.reverse());
+            })
+            .catch(() => {})
+            .finally(() => {
+                if (!controller.signal.aborted) setLoading(false);
+            });
+        apiFetch(`/chat/conversations/${activeConvId}/read`, {
+            method: 'POST',
+            token,
+            signal: controller.signal,
+        }).catch(() => {});
+
+        return () => controller.abort();
+    }, [activeConvId, token]);
+
+    const loadOlderMessages = useCallback(async () => {
+        if (!token || !activeConvId || loading || messagesRef.current.length === 0) return;
+        setLoading(true);
+        try {
+            const oldest = messagesRef.current[0];
+            const older = await apiFetch<DirectMessageItem[]>(
+                `/chat/conversations/${activeConvId}/messages`,
+                { token, query: { limit: '50', before: oldest.created_at } }
+            );
+            if (Array.isArray(older) && older.length > 0) {
+                setMessages((prev) => [...older.reverse(), ...prev]);
+            }
+        } catch {
+            // silent
+        } finally {
+            setLoading(false);
+        }
+    }, [activeConvId, loading, token]);
+
+    const handleSocketEvent = useCallback(
+        (payload: WsEvent) => {
+            if (
+                payload.event === 'direct_message' &&
+                'conversation_id' in payload &&
+                'message' in payload
+            ) {
+                const evt = payload as { conversation_id: string; message: DirectMessageItem };
+                if (evt.conversation_id === activeConvIdRef.current) {
+                    setMessages((prev) => {
+                        if (prev.some((m) => m.id === evt.message.id)) return prev;
+                        return [...prev, evt.message];
+                    });
+                }
+                onMessage?.(evt.conversation_id, evt.message);
+            }
+        },
+        [onMessage]
+    );
+
+    const activeConvIdRef = useRef<string | null>(null);
+    activeConvIdRef.current = activeConvId;
+
+    const { status: wsStatus } = useWorkspaceSocket({
+        rooms: activeConvId ? [`dm_${activeConvId}`] : [],
+        enabled: !!token && !!activeConvId,
+        onEvent: handleSocketEvent,
+    });
+
+    const uploadAttachment = useCallback(
+        async (file: File, onUpload?: (att: AttachmentMeta) => Promise<void>) => {
+            if (!token) return null;
+            const formData = new FormData();
+            formData.append('file', file);
+            const att = await apiFetch<AttachmentMeta>('/chat/upload-attachment', {
+                method: 'POST',
+                token,
+                body: formData,
+            });
+            await onUpload?.(att);
+            return att;
+        },
+        [token]
+    );
+
+    const sendMessage = useCallback(
+        async (content: string, opts: { attachment?: File; replyTo?: DirectMessageItem; mentions: string[] }) => {
+            if (!token || !activeConvId || sending) return;
+            setSending(true);
+
+            let att: AttachmentMeta | null = null;
+            if (opts.attachment) {
+                try {
+                    const uploaded = await uploadAttachment(opts.attachment);
+                    if (uploaded) att = uploaded;
+                } catch {
+                    setSending(false);
+                    return { error: 'upload' as const };
+                }
+            }
+
+            const body: Record<string, unknown> = { content };
+            if (att) {
+                body.attachment_url = att.url;
+                body.attachment_type = att.type;
+                body.attachment_name = att.name;
+                body.attachment_size = att.size;
+            }
+            if (opts.replyTo) body.reply_to_id = opts.replyTo.id;
+            if (opts.mentions.length > 0) body.mentions = opts.mentions;
+
+            try {
+                const msg = await apiFetch<DirectMessageItem>(
+                    `/chat/conversations/${activeConvId}/messages`,
+                    { method: 'POST', token, body }
+                );
+                setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+                setReplyTo(null);
+                return { error: null as null, message: msg };
+            } catch {
+                return { error: 'send' as const };
+            } finally {
+                setSending(false);
+            }
+        },
+        [activeConvId, sending, token, uploadAttachment]
+    );
+
+    return {
+        messages,
+        loading,
+        sending,
+        replyTo,
+        setReplyTo,
+        loadOlderMessages,
+        sendMessage,
+        wsStatus,
+    };
+}

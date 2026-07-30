@@ -38,6 +38,7 @@ export default function PageVersionsDiffPage() {
   const [versionAId, setVersionAId] = useState<string | null>(null);
   const [versionBId, setVersionBId] = useState<string | null>(null);
   const [rollingBack, setRollingBack] = useState(false);
+  const [pendingRollbackVersionId, setPendingRollbackVersionId] = useState<string | null>(null);
   const [hideUnchanged, setHideUnchanged] = useState<boolean>(true);
 
   // ── Load sites + versions ─────────────────────────────────────────
@@ -157,7 +158,13 @@ export default function PageVersionsDiffPage() {
 
   const handleRollback = async (versionId: string) => {
     if (!token || !siteKey || !slug || !canRollback) return;
-    if (!confirm("¿Restaurar esta versión? Las secciones actuales serán reemplazadas.")) return;
+    setPendingRollbackVersionId(versionId);
+  };
+
+  const confirmRollback = async () => {
+    if (!pendingRollbackVersionId || !token || !siteKey || !slug || !canRollback) return;
+    const versionId = pendingRollbackVersionId;
+    setPendingRollbackVersionId(null);
     setRollingBack(true);
     try {
       await rollbackCmsPageVersion(siteKey, slug, versionId, token);
@@ -238,6 +245,32 @@ export default function PageVersionsDiffPage() {
       {rollingBack && (
         <div className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--warning)/30%)] bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-3 py-2 text-sm text-warning-text dark:text-[hsl(var(--warning))] shadow-lg">
           <Loader2 size={14} className="animate-spin" /> Restaurando versión…
+        </div>
+      )}
+      {pendingRollbackVersionId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-6 shadow-xl dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">
+              ¿Restaurar esta versión?
+            </h3>
+            <p className="mt-2 text-sm text-[hsl(var(--text-secondary))]">
+              Las secciones actuales serán reemplazadas con los datos de la versión seleccionada.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setPendingRollbackVersionId(null)}
+                className="rounded-md border border-[hsl(var(--border))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmRollback}
+                className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:opacity-90"
+              >
+                Restaurar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
