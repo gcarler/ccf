@@ -100,7 +100,7 @@ def analytics_summary(
 
     # Axioma 3 — Multi-Tenant: el conteo de testimonios pendientes se
     # acota por sede del staff. Los testimonios viven como CmsPost
-    # categorizados ``testimonials``. La tabla legacy ``testimonials``
+    # categorizados ``testimonials``. La tabla anterior ``testimonials``
     # fue eliminada — contamos solo CmsPost.
     actor_sede = _actor_sede_or_none(db, current_user)
 

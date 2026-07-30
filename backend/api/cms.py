@@ -181,7 +181,7 @@ def patch_admin_testimonial(
     post_update = testimonial_update_to_post_update(payload, post.status, post.seo_json)
     updated = crud.update_cms_post(
         db,
-        post=post,
+        post,
         payload=post_update,
         user_id=str(current_user.id),
     )
@@ -546,7 +546,7 @@ def get_cms_metrics(
 
     # Axioma 3 — Multi-Tenant: pre-filtramos métricas por sede del staff.
     # Testimonials y announcements viven como CmsPost categorizados.
-    # Las tablas legacy (testimonials, announcements) fueron eliminadas.
+    # Las tablas anterior (testimonials, announcements) fueron eliminadas.
     actor_sede = _actor_sede_or_none(db, current_user)
 
     cms_testimonials = list_testimonial_posts(
