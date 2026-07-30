@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import uuid
 from datetime import datetime, timezone
 
@@ -13,23 +12,33 @@ from backend.api._cms_helpers import (
     _actor_sede_or_none,
     _get_scoped_cms_announcement,
     _get_scoped_cms_media,
-    _get_scoped_cms_testimonial,
     _scope_cms_announcements_by_user_sede,
     _scope_cms_media_by_user_sede,
     _scope_cms_testimonials_by_user_sede,
     collect_section_media_ids,
 )
+from backend.api.cms_v1_adapters import (
+    get_or_create_testimonial_category,
+    get_or_create_testimonial_site,
+    get_testimonial_post_by_id,
+    list_testimonial_posts,
+    post_to_testimonial_read,
+    testimonial_create_to_post_create,
+    testimonial_update_to_post_update,
+)
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
-from backend.core.storage import storage_service
-from backend.core.uploads import (
-    ensure_allowed_extension,
-    sanitize_filename,
-    validate_mime_extension_alignment,
-)
 from backend.schemas import PaginatedResponse
-from backend.services.image_optimizer import ImageOptimizer
+from backend.services.cms_media_service import (
+    delete_cms_media as _delete_cms_media,
+)
+from backend.services.cms_media_service import (
+    optimize_cms_media as _optimize_cms_media,
+)
+from backend.services.cms_media_service import (
+    upload_cms_media as _upload_cms_media,
+)
 
 # CMS endpoints — preferir /cms/v2/* en integraciones nuevas.
 router = APIRouter(tags=["cms"])
@@ -42,22 +51,19 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-# ── Testimonials (SQLAlchemy models) ────────────────────
-# Axioma 3 — Multi-Tenant: Testimonial tiene sede_id propio (migration
-# 2026-07-01). Endpoints admin filtran estrictamente por sede del staff;
-# endpoints públicos (/cms/testimonials) siguen retornando sólo
-# testimonios aprobados para preservar el feed público de la home.
+# ── Testimonials (v1→v2 shim) ──────────────────────────
+# Legacy Testimonial endpoints now read/write CmsPost rows categorized
+# as ``testimonials``. The response contract (TestimonialRead) is kept
+# unchanged for frontend compatibility.
 
 
 @router.get("/cms/testimonials", response_model=list[schemas.TestimonialRead])
 def list_cms_testimonials(db: Session = Depends(get_db)):
-    """Public feed: testimonios aprobados son contenido visible en la home
-    global de la plataforma (mismo tratamiento que announcements públicas).
-    El filtro de aprobación (approved_only=True) protege el feed público.
-    Los testimonios NO aprobados sólo aparecen en endpoints admin (filtrados
-    por sede).
-    """
-    return crud.list_testimonials(db, approved_only=True)
+    """Public feed: testimonios aprobados (status=published)."""
+    posts = list_testimonial_posts(
+        db, status="published", include_archived=False
+    )
+    return [post_to_testimonial_read(post) for post in posts]
 
 
 @router.post(
@@ -68,28 +74,44 @@ def create_cms_testimonial(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Axioma 3 — Multi-Tenant: al crear un testimonial, derivamos su
-    ``sede_id`` desde la persona del autor (si está presente) o el
-    usuario actual. Esto permite que defense-in-depth en el CRUD layer
-    valide que el target persona permanece en scope. Si el autor es NULL
-    (testimonial anónimo creado por admin), se usa la sede del current_user.
+    """Create a new testimonial as a v2 CmsPost.
+
+    ``sede_id`` se deriva de la persona del actor y se mapea a un
+    ``CmsSite`` para cumplir el modelo v2.
     """
-    # Derivar ``author_persona_id`` server-side cuando el payload no lo
-    # especifica. NO asignar ``author_id`` (anterior int FK) porque
-    # ``TestimonialCreate`` no expone ese campo: la única columna válida
-    # es ``author_persona_id`` (UUID FK a personas). Body con
-    # ``author_persona_id`` explícito del cliente pasa directo.
-    if not payload.author_persona_id:
-        resolved = crud.resolve_persona_id_for_user(
+    author_persona_id = payload.author_persona_id
+    if not author_persona_id:
+        author_persona_id = crud.resolve_persona_id_for_user(
             db, getattr(current_user, "id", None)
         )
-        if resolved:
-            payload.author_persona_id = str(resolved)
-    return crud.create_testimonial(
-        db,
-        payload,
-        actor_user_id=str(current_user.id),
+
+    actor_sede = _actor_sede_or_none(db, current_user)
+    if actor_sede is None:
+        raise HTTPException(
+            status_code=409,
+            detail="CMS content requires an attributed persona and sede",
+        )
+
+    site = get_or_create_testimonial_site(db, actor_sede)
+    category = get_or_create_testimonial_category(db, site.id)
+
+    post_create = testimonial_create_to_post_create(
+        payload, site_id=site.id, author_persona_id=author_persona_id
     )
+    post = crud.create_cms_post(
+        db,
+        site_id=site.id,
+        payload=post_create,
+        user_id=str(current_user.id),
+    )
+    # ``create_cms_post`` does not consume ``author_persona_id`` from the
+    # payload; set it explicitly to honour the v1 contract.
+    post.author_persona_id = author_persona_id
+    # Associate the post with the testimonials category.
+    post.categories.append(category)
+    db.commit()
+    db.refresh(post)
+    return post_to_testimonial_read(post)
 
 
 @router.get("/admin/testimonials", response_model=list[schemas.TestimonialRead])
@@ -97,12 +119,14 @@ def list_admin_testimonials(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Axioma 3 — Multi-Tenant: filtro por sede del staff. Staff de sede_a
-    ve SÓLO los testimonios de sede_a; staff sin sede (superadmin) ve
-    todos (consistente con el resto del axioma)."""
-    query = db.query(models.Testimonial)
-    query = _scope_cms_testimonials_by_user_sede(db, current_user, query)
-    return query.order_by(models.Testimonial.created_at.desc()).all()
+    """Axioma 3 — Multi-Tenant: filtro por sede del staff."""
+    actor_sede = _actor_sede_or_none(db, current_user)
+    posts = list_testimonial_posts(
+        db,
+        sede_id=actor_sede,
+        include_archived=True,
+    )
+    return [post_to_testimonial_read(post) for post in posts]
 
 
 @router.get(
@@ -112,13 +136,11 @@ def get_cms_testimonial(
     testimonial_id: uuid.UUID,
     db: Session = Depends(get_db),
 ):
-    """Public GET: mismo filtro dual que antes (approved_only +
-    no-archived). NO se aplica scope de sede porque el testimonial
-    aprobado es contenido público visible a cualquier visitante."""
-    row = crud.get_testimonial(db, testimonial_id)
-    if not row or not row.is_approved or row.status == "archived":
+    """Public GET: solo publicados y no archivados."""
+    post = get_testimonial_post_by_id(db, testimonial_id)
+    if not post or post.status != "published":
         raise HTTPException(status_code=404, detail="testimonial not found")
-    return row
+    return post_to_testimonial_read(post)
 
 
 @router.get(
@@ -129,9 +151,12 @@ def get_admin_testimonial(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Axioma 3 — Multi-Tenant: helper existence-leak-safe devuelve 404
-    para cross-sede o inexistente."""
-    return _get_scoped_cms_testimonial(db, current_user, testimonial_id)
+    """Axioma 3 — Multi-Tenant: 404 cross-sede o inexistente."""
+    actor_sede = _actor_sede_or_none(db, current_user)
+    post = get_testimonial_post_by_id(db, testimonial_id, sede_id=actor_sede)
+    if not post:
+        raise HTTPException(status_code=404, detail="testimonial not found")
+    return post_to_testimonial_read(post)
 
 
 @router.patch(
@@ -143,16 +168,20 @@ def patch_admin_testimonial(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede. Defense-in-depth CRUD
-    re-valida scope sobre `author_persona_id` entrante si el body lo
-    cambia."""
-    row = _get_scoped_cms_testimonial(db, current_user, testimonial_id)
-    return crud.update_testimonial(
+    """Axioma 3 — Multi-Tenant: 404 cross-sede."""
+    actor_sede = _actor_sede_or_none(db, current_user)
+    post = get_testimonial_post_by_id(db, testimonial_id, sede_id=actor_sede)
+    if not post:
+        raise HTTPException(status_code=404, detail="testimonial not found")
+
+    post_update = testimonial_update_to_post_update(payload, post.status, post.seo_json)
+    updated = crud.update_cms_post(
         db,
-        row,
-        payload,
-        actor_user_id=str(current_user.id),
+        post=post,
+        payload=post_update,
+        user_id=str(current_user.id),
     )
+    return post_to_testimonial_read(updated)
 
 
 @router.delete("/admin/testimonials/{testimonial_id}", status_code=204)
@@ -162,12 +191,11 @@ def delete_admin_testimonial(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Axioma 3 — Multi-Tenant: 404 cross-sede antes de soft-delete."""
-    row = _get_scoped_cms_testimonial(db, current_user, testimonial_id)
-    crud.delete_testimonial(
-        db,
-        row,
-        actor_user_id=str(current_user.id),
-    )
+    actor_sede = _actor_sede_or_none(db, current_user)
+    post = get_testimonial_post_by_id(db, testimonial_id, sede_id=actor_sede)
+    if not post:
+        raise HTTPException(status_code=404, detail="testimonial not found")
+    crud.delete_cms_post(db, post, actor_user_id=str(current_user.id))
 
 
 # ── Announcements (SQLAlchemy models) ───────────────────
@@ -405,29 +433,16 @@ def delete_cms_media(
     """Delete media item. If permanent=true, deletes the file AND DB record.
     Otherwise soft-deletes (archives).
 
-    Path traversal hardening (H-05): the resolved local path is normalised
-    and restricted to the ``uploads`` root before any ``os.remove``. A
-    malicious admin with ``cms:edit`` could otherwise store a crafted
-    ``url`` (``../../etc/passwd``) and trigger an out-of-root delete via
-    ``permanent=true``. Mirrors the guard already used by the optimize
-    endpoint below.
+    Path traversal hardening (H-05): delegated to
+    ``backend.services.cms_media_service``.
     """
     row = _get_scoped_cms_media(db, current_user, item_id)
-    if permanent:
-        # Delete physical file first, then hard-delete DB row.
-        if row.url:
-            rel_path = row.url.lstrip("/").replace("uploads/", "", 1)
-            full_path = os.path.normpath(os.path.join("/root/ccf/uploads", rel_path))
-            if not full_path.startswith("/root/ccf/uploads"):
-                raise HTTPException(status_code=400, detail="Invalid file path")
-            if os.path.exists(full_path) and os.path.isfile(full_path):
-                os.remove(full_path)
-    crud.delete_cms_media_item(
-        db,
-        row.id,
-        actor_user_id=str(current_user.id),
-        permanent=permanent,
-    )
+    try:
+        _delete_cms_media(
+            db, row, permanent=permanent, actor_user_id=str(current_user.id)
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/cms/media/{item_id}/optimize", response_model=schemas.CmsMediaRead)
@@ -439,41 +454,10 @@ def optimize_cms_media(
     """Optimize an existing image: re-encode to WebP, resize, compress.
     Returns updated media item with new URL and file_size."""
     row = _get_scoped_cms_media(db, current_user, item_id)
-
-    if not row.mime_type or not row.mime_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Only images can be optimized")
-
-    # Read original file from storage (path traversal guard)
-    original_path = row.url.lstrip("/")
-    full_path = os.path.normpath(os.path.join("/root/ccf/uploads", original_path.replace("uploads/", "")))
-    if not full_path.startswith("/root/ccf/uploads"):
-        raise HTTPException(status_code=400, detail="Invalid file path")
-    if not os.path.exists(full_path):
-        raise HTTPException(status_code=404, detail="Original file not found")
-
-    with open(full_path, "rb") as f:
-        content = f.read()
-
-    optimizer = ImageOptimizer()
-    optimized_bytes, output_ext, width, height = optimizer.optimize(content, row.filename or "image.jpg")
-
-    # Save optimized version (overwrite or new file)
-    optimized_name = os.path.splitext(row.filename or "image.jpg")[0] + output_ext
-    new_url = storage_service.save_file(optimized_bytes, optimized_name, subfolder="cms")
-
-    # Update media item
-    return crud.update_cms_media_item(
-        db,
-        row.id,
-        url=new_url,
-        mime_type=f"image/{output_ext.lstrip('.')}",
-        file_size=len(optimized_bytes),
-        filename=optimized_name,
-        width=width,
-        height=height,
-        dimensions=f"{width}x{height}",
-        actor_user_id=str(current_user.id),
-    )
+    try:
+        return _optimize_cms_media(db, row, actor_user_id=str(current_user.id))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/cms/media/upload", response_model=schemas.CmsMediaRead, status_code=201)
@@ -486,84 +470,27 @@ async def upload_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Hardened upload pipeline (Axioma 3 + Defense-in-Depth):
+    """Hardened upload pipeline (Axioma 3 + Defense-in-Depth).
 
-    1. **Size guardrail** — rejects uploads larger than ``MAX_UPLOAD_SIZE``
-       (10 MiB). Evita OOM en storage_service con payloads arbitrarios.
-    2. **Extension allow-list** — ``ensure_allowed_extension`` bloquea
-       extensiones fuera de ``ALLOWED_EXTENSIONS`` (png/jpg/jpeg/gif/webp/
-       pdf/mp4/mp3/wav/zip). Cierra el vector donde un cliente sube un
-       ``.exe`` o ``.html`` que storage_service aceptaría sin filtro.
-    3. **MIME/extension alignment** — ``validate_mime_extension_alignment``
-       verifica que el ``Content-Type`` declarado por el cliente sea
-       coherente con la extensión del archivo. Defense-in-depth sobre el
-       allow-list: si el cliente sube ``malware.png`` con
-       ``Content-Type: application/x-msdownload``, el allow-list lo
-       aceptaría (extensión válida), pero el alignment check lo rechaza.
-    4. **Filename sanitization** — ``sanitize_filename`` remueve chars
-       no-seguros y previene path traversal antes de persistir.
-    5. **Image optimization** — images are auto-optimized to WebP (max 1920px, quality 82%)
-       unless optimize=false. Dramatically reduces file size.
-    6. **Axioma 3** — ``actor_user_id`` se propaga al CRUD layer, donde
-       ``create_cms_media_item`` resuelve ``sede_id`` server-side desde
-       el actor (no del body) y previene cross-sede injection.
+    El procesamiento real vive en ``backend.services.cms_media_service``
+    para ser reutilizado por v1 y v2.
     """
     content = await file.read()
-    original_name = sanitize_filename(file.filename or "asset.bin")
-
-    # 1) Size guardrail
-    from backend.core.uploads import MAX_UPLOAD_SIZE
-    if len(content) > MAX_UPLOAD_SIZE:
-        raise HTTPException(status_code=400, detail="File exceeds maximum size")
-
-    # 2) Extension allow-list (bloquea .exe, .html, .js, .sh, ...).
-    try:
-        ensure_allowed_extension(original_name)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-    # 3) MIME/extension alignment (defense-in-depth sobre allow-list).
-    try:
-        validate_mime_extension_alignment(original_name, file.content_type)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-    # 4) Image optimization (convert to WebP, resize, compress)
-    mime_type = file.content_type
-    width: int | None = None
-    height: int | None = None
-    dimensions: str | None = None
-    if optimize:
-        try:
-            optimizer = ImageOptimizer()
-            optimized_bytes, output_ext, width, height = optimizer.optimize(content, original_name)
-            if output_ext != os.path.splitext(original_name)[1].lower():
-                # Extension changed (e.g. .jpg → .webp)
-                original_name = os.path.splitext(original_name)[0] + output_ext
-                mime_type = f"image/{output_ext.lstrip('.')}"
-            content = optimized_bytes
-            if width and height:
-                dimensions = f"{width}x{height}"
-        except Exception as exc:
-            logger.debug("Image optimization failed for %s, falling back to original: %s", original_name, exc)
-
-    url = storage_service.save_file(content, original_name, subfolder="cms")
     parsed_tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
-    return crud.create_cms_media_item(
-        db,
-        url=url,
-        alt_text=alt_text or file.filename,
-        section=section,
-        tags=parsed_tags,
-        created_by=current_user.id,
-        filename=file.filename,
-        mime_type=mime_type,
-        file_size=len(content),
-        width=width,
-        height=height,
-        dimensions=dimensions,
-        actor_user_id=str(current_user.id),
-    )
+    try:
+        return _upload_cms_media(
+            db,
+            content=content,
+            filename=file.filename or "asset.bin",
+            content_type=file.content_type,
+            section=section,
+            alt_text=alt_text or file.filename or "",
+            tags=parsed_tags,
+            optimize=optimize,
+            actor_user_id=str(current_user.id),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 # ── CMS Metrics ─────────────────────────────────────────
@@ -580,10 +507,27 @@ def get_cms_metrics(
     """Axioma 3 — Multi-Tenant: pre-filtramos métricas por sede del staff.
     El superadmin canónico sin sede conserva totales globales."""
 
-    # Scoped queries para User-Generated content:
+    # Scoped queries para User-Generated content. Testimonials are now
+    # stored as CmsPost rows; during the transition we also count any
+    # legacy Testimonial rows that have not been migrated yet.
+    # TODO (Phase 3): once the legacy ``testimonials`` table is dropped
+    # (see planned follow-up migration after
+    # 20260729_0001_migrate_testimonials_to_cms_posts), remove the legacy
+    # counting below and rely solely on CmsPost.
+    actor_sede = _actor_sede_or_none(db, current_user)
+
+    cms_testimonials = list_testimonial_posts(
+        db, sede_id=actor_sede, include_archived=True
+    )
+    cms_ids = {post.id for post in cms_testimonials}
+
     t_query = db.query(models.Testimonial)
     t_query = _scope_cms_testimonials_by_user_sede(db, current_user, t_query)
-    testimonials = t_query.all()
+    legacy_testimonials = [
+        t for t in t_query.all() if t.id not in cms_ids
+    ]
+
+    testimonials = list(cms_testimonials) + legacy_testimonials
 
     a_query = db.query(models.Announcement)
     a_query = _scope_cms_announcements_by_user_sede(db, current_user, a_query)
@@ -593,9 +537,14 @@ def get_cms_metrics(
     m_query = _scope_cms_media_by_user_sede(db, current_user, m_query)
     media = m_query.all()
 
+    approved_testimonials = (
+        sum(1 for p in cms_testimonials if p.status == "published")
+        + sum(1 for t in legacy_testimonials if t.is_approved)
+    )
+
     return schemas.CmsMetrics(
         testimonials_total=len(testimonials),
-        testimonials_approved=sum(1 for row in testimonials if row.is_approved),
+        testimonials_approved=approved_testimonials,
         announcements_total=len(announcements),
         announcements_active=sum(
             1 for row in announcements if row.status == "published"

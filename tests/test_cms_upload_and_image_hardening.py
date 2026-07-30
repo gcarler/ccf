@@ -184,9 +184,9 @@ class TestUploadCmsMediaHardening:
     )
 
     def _stub_storage_save(self, monkeypatch, save_calls):
-        from backend.api import cms as _cms_api
+        from backend.services import cms_media_service as _cms_media_service
         monkeypatch.setattr(
-            _cms_api.storage_service,
+            _cms_media_service.storage_service,
             "save_file",
             lambda content, name, subfolder: save_calls.append(name) or f"/uploads/{name}",
         )
