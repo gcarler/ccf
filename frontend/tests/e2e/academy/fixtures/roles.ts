@@ -170,7 +170,7 @@ export const test = base.extend<
   // header pre-attached. Built on `pwRequest.newContext` from the
   // playwright test module entry point (this is the documented factory;
   // the `request` fixture is an APIRequestContext, NOT a factory).
-  lectorRequest: async (_args, use) => {
+  lectorRequest: async ({}, use) => {
     const apiBase = resolveApiBaseUrl();
     test.skip(
       !apiBase || !apiBase.startsWith('http'),
@@ -191,7 +191,7 @@ export const test = base.extend<
       await ctx.dispose();
     }
   },
-  estudianteRequest: async (_args, use) => {
+  estudianteRequest: async ({}, use) => {
     const apiBase = resolveApiBaseUrl();
     test.skip(
       !apiBase || !apiBase.startsWith('http'),
@@ -212,7 +212,7 @@ export const test = base.extend<
       await ctx.dispose();
     }
   },
-  maestroRequest: async (_args, use) => {
+  maestroRequest: async ({}, use) => {
     const apiBase = resolveApiBaseUrl();
     test.skip(
       !apiBase || !apiBase.startsWith('http'),
@@ -233,7 +233,7 @@ export const test = base.extend<
       await ctx.dispose();
     }
   },
-  adminRequest: async (_args, use) => {
+  adminRequest: async ({}, use) => {
     const apiBase = resolveApiBaseUrl();
     test.skip(
       !apiBase || !apiBase.startsWith('http'),
