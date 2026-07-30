@@ -158,6 +158,49 @@ def _seed_testimonial_in_sede(
     return post
 
 
+def _seed_announcement_in_sede(
+    db,
+    author_persona,
+    sede_id,
+    title="Announcement",
+    content="Content",
+    status="published",
+):
+    """Seed a CmsPost categorized as announcements.
+
+    The v1→v2 migration moved announcements to CmsPost; this helper
+    creates one directly to test the API-layer without the legacy table.
+    """
+    from backend.api.cms_v1_adapters import (
+        get_or_create_announcement_category,
+        get_or_create_announcement_site,
+    )
+
+    site = get_or_create_announcement_site(db, sede_id)
+    category = get_or_create_announcement_category(db, site.id)
+
+    post = models.CmsPost(
+        id=_uuid.uuid4(),
+        site_id=site.id,
+        slug=f"announcement-{_uuid.uuid4().hex[:8]}",
+        title=title,
+        excerpt=content[:200] if content else None,
+        content=content,
+        featured_image_url=None,
+        status=status,
+        seo_json={
+            "category": "General",
+            "is_featured": False,
+            "content_type": "announcement",
+        },
+        created_by_persona_id=author_persona.id if author_persona else None,
+        updated_by_persona_id=author_persona.id if author_persona else None,
+    )
+    db.add(post)
+    db.flush()
+    post.categories.append(category)
+    db.flush()
+    return post
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -442,29 +485,25 @@ def test_admin_announcements_scoped_by_sede(client, db_session):
     """Axioma 3: GET /api/admin/announcements filtra por sede del staff."""
     (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
 
-    # Seed directo (bypass API) con sede_id ya colocado.
-    a_local = models.Announcement(
-        id=_uuid.uuid4(),
-        title="Announce LEGITIMO sede_a",
-        content="Bienvenida local",
-        sede_id=sede_a.id,
-        created_by_persona_id=persona_a.id,
+    # Seed CmsPost announcements (v1→v2 migration).
+    _seed_announcement_in_sede(
+        db_session, persona_a, sede_a.id,
+        title="Announce LEGITIMO sede_a", content="Bienvenida local",
     )
-    a_cross = models.Announcement(
-        id=_uuid.uuid4(),
+    _seed_announcement_in_sede(
+        db_session, persona_b, sede_b.id,
         title="Announce SECRETO sede_b",
         content="Contenido confidencial cross-sede — NO debe aparecer",
-        sede_id=sede_b.id,
-        created_by_persona_id=persona_b.id,
     )
-    db_session.add_all([a_local, a_cross])
     db_session.commit()
 
     headers_a = auth_headers(client, email="cmsFase5A@example.com")
     resp = client.get("/api/admin/announcements", headers=headers_a)
     assert resp.status_code == 200, resp.text
     body_text = resp.text
-    assert "Announce LEGITIMO sede_a" in body_text
+    assert "Announce LEGITIMO sede_a" in body_text, (
+        f"Falta announcement local: {body_text[:400]}"
+    )
     assert "Announce SECRETO sede_b" not in body_text, (
         f"FUGA: announcement cross-sede en lista admin A: {body_text[:400]}"
     )
@@ -473,15 +512,10 @@ def test_admin_announcements_scoped_by_sede(client, db_session):
 def test_patch_admin_announcement_blocks_cross_sede(client, db_session):
     """Axioma 3: PATCH /api/admin/announcements/{id} cross-sede → 404."""
     (admin_a, _, _), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
-    a_cross = models.Announcement(
-        id=_uuid.uuid4(),
-        title="Announce secreto patch target",
-        content="original",
-        sede_id=sede_b.id,
-        created_by_persona_id=persona_b.id,
-        status="published",
+    a_cross = _seed_announcement_in_sede(
+        db_session, persona_b, sede_b.id,
+        title="Announce secreto patch target", content="original",
     )
-    db_session.add(a_cross)
     db_session.commit()
 
     headers_a = auth_headers(client, email="cmsFase5A@example.com")
@@ -500,15 +534,10 @@ def test_patch_admin_announcement_blocks_cross_sede(client, db_session):
 def test_delete_admin_announcement_blocks_cross_sede(client, db_session):
     """Axioma 3: DELETE /api/admin/announcements/{id} cross-sede → 404."""
     (admin_a, _, _), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
-    a_cross = models.Announcement(
-        id=_uuid.uuid4(),
-        title="Announce secreto delete target",
-        content="x",
-        sede_id=sede_b.id,
-        created_by_persona_id=persona_b.id,
-        status="published",
+    a_cross = _seed_announcement_in_sede(
+        db_session, persona_b, sede_b.id,
+        title="Announce secreto delete target", content="x",
     )
-    db_session.add(a_cross)
     db_session.commit()
 
     headers_a = auth_headers(client, email="cmsFase5A@example.com")
@@ -1142,23 +1171,14 @@ def test_public_announcements_feed_remains_global(client, db_session):
     """
     (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
 
-    a_a = models.Announcement(
-        id=_uuid.uuid4(),
-        title="A-public-a",
-        content="publicado sede_a",
-        sede_id=sede_a.id,
-        created_by_persona_id=persona_a.id,
-        status="published",
+    _seed_announcement_in_sede(
+        db_session, persona_a, sede_a.id,
+        title="A-public-a", content="publicado sede_a", status="published",
     )
-    a_b = models.Announcement(
-        id=_uuid.uuid4(),
-        title="A-public-b",
-        content="publicado sede_b",
-        sede_id=sede_b.id,
-        created_by_persona_id=persona_b.id,
-        status="published",
+    _seed_announcement_in_sede(
+        db_session, persona_b, sede_b.id,
+        title="A-public-b", content="publicado sede_b", status="published",
     )
-    db_session.add_all([a_a, a_b])
     db_session.commit()
 
     resp = client.get("/api/cms/announcements")  # publico
