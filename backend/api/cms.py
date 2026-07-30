@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 from backend import crud, models, schemas
 from backend.api._cms_helpers import (
     _actor_sede_or_none,
-    _get_scoped_cms_announcement,
     _get_scoped_cms_media,
     _scope_cms_announcements_by_user_sede,
     _scope_cms_media_by_user_sede,
@@ -18,10 +17,17 @@ from backend.api._cms_helpers import (
     collect_section_media_ids,
 )
 from backend.api.cms_v1_adapters import (
+    announcement_create_to_post_create,
+    announcement_update_to_post_update,
+    get_announcement_post_by_id,
+    get_or_create_announcement_category,
+    get_or_create_announcement_site,
     get_or_create_testimonial_category,
     get_or_create_testimonial_site,
     get_testimonial_post_by_id,
+    list_announcement_posts,
     list_testimonial_posts,
+    post_to_announcement_read,
     post_to_testimonial_read,
     testimonial_create_to_post_create,
     testimonial_update_to_post_update,
@@ -198,19 +204,19 @@ def delete_admin_testimonial(
     crud.delete_cms_post(db, post, actor_user_id=str(current_user.id))
 
 
-# ── Announcements (SQLAlchemy models) ───────────────────
-# Axioma 3 — Multi-Tenant: Announcement tiene sede_id propio + FK a
-# ``created_by_persona_id`` (migration 2026-07-01). Public feed sigue
-# global para home; admin endpoints filtran estrictamente por sede.
+# ── Announcements (v1→v2 shim) ──────────────────────────
+# Legacy Announcement endpoints now read/write CmsPost rows categorized
+# as ``announcements``. The response contract (AnnouncementRead) is kept
+# unchanged for frontend compatibility.
 
 
 @router.get("/cms/announcements", response_model=list[schemas.AnnouncementRead])
 def list_cms_announcements(db: Session = Depends(get_db)):
-    """Public feed: anuncios publicados son contenido visible en la home
-    global de la plataforma, no se filtra por sede (un visitante de
-    cualquier sede debe ver anuncios publicados). El filtro ``public_only``
-    (status='published' AND published_at<=now) preserva el contrato."""
-    return crud.list_announcements(db, public_only=True)
+    """Public feed: anuncios publicados (status=published)."""
+    posts = list_announcement_posts(
+        db, status="published", include_archived=False
+    )
+    return [post_to_announcement_read(post) for post in posts]
 
 
 @router.post(
@@ -221,14 +227,39 @@ def create_cms_announcement(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Axioma 3 — Multi-Tenant: ``sede_id`` y ``created_by_persona_id``
-    se derivan server-side desde el current_user (no se aceptan del body
-    para evitar que un editor fuerce sede_id distinto al suyo)."""
-    return crud.create_announcement(
-        db,
-        payload,
-        actor_user_id=str(current_user.id),
+    """Create a new announcement as a v2 CmsPost.
+
+    ``sede_id`` se deriva de la persona del actor y se mapea a un
+    ``CmsSite`` para cumplir el modelo v2.
+    """
+    author_persona_id = crud.resolve_persona_id_for_user(
+        db, getattr(current_user, "id", None)
     )
+
+    actor_sede = _actor_sede_or_none(db, current_user)
+    if actor_sede is None:
+        raise HTTPException(
+            status_code=409,
+            detail="CMS content requires an attributed persona and sede",
+        )
+
+    site = get_or_create_announcement_site(db, actor_sede)
+    category = get_or_create_announcement_category(db, site.id)
+
+    post_create = announcement_create_to_post_create(
+        payload, site_id=site.id, author_persona_id=author_persona_id
+    )
+    post = crud.create_cms_post(
+        db,
+        site_id=site.id,
+        payload=post_create,
+        user_id=str(current_user.id),
+    )
+    post.created_by_persona_id = author_persona_id
+    post.categories.append(category)
+    db.commit()
+    db.refresh(post)
+    return post_to_announcement_read(post)
 
 
 @router.get("/admin/announcements", response_model=list[schemas.AnnouncementRead])
@@ -237,9 +268,13 @@ def list_admin_announcements(
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     """Axioma 3 — Multi-Tenant: filtro por sede del staff."""
-    query = db.query(models.Announcement)
-    query = _scope_cms_announcements_by_user_sede(db, current_user, query)
-    return query.order_by(models.Announcement.created_at.desc()).all()
+    actor_sede = _actor_sede_or_none(db, current_user)
+    posts = list_announcement_posts(
+        db,
+        sede_id=actor_sede,
+        include_archived=True,
+    )
+    return [post_to_announcement_read(post) for post in posts]
 
 
 @router.get(
@@ -249,18 +284,11 @@ def get_cms_announcement(
     announcement_id: uuid.UUID,
     db: Session = Depends(get_db),
 ):
-    """Public GET: contrato previo preservado (status='published' AND
-    published_at<=now). NO se aplica scope porque un anuncio publicado
-    es contenido público."""
-    row = crud.get_announcement(db, announcement_id)
-    now = datetime.now(timezone.utc)
-    if (
-        not row
-        or row.status != "published"
-        or (row.published_at and row.published_at > now)
-    ):
+    """Public GET: solo publicados y no archivados."""
+    post = get_announcement_post_by_id(db, announcement_id)
+    if not post or post.status != "published":
         raise HTTPException(status_code=404, detail="announcement not found")
-    return row
+    return post_to_announcement_read(post)
 
 
 @router.get(
@@ -271,8 +299,12 @@ def get_admin_announcement(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede existence-leak safe."""
-    return _get_scoped_cms_announcement(db, current_user, announcement_id)
+    """Axioma 3 — Multi-Tenant: 404 cross-sede o inexistente."""
+    actor_sede = _actor_sede_or_none(db, current_user)
+    post = get_announcement_post_by_id(db, announcement_id, sede_id=actor_sede)
+    if not post:
+        raise HTTPException(status_code=404, detail="announcement not found")
+    return post_to_announcement_read(post)
 
 
 @router.patch(
@@ -284,14 +316,22 @@ def patch_admin_announcement(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede antes de mutar."""
-    row = _get_scoped_cms_announcement(db, current_user, announcement_id)
-    return crud.update_announcement(
-        db,
-        row,
-        payload,
-        actor_user_id=str(current_user.id),
+    """Axioma 3 — Multi-Tenant: 404 cross-sede."""
+    actor_sede = _actor_sede_or_none(db, current_user)
+    post = get_announcement_post_by_id(db, announcement_id, sede_id=actor_sede)
+    if not post:
+        raise HTTPException(status_code=404, detail="announcement not found")
+
+    post_update = announcement_update_to_post_update(
+        payload, post.status, post.seo_json
     )
+    updated = crud.update_cms_post(
+        db,
+        post=post,
+        payload=post_update,
+        user_id=str(current_user.id),
+    )
+    return post_to_announcement_read(updated)
 
 
 @router.delete("/admin/announcements/{announcement_id}", status_code=204)
@@ -301,12 +341,11 @@ def delete_admin_announcement(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     """Axioma 3 — Multi-Tenant: 404 cross-sede antes de soft-delete."""
-    row = _get_scoped_cms_announcement(db, current_user, announcement_id)
-    crud.delete_announcement(
-        db,
-        row,
-        actor_user_id=str(current_user.id),
-    )
+    actor_sede = _actor_sede_or_none(db, current_user)
+    post = get_announcement_post_by_id(db, announcement_id, sede_id=actor_sede)
+    if not post:
+        raise HTTPException(status_code=404, detail="announcement not found")
+    crud.delete_cms_post(db, post, actor_user_id=str(current_user.id))
 
 
 # ── CMS Media ───────────────────────────────────────────
@@ -529,9 +568,31 @@ def get_cms_metrics(
 
     testimonials = list(cms_testimonials) + legacy_testimonials
 
+    # Announcements are now stored as CmsPost rows categorized as
+    # ``announcements``. During the transition we also count any legacy
+    # Announcement rows that have not been migrated yet.
+    # TODO (Phase 3.5): once the legacy ``announcements`` table is dropped,
+    # remove the legacy counting below and rely solely on CmsPost.
+    cms_announcements = list_announcement_posts(
+        db, sede_id=actor_sede, include_archived=True
+    )
+    a_cms_ids = {post.id for post in cms_announcements}
+
     a_query = db.query(models.Announcement)
     a_query = _scope_cms_announcements_by_user_sede(db, current_user, a_query)
-    announcements = a_query.all()
+    legacy_announcements = [
+        a for a in a_query.all() if a.id not in a_cms_ids
+    ]
+
+    announcements = list(cms_announcements) + legacy_announcements
+    announcements_active = (
+        sum(1 for p in cms_announcements if p.status == "published")
+        + sum(
+            1
+            for a in legacy_announcements
+            if a.status == "published"
+        )
+    )
 
     m_query = db.query(models.CmsMediaItem)
     m_query = _scope_cms_media_by_user_sede(db, current_user, m_query)
@@ -546,9 +607,7 @@ def get_cms_metrics(
         testimonials_total=len(testimonials),
         testimonials_approved=approved_testimonials,
         announcements_total=len(announcements),
-        announcements_active=sum(
-            1 for row in announcements if row.status == "published"
-        ),
+        announcements_active=announcements_active,
         media_total=len(media),
         media_images=sum(
             1 for row in media if (row.mime_type or "").startswith("image/")
