@@ -35,6 +35,7 @@ import {
     GitBranch,
     LayoutGrid,
     AlignCenter,
+    Hand,
 } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -79,7 +80,7 @@ import {
 } from "@/lib/whiteboard/snapGuides";
 
 
-type WhiteboardTool = "select" | "draw" | "connector";
+type WhiteboardTool = "select" | "draw" | "connector" | "pan";
 
 interface LayerRow {
     index: number;
@@ -231,6 +232,11 @@ export default function WhiteboardEditor({
     const connectorPreviewRef = useRef<fabric.Line | null>(null);
     const hoveredShapeIdRef = useRef<string | null>(null);
     const toolRef = useRef<WhiteboardTool>("select");
+    
+    const isPanningRef = useRef(false);
+    const lastPanPointRef = useRef<{ x: number; y: number } | null>(null);
+    const spaceDownRef = useRef(false);
+    const [zoomLevel, setZoomLevel] = useState(100);
 
     // Detect dark mode
     useEffect(() => {
@@ -407,6 +413,19 @@ export default function WhiteboardEditor({
 
         // Connector mode handlers
         canvas.on("mouse:move", (opt) => {
+            // Pan mode
+            if (isPanningRef.current && lastPanPointRef.current) {
+                const vpt = canvas.viewportTransform;
+                if (!vpt) return;
+                const e = opt.e as MouseEvent;
+                const dx = e.clientX - lastPanPointRef.current.x;
+                const dy = e.clientY - lastPanPointRef.current.y;
+                vpt[4] += dx;
+                vpt[5] += dy;
+                canvas.setViewportTransform(vpt);
+                lastPanPointRef.current = { x: e.clientX, y: e.clientY };
+                return;
+            }
             if (toolRef.current !== "connector") return;
             const pointer = opt.scenePoint;
             // Update hover
@@ -423,6 +442,22 @@ export default function WhiteboardEditor({
         });
 
         canvas.on("mouse:down", (opt) => {
+            // Space-drag panning (works in any tool)
+            if (spaceDownRef.current) {
+                isPanningRef.current = true;
+                const e = opt.e as MouseEvent;
+                lastPanPointRef.current = { x: e.clientX, y: e.clientY };
+                canvas.defaultCursor = 'grabbing';
+                return;
+            }
+            // Pan tool
+            if (toolRef.current === 'pan') {
+                isPanningRef.current = true;
+                const e = opt.e as MouseEvent;
+                lastPanPointRef.current = { x: e.clientX, y: e.clientY };
+                canvas.defaultCursor = 'grabbing';
+                return;
+            }
             if (toolRef.current !== "connector") return;
             const pointer = opt.scenePoint;
             const target = findShapeNearPoint(canvas, pointer, 28);
@@ -458,6 +493,25 @@ export default function WhiteboardEditor({
                 connectorFromRef.current = null;
                 canvas.requestRenderAll();
             }
+        });
+
+        canvas.on("mouse:up", () => {
+            if (toolRef.current === 'pan' || spaceDownRef.current) {
+                isPanningRef.current = false;
+                lastPanPointRef.current = null;
+                canvas.defaultCursor = spaceDownRef.current ? (toolRef.current === 'connector' ? 'crosshair' : toolRef.current === 'pan' ? 'grab' : 'default') : 'grab';
+            }
+        });
+
+        canvas.on("mouse:wheel", (opt) => {
+            const delta = opt.e.deltaY;
+            let zoom = canvas.getZoom();
+            zoom *= 0.999 ** delta;
+            zoom = Math.min(Math.max(0.1, zoom), 5);
+            canvas.zoomToPoint(new fabric.Point(opt.e.offsetX, opt.e.offsetY), zoom);
+            setZoomLevel(Math.round(canvas.getZoom() * 100));
+            opt.e.preventDefault();
+            opt.e.stopPropagation();
         });
 
         // Update connectors when shapes move
@@ -542,6 +596,15 @@ export default function WhiteboardEditor({
             if (e.key === "v" || e.key === "V") activateTool("select");
             else if (e.key === "p" || e.key === "P") activateTool("draw");
             else if (e.key === "a" || e.key === "A") activateTool("connector");
+            else if (e.key === "h" || e.key === "H") activateTool("pan");
+            else if (e.key === ' ' && !e.repeat) {
+                spaceDownRef.current = true;
+                if (fabricCanvas.current) {
+                    fabricCanvas.current.defaultCursor = 'grab';
+                    fabricCanvas.current.hoverCursor = 'grab';
+                }
+                e.preventDefault();
+            }
             else if (e.key === "d" || e.key === "D") addDiamondShape();
             else if (e.key === "s" || e.key === "S") addPillShape();
             else if (e.key === "i" || e.key === "I") addDataShape();
@@ -562,8 +625,29 @@ export default function WhiteboardEditor({
                 history.redo(canvas);
             }
         };
+
+        const keyupHandler = (e: KeyboardEvent) => {
+            const tag = (e.target as HTMLElement)?.tagName;
+            if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+            if (e.key === ' ') {
+                spaceDownRef.current = false;
+                isPanningRef.current = false;
+                lastPanPointRef.current = null;
+                const canvas = fabricCanvas.current;
+                if (canvas) {
+                    canvas.defaultCursor = toolRef.current === 'connector' ? 'crosshair' : toolRef.current === 'pan' ? 'grab' : 'default';
+                    canvas.hoverCursor = toolRef.current === 'connector' ? 'crosshair' : toolRef.current === 'pan' ? 'grab' : 'move';
+                }
+            }
+        };
+
         window.addEventListener("keydown", handler);
-        return () => window.removeEventListener("keydown", handler);
+        window.addEventListener("keyup", keyupHandler);
+        return () => {
+            window.removeEventListener("keydown", handler);
+            window.removeEventListener("keyup", keyupHandler);
+        };
     }, []);
 
     const activateTool = (next: WhiteboardTool) => {
@@ -578,6 +662,15 @@ export default function WhiteboardEditor({
             canvas.defaultCursor = "crosshair";
             canvas.hoverCursor = "crosshair";
             canvas.discardActiveObject();
+            canvas.forEachObject(o => { o.selectable = true; o.evented = true; });
+        } else if (next === 'pan') {
+            canvas.isDrawingMode = false;
+            canvas.selection = false;
+            canvas.defaultCursor = 'grab';
+            canvas.hoverCursor = 'grab';
+            canvas.discardActiveObject();
+            // Make all objects non-selectable during pan
+            canvas.forEachObject(o => { o.selectable = false; o.evented = false; });
         } else {
             canvas.selection = true;
             canvas.defaultCursor = "default";
@@ -587,6 +680,8 @@ export default function WhiteboardEditor({
                 canvas.remove(connectorPreviewRef.current);
                 connectorPreviewRef.current = null;
             }
+            // Restore object selectability when leaving pan
+            canvas.forEachObject(o => { o.selectable = true; o.evented = true; });
         }
 
         canvas.isDrawingMode = next === "draw";
@@ -902,6 +997,7 @@ export default function WhiteboardEditor({
                     <ToolbarButton icon={MousePointer2} active={tool === "select"} onClick={() => activateTool("select")} label="Seleccionar (V)" />
                     <ToolbarButton icon={Pencil} active={tool === "draw"} onClick={() => activateTool("draw")} label="Dibujo libre (P)" />
                     <ToolbarButton icon={ArrowUpRight} active={tool === "connector"} onClick={() => activateTool("connector")} label="Conector (A)" />
+                    <ToolbarButton icon={Hand} active={tool === "pan"} onClick={() => activateTool("pan")} label="Mover lienzo (H)" />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <div className="relative">
                         <ToolbarButton 
@@ -997,6 +1093,40 @@ export default function WhiteboardEditor({
                             </div>
                         )}
                     </div>
+                </div>
+
+                {/* ── Zoom controls (bottom-right) ── */}
+                <div className="absolute right-[340px] bottom-6 z-20 flex items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-white/90 p-1 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
+                    <button
+                        className="rounded-md px-2 py-1 text-xs font-medium hover:bg-[hsl(var(--surface-1))] transition-colors"
+                        onClick={() => {
+                            const canvas = fabricCanvas.current;
+                            if (!canvas) return;
+                            const zoom = Math.max(0.1, canvas.getZoom() - 0.1);
+                            canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
+                            setZoomLevel(Math.round(canvas.getZoom() * 100));
+                        }}
+                    >−</button>
+                    <span
+                        className="min-w-[50px] text-center text-xs font-mono cursor-pointer"
+                        onClick={() => {
+                            const canvas = fabricCanvas.current;
+                            if (!canvas) return;
+                            canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+                            setZoomLevel(Math.round(canvas.getZoom() * 100));
+                        }}
+                        title="Reset zoom"
+                    >{zoomLevel}%</span>
+                    <button
+                        className="rounded-md px-2 py-1 text-xs font-medium hover:bg-[hsl(var(--surface-1))] transition-colors"
+                        onClick={() => {
+                            const canvas = fabricCanvas.current;
+                            if (!canvas) return;
+                            const zoom = Math.min(5, canvas.getZoom() + 0.1);
+                            canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
+                            setZoomLevel(Math.round(canvas.getZoom() * 100));
+                        }}
+                    >+</button>
                 </div>
 
                 {/* ── Canvas area ── */}
