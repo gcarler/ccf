@@ -21,7 +21,7 @@ import uuid as _uuid
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -640,6 +640,20 @@ def send_direct_message(
     # TOCTOU defense (#5): re-validar participación al commit time.
     _assert_actor_still_participant_at_commit_time(db, conv_id, current_user)
     msg = crud.create_direct_message(db, conv_id, current_user.id, payload.content)
+    
+    import json
+    if payload.attachment_url:
+        msg.attachment_url = payload.attachment_url
+        msg.attachment_type = payload.attachment_type
+        msg.attachment_name = payload.attachment_name
+        msg.attachment_size = payload.attachment_size
+    if payload.reply_to_id:
+        msg.reply_to_id = payload.reply_to_id
+    if payload.mentions:
+        msg.mentions_raw = json.dumps([str(m) for m in payload.mentions])
+    db.commit()
+    db.refresh(msg)
+    
     persona = _get_persona(db, current_user)
     sender_name = _persona_display_name(persona)
     # Broadcast via WebSocket (scheduled as background task to avoid RuntimeError
@@ -665,6 +679,12 @@ def send_direct_message(
         sender_name=sender_name,
         content=msg.content,
         created_at=msg.created_at,
+        attachment_url=msg.attachment_url,
+        attachment_type=msg.attachment_type,
+        attachment_name=msg.attachment_name,
+        attachment_size=msg.attachment_size,
+        reply_to_id=msg.reply_to_id,
+        mentions=[str(m) for m in payload.mentions] if payload.mentions else None,
     )
 
 
@@ -755,3 +775,58 @@ def delete_chat_message_endpoint(
     msg.content = "[Mensaje eliminado]"
     db.commit()
     return {"ok": True}
+
+@router.post("/chat/upload-attachment")
+async def upload_chat_attachment(
+    file: UploadFile = File(...),
+    current_user: models.Usuario = Depends(crud.get_current_user) if hasattr(crud, "get_current_user") else Depends(require_module_access("messaging", "edit")),
+    db: Session = Depends(get_db),
+):
+    """Upload a file attachment for chat messages."""
+    import shutil, os, uuid as _uuid
+    
+    # Validate file type
+    ALLOWED_TYPES = {
+        "image/jpeg": "image", "image/png": "image", "image/gif": "image",
+        "image/webp": "image", "image/svg+xml": "image",
+        "application/pdf": "pdf",
+        "application/msword": "document",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "document",
+        "application/vnd.ms-excel": "document",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "document",
+        "text/plain": "document",
+        "text/csv": "document",
+        "video/mp4": "video", "video/webm": "video",
+        "audio/mpeg": "audio", "audio/ogg": "audio", "audio/wav": "audio",
+    }
+    
+    content_type = file.content_type or "application/octet-stream"
+    att_type = ALLOWED_TYPES.get(content_type, None)
+    if not att_type:
+        raise HTTPException(status_code=422, detail=f"Tipo de archivo no permitido: {content_type}")
+    
+    # Check file size (max 25MB)
+    MAX_SIZE = 25 * 1024 * 1024
+    contents = await file.read()
+    if len(contents) > MAX_SIZE:
+        raise HTTPException(status_code=413, detail="El archivo supera el límite de 25 MB")
+    
+    # Save to static directory
+    upload_dir = os.path.join(os.path.dirname(__file__), "..", "..", "static", "chat_attachments")
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    ext = os.path.splitext(file.filename or "")[1] or ".bin"
+    filename = f"{_uuid.uuid4()}{ext}"
+    filepath = os.path.join(upload_dir, filename)
+    
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    
+    url = f"/static/chat_attachments/{filename}"
+    
+    return {
+        "url": url,
+        "type": att_type,
+        "name": file.filename or filename,
+        "size": len(contents),
+    }

@@ -16,7 +16,14 @@ MessageCircle,
 Plus,
 Search,
 Send,
-UserPlus
+UserPlus,
+File as LucideFile,
+FileText,
+Music,
+Paperclip,
+Reply,
+Video,
+X
 } from "lucide-react";
 import React,{ useCallback,useEffect,useRef,useState } from "react";
 
@@ -70,6 +77,20 @@ export default function MessagesPage() {
     const inputRef = useRef<HTMLInputElement>(null);
     const messagesRef = useRef<DirectMessageItem[]>([]);
     const activeConvIdRef = useRef<string | null>(null);
+
+    const [replyTo, setReplyTo] = useState<DirectMessageItem | null>(null);
+    const [attachmentPreview, setAttachmentPreview] = useState<{
+        file: File; url: string; type: string; name: string;
+    } | null>(null);
+    const [uploadingFile, setUploadingFile] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Mention autocomplete
+    const [mentionQuery, setMentionQuery] = useState("");
+    const [mentionResults, setMentionResults] = useState<SearchedUser[]>([]);
+    const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+    const [mentionStart, setMentionStart] = useState(-1);
+    const [mentions, setMentions] = useState<SearchedUser[]>([]);
 
     // ── New conversation drawer ──────────────────────────────────────────
     const [showNewConvDrawer, setShowNewConvDrawer] = useState(false);
@@ -160,28 +181,125 @@ export default function MessagesPage() {
         }
     }, [messages]);
 
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setInput(val);
+        
+        // Detect @ symbol
+        const lastAt = val.lastIndexOf('@');
+        if (lastAt !== -1) {
+            const query = val.slice(lastAt + 1);
+            if (query.length >= 0 && !query.includes(' ')) {
+                setMentionQuery(query);
+                setMentionStart(lastAt);
+                setShowMentionDropdown(true);
+                // search users
+                if (query.length >= 1) {
+                    apiFetch<SearchedUser[]>(`/chat/users/search?q=${encodeURIComponent(query)}`, { token })
+                        .then(r => setMentionResults(Array.isArray(r) ? r.slice(0, 6) : []))
+                        .catch(() => {});
+                } else {
+                    setMentionResults([]);
+                }
+                return;
+            }
+        }
+        setShowMentionDropdown(false);
+    };
+
+    const selectMention = (user: SearchedUser) => {
+        const before = input.slice(0, mentionStart);
+        const after = input.slice(mentionStart + 1 + mentionQuery.length);
+        setInput(`${before}@${user.username} ${after}`);
+        setMentions(prev => prev.some(m => m.id === user.id) ? prev : [...prev, user]);
+        setShowMentionDropdown(false);
+        setMentionResults([]);
+        inputRef.current?.focus();
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        
+        const ALLOWED = ['image/', 'application/pdf', 'application/msword', 
+            'application/vnd.openxmlformats', 'application/vnd.ms-excel',
+            'text/plain', 'text/csv', 'video/mp4', 'video/webm', 
+            'audio/mpeg', 'audio/ogg', 'audio/wav'];
+        
+        const isAllowed = ALLOWED.some(t => file.type.startsWith(t));
+        if (!isAllowed) { addToast('Tipo de archivo no soportado', 'error'); return; }
+        if (file.size > 25 * 1024 * 1024) { addToast('El archivo supera 25 MB', 'error'); return; }
+        
+        const url = URL.createObjectURL(file);
+        const type = file.type.startsWith('image/') ? 'image' 
+            : file.type === 'application/pdf' ? 'pdf'
+            : file.type.startsWith('video/') ? 'video'
+            : file.type.startsWith('audio/') ? 'audio'
+            : 'document';
+        setAttachmentPreview({ file, url, type, name: file.name });
+    };
+
     const handleSend = async () => {
-        if (!input.trim() || !token || !activeConv || sending) return;
+        if ((!input.trim() && !attachmentPreview) || !token || !activeConv || sending) return;
         const content = input.trim();
-        setInput("");
+        setInput('');
         setSending(true);
+        
+        let att: { url: string; type: string; name: string; size: number } | null = null;
+        
+        if (attachmentPreview) {
+            setUploadingFile(true);
+            try {
+                const formData = new FormData();
+                formData.append('file', attachmentPreview.file);
+                const attRes = await apiFetch<{ url: string; type: string; name: string; size: number }>('/chat/upload-attachment', {
+                    method: 'POST',
+                    token,
+                    body: formData,
+                });
+                att = attRes;
+            } catch {
+                addToast('Error al subir archivo', 'error');
+                setSending(false);
+                setUploadingFile(false);
+                return;
+            } finally {
+                setUploadingFile(false);
+                URL.revokeObjectURL(attachmentPreview.url);
+                setAttachmentPreview(null);
+            }
+        }
+        
         try {
+            const body: Record<string, unknown> = { content };
+            if (att) { body.attachment_url = att.url; body.attachment_type = att.type; body.attachment_name = att.name; body.attachment_size = att.size; }
+            if (replyTo) { body.reply_to_id = replyTo.id; }
+            if (mentions.length > 0) { body.mentions = mentions.map(m => m.id); }
+            
             const msg = await apiFetch<DirectMessageItem>(
                 `/chat/conversations/${activeConv.id}/messages`,
-                { method: "POST", token, body: { content } }
+                { method: 'POST', token, body }
             );
-            setMessages((prev) => [...prev, msg]);
+            setMessages(prev => [...prev, msg]);
+            setReplyTo(null);
+            setMentions([]);
         } catch {
             setInput(content);
-            addToast("Error al enviar mensaje", "error");
+            addToast('Error al enviar mensaje', 'error');
         } finally {
             setSending(false);
         }
     };
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
-    };
+    
+    function renderContent(content: string, mentions: string[] = []) {
+        if (!mentions.length) return <p className="whitespace-pre-wrap break-words">{sanitizeText(content)}</p>;
+        const parts = content.split(/(@\w+)/g);
+        return <p className="whitespace-pre-wrap break-words">{parts.map((part, i) => 
+            part.startsWith('@') 
+                ? <span key={i} className="font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] px-0.5 rounded">{part}</span>
+                : part
+        )}</p>;
+    }
 
     const getOtherParticipant = (conv: ConversationRead) =>
         conv.participants.find((p) => p.persona_id !== userId);
@@ -458,8 +576,14 @@ export default function MessagesPage() {
                                     return (
                                         <div
                                             key={msg.id}
-                                            className={clsx("flex", isOwn ? "justify-end" : "justify-start")}
+                                            className={clsx("flex group", isOwn ? "justify-end" : "justify-start")}
                                         >
+                                            {!isOwn && (
+                                                <button onClick={() => setReplyTo(msg)}
+                                                    className="self-end mb-1 mr-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-[hsl(var(--surface-2))]">
+                                                    <Reply size={13} className="text-[hsl(var(--text-secondary))]" />
+                                                </button>
+                                            )}
                                             {!isOwn && (
                                                 <div className="mr-2 mt-1 shrink-0 hidden xs:block">
                                                     <AvatarInitial name={msg.sender_name || "U"} size="sm" />
@@ -477,7 +601,28 @@ export default function MessagesPage() {
                                                         ? "bg-[hsl(var(--primary))] text-white rounded-br-md"
                                                         : "bg-[hsl(var(--bg-primary))] dark:bg-white/[0.07] border border-[hsl(var(--border))] dark:border-white/[0.06] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-bl-md shadow-sm"
                                                 )}>
-                                                    <p className="whitespace-pre-wrap break-words">{sanitizeText(msg.content)}</p>
+                                                    {msg.reply_preview && (
+                                                        <div className="mb-1 px-2 py-1 rounded-md bg-black/5 dark:bg-white/5 border-l-2 border-[hsl(var(--primary))] text-2xs text-[hsl(var(--text-secondary))]">
+                                                            <span className="font-bold">{msg.reply_preview.sender_name}: </span>
+                                                            {msg.reply_preview.content || '📎 Adjunto'}
+                                                        </div>
+                                                    )}
+                                                    {renderContent(msg.content, msg.mentions || [])}
+                                                    {msg.attachment_url && (
+                                                        <div className="mt-1">
+                                                            {msg.attachment_type === 'image' ? (
+                                                                <img src={msg.attachment_url} alt={msg.attachment_name || 'imagen'} 
+                                                                    className="max-w-[240px] max-h-[240px] rounded-xl object-cover cursor-pointer" 
+                                                                    onClick={() => window.open(msg.attachment_url!, '_blank')} />
+                                                            ) : (
+                                                                <a href={msg.attachment_url} target="_blank" rel="noopener noreferrer"
+                                                                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10 transition-colors">
+                                                                    <FileText size={16} />
+                                                                    <span className="text-xs font-medium truncate max-w-[180px]">{msg.attachment_name || 'archivo'}</span>
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className={clsx("flex items-center gap-1", isOwn ? "justify-end pr-1" : "pl-1")}>
                                                     <span className={clsx(
@@ -491,6 +636,12 @@ export default function MessagesPage() {
                                                     )}
                                                 </div>
                                             </div>
+                                            {isOwn && (
+                                                <button onClick={() => setReplyTo(msg)}
+                                                    className="self-end mb-1 ml-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md hover:bg-[hsl(var(--surface-2))]">
+                                                    <Reply size={13} className="text-[hsl(var(--text-secondary))]" />
+                                                </button>
+                                            )}
                                         </div>
                                     );
                                 })
@@ -498,28 +649,100 @@ export default function MessagesPage() {
                         </div>
 
                         {/* ── Input bar ── */}
-                        <div className="border-t border-[hsl(var(--border))] dark:border-white/[0.05] p-2 md:p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
-                            <div className="flex items-center gap-2">
+                        <div className="border-t border-[hsl(var(--border))] dark:border-white/[0.05] p-2 md:p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#141517] relative">
+                            {/* Reply preview */}
+                            {replyTo && (
+                                <div className="mx-2 mb-1 flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg border-l-2 border-[hsl(var(--primary))]">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-2xs font-bold text-[hsl(var(--primary))]">Respondiendo a {replyTo.sender_name}</p>
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{replyTo.content || '📎 Adjunto'}</p>
+                                    </div>
+                                    <button onClick={() => setReplyTo(null)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors">
+                                        <X size={13} />
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {/* Attachment preview */}
+                            {attachmentPreview && (
+                                <div className="mx-2 mb-1 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg">
+                                    {attachmentPreview.type === 'image' ? (
+                                        <img src={attachmentPreview.url} alt="Preview" className="h-12 w-12 rounded-md object-cover" />
+                                    ) : (
+                                        <div className="h-10 w-10 rounded-md bg-[hsl(var(--primary)/0.1)] flex items-center justify-center">
+                                            {attachmentPreview.type === 'pdf' ? <FileText size={18} className="text-[hsl(var(--danger))]" />
+                                             : attachmentPreview.type === 'video' ? <Video size={18} className="text-[hsl(var(--info))]" />
+                                             : attachmentPreview.type === 'audio' ? <Music size={18} className="text-[hsl(var(--success))]" />
+                                             : <LucideFile size={18} className="text-[hsl(var(--primary))]" />}
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-semibold text-[hsl(var(--text-primary))] truncate">{attachmentPreview.name}</p>
+                                        <p className="text-2xs text-[hsl(var(--text-secondary))]">{(attachmentPreview.file.size / 1024).toFixed(0)} KB</p>
+                                    </div>
+                                    <button onClick={() => { URL.revokeObjectURL(attachmentPreview.url); setAttachmentPreview(null); fileInputRef.current && (fileInputRef.current.value = ''); }} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors">
+                                        <X size={13} />
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {/* Mention dropdown */}
+                            {showMentionDropdown && mentionResults.length > 0 && (
+                                <div className="absolute bottom-[calc(100%+0.5rem)] left-2 right-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1d] shadow-2xl overflow-hidden z-50">
+                                    {mentionResults.map(u => (
+                                        <button key={u.id} onClick={() => selectMention(u)}
+                                            className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
+                                            <AvatarInitial name={u.username} size="sm" />
+                                            <div className="text-left flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{u.username}</p>
+                                                <p className="text-2xs text-[hsl(var(--text-secondary))] truncate">{u.email}</p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="flex items-end gap-2">
+                                {/* File attach button */}
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={sending}
+                                    title="Adjuntar archivo (imágenes, PDF, Word, Excel, audio, video)"
+                                    className="size-9 rounded-xl flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all shrink-0"
+                                >
+                                    <Paperclip size={18} />
+                                </button>
+                                <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect}
+                                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,video/mp4,video/webm,audio/mpeg,audio/ogg,audio/wav" />
+                                
                                 <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-[hsl(var(--primary))]/20 transition-all">
                                     <input
                                         ref={inputRef}
                                         type="text"
                                         value={input}
-                                        onChange={(e) => setInput(e.target.value)}
-                                        onKeyDown={handleKeyDown}
+                                        onChange={handleInputChange}
+                                        onKeyDown={(e) => {
+                                            if (showMentionDropdown && (e.key === 'Escape' || e.key === 'ArrowDown')) {
+                                                e.preventDefault();
+                                                if (e.key === 'Escape') setShowMentionDropdown(false);
+                                                return;
+                                            }
+                                            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+                                        }}
                                         disabled={sending}
-                                        placeholder="Escribe un mensaje..."
+                                        placeholder={replyTo ? `Responder a ${replyTo.sender_name}...` : "Escribe un mensaje... (@ para mencionar)"}
                                         aria-label="Escribe un mensaje"
                                         className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] min-w-0 disabled:opacity-50"
                                     />
                                 </div>
+                                
                                 <button
                                     onClick={handleSend}
-                                    disabled={!input.trim() || sending}
+                                    disabled={(!input.trim() && !attachmentPreview) || sending}
                                     aria-label="Enviar mensaje"
-                                    className="size-9 rounded-xl bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:bg-[hsl(var(--primary))] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shadow-[hsl(var(--info)/20%)] shrink-0"
+                                    className="size-9 rounded-xl bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:bg-[hsl(var(--primary))] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shrink-0"
                                 >
-                                    {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                                    {(sending || uploadingFile) ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                                 </button>
                             </div>
                         </div>

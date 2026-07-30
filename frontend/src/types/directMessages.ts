@@ -15,12 +15,19 @@ export interface ConversationParticipantRead {
 }
 
 export interface DirectMessageItem {
-  id: string;
-  sender_id: string;
-  sender_name: string;
-  content: string;
-  created_at: string;
-  is_read: boolean;
+    id: string;
+    sender_id: string;
+    sender_name: string;
+    content: string;
+    created_at: string;
+    is_read: boolean;
+    attachment_url?: string | null;
+    attachment_type?: string | null;
+    attachment_name?: string | null;
+    attachment_size?: number | null;
+    reply_to_id?: string | null;
+    reply_preview?: { id: string; sender_name: string; content: string; attachment_type?: string | null } | null;
+    mentions?: string[] | null;
 }
 
 export interface WsDirectMessageEvent {
