@@ -16,9 +16,17 @@ interface MessageListProps {
 export function MessageList({ messages, loading, currentUserId, onLoadOlder, onReply }: MessageListProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const shouldAutoScroll = useRef(true);
+    const lastMessageIdRef = useRef<string | null>(null);
+    const topTriggerRef = useRef(false);
 
+    // Auto-scroll only when a new message is appended (last id changed), not when older messages prepend.
     useEffect(() => {
-        if (!shouldAutoScroll.current || !scrollRef.current) return;
+        const last = messages[messages.length - 1];
+        if (!scrollRef.current) return;
+        const prev = lastMessageIdRef.current;
+        lastMessageIdRef.current = last?.id ?? null;
+        if (prev === last?.id) return;
+        if (!shouldAutoScroll.current) return;
         const el = scrollRef.current;
         el.scrollTop = el.scrollHeight;
     }, [messages]);
@@ -28,8 +36,11 @@ export function MessageList({ messages, loading, currentUserId, onLoadOlder, onR
         if (!el) return;
         const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
         shouldAutoScroll.current = nearBottom;
-        if (el.scrollTop < 60) {
+        if (!loading && !topTriggerRef.current && el.scrollTop < 60) {
+            topTriggerRef.current = true;
             onLoadOlder();
+        } else if (el.scrollTop >= 60) {
+            topTriggerRef.current = false;
         }
     };
 
