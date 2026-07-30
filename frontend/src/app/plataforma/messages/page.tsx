@@ -4,7 +4,8 @@ import WorkspaceLayout from "@/components/WorkspaceLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { ChevronLeft, Circle, MessageCircle, Plus } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ConversationSidebar } from "./_components/ConversationSidebar";
 import { MessageInput } from "./_components/MessageInput";
 import { MessageList } from "./_components/MessageList";
@@ -17,7 +18,7 @@ import { apiFetch } from "@/lib/http";
 import type { ConversationRead, DirectMessageItem } from "@/types/directMessages";
 import clsx from "clsx";
 
-export default function MessagesPage() {
+function MessagesPage() {
     const { token, user } = useAuth();
     const { addToast } = useToast();
     const userId = user?.id ? String(user.id) : "";
@@ -34,9 +35,19 @@ export default function MessagesPage() {
         totalUnread,
     } = useConversations({ token, userPersonaId: userId });
 
+    const searchParams = useSearchParams();
+    const initialConvId = searchParams?.get("conv") ?? null;
+
     const [activeConv, setActiveConv] = useState<ConversationRead | null>(null);
     const [showNewConvDrawer, setShowNewConvDrawer] = useState(false);
     const [creatingConv, setCreatingConv] = useState(false);
+
+    // Open the conversation indicated by ?conv= when the list is loaded.
+    useEffect(() => {
+        if (!initialConvId || conversations.length === 0) return;
+        const match = conversations.find((c) => c.id === initialConvId);
+        if (match) setActiveConv(match);
+    }, [initialConvId, conversations]);
 
     const {
         messages,
@@ -162,6 +173,20 @@ export default function MessagesPage() {
                 onCreate={handleCreateConversation}
             />
         </WorkspaceLayout>
+    );
+}
+
+export default function MessagesPageWrapper() {
+    return (
+        <Suspense
+            fallback={
+                <div className="flex h-full items-center justify-center text-sm text-[hsl(var(--text-secondary))]">
+                    Cargando mensajes…
+                </div>
+            }
+        >
+            <MessagesPage />
+        </Suspense>
     );
 }
 

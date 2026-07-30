@@ -17,7 +17,7 @@ interface WorkspaceSocketResult {
     status: SocketStatus;
 }
 
-const MAX_RECONNECT_ATTEMPTS = 5;
+export const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_DELAY_MS = 1000;
 
 export function useWorkspaceSocket({ clientId, rooms = [], enabled = true, onEvent }: UseWorkspaceSocketOptions): WorkspaceSocketResult {
@@ -27,6 +27,7 @@ export function useWorkspaceSocket({ clientId, rooms = [], enabled = true, onEve
     const onEventRef = useRef(onEvent);
     const reconnectAttemptsRef = useRef(0);
     const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const hasErrorRef = useRef(false);
 
     onEventRef.current = onEvent;
 
@@ -35,15 +36,10 @@ export function useWorkspaceSocket({ clientId, rooms = [], enabled = true, onEve
 
     useEffect(() => {
         if (!enabled) {
-            if (socketRef.current) {
-                socketRef.current.close();
-                socketRef.current = null;
-            }
+            // Cleanup already closes the socket and clears timers before this
+            // effect re-runs, so we only need to reset state here.
             reconnectAttemptsRef.current = 0;
-            if (reconnectTimerRef.current) {
-                clearTimeout(reconnectTimerRef.current);
-                reconnectTimerRef.current = null;
-            }
+            hasErrorRef.current = false;
             setStatus('idle');
             return;
         }
@@ -56,10 +52,14 @@ export function useWorkspaceSocket({ clientId, rooms = [], enabled = true, onEve
 
             socket.onopen = () => {
                 setStatus('open');
+                hasErrorRef.current = false;
                 reconnectAttemptsRef.current = 0;
             };
             socket.onclose = () => {
-                setStatus('idle');
+                // Keep the error status visible until a successful reconnect happens.
+                if (!hasErrorRef.current) {
+                    setStatus('idle');
+                }
                 socketRef.current = null;
                 if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
                     const delay = BASE_DELAY_MS * Math.pow(2, reconnectAttemptsRef.current);
@@ -69,7 +69,10 @@ export function useWorkspaceSocket({ clientId, rooms = [], enabled = true, onEve
                     }, delay);
                 }
             };
-            socket.onerror = () => setStatus('error');
+            socket.onerror = () => {
+                setStatus('error');
+                hasErrorRef.current = true;
+            };
             socket.onmessage = (event) => {
                 if (!onEventRef.current) return;
                 try {

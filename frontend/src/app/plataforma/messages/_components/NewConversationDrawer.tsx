@@ -65,7 +65,7 @@ export function NewConversationDrawer({
                                     <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{u.username}</p>
                                     <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{u.email}</p>
                                 </div>
-                                {creating && <Loader2 size={14} className="animate-spin text-[hsl(var(--primary))] shrink-0" />}
+                                {creating && <Loader2 size={14} aria-hidden="true" data-testid="creating-conversation-spinner" className="animate-spin text-[hsl(var(--primary))] shrink-0" />}
                             </button>
                         ))
                     ) : (

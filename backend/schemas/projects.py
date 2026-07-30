@@ -327,6 +327,8 @@ class ProjectCommentItem(ProjectCommentBase):
     is_resolved: bool = False
     created_at: datetime
     updated_at: datetime
+    module_type: Literal["project", "agenda"] = "project"
+    context_title: Optional[str] = None
 
 
 class InboxReadToggle(BaseModel):

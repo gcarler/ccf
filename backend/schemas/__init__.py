@@ -134,6 +134,7 @@ from backend.schemas.auth_v3 import (
 
 # ── Chat / Direct Messages ───────────────────────────────────────────
 from backend.schemas.chat import (
+                                     ChatMessageAdminRead,
                                      ConversationCreate,
                                      ConversationParticipantRead,
                                      ConversationRead,

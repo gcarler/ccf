@@ -4,7 +4,7 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
 declare module 'vitest' {
-  interface Assertion<T = any> {
+  interface Assertion {
     toHaveNoViolations(): void;
   }
 }
@@ -67,6 +67,20 @@ Object.defineProperty(window, 'ResizeObserver', {
 
 // Mock HTMLElement.prototype.scrollIntoView
 Element.prototype.scrollIntoView = vi.fn();
+
+// Mock URL.createObjectURL for attachment previews in jsdom while preserving URL constructor
+if (!window.URL.createObjectURL) {
+  Object.defineProperty(window.URL, 'createObjectURL', {
+    writable: true,
+    value: vi.fn(() => 'blob://mock-preview-url'),
+  });
+}
+if (!window.URL.revokeObjectURL) {
+  Object.defineProperty(window.URL, 'revokeObjectURL', {
+    writable: true,
+    value: vi.fn(),
+  });
+}
 
 // Suppress React 18 act() warnings in tests
 const originalConsoleError = console.error;

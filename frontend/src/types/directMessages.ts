@@ -36,6 +36,23 @@ export interface WsDirectMessageEvent {
   message: DirectMessageItem;
 }
 
+export interface ChatAdminMessageItem {
+  id: string;
+  conversation_id: string;
+  conversation_name: string;
+  sender_id: string;
+  sender_name: string;
+  content: string;
+  created_at: string;
+  is_read: boolean;
+  attachment_url?: string | null;
+  attachment_type?: string | null;
+  attachment_name?: string | null;
+  attachment_size?: number | null;
+  reply_to_id?: string | null;
+  mentions?: string[] | null;
+}
+
 export interface WsRawEvent {
   event: string;
   [key: string]: unknown;

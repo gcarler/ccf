@@ -253,6 +253,17 @@ export async function patchCmsSection(
   });
 }
 
+export function updateCmsSectionProps(
+  siteKey: string,
+  slug: string,
+  sectionId: string,
+  props: Record<string, any>,
+  token?: string | null,
+) {
+  return patchCmsSection(siteKey, slug, sectionId, { props_json: props }, token);
+}
+
+
 export async function deleteCmsSection(siteKey: string, slug: string, sectionId: string, token?: string | null) {
   await apiFetch<void>(`/cms/v2/sites/${siteKey}/pages/${slug}/sections/${sectionId}`, {
     method: "DELETE",

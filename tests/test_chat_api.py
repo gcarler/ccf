@@ -341,3 +341,88 @@ def test_create_duplicate_conversation_returns_existing(client, db_session):
     assert resp2.status_code == 201
     conv2_id = resp2.json()["id"]
     assert conv1_id == conv2_id, "Duplicate DM conversation should return existing"
+
+
+def test_send_message_with_mention_creates_notification(client, db_session):
+    """CHAT-MED: Sending a message with @mentions creates in-app notifications."""
+    admin, persona, sede = _seed_admin(db_session)
+    user2, persona2, _ = seed_user_with_role(
+        db_session, "estudiante", "mentiontarget@example.com"
+    )
+    user2.sede_id = sede.id
+    persona2.sede_id = sede.id
+    db_session.add_all([user2, persona2])
+    db_session.commit()
+    headers = _auth_headers(client)
+
+    resp = client.post(
+        "/api/chat/conversations",
+        json={"participant_ids": [str(user2.id)]},
+        headers=headers,
+    )
+    conv_id = resp.json()["id"]
+
+    resp_msg = client.post(
+        f"/api/chat/conversations/{conv_id}/messages",
+        json={"content": "Hola @mencionado", "mentions": [str(user2.id)]},
+        headers=headers,
+    )
+    assert resp_msg.status_code == 201
+    msg = resp_msg.json()
+    assert str(user2.id) in [str(m) for m in msg["mentions"]]
+
+    notifications = (
+        db_session.query(models.NotificacionUsuario)
+        .filter(models.NotificacionUsuario.user_id == user2.id)
+        .all()
+    )
+    assert len(notifications) >= 1
+    assert notifications[0].title == "Te mencionaron en un chat"
+
+
+def test_list_my_messages_and_mentions(client, db_session):
+    """CHAT-MED: /chat/my-messages and /chat/mentions return scoped data."""
+    admin, persona, sede = _seed_admin(db_session)
+    user2, persona2, _ = seed_user_with_role(
+        db_session,
+        "chat_user",
+        "mentionscope@example.com",
+        permisos={"messaging:read": "allow", "messaging:edit": "allow"},
+    )
+    user2.sede_id = sede.id
+    persona2.sede_id = sede.id
+    db_session.add_all([user2, persona2])
+    db_session.commit()
+    headers = _auth_headers(client)
+
+    resp = client.post(
+        "/api/chat/conversations",
+        json={"participant_ids": [str(user2.id)]},
+        headers=headers,
+    )
+    conv_id = resp.json()["id"]
+
+    client.post(
+        f"/api/chat/conversations/{conv_id}/messages",
+        json={"content": "Mensaje sin mención"},
+        headers=headers,
+    )
+    client.post(
+        f"/api/chat/conversations/{conv_id}/messages",
+        json={"content": "Mencionando a user2", "mentions": [str(user2.id)]},
+        headers=headers,
+    )
+
+    # Admin sees their own sent messages.
+    my_resp = client.get("/api/chat/my-messages", headers=headers)
+    assert my_resp.status_code == 200
+    my_data = my_resp.json()
+    assert any(item["content"] == "Mencionando a user2" for item in my_data)
+
+    # Mentioned user sees the mention.
+    headers2 = _auth_headers(client, email="mentionscope@example.com", password="testpass123")
+    men_resp = client.get("/api/chat/mentions", headers=headers2)
+    assert men_resp.status_code == 200
+    men_data = men_resp.json()
+    assert any(item["content"] == "Mencionando a user2" for item in men_data)
+    assert all(item["sender_name"] for item in men_data)

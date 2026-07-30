@@ -17,6 +17,7 @@ Sprint 3 — Axioma 3 defense-in-depth
 
 from __future__ import annotations
 
+import json
 import uuid as _uuid
 from datetime import datetime
 from typing import List, Optional
@@ -31,6 +32,7 @@ from backend.core.permissions import require_module_access
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_for_user
 from backend.mesh_websockets import manager
 from backend.models_shared import _utcnow
+from backend.services.comment_notifications import notify_mention
 
 router = APIRouter()
 
@@ -306,6 +308,54 @@ def _assert_actor_is_active_participant(
 
 
 # ── Helpers de serialización / lookup ────────────────────────────────────────
+
+
+def _build_admin_message(
+    db: Session,
+    current_user: models.User,
+    msg: models.ChatMessage,
+    is_read: bool = False,
+) -> schemas.ChatMessageAdminRead:
+    """Serialize a ChatMessage for the message admin center."""
+    conv_id = msg.room_id[3:] if msg.room_id and msg.room_id.startswith("dm_") else None
+    conversation_id = _uuid.UUID(conv_id) if conv_id else None
+
+    conversation_name = "Chat"
+    if conversation_id:
+        conv = db.query(models.Conversation).filter(models.Conversation.id == conversation_id).first()
+        if conv:
+            other = next(
+                (p for p in conv.participants if str(p.user_id) != str(current_user.id)),
+                None,
+            )
+            if other:
+                persona = db.query(models.Persona).filter(models.Persona.id == other.user_id).first()
+                conversation_name = _persona_display_name(persona)
+
+    sender = db.query(models.Persona).filter(models.Persona.id == msg.sender_id).first()
+    mentions = None
+    if msg.mentions_raw:
+        try:
+            mentions = json.loads(msg.mentions_raw)
+        except Exception:
+            mentions = None
+
+    return schemas.ChatMessageAdminRead(
+        id=msg.id,
+        conversation_id=conversation_id,
+        conversation_name=conversation_name,
+        sender_id=msg.sender_id,
+        sender_name=_persona_display_name(sender),
+        content=msg.content,
+        created_at=msg.created_at,
+        is_read=is_read,
+        attachment_url=msg.attachment_url,
+        attachment_type=msg.attachment_type,
+        attachment_name=msg.attachment_name,
+        attachment_size=msg.attachment_size,
+        reply_to_id=msg.reply_to_id,
+        mentions=mentions,
+    )
 
 
 def _serialize_conversation(
@@ -587,6 +637,110 @@ def list_direct_messages(
     ]
 
 
+@router.get(
+    "/chat/my-messages",
+    response_model=List[schemas.ChatMessageAdminRead],
+)
+def list_my_chat_messages(
+    limit: int = Query(50, le=200),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
+):
+    """List all direct messages sent by the current user.
+
+    Axioma 3: only messages from conversations where the current user is a
+    participant are returned, which also keeps the result within the same
+    tenant scope.
+    """
+    if not current_user.id:
+        return []
+    convs = crud.get_user_conversations(db, current_user.id)
+    if not convs:
+        return []
+    room_ids = [f"dm_{c.id}" for c in convs]
+    msgs = (
+        db.query(models.ChatMessage)
+        .filter(
+            models.ChatMessage.sender_id == current_user.id,
+            models.ChatMessage.room_id.in_(room_ids),
+            models.ChatMessage.deleted_at.is_(None),
+        )
+        .order_by(models.ChatMessage.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return [_build_admin_message(db, current_user, msg, is_read=True) for msg in msgs]
+
+
+@router.get(
+    "/chat/mentions",
+    response_model=List[schemas.ChatMessageAdminRead],
+)
+def list_my_chat_mentions(
+    limit: int = Query(50, le=200),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
+):
+    """List chat messages where the current user has been mentioned.
+
+    Axioma 3: only messages from conversations where the current user is a
+    participant are returned.
+    """
+    persona_id = _get_persona_id(db, current_user)
+    if not persona_id:
+        return []
+    convs = crud.get_user_conversations(db, current_user.id)
+    if not convs:
+        return []
+    room_ids = [f"dm_{c.id}" for c in convs]
+    my_id = str(persona_id)
+    msgs = (
+        db.query(models.ChatMessage)
+        .filter(
+            models.ChatMessage.room_id.in_(room_ids),
+            models.ChatMessage.mentions_raw.isnot(None),
+            models.ChatMessage.mentions_raw.ilike(f"%{my_id}%"),
+            models.ChatMessage.deleted_at.is_(None),
+        )
+        .order_by(models.ChatMessage.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    # Build a lookup of last_read_at per conversation to compute is_read.
+    last_read_map = {
+        str(c.id): (
+            db.query(models.ConversationParticipant.last_read_at)
+            .filter(
+                models.ConversationParticipant.conversation_id == c.id,
+                models.ConversationParticipant.user_id == current_user.id,
+            )
+            .scalar()
+        )
+        for c in convs
+    }
+
+    result = []
+    for msg in msgs:
+        mentions = []
+        if msg.mentions_raw:
+            try:
+                mentions = json.loads(msg.mentions_raw)
+            except Exception:
+                continue
+        if my_id not in mentions:
+            continue
+        conv_id = msg.room_id[3:] if msg.room_id and msg.room_id.startswith("dm_") else None
+        read_at = last_read_map.get(conv_id)
+        is_read = bool(read_at) and msg.created_at <= read_at
+        result.append(_build_admin_message(db, current_user, msg, is_read=is_read))
+    return result
+
+
 @router.post(
     "/chat/conversations/{conv_id}/messages",
     response_model=schemas.DirectMessageItem,
@@ -639,9 +793,12 @@ def send_direct_message(
     _assert_conversation_sede_aligned(db, conv, current_user)
     # TOCTOU defense (#5): re-validar participación al commit time.
     _assert_actor_still_participant_at_commit_time(db, conv_id, current_user)
+
+    persona = _get_persona(db, current_user)
+    sender_name = _persona_display_name(persona)
+
     msg = crud.create_direct_message(db, conv_id, current_user.id, payload.content)
-    
-    import json
+
     if payload.attachment_url:
         msg.attachment_url = payload.attachment_url
         msg.attachment_type = payload.attachment_type
@@ -651,11 +808,20 @@ def send_direct_message(
         msg.reply_to_id = payload.reply_to_id
     if payload.mentions:
         msg.mentions_raw = json.dumps([str(m) for m in payload.mentions])
+        # Create in-app notifications for every mentioned user except the sender.
+        actor_sede = get_user_sede_id(db, current_user.id)
+        notify_mention(
+            db,
+            mention_ids=payload.mentions,
+            author_id=current_user.id,
+            title="Te mencionaron en un chat",
+            content=f"{sender_name}: {msg.content[:120]}{'...' if len(msg.content) > 120 else ''}",
+            url=f"/plataforma/messages?conv={conv_id}",
+            sede_id=actor_sede,
+        )
     db.commit()
     db.refresh(msg)
-    
-    persona = _get_persona(db, current_user)
-    sender_name = _persona_display_name(persona)
+
     # Broadcast via WebSocket (scheduled as background task to avoid RuntimeError
     # from asyncio.get_running_loop in sync endpoint context)
     ws_payload = {
@@ -783,7 +949,9 @@ async def upload_chat_attachment(
     db: Session = Depends(get_db),
 ):
     """Upload a file attachment for chat messages."""
-    import shutil, os, uuid as _uuid
+    import os
+    import shutil
+    import uuid as _uuid
     
     # Validate file type
     ALLOWED_TYPES = {
