@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 // TKT-202 — Multi-role Playwright fixtures for the Academy module (FINAL v3).
 //
 // Pivot from previous Object.fromEntries + mapped-type cast approach which
