@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend.schemas.projects import CommentAttachment
 from backend.core.database import get_db
 from backend.core.permissions import get_current_active_user
 from backend.crud.crm import get_user_sede_id
@@ -32,7 +33,7 @@ ALLOWED_TYPES = {
 }
 
 
-@router.post("/attachments/upload")
+@router.post("/attachments/upload", response_model=CommentAttachment)
 async def upload_comment_attachment(
     file: UploadFile = File(...),
     current_user: models.User = Depends(get_current_active_user),

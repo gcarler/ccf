@@ -11,6 +11,8 @@ interface Comment {
     authorColor?: string;
     text: string;
     timestamp: Date;
+    attachments: { url: string; type: string; name: string; size: number }[];
+    mentions?: string[];
 }
 
 export default function TaskCommentSection({
@@ -42,6 +44,8 @@ export default function TaskCommentSection({
                     author: c.author_name || 'Usuario',
                     text: c.content,
                     timestamp: new Date(c.created_at),
+                    attachments: c.attachments || [],
+                    mentions: c.mentions || [],
                 })));
             }
         } catch {
@@ -65,6 +69,8 @@ export default function TaskCommentSection({
                 author: created.author_name || 'Tú',
                 text: created.content,
                 timestamp: new Date(created.created_at),
+                attachments: created.attachments || [],
+                mentions: created.mentions || [],
             }]);
             onActivityCreated?.();
         } catch {
