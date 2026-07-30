@@ -2316,7 +2316,7 @@ def list_posts_by_category(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     _validate_canonical_category(category)
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    cat = _ensure_canonical_category(db, site.id, category)
+    _ = _ensure_canonical_category(db, site.id, category)
     items, total = crud.list_cms_posts_by_category(
         db,
         site_id=site.id,
@@ -2387,7 +2387,7 @@ def get_post_by_category(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     _validate_canonical_category(category)
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    cat = _ensure_canonical_category(db, site.id, category)
+    _ = _ensure_canonical_category(db, site.id, category)
     row = crud.get_cms_post_by_slug_and_category(db, site.id, slug, category)
     if not row:
         raise HTTPException(status_code=404, detail="post not found")
