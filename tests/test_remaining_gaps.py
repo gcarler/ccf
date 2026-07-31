@@ -161,10 +161,6 @@ def full(client, db_session):
     for i in range(3):
         db_session.add(models.SystemVariable(key=f"faro_var_{i}", value=f"val_{i}"))
 
-    for i in range(2):
-        db_session.add(models.Testimonial(content=f"Testimonial {i}", author_persona_id=str(personas[i].id), sede_id=sede.id, status="published", is_approved=True))
-        db_session.add(models.Announcement(title=f"Announcement {i}", content=f"Content {i}", sede_id=sede.id, created_by_persona_id=personas[i].id, status="published", published_at=datetime.now(timezone.utc)))
-    db_session.commit()
 
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
