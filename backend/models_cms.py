@@ -67,7 +67,17 @@ class CmsSite(Base):
     forms = relationship("CmsForm", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
     newsletters = relationship("CmsNewsletter", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
     subscribers = relationship("CmsSubscriber", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
-    ab_tests = relationship("CmsAbTest", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
+    # FIX (2026-07-31, eager-loading cycle): ``lazy="selectin"`` here + the
+    # ``CmsAbTest.*`` back-relationships (site/page/section_a/section_b/
+    # winner_section all ``lazy="joined"``) form an eager-loading cycle
+    # (CmsSite -> ab_tests -> CmsAbTest -> site/page/section -> CmsSite -> ...)
+    # that makes SQLAlchemy recurse infinitely at query-compile time
+    # (SelectInLoader.setup_query), hanging any ORM query on the
+    # CmsSection -> CmsPage -> CmsSite chain (e.g. seed_public_cms_v2_sections.py).
+    # Nothing reads ``site.ab_tests`` (CmsAbTestRead is scalar-only, and crud
+    # uses the scalar FKs), so ``lazy="select"`` (the default) keeps the
+    # relationship functional while breaking the compile-time cycle.
+    ab_tests = relationship("CmsAbTest", back_populates="site", lazy="select", cascade="all, delete-orphan")
 
 
 class CmsTheme(Base):
