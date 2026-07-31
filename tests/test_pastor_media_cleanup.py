@@ -38,9 +38,9 @@ import pytest
 
 # ── Project bootstrap (matches the script under test) ──────────────────
 _HERE = Path(__file__).resolve()
-_CCF_ROOT = _HERE.parents[1]                 # /root/ccf/ccf
-_PROJECT_ROOT = _CCF_ROOT.parent             # /root/ccf
-_SCRIPTS_DIR = _CCF_ROOT / "scripts"         # /root/ccf/ccf/scripts
+_CCF_ROOT = _HERE.parents[1]  # /root/ccf/ccf
+_PROJECT_ROOT = _CCF_ROOT.parent  # /root/ccf
+_SCRIPTS_DIR = _CCF_ROOT / "scripts"  # /root/ccf/ccf/scripts
 for path in (_PROJECT_ROOT, _CCF_ROOT, _SCRIPTS_DIR):
     p = str(path)
     if p not in sys.path:
@@ -128,11 +128,7 @@ class _MediaFactory:
         if sede_id is None or created_by_persona_id is None:
             sede_anchor, persona_anchor = self._ensure_anchor()
         sede_id = sede_id if sede_id is not None else sede_anchor
-        created_by_persona_id = (
-            created_by_persona_id
-            if created_by_persona_id is not None
-            else persona_anchor
-        )
+        created_by_persona_id = created_by_persona_id if created_by_persona_id is not None else persona_anchor
 
         uuid = _uuid.uuid4()
         url_str = url or f"/api/static/{SUBFOLDER}/{uuid.hex}.webp"
@@ -182,6 +178,7 @@ def tmp_uploads(tmp_path, monkeypatch):
     uploads_root = tmp_path / "uploads"
     (uploads_root / "cms" / "pastores").mkdir(parents=True)
     from backend.core.config import get_settings as _get_settings
+
     live = _get_settings()
     monkeypatch.setattr(live, "uploads_dir", str(uploads_root))
     return uploads_root
@@ -205,6 +202,7 @@ def patched_main_env(db_session, tmp_uploads, monkeypatch):
     # The conftest's ``Settings`` instance is bound to ENGINE we want.
     from tests.conftest import TestingSessionLocal as test_session_factory
     from tests.conftest import engine as test_engine
+
     # The conftest engine talks SQLite + the conftest's in-memory schema
     # which the autouse ``_reset_caches_between_tests`` does not touch
     # (no Redis interference).
@@ -224,9 +222,7 @@ class TestPlanBuilder:
     but the plan is built from a snapshot; no mutation is asserted).
     """
 
-    def test_no_files_no_rows_is_noop(
-        self, db_session, tmp_uploads
-    ):
+    def test_no_files_no_rows_is_noop(self, db_session, tmp_uploads):
         plan = cleanup._build_plan(
             disk_files=[],
             db_rows=[],
@@ -245,9 +241,7 @@ class TestPlanBuilder:
         # type so future refactors to either list/tuple/set pass.
         assert len(plan.actions) == 0
 
-    def test_live_webp_file_is_info_only(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_live_webp_file_is_info_only(self, db_session, tmp_uploads, media_factory):
         """A webp whose basename is in registered_basenames is protected."""
         # Disk
         live = _write_file(tmp_uploads / SUBFOLDER / "abc123.webp")
@@ -269,9 +263,7 @@ class TestPlanBuilder:
         assert info_entries[0].path == str(live)
         assert "CmsMediaItem.url" in (info_entries[0].reason or "")
 
-    def test_orphan_jpg_with_drifted_metadata(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_orphan_jpg_with_drifted_metadata(self, db_session, tmp_uploads, media_factory):
         """The canonical fix scenario:
         ``filename=<slug>.jpg`` but ``url=<uuid>.webp``.
         Plan: 1 delete + 1 update with ``new_filename`` = ``url basename``.
@@ -296,9 +288,7 @@ class TestPlanBuilder:
         assert update.media_id == str(row.id)
         assert delete.path == str(orphan)
 
-    def test_already_normalized_metadata_is_noop(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_already_normalized_metadata_is_noop(self, db_session, tmp_uploads, media_factory):
         """If filename already equals URL basename AND file is live,
         the plan must contain zero mutating actions.
         """
@@ -323,9 +313,7 @@ class TestPlanBuilder:
         assert delete == []
         assert update == []
 
-    def test_safety_rail_live_file_with_drifted_sibling_row(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_safety_rail_live_file_with_drifted_sibling_row(self, db_session, tmp_uploads, media_factory):
         """CRITICAL safety rail: a file whose basename is registered
         (live url) must never appear in ``n_deletes`` even if some
         other row has ``filename`` metadata drift referencing the same
@@ -374,17 +362,13 @@ class TestPlanBuilder:
         # specifically — re-emphasizes that drift-to-live-file is
         # outside the script's scope (the file is safe by construction).
         updates_for_drift = [
-            a for a in plan.actions
-            if a.action == "update_metadata" and a.media_id == str(row_drift.id)
+            a for a in plan.actions if a.action == "update_metadata" and a.media_id == str(row_drift.id)
         ]
         assert updates_for_drift == [], (
-            f"drift row pointing at a live file should not trigger an "
-            f"UPDATE; got {updates_for_drift}"
+            f"drift row pointing at a live file should not trigger an UPDATE; got {updates_for_drift}"
         )
 
-    def test_db_only_drift_without_disk_file(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_db_only_drift_without_disk_file(self, db_session, tmp_uploads, media_factory):
         """Row drift where the orphaned file is already absent:
         a pure DB-only ``update_metadata`` (no paired ``delete_file``).
         """
@@ -408,9 +392,7 @@ class TestPlanBuilder:
         # The ``reason`` is the no-disk variant — readable in audit logs.
         assert "disk file already absent" in (update.reason or "")
 
-    def test_multiple_rows_share_orphan_filename(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_multiple_rows_share_orphan_filename(self, db_session, tmp_uploads, media_factory):
         """Defensive case: two rows both have ``filename`` drift to the
         same orphan. The plan must UPDATE both, but ``delete_file`` only
         once (Path.unlink is idempotent; double-delete would otherwise
@@ -453,9 +435,7 @@ class TestExecutor:
     commit) is caught.
     """
 
-    def test_execute_updates_filename_then_unlinks_file(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_execute_updates_filename_then_unlinks_file(self, db_session, tmp_uploads, media_factory):
         """DB-first: after ``_execute_plan``, the row's filename must be
         updated AND the file must be gone from disk. The order matters
         only for failure recovery; the visible post-state is the
@@ -475,15 +455,11 @@ class TestExecutor:
         cleanup._execute_plan(db_session, plan)
 
         db_session.expire_all()
-        refreshed = (
-            db_session.query(models.CmsMediaItem).filter_by(id=row.id).one()
-        )
+        refreshed = db_session.query(models.CmsMediaItem).filter_by(id=row.id).one()
         assert refreshed.filename == "luis_uuid.webp"
         assert not orphan.exists()
 
-    def test_idempotency_second_run_is_noop(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_idempotency_second_run_is_noop(self, db_session, tmp_uploads, media_factory):
         """After applying once, rebuilding the plan from the same
         world-state must produce zero mutating actions. Repeated
         ``main`` invocations therefore converge.
@@ -504,12 +480,9 @@ class TestExecutor:
         # Re-snapshot the world to feed the second plan. The orphan is
         # gone; the row's filename is now in sync with url basename.
         db_session.expire_all()
-        refreshed = (
-            db_session.query(models.CmsMediaItem).filter_by(id=row.id).one()
-        )
+        refreshed = db_session.query(models.CmsMediaItem).filter_by(id=row.id).one()
         remaining_disk: list[Path] = [
-            p for p in tmp_uploads.rglob("*")
-            if p.is_file() and p.suffix in {".jpg", ".webp"}
+            p for p in tmp_uploads.rglob("*") if p.is_file() and p.suffix in {".jpg", ".webp"}
         ]
         plan_second = cleanup._build_plan(
             disk_files=remaining_disk,
@@ -518,14 +491,10 @@ class TestExecutor:
             subfolder=SUBFOLDER,
         )
         assert plan_second.no_op, (
-            f"idempotency violated: second plan has "
-            f"{plan_second.n_deletes} deletes / "
-            f"{plan_second.n_updates} updates"
+            f"idempotency violated: second plan has {plan_second.n_deletes} deletes / {plan_second.n_updates} updates"
         )
 
-    def test_execute_skips_stale_media_id(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_execute_skips_stale_media_id(self, db_session, tmp_uploads, media_factory):
         """If ``media_id`` in an UPDATE action was deleted between plan
         build and exec (e.g. concurrent operation by another process),
         ``db_session.get`` returns ``None`` and the executor emits a
@@ -585,16 +554,10 @@ class TestExecutor:
         assert rows_updated == 1
         assert files_deleted == 1
         db_session.expire_all()
-        refreshed = (
-            db_session.query(models.CmsMediaItem)
-            .filter_by(id=row_present.id)
-            .one()
-        )
+        refreshed = db_session.query(models.CmsMediaItem).filter_by(id=row_present.id).one()
         assert refreshed.filename == "present_uuid.webp"
 
-    def test_execute_db_commit_failure_leaves_disk_intact(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_execute_db_commit_failure_leaves_disk_intact(self, db_session, tmp_uploads, media_factory):
         """The DB-first invariant: a commit failure must NOT take the
         files with it. We simulate this by mocking ``commit`` to raise
         and confirm ``unlink`` is never executed (raises out of
@@ -617,9 +580,7 @@ class TestExecutor:
                 cleanup._execute_plan(db_session, plan)
 
         # Disk file must still exist.
-        assert orphan.is_file(), (
-            "DB-first invariant violated: file was deleted despite commit failure"
-        )
+        assert orphan.is_file(), "DB-first invariant violated: file was deleted despite commit failure"
 
 
 # ── Output formatting tests ────────────────────────────────────────────
@@ -628,9 +589,7 @@ class TestExecutor:
 class TestOutputFormatting:
     """Pin the report formats so CI pipelines can grep / parse them."""
 
-    def test_json_output_is_parseable_and_has_summary(
-        self, db_session, tmp_uploads, media_factory
-    ):
+    def test_json_output_is_parseable_and_has_summary(self, db_session, tmp_uploads, media_factory):
         orphan = _write_file(tmp_uploads / SUBFOLDER / "luis-ricardo-meza.jpg")
         row = media_factory.make(
             url="/api/static/cms/pastores/luis_uuid.webp",
@@ -656,9 +615,7 @@ class TestOutputFormatting:
         action_kinds = {a["action"] for a in parsed["actions"]}
         assert action_kinds == {"delete_file", "update_metadata"}
 
-    def test_json_output_contains_database_metadata(
-        self, db_session, tmp_uploads
-    ):
+    def test_json_output_contains_database_metadata(self, db_session, tmp_uploads):
         """The DB host/database fields are exposed so CI can confirm
         the script is pointed at the intended cluster.
         """
@@ -672,9 +629,7 @@ class TestOutputFormatting:
         assert "db_engine_host" in parsed
         assert "db_engine_database" in parsed
 
-    def test_human_output_marks_apply_vs_dry_run(
-        self, db_session, tmp_uploads
-    ):
+    def test_human_output_marks_apply_vs_dry_run(self, db_session, tmp_uploads):
         plan = cleanup._build_plan(
             disk_files=[],
             db_rows=[],
@@ -708,9 +663,7 @@ class TestMainEndToEnd:
     to the per-test tmpdir so disk I/O never leaves pytest's sandbox.
     """
 
-    def test_main_apply_full_cycle_then_idempotent(
-        self, db_session, patched_main_env, media_factory, capsys
-    ):
+    def test_main_apply_full_cycle_then_idempotent(self, db_session, patched_main_env, media_factory, capsys):
         # Build the world.
         orphan = _write_file(patched_main_env / SUBFOLDER / "luis-ricardo-meza.jpg")
         live = _write_file(patched_main_env / SUBFOLDER / "live_uuid.webp")
@@ -738,11 +691,7 @@ class TestMainEndToEnd:
         assert not orphan.exists(), "orphan file should have been removed"
         assert live.is_file(), "live .webp must not be touched by cleanup"
         db_session.expire_all()
-        refreshed_first = (
-            db_session.query(models.CmsMediaItem)
-            .filter_by(id=drift.id)
-            .one()
-        )
+        refreshed_first = db_session.query(models.CmsMediaItem).filter_by(id=drift.id).one()
         assert refreshed_first.filename == "luis_uuid.webp", (
             f"filename drift not normalized; got {refreshed_first.filename!r}"
         )
@@ -766,9 +715,5 @@ class TestMainEndToEnd:
         # Refresh from the second session's commit to confirm nothing
         # was orphaned by side effects from a no-op re-run.
         db_session.expire_all()
-        refreshed_second = (
-            db_session.query(models.CmsMediaItem)
-            .filter_by(id=drift.id)
-            .one()
-        )
+        refreshed_second = db_session.query(models.CmsMediaItem).filter_by(id=drift.id).one()
         assert refreshed_second.filename == "luis_uuid.webp"

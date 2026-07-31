@@ -38,7 +38,7 @@ describe('DSTabs', () => {
                 <div>Content</div>
             </DSTabs>
         );
-        
+
         fireEvent.click(screen.getByText('Tab 2'));
         const tab2 = screen.getByText('Tab 2');
         expect(tab2).toHaveAttribute('aria-selected', 'true');
@@ -51,7 +51,7 @@ describe('DSTabs', () => {
                 <div>Content</div>
             </DSTabs>
         );
-        
+
         fireEvent.click(screen.getByText('Tab 2'));
         expect(handleChange).toHaveBeenCalledWith('tab2');
     });
@@ -92,10 +92,10 @@ describe('DSTabs', () => {
                 <div>Content</div>
             </DSTabs>
         );
-        
+
         const tablist = screen.getByRole('tablist');
         expect(tablist).toHaveAttribute('aria-orientation', 'horizontal');
-        
+
         const tab1 = screen.getByText('Tab 1');
         expect(tab1).toHaveAttribute('role', 'tab');
         expect(tab1).toHaveAttribute('aria-controls', 'panel-tab1');
@@ -108,7 +108,7 @@ describe('DSTabs', () => {
                 <div>Panel Content</div>
             </DSTabs>
         );
-        
+
         const panel = screen.getByRole('tabpanel');
         expect(panel).toHaveAttribute('id', 'panel-tab1');
         expect(panel).toHaveAttribute('aria-labelledby', 'tab-tab1');

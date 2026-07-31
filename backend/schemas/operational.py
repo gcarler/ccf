@@ -26,7 +26,9 @@ class MilestoneCreate(BaseModel):
 
 
 class MilestoneUpdate(BaseModel):
-    type: Optional[str] = Field(None, pattern=r"^(Decision_Fe|Bautismo_Aguas|Bautismo_Espiritu|Persona_Oficial|Liderazgo)$")
+    type: Optional[str] = Field(
+        None, pattern=r"^(Decision_Fe|Bautismo_Aguas|Bautismo_Espiritu|Persona_Oficial|Liderazgo)$"
+    )
     event_date: Optional[date] = None
     minister_id: Optional[UUID] = None
     notes: Optional[str] = None

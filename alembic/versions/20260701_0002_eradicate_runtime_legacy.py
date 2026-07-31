@@ -43,19 +43,13 @@ def _has_table(table: str) -> bool:
 
 
 def _has_column(table: str, column: str) -> bool:
-    return _has_table(table) and column in {
-        item["name"] for item in _inspector().get_columns(table)
-    }
+    return _has_table(table) and column in {item["name"] for item in _inspector().get_columns(table)}
 
 
 def _set_not_null(table: str, column: str) -> None:
     if not _has_column(table, column):
         return
-    existing_type = next(
-        item["type"]
-        for item in _inspector().get_columns(table)
-        if item["name"] == column
-    )
+    existing_type = next(item["type"] for item in _inspector().get_columns(table) if item["name"] == column)
     with op.batch_alter_table(table) as batch_op:
         batch_op.alter_column(
             column,
@@ -67,11 +61,7 @@ def _set_not_null(table: str, column: str) -> None:
 def _set_nullable(table: str, column: str) -> None:
     if not _has_column(table, column):
         return
-    existing_type = next(
-        item["type"]
-        for item in _inspector().get_columns(table)
-        if item["name"] == column
-    )
+    existing_type = next(item["type"] for item in _inspector().get_columns(table) if item["name"] == column)
     with op.batch_alter_table(table) as batch_op:
         batch_op.alter_column(
             column,
@@ -124,12 +114,7 @@ def _purge_unowned_cms_content() -> None:
         if not (_has_column(table, "sede_id") and _has_column(table, persona_column)):
             continue
         _backfill_sede(table, persona_column)
-        bind.execute(
-            sa.text(
-                f'DELETE FROM "{table}" '
-                f'WHERE sede_id IS NULL OR "{persona_column}" IS NULL'
-            )
-        )
+        bind.execute(sa.text(f'DELETE FROM "{table}" WHERE sede_id IS NULL OR "{persona_column}" IS NULL'))
         _set_not_null(table, "sede_id")
         _set_not_null(table, persona_column)
 
@@ -137,12 +122,7 @@ def _purge_unowned_cms_content() -> None:
 def _normalize_runtime_values() -> None:
     bind = op.get_bind()
     if _has_column("communication_logs", "outcome"):
-        bind.execute(
-            sa.text(
-                "UPDATE communication_logs SET outcome = 'sent_real' "
-                "WHERE lower(outcome) = 'delivered'"
-            )
-        )
+        bind.execute(sa.text("UPDATE communication_logs SET outcome = 'sent_real' WHERE lower(outcome) = 'delivered'"))
     if _has_column("personas", "qr_token"):
         if bind.dialect.name == "postgresql":
             bind.execute(
@@ -167,9 +147,7 @@ def _normalize_runtime_values() -> None:
                     "WHERE jsonb_typeof(labels::jsonb) = 'string'"
                 )
             )
-            bind.execute(
-                sa.text("UPDATE project_tasks SET labels = '[]'::json WHERE labels IS NULL")
-            )
+            bind.execute(sa.text("UPDATE project_tasks SET labels = '[]'::json WHERE labels IS NULL"))
         else:
             bind.execute(
                 sa.text(
@@ -190,19 +168,12 @@ def _normalize_runtime_values() -> None:
                 "ELSE lower(trim(priority)) END WHERE priority IS NOT NULL"
             )
         )
-        bind.execute(
-            sa.text("UPDATE project_tasks SET priority = 'medium' WHERE priority IS NULL")
-        )
+        bind.execute(sa.text("UPDATE project_tasks SET priority = 'medium' WHERE priority IS NULL"))
         invalid_priorities = bind.execute(
-            sa.text(
-                "SELECT count(*) FROM project_tasks "
-                "WHERE priority NOT IN ('low', 'medium', 'high', 'urgent')"
-            )
+            sa.text("SELECT count(*) FROM project_tasks WHERE priority NOT IN ('low', 'medium', 'high', 'urgent')")
         ).scalar_one()
         if invalid_priorities:
-            raise RuntimeError(
-                f"Cannot normalize project task priority: {invalid_priorities} invalid row(s)"
-            )
+            raise RuntimeError(f"Cannot normalize project task priority: {invalid_priorities} invalid row(s)")
         _set_not_null("project_tasks", "priority")
 
 
@@ -212,9 +183,7 @@ def _rename_persona_baptism_date() -> None:
     if _has_column("personas", "baptism_date"):
         raise RuntimeError("personas has both fecha_bautismo and baptism_date")
     existing_type = next(
-        item["type"]
-        for item in _inspector().get_columns("personas")
-        if item["name"] == "fecha_bautismo"
+        item["type"] for item in _inspector().get_columns("personas") if item["name"] == "fecha_bautismo"
     )
     with op.batch_alter_table("personas") as batch_op:
         batch_op.alter_column(
@@ -251,9 +220,7 @@ def _drop_retired_member_objects() -> None:
         )
     ).scalar_one()
     if unmatched:
-        raise RuntimeError(
-            f"Cannot remove members: {unmatched} row(s) are not present in personas"
-        )
+        raise RuntimeError(f"Cannot remove members: {unmatched} row(s) are not present in personas")
     bind.execute(sa.text("DROP TABLE members CASCADE"))
 
 
@@ -265,13 +232,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    if _has_column("personas", "baptism_date") and not _has_column(
-        "personas", "fecha_bautismo"
-    ):
+    if _has_column("personas", "baptism_date") and not _has_column("personas", "fecha_bautismo"):
         existing_type = next(
-            item["type"]
-            for item in _inspector().get_columns("personas")
-            if item["name"] == "baptism_date"
+            item["type"] for item in _inspector().get_columns("personas") if item["name"] == "baptism_date"
         )
         with op.batch_alter_table("personas") as batch_op:
             batch_op.alter_column(

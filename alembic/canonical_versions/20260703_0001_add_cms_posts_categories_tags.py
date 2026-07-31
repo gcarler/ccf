@@ -30,11 +30,12 @@ this canonical chain becomes the only chain, this no-op can be retired
 in a future revision that simply chains forward with the same identifiers
 but does nothing.
 """
+
 from typing import Sequence, Union
 
 # revision identifiers, used by Alembic.
-revision: str = '20260703_0001_add_cms_posts_categories_tags'
-down_revision: Union[str, None] = '20260702_0002_reported_at_tz'
+revision: str = "20260703_0001_add_cms_posts_categories_tags"
+down_revision: Union[str, None] = "20260702_0002_reported_at_tz"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

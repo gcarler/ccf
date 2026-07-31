@@ -1,22 +1,18 @@
 """Tests exhaustivos y estructurales para backend/services/crm_resource_bank.py (100% Cobertura)."""
 
-import pytest
 from backend.services.crm_resource_bank import (
     SYSTEM_CATEGORIES,
     SYSTEM_TEMPLATES,
-    SystemCategory,
-    SystemTemplate,
-    get_system_categories,
-    get_system_templates,
     find_system_category,
     find_system_template,
     find_system_templates_by_category,
+    get_system_categories,
+    get_system_templates,
     system_template_id,
 )
 
 
 class TestCrmResourceBank100Pct:
-
     def test_get_system_categories(self):
         cats = get_system_categories()
         assert isinstance(cats, list)

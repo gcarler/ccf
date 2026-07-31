@@ -32,30 +32,28 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def _extension_exists(name: str) -> bool:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM pg_extension WHERE extname = :n"
-    ), {"n": name})
+    r = conn.execute(sa.text("SELECT count(*) FROM pg_extension WHERE extname = :n"), {"n": name})
     return r.scalar() > 0
 
 
 def _constraint_exists(name: str) -> bool:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM pg_constraint WHERE conname = :n"
-    ), {"n": name})
+    r = conn.execute(sa.text("SELECT count(*) FROM pg_constraint WHERE conname = :n"), {"n": name})
     return r.scalar() > 0
 
 
 def _has_collisions() -> bool:
     conn = op.get_bind()
-    r = conn.execute(sa.text("""
+    r = conn.execute(
+        sa.text("""
         SELECT count(*) FROM agenda_reserva_recursos r1
         JOIN agenda_reserva_recursos r2
           ON r1.recurso_id = r2.recurso_id
          AND r1.id < r2.id
          AND tstzrange(r1.bloqueo_inicio, r1.bloqueo_fin)
              && tstzrange(r2.bloqueo_inicio, r2.bloqueo_fin)
-    """))
+    """)
+    )
     return r.scalar() > 0
 
 
@@ -74,21 +72,20 @@ def upgrade() -> None:
         )
 
     if not _constraint_exists("sin_colisiones_fisicas"):
-        conn.execute(sa.text("""
+        conn.execute(
+            sa.text("""
             ALTER TABLE agenda_reserva_recursos
               ADD CONSTRAINT sin_colisiones_fisicas
               EXCLUDE USING gist (
                 recurso_id WITH =,
                 tstzrange(bloqueo_inicio, bloqueo_fin) WITH &&
               )
-        """))
+        """)
+        )
 
 
 def downgrade() -> None:
     conn = op.get_bind()
     if _constraint_exists("sin_colisiones_fisicas"):
-        conn.execute(sa.text(
-            "ALTER TABLE agenda_reserva_recursos "
-            "DROP CONSTRAINT IF EXISTS sin_colisiones_fisicas"
-        ))
+        conn.execute(sa.text("ALTER TABLE agenda_reserva_recursos DROP CONSTRAINT IF EXISTS sin_colisiones_fisicas"))
     # No drop btree_gist — other constraints may use it

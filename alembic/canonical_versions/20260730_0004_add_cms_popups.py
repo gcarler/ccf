@@ -5,9 +5,11 @@ Revises: 20260730_0003_drop_legacy_announcements_table
 Create Date: 2026-07-30 17:30:00.000000
 
 """
+
 from __future__ import annotations
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision = "20260730_0004_add_cms_popups"

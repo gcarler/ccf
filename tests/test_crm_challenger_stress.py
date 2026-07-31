@@ -22,10 +22,7 @@ def test_concurrency_same_stage_bypass_reorder_lock(client, db_session):
     db_session.commit()
 
     # Reorder payload for same-stage reorder
-    payload = {
-        "caso_id": str(caso1.id),
-        "sort_order": 10
-    }
+    payload = {"caso_id": str(caso1.id), "sort_order": 10}
 
     # Verify that same-stage reordering ignores the CrmReorderLock and returns 200
     response = client.post("/api/crm/pipeline/kanban/drag-drop/same-stage", json=payload, headers=headers)
@@ -48,10 +45,7 @@ def test_lock_recovery_boundary_exactly_ten_seconds(client, db_session):
     db_session.add(lock)
     db_session.commit()
 
-    payload = {
-        "caso_id": str(caso1.id),
-        "target_stage_id": str(etapa2.id)
-    }
+    payload = {"caso_id": str(caso1.id), "target_stage_id": str(etapa2.id)}
 
     response = client.post("/api/crm/pipeline/kanban/drag-drop/concurrent", json=payload, headers=headers)
     assert response.status_code == 200
@@ -76,7 +70,7 @@ def test_cycle_detection_multiple_subgraph_isolated_cycles(client, db_session):
             {"source": "n2", "target": "n1"},
             {"source": "n3", "target": "n4"},
             {"source": "n4", "target": "n3"},
-        ]
+        ],
     }
     response = client.post("/api/crm/automations/flows/check-cycles", json=payload, headers=headers)
     assert response.status_code == 200
@@ -93,7 +87,7 @@ def test_branching_traverse_missing_and_mismatched_types(client, db_session):
     # 1. Missing variable in conditions
     payload = {
         "variables": {"nombre": "Juan"},
-        "conditions": [{"key": "nonexistent", "operator": "equals", "value": "Juan"}]
+        "conditions": [{"key": "nonexistent", "operator": "equals", "value": "Juan"}],
     }
     response = client.post("/api/crm/automations/branching/traverse", json=payload, headers=headers)
     assert response.status_code == 200
@@ -102,7 +96,7 @@ def test_branching_traverse_missing_and_mismatched_types(client, db_session):
     # 2. Unexpected operator
     payload = {
         "variables": {"sort_order": 5},
-        "conditions": [{"key": "sort_order", "operator": "unknown_op", "value": "5"}]
+        "conditions": [{"key": "sort_order", "operator": "unknown_op", "value": "5"}],
     }
     response = client.post("/api/crm/automations/branching/traverse", json=payload, headers=headers)
     assert response.status_code == 200
@@ -115,38 +109,24 @@ def test_sede_isolation_on_invalid_transition(client, db_session):
     to a pipeline of a different Sede, preserving tenant isolation.
     """
     admin_a, persona_a, sede_a, pipeline_a, etapa1_a, etapa2_a, caso1_a, caso2_a = _seed_test_data(db_session)
-    
+
     # Create another Sede and pipeline
     sede_b = models.Sede(id=uuid.uuid4(), nombre="Sede B", ciudad="Ciudad B")
     db_session.add(sede_b)
     db_session.flush()
 
-    pipeline_b = PipelineCRM(
-        id=uuid.uuid4(),
-        sede_id=sede_b.id,
-        nombre="Pipeline B",
-        tipo="CONSEJERIA",
-        activo=True
-    )
+    pipeline_b = PipelineCRM(id=uuid.uuid4(), sede_id=sede_b.id, nombre="Pipeline B", tipo="CONSEJERIA", activo=True)
     db_session.add(pipeline_b)
     db_session.flush()
 
-    etapa_b = EtapaPipeline(
-        id=uuid.uuid4(),
-        pipeline_id=pipeline_b.id,
-        nombre="Etapa B",
-        orden=1
-    )
+    etapa_b = EtapaPipeline(id=uuid.uuid4(), pipeline_id=pipeline_b.id, nombre="Etapa B", orden=1)
     db_session.add(etapa_b)
     db_session.commit()
 
     headers_a = auth_headers(client, email=admin_a.email)
 
     # Attempt to transition Caso A (Sede A) to Etapa B (Sede B)
-    payload = {
-        "caso_id": str(caso1_a.id),
-        "target_stage_id": str(etapa_b.id)
-    }
+    payload = {"caso_id": str(caso1_a.id), "target_stage_id": str(etapa_b.id)}
 
     # Should be rejected with 400 since stage B doesn't belong to Sede A or pipeline A
     response = client.post("/api/crm/pipeline/kanban/drag-drop/invalid-stage", json=payload, headers=headers_a)

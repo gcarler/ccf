@@ -5,6 +5,7 @@ Revises: 20260719_0001_crm_events_deleted_at
 Create Date: 2026-07-23 00:00:00.000000
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa

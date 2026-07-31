@@ -307,4 +307,3 @@ En el componente `PublicSectionRenderer.tsx` y páginas públicas del CMS:
 - [ ] `cd frontend && npx tsc --noEmit` = 0 errores.
 - [ ] `PYTHONPATH=. python3 -m pytest tests/ -v` — todos los tests previos siguen pasando.
 - [ ] `git status` muestra working tree clean al finalizar (commit de cierre con prefijo `feat(cms):` o `docs(cms):`).
-

@@ -228,4 +228,3 @@ export function BookShopSection({ section }: { section: CmsSection<"book_shop"> 
 }
 
 // ─── Testimonials Masonry (config-only shell; data comes from testimonials API) ─
-

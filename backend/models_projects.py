@@ -36,7 +36,9 @@ class Project(Base):
     tasks = relationship("ProjectTask", back_populates="project", cascade="all, delete-orphan")
     milestones = relationship("ProjectMilestone", back_populates="project", cascade="all, delete-orphan")
     activity_logs = relationship("ProjectActivityLog", back_populates="project", cascade="all, delete-orphan")
-    whiteboard = relationship("ProjectWhiteboard", back_populates="project", uselist=False, cascade="all, delete-orphan")
+    whiteboard = relationship(
+        "ProjectWhiteboard", back_populates="project", uselist=False, cascade="all, delete-orphan"
+    )
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -81,7 +83,9 @@ class ProjectActivityLog(Base):
 class ProjectWhiteboard(Base):
     __tablename__ = "project_whiteboards"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    project_id = Column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
     title = Column(String(200), nullable=False, default="Pizarra")
     elements_json = Column(Text, nullable=False, default="[]")
     thumbnail_url = Column(String(500), nullable=True)
@@ -96,7 +100,9 @@ class ProjectTask(Base):
     __tablename__ = "project_tasks"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
-    parent_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=True, index=True)
+    parent_id = Column(
+        UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     order_index = Column(Integer, default=0)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)

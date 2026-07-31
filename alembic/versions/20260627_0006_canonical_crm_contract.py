@@ -28,9 +28,7 @@ PARALLEL_TABLES = (
 def _assert_empty(connection, table_name: str) -> None:
     count = connection.execute(sa.text(f'SELECT COUNT(*) FROM "{table_name}"')).scalar_one()
     if count:
-        raise RuntimeError(
-            f"Cannot remove parallel CRM table {table_name}: it contains {count} rows"
-        )
+        raise RuntimeError(f"Cannot remove parallel CRM table {table_name}: it contains {count} rows")
 
 
 def upgrade() -> None:
@@ -102,7 +100,12 @@ def downgrade() -> None:
         "consolidation_tasks",
         sa.Column("id", uuid_type, primary_key=True),
         sa.Column("case_id", uuid_type, sa.ForeignKey("consolidation_cases.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("assignment_id", uuid_type, sa.ForeignKey("consolidation_assignments.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "assignment_id",
+            uuid_type,
+            sa.ForeignKey("consolidation_assignments.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("title", sa.String(200), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("due_date", timestamp, nullable=True),

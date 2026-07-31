@@ -5,6 +5,7 @@ Revises: 20260626_drop_personas_user_id
 Create Date: 2026-06-26 15:30:00.000000
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa

@@ -123,19 +123,15 @@ def test_acad_tkt_131_extra_forbid_validation(model_name: str) -> None:
     ProgressUpdate + 3 más) se documenta como parcial.
     """
     schemas_file = BACKEND_SRC.parent / "schemas" / "academy.py"
-    assert schemas_file.exists(), (
-        f"TKT-131 regresión: {schemas_file} no existe."
-    )
+    assert schemas_file.exists(), f"TKT-131 regresión: {schemas_file} no existe."
     text = _code_only(_read(schemas_file))
     # Verifica 2 condiciones independientes: la clase existe Y el archivo contiene
     # la directiva ``extra="forbid"`` en cualquier punto (no requiere regex compleja
     # que puede fallar por herencia o spacing).
-    assert f"class {model_name}" in text, (
-        f"TKT-131 regresión: {model_name} no está declarado en schemas/academy.py."
-    )
+    assert f"class {model_name}" in text, f"TKT-131 regresión: {model_name} no está declarado en schemas/academy.py."
     assert 'extra="forbid"' in text, (
         'TKT-131 regresión: schemas/academy.py no contiene extra="forbid" en '
-        "ningún modelo. Aplicar ConfigDict(extra=\"forbid\") para rechazar campos "
+        'ningún modelo. Aplicar ConfigDict(extra="forbid") para rechazar campos '
         "no esperados en el payload."
     )
 
@@ -215,7 +211,7 @@ def test_acad_tkt_073_forum_no_mixed_toast_systems() -> None:
     en el mismo archivo.
     """
     text = _code_only(_read(FRONTEND_SRC / "app/plataforma/academy/forum/[id]/page.tsx"))
-    uses_sonner = "from \"sonner\"" in text or "from 'sonner'" in text
+    uses_sonner = 'from "sonner"' in text or "from 'sonner'" in text
     uses_toast_context = "useToast" in text or "ToastContext" in text
     assert not (uses_sonner and uses_toast_context), (
         "TKT-073 drift: forum/[id] usa MIX de sistemas de toast (sonner + ToastContext). "
@@ -257,8 +253,7 @@ def test_acad_tkt_079_course_completion_rate_derived_from_data() -> None:
             r"completionRate\s*=\s*(?:0|100|\"100%?\"|'100%?'|\d+\s*(?:;|\\n))",
         )
         assert not hardcoded_pattern.search(text), (
-            "TKT-079 drift: completionRate asignado a valor hardcoded. "
-            "Derivar de course.progress o similar."
+            "TKT-079 drift: completionRate asignado a valor hardcoded. Derivar de course.progress o similar."
         )
 
 
@@ -412,9 +407,7 @@ def test_acad_tkt_121_submit_assessment_derives_enrollment_id() -> None:
         r"def\s+submit_assessment[\s\S]{0,5000}?(?=\n(?:def|async\s+def|class|@router)\s|\Z)",
     )
     submit_block_match = submit_block_pattern.search(text)
-    assert submit_block_match, (
-        "TKT-121 regresión: submit_assessment no encontrado en academy.py."
-    )
+    assert submit_block_match, "TKT-121 regresión: submit_assessment no encontrado en academy.py."
     submit_block = submit_block_match.group(0)
     # Invariante positivo: la función DERIVA enrollment desde current_user.id
     derivation_pattern = re.compile(

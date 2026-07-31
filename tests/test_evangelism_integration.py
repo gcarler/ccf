@@ -1,4 +1,5 @@
 """Integration tests for evangelism — individual creation working."""
+
 from __future__ import annotations
 
 import uuid
@@ -22,17 +23,29 @@ def full(client, db_session):
 
 class TestFlow:
     def test_create_strategy(self, full):
-        assert _ok(full["c"].post("/api/evangelism/strategies",
-            json={"name": f"S-{uuid.uuid4().hex[:6]}"}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .post("/api/evangelism/strategies", json={"name": f"S-{uuid.uuid4().hex[:6]}"}, headers=full["h"])
+            .status_code
+        )
 
     def test_create_grupo(self, full):
-        assert _ok(full["c"].post("/api/evangelism/grupos",
-            json={"name": f"G-{uuid.uuid4().hex[:6]}"}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .post("/api/evangelism/grupos", json={"name": f"G-{uuid.uuid4().hex[:6]}"}, headers=full["h"])
+            .status_code
+        )
 
     def test_create_event(self, full):
-        assert _ok(full["c"].post("/api/evangelism/events",
-            json={"name": f"E-{uuid.uuid4().hex[:6]}", "event_date": "2026-09-01T10:00:00Z"},
-            headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .post(
+                "/api/evangelism/events",
+                json={"name": f"E-{uuid.uuid4().hex[:6]}", "event_date": "2026-09-01T10:00:00Z"},
+                headers=full["h"],
+            )
+            .status_code
+        )
 
     def test_rankings(self, full):
         assert _ok(full["c"].get("/api/evangelism/rankings/groups", headers=full["h"]).status_code)

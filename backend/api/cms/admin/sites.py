@@ -3,6 +3,7 @@
 Sites are the top-level tenant root of the CMS: every page, section, menu,
 theme, post and media object hangs off a ``CmsSite`` owned by a ``sede``.
 """
+
 from __future__ import annotations
 
 import logging

@@ -1,4 +1,5 @@
 """Grupos evangelismo CRUD."""
+
 import logging
 import uuid
 from typing import Optional
@@ -142,10 +143,11 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
         for item in payload.base_attendees_with_roles:
             role, custom_role_id = _group_participant_role_values(item)
             p_id = _to_uuid(item.persona_id) if isinstance(item.persona_id, str) else item.persona_id
-            existing = db.query(models.ParticipanteGrupo).filter(
-                models.ParticipanteGrupo.grupo_id == house_id,
-                models.ParticipanteGrupo.persona_id == p_id
-            ).first()
+            existing = (
+                db.query(models.ParticipanteGrupo)
+                .filter(models.ParticipanteGrupo.grupo_id == house_id, models.ParticipanteGrupo.persona_id == p_id)
+                .first()
+            )
             if existing:
                 existing.deleted_at = None
                 existing.activo = True
@@ -238,7 +240,8 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
                     except (ValueError, AttributeError):
                         logger.warning(
                             "rol_personalizado_id inválido en participante %s: %r",
-                            pg.persona_id, pg.rol_personalizado_id,
+                            pg.persona_id,
+                            pg.rol_personalizado_id,
                         )
                         lookup_id = None
                 cr = custom_roles_by_id.get(lookup_id) if lookup_id else None
@@ -246,11 +249,17 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
                     role_str = (cr.nombre_rol or "").lower().strip()
 
             # Normalizar para comparación
-            role_norm = role_str.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+            role_norm = (
+                role_str.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+            )
             tokens = set(role_norm.replace("-", " ").replace("_", " ").split())
 
             is_leader = ("lider" in tokens or "leader" in tokens) and not (tokens & _SUBORDINATE_TOKENS)
-            is_assistant = ("asistente" in tokens or "colider" in tokens or ("co" in tokens and ("lider" in tokens or "leader" in tokens)))
+            is_assistant = (
+                "asistente" in tokens
+                or "colider" in tokens
+                or ("co" in tokens and ("lider" in tokens or "leader" in tokens))
+            )
             is_host = "anfitrion" in tokens or "host" in tokens
 
             if is_leader and not new_leader_id:
@@ -270,10 +279,11 @@ def update_grupo(db: Session, house_id: uuid.UUID, payload: schemas.GrupoEvangel
         )
         for persona_id in payload.base_attendee_ids:
             p_id = _to_uuid(persona_id) if isinstance(persona_id, str) else persona_id
-            existing = db.query(models.ParticipanteGrupo).filter(
-                models.ParticipanteGrupo.grupo_id == house_id,
-                models.ParticipanteGrupo.persona_id == p_id
-            ).first()
+            existing = (
+                db.query(models.ParticipanteGrupo)
+                .filter(models.ParticipanteGrupo.grupo_id == house_id, models.ParticipanteGrupo.persona_id == p_id)
+                .first()
+            )
             if existing:
                 existing.deleted_at = None
                 existing.activo = True

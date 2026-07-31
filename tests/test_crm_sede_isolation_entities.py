@@ -10,17 +10,14 @@ from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_two_sedes(db_session):
-    admin_a, persona_a, sede_a = seed_admin(
-        db_session, email="entityA@example.com", password="testpass123"
-    )
-    admin_b, persona_b, sede_b = seed_admin(
-        db_session, email="entityB@example.com", password="testpass123"
-    )
+    admin_a, persona_a, sede_a = seed_admin(db_session, email="entityA@example.com", password="testpass123")
+    admin_b, persona_b, sede_b = seed_admin(db_session, email="entityB@example.com", password="testpass123")
     return (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b)
 
 
 def _persona_in(db, sede_id, email_suffix):
     import uuid as _uuid
+
     p = models.Persona(
         id=_uuid.uuid4(),
         first_name=f"User-{email_suffix}",
@@ -44,9 +41,7 @@ def test_idor_persona_cross_sede_returns_404(client, db_session):
 
     headers_a = auth_headers(client, email="entityA@example.com")
     resp = client.get(f"/api/crm/personas/{persona_b.id}", headers=headers_a)
-    assert resp.status_code == 404, (
-        f"IDOR leak: cross-sede persona access returned {resp.status_code}"
-    )
+    assert resp.status_code == 404, f"IDOR leak: cross-sede persona access returned {resp.status_code}"
     assert "idor-b" not in resp.text, "Persona name leaked in cross-sede response"
 
 
@@ -82,9 +77,7 @@ def test_get_volunteer_detail_blocks_cross_sede(client, db_session):
     persona_b = _persona_in(db_session, sede_b.id, "volunteer-detail-b")
     headers_a = auth_headers(client, email="entityA@example.com")
     resp = client.get(f"/api/crm/volunteers/{persona_b.id}", headers=headers_a)
-    assert resp.status_code == 404, (
-        f"Cross-sede volunteer detail leaked: {resp.status_code}"
-    )
+    assert resp.status_code == 404, f"Cross-sede volunteer detail leaked: {resp.status_code}"
 
 
 # ── Donation isolation (CRM persona donations) ─────────────────────────
@@ -108,7 +101,5 @@ def test_persona_donations_idor_cross_sede(client, db_session):
 
     headers_a = auth_headers(client, email="entityA@example.com")
     resp = client.get(f"/api/crm/personas/{persona_b.id}/donations", headers=headers_a)
-    assert resp.status_code == 404, (
-        f"Cross-sede donations leaked: {resp.status_code}"
-    )
+    assert resp.status_code == 404, f"Cross-sede donations leaked: {resp.status_code}"
     assert "5000" not in resp.text, "Donation amount leaked cross-sede"

@@ -106,65 +106,83 @@ def main() -> int:
     results: list[bool] = []
 
     # Group 1: Runtime / API tests
-    results.append(run_pytest(
-        "1. API y domain runtime",
-        "tests/test_academy_api.py",
-        "tests/test_academy_domain.py",
-    ))
+    results.append(
+        run_pytest(
+            "1. API y domain runtime",
+            "tests/test_academy_api.py",
+            "tests/test_academy_domain.py",
+        )
+    )
 
     # Group 2: Comprehensive suite
-    results.append(run_pytest(
-        "2. Comprehensive suite",
-        "tests/test_academy_comprehensive.py",
-    ))
+    results.append(
+        run_pytest(
+            "2. Comprehensive suite",
+            "tests/test_academy_comprehensive.py",
+        )
+    )
 
     # Group 3: Backlog structural validation
-    results.append(run_pytest(
-        "3. Backlog estructural",
-        "tests/test_academy_backlog.py",
-    ))
+    results.append(
+        run_pytest(
+            "3. Backlog estructural",
+            "tests/test_academy_backlog.py",
+        )
+    )
 
     # Group 4: Fase A CRIT regression gates
-    results.append(run_pytest(
-        "4. Fase A CRIT (TKT-010..015)",
-        "tests/test_academy_fase_a_crit.py",
-    ))
+    results.append(
+        run_pytest(
+            "4. Fase A CRIT (TKT-010..015)",
+            "tests/test_academy_fase_a_crit.py",
+        )
+    )
 
     # Group 5: Fase 1-3 (schema, audit, frontend)
-    results.append(run_pytest(
-        "5. Fase 1-3 (schema, audit, frontend)",
-        "tests/test_academy_fase_1.py",
-        "tests/test_academy_fase_2_audit.py",
-        "tests/test_academy_fase_3_frontend.py",
-    ))
+    results.append(
+        run_pytest(
+            "5. Fase 1-3 (schema, audit, frontend)",
+            "tests/test_academy_fase_1.py",
+            "tests/test_academy_fase_2_audit.py",
+            "tests/test_academy_fase_3_frontend.py",
+        )
+    )
 
     # Group 6: Fase 5-6 (cleanup, closure)
-    results.append(run_pytest(
-        "6. Fase 5-6 (cleanup, closure)",
-        "tests/test_academy_fase_5_cleanup.py",
-        "tests/test_academy_fase_5_cleanup_r2.py",
-        "tests/test_academy_fase_6_to_100.py",
-    ))
+    results.append(
+        run_pytest(
+            "6. Fase 5-6 (cleanup, closure)",
+            "tests/test_academy_fase_5_cleanup.py",
+            "tests/test_academy_fase_5_cleanup_r2.py",
+            "tests/test_academy_fase_6_to_100.py",
+        )
+    )
 
     # Group 7: Fase 7 transversal (rate limit, cache, N+1)
-    results.append(run_pytest(
-        "7. Fase 7 transversal (rate limit, cache, N+1)",
-        "tests/test_academy_fase_7_transversal.py",
-    ))
+    results.append(
+        run_pytest(
+            "7. Fase 7 transversal (rate limit, cache, N+1)",
+            "tests/test_academy_fase_7_transversal.py",
+        )
+    )
 
     # Group 8: Ticket-specific tests
-    results.append(run_pytest(
-        "8. Ticket-specific (TKT-042, TKT-143)",
-        "tests/test_academy_tkt_042_single_shell.py",
-        "tests/test_academy_tkt_143_course_catalog_split.py",
-    ))
+    results.append(
+        run_pytest(
+            "8. Ticket-specific (TKT-042, TKT-143)",
+            "tests/test_academy_tkt_042_single_shell.py",
+            "tests/test_academy_tkt_143_course_catalog_split.py",
+        )
+    )
 
     # Group 9: Gated tests (a11y, E2E) — may skip if not configured
-    results.append(run_pytest(
-        "9. Gated tests (a11y, E2E)",
-        "tests/test_academy_fase_7_tkt_204_a11y_gate.py",
-        "tests/test_e2e_academy_tkt_202_gate.py",
-    ))
+    results.append(
+        run_pytest(
+            "9. Gated tests (a11y, E2E)",
+            "tests/test_academy_fase_7_tkt_204_a11y_gate.py",
+            "tests/test_e2e_academy_tkt_202_gate.py",
+        )
+    )
 
     section("RESUMEN")
     passed = sum(1 for r in results if r)

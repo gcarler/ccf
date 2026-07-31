@@ -1,4 +1,5 @@
 """Tests for evangelism_reports.py — all endpoints."""
+
 from __future__ import annotations
 
 import uuid
@@ -22,13 +23,21 @@ def full(client, db_session):
 
 class TestReports:
     def test_attendance_pdf_not_found(self, full):
-        assert full["c"].get(f"/api/evangelism/reports/group/{uuid.uuid4()}/attendance-pdf",
-            headers=full["h"]).status_code == 404
+        assert (
+            full["c"].get(f"/api/evangelism/reports/group/{uuid.uuid4()}/attendance-pdf", headers=full["h"]).status_code
+            == 404
+        )
 
     def test_attendance_excel_not_found(self, full):
-        assert full["c"].get(f"/api/evangelism/reports/group/{uuid.uuid4()}/attendance-excel",
-            headers=full["h"]).status_code == 404
+        assert (
+            full["c"]
+            .get(f"/api/evangelism/reports/group/{uuid.uuid4()}/attendance-excel", headers=full["h"])
+            .status_code
+            == 404
+        )
 
     def test_strategy_summary_not_found(self, full):
-        assert full["c"].get(f"/api/evangelism/reports/strategy/{uuid.uuid4()}/summary",
-            headers=full["h"]).status_code == 404
+        assert (
+            full["c"].get(f"/api/evangelism/reports/strategy/{uuid.uuid4()}/summary", headers=full["h"]).status_code
+            == 404
+        )

@@ -20,6 +20,7 @@ Posture mirrors `tests/test_crm_crud_personas.py`: SQLite in-memory via
   * Timeline exposes each of the 6 event types when the corresponding
     row exists; ordering is desc by date.
 """
+
 from __future__ import annotations
 
 import datetime as dt
@@ -36,6 +37,7 @@ from backend.crud.crm_ import timeline as crud_timeline
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 
+
 def _seed_sede(db: Session, name: str = "Sede QC-18.D") -> models.Sede:
     sede = models.Sede(id=_uuid.uuid4(), nombre=name, ciudad="QC18 City", es_activa=True)
     db.add(sede)
@@ -45,7 +47,11 @@ def _seed_sede(db: Session, name: str = "Sede QC-18.D") -> models.Sede:
 
 def _seed_persona(db: Session, sede_id: _uuid.UUID, first: str = "P", church_role: str = "MIEMBRO") -> models.Persona:
     p = models.Persona(
-        id=_uuid.uuid4(), first_name=first, last_name="T", sede_id=sede_id, estado_vital="ACTIVO",
+        id=_uuid.uuid4(),
+        first_name=first,
+        last_name="T",
+        sede_id=sede_id,
+        estado_vital="ACTIVO",
         email=f"{first.lower()}{_uuid.uuid4().hex[:6]}@example.com",
         church_role=church_role,
     )
@@ -55,8 +61,14 @@ def _seed_persona(db: Session, sede_id: _uuid.UUID, first: str = "P", church_rol
 
 
 def _seed_milestone(
-    db: Session, *, persona: models.Persona, sede_id: Optional[_uuid.UUID] = None,
-    type: str = "BAUTISMO", event_date=None, deleted_at=None, notes: Optional[str] = None,
+    db: Session,
+    *,
+    persona: models.Persona,
+    sede_id: Optional[_uuid.UUID] = None,
+    type: str = "BAUTISMO",
+    event_date=None,
+    deleted_at=None,
+    notes: Optional[str] = None,
 ) -> models.SpiritualMilestone:
     m = models.SpiritualMilestone(
         id=_uuid.uuid4(),
@@ -105,8 +117,9 @@ def test_get_milestones_scoped_by_persona_and_excludes_soft_deleted(db_session):
     p = _seed_persona(db_session, sede_id=sede.id)
     p_other = _seed_persona(db_session, sede_id=sede.id, first="Other")
     m_live = _seed_milestone(db_session, persona=p, type="BAUTISMO", event_date=dt.date(2026, 6, 1))
-    m_dead = _seed_milestone(db_session, persona=p, type="CONFIRMACION", event_date=dt.date(2026, 5, 1),
-                             deleted_at=crud_milestones._utcnow())
+    m_dead = _seed_milestone(
+        db_session, persona=p, type="CONFIRMACION", event_date=dt.date(2026, 5, 1), deleted_at=crud_milestones._utcnow()
+    )
     m_other = _seed_milestone(db_session, persona=p_other, type="OTRO", event_date=dt.date(2026, 4, 1))
     _commit(db_session)
 
@@ -260,12 +273,19 @@ def test_get_persona_timeline_includes_only_live_milestones(db_session):
     p = _seed_persona(db_session, sede_id=sede.id)
     m_live = _seed_milestone(db_session, persona=p, sede_id=sede.id, type="BAUTISMO")
     m_dead = _seed_milestone(
-        db_session, persona=p, sede_id=sede.id, type="CONFIRMACION",
+        db_session,
+        persona=p,
+        sede_id=sede.id,
+        type="CONFIRMACION",
         deleted_at=crud_milestones._utcnow(),
     )
     _commit(db_session)
 
-    titles = [e["title"] for e in crud_timeline.get_persona_timeline(db_session, str(p.id)) if e["type"] == "spiritual_milestone"]
+    titles = [
+        e["title"]
+        for e in crud_timeline.get_persona_timeline(db_session, str(p.id))
+        if e["type"] == "spiritual_milestone"
+    ]
     assert any("BAUTISMO" in t for t in titles)
     assert not any("CONFIRMACION" in t for t in titles), "timeline aggregated a soft-deleted milestone"
 

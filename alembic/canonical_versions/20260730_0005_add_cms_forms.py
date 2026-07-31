@@ -5,9 +5,11 @@ Revises: 20260730_0004_add_cms_popups
 Create Date: 2026-07-30 18:00:00.000000
 
 """
+
 from __future__ import annotations
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision = "20260730_0005_add_cms_forms"

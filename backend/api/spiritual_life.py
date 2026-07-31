@@ -30,7 +30,9 @@ def _assert_persona_in_sede(db: Session, persona_id: UUID, user_sede_id: Optiona
     return persona
 
 
-def _assert_milestone_in_sede(db: Session, milestone_id: UUID, user_sede_id: Optional[UUID]) -> models.SpiritualMilestone:
+def _assert_milestone_in_sede(
+    db: Session, milestone_id: UUID, user_sede_id: Optional[UUID]
+) -> models.SpiritualMilestone:
     milestone = crud.get_milestone(db, milestone_id)
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
@@ -139,7 +141,6 @@ def update_spiritual_milestone(
     if not updated:
         raise HTTPException(status_code=404, detail="Milestone not found")
     return updated
-
 
 
 @router.delete("/milestone/{milestone_id}", status_code=204)

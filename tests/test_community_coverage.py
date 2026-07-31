@@ -1,6 +1,7 @@
 """
 Community + Prayer + Graph Coverage Tests.
 """
+
 import pytest
 
 from tests.conftest import auth_headers as _auth_headers

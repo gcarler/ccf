@@ -1,7 +1,7 @@
 # Revisión UI — Módulo de Proyectos CCF (Full-Stack)
 
-**Fecha de auditoría:** 2026-07-23  
-**Alcance:** Frontend + Backend + Base de datos del módulo de Proyectos  
+**Fecha de auditoría:** 2026-07-23
+**Alcance:** Frontend + Backend + Base de datos del módulo de Proyectos
 **Objetivo:** Evaluar calidad, consistencia, seguridad y performance de todo el módulo.
 
 ---

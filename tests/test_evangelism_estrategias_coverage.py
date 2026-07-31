@@ -1,6 +1,7 @@
 """
 Coverage tests for evangelism_main/main_estrategias.py — target 90%+.
 """
+
 import uuid
 from datetime import datetime, timezone
 
@@ -21,13 +22,18 @@ def full(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
-        "c": client, "h": headers, "db": db_session,
-        "admin": admin, "persona": persona, "sede": sede,
+        "c": client,
+        "h": headers,
+        "db": db_session,
+        "admin": admin,
+        "persona": persona,
+        "sede": sede,
     }
 
 
 def _make_categoria(db):
     from backend.models_evangelism import CategoriaEstrategia
+
     cat = CategoriaEstrategia(id=uuid.uuid4(), nombre="Test Cat")
     db.add(cat)
     db.flush()
@@ -36,12 +42,16 @@ def _make_categoria(db):
 
 def _make_strategy(db, sede_id, cat_id=None, frecuencia="SEMANAL", dia_reunion=None):
     from backend.models_evangelism import EstrategiaEvangelismo
+
     if cat_id is None:
         cat_id = _make_categoria(db).id
     s = EstrategiaEvangelismo(
-        id=uuid.uuid4(), nombre=f"E_{uuid.uuid4().hex[:4]}",
-        sede_id=sede_id, categoria_id=cat_id,
-        frecuencia=frecuencia, dia_reunion=dia_reunion,
+        id=uuid.uuid4(),
+        nombre=f"E_{uuid.uuid4().hex[:4]}",
+        sede_id=sede_id,
+        categoria_id=cat_id,
+        frecuencia=frecuencia,
+        dia_reunion=dia_reunion,
         fecha_inicio=datetime.now(timezone.utc),
         fecha_fin=datetime.now(timezone.utc),
     )
@@ -54,10 +64,14 @@ class TestEstrategiasHelpers:
     def test_hydrate_strategy_synonyms_empty(self, full):
         """_hydrate_strategy_synonyms with all fields already set."""
         from backend.models_evangelism import EstrategiaEvangelismo
+
         cat = _make_categoria(full["db"])
         s = EstrategiaEvangelismo(
-            id=uuid.uuid4(), nombre="Test", sede_id=full["sede"].id,
-            categoria_id=cat.id, frecuencia="SEMANAL",
+            id=uuid.uuid4(),
+            nombre="Test",
+            sede_id=full["sede"].id,
+            categoria_id=cat.id,
+            frecuencia="SEMANAL",
             fecha_inicio=datetime.now(timezone.utc),
             fecha_fin=datetime.now(timezone.utc),
             activa=True,
@@ -126,10 +140,14 @@ class TestEstrategiasEndpoints:
 
     def test_create_strategy(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/evangelism/strategies", headers=h, json={
-            "name": "New Strategy",
-            "typology": "formativo",
-            "start_date": "2026-01-01",
-            "end_date": "2026-12-31",
-        })
+        resp = c.post(
+            "/api/evangelism/strategies",
+            headers=h,
+            json={
+                "name": "New Strategy",
+                "typology": "formativo",
+                "start_date": "2026-01-01",
+                "end_date": "2026-12-31",
+            },
+        )
         assert resp.status_code in (200, 201), f"Got {resp.status_code}: {resp.text[:200]}"

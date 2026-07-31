@@ -2,6 +2,7 @@
 Extended unit tests for backend.api.workspace_shared._storage.
 Covers all read/write and persistence functions.
 """
+
 from __future__ import annotations
 
 import json
@@ -64,6 +65,7 @@ class TestLoadWorkspaceConfig:
     def test_no_file_returns_default(self, monkeypatch):
         monkeypatch.setattr(storage, "FLAGS_FILE", Path(f"/tmp/test_flags_{uuid.uuid4().hex}.json"))
         from backend.api.workspace_shared import DEFAULT_WORKSPACE_CONFIG
+
         result = storage._load_workspace_config()
         assert result == DEFAULT_WORKSPACE_CONFIG
 
@@ -80,6 +82,7 @@ class TestLoadWorkspaceConfig:
         f.write_text("not json", encoding="utf-8")
         monkeypatch.setattr(storage, "FLAGS_FILE", f)
         from backend.api.workspace_shared import DEFAULT_WORKSPACE_CONFIG
+
         result = storage._load_workspace_config()
         assert result == DEFAULT_WORKSPACE_CONFIG
 
@@ -132,7 +135,7 @@ class TestReadAuditEvents:
 
     def test_limits_results(self, monkeypatch, tmp_path):
         f = tmp_path / "audit.jsonl"
-        lines = '\n'.join([f'{{"n":{i}}}' for i in range(50)])
+        lines = "\n".join([f'{{"n":{i}}}' for i in range(50)])
         f.write_text(lines, encoding="utf-8")
         monkeypatch.setattr(storage, "AUDIT_FILE", f)
         result = storage._read_audit_events(limit=10)
@@ -164,7 +167,7 @@ class TestReadNotifications:
 
     def test_limits(self, monkeypatch, tmp_path):
         f = tmp_path / "notifications.jsonl"
-        lines = '\n'.join([f'{{"n":{i}}}' for i in range(20)])
+        lines = "\n".join([f'{{"n":{i}}}' for i in range(20)])
         f.write_text(lines, encoding="utf-8")
         monkeypatch.setattr(storage, "NOTIFICATIONS_FILE", f)
         result = storage._read_notifications(limit=5)
@@ -202,7 +205,7 @@ class TestReadSnapshotHistory:
 
     def test_limits(self, monkeypatch, tmp_path):
         f = tmp_path / "snapshots.jsonl"
-        f.write_text('\n'.join([f'{{"s":{i}}}' for i in range(2000)]), encoding="utf-8")
+        f.write_text("\n".join([f'{{"s":{i}}}' for i in range(2000)]), encoding="utf-8")
         monkeypatch.setattr(storage, "SNAPSHOT_HISTORY_FILE", f)
         result = storage._read_snapshot_history(limit=100)
         assert len(result) == 100
@@ -230,8 +233,11 @@ class TestAppendIncidentHistory:
     def test_appends_to_existing_history(self):
         incident = {"history": [{"event": "old"}]}
         storage._append_incident_history(
-            incident, event="new_event", actor_id="actor1",
-            note="test note", metadata={"key": "val"},
+            incident,
+            event="new_event",
+            actor_id="actor1",
+            note="test note",
+            metadata={"key": "val"},
         )
         assert len(incident["history"]) == 2
         assert incident["history"][1]["event"] == "new_event"
@@ -240,8 +246,11 @@ class TestAppendIncidentHistory:
     def test_adds_note_and_metadata(self):
         incident = {}
         storage._append_incident_history(
-            incident, event="created", actor_id="system",
-            note="Auto", metadata={"reason": "init"},
+            incident,
+            event="created",
+            actor_id="system",
+            note="Auto",
+            metadata={"reason": "init"},
         )
         assert incident["history"][0]["note"] == "Auto"
         assert incident["history"][0]["metadata"]["reason"] == "init"

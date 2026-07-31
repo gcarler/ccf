@@ -17,6 +17,7 @@ Axioma 3 note: `Family` does not have a `sede_id` column. Scope is
 inferred via the join with `Persona.family_id`. Therefore `get_families`
 only returns families that have at least one persona in the actor's sede.
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -41,7 +42,9 @@ def _seed_sede(db: Session, name: str = "Sede Fam") -> models.Sede:
     return sede
 
 
-def _seed_persona(db: Session, *, sede_id: _uuid.UUID, family_id: _uuid.UUID | None = None, first: str = "P") -> models.Persona:
+def _seed_persona(
+    db: Session, *, sede_id: _uuid.UUID, family_id: _uuid.UUID | None = None, first: str = "P"
+) -> models.Persona:
     p = models.Persona(
         id=_uuid.uuid4(),
         first_name=first,

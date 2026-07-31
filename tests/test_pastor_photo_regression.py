@@ -77,10 +77,7 @@ def _slug_token_set(value: str | None) -> set[str]:
     both ``_slugify`` and ``cms_pastors_sync._find_persona_by_name`` drop
     them; reusing the same filter keeps the regression test aligned.
     """
-    tokens = {
-        tok for tok in _slugify(value).split("-")
-        if tok and tok not in {"y", "e", "de", "del", "la"}
-    }
+    tokens = {tok for tok in _slugify(value).split("-") if tok and tok not in {"y", "e", "de", "del", "la"}}
     return tokens
 
 
@@ -224,11 +221,7 @@ def seed_pastors_page(db_session):  # noqa: F811  — see conftest fixture
     _user, _persona, sede = seed_admin(db_session)
 
     # 1. Site.
-    site = (
-        db_session.query(models.CmsSite)
-        .filter(models.CmsSite.site_key == SITE_KEY)
-        .first()
-    )
+    site = db_session.query(models.CmsSite).filter(models.CmsSite.site_key == SITE_KEY).first()
     if site is None:
         site = models.CmsSite(
             site_key=SITE_KEY,
@@ -436,17 +429,13 @@ PUBLIC_BASE = "/api/cms/v2/public/sites"
 
 def _public_pastoral_team(client, site_key: str = SITE_KEY) -> list[dict[str, Any]]:
     resp = client.get(f"{PUBLIC_BASE}/{site_key}/pastoral-team")
-    assert resp.status_code == 200, (
-        f"public pastoral-team 200 expected, got {resp.status_code}: {resp.text}"
-    )
+    assert resp.status_code == 200, f"public pastoral-team 200 expected, got {resp.status_code}: {resp.text}"
     return resp.json()
 
 
 def _public_page_pastors(client, site_key: str = SITE_KEY) -> dict[str, Any]:
     resp = client.get(f"{PUBLIC_BASE}/{site_key}/pages/{PASTORS_PAGE_SLUG}")
-    assert resp.status_code == 200, (
-        f"public pastors page 200 expected, got {resp.status_code}: {resp.text}"
-    )
+    assert resp.status_code == 200, f"public pastors page 200 expected, got {resp.status_code}: {resp.text}"
     return resp.json()
 
 
@@ -475,9 +464,7 @@ class TestPastorPhotoRegression:
 
     # ── II. Pastoral team endpoint has every seeded pastor ───────────────
 
-    def test_public_pastoral_team_lists_all_seeded_pastors(
-        self, client, seed_pastors_page
-    ):
+    def test_public_pastoral_team_lists_all_seeded_pastors(self, client, seed_pastors_page):
         payload = _public_pastoral_team(client)
         slugs_returned = {row["slug"] for row in payload}
         slugs_expected = {entry["slug"] for entry in PASTORS_SEED}
@@ -491,16 +478,12 @@ class TestPastorPhotoRegression:
         payload = _public_pastoral_team(client)
         row = next((r for r in payload if r["slug"] == pastor_slug), None)
         assert row is not None, f"{pastor_slug} missing from pastoral-team"
-        assert (row.get("photo_url") or "").strip(), (
-            f"{pastor_slug} has empty photo_url — feed regression"
-        )
+        assert (row.get("photo_url") or "").strip(), f"{pastor_slug} has empty photo_url — feed regression"
 
     # ── IV. Image URL resolves to a registered CmsMediaItem ──────────────
 
     @pytest.mark.parametrize("pastor_slug", [entry["slug"] for entry in PASTORS_SEED])
-    def test_pastor_image_url_resolves_to_cms_media_item(
-        self, client, db_session, seed_pastors_page, pastor_slug
-    ):
+    def test_pastor_image_url_resolves_to_cms_media_item(self, client, db_session, seed_pastors_page, pastor_slug):
         from backend import models
 
         payload = _public_pastoral_team(client)
@@ -508,11 +491,7 @@ class TestPastorPhotoRegression:
         image_url = (row.get("photo_url") or "").strip()
         assert image_url, f"{pastor_slug}: empty photo_url"
 
-        media = (
-            db_session.query(models.CmsMediaItem)
-            .filter(models.CmsMediaItem.url == image_url)
-            .first()
-        )
+        media = db_session.query(models.CmsMediaItem).filter(models.CmsMediaItem.url == image_url).first()
         assert media is not None, (
             f"{pastor_slug}: photo_url {image_url!r} has no CmsMediaItem row — "
             f"this is the original 'wrong photo' bug pattern"
@@ -524,19 +503,13 @@ class TestPastorPhotoRegression:
     # ── V. The CmsMediaItem encodes the pastor's identity (THE GUARD) ────
 
     @pytest.mark.parametrize("pastor_slug", [entry["slug"] for entry in PASTORS_SEED])
-    def test_pastor_media_item_encodes_pastor_identity(
-        self, client, db_session, seed_pastors_page, pastor_slug
-    ):
+    def test_pastor_media_item_encodes_pastor_identity(self, client, db_session, seed_pastors_page, pastor_slug):
         from backend import models
 
         payload = _public_pastoral_team(client)
         row = next(r for r in payload if r["slug"] == pastor_slug)
         image_url = (row.get("photo_url") or "").strip()
-        media = (
-            db_session.query(models.CmsMediaItem)
-            .filter(models.CmsMediaItem.url == image_url)
-            .one()
-        )
+        media = db_session.query(models.CmsMediaItem).filter(models.CmsMediaItem.url == image_url).one()
 
         # The pastor's "logical" name from the feed is the canonical ground
         # truth; the slug is the projection of the name and we tolerate
@@ -558,9 +531,7 @@ class TestPastorPhotoRegression:
 
     # ── VI. Section → media consistency (CMS-rendered page path) ────────
 
-    def test_pastors_page_section_matches_pastoral_team(
-        self, client, seed_pastors_page
-    ):
+    def test_pastors_page_section_matches_pastoral_team(self, client, seed_pastors_page):
         """The two public endpoints must agree.
 
         ``/pastoral-team`` is what the Next.js cards consume; the
@@ -570,8 +541,7 @@ class TestPastorPhotoRegression:
         the other was never re-published).
         """
         team_slugs_to_images = {
-            row["slug"]: (row.get("photo_url") or "").strip()
-            for row in _public_pastoral_team(client)
+            row["slug"]: (row.get("photo_url") or "").strip() for row in _public_pastoral_team(client)
         }
         page_data = _public_page_pastors(client)
         section_pastors: list[dict[str, Any]] = []
@@ -580,9 +550,7 @@ class TestPastorPhotoRegression:
             if isinstance(props, dict) and isinstance(props.get("pastors"), list):
                 section_pastors.extend(props["pastors"])
 
-        page_slug_to_image = {
-            row["slug"]: (row.get("image") or "").strip() for row in section_pastors
-        }
+        page_slug_to_image = {row["slug"]: (row.get("image") or "").strip() for row in section_pastors}
 
         # 1. Same set of slugs.
         assert page_slug_to_image.keys() == team_slugs_to_images.keys(), (
@@ -599,9 +567,7 @@ class TestPastorPhotoRegression:
 
     # ── VII. Negative test — alt-text swap fails the regression ──────────
 
-    def test_alt_text_swap_is_detected_as_regression(
-        self, client, db_session, seed_pastors_page
-    ):
+    def test_alt_text_swap_is_detected_as_regression(self, client, db_session, seed_pastors_page):
         """Mutate the CmsMediaItem.alt_text to a non-matching phrase and
         assert the regression trip-wire fires. This is the parametric
         danger case: someone overwrites a media row's alt_text without
@@ -613,10 +579,14 @@ class TestPastorPhotoRegression:
         response_slugs = {row["slug"] for row in _public_pastoral_team(client)}
         assert entry["slug"] in response_slugs, "fixture sanity: anchor row missing"
 
-        media = db_session.query(models.CmsMediaItem).filter(
-            models.CmsMediaItem.url.endswith(".webp"),
-            models.CmsMediaItem.filename == entry["filename"],
-        ).one()
+        media = (
+            db_session.query(models.CmsMediaItem)
+            .filter(
+                models.CmsMediaItem.url.endswith(".webp"),
+                models.CmsMediaItem.filename == entry["filename"],
+            )
+            .one()
+        )
         media.alt_text = "Foto no relacionada — error humano intencional"
         media.filename = "unrelated-archive-shot.webp"
         media.tags = ["archived"]  # drop the pastor-encoding tags too
@@ -625,11 +595,7 @@ class TestPastorPhotoRegression:
         # Re-hit the public endpoint and re-evaluate the matcher.
         payload = _public_pastoral_team(client)
         target = next(r for r in payload if r["slug"] == entry["slug"])
-        media_row = (
-            db_session.query(models.CmsMediaItem)
-            .filter(models.CmsMediaItem.url == target["photo_url"])
-            .one()
-        )
+        media_row = db_session.query(models.CmsMediaItem).filter(models.CmsMediaItem.url == target["photo_url"]).one()
         ok = _media_matches_pastor(
             pastor_slug=target["slug"],
             pastor_name=target["name"],
@@ -638,16 +604,13 @@ class TestPastorPhotoRegression:
             media_tags=list(media_row.tags or []),
         )
         assert not ok, (
-            "regression guard FAILED to detect a deliberate slug↔photo "
-            "desync — _media_matches_pastor is too permissive"
+            "regression guard FAILED to detect a deliberate slug↔photo desync — _media_matches_pastor is too permissive"
         )
 
     # ── VIII. URL render alignment (drift-free final check) ──────────────
 
     @pytest.mark.parametrize("pastor_slug", [entry["slug"] for entry in PASTORS_SEED])
-    def test_pastor_image_url_is_well_formed_for_static_serving(
-        self, client, seed_pastors_page, pastor_slug
-    ):
+    def test_pastor_image_url_is_well_formed_for_static_serving(self, client, seed_pastors_page, pastor_slug):
         """The image URL must be served from the assets static endpoint
         expected by the frontend (``/api/static/cms/pastores/...``).
 
@@ -660,8 +623,7 @@ class TestPastorPhotoRegression:
         row = next(r for r in payload if r["slug"] == pastor_slug)
         image_url = (row.get("photo_url") or "").strip()
         assert image_url.startswith("/api/static/cms/pastores/"), (
-            f"{pastor_slug}: photo_url {image_url!r} is not a stored pastors "
-            f"asset URL — frontend img src would 404"
+            f"{pastor_slug}: photo_url {image_url!r} is not a stored pastors asset URL — frontend img src would 404"
         )
         # Must end with a benign image extension (webp preferred, jpg/png tolerated).
         ext = Path(image_url).suffix.lower().lstrip(".")

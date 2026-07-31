@@ -443,19 +443,36 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
 
     # EventAttendance: 1 attended=True, 2 attended=False (should not count as attended, but counts as opportunity)
     evt_t = models.EventAttendance(
-        id=uuid.uuid4(), persona_id=persona_mixed.id, event_id=uuid.uuid4(), session_date=date.today(), status="present", attended=True
+        id=uuid.uuid4(),
+        persona_id=persona_mixed.id,
+        event_id=uuid.uuid4(),
+        session_date=date.today(),
+        status="present",
+        attended=True,
     )
     evt_f = models.EventAttendance(
-        id=uuid.uuid4(), persona_id=persona_mixed.id, event_id=uuid.uuid4(), session_date=date.today(), status="absent", attended=False
+        id=uuid.uuid4(),
+        persona_id=persona_mixed.id,
+        event_id=uuid.uuid4(),
+        session_date=date.today(),
+        status="absent",
+        attended=False,
     )
     evt_n = models.EventAttendance(
-        id=uuid.uuid4(), persona_id=persona_mixed.id, event_id=uuid.uuid4(), session_date=date.today(), status="unknown", attended=False
+        id=uuid.uuid4(),
+        persona_id=persona_mixed.id,
+        event_id=uuid.uuid4(),
+        session_date=date.today(),
+        status="unknown",
+        attended=False,
     )
     db_session.add_all([evt_t, evt_f, evt_n])
 
     # CourseAttendance:
     # Setup Enrollment
-    enrollment = models.Enrollment(id=uuid.uuid4(), persona_id=persona_mixed.id, course_id=uuid.uuid4(), status="active")
+    enrollment = models.Enrollment(
+        id=uuid.uuid4(), persona_id=persona_mixed.id, course_id=uuid.uuid4(), status="active"
+    )
     db_session.add(enrollment)
     db_session.commit()
 
@@ -505,14 +522,24 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     # 4. Status Boundaries and Rounding
     # Case A: Score exactly 39 (EN_RIESGO)
     persona_39 = models.Persona(
-        id=uuid.uuid4(), first_name="P39", last_name="Test", email="p39@example.com", sede_id=sede_a.id, is_baptized=False
+        id=uuid.uuid4(),
+        first_name="P39",
+        last_name="Test",
+        email="p39@example.com",
+        sede_id=sede_a.id,
+        is_baptized=False,
     )
     db_session.add(persona_39)
     # Opps = 50, Attended = 39 -> score = 39
     for i in range(50):
-        db_session.add(models.Asistencia(
-            id=uuid.uuid4(), persona_id=persona_39.id, sesion_id=uuid.uuid4(), estado="presente" if i < 39 else "falto"
-        ))
+        db_session.add(
+            models.Asistencia(
+                id=uuid.uuid4(),
+                persona_id=persona_39.id,
+                sesion_id=uuid.uuid4(),
+                estado="presente" if i < 39 else "falto",
+            )
+        )
     db_session.commit()
     score_39, status_39 = recalculate_and_persist_pastoral_health(db_session, persona_39.id)
     assert score_39 == 39
@@ -520,14 +547,24 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
 
     # Case B: Score exactly 40 (ESTABLE)
     persona_40 = models.Persona(
-        id=uuid.uuid4(), first_name="P40", last_name="Test", email="p40@example.com", sede_id=sede_a.id, is_baptized=False
+        id=uuid.uuid4(),
+        first_name="P40",
+        last_name="Test",
+        email="p40@example.com",
+        sede_id=sede_a.id,
+        is_baptized=False,
     )
     db_session.add(persona_40)
     # Opps = 50, Attended = 40 -> score = 40
     for i in range(50):
-        db_session.add(models.Asistencia(
-            id=uuid.uuid4(), persona_id=persona_40.id, sesion_id=uuid.uuid4(), estado="presente" if i < 40 else "falto"
-        ))
+        db_session.add(
+            models.Asistencia(
+                id=uuid.uuid4(),
+                persona_id=persona_40.id,
+                sesion_id=uuid.uuid4(),
+                estado="presente" if i < 40 else "falto",
+            )
+        )
     db_session.commit()
     score_40, status_40 = recalculate_and_persist_pastoral_health(db_session, persona_40.id)
     assert score_40 == 40
@@ -535,19 +572,37 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
 
     # Case C: Score exactly 79 (ESTABLE)
     persona_79 = models.Persona(
-        id=uuid.uuid4(), first_name="P79", last_name="Test", email="p79@example.com", sede_id=sede_a.id, is_baptized=False
+        id=uuid.uuid4(),
+        first_name="P79",
+        last_name="Test",
+        email="p79@example.com",
+        sede_id=sede_a.id,
+        is_baptized=False,
     )
     db_session.add(persona_79)
     # Milestones = 30 (max), Comms = 20 (max). Need attendance = 29.
     # Opps = 50, Attended = 29 -> score = 29.
     for i in range(50):
-        db_session.add(models.Asistencia(
-            id=uuid.uuid4(), persona_id=persona_79.id, sesion_id=uuid.uuid4(), estado="presente" if i < 29 else "falto"
-        ))
+        db_session.add(
+            models.Asistencia(
+                id=uuid.uuid4(),
+                persona_id=persona_79.id,
+                sesion_id=uuid.uuid4(),
+                estado="presente" if i < 29 else "falto",
+            )
+        )
     for _ in range(3):
-        db_session.add(models.SpiritualMilestone(id=uuid.uuid4(), persona_id=persona_79.id, sede_id=sede_a.id, type="Milestone", event_date=date.today()))
+        db_session.add(
+            models.SpiritualMilestone(
+                id=uuid.uuid4(), persona_id=persona_79.id, sede_id=sede_a.id, type="Milestone", event_date=date.today()
+            )
+        )
     for i in range(4):
-        db_session.add(models.CommunicationLog(id=uuid.uuid4(), persona_id=persona_79.id, channel="Call", content=f"C{i}", outcome="sent"))
+        db_session.add(
+            models.CommunicationLog(
+                id=uuid.uuid4(), persona_id=persona_79.id, channel="Call", content=f"C{i}", outcome="sent"
+            )
+        )
     db_session.commit()
     score_79, status_79 = recalculate_and_persist_pastoral_health(db_session, persona_79.id)
     assert score_79 == 79
@@ -555,19 +610,37 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
 
     # Case D: Score exactly 80 (COMPROMETIDO)
     persona_80 = models.Persona(
-        id=uuid.uuid4(), first_name="P80", last_name="Test", email="p80@example.com", sede_id=sede_a.id, is_baptized=False
+        id=uuid.uuid4(),
+        first_name="P80",
+        last_name="Test",
+        email="p80@example.com",
+        sede_id=sede_a.id,
+        is_baptized=False,
     )
     db_session.add(persona_80)
     # Milestones = 30 (max), Comms = 20 (max). Need attendance = 30.
     # Opps = 50, Attended = 30 -> score = 30.
     for i in range(50):
-        db_session.add(models.Asistencia(
-            id=uuid.uuid4(), persona_id=persona_80.id, sesion_id=uuid.uuid4(), estado="presente" if i < 30 else "falto"
-        ))
+        db_session.add(
+            models.Asistencia(
+                id=uuid.uuid4(),
+                persona_id=persona_80.id,
+                sesion_id=uuid.uuid4(),
+                estado="presente" if i < 30 else "falto",
+            )
+        )
     for _ in range(3):
-        db_session.add(models.SpiritualMilestone(id=uuid.uuid4(), persona_id=persona_80.id, sede_id=sede_a.id, type="Milestone", event_date=date.today()))
+        db_session.add(
+            models.SpiritualMilestone(
+                id=uuid.uuid4(), persona_id=persona_80.id, sede_id=sede_a.id, type="Milestone", event_date=date.today()
+            )
+        )
     for i in range(4):
-        db_session.add(models.CommunicationLog(id=uuid.uuid4(), persona_id=persona_80.id, channel="Call", content=f"C{i}", outcome="sent"))
+        db_session.add(
+            models.CommunicationLog(
+                id=uuid.uuid4(), persona_id=persona_80.id, channel="Call", content=f"C{i}", outcome="sent"
+            )
+        )
     db_session.commit()
     score_80, status_80 = recalculate_and_persist_pastoral_health(db_session, persona_80.id)
     assert score_80 == 80
@@ -578,15 +651,33 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     # Need attendance score = 9.4 -> total = 39.4 -> rounds to 39.
     # Opps = 500, Attended = 94 -> 94/500 * 50 = 9.4.
     persona_round_down = models.Persona(
-        id=uuid.uuid4(), first_name="RoundDown", last_name="Test", email="down@example.com", sede_id=sede_a.id, is_baptized=False
+        id=uuid.uuid4(),
+        first_name="RoundDown",
+        last_name="Test",
+        email="down@example.com",
+        sede_id=sede_a.id,
+        is_baptized=False,
     )
     db_session.add(persona_round_down)
     for i in range(500):
-        db_session.add(models.Asistencia(
-            id=uuid.uuid4(), persona_id=persona_round_down.id, sesion_id=uuid.uuid4(), estado="presente" if i < 94 else "falto"
-        ))
+        db_session.add(
+            models.Asistencia(
+                id=uuid.uuid4(),
+                persona_id=persona_round_down.id,
+                sesion_id=uuid.uuid4(),
+                estado="presente" if i < 94 else "falto",
+            )
+        )
     for _ in range(3):
-        db_session.add(models.SpiritualMilestone(id=uuid.uuid4(), persona_id=persona_round_down.id, sede_id=sede_a.id, type="Milestone", event_date=date.today()))
+        db_session.add(
+            models.SpiritualMilestone(
+                id=uuid.uuid4(),
+                persona_id=persona_round_down.id,
+                sede_id=sede_a.id,
+                type="Milestone",
+                event_date=date.today(),
+            )
+        )
     db_session.commit()
     score_down, status_down = recalculate_and_persist_pastoral_health(db_session, persona_round_down.id)
     assert score_down == 39
@@ -596,15 +687,33 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     # Need attendance score = 9.5 -> total = 39.5 -> rounds to 40.
     # Opps = 500, Attended = 95 -> 95/500 * 50 = 9.5.
     persona_round_up = models.Persona(
-        id=uuid.uuid4(), first_name="RoundUp", last_name="Test", email="up@example.com", sede_id=sede_a.id, is_baptized=False
+        id=uuid.uuid4(),
+        first_name="RoundUp",
+        last_name="Test",
+        email="up@example.com",
+        sede_id=sede_a.id,
+        is_baptized=False,
     )
     db_session.add(persona_round_up)
     for i in range(500):
-        db_session.add(models.Asistencia(
-            id=uuid.uuid4(), persona_id=persona_round_up.id, sesion_id=uuid.uuid4(), estado="presente" if i < 95 else "falto"
-        ))
+        db_session.add(
+            models.Asistencia(
+                id=uuid.uuid4(),
+                persona_id=persona_round_up.id,
+                sesion_id=uuid.uuid4(),
+                estado="presente" if i < 95 else "falto",
+            )
+        )
     for _ in range(3):
-        db_session.add(models.SpiritualMilestone(id=uuid.uuid4(), persona_id=persona_round_up.id, sede_id=sede_a.id, type="Milestone", event_date=date.today()))
+        db_session.add(
+            models.SpiritualMilestone(
+                id=uuid.uuid4(),
+                persona_id=persona_round_up.id,
+                sede_id=sede_a.id,
+                type="Milestone",
+                event_date=date.today(),
+            )
+        )
     db_session.commit()
     score_up, status_up = recalculate_and_persist_pastoral_health(db_session, persona_round_up.id)
     assert score_up == 40
@@ -623,11 +732,21 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
 
     # Persona A in Sede A
     persona_a = models.Persona(
-        id=uuid.uuid4(), first_name="Persona", last_name="A", email="persona_a@example.com", sede_id=sede_a.id, is_baptized=False
+        id=uuid.uuid4(),
+        first_name="Persona",
+        last_name="A",
+        email="persona_a@example.com",
+        sede_id=sede_a.id,
+        is_baptized=False,
     )
     # Persona B in Sede B
     persona_b = models.Persona(
-        id=uuid.uuid4(), first_name="Persona", last_name="B", email="persona_b@example.com", sede_id=sede_b.id, is_baptized=True
+        id=uuid.uuid4(),
+        first_name="Persona",
+        last_name="B",
+        email="persona_b@example.com",
+        sede_id=sede_b.id,
+        is_baptized=True,
     )
     db_session.add_all([persona_a, persona_b])
     db_session.commit()
@@ -635,13 +754,23 @@ def test_pastoral_health_adversarial_and_edge_cases(db_session):
     # Add records for Persona B
     # 10 Asistencias (presente)
     for _ in range(10):
-        db_session.add(models.Asistencia(id=uuid.uuid4(), persona_id=persona_b.id, sesion_id=uuid.uuid4(), estado="presente"))
+        db_session.add(
+            models.Asistencia(id=uuid.uuid4(), persona_id=persona_b.id, sesion_id=uuid.uuid4(), estado="presente")
+        )
     # 5 Milestones in Sede B
     for _ in range(5):
-        db_session.add(models.SpiritualMilestone(id=uuid.uuid4(), persona_id=persona_b.id, sede_id=sede_b.id, type="Milestone", event_date=date.today()))
+        db_session.add(
+            models.SpiritualMilestone(
+                id=uuid.uuid4(), persona_id=persona_b.id, sede_id=sede_b.id, type="Milestone", event_date=date.today()
+            )
+        )
     # 5 Comm logs
     for i in range(5):
-        db_session.add(models.CommunicationLog(id=uuid.uuid4(), persona_id=persona_b.id, channel="SMS", content="Test", outcome="sent"))
+        db_session.add(
+            models.CommunicationLog(
+                id=uuid.uuid4(), persona_id=persona_b.id, channel="SMS", content="Test", outcome="sent"
+            )
+        )
     db_session.commit()
 
     # Calculate pastoral health for Persona A (should remain unaffected: 0)

@@ -34,9 +34,9 @@ class MockIntersectionObserver {
   root = null;
   rootMargin = '';
   thresholds = [];
-  
+
   constructor() {}
-  
+
   observe() {}
   unobserve() {}
   disconnect() {}
@@ -50,11 +50,11 @@ Object.defineProperty(window, 'IntersectionObserver', {
 // Mock ResizeObserver
 class MockResizeObserver {
   callback: ResizeObserverCallback;
-  
+
   constructor(callback: ResizeObserverCallback) {
     this.callback = callback;
   }
-  
+
   observe() {}
   unobserve() {}
   disconnect() {}

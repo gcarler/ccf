@@ -32,21 +32,30 @@ depends_on: Union[str, Sequence[str], None] = None
 
 ACTIVITY_STATUS_VALUES = ("ACTIVO", "INACTIVO")
 MINISTRY_OFFICE_VALUES = (
-    "APOSTOL", "PROFETA", "EVANGELISTA", "PASTOR", "MAESTRO",
+    "APOSTOL",
+    "PROFETA",
+    "EVANGELISTA",
+    "PASTOR",
+    "MAESTRO",
 )
 CHURCH_ROLE_VALUES = (
-    "LIDER", "SERVIDOR", "MIEMBRO_BAUTIZADO", "SIMPATIZANTE",
-    "VISITANTE_SERVICIO", "VISITANTE_EVANGELISMO", "VISITANTE_ONLINE",
+    "LIDER",
+    "SERVIDOR",
+    "MIEMBRO_BAUTIZADO",
+    "SIMPATIZANTE",
+    "VISITANTE_SERVICIO",
+    "VISITANTE_EVANGELISMO",
+    "VISITANTE_ONLINE",
 )
 PLATFORM_ROLE_VALUES = ("ADMINISTRADOR", "GESTOR", "EDITOR", "LECTOR")
 
 
-
-
 def _drop_enums(bind):
     for name in [
-        "activity_status", "ministry_office",
-        "church_role", "platform_role",
+        "activity_status",
+        "ministry_office",
+        "church_role",
+        "platform_role",
     ]:
         sa.Enum(name=name, create_type=False).drop(bind, checkfirst=True)
 
@@ -55,7 +64,8 @@ def upgrade() -> None:
     bind = op.get_bind()
 
     # Create enums with IF NOT EXISTS (raw SQL to avoid duplicate)
-    bind.execute(sa.text("""
+    bind.execute(
+        sa.text("""
         DO $$ BEGIN
             CREATE TYPE activity_status AS ENUM ('ACTIVO', 'INACTIVO');
         EXCEPTION WHEN duplicate_object THEN null;
@@ -72,31 +82,39 @@ def upgrade() -> None:
             CREATE TYPE platform_role AS ENUM ('ADMINISTRADOR', 'GESTOR', 'EDITOR', 'LECTOR');
         EXCEPTION WHEN duplicate_object THEN null;
         END $$;
-    """))
+    """)
+    )
 
     # ── Tabla: user_ministries (Dimensión A) ──
     op.create_table(
         "user_ministries",
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column(
-            "user_id", sa.Integer(),
+            "user_id",
+            sa.Integer(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
-            nullable=False, index=True,
+            nullable=False,
+            index=True,
         ),
         sa.Column(
             "ministry",
             sa.Enum(*MINISTRY_OFFICE_VALUES, name="ministry_office", create_type=False),
-            nullable=False, index=True,
+            nullable=False,
+            index=True,
         ),
         sa.Column("is_primary", sa.Boolean(), default=False),
         sa.Column("recognized_at", sa.DateTime(), nullable=True),
         sa.Column(
-            "recognized_by", sa.Integer(),
-            sa.ForeignKey("users.id"), nullable=True,
+            "recognized_by",
+            sa.Integer(),
+            sa.ForeignKey("users.id"),
+            nullable=True,
         ),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.UniqueConstraint(
-            "user_id", "ministry", name="uq_user_ministry",
+            "user_id",
+            "ministry",
+            name="uq_user_ministry",
         ),
         sa.Index("ix_user_ministries_lookup", "user_id", "ministry"),
     )
@@ -106,19 +124,25 @@ def upgrade() -> None:
         "user_church_roles",
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column(
-            "user_id", sa.Integer(),
+            "user_id",
+            sa.Integer(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
-            nullable=False, unique=True, index=True,
+            nullable=False,
+            unique=True,
+            index=True,
         ),
         sa.Column(
             "church_role",
             sa.Enum(*CHURCH_ROLE_VALUES, name="church_role", create_type=False),
-            nullable=False, index=True,
+            nullable=False,
+            index=True,
         ),
         sa.Column("assigned_at", sa.DateTime(), nullable=True),
         sa.Column(
-            "assigned_by", sa.Integer(),
-            sa.ForeignKey("users.id"), nullable=True,
+            "assigned_by",
+            sa.Integer(),
+            sa.ForeignKey("users.id"),
+            nullable=True,
         ),
         sa.Column("notes", sa.Text(), nullable=True),
     )
@@ -128,9 +152,11 @@ def upgrade() -> None:
         "kernel_role_history",
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column(
-            "user_id", sa.Integer(),
+            "user_id",
+            sa.Integer(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
-            nullable=False, index=True,
+            nullable=False,
+            index=True,
         ),
         sa.Column(
             "from_role",
@@ -144,8 +170,10 @@ def upgrade() -> None:
         ),
         sa.Column("reason", sa.String(200), nullable=True),
         sa.Column(
-            "changed_by", sa.Integer(),
-            sa.ForeignKey("users.id"), nullable=True,
+            "changed_by",
+            sa.Integer(),
+            sa.ForeignKey("users.id"),
+            nullable=True,
         ),
         sa.Column("changed_at", sa.DateTime(), nullable=True, index=True),
         sa.Index("ix_role_history_user", "user_id", "changed_at"),
@@ -158,7 +186,9 @@ def upgrade() -> None:
         sa.Column(
             "role",
             sa.Enum(*PLATFORM_ROLE_VALUES, name="platform_role", create_type=False),
-            unique=True, nullable=False, index=True,
+            unique=True,
+            nullable=False,
+            index=True,
         ),
         sa.Column("permissions", sa.JSON(), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
@@ -170,25 +200,33 @@ def upgrade() -> None:
         "user_platform_roles",
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column(
-            "user_id", sa.Integer(),
+            "user_id",
+            sa.Integer(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
-            nullable=False, index=True,
+            nullable=False,
+            index=True,
         ),
         sa.Column(
-            "role_id", sa.Integer(),
+            "role_id",
+            sa.Integer(),
             sa.ForeignKey("platform_role_definitions.id"),
-            nullable=False, index=True,
+            nullable=False,
+            index=True,
         ),
         sa.Column("assigned_at", sa.DateTime(), nullable=True),
         sa.Column(
-            "assigned_by", sa.Integer(),
-            sa.ForeignKey("users.id"), nullable=True,
+            "assigned_by",
+            sa.Integer(),
+            sa.ForeignKey("users.id"),
+            nullable=True,
         ),
         sa.Column("expires_at", sa.DateTime(), nullable=True),
         sa.Column("is_active", sa.Boolean(), default=True, index=True),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.UniqueConstraint(
-            "user_id", "role_id", name="uq_user_platform_role",
+            "user_id",
+            "role_id",
+            name="uq_user_platform_role",
         ),
     )
 
@@ -197,14 +235,19 @@ def upgrade() -> None:
 
     # ── Índices estratégicos ──
     op.create_index(
-        "ix_user_ministries_user", "user_ministries", ["user_id"],
+        "ix_user_ministries_user",
+        "user_ministries",
+        ["user_id"],
     )
     op.create_index(
-        "ix_church_roles_user", "user_church_roles", ["user_id"],
+        "ix_church_roles_user",
+        "user_church_roles",
+        ["user_id"],
     )
     op.create_index(
         "ix_platform_roles_user",
-        "user_platform_roles", ["user_id", "is_active"],
+        "user_platform_roles",
+        ["user_id", "is_active"],
     )
 
 
@@ -240,8 +283,8 @@ def _seed_platform_roles():
         "INSERT INTO platform_role_definitions "
         "(role, permissions, description, created_at) VALUES "
         "('ADMINISTRADOR', "
-        "'{\"*\": [\"create\", \"read\", \"update\", "
-        "\"delete\", \"admin\"]}', "
+        '\'{"*": ["create", "read", "update", '
+        '"delete", "admin"]}\', '
         "'Control total del sistema, configuraciones globales', NOW()), "
         "('GESTOR', "
         "'" + gestor_perms + "', "
@@ -260,7 +303,8 @@ def downgrade() -> None:
     op.drop_index("ix_platform_roles_user", table_name="user_platform_roles")
     op.drop_index("ix_church_roles_user", table_name="user_church_roles")
     op.drop_index(
-        "ix_user_ministries_user", table_name="user_ministries",
+        "ix_user_ministries_user",
+        table_name="user_ministries",
     )
 
     op.drop_table("user_platform_roles")

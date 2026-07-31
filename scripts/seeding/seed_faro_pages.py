@@ -283,11 +283,7 @@ def seed_ccf_pages():
         inserted = 0
         updated = 0
         for block in ccf_blocks:
-            existing = (
-                db.query(PageContent)
-                .filter(PageContent.page_key == block["key"])
-                .first()
-            )
+            existing = db.query(PageContent).filter(PageContent.page_key == block["key"]).first()
             if existing:
                 existing.content = block["content"]
                 updated += 1
@@ -301,9 +297,7 @@ def seed_ccf_pages():
                 inserted += 1
 
         db.commit()
-        print(
-            f"✅ ¡Seed completado con éxito! {inserted} nuevos bloques insertados, {updated} actualizados."
-        )
+        print(f"✅ ¡Seed completado con éxito! {inserted} nuevos bloques insertados, {updated} actualizados.")
     except Exception as e:
         db.rollback()
         print(f"❌ Error durante el seed: {e}")

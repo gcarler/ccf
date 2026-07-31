@@ -57,9 +57,7 @@ def seed_prereqs():
         )
 
         if not exists:
-            prereq = models.CoursePrerequisite(
-                course_id=c2.id, prerequisite_course_id=c1.id
-            )
+            prereq = models.CoursePrerequisite(course_id=c2.id, prerequisite_course_id=c1.id)
             db.add(prereq)
             db.commit()
             print(f"Prerequisite added: {c2.title} now requires {c1.title}")

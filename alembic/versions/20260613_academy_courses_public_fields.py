@@ -25,10 +25,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def _col_exists(table: str, col: str) -> bool:
     conn = op.get_bind()
     result = conn.execute(
-        sa.text(
-            "SELECT 1 FROM information_schema.columns "
-            "WHERE table_name=:t AND column_name=:c"
-        ),
+        sa.text("SELECT 1 FROM information_schema.columns WHERE table_name=:t AND column_name=:c"),
         {"t": table, "c": col},
     )
     return result.fetchone() is not None
@@ -50,10 +47,7 @@ def upgrade() -> None:
     # Índice único en slug (solo para filas no nulas)
     conn = op.get_bind()
     idx_exists = conn.execute(
-        sa.text(
-            "SELECT 1 FROM pg_indexes WHERE tablename='academy_courses' "
-            "AND indexname='ix_academy_courses_slug'"
-        )
+        sa.text("SELECT 1 FROM pg_indexes WHERE tablename='academy_courses' AND indexname='ix_academy_courses_slug'")
     ).fetchone()
     if not idx_exists:
         op.create_index(

@@ -313,10 +313,10 @@ export default function GroupPage() {
  <section>
  <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Mis Grupos</h2>
  {houses.length === 0 ? (
- <EmptyState 
- icon={Home} 
- title="Sin Grupos Asignados" 
- description="No tienes ningún grupo asignado como líder." 
+ <EmptyState
+ icon={Home}
+ title="Sin Grupos Asignados"
+ description="No tienes ningún grupo asignado como líder."
  />
  ) : (
  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -342,9 +342,9 @@ export default function GroupPage() {
  <section>
  <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Temporadas</h2>
  {seasons.length === 0 ? (
- <EmptyState 
- icon={Clock} 
- title="No hay temporadas" 
+ <EmptyState
+ icon={Clock}
+ title="No hay temporadas"
  description="Crea la primera temporada para comenzar a registrar sesiones."
  onAction={() => setShowNewSeason(true)}
  actionLabel="Nueva Temporada"
@@ -477,7 +477,7 @@ export default function GroupPage() {
  <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info-text mb-1">Temporada Activa</p>
  <p className="text-sm font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{activeSeason?.name}</p>
  </div>
- 
+
  <div className="space-y-1.5">
  <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Grupo</label>
  <select value={sessionForm.grupo_id} onChange={e => setSessionForm(p => ({ ...p, grupo_id: e.target.value, create_for_all_groups: e.target.value === 'all' }))} className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none">
@@ -489,7 +489,7 @@ export default function GroupPage() {
  <p className="text-2xs text-[hsl(var(--primary))] font-bold mt-1">Se creará una sesión idéntica para todas las casas activas simultáneamente.</p>
  )}
  </div>
- 
+
  <div className="grid grid-cols-2 gap-4">
  <div className="space-y-1.5">
  <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre / Alias (Ej. S1)</label>

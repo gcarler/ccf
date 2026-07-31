@@ -4,6 +4,7 @@ Module Isolation Middleware — Aislamiento de fallos por módulo en el backend.
 Si un módulo falla (evangelism, crm, academy, projects, etc.), el error se
 captura y se retorna un 500 con detalle del módulo, sin tumbar todo el servidor.
 """
+
 import logging
 import os
 import time
@@ -19,7 +20,7 @@ logger.setLevel(logging.ERROR)
 # Circuit breaker state: module_name -> {failures: int, last_failure: float, open: bool}
 _circuit_breakers: dict[str, dict] = {}
 CIRCUIT_THRESHOLD = 5  # fallos consecutivos antes de abrir circuito
-CIRCUIT_TIMEOUT = 60   # segundos antes de intentar reconectar
+CIRCUIT_TIMEOUT = 60  # segundos antes de intentar reconectar
 
 
 def get_circuit_state(module: str) -> dict:
@@ -40,7 +41,7 @@ def extract_module(path: str) -> str:
 async def module_isolation_middleware(request: Request, call_next):
     """
     Middleware que aísla fallos por módulo.
-    
+
     Si un módulo falla repetidamente, se abre el circuit breaker y se rechazan
     peticiones rápidamente hasta que el módulo se recupere.
     """
@@ -57,7 +58,7 @@ async def module_isolation_middleware(request: Request, call_next):
                     "error": f"El módulo '{module}' está temporalmente indisponible",
                     "module": module,
                     "retry_after": int(CIRCUIT_TIMEOUT - elapsed),
-                }
+                },
             )
         else:
             # Timeout alcanzado, intentar reconectar (half-open)
@@ -91,7 +92,7 @@ async def module_isolation_middleware(request: Request, call_next):
                 "error": f"Error interno en el módulo {module}",
                 "module": module,
                 "detail": detail,
-            }
+            },
         )
 
 

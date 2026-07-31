@@ -1,13 +1,13 @@
 "use client";
 
 import React from 'react';
-import { 
-    Users, 
-    UserPlus, 
-    CheckCircle2, 
-    Target, 
-    Search, 
-    TrendingUp, 
+import {
+    Users,
+    UserPlus,
+    CheckCircle2,
+    Target,
+    Search,
+    TrendingUp,
     Zap,
     Filter
 } from 'lucide-react';
@@ -33,7 +33,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                 <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-[hsl(var(--primary))] dark:text-white">
                     <Target size={160} />
                 </div>
-                
+
                 <div className="flex items-center gap-4 relative z-10 p-2">
                     <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white shadow-2xl shadow-[hsl(var(--info)/30%)]">
                         <Target size={28} />
@@ -75,7 +75,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                             { id: 'new', label: 'Registros Nuevos', icon: UserPlus, count: stats.new, color: 'text-warning-text', bg: 'bg-[hsl(var(--warning))]/5' },
                             { id: 'consolidated', label: 'Casos de Éxito', icon: CheckCircle2, count: stats.consolidated, color: 'text-success-text', bg: 'bg-[hsl(var(--success))]/5' },
                         ].map((s) => (
-                            <motion.button 
+                            <motion.button
                                 key={s.id}
                                 whileHover={{ x: 4 }}
                                 className="w-full flex items-center gap-4 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-md hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/[0.05] hover:border-[hsl(var(--info)/100%)]/20 transition-all group"
@@ -105,7 +105,7 @@ export default function PipelineFiltersSidebar({ stats, search, onSearchChange }
                         />
                     </div>
                 </section>
-                
+
                 <section className="p-4 bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] rounded-md text-white shadow-2xl shadow-[hsl(var(--info)/25%)] relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 transition-transform duration-700"><Zap size={80} /></div>
                     <div className="relative z-10">

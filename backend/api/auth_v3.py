@@ -213,10 +213,14 @@ def _resolve_user(db: Session, email: str) -> Usuario | None:
 
 
 def _resolve_persona_default_role(db: Session) -> RolPlataforma:
-    role = db.query(RolPlataforma).filter(
-        RolPlataforma.nombre == "MIEMBRO",
-        RolPlataforma.deleted_at.is_(None),
-    ).first()
+    role = (
+        db.query(RolPlataforma)
+        .filter(
+            RolPlataforma.nombre == "MIEMBRO",
+            RolPlataforma.deleted_at.is_(None),
+        )
+        .first()
+    )
     if role:
         return role
 
@@ -358,6 +362,7 @@ def google_callback(
         # sede_id es NOT NULL en Usuario — usar la sede del sistema si la Persona no tiene
         if not persona.sede_id:
             from backend import models as _models
+
             fallback_sede = db.query(_models.Sede).first()
             if not fallback_sede:
                 raise HTTPException(status_code=500, detail="No hay sedes configuradas en el sistema.")
@@ -390,9 +395,7 @@ def google_callback(
         db.commit()
 
     # 6. Get platform role name
-    platform_role_name = (
-        user.rol_plataforma.nombre if user.rol_plataforma else "MIEMBRO"
-    )
+    platform_role_name = user.rol_plataforma.nombre if user.rol_plataforma else "MIEMBRO"
 
     # 7. Get sede_id from user persona
     sede_id = ""
@@ -487,14 +490,13 @@ def login(
     db.commit()
 
     # Get platform role
-    platform_role_name = (
-        user.rol_plataforma.nombre if user.rol_plataforma else "MIEMBRO"
-    )
+    platform_role_name = user.rol_plataforma.nombre if user.rol_plataforma else "MIEMBRO"
 
     # Resolve sede_id (from user record, fallback to persona)
     sede_id = str(user.sede_id) if user.sede_id else ""
     if not sede_id:
         from backend import models as _m
+
         persona = db.query(_m.Persona).filter(_m.Persona.id == user.id).first()
         if persona and persona.sede_id:
             sede_id = str(persona.sede_id)

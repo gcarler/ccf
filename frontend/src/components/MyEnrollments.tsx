@@ -319,7 +319,7 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
       )}
 
       {enrollments.length === 0 ? (
-        <EmptyState 
+        <EmptyState
             icon={BookOpen}
             title="No tienes cursos activos."
             description="Explora el Catálogo Formativo y encuentra tu próxima lección para continuar tu crecimiento."
@@ -364,18 +364,18 @@ export default function MyEnrollments({ userId, token, initialEnrollments }: MyE
 
                 <div className="flex gap-2 empty:hidden pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
                   {item.approved && certificatesByEnrollment[item.id] ? (
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); setSelectedCertificate({ cert: certificatesByEnrollment[item.id], enrollment: item }); }} 
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setSelectedCertificate({ cert: certificatesByEnrollment[item.id], enrollment: item }); }}
                         className="flex-1 py-1.5 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] rounded-md text-2xs font-semibold uppercase tracking-wide transition-all flex items-center justify-center gap-2 hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success))]/40"
                     >
                       <Award size={12} /> Certificado Disponible
                     </button>
                   ) : !item.approved && item.progress_percent >= 90 && assessmentsByCourse[item.course.id]?.length > 0 && (
-                    <button 
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          setActiveAssessment({ id: assessmentsByCourse[item.course.id][0].id, enrollmentId: item.id }); 
-                        }} 
+                    <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveAssessment({ id: assessmentsByCourse[item.course.id][0].id, enrollmentId: item.id });
+                        }}
                         className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary)/0.85)] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[hsl(var(--primary)/0.2)]"
                     >
                       Tomar Examen <ArrowRight size={12} />

@@ -10,14 +10,13 @@ Covers:
 - /v3/auth/refresh (refresh token rotation)
 - /v3/auth/google & google/callback (OAuth ready check and callback redirects)
 """
+
 from __future__ import annotations
 
-import uuid
 import pytest
-from backend import models
-from backend.core.security import get_password_hash
-from backend.models_auth import Usuario, TokenResetContrasena
-from tests.conftest import auth_headers as _auth_headers, seed_admin as _seed_admin
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture

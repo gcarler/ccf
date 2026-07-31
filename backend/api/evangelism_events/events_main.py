@@ -84,10 +84,7 @@ def list_events(
     # Pydantic v2 validation del response_model implica que cada elemento
     # debe ser dict; convertimos cada ORM CrmEvent a dict compatible con
     # el schema (preserva contrato y evita response model orm-only errores).
-    return [
-        schemas.CrmEvent.model_validate(event).model_dump(mode="json")
-        for event in events
-    ]
+    return [schemas.CrmEvent.model_validate(event).model_dump(mode="json") for event in events]
 
 
 @static_router.post("/events/", response_model=schemas.CrmEvent)
@@ -631,9 +628,7 @@ def get_persona_attendance_history(
 ):
     user_sede = require_user_sede_id(db, current_user)
     persona = (
-        db.query(models.Persona)
-        .filter(models.Persona.id == persona_id, models.Persona.sede_id == user_sede)
-        .first()
+        db.query(models.Persona).filter(models.Persona.id == persona_id, models.Persona.sede_id == user_sede).first()
     )
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")

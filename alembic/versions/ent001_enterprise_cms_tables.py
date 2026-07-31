@@ -6,6 +6,7 @@ Revision ID: ent001
 Revises: ffb57364a038
 Create Date: 2026-06-20
 """
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
@@ -18,15 +19,19 @@ depends_on = None
 
 
 def _col_exists(conn, table, col):
-    return conn.execute(sa.text(
-        f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{col}'"
-    )).fetchone() is not None
+    return (
+        conn.execute(
+            sa.text(f"SELECT 1 FROM information_schema.columns WHERE table_name='{table}' AND column_name='{col}'")
+        ).fetchone()
+        is not None
+    )
 
 
 def _table_exists(conn, table):
-    return conn.execute(sa.text(
-        f"SELECT 1 FROM information_schema.tables WHERE table_name='{table}'"
-    )).fetchone() is not None
+    return (
+        conn.execute(sa.text(f"SELECT 1 FROM information_schema.tables WHERE table_name='{table}'")).fetchone()
+        is not None
+    )
 
 
 def upgrade() -> None:
@@ -71,7 +76,9 @@ def upgrade() -> None:
             sa.Column("grant_type", sa.String(30), nullable=False),
             sa.Column("grant_target", sa.String(120), nullable=False),
             sa.Column("is_denied", sa.Boolean, server_default="false"),
-            sa.Column("created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True),
+            sa.Column(
+                "created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True
+            ),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
             sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         )
@@ -85,7 +92,9 @@ def upgrade() -> None:
         op.create_table(
             "cms_notifications",
             sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-            sa.Column("recipient_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=False),
+            sa.Column(
+                "recipient_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=False
+            ),
             sa.Column("actor_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True),
             sa.Column("notification_type", sa.String(60), nullable=False),
             sa.Column("title", sa.String(255), nullable=False),
@@ -118,7 +127,9 @@ def upgrade() -> None:
             sa.Column("last_triggered_at", sa.DateTime(timezone=True), nullable=True),
             sa.Column("last_status_code", sa.Integer, nullable=True),
             sa.Column("failure_count", sa.Integer, server_default="0"),
-            sa.Column("created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True),
+            sa.Column(
+                "created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True
+            ),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
             sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         )
@@ -177,7 +188,9 @@ def upgrade() -> None:
             sa.Column("owner_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True),
             sa.Column("review_date", sa.DateTime(timezone=True), nullable=True),
             sa.Column("expiry_date", sa.DateTime(timezone=True), nullable=True),
-            sa.Column("parent_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("cms_custom_entries.id"), nullable=True),
+            sa.Column(
+                "parent_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("cms_custom_entries.id"), nullable=True
+            ),
             sa.Column("sort_order", sa.Integer, server_default="0"),
             sa.Column("view_count", sa.Integer, server_default="0"),
             sa.Column("locale", sa.String(10), nullable=True),
@@ -198,11 +211,15 @@ def upgrade() -> None:
         op.create_table(
             "cms_custom_entry_versions",
             sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-            sa.Column("entry_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("cms_custom_entries.id"), nullable=False),
+            sa.Column(
+                "entry_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("cms_custom_entries.id"), nullable=False
+            ),
             sa.Column("version_number", sa.Integer, nullable=False),
             sa.Column("snapshot_json", postgresql.JSON, nullable=True),
             sa.Column("notes", sa.Text, nullable=True),
-            sa.Column("created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True),
+            sa.Column(
+                "created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True
+            ),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         )
         op.create_index("ix_cms_custom_entry_versions_entry", "cms_custom_entry_versions", ["entry_id"])
@@ -219,7 +236,9 @@ def upgrade() -> None:
             sa.Column("category", sa.String(100), nullable=True),
             sa.Column("language", sa.String(10), server_default="es"),
             sa.Column("is_published", sa.Boolean, server_default="true"),
-            sa.Column("created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True),
+            sa.Column(
+                "created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True
+            ),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
             sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         )
@@ -265,7 +284,9 @@ def upgrade() -> None:
             sa.Column("title", sa.String(300), nullable=True),
             sa.Column("boost_score", sa.Integer, server_default="100"),
             sa.Column("is_active", sa.Boolean, server_default="true"),
-            sa.Column("created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True),
+            sa.Column(
+                "created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True
+            ),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         )
         op.create_index("ix_cms_search_promotions_site_key", "cms_search_promotions", ["site_key"])
@@ -305,7 +326,9 @@ def upgrade() -> None:
             sa.Column("parent_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("cms_media_folders.id"), nullable=True),
             sa.Column("path", sa.String(500), nullable=False),
             sa.Column("sort_order", sa.Integer, server_default="0"),
-            sa.Column("created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True),
+            sa.Column(
+                "created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True
+            ),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         )
         op.create_index("ix_cms_media_folders_site_key", "cms_media_folders", ["site_key"])
@@ -317,13 +340,17 @@ def upgrade() -> None:
         op.create_table(
             "cms_media_file_versions",
             sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-            sa.Column("media_item_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("cms_media_items.id"), nullable=False),
+            sa.Column(
+                "media_item_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("cms_media_items.id"), nullable=False
+            ),
             sa.Column("version_number", sa.Integer, nullable=False),
             sa.Column("url", sa.String(500), nullable=False),
             sa.Column("file_size", sa.Integer, server_default="0"),
             sa.Column("checksum", sa.String(64), nullable=True),
             sa.Column("notes", sa.Text, nullable=True),
-            sa.Column("created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True),
+            sa.Column(
+                "created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True
+            ),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         )
         op.create_index("ix_cms_media_file_versions_item", "cms_media_file_versions", ["media_item_id"])
@@ -339,7 +366,9 @@ def upgrade() -> None:
             sa.Column("status_code", sa.Integer, server_default="301"),
             sa.Column("is_active", sa.Boolean, server_default="true"),
             sa.Column("hit_count", sa.Integer, server_default="0"),
-            sa.Column("created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True),
+            sa.Column(
+                "created_by_persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id"), nullable=True
+            ),
             sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         )
         op.create_index("ix_cms_redirects_site_key", "cms_redirects", ["site_key"])
@@ -369,11 +398,21 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     tables = [
-        "cms_broken_link_checks", "cms_redirects", "cms_media_file_versions",
-        "cms_media_folders", "cms_user_sessions", "cms_search_promotions",
-        "cms_search_index", "cms_glossary_terms", "cms_custom_entry_versions",
-        "cms_custom_entries", "cms_custom_types", "cms_webhook_deliveries",
-        "cms_webhooks", "cms_notifications", "cms_content_permissions",
+        "cms_broken_link_checks",
+        "cms_redirects",
+        "cms_media_file_versions",
+        "cms_media_folders",
+        "cms_user_sessions",
+        "cms_search_promotions",
+        "cms_search_index",
+        "cms_glossary_terms",
+        "cms_custom_entry_versions",
+        "cms_custom_entries",
+        "cms_custom_types",
+        "cms_webhook_deliveries",
+        "cms_webhooks",
+        "cms_notifications",
+        "cms_content_permissions",
         "cms_audit_logs",
     ]
     for t in tables:

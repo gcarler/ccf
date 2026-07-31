@@ -15,7 +15,6 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -335,10 +334,7 @@ def explain_selection(changed_files: list[str]) -> dict[str, list[str]]:
                 selected.add(rule.check_id)
                 reasons.setdefault(rule.check_id, set()).add(path)
 
-    return {
-        check_id: sorted(reasons.get(check_id, set()))
-        for check_id in sorted(selected)
-    }
+    return {check_id: sorted(reasons.get(check_id, set())) for check_id in sorted(selected)}
 
 
 def summarize(changed_files: list[str], checks: list[str]) -> str:
@@ -346,10 +342,7 @@ def summarize(changed_files: list[str], checks: list[str]) -> str:
         return "No changed files detected."
     if not checks:
         return f"No module checks selected for {len(changed_files)} changed files."
-    return (
-        f"{len(changed_files)} changed files -> "
-        + ", ".join(checks)
-    )
+    return f"{len(changed_files)} changed files -> " + ", ".join(checks)
 
 
 def format_explanations(changed_files: list[str]) -> list[str]:

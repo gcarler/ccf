@@ -44,8 +44,10 @@ def test_persona_get_by_id_and_delete(db_session):
     p = crud.create_persona(
         db_session,
         schemas.PersonaCreate(
-            first_name="Delete", last_name="Me",
-            email="del@test.com", church_role="Miembro",
+            first_name="Delete",
+            last_name="Me",
+            email="del@test.com",
+            church_role="Miembro",
         ),
     )
     fetched = crud.get_persona(db_session, str(p.id))
@@ -65,8 +67,10 @@ def test_persona_search(db_session):
     crud.create_persona(
         db_session,
         schemas.PersonaCreate(
-            first_name="Searchable", last_name="Person",
-            email="search@test.com", church_role="Miembro",
+            first_name="Searchable",
+            last_name="Person",
+            email="search@test.com",
+            church_role="Miembro",
         ),
     )
     results = crud.get_personas(db_session, search="Searchable")
@@ -85,6 +89,7 @@ def test_crm_schema_validation(db_session):
         RoleUpdate,
         VolunteerCreate,
     )
+
     role = RoleCreate(name="Test", color="red")
     assert role.name == "Test"
     assert role.color == "red"

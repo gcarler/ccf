@@ -165,7 +165,7 @@ export default function DonatePage() {
                     <p className="text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-md leading-relaxed">
                         Cada ofrenda y diezmo fortalece la misión de transformar vidas y comunidades a través del evangelio.
                     </p>
-                    
+
                     <div className="grid grid-cols-1 gap-4 pt-4">
                         <BenefitCard icon={ShieldCheck} title="Seguridad Total" desc="Tus transacciones están protegidas con encriptación de nivel bancario." />
                         <BenefitCard icon={Globe} title="Impacto Global" desc="Apoyas misiones y ayuda social en toda la región." />
@@ -193,12 +193,12 @@ export default function DonatePage() {
 
                         <div className="grid grid-cols-4 gap-3">
                             {AMOUNTS.map(val => (
-                                <button 
+                                <button
                                     key={val} onClick={() => { setAmount(val); setIsCustom(false); }}
                                     className={clsx(
                                         "py-1.5 rounded-lg font-bold text-sm transition-all",
-                                        amount === val && !isCustom 
-                                            ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/30%)] scale-105" 
+                                        amount === val && !isCustom
+                                            ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/30%)] scale-105"
                                             : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
                                     )}
                                 >
@@ -206,7 +206,7 @@ export default function DonatePage() {
                                 </button>
                             ))}
                         </div>
-                        <button 
+                        <button
                             onClick={() => setIsCustom(true)}
                             className={clsx(
                                 "w-full py-1.5 rounded-lg font-bold text-2xs uppercase tracking-wide transition-all border-2",
@@ -285,12 +285,12 @@ function BenefitCard({ icon: Icon, title, desc }: any) {
 
 function TypeOption({ active, onClick, icon: Icon, label }: any) {
     return (
-        <button 
+        <button
             onClick={onClick}
             className={clsx(
                 "p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-all group",
-                active 
-                    ? "border-[hsl(var(--info)/100%)] bg-info-soft/50 dark:bg-[hsl(var(--info))]/10 shadow-md" 
+                active
+                    ? "border-[hsl(var(--info)/100%)] bg-info-soft/50 dark:bg-[hsl(var(--info))]/10 shadow-md"
                     : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--info)/25%)]"
             )}
         >
@@ -304,4 +304,3 @@ function TypeOption({ active, onClick, icon: Icon, label }: any) {
         </button>
     );
 }
-

@@ -2,10 +2,10 @@
 
 import React from 'react';
 import type { AppIcon } from '@/types/icons';
-import { 
-    Search, 
-    Filter, 
-    MoreHorizontal, 
+import {
+    Search,
+    Filter,
+    MoreHorizontal,
     ChevronRight,
     Home,
     Columns,
@@ -62,7 +62,7 @@ export default function WorkspaceToolbar({
                     <Home size={13} />
                     <ChevronRight size={13} />
                 </div>
-                
+
                 <nav className="flex min-w-0 items-center gap-0.5 overflow-hidden">
                     {breadcrumbs.map((bc, idx) => {
                         const isLast = idx === breadcrumbs.length - 1;
@@ -91,7 +91,7 @@ export default function WorkspaceToolbar({
                 </nav>
 
                 {(setViewType && viewType) && <div className="hidden w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1.5 shrink-0 sm:block" />}
-                
+
                 {setViewType && viewType && (
                     <div className="hidden sm:block">
                     <ViewSwitcher
@@ -123,11 +123,11 @@ export default function WorkspaceToolbar({
                     {(onFilter || onColumns || onGroup) && (
                         <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
                     )}
-                    
+
                     {rightActions}
-                    
+
                     {onAdd && (
-                        <SplitDropdownButton 
+                        <SplitDropdownButton
                             onMainClick={onAdd}
                             onOptionClick={onAddOption ? onAddOption : () => {}}
                         />

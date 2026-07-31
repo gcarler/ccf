@@ -7,6 +7,7 @@ or properly guarded against race conditions.
 Note: True concurrency cannot be tested in SQLite (serializes writes).
 These tests verify the logic that prevents data corruption.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -287,10 +288,14 @@ class TestGroupSplitIdempotency:
         assert isinstance(body, dict)
 
         # Original group should still exist
-        original = db_session.query(GrupoEvangelismo).filter(
-            GrupoEvangelismo.id == grupo.id,
-            GrupoEvangelismo.deleted_at.is_(None),
-        ).first()
+        original = (
+            db_session.query(GrupoEvangelismo)
+            .filter(
+                GrupoEvangelismo.id == grupo.id,
+                GrupoEvangelismo.deleted_at.is_(None),
+            )
+            .first()
+        )
         assert original is not None
 
     def test_split_already_small_group_fails(self, client, db_session):
@@ -320,26 +325,37 @@ class TestGroupSplitIdempotency:
         db_session.flush()
 
         persona = models.Persona(
-            first_name="Solo", last_name="Member",
+            first_name="Solo",
+            last_name="Member",
             email=f"solo_{uuid.uuid4().hex[:4]}@ccf.test",
-            phone="+573000000001", sede_id=sede.id, church_role="Miembro",
+            phone="+573000000001",
+            sede_id=sede.id,
+            church_role="Miembro",
         )
         db_session.add(persona)
         db_session.flush()
 
         grupo = GrupoEvangelismo(
-            nombre="Grupo Small", codigo=f"GS-{uuid.uuid4().hex[:6]}",
-            sede_id=sede.id, estrategia_id=estrategia.id,
-            ubicacion="Zona S", direccion="Calle S", capacidad=20,
-            dia_reunion="Lunes", hora_reunion="19:00",
-            lider_persona_id=persona.id, activo=True,
+            nombre="Grupo Small",
+            codigo=f"GS-{uuid.uuid4().hex[:6]}",
+            sede_id=sede.id,
+            estrategia_id=estrategia.id,
+            ubicacion="Zona S",
+            direccion="Calle S",
+            capacidad=20,
+            dia_reunion="Lunes",
+            hora_reunion="19:00",
+            lider_persona_id=persona.id,
+            activo=True,
         )
         db_session.add(grupo)
         db_session.flush()
 
         pg = ParticipanteGrupo(
-            grupo_id=grupo.id, persona_id=persona.id,
-            rol_base="LIDER", activo=True,
+            grupo_id=grupo.id,
+            persona_id=persona.id,
+            rol_base="LIDER",
+            activo=True,
         )
         db_session.add(pg)
         db_session.commit()

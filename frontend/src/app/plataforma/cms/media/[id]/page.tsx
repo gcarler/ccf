@@ -232,7 +232,7 @@ export default function CmsMediaDetailPage() {
                         <section className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">TÃ­tulo del Recurso</label>
-                                <input 
+                                <input
                                     value={item.alt_text || ''}
                                     onChange={(e) => setItem({ ...item, alt_text: e.target.value })}
                                     className="w-full bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 py-2 text-xl font-semibold outline-none focus:border-[hsl(var(--info)/100%)] transition-all"

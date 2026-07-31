@@ -16,6 +16,7 @@ from backend.models_knowledge_base import AgentKnowledgeBase
 # KNOWLEDGE INDEXER
 # ──────────────────────────────────────────────
 
+
 class KnowledgeIndexer:
     """Indexa contenido de los módulos en la Knowledge Base."""
 
@@ -30,7 +31,8 @@ class KnowledgeIndexer:
         """Reconstruye toda la KB desde cero."""
         # Desactivar todo lo existente
         self.db.query(AgentKnowledgeBase).update(
-            {"is_active": False}, synchronize_session=False,
+            {"is_active": False},
+            synchronize_session=False,
         )
         self.db.commit()
 
@@ -50,9 +52,13 @@ class KnowledgeIndexer:
         if not self._has_table(models.Course.__tablename__):
             return 0
 
-        courses = self.db.query(models.Course).filter(
-            models.Course.is_published,
-        ).all()
+        courses = (
+            self.db.query(models.Course)
+            .filter(
+                models.Course.is_published,
+            )
+            .all()
+        )
         count = 0
         for c in courses:
             self._upsert_kb(
@@ -77,17 +83,19 @@ class KnowledgeIndexer:
         """Indexa estrategias de evangelismo."""
         from backend import models
 
-        strategies = self.db.query(models.EstrategiaEvangelismo).filter(
-            models.EstrategiaEvangelismo.activa == True,  # noqa: E712
-        ).all()
+        strategies = (
+            self.db.query(models.EstrategiaEvangelismo)
+            .filter(
+                models.EstrategiaEvangelismo.activa == True,  # noqa: E712
+            )
+            .all()
+        )
         count = 0
         for s in strategies:
             self._upsert_kb(
                 title=f"Estrategia: {s.name}",
                 content=(
-                    f"{s.name}: {s.description or ''}\n"
-                    f"Tipo: {s.strategy_type or 'N/A'}\n"
-                    f"Estado: {s.status or 'active'}"
+                    f"{s.name}: {s.description or ''}\nTipo: {s.strategy_type or 'N/A'}\nEstado: {s.status or 'active'}"
                 ),
                 summary=(s.description or "")[:200] if s.description else None,
                 category="evangelism",
@@ -104,18 +112,18 @@ class KnowledgeIndexer:
         """Indexa proyectos activos."""
         from backend import models
 
-        projects = self.db.query(models.Project).filter(
-            models.Project.status.in_(["active", "planning"]),
-        ).all()
+        projects = (
+            self.db.query(models.Project)
+            .filter(
+                models.Project.status.in_(["active", "planning"]),
+            )
+            .all()
+        )
         count = 0
         for p in projects:
             self._upsert_kb(
                 title=f"Proyecto: {p.title}",
-                content=(
-                    f"{p.title}: {p.description or ''}\n"
-                    f"Estado: {p.status}\n"
-                    f"Owner: {p.owner_id}"
-                ),
+                content=(f"{p.title}: {p.description or ''}\nEstado: {p.status}\nOwner: {p.owner_id}"),
                 summary=(p.description or "")[:200] if p.description else None,
                 category="projects",
                 source_module="projects",
@@ -152,16 +160,13 @@ class KnowledgeIndexer:
 
         self._upsert_kb(
             title="Estadísticas de personas",
-            content=(
-                f"Total de personas: {total}\n"
-                f"Distribución por rol: {by_role}"
-            ),
+            content=(f"Total de personas: {total}\nDistribución por rol: {by_role}"),
             summary=f"{total} personas registradas",
-                category="crm_stats",
-                source_module="crm",
-                source_id=None,
-                indexed_by=agent_id,
-            )
+            category="crm_stats",
+            source_module="crm",
+            source_id=None,
+            indexed_by=agent_id,
+        )
         self.db.commit()
         return 1
 
@@ -189,11 +194,15 @@ class KnowledgeIndexer:
         """Inserta o actualiza un documento en la KB."""
         if kwargs.get("source_id") is not None:
             kwargs["source_id"] = str(kwargs["source_id"])
-        existing = self.db.query(AgentKnowledgeBase).filter(
-            AgentKnowledgeBase.source_module == kwargs.get("source_module"),
-            AgentKnowledgeBase.source_id == kwargs.get("source_id"),
-            AgentKnowledgeBase.title == kwargs.get("title"),
-        ).first()
+        existing = (
+            self.db.query(AgentKnowledgeBase)
+            .filter(
+                AgentKnowledgeBase.source_module == kwargs.get("source_module"),
+                AgentKnowledgeBase.source_id == kwargs.get("source_id"),
+                AgentKnowledgeBase.title == kwargs.get("title"),
+            )
+            .first()
+        )
 
         if existing:
             for k, v in kwargs.items():
@@ -210,8 +219,12 @@ class KnowledgeIndexer:
 # BÚSQUEDA REAL (full-text search)
 # ──────────────────────────────────────────────
 
+
 def search_knowledge_base_real(
-    db: Session, query: str, top_k: int = 5, category: str = None,
+    db: Session,
+    query: str,
+    top_k: int = 5,
+    category: str = None,
 ):
     """Búsqueda full-text en la Knowledge Base.
 
@@ -243,12 +256,17 @@ def search_knowledge_base_real(
 
     if conditions:
         from sqlalchemy import or_
+
         q = q.filter(or_(*conditions))
 
     # Ordenar por relevancia y fecha
-    results = q.order_by(
-        AgentKnowledgeBase.relevance_score.desc(),
-        AgentKnowledgeBase.updated_at.desc(),
-    ).limit(top_k).all()
+    results = (
+        q.order_by(
+            AgentKnowledgeBase.relevance_score.desc(),
+            AgentKnowledgeBase.updated_at.desc(),
+        )
+        .limit(top_k)
+        .all()
+    )
 
     return results

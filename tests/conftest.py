@@ -66,6 +66,7 @@ def _patch_sqlite_uuid():
             if proc is not None:
                 return proc(value)
             return value
+
         return _safe_process
 
     def _patched_result(self, dialect, coltype):
@@ -91,6 +92,7 @@ def _patch_sqlite_uuid():
             if proc is not None:
                 return proc(value)
             return value
+
         return _safe_result
 
     _satypes.Uuid.bind_processor = _patched_bind
@@ -102,6 +104,7 @@ _patch_sqlite_uuid()
 
 
 if os.getenv("CCF_TEST_INLINE_SYNC_HANDLERS", "1") != "0":
+
     async def _run_sync_inline(
         func,
         *args,
@@ -118,9 +121,7 @@ from backend.app import app
 from backend.core.database import Base, get_db
 from backend.middleware.module_isolation import _circuit_breakers
 
-SQLALCHEMY_DATABASE_URL = (
-    os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite://"
-)
+SQLALCHEMY_DATABASE_URL = os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or "sqlite://"
 database_url = make_url(SQLALCHEMY_DATABASE_URL)
 
 engine_kwargs = {}
@@ -302,6 +303,7 @@ def _reset_caches_between_tests():
       time. If the module surface changes, the test simply doesn't get
       the cleanup (no false negatives created).
     """
+
     def _clear_redis():
         try:
             from backend.core.cache import get_redis
@@ -346,6 +348,7 @@ def _reset_caches_between_tests():
 # helpers instead of the numeric models.User pattern, because the
 # /api/auth/login endpoint queries Usuario (auth_users), not User (users).
 
+
 def seed_admin(db_session, email="admin@example.com", password="testpass123"):
     """Crea un administrador funcional en Auth v3 y su Persona.
 
@@ -363,22 +366,10 @@ def seed_admin(db_session, email="admin@example.com", password="testpass123"):
     from backend.models_auth import RolPlataforma, Usuario
     from backend.models_crm import Persona
 
-    existing_user = (
-        db_session.query(Usuario)
-        .filter(Usuario.email == email)
-        .first()
-    )
+    existing_user = db_session.query(Usuario).filter(Usuario.email == email).first()
     if existing_user is not None:
-        existing_persona = (
-            db_session.query(Persona)
-            .filter(Persona.id == existing_user.id)
-            .first()
-        )
-        existing_sede = (
-            db_session.query(_models.Sede)
-            .filter(_models.Sede.id == existing_user.sede_id)
-            .first()
-        )
+        existing_persona = db_session.query(Persona).filter(Persona.id == existing_user.id).first()
+        existing_sede = db_session.query(_models.Sede).filter(_models.Sede.id == existing_user.sede_id).first()
         return existing_user, existing_persona, existing_sede
 
     persona = Persona(
@@ -489,11 +480,7 @@ def seed_user_with_role(
         if existing_sede is not None:
             sede_id = existing_sede.id
     if sede_id is not None:
-        sede = (
-            db_session.query(_models.Sede)
-            .filter(_models.Sede.id == sede_id)
-            .first()
-        )
+        sede = db_session.query(_models.Sede).filter(_models.Sede.id == sede_id).first()
         if sede is None:
             sede = _models.Sede(
                 id=sede_id,

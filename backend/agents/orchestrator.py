@@ -47,9 +47,7 @@ class AgentOrchestrator:
 
         key = api_key or os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
         if not key:
-            raise RuntimeError(
-                "API key not configured. Set OPENROUTER_API_KEY or OPENROUTER_API_KEY."
-            )
+            raise RuntimeError("API key not configured. Set OPENROUTER_API_KEY or OPENROUTER_API_KEY.")
 
         is_openrouter = key.startswith("sk-or-")
         base_url = "https://openrouter.ai/api/v1" if is_openrouter else None
@@ -79,6 +77,7 @@ class AgentOrchestrator:
         tools = []
         if use_tools:
             from backend.services.tool_registry import tool_registry
+
             tools = tool_registry.get_openai_tools()
 
         # Call LLM
@@ -104,19 +103,24 @@ class AgentOrchestrator:
                 tool_args = json.loads(tc.function.arguments)
 
                 from backend.services.tool_registry import tool_registry
+
                 result = tool_registry.execute(tool_name, **tool_args)
-                tool_results.append({
-                    "tool": tool_name,
-                    "args": tool_args,
-                    "result": result,
-                })
+                tool_results.append(
+                    {
+                        "tool": tool_name,
+                        "args": tool_args,
+                        "result": result,
+                    }
+                )
 
                 # Add tool result to messages
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": json.dumps(result, ensure_ascii=False),
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": json.dumps(result, ensure_ascii=False),
+                    }
+                )
 
             # Get final response after tool execution
             final_response = self.client.chat.completions.create(
@@ -132,10 +136,14 @@ class AgentOrchestrator:
         # Save conversation to memory if conversation_id provided
         if conversation_id:
             self._save_conversation_turn(
-                conversation_id, "user", summary,
+                conversation_id,
+                "user",
+                summary,
             )
             self._save_conversation_turn(
-                conversation_id, "assistant", content or "",
+                conversation_id,
+                "assistant",
+                content or "",
                 tools_used=tool_results,
             )
 
@@ -182,11 +190,14 @@ class AgentOrchestrator:
         return messages
 
     def _get_conversation_history(
-        self, conversation_id: UUID, max_turns: int = 10,
+        self,
+        conversation_id: UUID,
+        max_turns: int = 10,
     ) -> List[Dict[str, str]]:
         """Obtiene historial de conversación."""
         try:
             from backend.services.conversation_memory import get_conversation_history
+
             return get_conversation_history(conversation_id, max_turns)
         except Exception:
             return []
@@ -201,29 +212,33 @@ class AgentOrchestrator:
         """Guarda un turno de conversación."""
         try:
             from backend.services.conversation_memory import save_conversation_turn
+
             save_conversation_turn(
-                conversation_id, role, content, tools_used=tools_used,
+                conversation_id,
+                role,
+                content,
+                tools_used=tools_used,
             )
         except Exception:
             pass  # Non-critical
 
 
 def bootstrap_diagnostic_task(
-    summary: str, metrics: Dict[str, Any], conversation_id: UUID = None,
+    summary: str,
+    metrics: Dict[str, Any],
+    conversation_id: UUID = None,
 ) -> None:
     """Ejecuta diagnóstico y persiste insights/tareas."""
     orchestrator = AgentOrchestrator()
     insight = orchestrator.run_diagnosis(
-        summary, metrics, conversation_id=conversation_id,
+        summary,
+        metrics,
+        conversation_id=conversation_id,
     )
     db: Session = SessionLocal()
     try:
         content = insight.payload.strip() if insight.payload else ""
-        is_relevant = (
-            len(content) > 20
-            and "no lo sé" not in content.lower()
-            and "desconozco" not in content.lower()
-        )
+        is_relevant = len(content) > 20 and "no lo sé" not in content.lower() and "desconozco" not in content.lower()
 
         if is_relevant:
             crud.create_agent_insight(db, insight)
@@ -238,8 +253,6 @@ def bootstrap_diagnostic_task(
                 ),
             )
         else:
-            print(
-                f"Skipping task: content not relevant ({len(content)} chars)"
-            )
+            print(f"Skipping task: content not relevant ({len(content)} chars)")
     finally:
         db.close()

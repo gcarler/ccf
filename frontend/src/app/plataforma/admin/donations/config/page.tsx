@@ -247,7 +247,7 @@ export default function DonationConfig() {
 
 
 
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
 
                 breadcrumbs={[{ label: 'Ajustes', icon: Settings }, { label: 'Finanzas', icon: DollarSign }, { label: 'Estructura de Recaudación', icon: ShieldCheck }]}
 
@@ -276,13 +276,13 @@ export default function DonationConfig() {
 
  <div className="w-full space-y-3 relative z-10">
 
-                    
+
 
                     {/* Hero Config Section Cinematic */}
 
                     <header className="space-y-4">
 
-                        <motion.div 
+                        <motion.div
 
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
 
@@ -325,7 +325,7 @@ export default function DonationConfig() {
                     ) : (
                     <>
                     {/* Master Switch Cinematic */}
-                    <motion.section 
+                    <motion.section
 
                         initial={{ opacity: 0, y: 20 }}
 
@@ -359,7 +359,7 @@ export default function DonationConfig() {
 
                         >
 
-                            <motion.div 
+                            <motion.div
 
                                 animate={{ x: titheEnabled ? 44 : 4 }}
 
@@ -423,7 +423,7 @@ export default function DonationConfig() {
 
                             </div>
 
-                            
+
 
                             <div className="grid grid-cols-1 gap-4">
 
@@ -435,7 +435,7 @@ export default function DonationConfig() {
 
                                     ) : categories.length > 0 ? categories.map((cat, i) => (
 
-                                        <motion.div 
+                                        <motion.div
 
                                             key={cat.id}
 
@@ -449,7 +449,7 @@ export default function DonationConfig() {
 
                                             <div className="flex items-center gap-3">
 
-                                                <div className={clsx("size-4 rounded-full shadow-[0_0_12px_currentColor] transition-transform group-hover:scale-150 duration-500", 
+                                                <div className={clsx("size-4 rounded-full shadow-[0_0_12px_currentColor] transition-transform group-hover:scale-150 duration-500",
 
                                                     cat.color === 'emerald' ? 'text-[hsl(var(--success))] bg-[hsl(var(--success))]' :
 
@@ -498,7 +498,7 @@ export default function DonationConfig() {
 
 
                     {/* Certs Automation Cinematic */}
-                    <motion.section 
+                    <motion.section
 
                         initial={{ opacity: 0, y: 30 }}
 
@@ -512,7 +512,7 @@ export default function DonationConfig() {
 
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-1000"><FileText size={200} /></div>
 
-                        
+
 
                         <div className="flex flex-col lg:flex-row items-center justify-between gap-3 relative z-10">
 
@@ -602,8 +602,3 @@ function PaymentMethodItem({ icon: Icon, label, active }: PaymentMethodItemProps
     );
 
 }
-
-
-
-
-

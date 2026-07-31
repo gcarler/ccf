@@ -1,6 +1,7 @@
 """
 Direct unit tests for backend.api.crm._shared — testable utility functions.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -24,6 +25,7 @@ class TestEnumValue:
     def test_enum_with_value_attr(self):
         class FakeEnum:
             value = "test_value"
+
         assert shared._enum_value(FakeEnum()) == "test_value"
 
     def test_enum_with_string(self):
@@ -41,30 +43,35 @@ class TestCaseStatus:
         class MockCase:
             status = "active"
             estado = None
+
         assert shared._case_status(MockCase()) == "active"
 
     def test_case_status_closed_exito(self):
         class MockCase:
             status = None
             estado = "RESUELTO_EXITO"
+
         assert shared._case_status(MockCase()) == "closed"
 
     def test_case_status_closed_perdido(self):
         class MockCase:
             status = None
             estado = "CERRADO_PERDIDO"
+
         assert shared._case_status(MockCase()) == "closed"
 
     def test_case_status_active_default(self):
         class MockCase:
             status = None
             estado = "EN_PROGRESO"
+
         assert shared._case_status(MockCase()) == "active"
 
     def test_case_status_active_empty(self):
         class MockCase:
             status = None
             estado = ""
+
         assert shared._case_status(MockCase()) == "active"
 
 
@@ -75,6 +82,7 @@ class TestCaseStage:
             payload_web = None
             etapa_actual = None
             estado = ""
+
         assert shared._case_stage(MockCase()) == "call"
 
     def test_case_stage_from_payload(self):
@@ -83,36 +91,43 @@ class TestCaseStage:
             payload_web = {"stage": "visit"}
             etapa_actual = None
             estado = ""
+
         assert shared._case_stage(MockCase()) == "visit"
 
     def test_case_stage_from_etapa_llamar(self):
         class MockEtapa:
             nombre = "llamar_contacto"
+
         class MockCase:
             stage = None
             payload_web = None
             etapa_actual = MockEtapa()
             estado = ""
+
         assert shared._case_stage(MockCase()) == "call"
 
     def test_case_stage_from_etapa_visita(self):
         class MockEtapa:
             nombre = "visita_seguimiento"
+
         class MockCase:
             stage = None
             payload_web = None
             etapa_actual = MockEtapa()
             estado = ""
+
         assert shared._case_stage(MockCase()) == "visit"
 
     def test_case_stage_from_etapa_discip(self):
         class MockEtapa:
             nombre = "discipulado"
+
         class MockCase:
             stage = None
             payload_web = None
             etapa_actual = MockEtapa()
             estado = ""
+
         assert shared._case_stage(MockCase()) == "discipleship"
 
     def test_case_stage_from_estado_exito(self):
@@ -121,6 +136,7 @@ class TestCaseStage:
             payload_web = None
             etapa_actual = None
             estado = "RESUELTO_EXITO"
+
         assert shared._case_stage(MockCase()) == "consolidated"
 
     def test_case_stage_from_estado_perdido(self):
@@ -129,6 +145,7 @@ class TestCaseStage:
             payload_web = None
             etapa_actual = None
             estado = "CERRADO_PERDIDO"
+
         assert shared._case_stage(MockCase()) == "lost"
 
     def test_case_stage_default_new(self):
@@ -137,6 +154,7 @@ class TestCaseStage:
             payload_web = None
             etapa_actual = None
             estado = ""
+
         assert shared._case_stage(MockCase()) == "new"
 
 
@@ -152,6 +170,7 @@ class TestSerializePersonaPosition:
             is_active = True
             notes = None
             created_at = None
+
         result = shared._serialize_persona_position(MockPP())
         assert result["position_name"] is None
         assert result["category"] is None
@@ -161,6 +180,7 @@ class TestSerializePersonaPosition:
         class MockPos:
             name = "Pastor"
             category = "ministry"
+
         class MockPP:
             id = uuid.uuid4()
             persona_id = uuid.uuid4()
@@ -171,6 +191,7 @@ class TestSerializePersonaPosition:
             is_active = False
             notes = "Test"
             created_at = None
+
         result = shared._serialize_persona_position(MockPP())
         assert result["position_name"] == "Pastor"
         assert result["is_active"] is False
@@ -181,6 +202,7 @@ class TestPersonaFullName:
     def test_with_persona(self):
         class MockPersona:
             nombre_completo = "Carlos Perez"
+
         assert shared._persona_full_name(MockPersona()) == "Carlos Perez"
 
     def test_with_none(self):

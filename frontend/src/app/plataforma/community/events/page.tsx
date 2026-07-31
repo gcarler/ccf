@@ -55,7 +55,7 @@ export default function EventsCalendar() {
                     </div>
                     <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tighter">Calendario de Eventos</h1>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     <h2 className="text-sm font-bold tabular-nums">Eventos Próximos</h2>
                 </div>
@@ -74,9 +74,9 @@ export default function EventsCalendar() {
                         >
                             {tab}
                             {activeTab === tab && (
-                                <motion.div 
+                                <motion.div
                                     layoutId="active-tab"
-                                    className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[hsl(var(--primary))] shadow-[0_0_12px_hsl(var(--primary)/0.5)]" 
+                                    className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[hsl(var(--primary))] shadow-[0_0_12px_hsl(var(--primary)/0.5)]"
                                 />
                             )}
                         </button>
@@ -95,7 +95,7 @@ export default function EventsCalendar() {
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-4">
                         {filteredEvents.map(event => (
-                            <motion.div 
+                            <motion.div
                                 key={event.id}
                                 whileHover={{ y: -2 }}
                                 className="group bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md overflow-hidden shadow-sm hover:shadow-md hover:border-[hsl(var(--primary)/0.3)] transition-all flex flex-col"
@@ -130,7 +130,7 @@ export default function EventsCalendar() {
                 )}
             </div>
 
-            <motion.button 
+            <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="fixed bottom-6 right-6 size-7 bg-[hsl(var(--primary))] text-white rounded-md shadow-lg flex items-center justify-center z-50 border border-white/20"
@@ -140,4 +140,3 @@ export default function EventsCalendar() {
         </div>
     );
 }
-

@@ -24,9 +24,9 @@ export default function RedirectsPage() {
     try {
       const data = await apiFetch<Redirect[]>(`/cms/v2/redirects?site_key=${SITE_KEY}`, { silent: true });
       setRedirects(Array.isArray(data) ? data : []);
-    } catch { 
-      toast.error("Error al cargar datos"); 
-      setRedirects([]); 
+    } catch {
+      toast.error("Error al cargar datos");
+      setRedirects([]);
     }
     setLoading(false);
   };
@@ -162,8 +162,8 @@ export default function RedirectsPage() {
                     <td className="px-4 py-3">
                       <span className={clsx(
                         "px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wide",
-                        r.status_code === 301 
-                          ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success-text))] dark:bg-[hsl(var(--success))]/20 dark:text-[hsl(var(--success))]" 
+                        r.status_code === 301
+                          ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success-text))] dark:bg-[hsl(var(--success))]/20 dark:text-[hsl(var(--success))]"
                           : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] dark:bg-[hsl(var(--warning))]/20 dark:text-[hsl(var(--warning))]"
                       )}>
                         {r.status_code}
@@ -171,8 +171,8 @@ export default function RedirectsPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-[hsl(var(--text-secondary))] hidden sm:table-cell">{r.hit_count}</td>
                     <td className="px-4 py-3">
-                      <button 
-                        onClick={() => setPendingDelete(r)} 
+                      <button
+                        onClick={() => setPendingDelete(r)}
                         className="p-2 rounded-md hover:bg-[hsl(var(--danger-muted))] dark:hover:bg-[hsl(var(--danger))]/20 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                         title="Eliminar"
                       >

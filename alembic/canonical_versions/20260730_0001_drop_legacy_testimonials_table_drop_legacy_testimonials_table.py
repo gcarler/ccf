@@ -18,6 +18,7 @@ adapter layer in ``backend.api.cms_v1_adapters``).
 The downgrade recreates the table structure but does NOT repopulate data
 from ``cms_posts`` (that would be a data-migration concern).
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa

@@ -1,8 +1,8 @@
 # Auditoría del Design System y Librería de Componentes CCF
 
-**Fecha de auditoría:** 2026-07-23  
-**Fecha de actualización:** 2026-07-29  
-**Alcance:** `frontend/src/design/` (Design System) y `frontend/src/components/ui/` (UI Library)  
+**Fecha de auditoría:** 2026-07-23
+**Fecha de actualización:** 2026-07-29
+**Alcance:** `frontend/src/design/` (Design System) y `frontend/src/components/ui/` (UI Library)
 **Objetivo:** Documentar el estado actual, fortalezas, hallazgos y recomendaciones para consolidar un sistema de diseño único, coherente y accesible.
 
 ---
@@ -304,7 +304,7 @@ La deuda restante es pura de **consolidación documental**: decidir si seguir ma
 
 6. **Crear tipos TypeScript para variables CSS semánticas**
    - Definir un objeto/token TS que mapee nombres semánticos (`success`, `danger`, `info`, `warning`) a las variables CSS.
-   - Ejemplo: 
+   - Ejemplo:
      ```ts
      export const semanticColors = {
        success: 'hsl(var(--success))',

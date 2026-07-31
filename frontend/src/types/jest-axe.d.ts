@@ -1,22 +1,22 @@
 declare module 'jest-axe' {
   import { AxeResults } from 'axe-core';
-  
+
   export interface JestAxeConfiguration {
     globalOptions?: any;
     impactLevels?: string[];
     rules?: any[];
   }
-  
+
   export function axe(
     html: Element | string,
     options?: JestAxeConfiguration
   ): Promise<AxeResults>;
-  
+
   export function toHaveNoViolations(results: AxeResults): {
     message: () => string;
     pass: boolean;
   };
-  
+
   export function configureAxe(options: JestAxeConfiguration): void;
 }
 

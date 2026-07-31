@@ -28,28 +28,22 @@ FORBIDDEN_ROOT_PREFIXES = (
 def test_all_application_routes_stay_under_api_tree_or_explicit_exceptions():
     paths = {route.path for route in app.routes if getattr(route, "path", None)}
 
-    invalid_paths = sorted(
-        path
-        for path in paths
-        if not path.startswith("/api/") and path not in ALLOWED_NON_API_PATHS
-    )
+    invalid_paths = sorted(path for path in paths if not path.startswith("/api/") and path not in ALLOWED_NON_API_PATHS)
 
     assert invalid_paths == []
 
     forbidden_aliases = sorted(
         path
         for path in paths
-        if any(
-            path == prefix or path.startswith(prefix + "/")
-            for prefix in FORBIDDEN_ROOT_PREFIXES
-        )
+        if any(path == prefix or path.startswith(prefix + "/") for prefix in FORBIDDEN_ROOT_PREFIXES)
     )
 
     assert forbidden_aliases == []
     forbidden_old_api_paths = sorted(
         path
         for path in paths
-        if path in {
+        if path
+        in {
             "/api/announcements",
             "/api/testimonials",
             "/api/analytics/summary",
@@ -111,10 +105,7 @@ def test_docker_compose_requires_mandatory_secrets_and_canonical_environment_key
 
     assert "SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}" in content
     assert "POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}" in content
-    assert (
-        "MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}"
-        in content
-    )
+    assert "MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}" in content
     assert "environment: production" in content
     assert "ENV: production" not in content
 
@@ -131,15 +122,9 @@ def test_routes_do_not_collide_by_method_and_normalized_path():
 
         normalized_path = re.sub(r"\{[^}]+\}", "{}", path)
         key = (normalized_path, methods)
-        seen.setdefault(key, []).append(
-            f"{path} -> {endpoint.__module__}.{endpoint.__name__}"
-        )
+        seen.setdefault(key, []).append(f"{path} -> {endpoint.__module__}.{endpoint.__name__}")
 
-    collisions = {
-        f"{methods} {path}": owners
-        for (path, methods), owners in seen.items()
-        if len(owners) > 1
-    }
+    collisions = {f"{methods} {path}": owners for (path, methods), owners in seen.items() if len(owners) > 1}
 
     assert collisions == {}
 
@@ -307,11 +292,11 @@ def test_academy_persona_backfill_migration_exists():
     content = migration.read_text(encoding="utf-8")
 
     required_fragments = [
-        "down_revision: Union[str, None] = \"20260604_personas_scanner_token\"",
-        "_backfill(\"enrollments\", \"persona_id\")",
-        "_backfill(\"lesson_progress\", \"persona_id\")",
-        "_backfill(\"academy_activity_logs\", \"persona_id\")",
-        "_backfill(\"formal_actas\", \"closed_by_persona_id\", \"closed_by_user_id\")",
+        'down_revision: Union[str, None] = "20260604_personas_scanner_token"',
+        '_backfill("enrollments", "persona_id")',
+        '_backfill("lesson_progress", "persona_id")',
+        '_backfill("academy_activity_logs", "persona_id")',
+        '_backfill("formal_actas", "closed_by_persona_id", "closed_by_user_id")',
         "uq_persona_course",
         "uq_persona_lesson_progress",
     ]
@@ -338,10 +323,10 @@ def test_crm_persona_backfill_migration_exists():
     content = migration.read_text(encoding="utf-8")
 
     required_fragments = [
-        "down_revision: Union[str, None] = \"20260605_acad_pers_backfill\"",
-        "_backfill(\"counseling_tickets\", \"pastor_id\", \"pastor_user_id\")",
-        "_backfill(\"consolidation_tasks\", \"assignee_id\", \"assignee_user_id\")",
-        "_backfill(\"communication_logs\", \"leader_id\", \"leader_user_id\")",
+        'down_revision: Union[str, None] = "20260605_acad_pers_backfill"',
+        '_backfill("counseling_tickets", "pastor_id", "pastor_user_id")',
+        '_backfill("consolidation_tasks", "assignee_id", "assignee_user_id")',
+        '_backfill("communication_logs", "leader_id", "leader_user_id")',
         "fk_counseling_tickets_pastor_id",
         "fk_consolidation_tasks_assignee_id",
         "fk_communication_logs_leader_id",
@@ -359,10 +344,10 @@ def test_cms_persona_backfill_migration_exists():
     content = migration.read_text(encoding="utf-8")
 
     required_fragments = [
-        "down_revision: Union[str, None] = \"20260605_crm_persona_backfill\"",
-        "(\"content_publications\", \"updated_by_persona_id\", \"updated_by\")",
-        "(\"cms_media_items\", \"created_by_persona_id\", \"created_by\")",
-        "(\"cms_pages\", \"created_by_persona_id\", \"created_by\")",
+        'down_revision: Union[str, None] = "20260605_crm_persona_backfill"',
+        '("content_publications", "updated_by_persona_id", "updated_by")',
+        '("cms_media_items", "created_by_persona_id", "created_by")',
+        '("cms_pages", "created_by_persona_id", "created_by")',
     ]
 
     missing = [fragment for fragment in required_fragments if fragment not in content]
@@ -377,11 +362,11 @@ def test_agents_governance_persona_backfill_migration_exists():
     content = migration.read_text(encoding="utf-8")
 
     required_fragments = [
-        "down_revision: Union[str, None] = \"20260605_cms_persona_backfill\"",
-        "(\"agents\", \"created_by_persona_id\", \"created_by\")",
-        "(\"agent_roles\", \"created_by_persona_id\", \"created_by\")",
-        "(\"agent_journey\", \"triggered_by_persona_id\", \"triggered_by_id\")",
-        "(\"agent_conversations\", \"persona_id\", \"user_id\")",
+        'down_revision: Union[str, None] = "20260605_cms_persona_backfill"',
+        '("agents", "created_by_persona_id", "created_by")',
+        '("agent_roles", "created_by_persona_id", "created_by")',
+        '("agent_journey", "triggered_by_persona_id", "triggered_by_id")',
+        '("agent_conversations", "persona_id", "user_id")',
     ]
 
     missing = [fragment for fragment in required_fragments if fragment not in content]
@@ -398,8 +383,12 @@ def test_platform_frontend_respects_ccf_ui_contracts():
     # Raw-substring forbidden: Tailwind colors and direct Radix Dialog imports
     # must NEVER appear regardless of identifier casing.
     _raw_forbidden = (
-        "indigo", "violet", "purple",
-        "@radix-ui/react-dialog", "<Dialog", "Dialog.",
+        "indigo",
+        "violet",
+        "purple",
+        "@radix-ui/react-dialog",
+        "<Dialog",
+        "Dialog.",
     )
     # Word-boundary forbidden: display-copy Spanish terminology should not
     # surface to end users. snake_case identifiers (`total_miembros`,
@@ -513,6 +502,7 @@ def test_h11_academy_frontend_no_any_types():
     ]
     # type-annotation shapes que senalize debt de TS:
     import re
+
     patterns = [
         re.compile(r":\s*any\b"),
         re.compile(r"<any>"),
@@ -532,15 +522,15 @@ def test_h11_academy_frontend_no_any_types():
                     if pat.search(line):
                         violations.append(f"{rel}:{line_no} contains explicit any")
                         break
-    assert violations == [], (
-        "H-11 regression: Academy frontend contiene ``any`` explicitos: "
-        + "; ".join(violations[:10])
+    assert violations == [], "H-11 regression: Academy frontend contiene ``any`` explicitos: " + "; ".join(
+        violations[:10]
     )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # BACKEND AXIOMATIC RULES — REGLAS.md + ESTANDARES_DESARROLLO.md
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def test_backend_no_jsonb_columns():
     """REGLAS §2.8 — usar JSON no JSONB. JSONB rompe soporte SQLite (tests)."""
@@ -576,11 +566,11 @@ def test_backend_no_hard_deletes_in_transactional_apis():
     root = Path(__file__).resolve().parents[1]
     # Tablas transaccionales históricas — excluir archivos de control/auth que sí usan hard delete legítimo
     ALLOWED_FILES = {
-        "backend/api/admin.py",       # asignaciones de roles (tablas de control, no históricas)
-        "backend/api/auth.py",        # refresh tokens revocados
-        "backend/api/auth_v3.py",     # tokens de sesión
-        "backend/crud/cms.py",        # media items son archivos estáticos, no datos transaccionales
-        "backend/crud/kernel.py",     # relaciones persona-ministerio (tabla de control sin trazabilidad histórica)
+        "backend/api/admin.py",  # asignaciones de roles (tablas de control, no históricas)
+        "backend/api/auth.py",  # refresh tokens revocados
+        "backend/api/auth_v3.py",  # tokens de sesión
+        "backend/crud/cms.py",  # media items son archivos estáticos, no datos transaccionales
+        "backend/crud/kernel.py",  # relaciones persona-ministerio (tabla de control sin trazabilidad histórica)
     }
     violations = []
     for scan_dir in [(root / "backend" / "api"), (root / "backend" / "crud")]:
@@ -595,8 +585,7 @@ def test_backend_no_hard_deletes_in_transactional_apis():
                 if "db.delete(" in line:
                     violations.append(f"{rel}:{line_no}: {stripped[:80]}")
     assert violations == [], (
-        "Usar soft delete (deleted_at o estado_vital='INACTIVO') en vez de db.delete() "
-        "en endpoints transaccionales"
+        "Usar soft delete (deleted_at o estado_vital='INACTIVO') en vez de db.delete() en endpoints transaccionales"
     )
 
 
@@ -635,8 +624,7 @@ def test_backend_new_models_use_uuid_not_integer_pk_for_persona_linked_tables():
             new_violations.append(f"{path.name}::{bare}")
 
     assert new_violations == [], (
-        "Tablas vinculadas a personas.id con PK Integer detectadas. "
-        "Usar UUID(as_uuid=True) como PK. Ver REGLAS §2.A"
+        "Tablas vinculadas a personas.id con PK Integer detectadas. Usar UUID(as_uuid=True) como PK. Ver REGLAS §2.A"
     )
 
 
@@ -647,9 +635,7 @@ def test_all_runtime_primary_keys_are_uuid():
     for table in Base.metadata.tables.values():
         for column in table.primary_key.columns:
             if type(column.type).__name__ != "UUID":
-                violations.append(
-                    f"{table.name}.{column.name}: {type(column.type).__name__}"
-                )
+                violations.append(f"{table.name}.{column.name}: {type(column.type).__name__}")
 
     assert violations == [], "Todas las entidades runtime deben usar UUID como PK"
 
@@ -666,9 +652,7 @@ def test_internal_id_contracts_do_not_use_integer_annotations():
     allowed_files = {
         "backend/services/payments.py",  # MercadoPago owns its numeric payment ID.
     }
-    pattern = re.compile(
-        r"\b[A-Za-z_]+_id:\s*(?:Optional\[)?int\b|\bid:\s*(?:Optional\[)?int\b"
-    )
+    pattern = re.compile(r"\b[A-Za-z_]+_id:\s*(?:Optional\[)?int\b|\bid:\s*(?:Optional\[)?int\b")
     violations = []
 
     for scan_root in scan_roots:
@@ -696,8 +680,7 @@ def test_academy_has_one_runtime_contract_and_model_tree():
     academy_routes = {
         route.path
         for route in app.routes
-        if getattr(getattr(route, "endpoint", None), "__module__", "")
-        == "backend.api.academy"
+        if getattr(getattr(route, "endpoint", None), "__module__", "") == "backend.api.academy"
     }
     assert academy_routes
     assert all(path.startswith("/api/academy/") for path in academy_routes)
@@ -760,9 +743,7 @@ def test_crm_and_agenda_have_one_runtime_contract_each():
     ]
     assert [path.relative_to(root).as_posix() for path in removed_files if path.exists()] == []
 
-    application_paths = {
-        route.path for route in app.routes if getattr(route, "path", None)
-    }
+    application_paths = {route.path for route in app.routes if getattr(route, "path", None)}
     assert not any(path.startswith("/api/v2/") for path in application_paths)
     assert any(path.startswith("/api/crm/") for path in application_paths)
     assert any(path.startswith("/api/agenda/") for path in application_paths)
@@ -777,9 +758,7 @@ def test_auth_has_one_role_owner_and_no_removed_runtime_modules():
     ]
     assert [path.relative_to(root).as_posix() for path in removed_files if path.exists()] == []
 
-    application_paths = {
-        route.path for route in app.routes if getattr(route, "path", None)
-    }
+    application_paths = {route.path for route in app.routes if getattr(route, "path", None)}
     forbidden_kernel_role_mutations = {
         path
         for path in application_paths

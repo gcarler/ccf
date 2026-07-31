@@ -1,4 +1,5 @@
 """CRM event and event attendance CRUD."""
+
 from typing import List, Optional
 from uuid import UUID
 
@@ -43,9 +44,7 @@ def get_crm_event(db: Session, event_id: UUID) -> Optional[models.CrmEvent]:
     return _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
 
 
-def update_crm_event(
-    db: Session, event_id: UUID, payload: schemas.CrmEventUpdate
-) -> Optional[models.CrmEvent]:
+def update_crm_event(db: Session, event_id: UUID, payload: schemas.CrmEventUpdate) -> Optional[models.CrmEvent]:
     """Actualiza un evento mediante el contrato Pydantic canónico."""
     row = _active_events_query(db).filter(models.CrmEvent.id == event_id).first()
     if not row:

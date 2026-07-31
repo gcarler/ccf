@@ -8,14 +8,14 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import { apiFetch } from '@/lib/http';
-import { 
-    GraduationCap, 
-    Award, 
-    BookOpen, 
-    CheckCircle2, 
-    Clock, 
-    Trophy, 
-    Star, 
+import {
+    GraduationCap,
+    Award,
+    BookOpen,
+    CheckCircle2,
+    Clock,
+    Trophy,
+    Star,
     ArrowRight,
     Search,
     BarChart3,
@@ -59,7 +59,7 @@ export default function StudentProgressPage() {
                 const data = await apiFetch<CourseProgress[]>('/academy/me/progress', { token, signal: ctrl.signal });
                 const arr = Array.isArray(data) ? data : [];
                 setProgress(arr);
-                
+
                 const completed = arr.filter(c => c.status === 'completed').length;
                 const avg = arr.length > 0 ? arr.reduce((acc, curr) => acc + curr.average_grade, 0) / arr.length : 0;
                 const certs = arr.filter(c => c.certificate_issued).length;
@@ -170,7 +170,7 @@ export default function StudentProgressPage() {
                     </div>
                 )}
                 {viewType === 'grid' && (
-                <motion.div 
+                <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
@@ -180,7 +180,7 @@ export default function StudentProgressPage() {
                     <motion.section variants={itemVariants} className="relative rounded-lg bg-[hsl(var(--primary))] overflow-hidden group border border-white/10 shadow-2xl">
                         <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.05] mix-blend-overlay" />
                         <div className="absolute top-[-50%] right-[-10%] w-[80%] h-[200%] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] to-[hsl(var(--info)/20%)] via-[hsl(var(--info)/10%)] to-transparent blur-3xl pointer-events-none" />
-                        
+
                         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between p-4 lg:p-4 gap-4">
                             <div className="space-y-3 max-w-xl">
                                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--info))] border border-white/10">
@@ -222,8 +222,8 @@ export default function StudentProgressPage() {
                                 ))
                             ) : progress.length > 0 ? (
                                 progress.map(course => (
-                                    <div 
-                                        key={course.id} 
+                                    <div
+                                        key={course.id}
                                         className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 lg:p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 group hover:border-[hsl(var(--info)/100%)]/30 hover:shadow-2xl hover:shadow-[hsl(var(--info)/5%)] transition-all duration-500"
                                     >
                                         <div className="flex-1 space-y-4">
@@ -260,7 +260,7 @@ export default function StudentProgressPage() {
                                                     <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{course.progress_percent}%</span>
                                                 </div>
                                                 <div className="h-3 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden p-0.5">
-                                                    <motion.div 
+                                                    <motion.div
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${course.progress_percent}%` }}
                                                         className={clsx(
@@ -278,7 +278,7 @@ export default function StudentProgressPage() {
                                                         {course.average_grade.toFixed(1)}
                                                     </p>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={() => router.push(`/plataforma/academy/courses/${course.id}`)}
                                                     className="size-7 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl shadow-black/10"
                                                 >

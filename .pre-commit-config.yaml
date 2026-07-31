@@ -23,7 +23,7 @@ repos:
         args: ["--select", "I", "--fix"]
       - id: ruff
         name: ruff lint
-        args: ["--select=E,W,F", "--fix"]
+        args: ["--fix"]
       - id: ruff-format
 
   - repo: https://github.com/PyCQA/bandit

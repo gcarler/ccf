@@ -18,6 +18,7 @@ log = logging.getLogger(__name__)
 
 class ToolParameter(BaseModel):
     """Definición de un parámetro de herramienta."""
+
     name: str
     type: str  # "string", "integer", "boolean", "array"
     description: str
@@ -27,6 +28,7 @@ class ToolParameter(BaseModel):
 
 class ToolDefinition(BaseModel):
     """Definición de una herramienta del sistema."""
+
     name: str
     description: str
     module: str
@@ -39,26 +41,22 @@ class AgentTool(ABC):
 
     @property
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     @property
     @abstractmethod
-    def description(self) -> str:
-        ...
+    def description(self) -> str: ...
 
     @property
     @abstractmethod
-    def module(self) -> str:
-        ...
+    def module(self) -> str: ...
 
     @property
     def parameters(self) -> List[ToolParameter]:
         return []
 
     @abstractmethod
-    def execute(self, **kwargs) -> Dict[str, Any]:
-        ...
+    def execute(self, **kwargs) -> Dict[str, Any]: ...
 
     def to_definition(self) -> ToolDefinition:
         return ToolDefinition(
@@ -119,11 +117,7 @@ class ToolRegistry:
 
     def list_by_module(self, module: str) -> List[ToolDefinition]:
         """Lista herramientas de un módulo específico."""
-        return [
-            t.to_definition()
-            for t in self._tools.values()
-            if t.module == module
-        ]
+        return [t.to_definition() for t in self._tools.values() if t.module == module]
 
     def get_openai_tools(self) -> List[Dict[str, Any]]:
         """Todas las herramientas en formato OpenAI function calling."""
@@ -157,24 +151,28 @@ tool_registry = ToolRegistry()
 # HERRAMIENTAS CRM
 # ──────────────────────────────────────────────
 
+
 class CRMSearchPersona(AgentTool):
     """Busca personas por nombre, email o teléfono."""
 
     @property
-    def name(self): return "crm_search_persona"
+    def name(self):
+        return "crm_search_persona"
 
     @property
     def description(self):
         return "Search church personas by name, email, or phone"
 
     @property
-    def module(self): return "crm"
+    def module(self):
+        return "crm"
 
     @property
     def parameters(self):
         return [
             ToolParameter(
-                name="query", type="string",
+                name="query",
+                type="string",
                 description="Search term (name, email, or phone)",
             ),
         ]
@@ -186,12 +184,17 @@ class CRMSearchPersona(AgentTool):
         db = SessionLocal()
         try:
             term = f"%{query}%"
-            personas = db.query(models.Persona).filter(
-                models.Persona.first_name.ilike(term)
-                | models.Persona.last_name.ilike(term)
-                | models.Persona.email.ilike(term)
-                | (models.Persona.phone == query),
-            ).limit(10).all()
+            personas = (
+                db.query(models.Persona)
+                .filter(
+                    models.Persona.first_name.ilike(term)
+                    | models.Persona.last_name.ilike(term)
+                    | models.Persona.email.ilike(term)
+                    | (models.Persona.phone == query),
+                )
+                .limit(10)
+                .all()
+            )
             return {
                 "count": len(personas),
                 "personas": [
@@ -213,20 +216,23 @@ class CRMGetPersonaProfile(AgentTool):
     """Obtiene el perfil completo de una persona."""
 
     @property
-    def name(self): return "crm_get_persona_profile"
+    def name(self):
+        return "crm_get_persona_profile"
 
     @property
     def description(self):
         return "Get full profile of a church persona by ID"
 
     @property
-    def module(self): return "crm"
+    def module(self):
+        return "crm"
 
     @property
     def parameters(self):
         return [
             ToolParameter(
-                name="persona_id", type="string",
+                name="persona_id",
+                type="string",
                 description="Persona ID (UUID)",
             ),
         ]
@@ -242,9 +248,13 @@ class CRMGetPersonaProfile(AgentTool):
 
         db = SessionLocal()
         try:
-            persona = db.query(models.Persona).filter(
-                models.Persona.id == persona_uuid,
-            ).first()
+            persona = (
+                db.query(models.Persona)
+                .filter(
+                    models.Persona.id == persona_uuid,
+                )
+                .first()
+            )
             if not persona:
                 return {"error": f"Persona {persona_id} not found"}
             return {
@@ -265,24 +275,28 @@ class CRMGetPersonaProfile(AgentTool):
 # HERRAMIENTAS ACADEMY
 # ──────────────────────────────────────────────
 
+
 class AcademySearchCourse(AgentTool):
     """Busca cursos por nombre o descripción."""
 
     @property
-    def name(self): return "academy_search_course"
+    def name(self):
+        return "academy_search_course"
 
     @property
     def description(self):
         return "Search courses by name or description"
 
     @property
-    def module(self): return "academy"
+    def module(self):
+        return "academy"
 
     @property
     def parameters(self):
         return [
             ToolParameter(
-                name="query", type="string",
+                name="query",
+                type="string",
                 description="Search term",
             ),
         ]
@@ -296,12 +310,17 @@ class AcademySearchCourse(AgentTool):
         db = SessionLocal()
         try:
             term = f"%{query}%"
-            courses = db.query(models.Course).filter(
-                models.Course.is_published,
-            ).filter(
-                models.Course.title.ilike(term)
-                | func.coalesce(models.Course.description, "").ilike(term),
-            ).limit(10).all()
+            courses = (
+                db.query(models.Course)
+                .filter(
+                    models.Course.is_published,
+                )
+                .filter(
+                    models.Course.title.ilike(term) | func.coalesce(models.Course.description, "").ilike(term),
+                )
+                .limit(10)
+                .all()
+            )
             return {
                 "count": len(courses),
                 "courses": [
@@ -323,14 +342,16 @@ class AcademyGetStats(AgentTool):
     """Obtiene estadísticas de la academia."""
 
     @property
-    def name(self): return "academy_get_stats"
+    def name(self):
+        return "academy_get_stats"
 
     @property
     def description(self):
         return "Get academy statistics (courses, enrollments, certificates)"
 
     @property
-    def module(self): return "academy"
+    def module(self):
+        return "academy"
 
     def execute(self, **kwargs) -> Dict[str, Any]:
         from backend import models
@@ -338,9 +359,13 @@ class AcademyGetStats(AgentTool):
 
         db = SessionLocal()
         try:
-            courses = db.query(models.Course).filter(
-                models.Course.is_published,
-            ).count()
+            courses = (
+                db.query(models.Course)
+                .filter(
+                    models.Course.is_published,
+                )
+                .count()
+            )
             enrollments = db.query(models.Enrollment).count()
             certificates = db.query(models.Certificate).count()
             return {
@@ -356,28 +381,33 @@ class AcademyGetStats(AgentTool):
 # HERRAMIENTAS PROJECTS
 # ──────────────────────────────────────────────
 
+
 class ProjectsSearchTask(AgentTool):
     """Busca tareas de proyectos."""
 
     @property
-    def name(self): return "projects_search_task"
+    def name(self):
+        return "projects_search_task"
 
     @property
     def description(self):
         return "Search project tasks by title or description"
 
     @property
-    def module(self): return "projects"
+    def module(self):
+        return "projects"
 
     @property
     def parameters(self):
         return [
             ToolParameter(
-                name="query", type="string",
+                name="query",
+                type="string",
                 description="Search term",
             ),
             ToolParameter(
-                name="status", type="string",
+                name="status",
+                type="string",
                 description="Filter by status (todo, in_progress, review, done)",
                 required=False,
             ),
@@ -391,8 +421,7 @@ class ProjectsSearchTask(AgentTool):
         try:
             term = f"%{query}%"
             q = db.query(models.ProjectTask).filter(
-                models.ProjectTask.title.ilike(term)
-                | (models.ProjectTask.description or "").ilike(term),
+                models.ProjectTask.title.ilike(term) | (models.ProjectTask.description or "").ilike(term),
             )
             if status:
                 q = q.filter(models.ProjectTask.status == status)
@@ -418,14 +447,16 @@ class ProjectsGetStats(AgentTool):
     """Obtiene estadísticas de proyectos."""
 
     @property
-    def name(self): return "projects_get_stats"
+    def name(self):
+        return "projects_get_stats"
 
     @property
     def description(self):
         return "Get project statistics"
 
     @property
-    def module(self): return "projects"
+    def module(self):
+        return "projects"
 
     def execute(self, **kwargs) -> Dict[str, Any]:
         from backend import models
@@ -434,13 +465,21 @@ class ProjectsGetStats(AgentTool):
         db = SessionLocal()
         try:
             projects = db.query(models.Project).count()
-            active = db.query(models.Project).filter(
-                models.Project.status == "active",
-            ).count()
+            active = (
+                db.query(models.Project)
+                .filter(
+                    models.Project.status == "active",
+                )
+                .count()
+            )
             tasks = db.query(models.ProjectTask).count()
-            overdue = db.query(models.ProjectTask).filter(
-                models.ProjectTask.status.in_(["todo", "in_progress"]),
-            ).count()
+            overdue = (
+                db.query(models.ProjectTask)
+                .filter(
+                    models.ProjectTask.status.in_(["todo", "in_progress"]),
+                )
+                .count()
+            )
             return {
                 "total_projects": projects,
                 "active_projects": active,
@@ -455,18 +494,21 @@ class ProjectsGetStats(AgentTool):
 # HERRAMIENTAS ANALYTICS
 # ──────────────────────────────────────────────
 
+
 class AnalyticsGetRadar(AgentTool):
     """Obtiene KPIs del Pastor's Radar."""
 
     @property
-    def name(self): return "analytics_get_radar"
+    def name(self):
+        return "analytics_get_radar"
 
     @property
     def description(self):
         return "Get Pastor's Radar KPIs (personas, baptisms, students, revenue)"
 
     @property
-    def module(self): return "analytics"
+    def module(self):
+        return "analytics"
 
     def execute(self, **kwargs) -> Dict[str, Any]:
         from backend import models
@@ -476,12 +518,16 @@ class AnalyticsGetRadar(AgentTool):
         try:
             return {
                 "personas": db.query(models.Persona).count(),
-                "active_projects": db.query(models.Project).filter(
+                "active_projects": db.query(models.Project)
+                .filter(
                     models.Project.status == "active",
-                ).count(),
-                "courses": db.query(models.Course).filter(
+                )
+                .count(),
+                "courses": db.query(models.Course)
+                .filter(
                     models.Course.is_published,
-                ).count(),
+                )
+                .count(),
             }
         finally:
             db.close()
@@ -491,14 +537,16 @@ class AnalyticsProactive(AgentTool):
     """Ejecuta análisis proactivo de IA."""
 
     @property
-    def name(self): return "analytics_proactive_analysis"
+    def name(self):
+        return "analytics_proactive_analysis"
 
     @property
     def description(self):
         return "Run proactive AI analysis (attrition risk, bottlenecks, recognition)"
 
     @property
-    def module(self): return "analytics"
+    def module(self):
+        return "analytics"
 
     def execute(self, **kwargs) -> Dict[str, Any]:
         from backend.analytics.proactive_ia import run_proactive_analysis
@@ -515,6 +563,7 @@ class AnalyticsProactive(AgentTool):
 # ──────────────────────────────────────────────
 # REGISTRO AUTOMÁTICO
 # ──────────────────────────────────────────────
+
 
 def register_all_tools():
     """Registra todas las herramientas en el registry global."""

@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Bot, 
-    Zap, 
-    BrainCircuit, 
-    Activity, 
-    Send, 
-    Layers, 
-    BarChart3, 
-    Sparkles, 
+import {
+    Bot,
+    Zap,
+    BrainCircuit,
+    Activity,
+    Send,
+    Layers,
+    BarChart3,
+    Sparkles,
     Settings,
     MoreHorizontal,
     ChevronRight,
@@ -236,7 +236,7 @@ export default function IntelligenceConsole() {
                     {/* Ask Optimus Interface */}
                     <section className="bg-[hsl(var(--bg-muted))] rounded-lg p-4 text-white shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-[hsl(var(--info))]/20 rounded-full blur-[80px] group-hover:bg-[hsl(var(--info))]/30 transition-all duration-1000" />
-                        
+
                         <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-4">
                                 <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shadow-lg shadow-[hsl(var(--info)/20%)]"><Bot size={28} /></div>
@@ -247,12 +247,12 @@ export default function IntelligenceConsole() {
                             </div>
 
                             <div className="relative">
-                                <input 
+                                <input
                                     value={query} onChange={(e) => setQuery(e.target.value)}
                                     placeholder="¿Cuál es la tendencia de crecimiento en el curso de liderazgo?"
                                     className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-4 pr-16 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--info)/100%)]/50 transition-all placeholder:text-[hsl(var(--text-secondary))]"
                                 />
-                                <button 
+                                <button
                                     onClick={handleAskOptimus} disabled={isAsking}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 size-7 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] rounded-md flex items-center justify-center transition-all active:scale-90"
                                 >
@@ -262,7 +262,7 @@ export default function IntelligenceConsole() {
 
                             <AnimatePresence>
                                 {aiResponse && (
-                                    <motion.div 
+                                    <motion.div
                                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                         className="p-4 bg-white/5 border border-white/10 rounded-lg space-y-4"
                                     >

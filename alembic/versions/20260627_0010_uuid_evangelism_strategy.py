@@ -25,25 +25,18 @@ UUID_PATTERN = (
 
 def _assert_uuid_values(connection, table: str, column: str) -> None:
     invalid = connection.execute(
-        sa.text(
-            f'SELECT COUNT(*) FROM "{table}" '
-            f'WHERE "{column}" IS NOT NULL AND "{column}" !~ :pattern'
-        ),
+        sa.text(f'SELECT COUNT(*) FROM "{table}" WHERE "{column}" IS NOT NULL AND "{column}" !~ :pattern'),
         {"pattern": UUID_PATTERN},
     ).scalar_one()
     if invalid:
-        raise RuntimeError(
-            f"Cannot convert {table}.{column} to UUID: {invalid} invalid value(s)"
-        )
+        raise RuntimeError(f"Cannot convert {table}.{column} to UUID: {invalid} invalid value(s)")
 
 
 def upgrade() -> None:
     connection = op.get_bind()
     orphan_rows = connection.execute(sa.text("SELECT COUNT(*) FROM cell_groups")).scalar_one()
     if orphan_rows:
-        raise RuntimeError(
-            f"Cannot remove orphan cell_groups table: it contains {orphan_rows} row(s)"
-        )
+        raise RuntimeError(f"Cannot remove orphan cell_groups table: it contains {orphan_rows} row(s)")
 
     columns = (
         ("estrategias_evangelismo", "id"),
@@ -118,12 +111,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        "crm_casos_origen_estrategia_id_fkey", "crm_casos", type_="foreignkey"
-    )
-    op.drop_constraint(
-        "fk_personas_origen_estrategia_id", "personas", type_="foreignkey"
-    )
+    op.drop_constraint("crm_casos_origen_estrategia_id_fkey", "crm_casos", type_="foreignkey")
+    op.drop_constraint("fk_personas_origen_estrategia_id", "personas", type_="foreignkey")
     op.drop_constraint(
         "grupos_evangelismo_estrategia_id_fkey",
         "grupos_evangelismo",
@@ -207,15 +196,9 @@ def downgrade() -> None:
             ["estrategias_evangelismo.id"],
             ondelete="SET NULL",
         ),
-        sa.ForeignKeyConstraint(
-            ["leader_persona_id"], ["personas.id"], ondelete="SET NULL"
-        ),
-        sa.ForeignKeyConstraint(
-            ["assistant_persona_id"], ["personas.id"], ondelete="SET NULL"
-        ),
-        sa.ForeignKeyConstraint(
-            ["host_persona_id"], ["personas.id"], ondelete="SET NULL"
-        ),
+        sa.ForeignKeyConstraint(["leader_persona_id"], ["personas.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["assistant_persona_id"], ["personas.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["host_persona_id"], ["personas.id"], ondelete="SET NULL"),
     )
     op.create_index("ix_cell_groups_code", "cell_groups", ["code"], unique=True)
     op.create_index(

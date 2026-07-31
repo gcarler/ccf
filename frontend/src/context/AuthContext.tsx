@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await fetchUser(effectiveToken);
         if (data?.role) redirectByRole();
         else if (effectiveToken) router.push('/plataforma/academy');
-        
+
         // Auto-refresh permissions cache
         try {
             if (effectiveToken) {

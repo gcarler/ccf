@@ -14,43 +14,58 @@ Submodules targeted:
 - backend/crud/crm_/support.py
 - backend/crud/crm_/volunteers.py
 """
+
 import uuid
+from datetime import date, datetime, timezone
+
 import pytest
-from datetime import datetime, date, timezone
+
 from backend import models, models_crm_pipeline, schemas
-from backend.schemas.crm.base import CrmTaskCreate, CrmTaskUpdate, VolunteerShiftCreate
-from backend.schemas.operational import SupportTicketCreate
-from backend.crud import crm as crm_crud
+from backend.crud.crm_ import (
+    families as families_crud,
+)
+from backend.crud.crm_ import (
+    groups as groups_crud,
+)
 from backend.crud.crm_ import (
     health as health_crud,
-    personas as personas_crud,
-    groups as groups_crud,
-    tasks as tasks_crud,
-    timeline as timeline_crud,
-    resources as resources_crud,
-    families as families_crud,
+)
+from backend.crud.crm_ import (
     milestones as milestones_crud,
-    pipeline as pipeline_crud,
-    shared as shared_crud,
+)
+from backend.crud.crm_ import (
+    personas as personas_crud,
+)
+from backend.crud.crm_ import (
+    resources as resources_crud,
+)
+from backend.crud.crm_ import (
     support as support_crud,
+)
+from backend.crud.crm_ import (
+    tasks as tasks_crud,
+)
+from backend.crud.crm_ import (
+    timeline as timeline_crud,
+)
+from backend.crud.crm_ import (
     volunteers as volunteers_crud,
 )
+from backend.schemas.crm.base import CrmTaskCreate, CrmTaskUpdate, VolunteerShiftCreate
+from backend.schemas.operational import SupportTicketCreate
+
 
 # -------------------------------------------------------------------
 # Fixtures
 # -------------------------------------------------------------------
 @pytest.fixture
 def sample_sede(db_session):
-    sede = models.Sede(
-        id=uuid.uuid4(),
-        nombre=f"Sede Test {uuid.uuid4().hex[:6]}",
-        ciudad="Bogota",
-        es_activa=True
-    )
+    sede = models.Sede(id=uuid.uuid4(), nombre=f"Sede Test {uuid.uuid4().hex[:6]}", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.commit()
     db_session.refresh(sede)
     return sede
+
 
 @pytest.fixture
 def sample_persona(db_session, sample_sede):
@@ -63,7 +78,7 @@ def sample_persona(db_session, sample_sede):
         id_number=f"DOC{uuid.uuid4().hex[:8]}",
         sede_id=sample_sede.id,
         estado_vital="ACTIVO",
-        church_role="Miembro"
+        church_role="Miembro",
     )
     db_session.add(persona)
     db_session.commit()
@@ -102,6 +117,7 @@ def test_health_crud_functions(db_session, sample_persona):
     # Test listeners / helpers
     class DummyCourseAttendance:
         pass
+
     dummy = DummyCourseAttendance()
     assert health_crud._persona_id_from_course_attendance(dummy) is None
 
@@ -132,7 +148,9 @@ def test_personas_crud_functions(db_session, sample_sede, sample_persona):
     p_page_res = personas_crud.search_personas_page(db_session, search="Test", skip=0, limit=10, sede_id=sample_sede.id)
     assert p_page_res["total"] >= 1
 
-    p_paginated = personas_crud.search_personas_paginated(db_session, search="Test", limit=10, offset=0, sede_id=sample_sede.id)
+    p_paginated = personas_crud.search_personas_paginated(
+        db_session, search="Test", limit=10, offset=0, sede_id=sample_sede.id
+    )
     assert len(p_paginated["items"]) >= 1
 
     p_list = personas_crud.get_personas(db_session, search="Test")
@@ -147,12 +165,14 @@ def test_personas_crud_functions(db_session, sample_sede, sample_persona):
         first_name="Mentor",
         last_name="User",
         email=f"mentor_{uuid.uuid4().hex[:6]}@example.com",
-        sede_id=sample_sede.id
+        sede_id=sample_sede.id,
     )
     db_session.add(mentor_persona)
     db_session.commit()
 
-    mentorship = personas_crud.assign_persona_mentor(db_session, sample_persona.id, mentor_persona.id, notes="Testing mentor")
+    mentorship = personas_crud.assign_persona_mentor(
+        db_session, sample_persona.id, mentor_persona.id, notes="Testing mentor"
+    )
     assert mentorship is not None
 
     # Test update_persona
@@ -178,9 +198,7 @@ def test_personas_crud_functions(db_session, sample_sede, sample_persona):
 def test_groups_crud_functions(db_session, sample_sede, sample_persona):
     # Create group
     group_payload = schemas.GrupoEvangelismoCreate(
-        name=f"Grupo {uuid.uuid4().hex[:6]}",
-        address="Calle 123",
-        leader_id=sample_persona.id
+        name=f"Grupo {uuid.uuid4().hex[:6]}", address="Calle 123", leader_id=sample_persona.id
     )
     group = groups_crud.create_grupo(db_session, group_payload, sede_id=sample_sede.id)
     assert group is not None and group.nombre == group_payload.name
@@ -213,13 +231,9 @@ def test_tasks_crud_functions(db_session, sample_persona):
         description="Testing task crud",
         persona_id=sample_persona.id,
         assignee_id=sample_persona.id,
-        due_date=date.today()
+        due_date=date.today(),
     )
-    task = tasks_crud.create_crm_task(
-        db_session,
-        payload=task_payload,
-        actor_user_id=sample_persona.id
-    )
+    task = tasks_crud.create_crm_task(db_session, payload=task_payload, actor_user_id=sample_persona.id)
     assert task is not None and task.title == "Test CRM Task"
 
     # List tasks
@@ -264,7 +278,9 @@ def test_resources_crud_functions(db_session, sample_sede):
     cats = resources_crud.list_categorias(db_session)
     assert len(cats) >= 1
 
-    cat_updated = resources_crud.update_categoria(db_session, str(cat.id), schemas.CategoriaRecursoUpdate(nombre="Cat Updated"))
+    cat_updated = resources_crud.update_categoria(
+        db_session, str(cat.id), schemas.CategoriaRecursoUpdate(nombre="Cat Updated")
+    )
     assert cat_updated.nombre == "Cat Updated"
 
     # Plantillas
@@ -272,7 +288,7 @@ def test_resources_crud_functions(db_session, sample_sede):
         titulo=f"Plantilla {uuid.uuid4().hex[:6]}",
         contenido_texto="Hola {{nombre}}",
         canal="WHATSAPP",
-        categoria_id=cat.id
+        categoria_id=cat.id,
     )
     plantilla = resources_crud.create_plantilla(db_session, plantilla_payload, sede_id=sample_sede.id)
     assert plantilla is not None
@@ -283,7 +299,9 @@ def test_resources_crud_functions(db_session, sample_sede):
     plantillas = resources_crud.list_plantillas(db_session, sede_id=sample_sede.id)
     assert len(plantillas) >= 1
 
-    p_updated = resources_crud.update_plantilla(db_session, str(plantilla.id), schemas.PlantillaMensajeUpdate(titulo="Plantilla Updated"))
+    p_updated = resources_crud.update_plantilla(
+        db_session, str(plantilla.id), schemas.PlantillaMensajeUpdate(titulo="Plantilla Updated")
+    )
     assert p_updated.titulo == "Plantilla Updated"
 
     # Envios & Counts & Adjuntos
@@ -298,7 +316,7 @@ def test_resources_crud_functions(db_session, sample_sede):
         url_acceso="http://example.com/doc.pdf",
         nombre_archivo="doc.pdf",
         tipo_mime="application/pdf",
-        peso_bytes=1024
+        peso_bytes=1024,
     )
     assert adjunto is not None
 
@@ -331,11 +349,7 @@ def test_families_crud_functions(db_session, sample_persona):
 
 def test_milestones_crud_functions(db_session, sample_persona, sample_sede):
     ms = milestones_crud.create_milestone(
-        db_session,
-        persona_id=sample_persona.id,
-        type="bautismo",
-        event_date=date.today(),
-        sede_id=sample_sede.id
+        db_session, persona_id=sample_persona.id, type="bautismo", event_date=date.today(), sede_id=sample_sede.id
     )
     assert ms is not None
 
@@ -346,11 +360,7 @@ def test_milestones_crud_functions(db_session, sample_persona, sample_sede):
 
 
 def test_support_crud_functions(db_session, sample_persona):
-    st_payload = SupportTicketCreate(
-        subject="Ayuda",
-        description="Testing support",
-        user_id=sample_persona.id
-    )
+    st_payload = SupportTicketCreate(subject="Ayuda", description="Testing support", user_id=sample_persona.id)
     ticket = support_crud.create_support_ticket(db_session, ticket=st_payload)
     assert ticket is not None
 
@@ -373,7 +383,7 @@ def test_volunteers_crud_functions(db_session, sample_persona):
         role_name="Acomodador",
         team_name="Bienvenida",
         shift_start=datetime.now(timezone.utc),
-        shift_end=datetime.now(timezone.utc)
+        shift_end=datetime.now(timezone.utc),
     )
     shift = volunteers_crud.create_volunteer_shift(db_session, payload=shift_payload)
     assert shift is not None
@@ -383,11 +393,17 @@ def test_volunteers_crud_functions(db_session, sample_persona):
 
     volunteers_crud.delete_volunteer_shift(db_session, str(shift.id))
 
+
 # -------------------------------------------------------------------
 # 8. Extra Edge Case Tests for 100% Coverage (health, groups, tasks, personas)
 # -------------------------------------------------------------------
 def test_health_listeners_edge_cases(db_session, sample_persona, sample_sede):
-    pipe = models.PipelineCRM(id=uuid.uuid4(), sede_id=sample_sede.id, nombre="Pipeline Test", tipo=models_crm_pipeline.TipoPipelineEnum.RETENCION)
+    pipe = models.PipelineCRM(
+        id=uuid.uuid4(),
+        sede_id=sample_sede.id,
+        nombre="Pipeline Test",
+        tipo=models_crm_pipeline.TipoPipelineEnum.RETENCION,
+    )
     stage = models.EtapaPipeline(id=uuid.uuid4(), pipeline_id=pipe.id, nombre="Etapa 1", orden=1)
     db_session.add_all([pipe, stage])
     db_session.commit()
@@ -400,7 +416,7 @@ def test_health_listeners_edge_cases(db_session, sample_persona, sample_sede):
         etapa_actual_id=stage.id,
         titulo_caso="Test Case",
         origen_canal=models_crm_pipeline.CanalOrigenEnum.WEB_FORM,
-        estado=models_crm_pipeline.EstadoCasoEnum.ABIERTO
+        estado=models_crm_pipeline.EstadoCasoEnum.ABIERTO,
     )
     db_session.add(case)
     db_session.commit()
@@ -410,7 +426,7 @@ def test_health_listeners_edge_cases(db_session, sample_persona, sample_sede):
         caso_id=case.id,
         realizado_por_id=sample_persona.id,
         tipo=models_crm_pipeline.TipoInteraccionEnum.WHATSAPP,
-        resumen="Test note"
+        resumen="Test note",
     )
     db_session.add(inter)
     db_session.commit()
@@ -423,28 +439,27 @@ def test_health_listeners_edge_cases(db_session, sample_persona, sample_sede):
     health_crud._after_delete_direct(None, None, inter)
     health_crud._after_course_attendance_change(None, None, None)
 
+
 def test_tasks_emit_mesh_event(db_session, sample_persona):
     # Test _emit_mesh_event exception handling when redis is dummy/none
     tasks_crud._emit_mesh_event("test_event", str(uuid.uuid4()), str(sample_persona.id), {"extra": 123})
 
+
 def test_groups_edge_cases(db_session, sample_sede, sample_persona):
     # Test group custom role resolution and subordinate tokens logic
     group_payload = schemas.GrupoEvangelismoCreate(
-        name=f"Grupo Custom {uuid.uuid4().hex[:6]}",
-        address="Calle 456",
-        leader_id=sample_persona.id
+        name=f"Grupo Custom {uuid.uuid4().hex[:6]}", address="Calle 456", leader_id=sample_persona.id
     )
     group = groups_crud.create_grupo(db_session, group_payload, sede_id=sample_sede.id)
 
     # Test update_grupo with custom roles & subordinate tokens
     update_payload = schemas.GrupoEvangelismoUpdate(
         name="Grupo Custom Updated",
-        base_attendees_with_roles=[
-            {"persona_id": str(sample_persona.id), "role": "co-lider"}
-        ]
+        base_attendees_with_roles=[{"persona_id": str(sample_persona.id), "role": "co-lider"}],
     )
     updated = groups_crud.update_grupo(db_session, group.id, update_payload)
     assert updated is not None
+
 
 def test_personas_additional_queries(db_session, sample_persona):
     # Test edge case helpers in personas

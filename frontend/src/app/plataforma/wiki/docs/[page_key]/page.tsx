@@ -99,7 +99,7 @@ export default function WikiDocEditPage() {
 
     if (loading) return (
         <div className="flex-1 flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
-            <motion.div 
+            <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
                 className="size-8 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full"
@@ -139,7 +139,7 @@ export default function WikiDocEditPage() {
             <div className="flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#141517] overflow-hidden">
             <header className="h-8 px-3 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between shrink-0 bg-white/80 dark:bg-[#141517]/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-4">
-                    <button 
+                    <button
                         onClick={() => router.push('/plataforma/wiki')}
                         className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-all"
                         aria-label="Volver al listado"
@@ -220,8 +220,8 @@ export default function WikiDocEditPage() {
                         />
                     </div>
                 ) : (
-                    <WikiEditor 
-                        initialContent={doc.content || ""} 
+                    <WikiEditor
+                        initialContent={doc.content || ""}
                         onSave={handleSave}
                         onContentChange={handleContentChange}
                         placeholder="Comienza la base de conocimiento..."

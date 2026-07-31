@@ -1,8 +1,8 @@
 # Reporte de Cobertura Frontend ↔ Backend - Plataforma CCF
 
-**Fecha:** 2026-07-01  
-**Frontend Routes:** 213 páginas  
-**Backend Endpoints:** ~450+ endpoints en 69 módulos API  
+**Fecha:** 2026-07-01
+**Frontend Routes:** 213 páginas
+**Backend Endpoints:** ~450+ endpoints en 69 módulos API
 **Base URL Backend:** `/api/v3/` + módulos
 
 ---

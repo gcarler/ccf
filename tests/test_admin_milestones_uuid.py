@@ -31,8 +31,12 @@ def test_admin_milestones_uuid_award_uses_auth_users(client, db_session):
     assert resp.status_code == 200
     assert resp.json()["awarded"] == 1
 
-    rows = db_session.query(models.MedallaUsuario).filter(
-        models.MedallaUsuario.user_id == target_user.id,
-        models.MedallaUsuario.badge_id == badge.id,
-    ).all()
+    rows = (
+        db_session.query(models.MedallaUsuario)
+        .filter(
+            models.MedallaUsuario.user_id == target_user.id,
+            models.MedallaUsuario.badge_id == badge.id,
+        )
+        .all()
+    )
     assert len(rows) == 1

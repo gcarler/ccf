@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
-import { 
-    CheckCircle2, 
-    Calendar, 
+import {
+    CheckCircle2,
+    Calendar,
     LayoutDashboard,
     Flag,
     AlertCircle,
@@ -27,7 +27,7 @@ export default function CrmTaskDetailPage() {
         notFound();
     }
     const { token, loading: authLoading } = useAuth();
-    
+
     const [task, setTask] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

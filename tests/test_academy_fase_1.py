@@ -131,10 +131,7 @@ def test_tkt_050_053_055_065_field_max_length(model, field, invalid_value, valid
     with pytest.raises(ValidationError) as exc_info:
         model(**bad)  # type: ignore[arg-type]
     error_fields = {err["loc"][0] for err in exc_info.value.errors()}
-    assert field in error_fields, (
-        f"ValidationError debe apuntar a {field!r}, "
-        f"pero errors fueron {error_fields!r}"
-    )
+    assert field in error_fields, f"ValidationError debe apuntar a {field!r}, pero errors fueron {error_fields!r}"
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -163,10 +160,7 @@ def test_tkt_051_054_enum_invariants(model, field, invalid_value):
     with pytest.raises(ValidationError) as exc_info:
         model(**bad)  # type: ignore[arg-type]
     error_fields = {err["loc"][0] for err in exc_info.value.errors()}
-    assert field in error_fields, (
-        f"ValidationError debe apuntar a {field!r}, "
-        f"pero errors fueron {error_fields!r}"
-    )
+    assert field in error_fields, f"ValidationError debe apuntar a {field!r}, pero errors fueron {error_fields!r}"
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -216,22 +210,17 @@ def test_tkt_020_assessment_questions_is_typed_list():
     annotation = field_info.annotation
 
     # El annotation debe ser un list tipado.
-    assert get_origin(annotation) is list, (
-        f"questions debe ser list[...], pero es {annotation!r}"
-    )
+    assert get_origin(annotation) is list, f"questions debe ser list[...], pero es {annotation!r}"
     args = get_args(annotation)
     assert len(args) == 1, f"list[...] debe tener 1 type arg, tiene {len(args)}"
     inner_type = args[0]
 
     # El inner type NO debe ser dict (eso sería el anti-pattern original).
-    assert inner_type is not dict, (
-        "questions NO debe ser list[dict]; debe ser list[AssessmentQuestionPayload]"
-    )
+    assert inner_type is not dict, "questions NO debe ser list[dict]; debe ser list[AssessmentQuestionPayload]"
 
     # Y debe ser el modelo Pydantic real (no raw dict).
     assert inner_type is AssessmentQuestionPayload, (
-        f"questions inner type debe ser AssessmentQuestionPayload, "
-        f"es {inner_type!r}"
+        f"questions inner type debe ser AssessmentQuestionPayload, es {inner_type!r}"
     )
 
     # Verificación funcional: instanciar con dict debe fallar (Pydantic valida estructura).
@@ -253,13 +242,13 @@ def test_tkt_020_assessment_questions_is_typed_list():
 @pytest.mark.parametrize(
     "endpoint_name",
     [
-        "list_lessons",       # TKT-056
-        "list_assessments",   # TKT-057
-        "academy_schedule",   # TKT-058
-        "academy_personas",   # TKT-059
-        "my_enrollments",     # TKT-060
-        "my_certificates",    # TKT-061
-        "my_progress",        # TKT-062
+        "list_lessons",  # TKT-056
+        "list_assessments",  # TKT-057
+        "academy_schedule",  # TKT-058
+        "academy_personas",  # TKT-059
+        "my_enrollments",  # TKT-060
+        "my_certificates",  # TKT-061
+        "my_progress",  # TKT-062
     ],
     ids=[
         "TKT-056_list_lessons",
@@ -288,18 +277,15 @@ def test_tkt_056_to_062_pagination_signature(endpoint_name):
     params = sig.parameters
 
     # Ambos parámetros deben existir.
-    assert "skip" in params, (
-        f"{endpoint_name} debe tener parámetro 'skip' para paginación"
-    )
-    assert "limit" in params, (
-        f"{endpoint_name} debe tener parámetro 'limit' para paginación"
-    )
+    assert "skip" in params, f"{endpoint_name} debe tener parámetro 'skip' para paginación"
+    assert "limit" in params, f"{endpoint_name} debe tener parámetro 'limit' para paginación"
 
     # Tipo debe ser int. Usamos ``get_type_hints`` para resolver
     # ``from __future__ import annotations`` (que retorna strings).
     skip_param = params["skip"]
     limit_param = params["limit"]
     from typing import get_type_hints
+
     try:
         hints = get_type_hints(func)
         skip_type = hints["skip"]
@@ -308,12 +294,8 @@ def test_tkt_056_to_062_pagination_signature(endpoint_name):
         # Fallback al annotation crudo (puede ser string ``'int'`` o type ``int``).
         skip_type = skip_param.annotation
         limit_type = limit_param.annotation
-    assert skip_type is int or skip_type == "int", (
-        f"{endpoint_name}.skip debe ser int, es {skip_type!r}"
-    )
-    assert limit_type is int or limit_type == "int", (
-        f"{endpoint_name}.limit debe ser int, es {limit_type!r}"
-    )
+    assert skip_type is int or skip_type == "int", f"{endpoint_name}.skip debe ser int, es {skip_type!r}"
+    assert limit_type is int or limit_type == "int", f"{endpoint_name}.limit debe ser int, es {limit_type!r}"
 
     # Default debe ser un Query object (FastAPI dependency injection).
     # ``from fastapi import Query`` importa la FUNCIÓN ``Query``, no la clase.
@@ -323,13 +305,12 @@ def test_tkt_056_to_062_pagination_signature(endpoint_name):
     skip_default = skip_param.default
     limit_default = limit_param.default
     from fastapi.params import Query as QueryClass
+
     assert isinstance(skip_default, QueryClass), (
-        f"{endpoint_name}.skip debe tener default FastAPI Query(...) para paginación, "
-        f"es {skip_default!r}"
+        f"{endpoint_name}.skip debe tener default FastAPI Query(...) para paginación, es {skip_default!r}"
     )
     assert isinstance(limit_default, QueryClass), (
-        f"{endpoint_name}.limit debe tener default FastAPI Query(...) para paginación, "
-        f"es {limit_default!r}"
+        f"{endpoint_name}.limit debe tener default FastAPI Query(...) para paginación, es {limit_default!r}"
     )
     # ``metadata`` es una tupla de constraints (Ge, Le, MultipleOf, etc.).
     # Si alguien elimina los constraints ge/le, este gate lo detecta.
@@ -364,7 +345,8 @@ def test_tkt_063_datetime_import_at_top_of_academy():
 
     # Buscar la primera línea que matchee ``from datetime import``.
     datetime_import_lines = [
-        i for i, line in enumerate(lines[:50], start=1)
+        i
+        for i, line in enumerate(lines[:50], start=1)
         if line.startswith("from datetime import") or line.startswith("import datetime")
     ]
     assert datetime_import_lines, (
@@ -373,6 +355,4 @@ def test_tkt_063_datetime_import_at_top_of_academy():
     )
     # El import debe estar entre las primeras 20 líneas (zona estándar de imports).
     first_import = datetime_import_lines[0]
-    assert first_import <= 20, (
-        f"datetime import debe estar en top 20 líneas, está en línea {first_import}"
-    )
+    assert first_import <= 20, f"datetime import debe estar en top 20 líneas, está en línea {first_import}"

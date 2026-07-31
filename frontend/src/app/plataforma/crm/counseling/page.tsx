@@ -134,9 +134,9 @@ export default function CounselingPage() {
             id: `session-detail-${session.id}`,
             title: session.topic || 'Detalle de Sesión',
             content: (
-                <CounselingDetailSidebar 
-                    session={session} 
-                    onUpdate={fetchSessions} 
+                <CounselingDetailSidebar
+                    session={session}
+                    onUpdate={fetchSessions}
                     onClose={popSidebarPanel}
                 />
             )
@@ -260,8 +260,8 @@ export default function CounselingPage() {
                     ))
                 ) : !sessionsError && filteredSessions.length > 0 ? (
                     filteredSessions.map(session => (
-                        <div 
-                            key={session.id} 
+                        <div
+                            key={session.id}
                             onClick={() => openSessionDetail(session)}
                             role="button"
                             tabIndex={0}
@@ -340,8 +340,8 @@ export default function CounselingPage() {
                             </div>
                         ))
                     ) : filteredSessions.map(session => (
-                        <div 
-                            key={session.id} 
+                        <div
+                            key={session.id}
                             onClick={() => openSessionDetail(session)}
                             role="button"
                             tabIndex={0}
@@ -413,19 +413,19 @@ export default function CounselingPage() {
             <UniversalTableView
                 data={filteredSessions}
                 columns={[
-                    { 
-                        key: 'topic', 
-                        label: 'Tema', 
-                        type: 'text', 
+                    {
+                        key: 'topic',
+                        label: 'Tema',
+                        type: 'text',
                         width: '300px',
                         render: (val, session) => (
                             <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{session.topic || 'Sin tema'}</span>
                         )
                     },
-                    { 
-                        key: 'scheduled_at', 
-                        label: 'Fecha y Hora', 
-                        type: 'date', 
+                    {
+                        key: 'scheduled_at',
+                        label: 'Fecha y Hora',
+                        type: 'date',
                         width: '200px',
                         render: (val, session) => (
                             <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
@@ -434,10 +434,10 @@ export default function CounselingPage() {
                             </div>
                         )
                     },
-                    { 
-                        key: 'duration_minutes', 
-                        label: 'Duración', 
-                        type: 'text', 
+                    {
+                        key: 'duration_minutes',
+                        label: 'Duración',
+                        type: 'text',
                         width: '120px',
                         render: (val, session) => (
                             <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
@@ -446,10 +446,10 @@ export default function CounselingPage() {
                             </div>
                         )
                     },
-                    { 
-                        key: 'priority_level', 
-                        label: 'Prioridad', 
-                        type: 'priority', 
+                    {
+                        key: 'priority_level',
+                        label: 'Prioridad',
+                        type: 'priority',
                         width: '120px',
                         render: (val, session) => {
                             const prior = session.priority_level;
@@ -461,10 +461,10 @@ export default function CounselingPage() {
                             );
                         }
                     },
-                    { 
-                        key: 'status', 
-                        label: 'Estado', 
-                        type: 'status', 
+                    {
+                        key: 'status',
+                        label: 'Estado',
+                        type: 'status',
                         width: '120px',
                         render: (val, session) => (
                             <span className={`px-2 py-1 rounded-full text-2xs font-bold uppercase tracking-wide ${session.status === 'Pendiente' ? 'bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]' : session.status === 'Realizada' ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] dark:text-[hsl(var(--success))]' : 'bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]'}`}>
@@ -544,7 +544,7 @@ export default function CounselingPage() {
                                             {session.duration_minutes}m
                                         </p>
                                     </div>
-                                    
+
                                     {/* Action overlay on hover for pending */}
                                     {status === 'Pendiente' && (
                                         <div className="absolute inset-0 bg-white/95 dark:bg-[hsl(var(--surface-1))]/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-3 p-4 translate-y-4 group-hover:translate-y-0">
@@ -569,7 +569,7 @@ export default function CounselingPage() {
                 <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                     <Calendar size={200} />
                 </div>
-                
+
                 {loading ? (
                     <div className="space-y-4 relative z-10">
                         {[...Array(2)].map((_, i) => (
@@ -596,7 +596,7 @@ export default function CounselingPage() {
                             <div className="flex-1 border-t border-dashed border-[hsl(var(--border))] dark:border-white/10 mx-4" />
                             <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2.5 py-1 rounded-md">{payload.items.length} sesiones</span>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                             {payload.items.map(session => (
                                 <div key={session.id} onClick={() => openSessionDetail(session)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSessionDetail(session); } }} className="group rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] p-3 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-lg hover:shadow-[hsl(var(--primary)/0.05)] transition-all flex gap-3 cursor-pointer">
@@ -621,7 +621,7 @@ export default function CounselingPage() {
                         </div>
                     </div>
                 ))}
-                
+
                 {!sessionsError && groupedByDate.length === 0 && (
                     <div className="py-1.5 text-center space-y-2 relative z-10">
                         <div className="size-10 rounded-full bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
@@ -670,7 +670,7 @@ export default function CounselingPage() {
                                 <span className="font-bold text-[hsl(var(--text-secondary))] font-mono">{STATUS_PROGRESS[session.status] ?? 0}%</span>
                             </div>
                             <div className="h-3.5 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 overflow-hidden border border-[hsl(var(--border))]/50 dark:border-white/5 relative">
-                                <div 
+                                <div
                                     className={`h-full transition-all duration-1000 ease-out relative overflow-hidden ${session.status === 'Realizada' ? 'bg-[hsl(var(--success))]' : session.status === 'Cancelada' ? 'bg-[hsl(var(--destructive))]' : 'bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]'}`}
                                     style={{ width: `${STATUS_PROGRESS[session.status] ?? 0}%` }}
                                 >

@@ -42,7 +42,7 @@ def upgrade() -> None:
 
     autovacuum_settings = {
         # High-write tables: vacuum more frequently
-        "admin_audit_logs": "500, 0.05",      # Vacuum every 500 rows + 5%
+        "admin_audit_logs": "500, 0.05",  # Vacuum every 500 rows + 5%
         "academy_activity_logs": "500, 0.05",
         "notifications": "1000, 0.1",
         "event_attendances": "500, 0.05",
@@ -57,19 +57,19 @@ def upgrade() -> None:
         "members": "200, 0.05",
     }
 
-    for table_name, (threshold, scale) in [
-        (t, s.split(", ")) for t, s in autovacuum_settings.items()
-    ]:
+    for table_name, (threshold, scale) in [(t, s.split(", ")) for t, s in autovacuum_settings.items()]:
         if table_name in inspector.get_table_names():
             try:
-                conn.execute(sa.text(
-                    f"ALTER TABLE {table_name} SET ("
-                    f"  autovacuum_vacuum_threshold = {threshold},"
-                    f"  autovacuum_analyze_threshold = {threshold},"
-                    f"  autovacuum_vacuum_scale_factor = {scale},"
-                    f"  autovacuum_analyze_scale_factor = {scale}"
-                    f")"
-                ))
+                conn.execute(
+                    sa.text(
+                        f"ALTER TABLE {table_name} SET ("
+                        f"  autovacuum_vacuum_threshold = {threshold},"
+                        f"  autovacuum_analyze_threshold = {threshold},"
+                        f"  autovacuum_vacuum_scale_factor = {scale},"
+                        f"  autovacuum_analyze_scale_factor = {scale}"
+                        f")"
+                    )
+                )
             except Exception:
                 pass
 
@@ -83,7 +83,6 @@ def upgrade() -> None:
         "users": "System users with authentication and role management",
         "members": "Church members linked to users with pastoral information",
         "families": "Family groupings for members",
-
         # Academy
         "courses": "Educational courses (formal and non-formal)",
         "lessons": "Individual lessons within courses",
@@ -92,7 +91,6 @@ def upgrade() -> None:
         "assessment_attempts": "User attempts at assessments with scores",
         "certificates": "Issued certificates for completed courses",
         "lesson_progress": "Per-user per-lesson completion tracking",
-
         # CRM / Pastoral
         "consolidation_cases": "New member follow-up and integration pipeline",
         "consolidation_interactions": "Contact logs for consolidation cases",
@@ -101,33 +99,27 @@ def upgrade() -> None:
         "sesiones_grupo": "Weekly session reports for grupos",
         "counseling_tickets": "Pastoral counseling cases",
         "prayer_requests": "Prayer requests from members and public",
-
         # Projects
         "projects": "Ministry and operational projects",
         "project_tasks": "Tasks within projects with assignment and status",
         "project_phases": "Project phases/stages",
         "project_comments": "Comments on project tasks",
-
         # CMS
         "cms_pages": "Website pages with versioning and workflow",
         "cms_sections": "Content sections within pages",
         "cms_page_versions": "Historical versions of pages",
         "cms_publish_logs": "Audit trail of page publications",
-
         # Finance
         "donations": "Financial contributions (tithes, offerings)",
         "funds": "Budget allocation funds",
-
         # Communication
         "notifications": "In-app user notifications",
         "communication_logs": "Logged communications with members",
         "chat_messages": "Real-time chat room messages",
-
         # Evangelism
         "crm_events": "Recurring and one-time church events",
         "event_attendances": "QR-based event check-in records",
         "evangelism_strategies": "Outreach campaign definitions",
-
         # System
         "admin_audit_logs": "Admin action audit trail (trigger-populated)",
         "alembic_version": "Database migration version tracking",
@@ -136,9 +128,7 @@ def upgrade() -> None:
     for table_name, comment in table_comments.items():
         if table_name in inspector.get_table_names():
             try:
-                conn.execute(sa.text(
-                    f"COMMENT ON TABLE {table_name} IS '{comment}'"
-                ))
+                conn.execute(sa.text(f"COMMENT ON TABLE {table_name} IS '{comment}'"))
             except Exception:
                 pass
 
@@ -160,9 +150,7 @@ def upgrade() -> None:
 
     for (table_name, column_name), comment in column_comments.items():
         try:
-            conn.execute(sa.text(
-                f"COMMENT ON COLUMN {table_name}.{column_name} IS '{comment}'"
-            ))
+            conn.execute(sa.text(f"COMMENT ON COLUMN {table_name}.{column_name} IS '{comment}'"))
         except Exception:
             pass
 
@@ -232,17 +220,27 @@ def downgrade() -> None:
 
         # Reset autovacuum settings
         autovacuum_tables = [
-            "admin_audit_logs", "academy_activity_logs", "notifications",
-            "event_attendances", "consolidation_interactions",
-            "project_activity_logs", "forum_comments", "crm_tasks",
-            "agent_tasks", "donations", "enrollments", "members",
+            "admin_audit_logs",
+            "academy_activity_logs",
+            "notifications",
+            "event_attendances",
+            "consolidation_interactions",
+            "project_activity_logs",
+            "forum_comments",
+            "crm_tasks",
+            "agent_tasks",
+            "donations",
+            "enrollments",
+            "members",
         ]
         for table_name in autovacuum_tables:
-            conn.execute(sa.text(
-                f"ALTER TABLE {table_name} RESET (autovacuum_vacuum_threshold, "
-                f"autovacuum_analyze_threshold, autovacuum_vacuum_scale_factor, "
-                f"autovacuum_analyze_scale_factor)"
-            ))
+            conn.execute(
+                sa.text(
+                    f"ALTER TABLE {table_name} RESET (autovacuum_vacuum_threshold, "
+                    f"autovacuum_analyze_threshold, autovacuum_vacuum_scale_factor, "
+                    f"autovacuum_analyze_scale_factor)"
+                )
+            )
     except Exception:
         pass
 

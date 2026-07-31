@@ -35,10 +35,25 @@ from backend.core.database import SessionLocal
 SEDE_ID = 1
 
 BARRIOS_BOGOTA = [
-    "Chapinero", "Usaquén", "Suba", "Engativá", "Bosa",
-    "Kennedy", "Fontibón", "Puente Aranda", "Teusaquillo", "Mártires",
-    "Barrios Unidos", "Candelaria", "Santa Fe", "Antonio Nariño",
-    "Rafael Uribe", "San Cristóbal", "Usme", "Tunjuelito", "Ciudad Bolívar",
+    "Chapinero",
+    "Usaquén",
+    "Suba",
+    "Engativá",
+    "Bosa",
+    "Kennedy",
+    "Fontibón",
+    "Puente Aranda",
+    "Teusaquillo",
+    "Mártires",
+    "Barrios Unidos",
+    "Candelaria",
+    "Santa Fe",
+    "Antonio Nariño",
+    "Rafael Uribe",
+    "San Cristóbal",
+    "Usme",
+    "Tunjuelito",
+    "Ciudad Bolívar",
     "Sumapaz",
 ]
 
@@ -46,14 +61,14 @@ DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Doming
 HORAS = ["17:00", "18:00", "19:00", "20:00"]
 
 CULTOS = [
-    ("Culto Dominical Principal",   "Domingo",  "10:00"),
-    ("Culto Dominical Tarde",       "Domingo",  "17:00"),
-    ("Culto de Jóvenes",            "Sábado",   "17:00"),
-    ("Culto Matutino",              "Domingo",  "08:00"),
-    ("Culto Familiar",              "Sábado",   "15:00"),
-    ("Culto de Mujeres",            "Miércoles","18:00"),
-    ("Culto de Hombres",            "Jueves",   "19:00"),
-    ("Culto de Madrugada",          "Viernes",  "05:00"),
+    ("Culto Dominical Principal", "Domingo", "10:00"),
+    ("Culto Dominical Tarde", "Domingo", "17:00"),
+    ("Culto de Jóvenes", "Sábado", "17:00"),
+    ("Culto Matutino", "Domingo", "08:00"),
+    ("Culto Familiar", "Sábado", "15:00"),
+    ("Culto de Mujeres", "Miércoles", "18:00"),
+    ("Culto de Hombres", "Jueves", "19:00"),
+    ("Culto de Madrugada", "Viernes", "05:00"),
 ]
 
 
@@ -108,7 +123,7 @@ def seed(db):
     for i in range(grupos_a_crear):
         num = grupos_geo_existentes + i + 1
         barrio = BARRIOS_BOGOTA[(num - 1) % len(BARRIOS_BOGOTA)]
-        dia = DIAS[(num - 1) % 5]        # lunes a viernes
+        dia = DIAS[(num - 1) % 5]  # lunes a viernes
         hora = HORAS[(num - 1) % len(HORAS)]
         codigo = f"GEO-{num:02d}"
         grupo = models.GrupoEvangelismo(
@@ -145,7 +160,9 @@ def seed(db):
     else:
         print(f"  · Estrategia '{est_cultos.nombre}' ya existe")
 
-    grupos_cultos_existentes = db.query(models.GrupoEvangelismo).filter_by(estrategia_id="estrategia-cultos-dominicales").count()
+    grupos_cultos_existentes = (
+        db.query(models.GrupoEvangelismo).filter_by(estrategia_id="estrategia-cultos-dominicales").count()
+    )
     cultos_a_crear = [c for c in CULTOS[grupos_cultos_existentes:]]
     print(f"  · Grupos existentes: {grupos_cultos_existentes} — creando {len(cultos_a_crear)} más")
 

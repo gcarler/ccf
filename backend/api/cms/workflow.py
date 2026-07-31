@@ -2,6 +2,7 @@
 
 PageWorkflowService encapsula la máquina de estados del CMS (draft -> in_review -> published/scheduled -> archived).
 """
+
 from __future__ import annotations
 
 import logging

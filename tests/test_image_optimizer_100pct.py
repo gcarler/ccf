@@ -1,15 +1,14 @@
 """Tests exhaustivos y estructurales para backend/services/image_optimizer.py (100% Cobertura)."""
 
 import io
-import pytest
 from unittest.mock import MagicMock, patch
+
 from PIL import Image
 
 from backend.services.image_optimizer import ImageOptimizer, _fmt_size
 
 
 class TestImageOptimizer100Pct:
-
     def test_fmt_size_helper(self):
         assert _fmt_size(500) == "500B"
         assert _fmt_size(2048) == "2.0KB"
@@ -131,6 +130,7 @@ class TestImageOptimizer100Pct:
             # Fake optimized bytes being much larger
             def mock_save_impl(buf_arg, **kwargs):
                 buf_arg.write(raw_bytes * 50)
+
             mock_save.side_effect = mock_save_impl
 
             opt_bytes, ext, w, h = opt.optimize(raw_bytes, "tiny.webp")
@@ -148,4 +148,3 @@ class TestImageOptimizer100Pct:
         assert ext == ".webp"
         assert orig_w == 200
         assert orig_h == 200
-

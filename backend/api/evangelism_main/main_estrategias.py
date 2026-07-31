@@ -54,10 +54,15 @@ def _hydrate_strategy_synonyms(obj: EvangelismStrategy, source) -> EvangelismStr
 
 def _count_strategy_groups(db: Session, strategy_id: UUID) -> int:
     from backend.models_evangelism import GrupoEvangelismo
-    return db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.estrategia_id == strategy_id,
-        GrupoEvangelismo.deleted_at.is_(None),
-    ).count()
+
+    return (
+        db.query(GrupoEvangelismo)
+        .filter(
+            GrupoEvangelismo.estrategia_id == strategy_id,
+            GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .count()
+    )
 
 
 def _load_visible_strategy(
@@ -152,6 +157,7 @@ def create_strategy(
 ):
     try:
         from backend.models_evangelism import CategoriaEstrategia
+
         # Asignar sede_id desde el usuario autenticado
         sede_id = crud.get_user_sede_id(db, current_user.id)
         if not sede_id:
@@ -163,7 +169,9 @@ def create_strategy(
             primera_categoria = CategoriaEstrategia(nombre="General")
             db.add(primera_categoria)
             db.flush()
-        result = create_evangelism_strategy(db=db, data=strategy, sede_id=sede_id, categoria_id=primera_categoria.id, actor_user_id=str(current_user.id))
+        result = create_evangelism_strategy(
+            db=db, data=strategy, sede_id=sede_id, categoria_id=primera_categoria.id, actor_user_id=str(current_user.id)
+        )
     except HTTPException:
         raise
     except Exception:
@@ -222,7 +230,9 @@ def update_strategy(
     # ── Phase scheduling trigger ──
     if strategy.typology == "evento_masivo" and strategy.phases:
         try:
-            _project_phases_as_tasks(db, strategy_id, result.name, strategy.phases, strategy.start_date, sede_id=user_sede_id)
+            _project_phases_as_tasks(
+                db, strategy_id, result.name, strategy.phases, strategy.start_date, sede_id=user_sede_id
+            )
         except Exception:
             logger.exception(
                 "Phase task regeneration failed for evangelism strategy=%s; keeping update saved",
@@ -260,11 +270,15 @@ def generate_strategy_sessions(
     from backend.services.calculo_sesiones import calcular_sesiones
 
     user_sede_id = require_user_sede_id(db, _user)
-    strat = db.query(StratModel).filter(
-        StratModel.id == strategy_id,
-        StratModel.sede_id == user_sede_id,
-        StratModel.deleted_at.is_(None),
-    ).first()
+    strat = (
+        db.query(StratModel)
+        .filter(
+            StratModel.id == strategy_id,
+            StratModel.sede_id == user_sede_id,
+            StratModel.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not strat:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
     if not strat.frecuencia or not strat.fecha_inicio or not strat.fecha_fin:
@@ -273,11 +287,15 @@ def generate_strategy_sessions(
             detail="La estrategia necesita: frecuencia, fecha_inicio, fecha_fin",
         )
 
-    groups = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.estrategia_id == strategy_id,
-        GrupoEvangelismo.sede_id == user_sede_id,
-        GrupoEvangelismo.deleted_at.is_(None),
-    ).all()
+    groups = (
+        db.query(GrupoEvangelismo)
+        .filter(
+            GrupoEvangelismo.estrategia_id == strategy_id,
+            GrupoEvangelismo.sede_id == user_sede_id,
+            GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .all()
+    )
 
     if not groups:
         return {
@@ -288,17 +306,29 @@ def generate_strategy_sessions(
             "sessions_per_group": 0,
             "groups": 0,
             "total_sessions_created": 0,
-            "message": "No hay grupos en esta estrategia. Crea grupos primero."
+            "message": "No hay grupos en esta estrategia. Crea grupos primero.",
         }
 
     # ── Ajustar fecha_inicio al primer día de reunión ──
     fecha_inicio = strat.fecha_inicio
     if strat.dia_reunion:
         DAY_MAP = {
-            "domingo": 6, "lunes": 0, "martes": 1, "miércoles": 2,
-            "miercoles": 2, "jueves": 3, "viernes": 4, "sábado": 5, "sabado": 5,
-            "Domingo": 6, "Lunes": 0, "Martes": 1, "Miércoles": 2,
-            "Jueves": 3, "Viernes": 4, "Sábado": 5,
+            "domingo": 6,
+            "lunes": 0,
+            "martes": 1,
+            "miércoles": 2,
+            "miercoles": 2,
+            "jueves": 3,
+            "viernes": 4,
+            "sábado": 5,
+            "sabado": 5,
+            "Domingo": 6,
+            "Lunes": 0,
+            "Martes": 1,
+            "Miércoles": 2,
+            "Jueves": 3,
+            "Viernes": 4,
+            "Sábado": 5,
         }
         target = DAY_MAP.get(strat.dia_reunion)
         if target is not None:
@@ -308,7 +338,9 @@ def generate_strategy_sessions(
                 fecha_inicio = fecha_inicio + timedelta(days=diff)
                 logger.info(
                     "Ajustando fecha_inicio de %s a %s (día=%s)",
-                    strat.fecha_inicio, fecha_inicio, strat.dia_reunion,
+                    strat.fecha_inicio,
+                    fecha_inicio,
+                    strat.dia_reunion,
                 )
 
     # Capturar timestamp ANTES de calcular_sesiones. Sirve como umbral
@@ -412,7 +444,9 @@ def delete_strategy(
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
 
 
-def _project_phases_as_tasks(db, strategy_id: UUID, strategy_name: str, phases: list[dict], start_date=None, *, sede_id: str | None = None):
+def _project_phases_as_tasks(
+    db, strategy_id: UUID, strategy_name: str, phases: list[dict], start_date=None, *, sede_id: str | None = None
+):
     """Create N1 tasks in Projects module for each phase of a mass event.
 
     All-or-nothing: if any task creation fails, the project is rolled back.

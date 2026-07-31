@@ -44,9 +44,7 @@ class IntelligenceMESH:
         # ... logic ...
 
         # 2. Alumnos destacados (Gamificación)
-        top_students = (
-            db.query(models.User).order_by(models.User.xp.desc()).limit(3).all()
-        )
+        top_students = db.query(models.User).order_by(models.User.xp.desc()).limit(3).all()
         if top_students:
             names = ", ".join([u.username for u in top_students])
             insights.append(
@@ -68,9 +66,7 @@ class IntelligenceMESH:
         now = dt.datetime.now()
         overdue_tasks = (
             db.query(models.ProjectTask)
-            .filter(
-                models.ProjectTask.due_date < now, models.ProjectTask.status != "done"
-            )
+            .filter(models.ProjectTask.due_date < now, models.ProjectTask.status != "done")
             .count()
         )
 
@@ -98,8 +94,6 @@ class IntelligenceMESH:
         )
 
         if not existing:
-            new_insight = models.AgentInsight(
-                title=data["title"], insight_type=data["type"], payload=data["payload"]
-            )
+            new_insight = models.AgentInsight(title=data["title"], insight_type=data["type"], payload=data["payload"])
             db.add(new_insight)
             db.commit()

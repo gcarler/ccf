@@ -4,6 +4,7 @@ Revision ID: 20260527_0036_member_tags_origen
 Revises: 20260526_0034_kernel_identity
 Create Date: 2026-05-27
 """
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
@@ -23,14 +24,18 @@ def upgrade():
 
     op.create_foreign_key(
         "fk_members_origen_estrategia",
-        "members", "evangelism_strategies",
-        ["origen_estrategia_id"], ["id"],
+        "members",
+        "evangelism_strategies",
+        ["origen_estrategia_id"],
+        ["id"],
         ondelete="SET NULL",
     )
     op.create_foreign_key(
         "fk_members_origen_grupo",
-        "members", "grupos_evangelismo",
-        ["origen_grupo_id"], ["id"],
+        "members",
+        "grupos_evangelismo",
+        ["origen_grupo_id"],
+        ["id"],
         ondelete="SET NULL",
     )
     op.create_index("ix_members_origen_estrategia_id", "members", ["origen_estrategia_id"])

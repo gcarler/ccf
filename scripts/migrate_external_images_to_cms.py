@@ -4,6 +4,7 @@
 Usage:
     cd /root/ccf && source venv/bin/activate && python scripts/migrate_external_images_to_cms.py
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -28,9 +29,10 @@ if _PROJECT_ROOT is None:
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
+from sqlalchemy import text  # noqa: E402
+
 import backend.models as models  # noqa: E402
 from backend.core.config import get_settings  # noqa: E402
-from sqlalchemy import text  # noqa: E402
 
 try:
     from backend.database import SessionLocal  # noqa: E402
@@ -126,11 +128,7 @@ def main() -> int:
                 # Use a hash of the full URL as the canonical filename so that
                 # different dimensions of the same service produce distinct records.
                 url_hash = hashlib.md5(url.encode("utf-8")).hexdigest()
-                existing = (
-                    db.query(models.CmsMediaItem)
-                    .filter(models.CmsMediaItem.filename == url_hash)
-                    .first()
-                )
+                existing = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.filename == url_hash).first()
                 if existing:
                     section.props_json = _replace_url(props, url, existing.url)
                     props = section.props_json
@@ -157,9 +155,7 @@ def main() -> int:
                     filename=url_hash,
                     url=media_url,
                     file_size=len(data),
-                    mime_type=content_type
-                    or mimetypes.guess_type(file_name)[0]
-                    or "image/jpeg",
+                    mime_type=content_type or mimetypes.guess_type(file_name)[0] or "image/jpeg",
                     status="active",
                     created_by_persona_id=persona_id,
                     sede_id=sede_id,

@@ -1,4 +1,5 @@
 """Agent Identity Model — Canonical person identity for the CCF platform."""
+
 import uuid as _uuid
 from datetime import datetime, timezone
 
@@ -28,13 +29,26 @@ class Agent(Base):
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     updated_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     auth_credentials = relationship("AgentAuth", back_populates="agent", cascade="all, delete-orphan")
-    contacts = relationship("AgentContact", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentContact.agent_id")
-    roles = relationship("AgentRole", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentRole.agent_id")
-    activities = relationship("AgentActivity", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentActivity.agent_id")
+    contacts = relationship(
+        "AgentContact", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentContact.agent_id"
+    )
+    roles = relationship(
+        "AgentRole", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentRole.agent_id"
+    )
+    activities = relationship(
+        "AgentActivity", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentActivity.agent_id"
+    )
     families_as_agent = relationship("AgentFamily", cascade="all, delete-orphan", foreign_keys="AgentFamily.agent_id")
-    families_as_related = relationship("AgentFamily", cascade="all, delete-orphan", foreign_keys="AgentFamily.related_agent_id")
-    journey_entries = relationship("AgentJourney", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentJourney.agent_id")
-    permissions = relationship("AgentPermission", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentPermission.agent_id")
+    families_as_related = relationship(
+        "AgentFamily", cascade="all, delete-orphan", foreign_keys="AgentFamily.related_agent_id"
+    )
+    journey_entries = relationship(
+        "AgentJourney", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentJourney.agent_id"
+    )
+    permissions = relationship(
+        "AgentPermission", back_populates="agent", cascade="all, delete-orphan", foreign_keys="AgentPermission.agent_id"
+    )
+
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
@@ -102,7 +116,9 @@ class AgentFamily(Base):
     __table_args__ = (UniqueConstraint("agent_id", "related_agent_id", "relationship", name="uq_family_relationship"),)
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
-    related_agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    related_agent_id = Column(
+        UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     relationship = Column(String(30), nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 

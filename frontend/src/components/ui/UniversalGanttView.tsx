@@ -2,8 +2,8 @@
 
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-    ChevronLeft, ChevronRight, Calendar, Info, 
+import {
+    ChevronLeft, ChevronRight, Calendar, Info,
     Clock, Zap, Layout
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -154,7 +154,7 @@ function GanttBarItem({ item, pos, width, idx, onClick, onMove, onResize }: Gant
 export default function UniversalGanttView({ items, moduleName = "Módulo", onItemClick, onOptimize, onItemMove, onItemResize }: UniversalGanttViewProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [zoom, setZoom] = useState<'day' | 'week' | 'month'>('week');
-    
+
     // Generate scale (current month as default)
     const today = new Date();
     const days = Array.from({ length: 30 }, (_, i) => {
@@ -189,7 +189,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] overflow-hidden shadow-sm">
-            
+
             {/* ─── Header de Controles ─── */}
             <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                 <div className="flex items-center gap-4">
@@ -235,7 +235,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
             {/* ─── Scroll Area ─── */}
             <div className="flex-1 overflow-hidden flex flex-col">
                 {/* Timeline Header */}
-                <div 
+                <div
                     ref={scrollContainerRef}
                     className="flex-1 overflow-x-auto scroll-smooth scrollbar-none relative"
                 >
@@ -279,7 +279,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                                     items.map((item, idx) => {
                                         const pos = getPosition(item.start_date);
                                         const width = getWidth(item.start_date, item.end_date);
-                                        
+
                                         return (
                                             <div key={item.id} className="h-8 relative group">
                                                 <GanttBarItem

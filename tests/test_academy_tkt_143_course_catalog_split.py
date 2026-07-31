@@ -89,8 +89,7 @@ def test_acad_tkt_143_orchestrator_under_max_lines() -> None:
     split, el archivo crecerá y este gate lo detecta.
     """
     assert COURSE_CATALOG_FILE.exists(), (
-        f"TKT-143 regresión: {COURSE_CATALOG_FILE} no existe. "
-        "CourseCatalog.tsx debe seguir en su ubicación original."
+        f"TKT-143 regresión: {COURSE_CATALOG_FILE} no existe. CourseCatalog.tsx debe seguir en su ubicación original."
     )
     lines = _read(COURSE_CATALOG_FILE).splitlines()
     line_count = len(lines)
@@ -197,13 +196,12 @@ def test_acad_tkt_143_types_in_separate_file() -> None:
     expected_types = ["Course", "Modality", "AccessLevel", "CourseCatalogProps"]
     missing = [t for t in expected_types if t not in types_text]
     assert not missing, (
-        f"TKT-143 regresión: types.ts no exporta {missing}. "
-        "Tipos compartidos deben vivir en course-catalog/types.ts."
+        f"TKT-143 regresión: types.ts no exporta {missing}. Tipos compartidos deben vivir en course-catalog/types.ts."
     )
 
     # Y el orquestador debe importarlos, no redefinirlos
     orchestrator_text = _read(COURSE_CATALOG_FILE)
-    assert "from \"./course-catalog/types\"" in orchestrator_text, (
+    assert 'from "./course-catalog/types"' in orchestrator_text, (
         "TKT-143 regresión: CourseCatalog.tsx no importa tipos de ./course-catalog/types. "
         "Si redefine los tipos, diverge el contrato compartido con views.tsx."
     )
@@ -229,6 +227,6 @@ def test_acad_tkt_143_constants_in_separate_file() -> None:
 
     # Y el orquestador debe importarlos, no redefinirlos
     orchestrator_text = _read(COURSE_CATALOG_FILE)
-    assert "from \"./course-catalog/constants\"" in orchestrator_text, (
+    assert 'from "./course-catalog/constants"' in orchestrator_text, (
         "TKT-143 regresión: CourseCatalog.tsx no importa constantes de ./course-catalog/constants."
     )

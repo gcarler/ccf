@@ -81,12 +81,8 @@ def test_agenda_resource_participant_and_reservation_flow(client, db_session):
         "starts_at": starts_at.isoformat(),
         "ends_at": (starts_at + timedelta(hours=1)).isoformat(),
     }
-    reservation = client.post(
-        "/api/agenda/reservations", headers=headers, json=reservation_payload
-    )
+    reservation = client.post("/api/agenda/reservations", headers=headers, json=reservation_payload)
     assert reservation.status_code == 201, reservation.text
 
-    conflict = client.post(
-        "/api/agenda/reservations", headers=headers, json=reservation_payload
-    )
+    conflict = client.post("/api/agenda/reservations", headers=headers, json=reservation_payload)
     assert conflict.status_code == 409

@@ -87,8 +87,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="audit_pastor_media_orphans",
         description=(
-            "Reconcile uploads/cms/.../ on disk against cms_media_items. "
-            "Reports orphan files and broken DB references."
+            "Reconcile uploads/cms/.../ on disk against cms_media_items. Reports orphan files and broken DB references."
         ),
     )
     p.add_argument(
@@ -110,10 +109,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--include-archived",
         action="store_true",
-        help=(
-            "Include CmsMediaItem rows with status='archived' when "
-            "reporting broken refs (default excludes them)."
-        ),
+        help=("Include CmsMediaItem rows with status='archived' when reporting broken refs (default excludes them)."),
     )
     p.add_argument(
         "--json",
@@ -128,10 +124,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--dry-run",
         action="store_true",
-        help=(
-            "Default. Audit is non-mutating; the flag exists for "
-            "consistency with other scripts."
-        ),
+        help=("Default. Audit is non-mutating; the flag exists for consistency with other scripts."),
     )
     p.add_argument(
         "-v",
@@ -233,18 +226,14 @@ def _gather_db_rows(
     from backend import models  # imported lazily to keep cold-start cheap
 
     pattern = f"/api/static/{subfolder}/%"
-    query = db_session.query(models.CmsMediaItem).filter(
-        models.CmsMediaItem.url.like(pattern)
-    )
+    query = db_session.query(models.CmsMediaItem).filter(models.CmsMediaItem.url.like(pattern))
     if not include_archived:
         query = query.filter(models.CmsMediaItem.status != "archived")
     if sede_id is not None:
         try:
             parsed_sede = _uuid.UUID(str(sede_id))
         except (ValueError, TypeError) as exc:
-            raise SystemExit(
-                f"ERROR: invalid --sede-id {sede_id!r}: {exc}", code=2
-            ) from exc
+            raise SystemExit(f"ERROR: invalid --sede-id {sede_id!r}: {exc}", code=2) from exc
         query = query.filter(models.CmsMediaItem.sede_id == parsed_sede)
     return query.all()
 
@@ -294,9 +283,7 @@ def _build_report(
                 OrphanFile(
                     path=str(path),
                     size_bytes=stat.st_size,
-                    mtime_iso=_dt.datetime.fromtimestamp(
-                        stat.st_mtime
-                    ).isoformat(timespec="seconds"),
+                    mtime_iso=_dt.datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
                 )
             )
         except OSError as exc:
@@ -307,10 +294,7 @@ def _build_report(
     for row in db_rows:
         url = row.url or ""
         basename = Path(url).name
-        matched_on_disk = (
-            basename in disk_basenames
-            and (uploads_dir / subfolder / basename).is_file()
-        )
+        matched_on_disk = basename in disk_basenames and (uploads_dir / subfolder / basename).is_file()
         if not matched_on_disk:
             broken.append(
                 BrokenRef(
@@ -363,36 +347,24 @@ def _format_human(report: AuditReport) -> str:
         header = f"  {'sede':<38} {'rows':>5} {'active':>7} {'broken':>7}"
         lines.append(header)
         for sede, counts in sorted(report.by_sede.items()):
-            lines.append(
-                f"  {sede:<38} {counts['rows']:>5} "
-                f"{counts['active']:>7} {counts['broken']:>7}"
-            )
+            lines.append(f"  {sede:<38} {counts['rows']:>5} {counts['active']:>7} {counts['broken']:>7}")
 
     if report.orphans:
         lines.append("")
-        lines.append(
-            f"⚠  {len(report.orphans)} orphan file(s) on disk "
-            "(no matching CmsMediaItem):"
-        )
+        lines.append(f"⚠  {len(report.orphans)} orphan file(s) on disk (no matching CmsMediaItem):")
         for orphan in report.orphans[:50]:
-            lines.append(
-                f"  - {orphan.path}  "
-                f"({orphan.size_bytes} bytes, mtime={orphan.mtime_iso})"
-            )
+            lines.append(f"  - {orphan.path}  ({orphan.size_bytes} bytes, mtime={orphan.mtime_iso})")
         if len(report.orphans) > 50:
             lines.append(f"  … {len(report.orphans) - 50} more (truncated)")
 
     if report.broken:
         lines.append("")
-        lines.append(
-            f"⚠  {len(report.broken)} broken DB reference(s):"
-        )
+        lines.append(f"⚠  {len(report.broken)} broken DB reference(s):")
         for ref in report.broken[:50]:
             raw = ref.media_id
             truncated_id = raw if len(raw) <= 12 else f"{raw[:8]}…{raw[-4:]}"
             lines.append(
-                f"  - id={truncated_id:<14} status={ref.status:<10} "
-                f"url={ref.url}  expected at {ref.expected_path}"
+                f"  - id={truncated_id:<14} status={ref.status:<10} url={ref.url}  expected at {ref.expected_path}"
             )
         if len(report.broken) > 50:
             lines.append(f"  … {len(report.broken) - 50} more (truncated)")
@@ -429,12 +401,6 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     try:
-        from backend.core.config import get_settings
-        from backend.core.database import (
-            Base,
-            SessionLocal,
-            engine,
-        )
         # Local-dev convenience: when running against a fresh ``sqlite:///``
         # path (typical of ``cli smoke`` or unpublished test DBs) the script
         # would otherwise crash with ``no such table: cms_media_items``.
@@ -443,6 +409,13 @@ def main(argv: list[str] | None = None) -> int:
         # suspenders for SQLite ONLY — Postgres tables stay under Alembic's
         # exclusive control.
         import backend.models  # noqa: F401  — register all model classes
+        from backend.core.config import get_settings
+        from backend.core.database import (
+            Base,
+            SessionLocal,
+            engine,
+        )
+
         if engine.dialect.name == "sqlite":
             Base.metadata.create_all(engine)
     except Exception as exc:  # pragma: no cover - ops path
@@ -464,10 +437,10 @@ def main(argv: list[str] | None = None) -> int:
 
     # ── Phase 2: DB discovery ───────────────────────────────────────────
     db_session: Any  # SQLAlchemy ``Session``. Type annotation kept loose
-                    # because the ``Any`` import only takes effect under
-                    # ``from __future__ import annotations`` (active here)
-                    # and pulling the concrete type adds coupling to
-                    # ``sqlalchemy.orm.Session`` for a tiny benefit.
+    # because the ``Any`` import only takes effect under
+    # ``from __future__ import annotations`` (active here)
+    # and pulling the concrete type adds coupling to
+    # ``sqlalchemy.orm.Session`` for a tiny benefit.
     db_rows: list
     db_session = None
     try:

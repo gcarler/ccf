@@ -13,6 +13,7 @@ Posture mirrors `tests/test_crm_crud_personas.py`: SQLite in-memory via the
   * `update_*` sets `updated_at` via `_utcnow`.
   * `list_stages` filter by pipeline + order by `orden`.
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -25,6 +26,7 @@ from backend.models_crm_pipeline import EtapaPipeline, PipelineCRM
 from backend.models_shared import _utcnow
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
+
 
 def _seed_sede(db: Session, name: str = "Sede QC-18.B") -> models.Sede:
     sede = models.Sede(id=_uuid.uuid4(), nombre=name, ciudad="QC18 City", es_activa=True)
@@ -184,7 +186,9 @@ def test_archive_pipeline_sets_deleted_at(db_session):
     db_session.expire_all()
     # Row still in the table (hard delete would have removed it)
     row = db_session.query(PipelineCRM).filter(PipelineCRM.id == p.id).first()
-    assert row is not None and row.deleted_at is not None, "archive_pipeline did not soft-delete (deleted_at still None)"
+    assert row is not None and row.deleted_at is not None, (
+        "archive_pipeline did not soft-delete (deleted_at still None)"
+    )
     # And now invisible to list/get
     assert crud_pipeline.get_pipeline(db_session, p.id) is None
 
@@ -240,7 +244,14 @@ def test_create_stage_persists_fields(db_session):
 
     row = crud_pipeline.create_stage(
         db_session,
-        {"id": _uuid.uuid4(), "pipeline_id": p.id, "nombre": "E", "orden": 1, "requiere_accion": True, "visual_color": "#000"},
+        {
+            "id": _uuid.uuid4(),
+            "pipeline_id": p.id,
+            "nombre": "E",
+            "orden": 1,
+            "requiere_accion": True,
+            "visual_color": "#000",
+        },
     )
     assert row.nombre == "E"
     assert row.orden == 1

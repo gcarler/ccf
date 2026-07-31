@@ -5,6 +5,7 @@ Revises: 20260616_0001
 Create Date: 2026-06-17 00:00:00.000000
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -25,8 +26,12 @@ def upgrade() -> None:
     op.add_column("personas", sa.Column("social_instagram", sa.String(200), nullable=True))
     op.add_column("personas", sa.Column("social_facebook", sa.String(200), nullable=True))
     op.add_column("personas", sa.Column("social_twitter", sa.String(200), nullable=True))
-    op.add_column("personas", sa.Column("is_pastoral_leader", sa.Boolean(), server_default=sa.text("false"), nullable=False))
-    op.add_column("personas", sa.Column("is_main_pastor", sa.Boolean(), server_default=sa.text("false"), nullable=False))
+    op.add_column(
+        "personas", sa.Column("is_pastoral_leader", sa.Boolean(), server_default=sa.text("false"), nullable=False)
+    )
+    op.add_column(
+        "personas", sa.Column("is_main_pastor", sa.Boolean(), server_default=sa.text("false"), nullable=False)
+    )
     op.create_index("ix_personas_is_pastoral_leader", "personas", ["is_pastoral_leader"])
 
 

@@ -92,7 +92,7 @@ function processDynamicRoutes(routes) {
             await page.goto(url, { waitUntil: 'networkidle', timeout: 10000 });
             // Esperar a que React renderice e hidrate
             await page.waitForTimeout(1000);
-            
+
             // Check for Next.js error overlay or React error boundary
             const hasErrorOverlay = await page.evaluate(() => {
                 return !!document.querySelector('nextjs-portal') || document.body.innerText.includes('TypeError');

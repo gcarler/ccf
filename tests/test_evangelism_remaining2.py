@@ -1,4 +1,5 @@
 """Target tests for remaining low-coverage evangelism modules — working only."""
+
 from __future__ import annotations
 
 import uuid
@@ -25,18 +26,21 @@ def full(client, db_session):
 class TestEventUpdate:
     def test_update(self, full):
         c, h = full["c"], full["h"]
-        evt = c.post("/api/evangelism/events",
+        evt = c.post(
+            "/api/evangelism/events",
             json={"name": f"EU-{uuid.uuid4().hex[:6]}", "event_date": "2026-09-01T10:00:00Z"},
-            headers=h).json()
+            headers=h,
+        ).json()
         assert _ok(c.put(f"/api/evangelism/events/{evt['id']}", json={"name": "Updated"}, headers=h).status_code)
 
     def test_audience(self, full):
         c, h = full["c"], full["h"]
-        evt = c.post("/api/evangelism/events",
+        evt = c.post(
+            "/api/evangelism/events",
             json={"name": f"EA-{uuid.uuid4().hex[:6]}", "event_date": "2026-09-01T10:00:00Z"},
-            headers=h).json()
-        resp = c.put(f"/api/evangelism/events/{evt['id']}/audience",
-            json={"target_audience": "ALL"}, headers=h)
+            headers=h,
+        ).json()
+        resp = c.put(f"/api/evangelism/events/{evt['id']}/audience", json={"target_audience": "ALL"}, headers=h)
         assert _ok(resp.status_code)
 
 
@@ -47,18 +51,26 @@ class TestAsistenciasFlow:
         p = models.Persona(id=uuid.uuid4(), first_name="FU", last_name="T", sede_id=s.id)
         db_session.add(p)
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre=f"G-{uuid.uuid4().hex[:6]}",
-            sede_id=s.id, lider_persona_id=p.id,
+            id=uuid.uuid4(),
+            nombre=f"G-{uuid.uuid4().hex[:6]}",
+            sede_id=s.id,
+            lider_persona_id=p.id,
         )
         db_session.add(g)
         db_session.flush()
         ses = models.SesionGrupo(
-            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA",
+            id=uuid.uuid4(),
+            grupo_id=g.id,
+            fecha_sesion=now,
+            estado="REALIZADA",
         )
         db_session.add(ses)
         db_session.flush()
         att = models.Asistencia(
-            id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO",
+            id=uuid.uuid4(),
+            sesion_id=ses.id,
+            persona_id=p.id,
+            estado="ASISTIO",
         )
         db_session.add(att)
         db_session.commit()

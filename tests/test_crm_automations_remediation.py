@@ -78,10 +78,7 @@ def test_validate_path(client):
     # Valid >= 3 nodes path
     payload = {
         "nodes": ["n1", "n2", "n3"],
-        "edges": [
-            {"source": "n1", "target": "n2"},
-            {"source": "n2", "target": "n3"}
-        ]
+        "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n3"}],
     }
     response = client.post("/api/crm/automations/flows/validate-path", json=payload)
     assert response.status_code == 200
@@ -121,7 +118,7 @@ def test_branching_traverse(client):
     # Dynamic conditions evaluating to True
     payload_true = {
         "variables": {"nombre": "Juan"},
-        "conditions": [{"key": "nombre", "operator": "equals", "value": "Juan"}]
+        "conditions": [{"key": "nombre", "operator": "equals", "value": "Juan"}],
     }
     response = client.post("/api/crm/automations/branching/traverse", json=payload_true)
     assert response.status_code == 200
@@ -130,7 +127,7 @@ def test_branching_traverse(client):
     # Dynamic conditions evaluating to False
     payload_false = {
         "variables": {"nombre": "Juan"},
-        "conditions": [{"key": "nombre", "operator": "equals", "value": "Pedro"}]
+        "conditions": [{"key": "nombre", "operator": "equals", "value": "Pedro"}],
     }
     response = client.post("/api/crm/automations/branching/traverse", json=payload_false)
     assert response.status_code == 200
@@ -142,8 +139,8 @@ def test_branching_traverse(client):
         "conditions": [
             {"key": "nombre", "operator": "equals", "value": "Juan"},
             {"key": "sort_order", "operator": "gt", "value": 3},
-            {"key": "is_active", "operator": "always", "value": ""}
-        ]
+            {"key": "is_active", "operator": "always", "value": ""},
+        ],
     }
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.status_code == 200
@@ -160,31 +157,25 @@ def test_branching_traverse_operators(client):
     # equals: True
     payload = {
         "variables": {"field": "value"},
-        "conditions": [{"key": "field", "operator": "equals", "value": "value"}]
+        "conditions": [{"key": "field", "operator": "equals", "value": "value"}],
     }
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is True
 
     # equals: False
-    payload = {
-        "variables": {"field": "value"},
-        "conditions": [{"key": "field", "operator": "equals", "value": "diff"}]
-    }
+    payload = {"variables": {"field": "value"}, "conditions": [{"key": "field", "operator": "equals", "value": "diff"}]}
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is False
 
     # ne: True
-    payload = {
-        "variables": {"field": "value"},
-        "conditions": [{"key": "field", "operator": "ne", "value": "diff"}]
-    }
+    payload = {"variables": {"field": "value"}, "conditions": [{"key": "field", "operator": "ne", "value": "diff"}]}
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is True
 
     # contains: True
     payload = {
         "variables": {"field": "somevaluehere"},
-        "conditions": [{"key": "field", "operator": "contains", "value": "value"}]
+        "conditions": [{"key": "field", "operator": "contains", "value": "value"}],
     }
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is True
@@ -192,7 +183,7 @@ def test_branching_traverse_operators(client):
     # starts_with: True
     payload = {
         "variables": {"field": "value_suffix"},
-        "conditions": [{"key": "field", "operator": "starts_with", "value": "value"}]
+        "conditions": [{"key": "field", "operator": "starts_with", "value": "value"}],
     }
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is True
@@ -200,56 +191,38 @@ def test_branching_traverse_operators(client):
     # in: True
     payload = {
         "variables": {"field": "val2"},
-        "conditions": [{"key": "field", "operator": "in", "value": "val1, val2, val3"}]
+        "conditions": [{"key": "field", "operator": "in", "value": "val1, val2, val3"}],
     }
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is True
 
     # gt: True
-    payload = {
-        "variables": {"field": 10},
-        "conditions": [{"key": "field", "operator": "gt", "value": 5}]
-    }
+    payload = {"variables": {"field": 10}, "conditions": [{"key": "field", "operator": "gt", "value": 5}]}
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is True
 
     # gt: TypeError/ValueError -> False
-    payload = {
-        "variables": {"field": "not_a_number"},
-        "conditions": [{"key": "field", "operator": "gt", "value": 5}]
-    }
+    payload = {"variables": {"field": "not_a_number"}, "conditions": [{"key": "field", "operator": "gt", "value": 5}]}
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is False
 
     # lt: True
-    payload = {
-        "variables": {"field": 2},
-        "conditions": [{"key": "field", "operator": "lt", "value": 5}]
-    }
+    payload = {"variables": {"field": 2}, "conditions": [{"key": "field", "operator": "lt", "value": 5}]}
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is True
 
     # lt: TypeError/ValueError -> False
-    payload = {
-        "variables": {"field": "not_a_number"},
-        "conditions": [{"key": "field", "operator": "lt", "value": 5}]
-    }
+    payload = {"variables": {"field": "not_a_number"}, "conditions": [{"key": "field", "operator": "lt", "value": 5}]}
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is False
 
     # always: True
-    payload = {
-        "variables": {},
-        "conditions": [{"key": "any", "operator": "always", "value": ""}]
-    }
+    payload = {"variables": {}, "conditions": [{"key": "any", "operator": "always", "value": ""}]}
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is True
 
     # missing variable in variables: False
-    payload = {
-        "variables": {},
-        "conditions": [{"key": "missing", "operator": "equals", "value": "val"}]
-    }
+    payload = {"variables": {}, "conditions": [{"key": "missing", "operator": "equals", "value": "val"}]}
     response = client.post("/api/crm/automations/branching/traverse", json=payload)
     assert response.json()["result"] is False
 
@@ -258,10 +231,7 @@ def test_check_cycles(client):
     # No cycle
     payload = {
         "nodes": ["n1", "n2", "n3"],
-        "edges": [
-            {"source": "n1", "target": "n2"},
-            {"source": "n2", "target": "n3"}
-        ]
+        "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n3"}],
     }
     response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
     assert response.status_code == 200
@@ -270,11 +240,7 @@ def test_check_cycles(client):
     # Cycle detected
     payload = {
         "nodes": ["n1", "n2", "n3"],
-        "edges": [
-            {"source": "n1", "target": "n2"},
-            {"source": "n2", "target": "n3"},
-            {"source": "n3", "target": "n1"}
-        ]
+        "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n3"}, {"source": "n3", "target": "n1"}],
     }
     response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
     assert response.status_code == 200
@@ -283,22 +249,13 @@ def test_check_cycles(client):
 
 def test_flows_validate(client):
     # No cycle
-    payload = {
-        "nodes": ["n1", "n2"],
-        "edges": [{"source": "n1", "target": "n2"}]
-    }
+    payload = {"nodes": ["n1", "n2"], "edges": [{"source": "n1", "target": "n2"}]}
     response = client.post("/api/crm/automations/flows/validate", json=payload)
     assert response.status_code == 200
     assert response.json()["valid"] is True
 
     # With cycle
-    payload = {
-        "nodes": ["n1", "n2"],
-        "edges": [
-            {"source": "n1", "target": "n2"},
-            {"source": "n2", "target": "n1"}
-        ]
-    }
+    payload = {"nodes": ["n1", "n2"], "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n1"}]}
     response = client.post("/api/crm/automations/flows/validate", json=payload)
     assert response.status_code == 200
     assert response.json()["valid"] is False
@@ -311,21 +268,13 @@ def test_validate_node(client):
     assert response.json()["valid"] is True
 
     # Self reference via edges 1
-    payload1 = {
-        "nodes": ["n1"],
-        "node_id": "n1",
-        "edges": [{"source": "n1", "target": "n1"}]
-    }
+    payload1 = {"nodes": ["n1"], "node_id": "n1", "edges": [{"source": "n1", "target": "n1"}]}
     response = client.post("/api/crm/automations/flows/validate-node", json=payload1)
     assert response.status_code == 200
     assert response.json()["valid"] is False
 
     # Self reference via edges 2
-    payload2 = {
-        "nodes": ["n2"],
-        "node_id": "n2",
-        "edges": [{"source": "n2", "target": "n2"}]
-    }
+    payload2 = {"nodes": ["n2"], "node_id": "n2", "edges": [{"source": "n2", "target": "n2"}]}
     response = client.post("/api/crm/automations/flows/validate-node", json=payload2)
     assert response.status_code == 200
     assert response.json()["valid"] is False
@@ -333,10 +282,7 @@ def test_validate_node(client):
 
 def test_validate_graph(client):
     # No cycle
-    payload = {
-        "nodes": ["n1", "n2"],
-        "edges": [{"source": "n1", "target": "n2"}]
-    }
+    payload = {"nodes": ["n1", "n2"], "edges": [{"source": "n1", "target": "n2"}]}
     response = client.post("/api/crm/automations/validate-graph", json=payload)
     assert response.status_code == 200
     assert response.json()["valid"] is True
@@ -362,10 +308,7 @@ def test_flows_max_nodes_check(client):
 
 
 def test_flows_disconnected_nodes(client):
-    payload = {
-        "nodes": ["n1", "n2", "n3"],
-        "edges": [{"source": "n1", "target": "n2"}]
-    }
+    payload = {"nodes": ["n1", "n2", "n3"], "edges": [{"source": "n1", "target": "n2"}]}
     response = client.post("/api/crm/automations/flows/disconnected-nodes", json=payload)
     assert response.status_code == 200
     assert response.json()["warning"] == "disconnected nodes"
@@ -402,10 +345,7 @@ def test_validate_path_length_api(client):
 def test_validate_multiple_inputs(client):
     payload = {
         "nodes": ["n1", "n2", "n3"],
-        "edges": [
-            {"source": "n1", "target": "n3"},
-            {"source": "n2", "target": "n3"}
-        ]
+        "edges": [{"source": "n1", "target": "n3"}, {"source": "n2", "target": "n3"}],
     }
     response = client.post("/api/crm/automations/flows/validate-multiple-inputs", json=payload)
     assert response.status_code == 200
@@ -415,10 +355,7 @@ def test_validate_multiple_inputs(client):
 def test_validate_multiple_outputs(client):
     payload = {
         "nodes": ["n1", "n2", "n3"],
-        "edges": [
-            {"source": "n1", "target": "n2"},
-            {"source": "n1", "target": "n3"}
-        ]
+        "edges": [{"source": "n1", "target": "n2"}, {"source": "n1", "target": "n3"}],
     }
     response = client.post("/api/crm/automations/flows/validate-multiple-outputs", json=payload)
     assert response.status_code == 200
@@ -426,13 +363,7 @@ def test_validate_multiple_outputs(client):
 
 
 def test_clean_orphans(client):
-    payload = {
-        "nodes": ["n1", "n2"],
-        "edges": [
-            {"source": "n1", "target": "n2"},
-            {"source": "n2", "target": "n3"}
-        ]
-    }
+    payload = {"nodes": ["n1", "n2"], "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n3"}]}
     response = client.post("/api/crm/automations/flows/clean-orphans", json=payload)
     assert response.status_code == 200
     assert response.json()["cleaned_count"] == 1
@@ -485,8 +416,8 @@ def test_cycle_deep(client):
             {"source": "n2", "target": "n3"},
             {"source": "n3", "target": "n4"},
             {"source": "n4", "target": "n5"},
-            {"source": "n5", "target": "n1"}
-        ]
+            {"source": "n5", "target": "n1"},
+        ],
     }
     response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
     assert response.status_code == 200
@@ -501,8 +432,8 @@ def test_multiple_cycles(client):
             {"source": "n1", "target": "n2"},
             {"source": "n2", "target": "n1"},
             {"source": "n3", "target": "n4"},
-            {"source": "n4", "target": "n3"}
-        ]
+            {"source": "n4", "target": "n3"},
+        ],
     }
     response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
     assert response.status_code == 200
@@ -513,11 +444,7 @@ def test_disconnected_subgraph_cycles(client):
     # Alias obsoleto (disconnected-subgraph-cycles → check_cycles). Migrado.
     payload = {
         "nodes": ["n1", "n2", "n3", "n4"],
-        "edges": [
-            {"source": "n1", "target": "n2"},
-            {"source": "n3", "target": "n4"},
-            {"source": "n4", "target": "n3"}
-        ]
+        "edges": [{"source": "n1", "target": "n2"}, {"source": "n3", "target": "n4"}, {"source": "n4", "target": "n3"}],
     }
     response = client.post("/api/crm/automations/flows/check-cycles", json=payload)
     assert response.status_code == 200
@@ -540,11 +467,7 @@ def test_concurrent_cycle_checks(client):
 def test_kanban_sync_reorder(client, db_session):
     admin, persona, sede = seed_admin(db_session)
     pipeline = models.PipelineCRM(
-        id=uuid.uuid4(),
-        sede_id=sede.id,
-        nombre="Pipeline Test",
-        tipo="NUEVOS_VISITANTES",
-        activo=True
+        id=uuid.uuid4(), sede_id=sede.id, nombre="Pipeline Test", tipo="NUEVOS_VISITANTES", activo=True
     )
     db_session.add(pipeline)
     db_session.commit()
@@ -577,20 +500,11 @@ def test_branching_validate_cycles(client):
 def test_reorder_trigger_automation(client, db_session):
     admin, persona, sede = seed_admin(db_session)
     pipeline = models.PipelineCRM(
-        id=uuid.uuid4(),
-        sede_id=sede.id,
-        nombre="Pipeline Test",
-        tipo="NUEVOS_VISITANTES",
-        activo=True
+        id=uuid.uuid4(), sede_id=sede.id, nombre="Pipeline Test", tipo="NUEVOS_VISITANTES", activo=True
     )
     db_session.add(pipeline)
     db_session.flush()
-    etapa1 = models.EtapaPipeline(
-        id=uuid.uuid4(),
-        pipeline_id=pipeline.id,
-        nombre="Etapa 1",
-        orden=1
-    )
+    etapa1 = models.EtapaPipeline(id=uuid.uuid4(), pipeline_id=pipeline.id, nombre="Etapa 1", orden=1)
     db_session.add(etapa1)
     db_session.flush()
     caso = models.CasoCRM(
@@ -601,10 +515,12 @@ def test_reorder_trigger_automation(client, db_session):
         etapa_actual_id=etapa1.id,
         titulo_caso="Caso 1",
         origen_canal="WEB_FORM",
-        sort_order=1
+        sort_order=1,
     )
     db_session.add(caso)
-    automation = models.CrmAutomation(name="Stage Change Trigger", trigger_event="stage_change", action_type="send_email", is_active=True)
+    automation = models.CrmAutomation(
+        name="Stage Change Trigger", trigger_event="stage_change", action_type="send_email", is_active=True
+    )
     db_session.add(automation)
     db_session.commit()
     headers = auth_headers(client, email=admin.email)
@@ -617,11 +533,7 @@ def test_reorder_trigger_automation(client, db_session):
 def test_branching_three_node_traversal(client, db_session):
     admin, persona, sede = seed_admin(db_session)
     pipeline = models.PipelineCRM(
-        id=uuid.uuid4(),
-        sede_id=sede.id,
-        nombre="Pipeline Test",
-        tipo="NUEVOS_VISITANTES",
-        activo=True
+        id=uuid.uuid4(), sede_id=sede.id, nombre="Pipeline Test", tipo="NUEVOS_VISITANTES", activo=True
     )
     db_session.add(pipeline)
     db_session.commit()

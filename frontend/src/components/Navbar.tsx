@@ -66,10 +66,10 @@ export default function Navbar() {
                     {/* Desktop Menu */}
                     <div className="hidden lg:flex items-center gap-1">
                         {navItems.map((item: any) => {
-                            const isActive = item.href === '/' 
-                                ? (pathname || '') === '/' 
+                            const isActive = item.href === '/'
+                                ? (pathname || '') === '/'
                                 : (pathname || '').startsWith(item.href);
-                            
+
                             if (item.submenu && Array.isArray(item.submenu)) {
                                 return (
                                     <NavDropdown
@@ -176,7 +176,7 @@ function NavDropdown({ label, items, active }: { label: string, items: any[], ac
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div 
+        <div
             className="relative group"
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}

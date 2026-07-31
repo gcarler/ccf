@@ -71,18 +71,12 @@ def notify_task_assigned(
     email was sent and the audit row's outcome is ``no_email``.
     """
     assignee = (
-        db.query(models.Persona)
-        .filter(models.Persona.id == task.assignee_id)
-        .first()
-        if task.assignee_id
-        else None
+        db.query(models.Persona).filter(models.Persona.id == task.assignee_id).first() if task.assignee_id else None
     )
     if not assignee:
         return False
 
-    project = project or (
-        db.query(models.Project).filter(models.Project.id == task.project_id).first()
-    )
+    project = project or (db.query(models.Project).filter(models.Project.id == task.project_id).first())
     assigned_by_persona_id = resolve_persona_id_for_user(db, assigned_by_user_id)
     assigned_by = (
         db.query(models.Persona).filter(models.Persona.id == assigned_by_persona_id).first()
@@ -146,7 +140,8 @@ def notify_task_assigned(
             # assignee wouldn't have a way to learn about the assignment.
             db.commit()
             logger.info(
-                "Task assignment logged without email: %s", task.id,
+                "Task assignment logged without email: %s",
+                task.id,
             )
             return True
 
@@ -206,7 +201,8 @@ def notify_task_assigned(
             # (caller path was request-driven, not a critical path).
             logger.warning(
                 "Task assignment email failed: task_id=%s assignee_id=%s",
-                task.id, assignee.id,
+                task.id,
+                assignee.id,
             )
         return True
     except Exception:
@@ -215,8 +211,8 @@ def notify_task_assigned(
         # contract that fixes the orphan-NotificacionUsuario pattern.
         db.rollback()
         logger.exception(
-            "notify_task_assigned failed; rolled back atomic transaction: "
-            "task_id=%s assignee_id=%s",
-            str(task.id), str(assignee.id),
+            "notify_task_assigned failed; rolled back atomic transaction: task_id=%s assignee_id=%s",
+            str(task.id),
+            str(assignee.id),
         )
         return False

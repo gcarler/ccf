@@ -72,10 +72,13 @@ def _build_snapshot(page: m.CmsPage, section_rows: list[m.CmsSection]) -> dict[s
             "status": page.status,
             "seo_json": page.seo_json or {},
         },
-        "sections": [_section_payload(s) for s in sorted(
-            section_rows,
-            key=lambda r: (r.sort_order if r.sort_order is not None else 0),
-        )],
+        "sections": [
+            _section_payload(s)
+            for s in sorted(
+                section_rows,
+                key=lambda r: r.sort_order if r.sort_order is not None else 0,
+            )
+        ],
     }
 
 
@@ -86,19 +89,11 @@ def republish(site_key: str, slug: str, *, actor: str | None = None) -> int:
 
     actor_note = actor or "scripts/republish_home_cms_snapshot.py"
     with SessionLocal() as db:
-        site = (
-            db.query(m.CmsSite)
-            .filter(m.CmsSite.site_key == site_key.strip().lower())
-            .first()
-        )
+        site = db.query(m.CmsSite).filter(m.CmsSite.site_key == site_key.strip().lower()).first()
         if site is None:
             raise SystemExit(f"CMS site {site_key!r} not found")
 
-        page = (
-            db.query(m.CmsPage)
-            .filter(m.CmsPage.site_id == site.id, m.CmsPage.slug == slug)
-            .first()
-        )
+        page = db.query(m.CmsPage).filter(m.CmsPage.site_id == site.id, m.CmsPage.slug == slug).first()
         if page is None:
             raise SystemExit(f"CmsPage slug={slug!r} not found for site {site_key!r}")
 

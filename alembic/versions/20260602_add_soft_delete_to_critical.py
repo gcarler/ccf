@@ -42,10 +42,7 @@ TABLES = [
 def _col_exists(table: str, col: str) -> bool:
     conn = op.get_bind()
     r = conn.execute(
-        sa.text(
-            "SELECT count(*) FROM information_schema.columns "
-            "WHERE table_name = :t AND column_name = :c"
-        ),
+        sa.text("SELECT count(*) FROM information_schema.columns WHERE table_name = :t AND column_name = :c"),
         {"t": table, "c": col},
     )
     return r.scalar() > 0
@@ -70,12 +67,7 @@ def upgrade() -> None:
 
         idx_name = f"ix_{table}_active"
         if not _index_exists(idx_name):
-            op.execute(
-                sa.text(
-                    f"CREATE INDEX IF NOT EXISTS {idx_name} "
-                    f"ON {table} (id) WHERE deleted_at IS NULL"
-                )
-            )
+            op.execute(sa.text(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table} (id) WHERE deleted_at IS NULL"))
 
 
 def downgrade() -> None:

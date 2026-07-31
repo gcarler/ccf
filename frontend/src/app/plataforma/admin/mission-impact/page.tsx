@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { 
-    Target, 
-    Zap, 
-    Heart, 
-    Globe, 
-    Plus, 
+import {
+    Target,
+    Zap,
+    Heart,
+    Globe,
+    Plus,
     TrendingUp,
     MapPin,
     Sparkles,
@@ -185,7 +185,7 @@ export default function AdminMissionImpactPage() {
                 }
             `}</style>
 
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Admin', icon: Globe }, { label: 'Impacto Misionero', icon: Target }]}
                 viewType={viewType}
                 setViewType={setViewType}
@@ -201,11 +201,11 @@ export default function AdminMissionImpactPage() {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--info)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
-                    
+
                     {/* Header Cinematic */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                         <div className="space-y-4">
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                                 className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                             >
@@ -255,7 +255,7 @@ export default function AdminMissionImpactPage() {
                                         { title: 'Comedor Comunitario Sur', place: 'Barrio El Sol', metric: '200 Almuerzos servidos', date: 'Ayer', tone: 'emerald' },
                                         { title: 'Brigada de Salud Integral', place: 'Vereda La Unión', metric: '80 Atenciones médicas', date: 'Hace 1 semana', tone: 'sky' },
                                     ].map((item, i) => (
-                                        <motion.div 
+                                        <motion.div
                                             key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
                                             className="p-4 hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
                                         >
@@ -282,16 +282,16 @@ export default function AdminMissionImpactPage() {
 
                         {/* Goals & Predictions Sidebar */}
                         <aside className="lg:col-span-4 space-y-3">
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                                 className="bg-[hsl(var(--bg-muted))] p-4 rounded-lg text-white space-y-3 relative overflow-hidden shadow-2xl group"
                             >
                                 <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-[hsl(var(--info))]/20 rounded-full blur-3xl group-hover:bg-[hsl(var(--info))]/30 transition-all duration-1000" />
-                                
+
                                 <h3 className="text-xl font-bold tracking-tight uppercase italic flex items-center gap-3 relative z-10">
                                     <TrendingUp size={20} className="text-[hsl(var(--primary))]" /> Metas Globales
                                 </h3>
-                                
+
                                 <div className="space-y-3 relative z-10">
                                     <GoalProgress label="Personas registrados" current={stats.personas} target={1000} color="bg-[hsl(var(--primary))]" />
                                     <GoalProgress label="Impacto Social" current={12000} target={20000} color="bg-[hsl(var(--primary))]" />
@@ -353,8 +353,8 @@ function GoalProgress({ label, current, target, color }: GoalProgressProps) {
                 <span className="text-white">{Math.round(pct)}%</span>
             </div>
             <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden shadow-inner">
-                <motion.div 
-                    initial={{ width: 0 }} animate={{ width: `${pct}%` }} 
+                <motion.div
+                    initial={{ width: 0 }} animate={{ width: `${pct}%` }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
                     className={clsx("h-full relative", color)}
                 >
@@ -365,4 +365,3 @@ function GoalProgress({ label, current, target, color }: GoalProgressProps) {
         </div>
     );
 }
-

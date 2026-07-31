@@ -1,4 +1,5 @@
 """Tests for auth v3 login/refresh flow."""
+
 from fastapi.testclient import TestClient
 
 from tests.conftest import seed_admin

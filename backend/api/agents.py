@@ -68,10 +68,11 @@ def analytics_summary(
     current_user: models.User = Depends(require_active_user),
 ):
     """Resumen global para el Dashboard de Administración.
-    
+
     Axioma 3: filtra métricas por sede_id del usuario autenticado.
     """
     from backend.crud.crm import get_user_sede_id
+
     user_sede = get_user_sede_id(db, current_user.id)
 
     persona_q = db.query(models.Persona)
@@ -82,20 +83,16 @@ def analytics_summary(
         persona_q = persona_q.filter(models.Persona.sede_id == user_sede)
         project_q = project_q.filter(models.Project.sede_id == user_sede)
         # Enrollments join through persona or course sede
-        enrollment_q = enrollment_q.join(models.Persona, models.Enrollment.persona_id == models.Persona.id).filter(models.Persona.sede_id == user_sede)
+        enrollment_q = enrollment_q.join(models.Persona, models.Enrollment.persona_id == models.Persona.id).filter(
+            models.Persona.sede_id == user_sede
+        )
 
     total_personas = persona_q.count()
     total_projects = project_q.count()
     total_enrollments = enrollment_q.count()
     total_certificates = db.query(models.Certificate).count()
-    pending_tasks = (
-        db.query(models.AgentTask).filter(models.AgentTask.status == "pending").count()
-    )
-    unread_insights = (
-        db.query(models.AgentInsight)
-        .filter(~models.AgentInsight.acknowledged)
-        .count()
-    )
+    pending_tasks = db.query(models.AgentTask).filter(models.AgentTask.status == "pending").count()
+    unread_insights = db.query(models.AgentInsight).filter(~models.AgentInsight.acknowledged).count()
 
     # Axioma 3 — Multi-Tenant: el conteo de testimonios pendientes se
     # acota por sede del staff. Los testimonios viven como CmsPost
@@ -104,20 +101,12 @@ def analytics_summary(
     actor_sede = _actor_sede_or_none(db, current_user)
 
     # Inline query para testimonials (adapters v1 eliminados).
-    query = db.query(models.CmsPost).join(models.CmsPost.categories).filter(
-        models.CmsCategory.slug == "testimonials"
-    )
+    query = db.query(models.CmsPost).join(models.CmsPost.categories).filter(models.CmsCategory.slug == "testimonials")
     if actor_sede is not None:
-        query = query.join(models.CmsSite).filter(
-            models.CmsSite.sede_id == actor_sede
-        )
-    cms_testimonials = query.distinct().order_by(
-        models.CmsPost.created_at.desc()
-    ).all()
+        query = query.join(models.CmsSite).filter(models.CmsSite.sede_id == actor_sede)
+    cms_testimonials = query.distinct().order_by(models.CmsPost.created_at.desc()).all()
 
-    pending_testimonials = sum(
-        1 for p in cms_testimonials if p.status == "draft"
-    )
+    pending_testimonials = sum(1 for p in cms_testimonials if p.status == "draft")
 
     return {
         "total_personas": total_personas,
@@ -246,11 +235,7 @@ def delete_insight(
     current_user: models.User = Depends(require_admin),
 ):
     """Elimina un insight de agente."""
-    insight = (
-        db.query(models.AgentInsight)
-        .filter(models.AgentInsight.id == insight_id)
-        .first()
-    )
+    insight = db.query(models.AgentInsight).filter(models.AgentInsight.id == insight_id).first()
     if not insight:
         raise HTTPException(status_code=404, detail="Insight not found")
     insight.deleted_at = _utcnow()
@@ -285,9 +270,7 @@ def ask_optimus(
     try:
         orchestrator = AgentOrchestrator()
         # Create a custom prompt combining KB context and query
-        full_query = (
-            f"Context from Knowledge Base:\n{context}\n\nUser Question: {payload.query}"
-        )
+        full_query = f"Context from Knowledge Base:\n{context}\n\nUser Question: {payload.query}"
 
         insight = orchestrator.run_diagnosis(
             summary=f"Consulta de usuario: {payload.query}",
@@ -351,11 +334,21 @@ def search_agents(
     _user: models.User = Depends(require_active_user),
 ):
     term = f"%{q}%"
-    agents = db.query(AgentModel).filter(
-        or_(AgentModel.first_name.ilike(term), AgentModel.last_name.ilike(term),
-            AgentModel.email.ilike(term), AgentModel.phone.ilike(term)),
-        AgentModel.is_active,
-    ).order_by(AgentModel.first_name).limit(limit).all()
+    agents = (
+        db.query(AgentModel)
+        .filter(
+            or_(
+                AgentModel.first_name.ilike(term),
+                AgentModel.last_name.ilike(term),
+                AgentModel.email.ilike(term),
+                AgentModel.phone.ilike(term),
+            ),
+            AgentModel.is_active,
+        )
+        .order_by(AgentModel.first_name)
+        .limit(limit)
+        .all()
+    )
     return agents
 
 
@@ -385,23 +378,60 @@ def get_agent_profile(
     if not agent:
         raise HTTPException(404, "Agent not found")
     roles = db.query(AgentRole).filter(AgentRole.agent_id == agent_id, AgentRole.ended_at.is_(None)).all()
-    activities = db.query(AgentActivity).filter(AgentActivity.agent_id == agent_id).order_by(AgentActivity.occurred_at.desc()).limit(limit).all()
+    activities = (
+        db.query(AgentActivity)
+        .filter(AgentActivity.agent_id == agent_id)
+        .order_by(AgentActivity.occurred_at.desc())
+        .limit(limit)
+        .all()
+    )
     total = db.query(AgentActivity).filter(AgentActivity.agent_id == agent_id).count()
     return AgentProfileResponse(
-        agent=agent, roles=roles,
-        activities=[AgentTimelineItem(activity_type=a.activity_type, source_type=a.source_type, source_id=a.source_id, status=a.status, notes=a.notes, occurred_at=a.occurred_at) for a in activities],
+        agent=agent,
+        roles=roles,
+        activities=[
+            AgentTimelineItem(
+                activity_type=a.activity_type,
+                source_type=a.source_type,
+                source_id=a.source_id,
+                status=a.status,
+                notes=a.notes,
+                occurred_at=a.occurred_at,
+            )
+            for a in activities
+        ],
         total_activities=total,
     )
 
 
 @router.get("/timeline/{agent_id}", response_model=TypingList[AgentTimelineItem])
-def get_agent_timeline(agent_id: uuid.UUID, limit: int = 100, db=Depends(get_db), _user: models.User = Depends(require_active_user)):
-    activities = db.query(AgentActivity).filter(AgentActivity.agent_id == agent_id).order_by(AgentActivity.occurred_at.desc()).limit(limit).all()
-    return [AgentTimelineItem(activity_type=a.activity_type, source_type=a.source_type, source_id=a.source_id, status=a.status, notes=a.notes, occurred_at=a.occurred_at) for a in activities]
+def get_agent_timeline(
+    agent_id: uuid.UUID, limit: int = 100, db=Depends(get_db), _user: models.User = Depends(require_active_user)
+):
+    activities = (
+        db.query(AgentActivity)
+        .filter(AgentActivity.agent_id == agent_id)
+        .order_by(AgentActivity.occurred_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return [
+        AgentTimelineItem(
+            activity_type=a.activity_type,
+            source_type=a.source_type,
+            source_id=a.source_id,
+            status=a.status,
+            notes=a.notes,
+            occurred_at=a.occurred_at,
+        )
+        for a in activities
+    ]
 
 
 @router.get("/roles/{agent_id}", response_model=TypingList[AgentRoleResponse])
-def get_agent_roles(agent_id: uuid.UUID, active_only: bool = True, db=Depends(get_db), _user: models.User = Depends(require_active_user)):
+def get_agent_roles(
+    agent_id: uuid.UUID, active_only: bool = True, db=Depends(get_db), _user: models.User = Depends(require_active_user)
+):
     query = db.query(AgentRole).filter(AgentRole.agent_id == agent_id)
     if active_only:
         query = query.filter(AgentRole.ended_at.is_(None))
@@ -409,7 +439,12 @@ def get_agent_roles(agent_id: uuid.UUID, active_only: bool = True, db=Depends(ge
 
 
 @router.post("/roles/{agent_id}", response_model=AgentRoleResponse)
-def add_agent_role(agent_id: uuid.UUID, role: AgentRoleCreate, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
+def add_agent_role(
+    agent_id: uuid.UUID,
+    role: AgentRoleCreate,
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
     agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
     if not agent:
         raise HTTPException(404, "Agent not found")
@@ -448,7 +483,9 @@ def create_agent(data: AgentCreate, db=Depends(get_db), current_user: models.Use
 
 
 @router.put("/{agent_id}", response_model=AgentResponse)
-def update_agent(agent_id: uuid.UUID, data: AgentUpdate, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
+def update_agent(
+    agent_id: uuid.UUID, data: AgentUpdate, db=Depends(get_db), current_user: models.User = Depends(require_active_user)
+):
     agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
     if not agent:
         raise HTTPException(404, "Agent not found")
@@ -461,7 +498,12 @@ def update_agent(agent_id: uuid.UUID, data: AgentUpdate, db=Depends(get_db), cur
 
 
 @router.put("/{agent_id}/stage", response_model=dict)
-def transition_stage(agent_id: uuid.UUID, data: StageTransition, db=Depends(get_db), current_user: models.User = Depends(require_active_user)):
+def transition_stage(
+    agent_id: uuid.UUID,
+    data: StageTransition,
+    db=Depends(get_db),
+    current_user: models.User = Depends(require_active_user),
+):
     agent = db.query(AgentModel).filter(AgentModel.id == agent_id).first()
     if not agent:
         raise HTTPException(404, "Agent not found")
@@ -491,12 +533,16 @@ from backend.models_agents import AgentAuth as AgentModelAuth  # noqa: E402
 
 def sync_persona_to_agent(db: Session, persona) -> int:
     """Create an Agent from a Persona if one doesn't exist yet."""
-    existing = db.query(AgentModel).filter(
-        or_(
-            AgentModel.email == persona.email,
-            AgentModel.phone == persona.phone,
+    existing = (
+        db.query(AgentModel)
+        .filter(
+            or_(
+                AgentModel.email == persona.email,
+                AgentModel.phone == persona.phone,
+            )
         )
-    ).first()
+        .first()
+    )
 
     if existing:
         return existing.id
@@ -522,20 +568,20 @@ def sync_persona_to_agent(db: Session, persona) -> int:
         db.add(auth)
 
     if persona.church_role:
-        db.add(AgentRole(
-            agent_id=agent.id,
-            role_type="church",
-            role_value=persona.church_role,
-        ))
+        db.add(
+            AgentRole(
+                agent_id=agent.id,
+                role_type="church",
+                role_value=persona.church_role,
+            )
+        )
 
     return agent.id
 
 
 def sync_user_to_agent(db: Session, user) -> int:
     """Create an Agent from a User if one doesn't exist yet."""
-    existing = db.query(AgentModel).filter(
-        or_(AgentModel.email == user.email)
-    ).first()
+    existing = db.query(AgentModel).filter(or_(AgentModel.email == user.email)).first()
 
     if existing:
         return existing.id
@@ -550,20 +596,24 @@ def sync_user_to_agent(db: Session, user) -> int:
     db.add(agent)
     db.flush()
 
-    db.add(AgentModelAuth(
-        agent_id=agent.id,
-        username=user.username,
-        password_hash=user.password_hash if hasattr(user, 'password_hash') else None,
-        provider="local",
-    ))
+    db.add(
+        AgentModelAuth(
+            agent_id=agent.id,
+            username=user.username,
+            password_hash=user.password_hash if hasattr(user, "password_hash") else None,
+            provider="local",
+        )
+    )
 
     # Platform role
     if user.role:
-        db.add(AgentRole(
-            agent_id=agent.id,
-            role_type="platform",
-            role_value=user.role,
-        ))
+        db.add(
+            AgentRole(
+                agent_id=agent.id,
+                role_type="platform",
+                role_value=user.role,
+            )
+        )
 
     return agent.id
 
@@ -603,7 +653,10 @@ def search_kb(
     from backend.services.knowledge_base import search_knowledge_base_real
 
     results = search_knowledge_base_real(
-        db, q, top_k=limit, category=category,
+        db,
+        q,
+        top_k=limit,
+        category=category,
     )
     return [
         {
@@ -627,16 +680,25 @@ def kb_stats(
 ):
     """Estadísticas de la Knowledge Base."""
     total = db.query(AgentKnowledgeBase).count()
-    active = db.query(AgentKnowledgeBase).filter(
-        AgentKnowledgeBase.is_active,
-    ).count()
+    active = (
+        db.query(AgentKnowledgeBase)
+        .filter(
+            AgentKnowledgeBase.is_active,
+        )
+        .count()
+    )
     by_category = {}
-    for cat, cnt in db.query(
-        AgentKnowledgeBase.category,
-        func.count(AgentKnowledgeBase.id),
-    ).filter(
-        AgentKnowledgeBase.is_active,
-    ).group_by(AgentKnowledgeBase.category).all():
+    for cat, cnt in (
+        db.query(
+            AgentKnowledgeBase.category,
+            func.count(AgentKnowledgeBase.id),
+        )
+        .filter(
+            AgentKnowledgeBase.is_active,
+        )
+        .group_by(AgentKnowledgeBase.category)
+        .all()
+    ):
         by_category[cat] = cnt
     return {"total": total, "active": active, "by_category": by_category}
 

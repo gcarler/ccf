@@ -19,9 +19,7 @@ from backend.core.rate_limit import rate_limiter
 router = APIRouter(tags=["workspace"])
 
 
-@router.get(
-    "/flags/audit", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))]
-)
+@router.get("/flags/audit", dependencies=[Depends(rate_limiter(limit=60, window_seconds=60))])
 def get_flags_audit(
     limit: int = 100,
     action: str | None = None,
@@ -77,9 +75,7 @@ def export_flags_audit(
         return Response(
             content=json.dumps(payload, ensure_ascii=True, indent=2),
             media_type="application/json",
-            headers={
-                "Content-Disposition": "attachment; filename=feature_flags_audit.json"
-            },
+            headers={"Content-Disposition": "attachment; filename=feature_flags_audit.json"},
         )
 
     if normalized_format == "csv":
@@ -114,9 +110,7 @@ def export_flags_audit(
         return Response(
             content=buffer.getvalue(),
             media_type="text/csv",
-            headers={
-                "Content-Disposition": "attachment; filename=feature_flags_audit.csv"
-            },
+            headers={"Content-Disposition": "attachment; filename=feature_flags_audit.csv"},
         )
 
     raise HTTPException(status_code=400, detail="format must be 'json' or 'csv'")

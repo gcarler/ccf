@@ -1,4 +1,5 @@
 """CRM task CRUD."""
+
 import uuid
 from typing import List, Optional
 

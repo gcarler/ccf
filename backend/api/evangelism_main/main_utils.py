@@ -73,20 +73,14 @@ def _resolve_campaign_personas(
 
     Results are deduplicated by ``persona.id``.
     """
-    normalized_segments = [
-        segment for segment in (s.strip().lower() for s in segments) if segment
-    ]
+    normalized_segments = [segment for segment in (s.strip().lower() for s in segments) if segment]
     if not normalized_segments:
         return []
 
-    donations_q = db.query(models.Donation.persona_id).filter(
-        models.Donation.persona_id.isnot(None)
-    )
+    donations_q = db.query(models.Donation.persona_id).filter(models.Donation.persona_id.isnot(None))
     if sede_id:
         donations_q = donations_q.filter(models.Donation.sede_id == sede_id)
-    donation_persona_ids = {
-        str(pid) for (pid,) in donations_q.distinct().all()
-    }
+    donation_persona_ids = {str(pid) for (pid,) in donations_q.distinct().all()}
     personas_q = db.query(models.Persona)
     if sede_id:
         personas_q = personas_q.filter(models.Persona.sede_id == sede_id)
@@ -96,10 +90,7 @@ def _resolve_campaign_personas(
     for persona in personas:
         if persona.id in seen_ids:
             continue
-        if any(
-            _persona_matches_segment(persona, segment, donation_persona_ids)
-            for segment in normalized_segments
-        ):
+        if any(_persona_matches_segment(persona, segment, donation_persona_ids) for segment in normalized_segments):
             selected.append(persona)
             seen_ids.add(persona.id)
     return selected
@@ -107,19 +98,13 @@ def _resolve_campaign_personas(
 
 def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     """Summarise a group of related CommunicationLog entries into a single dict."""
-    ordered = sorted(
-        logs, key=lambda log: log.created_at or datetime.datetime.min, reverse=True
-    )
+    ordered = sorted(logs, key=lambda log: log.created_at or datetime.datetime.min, reverse=True)
     representative = ordered[0]
     persona = getattr(representative, "persona", None)
     persona_name = persona.nombre_completo if persona else "Desconocido"
-    campaign_name = next(
-        (log.campaign_name for log in ordered if log.campaign_name), None
-    )
+    campaign_name = next((log.campaign_name for log in ordered if log.campaign_name), None)
     sent_at_dt = ordered[0].created_at
-    delivered_count = sum(
-        1 for log in ordered if str(log.outcome).lower() in DELIVERED_OUTCOMES
-    )
+    delivered_count = sum(1 for log in ordered if str(log.outcome).lower() in DELIVERED_OUTCOMES)
     failed_count = sum(1 for log in ordered if str(log.outcome).lower() == "failed")
     if failed_count and not delivered_count:
         status = "failed"
@@ -128,9 +113,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     else:
         status = str(representative.outcome or CommunicationOutcome.INTERNAL_LOG.value).lower()
     display_name = campaign_name or (
-        f"Mensaje a {persona_name}"
-        if len(ordered) == 1
-        else f"Campaña a {len(ordered)} contactos"
+        f"Mensaje a {persona_name}" if len(ordered) == 1 else f"Campaña a {len(ordered)} contactos"
     )
     return {
         "id": representative.id,

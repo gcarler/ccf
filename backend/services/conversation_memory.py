@@ -35,6 +35,7 @@ def _get_session(db: Session | None = None) -> tuple[Session, bool]:
 # FUNCIONES DE ALTO NIVEL
 # ──────────────────────────────────────────────
 
+
 def create_conversation(
     user_id: _uuid.UUID | str,
     title: str = None,
@@ -72,12 +73,18 @@ def get_user_conversations(
         persona_id = resolve_persona_id_for_user(db, user_id)
         if not persona_id:
             return []
-        convs = db.query(AgentConversation).filter(
-            AgentConversation.persona_id == persona_id,
-            AgentConversation.is_active,
-        ).order_by(
-            AgentConversation.updated_at.desc(),
-        ).limit(limit).all()
+        convs = (
+            db.query(AgentConversation)
+            .filter(
+                AgentConversation.persona_id == persona_id,
+                AgentConversation.is_active,
+            )
+            .order_by(
+                AgentConversation.updated_at.desc(),
+            )
+            .limit(limit)
+            .all()
+        )
 
         return [
             {
@@ -96,26 +103,35 @@ def get_user_conversations(
 
 
 def get_conversation_history(
-    conversation_id: _uuid.UUID, max_turns: int = 10,
+    conversation_id: _uuid.UUID,
+    max_turns: int = 10,
 ) -> List[Dict[str, str]]:
     """Obtiene historial de una conversación en formato LLM messages."""
     db = SessionLocal()
     try:
-        messages = db.query(AgentMessage).filter(
-            AgentMessage.conversation_id == conversation_id,
-        ).order_by(
-            AgentMessage.created_at.desc(),
-        ).limit(max_turns * 2).all()  # *2 for user+assistant pairs
+        messages = (
+            db.query(AgentMessage)
+            .filter(
+                AgentMessage.conversation_id == conversation_id,
+            )
+            .order_by(
+                AgentMessage.created_at.desc(),
+            )
+            .limit(max_turns * 2)
+            .all()
+        )  # *2 for user+assistant pairs
 
         # Reverse to chronological order
         messages = list(reversed(messages))
 
         result = []
         for m in messages:
-            result.append({
-                "role": m.role,
-                "content": m.content,
-            })
+            result.append(
+                {
+                    "role": m.role,
+                    "content": m.content,
+                }
+            )
         return result
     finally:
         db.close()
@@ -134,17 +150,18 @@ def save_conversation_turn(
             conversation_id=conversation_id,
             role=role,
             content=content,
-            tools_used=(
-            json.dumps(tools_used, ensure_ascii=False)
-            if tools_used else None
-        ),
+            tools_used=(json.dumps(tools_used, ensure_ascii=False) if tools_used else None),
         )
         db.add(msg)
 
         # Update conversation timestamp
-        conv = db.query(AgentConversation).filter(
-            AgentConversation.id == conversation_id,
-        ).first()
+        conv = (
+            db.query(AgentConversation)
+            .filter(
+                AgentConversation.id == conversation_id,
+            )
+            .first()
+        )
         if conv:
             conv.updated_at = _utcnow()
 
@@ -164,10 +181,14 @@ def delete_conversation(
         persona_id = resolve_persona_id_for_user(db, user_id)
         if not persona_id:
             return False
-        conv = db.query(AgentConversation).filter(
-            AgentConversation.id == conversation_id,
-            AgentConversation.persona_id == persona_id,
-        ).first()
+        conv = (
+            db.query(AgentConversation)
+            .filter(
+                AgentConversation.id == conversation_id,
+                AgentConversation.persona_id == persona_id,
+            )
+            .first()
+        )
         if not conv:
             return False
         conv.is_active = False
@@ -186,11 +207,17 @@ def get_conversation_messages(
     """Obtiene mensajes de una conversación."""
     db, should_close = _get_session(db)
     try:
-        messages = db.query(AgentMessage).filter(
-            AgentMessage.conversation_id == conversation_id,
-        ).order_by(
-            AgentMessage.created_at.asc(),
-        ).limit(limit).all()
+        messages = (
+            db.query(AgentMessage)
+            .filter(
+                AgentMessage.conversation_id == conversation_id,
+            )
+            .order_by(
+                AgentMessage.created_at.asc(),
+            )
+            .limit(limit)
+            .all()
+        )
 
         return [
             {

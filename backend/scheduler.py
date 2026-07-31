@@ -53,6 +53,7 @@ def _load_settings() -> Any:
     importing main.py (which starts uvicorn hooks).
     """
     from backend.core.config import get_settings
+
     return get_settings()
 
 
@@ -109,13 +110,9 @@ def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
     )
 
     counts = process_due_content(db_session, dry_run=dry_run)
-    snapshot_counts = capture_daily_seo_snapshots(
-        db_session, dry_run=dry_run
-    )
+    snapshot_counts = capture_daily_seo_snapshots(db_session, dry_run=dry_run)
     # F-08: limpieza periodica de CmsPublishLog (retention 90 dias default)
-    publish_logs_purged = cleanup_old_publish_logs(
-        db_session, dry_run=dry_run
-    )
+    publish_logs_purged = cleanup_old_publish_logs(db_session, dry_run=dry_run)
     if not dry_run:
         db_session.commit()
     counts["seo"] = {
@@ -129,9 +126,7 @@ def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
     # Default OFF: el cron de cada minuto no debe introducir mutaciones
     # adicionales sin opt-in explicito del operador.  El endpoint API
     # (``DELETE /cms/media/cleanup``) es la via primaria para limpiar.
-    orphan_media_archived = _maybe_run_orphan_media_cleanup(
-        db_session, dry_run=dry_run
-    )
+    orphan_media_archived = _maybe_run_orphan_media_cleanup(db_session, dry_run=dry_run)
     counts["orphan_media_archived"] = orphan_media_archived
     return counts
 
@@ -162,11 +157,7 @@ def _maybe_run_orphan_media_cleanup(db_session, *, dry_run: bool) -> int:
     total = 0
     sedes = db_session.query(models.Sede).all()
     for sede in sedes:
-        sites = (
-            db_session.query(models.CmsSite)
-            .filter(models.CmsSite.sede_id == sede.id)
-            .all()
-        )
+        sites = db_session.query(models.CmsSite).filter(models.CmsSite.sede_id == sede.id).all()
         referenced_ids: set[str] = set()
         for site in sites:
             sections = (

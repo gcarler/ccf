@@ -115,17 +115,17 @@ export default function AdminDashboard() {
                 {/* Main Stats Area */}
                 <div className="lg:col-span-8 space-y-3">
                     <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <StatCard 
-                            label="Usuarios Totales" value={loading ? '...' : stats.users.toLocaleString()} 
-                            icon={Users} trend="+12.5%" color="blue" 
+                        <StatCard
+                            label="Usuarios Totales" value={loading ? '...' : stats.users.toLocaleString()}
+                            icon={Users} trend="+12.5%" color="blue"
                         />
-                        <StatCard 
-                            label="Sesiones Activas" value={loading ? '...' : stats.sessions.toLocaleString()} 
-                            icon={Activity} trend="Auth v3" color="rose" 
+                        <StatCard
+                            label="Sesiones Activas" value={loading ? '...' : stats.sessions.toLocaleString()}
+                            icon={Activity} trend="Auth v3" color="rose"
                         />
-                        <StatCard 
-                            label="Personas Registradas" value={loading ? '...' : stats.personas.toLocaleString()} 
-                            icon={Heart} trend="CRM base" color="emerald" 
+                        <StatCard
+                            label="Personas Registradas" value={loading ? '...' : stats.personas.toLocaleString()}
+                            icon={Heart} trend="CRM base" color="emerald"
                         />
                     </section>
 
@@ -145,7 +145,7 @@ export default function AdminDashboard() {
                         <div className="h-48 flex items-end gap-3 lg:gap-3 pt-10">
                             {[40, 65, 30, 85, 70, 55, 100].map((h, i) => (
                                 <div key={i} className="flex-1 flex flex-col items-center gap-4 group/bar">
-                                    <motion.div 
+                                    <motion.div
                                         initial={{ height: 0 }} animate={{ height: `${h}%` }}
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative",
@@ -204,15 +204,15 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                             <ModalityCard 
-                                title="Ruta Formal" 
-                                stats={academy?.formal_stats} 
+                             <ModalityCard
+                                title="Ruta Formal"
+                                stats={academy?.formal_stats}
                                 icon={Layers}
                                 color="blue"
                              />
-                             <ModalityCard 
-                                title="No Formal / Abierta" 
-                                stats={academy?.no_formal_stats} 
+                             <ModalityCard
+                                title="No Formal / Abierta"
+                                stats={academy?.no_formal_stats}
                                 icon={Zap}
                                 color="amber"
                              />
@@ -243,7 +243,7 @@ export default function AdminDashboard() {
                 <aside className="lg:col-span-4 space-y-3">
                     <div className="bg-[hsl(var(--bg-muted))] rounded-lg p-4 text-white shadow-2xl space-y-3 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-[hsl(var(--primary))/0.2] rounded-full blur-[80px] group-hover:bg-[hsl(var(--primary))/0.3] transition-all duration-1000" />
-                        
+
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
                                 <PieChart size={20} className="text-[hsl(var(--primary))]" />
@@ -314,7 +314,7 @@ export default function AdminDashboard() {
 
 function ModalityCard({ title, stats, icon: Icon, color = 'blue' }: ModalityCardProps) {
     if (!stats) return <div className="h-48 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />;
-    
+
     const colorMap: Record<string, { text: string; bg: string; bar: string; border: string }> = {
         blue: { text: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info-muted))]', bar: 'bg-[hsl(var(--primary))]', border: 'border-[hsl(var(--primary))/0.2]' },
         amber: { text: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning-muted))]', bar: 'bg-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))/0.2]' }
@@ -332,7 +332,7 @@ function ModalityCard({ title, stats, icon: Icon, color = 'blue' }: ModalityCard
                     <h5 className={clsx("text-xl font-bold tracking-tight", c.text)}>{stats.rate}%</h5>
                 </div>
             </div>
-            
+
             <div>
                 <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wider">{title}</h4>
                 <div className="flex items-center gap-2 mt-1">
@@ -351,12 +351,12 @@ function ModalityCard({ title, stats, icon: Icon, color = 'blue' }: ModalityCard
                     <p className="text-lg font-bold tracking-tighter">{stats.total}</p>
                 </div>
             </div>
-            
+
             <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
-                <motion.div 
-                    initial={{ width: 0 }} 
-                    animate={{ width: `${stats.rate}%` }} 
-                    className={clsx("h-full", c.bar)} 
+                <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${stats.rate}%` }}
+                    className={clsx("h-full", c.bar)}
                 />
             </div>
         </div>
@@ -377,7 +377,7 @@ function StatCard({ label, value, icon: Icon, trend, color = 'blue' }: StatCardP
                     <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
                         {Icon && <Icon size={28} />}
                     </div>
-                    <div className={clsx("font-semibold px-2 py-0.5 rounded-lg border", 
+                    <div className={clsx("font-semibold px-2 py-0.5 rounded-lg border",
                         trend?.startsWith('+') ? "text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border-[hsl(var(--success))/0.2] dark:bg-[hsl(var(--success)/0.15)] dark:border-[hsl(var(--success))/0.2]" : "text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.2)] dark:bg-[hsl(var(--destructive)/0.15)] dark:border-[hsl(var(--destructive)/0.2)]"
                     )}>
                         {trend}

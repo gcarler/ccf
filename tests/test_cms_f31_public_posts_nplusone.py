@@ -23,6 +23,7 @@ Test pattern:
 - Attach an author persona to verify ``author_name`` resolution.
 - Hit ``GET /api/cms/v2/public/sites/{key}/posts`` and assert the full shape.
 """
+
 import uuid
 from datetime import datetime, timezone
 
@@ -46,8 +47,9 @@ def _seed_site(db, key="f31"):
     return site
 
 
-def _make_post(db, site_id, *, slug, title="P", status="published",
-               published_at=None, author_persona_id=None, with_seo_json=True):
+def _make_post(
+    db, site_id, *, slug, title="P", status="published", published_at=None, author_persona_id=None, with_seo_json=True
+):
     """Insert a published post directly via ORM.
 
     With ``with_seo_json=False`` the post is created WITHOUT setting
@@ -159,9 +161,11 @@ class TestPublicPostsListF31NPlusOne:
             datetime(2024, 2, 1, tzinfo=timezone.utc),
             datetime(2024, 3, 1, tzinfo=timezone.utc),
         ]
-        slugs = [f"post-jan-{uuid.uuid4().hex[:4]}",
-                 f"post-feb-{uuid.uuid4().hex[:4]}",
-                 f"post-mar-{uuid.uuid4().hex[:4]}"]
+        slugs = [
+            f"post-jan-{uuid.uuid4().hex[:4]}",
+            f"post-feb-{uuid.uuid4().hex[:4]}",
+            f"post-mar-{uuid.uuid4().hex[:4]}",
+        ]
         for s, d in zip(slugs, dates):
             _make_post(db_session, site.id, slug=s, published_at=d)
 
@@ -203,8 +207,7 @@ class TestPublicPostsListF31NPlusOne:
         """
         user, persona, sede = seed_admin(db_session)
         site = _seed_site(db_session, "f31-author")
-        _make_post(db_session, site.id, slug="with-author",
-                   author_persona_id=persona.id)
+        _make_post(db_session, site.id, slug="with-author", author_persona_id=persona.id)
         resp = client.get(f"/api/cms/v2/public/sites/{site.site_key}/posts")
         assert resp.status_code == 200
         item = resp.json()["items"][0]
@@ -243,8 +246,7 @@ class TestPublicPostsListF31NPlusOne:
         endpoint must return 200 with a default-dict ``seo_json``.
         """
         site = _seed_site(db_session, "f31-no-seo")
-        post = _make_post(db_session, site.id, slug="no-seo",
-                          with_seo_json=False)
+        post = _make_post(db_session, site.id, slug="no-seo", with_seo_json=False)
         # The post must be queryable through the serialized path
         resp = client.get(f"/api/cms/v2/public/sites/{site.site_key}/posts")
         # Before fix: 500 (ValidationError); after: 200 with seo_json
@@ -268,9 +270,7 @@ class TestPublicPostSingleF31ModelValidate:
         post = _make_post(db_session, site.id, slug="single", title="Single")
         _attach_category(db_session, site.id, post.id, "guide", "Guide")
         _attach_tag(db_session, site.id, post.id, "info", "Info")
-        resp = client.get(
-            f"/api/cms/v2/public/sites/{site.site_key}/posts/single"
-        )
+        resp = client.get(f"/api/cms/v2/public/sites/{site.site_key}/posts/single")
         assert resp.status_code == 200, resp.text
         item = resp.json()
         assert item["slug"] == "single"
@@ -282,7 +282,5 @@ class TestPublicPostSingleF31ModelValidate:
 
     def test_single_post_not_found_returns_404(self, client, db_session):
         site = _seed_site(db_session, "f31-404")
-        resp = client.get(
-            f"/api/cms/v2/public/sites/{site.site_key}/posts/nonexistent-slug"
-        )
+        resp = client.get(f"/api/cms/v2/public/sites/{site.site_key}/posts/nonexistent-slug")
         assert resp.status_code == 404

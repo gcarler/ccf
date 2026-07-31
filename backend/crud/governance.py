@@ -18,16 +18,10 @@ def get_automation_rules(db: Session, only_active: bool = False):
 
 
 def get_automation_rule(db: Session, rule_id: UUID) -> Optional[models.AutomationRule]:
-    return (
-        db.query(models.AutomationRule)
-        .filter(models.AutomationRule.id == rule_id)
-        .first()
-    )
+    return db.query(models.AutomationRule).filter(models.AutomationRule.id == rule_id).first()
 
 
-def create_automation_rule(
-    db: Session, payload: AutomationRuleCreate
-) -> models.AutomationRule:
+def create_automation_rule(db: Session, payload: AutomationRuleCreate) -> models.AutomationRule:
     row = models.AutomationRule(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -38,11 +32,7 @@ def create_automation_rule(
 def update_automation_rule(
     db: Session, rule_id: UUID, payload: AutomationRuleUpdate
 ) -> Optional[models.AutomationRule]:
-    row = (
-        db.query(models.AutomationRule)
-        .filter(models.AutomationRule.id == rule_id)
-        .first()
-    )
+    row = db.query(models.AutomationRule).filter(models.AutomationRule.id == rule_id).first()
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -53,11 +43,7 @@ def update_automation_rule(
 
 
 def delete_automation_rule(db: Session, rule_id: UUID) -> bool:
-    row = (
-        db.query(models.AutomationRule)
-        .filter(models.AutomationRule.id == rule_id)
-        .first()
-    )
+    row = db.query(models.AutomationRule).filter(models.AutomationRule.id == rule_id).first()
     if not row:
         return False
     row.is_active = False
@@ -67,11 +53,7 @@ def delete_automation_rule(db: Session, rule_id: UUID) -> bool:
 
 def record_automation_run(db: Session, rule_id: UUID):
     """Update last_run timestamp for an automation rule."""
-    row = (
-        db.query(models.AutomationRule)
-        .filter(models.AutomationRule.id == rule_id)
-        .first()
-    )
+    row = db.query(models.AutomationRule).filter(models.AutomationRule.id == rule_id).first()
     if not row:
         return None
     row.last_run = _utcnow()

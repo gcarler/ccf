@@ -23,6 +23,7 @@ def _ensure_utc(value: Any) -> Any:
         return value.replace(tzinfo=timezone.utc)
     return value
 
+
 # ── Enums canónicos (validación en borde Pydantic) ────────────────────────────
 # Definidos aquí (no en api/academy.py) porque los write schemas los usan.
 # Reflejan el vocabulario de String(50) en models_academy_core.py.
@@ -30,6 +31,7 @@ def _ensure_utc(value: Any) -> Any:
 
 class Modality(str, Enum):
     """TKT-051 — vocabulario canónico para ``Course.modality`` (String 50)."""
+
     ONLINE = "online"
     PRESENTIAL = "presential"
     HYBRID = "hybrid"
@@ -37,6 +39,7 @@ class Modality(str, Enum):
 
 class ContentType(str, Enum):
     """TKT-054 — vocabulario canónico para ``Lesson.content_type`` (String 50)."""
+
     VIDEO = "video"
     TEXT = "text"
     DOCUMENT = "document"
@@ -156,9 +159,7 @@ class AssessmentAttempt(BaseModel):
     model_config = orm_config
 
     # M-09 — tz-aware normalización (SQLite read-back pierde tzinfo).
-    _ensure_tz_created = field_validator("created_at", mode="before")(
-        classmethod(lambda cls, v: _ensure_utc(v))
-    )
+    _ensure_tz_created = field_validator("created_at", mode="before")(classmethod(lambda cls, v: _ensure_utc(v)))
 
 
 class AssessmentAnswer(BaseModel):
@@ -207,9 +208,7 @@ class Enrollment(BaseModel):
     model_config = orm_config
 
     # M-09 — tz-aware normalización (SQLite read-back pierde tzinfo).
-    _ensure_tz_created = field_validator("created_at", mode="before")(
-        classmethod(lambda cls, v: _ensure_utc(v))
-    )
+    _ensure_tz_created = field_validator("created_at", mode="before")(classmethod(lambda cls, v: _ensure_utc(v)))
 
 
 class CourseAttendanceBase(BaseModel):
@@ -241,23 +240,24 @@ class Certificate(BaseModel):
     model_config = orm_config
 
     # M-09 — tz-aware normalización (SQLite read-back pierde tzinfo).
-    _ensure_tz_issued = field_validator("issued_at", mode="before")(
-        classmethod(lambda cls, v: _ensure_utc(v))
-    )
+    _ensure_tz_issued = field_validator("issued_at", mode="before")(classmethod(lambda cls, v: _ensure_utc(v)))
 
 
 class CertificateValidationStudent(BaseModel):
     """Metadatos públicos del estudiante certificado — sin PII ni IDs internos."""
+
     username: str | None = None
 
 
 class CertificateValidationCourse(BaseModel):
     """Metadatos públicos del curso asociado al certificado."""
+
     title: str
 
 
 class CertificateValidationEnrollment(BaseModel):
     """Datos públicos de la inscripción firmada por el certificado."""
+
     student: CertificateValidationStudent
     course: CertificateValidationCourse
 
@@ -273,6 +273,7 @@ class CertificateValidation(BaseModel):
     pública. No expone ``id`` ni ``enrollment_id`` internos — cierra la
     enumeración oracle de A-01.
     """
+
     certificate_code: str
     certificate_type: str | None = None
     issued_at: datetime
@@ -472,6 +473,7 @@ class LessonProgressResponse(BaseModel):
     ``is_completed``) como el dict fallback (0.0 / 0 / False cuando no
     hay progreso guardado) en el mismo contract.
     """
+
     model_config = orm_config
 
     progress_percent: float = 0.0

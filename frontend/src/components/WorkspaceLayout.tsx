@@ -251,7 +251,7 @@ function WorkspaceLayoutInner({
             if (!isDraggingS2) return;
             const delta = e.clientX - startPosRef.current;
             let newWidth = startWidthRef.current + delta;
-            
+
             if (newWidth < snapThreshold) {
                 newWidth = minS2Width;
             }
@@ -531,7 +531,7 @@ function WorkspaceLayoutInner({
                                 </ErrorBoundary>
                             </div>
                         </div>
-                        
+
                         <WorkspaceInbox isOpen={showInbox} onClose={() => setShowInbox(false)} />
                         <MeshChat isOpen={showChat} onClose={() => setShowChat(false)} />
 

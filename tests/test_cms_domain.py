@@ -5,6 +5,7 @@ from backend import crud, models
 
 def seed_user_and_persona(db_session):
     from tests.conftest import seed_admin
+
     user, persona, sede = seed_admin(db_session, email="cms-editor@example.com")
     return user, persona
 
@@ -30,7 +31,8 @@ def test_cms_page_versioning(db_session):
 
     site = _seed_site(db_session)
     page = crud.create_cms_page(
-        db_session, site.id,
+        db_session,
+        site.id,
         CmsPageCreate(slug="landing", title="Original", status="draft"),
         user_id=None,
     )
@@ -38,7 +40,10 @@ def test_cms_page_versioning(db_session):
 
     # Update the page title
     updated = crud.update_cms_page(
-        db_session, page, CmsPageUpdate(title="Actualizado"), user_id=None,
+        db_session,
+        page,
+        CmsPageUpdate(title="Actualizado"),
+        user_id=None,
     )
     assert updated.title == "Actualizado"
 
@@ -68,5 +73,3 @@ def test_create_cms_media_item(db_session):
         actor_user_id=user.id,
     )
     assert item.id is not None
-
-

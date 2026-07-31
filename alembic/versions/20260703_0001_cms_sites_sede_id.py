@@ -43,17 +43,13 @@ def _has_table(table: str) -> bool:
 def _has_column(table: str, column: str) -> bool:
     if not _has_table(table):
         return False
-    return any(
-        col.get("name") == column for col in _inspector().get_columns(table)
-    )
+    return any(col.get("name") == column for col in _inspector().get_columns(table))
 
 
 def _has_index(table: str, index_name: str) -> bool:
     if not _has_table(table):
         return False
-    return any(
-        idx.get("name") == index_name for idx in _inspector().get_indexes(table)
-    )
+    return any(idx.get("name") == index_name for idx in _inspector().get_indexes(table))
 
 
 def _uuid_type():

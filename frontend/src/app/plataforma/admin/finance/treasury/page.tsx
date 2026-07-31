@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { 
+import {
     DollarSign, TrendingUp, Calendar, PieChart, Filter
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
@@ -153,4 +153,3 @@ export default function AdminTreasuryPage() {
         </div>
     );
 }
-

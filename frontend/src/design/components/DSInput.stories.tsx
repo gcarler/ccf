@@ -75,9 +75,9 @@ export const FormExample: Story = {
             <DSInput label="Nombre" placeholder="Tu nombre" />
             <DSInput label="Email" placeholder="correo@ejemplo.com" icon={Mail} />
             <DSInput label="Contraseña" type="password" placeholder="••••••••" icon={Lock} />
-            <DSInput 
-                label="Buscar" 
-                placeholder="Buscar personas..." 
+            <DSInput
+                label="Buscar"
+                placeholder="Buscar personas..."
                 icon={Search}
                 helperText="Presiona Enter para buscar"
             />

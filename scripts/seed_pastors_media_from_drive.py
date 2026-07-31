@@ -57,11 +57,7 @@ TARGET_FILES = {
 
 
 def _find_admin_user(db) -> models.Usuario:
-    user = (
-        db.query(models.Usuario)
-        .filter(models.Usuario.email == "gscarlosernesto@gmail.com")
-        .first()
-    )
+    user = db.query(models.Usuario).filter(models.Usuario.email == "gscarlosernesto@gmail.com").first()
     if user is None:
         user = (
             db.query(models.Usuario)
@@ -119,16 +115,12 @@ def _ensure_cms_media(db, user: models.Usuario, slug: str, content: bytes, origi
     # the live endpoint would 500 on the wrong URL. Strip the leading
     # ``/static/`` so the public URL is canonical.
     if public_path.startswith("/static/"):
-        relative = public_path[len("/static/"):]
+        relative = public_path[len("/static/") :]
     else:
         relative = public_path.lstrip("/")
     public_url = f"/api/static/{relative}"
 
-    existing = (
-        db.query(models.CmsMediaItem)
-        .filter(models.CmsMediaItem.url == public_url)
-        .first()
-    )
+    existing = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.url == public_url).first()
     if existing is None:
         crud.create_cms_media_item(
             db,
@@ -177,9 +169,7 @@ def main() -> int:
             raise RuntimeError(f"CMS site {SITE_KEY!r} not found")
 
         page = (
-            db.query(models.CmsPage)
-            .filter(models.CmsPage.site_id == site.id, models.CmsPage.slug == PAGE_SLUG)
-            .first()
+            db.query(models.CmsPage).filter(models.CmsPage.site_id == site.id, models.CmsPage.slug == PAGE_SLUG).first()
         )
         if page is None:
             raise RuntimeError("pastors page not found; run ensure_public_cms_pastors.py first")
@@ -204,7 +194,9 @@ def main() -> int:
                             parsed = None
                         if isinstance(parsed, dict):
                             parsed["bg_image"] = desired
-                            props["content"] = json.dumps(parsed, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+                            props["content"] = json.dumps(
+                                parsed, ensure_ascii=False, separators=(",", ":"), sort_keys=True
+                            )
                     section.props_json = props
                     changed = True
             elif section.section_key == "pastors":
@@ -232,7 +224,9 @@ def main() -> int:
                                 parsed = None
                             if isinstance(parsed, dict):
                                 parsed["pastors"] = next_payload
-                                props["content"] = json.dumps(parsed, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+                                props["content"] = json.dumps(
+                                    parsed, ensure_ascii=False, separators=(",", ":"), sort_keys=True
+                                )
                         section.props_json = props
                         changed = True
 

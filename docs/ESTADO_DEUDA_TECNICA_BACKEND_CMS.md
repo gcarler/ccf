@@ -1,6 +1,6 @@
 # Deuda Técnica del Backend CMS
 
-> **Auditoría realizada:** 2026-07-29  
+> **Auditoría realizada:** 2026-07-29
 > **Alcance:** APIs, CRUD, modelos, esquemas y servicios relacionados con CMS en el backend.
 
 ## Resumen Ejecutivo
@@ -105,5 +105,5 @@ El backend CMS presenta una **alta concentración de deuda estructural**: archiv
 
 ---
 
-> **Generado automáticamente a partir del análisis de archivos backend.**  
+> **Generado automáticamente a partir del análisis de archivos backend.**
 > Para regenerar o actualizar, revisar los archivos listados en la sección *Métricas generales*.

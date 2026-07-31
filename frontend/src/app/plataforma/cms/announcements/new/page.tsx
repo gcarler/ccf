@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-    Bell, 
-    Save, 
-    Send, 
-    ImageIcon, 
-    Users, 
-    Eye, 
+import {
+    Bell,
+    Save,
+    Send,
+    ImageIcon,
+    Users,
+    Eye,
     Sparkles,
     Bot
 } from 'lucide-react';
@@ -108,11 +108,11 @@ export default function NewAnnouncementPage() {
                 <div className="lg:col-span-8 space-y-3">
                     <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
                         <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-[hsl(var(--info))]/5 rounded-full blur-3xl" />
-                        
+
                         <div className="relative z-10 space-y-3">
                             <div className="space-y-2">
                                 <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Encabezado de la Noticia</label>
-                                <input 
+                                <input
                                     value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
                                     placeholder="Ej: Gran Vigilia de Oración - Próximo Viernes"
                                     className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-2 px-4 text-lg font-bold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all"
@@ -121,7 +121,7 @@ export default function NewAnnouncementPage() {
 
                             <div className="space-y-2">
                                 <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Cuerpo del Mensaje</label>
-                                <textarea 
+                                <textarea
                                     value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})}
                                     placeholder="Escribe los detalles aquí..."
                                     className="w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 text-lg font-medium leading-relaxed outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none"
@@ -146,11 +146,11 @@ export default function NewAnnouncementPage() {
                 <aside className="lg:col-span-4 space-y-3">
                     <section className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-xl space-y-3">
                         <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Ajustes de Publicación</h3>
-                        
+
                         <div className="space-y-3">
                             <div className="space-y-2">
                                 <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-2">Categoría</label>
-                                <select 
+                                <select
                                     value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}
                                     className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/10 border-none rounded-md py-3 px-4 text-xs font-bold outline-none"
                                 >
@@ -212,4 +212,3 @@ export default function NewAnnouncementPage() {
         </AdminShell>
     );
 }
-

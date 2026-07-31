@@ -147,15 +147,9 @@ def verify_section_types(db: Session) -> VerifyResult:
     return VerifyResult(
         missing=[name for name in canonical if name not in existing],
         extra=[name for name in existing if name not in canonical],
-        deactivated=[
-            name
-            for name, row in existing.items()
-            if name in canonical and not row.is_active
-        ],
+        deactivated=[name for name, row in existing.items() if name in canonical and not row.is_active],
         out_of_sync_desc=[
-            name
-            for name, row in existing.items()
-            if name in canonical and row.description != canonical[name]
+            name for name, row in existing.items() if name in canonical and row.description != canonical[name]
         ],
     )
 
@@ -198,10 +192,7 @@ def main(argv: Sequence[str] | None = None, db: Session | None = None) -> int:
             for line in _format_check_drift(result):
                 print(line)
             if result.is_synced:
-                print(
-                    "OK"
-                    f" — {len(EXPECTED_SECTION_TYPES)} section types match canonical list."
-                )
+                print(f"OK — {len(EXPECTED_SECTION_TYPES)} section types match canonical list.")
                 return 0
             # Note: even with drift here, the verify report may also list
             # ``extra`` or ``deactivated`` rows — those are informational and
@@ -210,11 +201,7 @@ def main(argv: Sequence[str] | None = None, db: Session | None = None) -> int:
             return 1
 
         result = apply_section_types(session)
-        print(
-            "Seed complete"
-            f" — added: {result.added}, updated: {result.updated},"
-            f" total: {result.total_after}"
-        )
+        print(f"Seed complete — added: {result.added}, updated: {result.updated}, total: {result.total_after}")
         return 0
     finally:
         if own_session:

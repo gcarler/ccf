@@ -1,6 +1,7 @@
 """
 Tests for projects.py — main CRUD endpoints.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -32,14 +33,25 @@ def _make_project(full):
 class TestProjectCRUD:
     def test_list(self, full):
         assert _ok(full["c"].get("/api/projects", headers=full["h"]).status_code)
+
     def test_create(self, full):
-        assert _ok(full["c"].post("/api/projects", json={"title": f"P-{uuid.uuid4().hex[:6]}"}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"].post("/api/projects", json={"title": f"P-{uuid.uuid4().hex[:6]}"}, headers=full["h"]).status_code
+        )
+
     def test_get(self, full):
         assert _ok(full["c"].get(f"/api/projects/{_make_project(full)['id']}", headers=full["h"]).status_code)
+
     def test_patch(self, full):
-        assert _ok(full["c"].patch(f"/api/projects/{_make_project(full)['id']}", json={"title": "Upd"}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .patch(f"/api/projects/{_make_project(full)['id']}", json={"title": "Upd"}, headers=full["h"])
+            .status_code
+        )
+
     def test_delete(self, full):
         assert _ok(full["c"].delete(f"/api/projects/{_make_project(full)['id']}", headers=full["h"]).status_code)
+
     def test_not_found(self, full):
         assert full["c"].get(f"/api/projects/{uuid.uuid4()}", headers=full["h"]).status_code == 404
 
@@ -52,22 +64,34 @@ class TestProjectPhases:
 class TestProjectTasks:
     def test_list(self, full):
         assert _ok(full["c"].get(f"/api/projects/{_make_project(full)['id']}/tasks", headers=full["h"]).status_code)
+
     def test_create(self, full):
-        assert _ok(full["c"].post(f"/api/projects/{_make_project(full)['id']}/tasks", json={"title": "T"}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .post(f"/api/projects/{_make_project(full)['id']}/tasks", json={"title": "T"}, headers=full["h"])
+            .status_code
+        )
+
     def test_get_task(self, full):
         p = _make_project(full)
         t = full["c"].post(f"/api/projects/{p['id']}/tasks", json={"title": "Get"}, headers=full["h"]).json()
         assert _ok(full["c"].get(f"/api/projects/tasks/{t['id']}", headers=full["h"]).status_code)
+
     def test_patch_task(self, full):
         p = _make_project(full)
         t = full["c"].post(f"/api/projects/{p['id']}/tasks", json={"title": "Patch"}, headers=full["h"]).json()
-        assert _ok(full["c"].patch(f"/api/projects/tasks/{t['id']}", json={"title": "Upd"}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"].patch(f"/api/projects/tasks/{t['id']}", json={"title": "Upd"}, headers=full["h"]).status_code
+        )
+
     def test_delete_task(self, full):
         p = _make_project(full)
         t = full["c"].post(f"/api/projects/{p['id']}/tasks", json={"title": "Del"}, headers=full["h"]).json()
         assert _ok(full["c"].delete(f"/api/projects/{p['id']}/tasks/{t['id']}", headers=full["h"]).status_code)
+
     def test_not_found(self, full):
         assert full["c"].get(f"/api/projects/tasks/{uuid.uuid4()}", headers=full["h"]).status_code == 404
+
     def test_my_tasks(self, full):
         assert _ok(full["c"].get("/api/projects/tasks", headers=full["h"]).status_code)
 
@@ -75,8 +99,13 @@ class TestProjectTasks:
 class TestProjectComments:
     def test_list_all(self, full):
         assert _ok(full["c"].get("/api/projects/comments", headers=full["h"]).status_code)
+
     def test_create(self, full):
-        assert _ok(full["c"].post(f"/api/projects/{_make_project(full)['id']}/comments", json={"content": "Hi"}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .post(f"/api/projects/{_make_project(full)['id']}/comments", json={"content": "Hi"}, headers=full["h"])
+            .status_code
+        )
 
 
 class TestProjectSummary:
@@ -102,10 +131,19 @@ class TestProjectInbox:
 class TestProjectWhiteboards:
     def test_list(self, full):
         assert _ok(full["c"].get("/api/projects/whiteboards", headers=full["h"]).status_code)
+
     def test_get(self, full):
-        assert _ok(full["c"].get(f"/api/projects/{_make_project(full)['id']}/whiteboard", headers=full["h"]).status_code)
+        assert _ok(
+            full["c"].get(f"/api/projects/{_make_project(full)['id']}/whiteboard", headers=full["h"]).status_code
+        )
+
     def test_create(self, full):
-        assert _ok(full["c"].post(f"/api/projects/{_make_project(full)['id']}/whiteboard", json={"content": "D"}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .post(f"/api/projects/{_make_project(full)['id']}/whiteboard", json={"content": "D"}, headers=full["h"])
+            .status_code
+        )
+
     def test_delete(self, full):
         p = _make_project(full)
         full["c"].post(f"/api/projects/{p['id']}/whiteboard", json={"content": "D"}, headers=full["h"])
@@ -115,8 +153,17 @@ class TestProjectWhiteboards:
 class TestProjectWiki:
     def test_get(self, full):
         assert _ok(full["c"].get(f"/api/projects/{_make_project(full)['id']}/wiki", headers=full["h"]).status_code)
+
     def test_create(self, full):
-        assert _ok(full["c"].post(f"/api/projects/{_make_project(full)['id']}/wiki", json={"title": "W", "content": "C"}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .post(
+                f"/api/projects/{_make_project(full)['id']}/wiki",
+                json={"title": "W", "content": "C"},
+                headers=full["h"],
+            )
+            .status_code
+        )
 
 
 class TestProjectMessages:
@@ -128,17 +175,41 @@ class TestProjectSubtask:
     def test_create(self, full):
         p = _make_project(full)
         t = full["c"].post(f"/api/projects/{p['id']}/tasks", json={"title": "P"}, headers=full["h"]).json()
-        assert _ok(full["c"].post(f"/api/projects/{p['id']}/tasks/{t['id']}/subtasks", json={"title": "S"}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .post(f"/api/projects/{p['id']}/tasks/{t['id']}/subtasks", json={"title": "S"}, headers=full["h"])
+            .status_code
+        )
+
     def test_patch(self, full):
         p = _make_project(full)
         t = full["c"].post(f"/api/projects/{p['id']}/tasks", json={"title": "P"}, headers=full["h"]).json()
-        st = full["c"].post(f"/api/projects/{p['id']}/tasks/{t['id']}/subtasks", json={"title": "S"}, headers=full["h"]).json()
-        assert _ok(full["c"].patch(f"/api/projects/{p['id']}/tasks/{t['id']}/subtasks/{st['id']}", json={"title": "U"}, headers=full["h"]).status_code)
+        st = (
+            full["c"]
+            .post(f"/api/projects/{p['id']}/tasks/{t['id']}/subtasks", json={"title": "S"}, headers=full["h"])
+            .json()
+        )
+        assert _ok(
+            full["c"]
+            .patch(
+                f"/api/projects/{p['id']}/tasks/{t['id']}/subtasks/{st['id']}", json={"title": "U"}, headers=full["h"]
+            )
+            .status_code
+        )
+
     def test_delete(self, full):
         p = _make_project(full)
         t = full["c"].post(f"/api/projects/{p['id']}/tasks", json={"title": "P"}, headers=full["h"]).json()
-        st = full["c"].post(f"/api/projects/{p['id']}/tasks/{t['id']}/subtasks", json={"title": "S"}, headers=full["h"]).json()
-        assert _ok(full["c"].delete(f"/api/projects/{p['id']}/tasks/{t['id']}/subtasks/{st['id']}", headers=full["h"]).status_code)
+        st = (
+            full["c"]
+            .post(f"/api/projects/{p['id']}/tasks/{t['id']}/subtasks", json={"title": "S"}, headers=full["h"])
+            .json()
+        )
+        assert _ok(
+            full["c"]
+            .delete(f"/api/projects/{p['id']}/tasks/{t['id']}/subtasks/{st['id']}", headers=full["h"])
+            .status_code
+        )
 
 
 class TestProjectSupplies:
@@ -150,24 +221,53 @@ class TestProjectSupplies:
     def test_create_supply(self, full):
         p = _make_project(full)
         t = full["c"].post(f"/api/projects/{p['id']}/tasks", json={"title": "T"}, headers=full["h"]).json()
-        assert _ok(full["c"].post(f"/api/projects/{p['id']}/tasks/{t['id']}/supplies",
-            json={"item_name": "Hammer", "quantity": 2}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .post(
+                f"/api/projects/{p['id']}/tasks/{t['id']}/supplies",
+                json={"item_name": "Hammer", "quantity": 2},
+                headers=full["h"],
+            )
+            .status_code
+        )
 
     def test_patch_supply(self, full):
         p = _make_project(full)
         t = full["c"].post(f"/api/projects/{p['id']}/tasks", json={"title": "T"}, headers=full["h"]).json()
-        s = full["c"].post(f"/api/projects/{p['id']}/tasks/{t['id']}/supplies",
-            json={"item_name": "Nail", "quantity": 10}, headers=full["h"]).json()
-        assert _ok(full["c"].patch(f"/api/projects/{p['id']}/tasks/{t['id']}/supplies/{s['id']}",
-            json={"quantity": 5}, headers=full["h"]).status_code)
+        s = (
+            full["c"]
+            .post(
+                f"/api/projects/{p['id']}/tasks/{t['id']}/supplies",
+                json={"item_name": "Nail", "quantity": 10},
+                headers=full["h"],
+            )
+            .json()
+        )
+        assert _ok(
+            full["c"]
+            .patch(
+                f"/api/projects/{p['id']}/tasks/{t['id']}/supplies/{s['id']}", json={"quantity": 5}, headers=full["h"]
+            )
+            .status_code
+        )
 
     def test_delete_supply(self, full):
         p = _make_project(full)
         t = full["c"].post(f"/api/projects/{p['id']}/tasks", json={"title": "T"}, headers=full["h"]).json()
-        s = full["c"].post(f"/api/projects/{p['id']}/tasks/{t['id']}/supplies",
-            json={"item_name": "Nail", "quantity": 5}, headers=full["h"]).json()
-        assert _ok(full["c"].delete(f"/api/projects/{p['id']}/tasks/{t['id']}/supplies/{s['id']}",
-            headers=full["h"]).status_code)
+        s = (
+            full["c"]
+            .post(
+                f"/api/projects/{p['id']}/tasks/{t['id']}/supplies",
+                json={"item_name": "Nail", "quantity": 5},
+                headers=full["h"],
+            )
+            .json()
+        )
+        assert _ok(
+            full["c"]
+            .delete(f"/api/projects/{p['id']}/tasks/{t['id']}/supplies/{s['id']}", headers=full["h"])
+            .status_code
+        )
 
 
 class TestProjectAttachments:
@@ -177,21 +277,27 @@ class TestProjectAttachments:
 
     def test_delete_attachment_not_found(self, full):
         p = _make_project(full)
-        assert full["c"].delete(f"/api/projects/{p['id']}/tasks/{uuid.uuid4()}/attachments/{uuid.uuid4()}",
-            headers=full["h"]).status_code == 404
+        assert (
+            full["c"]
+            .delete(f"/api/projects/{p['id']}/tasks/{uuid.uuid4()}/attachments/{uuid.uuid4()}", headers=full["h"])
+            .status_code
+            == 404
+        )
 
 
 class TestProjectInboxRead:
     def test_read_not_found(self, full):
-        assert full["c"].post(f"/api/projects/inbox/{uuid.uuid4()}/read",
-            headers=full["h"]).status_code == 404
+        assert full["c"].post(f"/api/projects/inbox/{uuid.uuid4()}/read", headers=full["h"]).status_code == 404
 
 
 class TestProjectCommentsPatch:
     def test_patch_not_found(self, full):
-        assert full["c"].patch(f"/api/projects/comments/{uuid.uuid4()}",
-            json={"content": "X"}, headers=full["h"]).status_code == 404
+        assert (
+            full["c"]
+            .patch(f"/api/projects/comments/{uuid.uuid4()}", json={"content": "X"}, headers=full["h"])
+            .status_code
+            == 404
+        )
 
     def test_delete_not_found(self, full):
-        assert full["c"].delete(f"/api/projects/comments/{uuid.uuid4()}",
-            headers=full["h"]).status_code == 404
+        assert full["c"].delete(f"/api/projects/comments/{uuid.uuid4()}", headers=full["h"]).status_code == 404

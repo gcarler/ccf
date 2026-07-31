@@ -12,13 +12,13 @@ export default function GlobalEventAnalyticsPage() {
  const { token } = useAuth();
  const [period, setPeriod] = useState<string>('MONTH');
  const [eventType, setEventType] = useState<string>('ALL');
- 
+
  const [loading, setLoading] = useState(true);
  const [data, setData] = useState<GlobalEventAnalyticsData | null>(null);
 
  useEffect(() => {
  if (!token) return;
- 
+
  const loadAnalytics = async () => {
  setLoading(true);
  try {
@@ -67,20 +67,20 @@ export default function GlobalEventAnalyticsPage() {
  tags={['Data Science', 'Crecimiento', 'Asistencia']}
  watchers={['Sistema Optimus', 'Módulo Analítico']}
  />
- 
+
  <div className="p-4 lg:p-3 space-y-3 w-full">
- 
+
  {/* FILTROS */}
  <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center">
  <div className="flex items-center gap-3 text-[hsl(var(--text-primary))] font-semibold uppercase tracking-wide text-xs">
  <Filter size={18} className="text-[hsl(var(--primary))]" /> Filtros Activos
  </div>
  <div className="h-10 w-px bg-[hsl(var(--bg-muted))] hidden md:block"></div>
- 
+
  <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
  <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Agrupación de Tiempo</label>
- <select 
+ <select
  value={period}
  onChange={e => setPeriod(e.target.value)}
  className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
@@ -90,7 +90,7 @@ export default function GlobalEventAnalyticsPage() {
  </div>
  <div>
  <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Tipo de Evento</label>
- <select 
+ <select
  value={eventType}
  onChange={e => setEventType(e.target.value)}
  className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
@@ -165,7 +165,7 @@ export default function GlobalEventAnalyticsPage() {
  <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
  <BarChart3 size={16} /> Tendencia en el tiempo
  </h3>
- 
+
  {data.series.length === 0 ? (
  <div className="text-center py-1.5 text-[hsl(var(--text-secondary))] text-sm font-bold">No hay datos de asistencia para mostrar con este filtro.</div>
  ) : (
@@ -174,7 +174,7 @@ export default function GlobalEventAnalyticsPage() {
  // Maximo para normalizar alturas
  const maxTotal = data.kpis.peak_period?.total || 1;
  const heightPct = Math.max(5, Math.round((d.total / maxTotal) * 100));
- 
+
  return (
  <div key={d.key} className="flex-1 min-w-[60px] max-w-[100px] flex flex-col items-center justify-end group relative h-full">
  {/* Tooltip */}
@@ -183,13 +183,13 @@ export default function GlobalEventAnalyticsPage() {
  <span>{d.total} asistentes</span>
  <span className="text-[hsl(var(--text-secondary))] text-2xs">{d.sessions} sesiones</span>
  </div>
- 
+
  {/* Barra */}
- <div 
- className="w-full bg-gradient-to-t from-[hsl(var(--info)/0.2)] to-[hsl(var(--info)/0.8)] hover:from-[hsl(var(--info))] hover:to-[hsl(var(--info))] rounded-t-xl transition-all duration-500 border-t border-[hsl(var(--info)/0.5)]" 
+ <div
+ className="w-full bg-gradient-to-t from-[hsl(var(--info)/0.2)] to-[hsl(var(--info)/0.8)] hover:from-[hsl(var(--info))] hover:to-[hsl(var(--info))] rounded-t-xl transition-all duration-500 border-t border-[hsl(var(--info)/0.5)]"
  style={{ height: `${heightPct}%` }}
  ></div>
- 
+
  {/* Label Eje X */}
  <div className="mt-4 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] rotate-[-45deg] origin-top-left translate-y-2 translate-x-2 whitespace-nowrap">
  {d.label}

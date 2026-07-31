@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { 
-    BookOpen, 
-    FileText, 
-    Plus, 
-    Save, 
+import {
+    BookOpen,
+    FileText,
+    Plus,
+    Save,
     Settings,
     History,
     ChevronRight,
@@ -41,7 +41,7 @@ export default function AdminCourseContentPage() {
     const params = useParams();
     const id = (params?.id as string) || '';
     const { token } = useAuth();
-    
+
     const [course, setCourse] = useState<CourseDetail | null>(null);
     const [lessons, setLessons] = useState<LessonItem[]>([]);
     const [loading, setLoading] = useState(true);

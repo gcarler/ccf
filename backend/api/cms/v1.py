@@ -71,12 +71,7 @@ def list_cms_media(
             )
         )
     total = base_query.count()
-    items = (
-        base_query.order_by(models.CmsMediaItem.updated_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    items = base_query.order_by(models.CmsMediaItem.updated_at.desc()).offset(skip).limit(limit).all()
     return PaginatedResponse(
         items=[schemas.CmsMediaRead.model_validate(i) for i in items],
         total=total,
@@ -153,9 +148,7 @@ def delete_cms_media(
 ):
     row = _get_scoped_cms_media(db, current_user, item_id)
     try:
-        _delete_cms_media(
-            db, row, permanent=permanent, actor_user_id=str(current_user.id)
-        )
+        _delete_cms_media(db, row, permanent=permanent, actor_user_id=str(current_user.id))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -230,11 +223,7 @@ async def edit_cms_media(
     else:
         edited_filename = f"{base_name}_edited{ext}"
 
-    parsed_tags = (
-        [tag.strip() for tag in tags.split(",") if tag.strip()]
-        if tags is not None
-        else (row.tags or [])
-    )
+    parsed_tags = [tag.strip() for tag in tags.split(",") if tag.strip()] if tags is not None else (row.tags or [])
 
     if alt_text is not None and alt_text.strip():
         final_alt = alt_text.strip()
@@ -271,13 +260,9 @@ def get_cms_metrics(
     actor_sede = _actor_sede_or_none(db, current_user)
 
     def _cms_posts_by_category(slug: str) -> list[models.CmsPost]:
-        q = db.query(models.CmsPost).join(models.CmsPost.categories).filter(
-            models.CmsCategory.slug == slug
-        )
+        q = db.query(models.CmsPost).join(models.CmsPost.categories).filter(models.CmsCategory.slug == slug)
         if actor_sede is not None:
-            q = q.join(models.CmsSite).filter(
-                models.CmsSite.sede_id == actor_sede
-            )
+            q = q.join(models.CmsSite).filter(models.CmsSite.sede_id == actor_sede)
         return q.distinct().order_by(models.CmsPost.created_at.desc()).all()
 
     cms_testimonials = _cms_posts_by_category("testimonials")
@@ -289,23 +274,13 @@ def get_cms_metrics(
 
     return schemas.CmsMetrics(
         testimonials_total=len(cms_testimonials),
-        testimonials_approved=sum(
-            1 for p in cms_testimonials if p.status == "published"
-        ),
+        testimonials_approved=sum(1 for p in cms_testimonials if p.status == "published"),
         announcements_total=len(cms_announcements),
-        announcements_active=sum(
-            1 for p in cms_announcements if p.status == "published"
-        ),
+        announcements_active=sum(1 for p in cms_announcements if p.status == "published"),
         media_total=len(media),
-        media_images=sum(
-            1 for row in media if (row.mime_type or "").startswith("image/")
-        ),
-        media_videos=sum(
-            1 for row in media if (row.mime_type or "").startswith("video/")
-        ),
-        media_audio=sum(
-            1 for row in media if (row.mime_type or "").startswith("audio/")
-        ),
+        media_images=sum(1 for row in media if (row.mime_type or "").startswith("image/")),
+        media_videos=sum(1 for row in media if (row.mime_type or "").startswith("video/")),
+        media_audio=sum(1 for row in media if (row.mime_type or "").startswith("audio/")),
     )
 
 
@@ -325,11 +300,7 @@ def cleanup_orphan_cms_media_endpoint(
             detail="Cleanup requiere scope por sede; el superadmin sin sede no puede limpiar a nivel plataforma",
         )
 
-    sites = (
-        db.query(models.CmsSite)
-        .filter(models.CmsSite.sede_id == actor_sede)
-        .all()
-    )
+    sites = db.query(models.CmsSite).filter(models.CmsSite.sede_id == actor_sede).all()
     referenced_ids: set[str] = set()
     for site in sites:
         sections = (

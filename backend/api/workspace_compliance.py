@@ -71,14 +71,10 @@ def get_flags_compliance_snapshot(
             "requested_by": snapshot.get("requested_by"),
             "signature": snapshot.get("signature"),
             "summary": {
-                "features_enabled": len(
-                    (snapshot.get("config", {}).get("features_enabled") or {})
-                ),
+                "features_enabled": len((snapshot.get("config", {}).get("features_enabled") or {})),
                 "audit_events": snapshot.get("audit", {}).get("count"),
                 "incidents": snapshot.get("incidents", {}).get("count"),
-                "has_anomaly": snapshot.get("audit", {})
-                .get("anomalies", {})
-                .get("has_anomaly"),
+                "has_anomaly": snapshot.get("audit", {}).get("anomalies", {}).get("has_anomaly"),
                 "critical_incidents": snapshot.get("incidents", {})
                 .get("summary", {})
                 .get("severity_counts", {})
@@ -97,9 +93,7 @@ def get_flags_compliance_snapshot(
         return Response(
             content=json.dumps(snapshot, ensure_ascii=True, indent=2),
             media_type="application/json",
-            headers={
-                "Content-Disposition": "attachment; filename=flags_compliance_snapshot.json"
-            },
+            headers={"Content-Disposition": "attachment; filename=flags_compliance_snapshot.json"},
         )
 
     return {
@@ -215,9 +209,7 @@ def delete_flags_compliance_suppression(
     )
     suppressions = list(policy.get("suppressions") or [])
     previous_len = len(suppressions)
-    suppressions = [
-        item for item in suppressions if str(item.get("id", "")) != suppression_id
-    ]
+    suppressions = [item for item in suppressions if str(item.get("id", "")) != suppression_id]
     if len(suppressions) == previous_len:
         raise HTTPException(status_code=404, detail="suppression not found")
 
@@ -256,11 +248,7 @@ def get_flags_compliance_history(
         rows = [
             row
             for row in rows
-            if (
-                _parse_timestamp(row.get("recorded_at"))
-                or datetime.fromtimestamp(0, tz=timezone.utc)
-            )
-            >= since_dt
+            if (_parse_timestamp(row.get("recorded_at")) or datetime.fromtimestamp(0, tz=timezone.utc)) >= since_dt
         ]
 
     capped_limit = max(1, min(limit, 500))
@@ -321,9 +309,7 @@ def get_flags_compliance_history_item(
         return Response(
             content=json.dumps(item, ensure_ascii=True, indent=2),
             media_type="application/json",
-            headers={
-                "Content-Disposition": f"attachment; filename=flags_compliance_snapshot_{snapshot_id}.json"
-            },
+            headers={"Content-Disposition": f"attachment; filename=flags_compliance_snapshot_{snapshot_id}.json"},
         )
 
     return {
@@ -350,34 +336,18 @@ def compare_flags_compliance_snapshots(
     first_payload = first.get("snapshot") or {}
     second_payload = second.get("snapshot") or {}
     if not isinstance(first_payload, dict) or not isinstance(second_payload, dict):
-        raise HTTPException(
-            status_code=422, detail="Invalid snapshot payload in history"
-        )
+        raise HTTPException(status_code=422, detail="Invalid snapshot payload in history")
 
-    second_config = (
-        second_payload.get("config")
-        if isinstance(second_payload.get("config"), dict)
-        else {}
-    )
+    second_config = second_payload.get("config") if isinstance(second_payload.get("config"), dict) else {}
     second_policy = (
-        second_config.get("compliance_policy")
-        if isinstance(second_config.get("compliance_policy"), dict)
-        else None
+        second_config.get("compliance_policy") if isinstance(second_config.get("compliance_policy"), dict) else None
     )
-    second_inputs = (
-        second_payload.get("inputs")
-        if isinstance(second_payload.get("inputs"), dict)
-        else {}
-    )
+    second_inputs = second_payload.get("inputs") if isinstance(second_payload.get("inputs"), dict) else {}
     diff = _compare_snapshot_payloads(
         first_payload,
         second_payload,
         policy=second_policy,
-        environment=(
-            str(second_inputs.get("environment"))
-            if second_inputs.get("environment")
-            else None
-        ),
+        environment=(str(second_inputs.get("environment")) if second_inputs.get("environment") else None),
     )
     return {
         "status": "ok",
@@ -412,34 +382,18 @@ def get_flags_compliance_drift(
     first_payload = first.get("snapshot") or {}
     second_payload = second.get("snapshot") or {}
     if not isinstance(first_payload, dict) or not isinstance(second_payload, dict):
-        raise HTTPException(
-            status_code=422, detail="Invalid snapshot payload in history"
-        )
+        raise HTTPException(status_code=422, detail="Invalid snapshot payload in history")
 
-    second_config = (
-        second_payload.get("config")
-        if isinstance(second_payload.get("config"), dict)
-        else {}
-    )
+    second_config = second_payload.get("config") if isinstance(second_payload.get("config"), dict) else {}
     second_policy = (
-        second_config.get("compliance_policy")
-        if isinstance(second_config.get("compliance_policy"), dict)
-        else None
+        second_config.get("compliance_policy") if isinstance(second_config.get("compliance_policy"), dict) else None
     )
-    second_inputs = (
-        second_payload.get("inputs")
-        if isinstance(second_payload.get("inputs"), dict)
-        else {}
-    )
+    second_inputs = second_payload.get("inputs") if isinstance(second_payload.get("inputs"), dict) else {}
     diff = _compare_snapshot_payloads(
         first_payload,
         second_payload,
         policy=second_policy,
-        environment=(
-            str(second_inputs.get("environment"))
-            if second_inputs.get("environment")
-            else None
-        ),
+        environment=(str(second_inputs.get("environment")) if second_inputs.get("environment") else None),
     )
     drift = diff.get("drift") or {}
     return {

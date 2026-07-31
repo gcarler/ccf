@@ -120,9 +120,7 @@ def create_verification_token(db: Session, user_id: UUID) -> models.Verification
 
 
 def use_verification_token(db: Session, token: str) -> UUID | None:
-    row = db.query(models.VerificationToken).filter(
-        models.VerificationToken.token == token
-    ).first()
+    row = db.query(models.VerificationToken).filter(models.VerificationToken.token == token).first()
     expires_at = _utc_compare(row.expires_at) if row else None
     if not row or row.used or expires_at is None or expires_at <= _utcnow():
         return None
@@ -168,9 +166,7 @@ def grant_xp(db: Session, user_id: UUID, amount: int):
     if not user:
         return None
     user.xp = (user.xp or 0) + amount
-    level = db.query(models.Level).filter(
-        models.Level.min_xp <= user.xp
-    ).order_by(models.Level.min_xp.desc()).first()
+    level = db.query(models.Level).filter(models.Level.min_xp <= user.xp).order_by(models.Level.min_xp.desc()).first()
     if level:
         user.current_level_id = level.id
     db.commit()
@@ -182,10 +178,14 @@ def award_badge(db: Session, user_id: UUID, badge_name: str):
     badge = db.query(models.Badge).filter(models.Badge.name == badge_name).first()
     if not badge:
         return None
-    existing = db.query(models.UserBadge).filter(
-        models.UserBadge.user_id == user_id,
-        models.UserBadge.badge_id == badge.id,
-    ).first()
+    existing = (
+        db.query(models.UserBadge)
+        .filter(
+            models.UserBadge.user_id == user_id,
+            models.UserBadge.badge_id == badge.id,
+        )
+        .first()
+    )
     if existing:
         return existing
     row = models.UserBadge(user_id=user_id, badge_id=badge.id)
@@ -196,9 +196,7 @@ def award_badge(db: Session, user_id: UUID, badge_name: str):
 
 
 def update_ui_preferences(db: Session, user_id: UUID, settings: dict):
-    prefs = db.query(models.UserUIPreference).filter(
-        models.UserUIPreference.user_id == user_id
-    ).first()
+    prefs = db.query(models.UserUIPreference).filter(models.UserUIPreference.user_id == user_id).first()
     if not prefs:
         prefs = models.UserUIPreference(user_id=user_id, settings=settings)
         db.add(prefs)
@@ -210,9 +208,7 @@ def update_ui_preferences(db: Session, user_id: UUID, settings: dict):
 
 
 def get_ui_preferences(db: Session, user_id: UUID):
-    return db.query(models.UserUIPreference).filter(
-        models.UserUIPreference.user_id == user_id
-    ).first()
+    return db.query(models.UserUIPreference).filter(models.UserUIPreference.user_id == user_id).first()
 
 
 def ensure_ui_preferences(db: Session, user_id: UUID):

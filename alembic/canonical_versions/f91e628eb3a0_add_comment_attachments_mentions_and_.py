@@ -5,30 +5,25 @@ Revises: 20260730_0004_add_cms_popups
 Create Date: 2026-07-30 17:51:09.866196
 
 """
+
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = 'f91e628eb3a0'
-down_revision: Union[str, None] = '20260730_0004_add_cms_popups'
+revision: str = "f91e628eb3a0"
+down_revision: Union[str, None] = "20260730_0004_add_cms_popups"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     # ── project_comments enhancements ──────────────────────────────
-    op.add_column(
-        "project_comments",
-        sa.Column("attachments", sa.JSON(), nullable=False, server_default="[]")
-    )
-    op.add_column(
-        "project_comments",
-        sa.Column("mentions", sa.JSON(), nullable=False, server_default="[]")
-    )
+    op.add_column("project_comments", sa.Column("attachments", sa.JSON(), nullable=False, server_default="[]"))
+    op.add_column("project_comments", sa.Column("mentions", sa.JSON(), nullable=False, server_default="[]"))
 
     # ── agenda_event_comments table ────────────────────────────────
     op.create_table(

@@ -60,7 +60,7 @@ export default function SecurityAuditPage() {
         >
             <style jsx global>{`
                 .cyber-grid {
-                    background-image: 
+                    background-image:
                         linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
                         linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
                     background-size: 20px 20px;
@@ -100,7 +100,7 @@ export default function SecurityAuditPage() {
                             <p className="text-2xs text-success-text uppercase tracking-wide mt-1">Registro inmutable de transacciones del sistema</p>
                         </div>
                     </div>
-                    <button 
+                    <button
                         onClick={() => fetchLogs()}
                         className="px-3 py-2.5 bg-[hsl(var(--success))]/50 text-[hsl(var(--success))] border border-[hsl(var(--success)/100%)]/30 rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success))] transition-colors flex items-center gap-2 group"
                     >
@@ -113,7 +113,7 @@ export default function SecurityAuditPage() {
                 <div className="flex-1 overflow-hidden relative cyber-grid">
                     <div className="scanline" />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[hsl(var(--bg-primary))]/50 to-[hsl(var(--bg-primary))] pointer-events-none z-10" />
-                    
+
                     <div className="h-full overflow-y-auto p-4 relative z-20 scrollbar-thin scrollbar-thumb-emerald-900/50 scrollbar-track-transparent">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-1.5 gap-4">
@@ -124,7 +124,7 @@ export default function SecurityAuditPage() {
                             <div className="space-y-3">
                                 <AnimatePresence>
                                     {logs.map((log, idx) => (
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{ delay: idx * 0.05 }}
@@ -145,7 +145,7 @@ export default function SecurityAuditPage() {
                                             </div>
 
                                             <div className="flex-1 flex items-center gap-4 text-[hsl(var(--success))]/80 text-xs">
-                                                <User size={12} className="opacity-50" /> 
+                                                <User size={12} className="opacity-50" />
                                                 <span>{log.actor_persona_id ? `PERSONA: ${String(log.actor_persona_id).slice(0, 8)}` : log.updated_by ? `USER: ${String(log.updated_by).slice(0, 8)}` : 'SYS'}</span>
                                                 <span className="opacity-30">|</span>
                                                 <span>Target: <span className="text-[hsl(var(--success))] font-bold">{String(log.feature_id || 'GLOBAL').toUpperCase()}</span></span>
@@ -155,7 +155,7 @@ export default function SecurityAuditPage() {
                                                 <div className="text-2xs text-success-text/50 uppercase tracking-wide hidden lg:block truncate max-w-[200px]">
                                                     {JSON.stringify(log.changes || log.after || {})}
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/admin/audit/${encodeURIComponent(getWorkspaceAuditEventKey(log))}`); }}
                                                     className="p-2 bg-[hsl(var(--success))]/50 rounded-lg text-[hsl(var(--success))] opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[hsl(var(--success))]"
                                                 >

@@ -1,6 +1,7 @@
 """
 Coverage tests for evangelism_reports.py — target 90%+.
 """
+
 import uuid
 from datetime import datetime, timezone
 
@@ -24,7 +25,9 @@ def full(client, db_session):
 
 def _make_grupo(db, sede_id, persona_id=None):
     g = models.GrupoEvangelismo(
-        id=uuid.uuid4(), nombre="TestGrupo", sede_id=sede_id,
+        id=uuid.uuid4(),
+        nombre="TestGrupo",
+        sede_id=sede_id,
         lider_persona_id=persona_id,
     )
     db.add(g)
@@ -64,8 +67,10 @@ class TestReportsHelpers:
 
         # Need explicit flush or commit between adds
         p = models.ParticipanteGrupo(
-            grupo_id=grupo.id, persona_id=full["persona"].id,
-            activo=True, rol_base="miembro",
+            grupo_id=grupo.id,
+            persona_id=full["persona"].id,
+            activo=True,
+            rol_base="miembro",
         )
         full["db"].add(p)
 

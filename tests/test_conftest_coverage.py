@@ -3,6 +3,7 @@ Tests for conftest.py helper functions.
 Ensures seed_admin, auth_headers, seed_user_with_role work correctly
 and cover edge cases (custom sede_id, custom permissions, etc.).
 """
+
 import uuid
 
 import pytest
@@ -61,21 +62,20 @@ class TestSeedUserWithRole:
         assert user.username == "user"
 
     def test_seed_user_custom_role(self, db_session):
-        user, persona, sede = seed_user_with_role(
-            db_session, role_name="EDITOR", email="editor@test.com"
-        )
+        user, persona, sede = seed_user_with_role(db_session, role_name="EDITOR", email="editor@test.com")
         assert user.rol_plataforma.nombre == "EDITOR"
 
     def test_seed_user_with_sede_id(self, db_session):
         from backend import models
-        custom_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Custom Sede", ciudad="Medellin", es_activa=True
-        )
+
+        custom_sede = models.Sede(id=uuid.uuid4(), nombre="Custom Sede", ciudad="Medellin", es_activa=True)
         db_session.add(custom_sede)
         db_session.commit()
 
         user, persona, sede = seed_user_with_role(
-            db_session, role_name="GESTOR", email="gestor@test.com",
+            db_session,
+            role_name="GESTOR",
+            email="gestor@test.com",
             sede_id=custom_sede.id,
         )
         assert sede.id == custom_sede.id
@@ -83,7 +83,9 @@ class TestSeedUserWithRole:
 
     def test_seed_user_with_custom_permissions(self, db_session):
         user, persona, sede = seed_user_with_role(
-            db_session, role_name="CUSTOM_ROLE", email="custom@test.com",
+            db_session,
+            role_name="CUSTOM_ROLE",
+            email="custom@test.com",
             permisos={"custom:read": "allow", "custom:write": "allow"},
         )
         rol = user.rol_plataforma
@@ -92,7 +94,9 @@ class TestSeedUserWithRole:
     def test_seed_user_nonexistent_sede_creates(self, db_session):
         new_sede_id = uuid.uuid4()
         user, persona, sede = seed_user_with_role(
-            db_session, role_name="LECTOR", email="lector@test.com",
+            db_session,
+            role_name="LECTOR",
+            email="lector@test.com",
             sede_id=new_sede_id,
         )
         assert sede.id == new_sede_id

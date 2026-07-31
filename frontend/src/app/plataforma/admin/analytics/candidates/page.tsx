@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-    Search, 
-    ChevronRight, 
-    Award, 
-    TrendingUp, 
-    CheckCircle2, 
+import {
+    Search,
+    ChevronRight,
+    Award,
+    TrendingUp,
+    CheckCircle2,
     Zap,
     Target,
     Loader2,
@@ -80,7 +80,7 @@ export default function CandidatesDashboard() {
     }, [isAuthenticated, fetchCandidates]);
 
     const filteredCandidates = useMemo(() => {
-        return candidates.filter(c => 
+        return candidates.filter(c =>
             c.username.toLowerCase().includes(search.toLowerCase())
         );
     }, [candidates, search]);
@@ -97,8 +97,8 @@ export default function CandidatesDashboard() {
     };
 
     const columns = useMemo<ColumnDef<Candidate>[]>(() => [
-        { 
-            accessorKey: 'username', 
+        {
+            accessorKey: 'username',
             header: 'Estudiante',
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
@@ -110,8 +110,8 @@ export default function CandidatesDashboard() {
                 </div>
             )
         },
-        { 
-            accessorKey: 'progress', 
+        {
+            accessorKey: 'progress',
             header: 'Avance Formativo',
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
@@ -122,13 +122,13 @@ export default function CandidatesDashboard() {
                 </div>
             )
         },
-        { 
-            accessorKey: 'target_level', 
+        {
+            accessorKey: 'target_level',
             header: 'Nivel Objetivo',
             cell: info => <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide">{info.getValue() as string}</span>
         },
-        { 
-            accessorKey: 'status', 
+        {
+            accessorKey: 'status',
             header: 'Calificación IA',
             cell: ({ row }) => (
                 <span className={clsx(
@@ -182,10 +182,10 @@ export default function CandidatesDashboard() {
                         </div>
                         <div className="relative w-full md:w-96 group">
                             <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
-                            <input 
+                            <input
                                 value={search} onChange={e => setSearch(e.target.value)}
-                                placeholder="Filtrar por nombre de participante..." 
-                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-[hsl(var(--info)/100%)] transition-all shadow-sm" 
+                                placeholder="Filtrar por nombre de participante..."
+                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-[hsl(var(--info)/100%)] transition-all shadow-sm"
                             />
                         </div>
                     </div>
@@ -235,5 +235,3 @@ function CandidateStat({ label, value, icon: Icon, color = 'emerald', auraColor 
         </div>
     );
 }
-
-

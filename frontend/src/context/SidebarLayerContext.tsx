@@ -38,7 +38,7 @@ export function SidebarLayerProvider({ children }: { children: React.ReactNode }
     const openLayer = useCallback((id: SidebarId) => setLayers(p => ({...p, [id]: true})), []);
     const closeLayer = useCallback((id: SidebarId) => setLayers(p => ({...p, [id]: false})), []);
     const toggleLayer = useCallback((id: SidebarId) => setLayers(p => ({...p, [id]: !p[id]})), []);
-    
+
     const closeTopLayer = useCallback(() => {
         setLayers(prev => {
             if (prev.RIGHT) return {...prev, RIGHT: false};

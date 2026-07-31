@@ -163,7 +163,7 @@ export default function GroupDetailPage() {
  <Calendar size={12} /> Sesiones Registradas
  </h2>
  {/* New Session Action */}
- {canManageEvangelism && <button 
+ {canManageEvangelism && <button
  onClick={async () => {
  try {
  const session = await apiFetch<{ id: string }>(`/evangelism/sessions`, {
@@ -241,7 +241,7 @@ export default function GroupDetailPage() {
  apiFetch<AttendanceData>(`/evangelism/groups/sessions/${activeSession.id}/attendance`, { token, silent: true })
  .then(data => {
  setAttendance(data);
- 
+
  // Merge expected personas and attendees perfectly
  const mergedMap = new Map<string, AttendeeRow>();
 
@@ -249,14 +249,14 @@ export default function GroupDetailPage() {
  (data.expected_personas || []).forEach(row => {
  mergedMap.set(row.persona_id, {
  ...row,
- // By default, if there is no attendance data yet, mark them as 'attended: false' initially? 
+ // By default, if there is no attendance data yet, mark them as 'attended: false' initially?
  // The user said: "no me dijiste quines fueron y quines no".
- // Wait, if we mark attended: false, they show as absent. 
+ // Wait, if we mark attended: false, they show as absent.
  // Let's rely on the row.attended property if it exists, otherwise false.
  attended: row.attended ?? false,
  });
  });
- 
+
  // Then add/overwrite with any explicit attendees (extra guests added via Add Attendee)
  (data.attendees || []).forEach(row => {
  if (mergedMap.has(row.persona_id)) {
@@ -269,7 +269,7 @@ export default function GroupDetailPage() {
  });
  }
  });
- 
+
  setReportPersonas(Array.from(mergedMap.values()));
  setReportTopic(data.topic || '');
  setReportOfferingAmount(data.offering_amount != null ? String(data.offering_amount) : '');

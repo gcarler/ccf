@@ -1,4 +1,5 @@
 """Permission helpers for evangelism events."""
+
 import uuid
 from uuid import UUID
 

@@ -163,6 +163,7 @@ class ProjectTaskUpdate(BaseModel):
     def _title_no_blank(cls, v: Any) -> Any:
         return _strip_str_or_passthrough(v)
 
+
 class ProjectTask(ProjectTaskBase):
     id: UUIDStr
     project_id: UUIDStr
@@ -203,6 +204,7 @@ class ProjectUpdate(BaseModel):
     @classmethod
     def _title_no_blank(cls, v: Any) -> Any:
         return _strip_str_or_passthrough(v)
+
     description: Optional[str] = None
     status: Optional[ProjectStatus] = None
     owner_id: Optional[UUIDStr] = None

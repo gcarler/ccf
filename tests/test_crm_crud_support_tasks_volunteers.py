@@ -17,6 +17,7 @@ Posture mirrors `tests/test_crm_crud_personas.py`: SQLite in-memory via
   * create_crm_task persists an audit log record (Axioma 1).
   * update_crm_task only emits an audit log entry when there are REAL changes.
 """
+
 from __future__ import annotations
 
 import datetime as dt
@@ -35,6 +36,7 @@ from backend.schemas.crm.base import CrmTaskPriority, CrmTaskStatus
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 
+
 def _seed_sede(db: Session, name: str = "Sede QC-18.G") -> models.Sede:
     sede = models.Sede(id=_uuid.uuid4(), nombre=name, ciudad="QC18 City", es_activa=True)
     db.add(sede)
@@ -44,7 +46,11 @@ def _seed_sede(db: Session, name: str = "Sede QC-18.G") -> models.Sede:
 
 def _seed_persona(db: Session, sede_id: _uuid.UUID, first: str = "P") -> models.Persona:
     p = models.Persona(
-        id=_uuid.uuid4(), first_name=first, last_name="T", sede_id=sede_id, estado_vital="ACTIVO",
+        id=_uuid.uuid4(),
+        first_name=first,
+        last_name="T",
+        sede_id=sede_id,
+        estado_vital="ACTIVO",
         email=f"{first.lower()}{_uuid.uuid4().hex[:6]}@example.com",
     )
     db.add(p)
@@ -60,11 +66,19 @@ def _commit(db: Session) -> None:
 
 
 def _seed_support_ticket(
-    db: Session, *, user_id: _uuid.UUID, subject: str = "S", status: str = "ABIERTO",
+    db: Session,
+    *,
+    user_id: _uuid.UUID,
+    subject: str = "S",
+    status: str = "ABIERTO",
     deleted_at=None,
 ) -> models.SupportTicket:
     t = models.SupportTicket(
-        id=_uuid.uuid4(), user_id=user_id, subject=subject, description="d", status=status,
+        id=_uuid.uuid4(),
+        user_id=user_id,
+        subject=subject,
+        description="d",
+        status=status,
     )
     if deleted_at is not None:
         t.deleted_at = deleted_at
@@ -112,13 +126,17 @@ def test_create_support_ticket_persists_fields(db_session):
     p = _seed_persona(db_session, sede_id=sede.id)
     _commit(db_session)
     payload = schemas.SupportTicketCreate(
-        subject="Broken", description="help please", user_id=p.id,
+        subject="Broken",
+        description="help please",
+        user_id=p.id,
     )
     row = crud_support.create_support_ticket(db_session, payload)
     assert row.id is not None
     assert row.subject == "Broken"
     assert row.user_id == p.id
-    assert row.status == "open"  # default (SupportTicketCreate does not wire a status; model default is lowercase 'open')
+    assert (
+        row.status == "open"
+    )  # default (SupportTicketCreate does not wire a status; model default is lowercase 'open')
     assert row.deleted_at is None
 
 
@@ -162,8 +180,14 @@ def test_delete_support_ticket_returns_false_for_missing(db_session):
 
 
 def _seed_tarea(
-    db: Session, *, persona: Optional[models.Persona] = None, deleted_at=None,
-    title: str = "T", estado: str = "PENDIENTE", caso_id=None, assignee=None,
+    db: Session,
+    *,
+    persona: Optional[models.Persona] = None,
+    deleted_at=None,
+    title: str = "T",
+    estado: str = "PENDIENTE",
+    caso_id=None,
+    assignee=None,
 ) -> models.TareaCRM:
     t = models.TareaCRM(
         id=_uuid.uuid4(),
@@ -224,8 +248,15 @@ def test_create_crm_task_rejects_cross_sede_persona(db_session):
     _commit(db_session)
 
     payload = schemas.CrmTaskCreate(
-        title="T", description="d", persona_id=p_target.id, assignee_id=None,
-        category="FOLLOWUP", due_date=None, status=CrmTaskStatus.pending, priority=CrmTaskPriority.medium, completed_at=None,
+        title="T",
+        description="d",
+        persona_id=p_target.id,
+        assignee_id=None,
+        category="FOLLOWUP",
+        due_date=None,
+        status=CrmTaskStatus.pending,
+        priority=CrmTaskPriority.medium,
+        completed_at=None,
     )
     with pytest.raises(HTTPException) as exc:
         crud_tasks.create_crm_task(db_session, payload, actor_user_id=p_actor.id)
@@ -244,8 +275,15 @@ def test_create_crm_task_same_sede_succeeds_and_persists_audit_log(db_session):
     _commit(db_session)
 
     payload = schemas.CrmTaskCreate(
-        title="T", description="d", persona_id=p_target.id, assignee_id=None,
-        category="FOLLOWUP", due_date=None, status=CrmTaskStatus.pending, priority=CrmTaskPriority.medium, completed_at=None,
+        title="T",
+        description="d",
+        persona_id=p_target.id,
+        assignee_id=None,
+        category="FOLLOWUP",
+        due_date=None,
+        status=CrmTaskStatus.pending,
+        priority=CrmTaskPriority.medium,
+        completed_at=None,
     )
     row = crud_tasks.create_crm_task(db_session, payload, actor_user_id=p_actor.id)
     assert row.id is not None
@@ -263,16 +301,27 @@ def test_create_crm_task_actor_without_sede_bypasses_scope_check(db_session):
     sede = _seed_sede(db_session)
     # Persona del actor SIN sede assignment
     p_actor = models.Persona(
-        id=_uuid.uuid4(), first_name="Super", last_name="Admin", estado_vital="ACTIVO",
-        email=f"super{_uuid.uuid4().hex[:6]}@example.com", sede_id=None,
+        id=_uuid.uuid4(),
+        first_name="Super",
+        last_name="Admin",
+        estado_vital="ACTIVO",
+        email=f"super{_uuid.uuid4().hex[:6]}@example.com",
+        sede_id=None,
     )
     db_session.add(p_actor)
     p_target = _seed_persona(db_session, sede_id=sede.id, first="Target")
     _commit(db_session)
 
     payload = schemas.CrmTaskCreate(
-        title="T", description="d", persona_id=p_target.id, assignee_id=None,
-        category="FOLLOWUP", due_date=None, status=CrmTaskStatus.pending, priority=CrmTaskPriority.medium, completed_at=None,
+        title="T",
+        description="d",
+        persona_id=p_target.id,
+        assignee_id=None,
+        category="FOLLOWUP",
+        due_date=None,
+        status=CrmTaskStatus.pending,
+        priority=CrmTaskPriority.medium,
+        completed_at=None,
     )
     row = crud_tasks.create_crm_task(db_session, payload, actor_user_id=p_actor.id)
     assert row.id is not None
@@ -283,7 +332,8 @@ def test_update_crm_task_returns_none_for_missing(db_session):
     p = _seed_persona(db_session, sede_id=sede.id)
     _commit(db_session)
     out = crud_tasks.update_crm_task(
-        db_session, _uuid.uuid4(),
+        db_session,
+        _uuid.uuid4(),
         schemas.CrmTaskUpdate(status=CrmTaskStatus.cancelled),
         actor_user_id=p.id,
     )
@@ -296,7 +346,10 @@ def test_update_crm_task_skips_soft_deleted(db_session):
     t = _seed_tarea(db_session, persona=p, deleted_at=crud_tasks._utcnow())
     _commit(db_session)
     out = crud_tasks.update_crm_task(
-        db_session, t.id, schemas.CrmTaskUpdate(status=CrmTaskStatus.cancelled), actor_user_id=p.id,
+        db_session,
+        t.id,
+        schemas.CrmTaskUpdate(status=CrmTaskStatus.cancelled),
+        actor_user_id=p.id,
     )
     assert out is None
 
@@ -311,7 +364,9 @@ def test_update_crm_task_with_real_changes_emits_audit_log(db_session):
     _commit(db_session)
 
     crud_tasks.update_crm_task(
-        db_session, t.id, schemas.CrmTaskUpdate(title="Changed"),
+        db_session,
+        t.id,
+        schemas.CrmTaskUpdate(title="Changed"),
         actor_user_id=p_actor.id,
     )
     logs = db_session.query(LogAuditoria).filter_by(tabla_afectada="crm_tareas", accion="UPDATE").all()
@@ -330,12 +385,20 @@ def test_update_crm_task_idempotent_no_changes_skips_audit_log(db_session):
 
     # pass the SAME title — _values_equivalent should detect no real change
     crud_tasks.update_crm_task(
-        db_session, t.id, schemas.CrmTaskUpdate(title="Same Title"),
+        db_session,
+        t.id,
+        schemas.CrmTaskUpdate(title="Same Title"),
         actor_user_id=p_actor.id,
     )
-    logs = db_session.query(LogAuditoria).filter_by(
-        tabla_afectada="crm_tareas", accion="UPDATE", registro_id=str(t.id),
-    ).all()
+    logs = (
+        db_session.query(LogAuditoria)
+        .filter_by(
+            tabla_afectada="crm_tareas",
+            accion="UPDATE",
+            registro_id=str(t.id),
+        )
+        .all()
+    )
     assert len(logs) == 0, f"noise-minimization broken; got {len(logs)} UPDATE log(s) for no-op change"
 
 
@@ -357,12 +420,19 @@ def test_delete_crm_task_returns_false_for_missing(db_session):
 
 
 def _seed_shift(
-    db: Session, *, persona: models.Persona, role_name: str = "Greeter",
-    status: str = "PROGRAMADO", deleted_at=None,
+    db: Session,
+    *,
+    persona: models.Persona,
+    role_name: str = "Greeter",
+    status: str = "PROGRAMADO",
+    deleted_at=None,
 ) -> models.VolunteerShift:
     import datetime as dt
+
     s = models.VolunteerShift(
-        id=_uuid.uuid4(), persona_id=persona.id, role_name=role_name,
+        id=_uuid.uuid4(),
+        persona_id=persona.id,
+        role_name=role_name,
         team_name="Team A",
         shift_start=dt.datetime(2026, 7, 1, 9, 0, tzinfo=dt.timezone.utc),
         shift_end=dt.datetime(2026, 7, 1, 11, 0, tzinfo=dt.timezone.utc),
@@ -419,10 +489,13 @@ def test_create_volunteer_shift_persists_fields(db_session):
     p = _seed_persona(db_session, sede_id=sede.id)
     _commit(db_session)
     payload = schemas.VolunteerShiftCreate(
-        persona_id=p.id, role_name="Usher", team_name="TeamB",
+        persona_id=p.id,
+        role_name="Usher",
+        team_name="TeamB",
         shift_start="2026-07-01T09:00",
         shift_end="2026-07-01T11:00",
-        status="PROGRAMADO", notes=None,
+        status="PROGRAMADO",
+        notes=None,
     )
     row = crud_volunteers.create_volunteer_shift(db_session, payload)
     assert row.id is not None
@@ -431,7 +504,10 @@ def test_create_volunteer_shift_persists_fields(db_session):
 
 
 def test_update_volunteer_shift_returns_none_for_missing(db_session):
-    assert crud_volunteers.update_volunteer_shift(db_session, _uuid.uuid4(), schemas.VolunteerShiftUpdate(status="X")) is None
+    assert (
+        crud_volunteers.update_volunteer_shift(db_session, _uuid.uuid4(), schemas.VolunteerShiftUpdate(status="X"))
+        is None
+    )
 
 
 def test_update_volunteer_shift_updates_provided_fields(db_session):

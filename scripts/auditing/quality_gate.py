@@ -110,10 +110,7 @@ def check_db_indices():
         dialect_name = db.bind.dialect.name
         if dialect_name == "postgresql":
             rows = db.execute(
-                text(
-                    "SELECT indexname FROM pg_indexes "
-                    "WHERE schemaname NOT IN ('pg_catalog', 'information_schema')"
-                )
+                text("SELECT indexname FROM pg_indexes WHERE schemaname NOT IN ('pg_catalog', 'information_schema')")
             )
         else:
             rows = db.execute(text("SELECT name FROM sqlite_master WHERE type='index'"))

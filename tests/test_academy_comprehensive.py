@@ -1224,9 +1224,7 @@ def test_h01_course_response_exposes_sede_id(client, db_session):
     assert "sede_id" in matched[0], "H-01: sede_id ausente del list response"
     assert matched[0]["sede_id"] == str(sede.id)
     # Detail endpoint.
-    resp_detail = client.get(
-        f"/api/academy/courses/{course.id}", headers=headers
-    )
+    resp_detail = client.get(f"/api/academy/courses/{course.id}", headers=headers)
     assert resp_detail.status_code == 200
     assert resp_detail.json()["sede_id"] == str(sede.id)
 
@@ -1237,9 +1235,7 @@ def test_h01_course_global_has_null_sede_id(client, db_session):
     admin, _, sede = seed_admin(db_session)
     course = _create_course(db_session, sede_id=None, is_published=True)
     headers = auth_headers(client, email=admin.email)
-    resp = client.get(
-        f"/api/academy/courses/{course.id}", headers=headers
-    )
+    resp = client.get(f"/api/academy/courses/{course.id}", headers=headers)
     assert resp.status_code == 200
     assert resp.json()["sede_id"] is None
 
@@ -1261,8 +1257,7 @@ def test_h01_course_payload_forbids_sede_id(client, db_session):
         },
     )
     assert resp.status_code == 422, (
-        f"H-01: CoursePayload debe rechazar sede_id con 422 (extra=forbid), "
-        f"got {resp.status_code}"
+        f"H-01: CoursePayload debe rechazar sede_id con 422 (extra=forbid), got {resp.status_code}"
     )
 
 
@@ -1284,15 +1279,13 @@ def test_h02_get_lesson_progress_contract(client, db_session):
     course = _create_course(db_session, sede_id=sede.id)
     lesson = _create_lesson(db_session, course.id)
     headers = auth_headers(client, email=student.email)
-    resp = client.get(
-        f"/api/academy/lessons/{lesson.id}/progress", headers=headers
-    )
+    resp = client.get(f"/api/academy/lessons/{lesson.id}/progress", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
     # Contract LessonProgressResponse.
-    assert set(data.keys()) == {
-        "progress_percent", "last_position_seconds", "is_completed"
-    }, f"H-02: response keys no conforman LessonProgressResponse: {set(data.keys())}"
+    assert set(data.keys()) == {"progress_percent", "last_position_seconds", "is_completed"}, (
+        f"H-02: response keys no conforman LessonProgressResponse: {set(data.keys())}"
+    )
     assert isinstance(data["progress_percent"], float)
     assert isinstance(data["last_position_seconds"], int)
     assert isinstance(data["is_completed"], bool)
@@ -1326,9 +1319,7 @@ def test_h02_get_lesson_progress_reflects_persisted_progress(client, db_session)
     db_session.add(progress)
     db_session.commit()
     headers = auth_headers(client, email=student.email)
-    resp = client.get(
-        f"/api/academy/lessons/{lesson.id}/progress", headers=headers
-    )
+    resp = client.get(f"/api/academy/lessons/{lesson.id}/progress", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
     assert data["progress_percent"] == 42.5

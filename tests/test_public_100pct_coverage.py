@@ -7,15 +7,15 @@ Covers:
 - public_wishlist
 - upload_public_document (allowed types, disallowed types, max size)
 """
+
 from __future__ import annotations
 
-import io
 import uuid
-from datetime import datetime, timedelta
+
 import pytest
 
 from backend import models
-from backend.models_academy_core import Course, Lesson
+from backend.models_academy_core import Course
 
 
 @pytest.fixture(autouse=True)

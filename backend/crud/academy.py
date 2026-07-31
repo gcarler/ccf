@@ -34,9 +34,7 @@ from backend.schemas import academy as schemas
 logger = logging.getLogger(__name__)
 
 
-def _commit_or_raise_conflict(
-    db: Session, detail: str = "resource already exists"
-) -> None:
+def _commit_or_raise_conflict(db: Session, detail: str = "resource already exists") -> None:
     """H-08 (cierre 2026-07-24): commit helper que distingue 409 de 500.
 
     Convierte violaciones de unique-key concurrentes en ``409 Conflict`` en
@@ -86,15 +84,17 @@ def list_courses(
     pidiéndolo con ``include_global=True``; los callers CRUD que querían
     mezclar globales ahora deben hacerlo visible con el flag.
     """
-    query = db.query(models.Course).options(
-        selectinload(models.Course.lessons),
-        selectinload(models.Course.prerequisites),
-    ).filter(models.Course.deleted_at.is_(None))
+    query = (
+        db.query(models.Course)
+        .options(
+            selectinload(models.Course.lessons),
+            selectinload(models.Course.prerequisites),
+        )
+        .filter(models.Course.deleted_at.is_(None))
+    )
     if sede_id:
         if include_global:
-            query = query.filter(
-                or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
-            )
+            query = query.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
         else:
             # H-05: scope estricto por defecto — sin cursos globales.
             query = query.filter(models.Course.sede_id == sede_id)
@@ -119,13 +119,9 @@ def get_course(
     previo (sin filtro) — el flag es opt-in para preservar compatibilidad con
     los tests del módulo CRUD.
     """
-    query = db.query(models.Course).filter(
-        models.Course.id == course_id, models.Course.deleted_at.is_(None)
-    )
+    query = db.query(models.Course).filter(models.Course.id == course_id, models.Course.deleted_at.is_(None))
     if sede_id is not None:
-        query = query.filter(
-            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
-        )
+        query = query.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
     return query.first()
 
 
@@ -159,9 +155,7 @@ def create_course(
         # Curso global (sede_id None) es legítimo; cualquier sede específica
         # distinta de la del actor es cross-tenant y se bloquea.
         if target is not None and target != sede_id:
-            raise ValueError(
-                "El actor no puede crear un curso atribuido a otra sede"
-            )
+            raise ValueError("El actor no puede crear un curso atribuido a otra sede")
     course = models.Course(**course_data)
     db.add(course)
     _commit_or_raise_conflict(db, detail="course code already exists")
@@ -214,9 +208,13 @@ def list_lessons(
     # actor (o ser global) — sino retorna [].
     if sede_id is not None and not get_course(db, course_id, sede_id=sede_id):
         return []
-    query = db.query(models.Lesson).options(selectinload(models.Lesson.resources)).filter(
-        models.Lesson.course_id == course_id,
-        models.Lesson.deleted_at.is_(None),
+    query = (
+        db.query(models.Lesson)
+        .options(selectinload(models.Lesson.resources))
+        .filter(
+            models.Lesson.course_id == course_id,
+            models.Lesson.deleted_at.is_(None),
+        )
     )
     if published_only:
         query = query.filter(models.Lesson.is_published.is_(True))
@@ -229,9 +227,7 @@ def get_lesson(
     *,
     sede_id: UUID | None = None,
 ) -> models.Lesson | None:
-    query = db.query(models.Lesson).filter(
-        models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)
-    )
+    query = db.query(models.Lesson).filter(models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None))
     if sede_id is not None:
         # A-06: join con Course para aplicar scope de sede.
         query = query.join(models.Course).filter(
@@ -310,18 +306,18 @@ def list_enrollments(
     course_id: UUID | None = None,
     sede_id: UUID | None = None,
 ) -> list[models.Enrollment]:
-    query = db.query(models.Enrollment).options(
-        joinedload(models.Enrollment.course), joinedload(models.Enrollment.persona)
-    ).filter(models.Enrollment.deleted_at.is_(None))
+    query = (
+        db.query(models.Enrollment)
+        .options(joinedload(models.Enrollment.course), joinedload(models.Enrollment.persona))
+        .filter(models.Enrollment.deleted_at.is_(None))
+    )
     if persona_id:
         query = query.filter(models.Enrollment.persona_id == persona_id)
     if course_id:
         query = query.filter(models.Enrollment.course_id == course_id)
     if sede_id is not None:
         # H-04: filtra por sede del Course del enrollment.
-        query = query.join(models.Course).filter(
-            or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None))
-        )
+        query = query.join(models.Course).filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
     return query.order_by(models.Enrollment.created_at.desc()).all()
 
 
@@ -364,10 +360,14 @@ def create_enrollment(
     H-08: commit vía ``_commit_or_raise_conflict`` para distinguir 409
     (enrollment único duplicado concurrente) de 500.
     """
-    existing = db.query(models.Enrollment).filter(
-        models.Enrollment.persona_id == payload.persona_id,
-        models.Enrollment.course_id == payload.course_id,
-    ).first()
+    existing = (
+        db.query(models.Enrollment)
+        .filter(
+            models.Enrollment.persona_id == payload.persona_id,
+            models.Enrollment.course_id == payload.course_id,
+        )
+        .first()
+    )
     if existing and existing.deleted_at is None:
         raise ValueError("La persona ya está inscrita en este curso")
     if existing:
@@ -376,9 +376,7 @@ def create_enrollment(
         # NO se reactiva — se interpreta como nuevo enrollment legítimo.
         can_reactivate = True
         if sede_id is not None:
-            course = db.query(models.Course.sede_id).filter(
-                models.Course.id == existing.course_id
-            ).first()
+            course = db.query(models.Course.sede_id).filter(models.Course.id == existing.course_id).first()
             course_sede = course[0] if course else None
             if course_sede is not None and course_sede != sede_id:
                 can_reactivate = False
@@ -391,9 +389,7 @@ def create_enrollment(
             # validó que payload.course_id es visible al actor (debería
             # coincidir con existing.course_id o se rechazaría upstream).
             # Caso teórico: si llegamos aquí, treatamos como conflicto.
-            raise ValueError(
-                "Enrollment existente pertenece a un curso de otra sede"
-            )
+            raise ValueError("Enrollment existente pertenece a un curso de otra sede")
     else:
         enrollment = models.Enrollment(
             persona_id=payload.persona_id,
@@ -406,10 +402,14 @@ def create_enrollment(
 
 
 def list_assessments(db: Session, course_id: UUID) -> list[models.Assessment]:
-    return db.query(models.Assessment).filter(
-        models.Assessment.course_id == course_id,
-        models.Assessment.deleted_at.is_(None),
-    ).all()
+    return (
+        db.query(models.Assessment)
+        .filter(
+            models.Assessment.course_id == course_id,
+            models.Assessment.deleted_at.is_(None),
+        )
+        .all()
+    )
 
 
 def get_assessment(
@@ -418,11 +418,13 @@ def get_assessment(
     *,
     sede_id: UUID | None = None,
 ) -> models.Assessment | None:
-    query = db.query(models.Assessment).options(
-        selectinload(models.Assessment.questions).selectinload(models.AssessmentQuestion.options)
-    ).filter(
-        models.Assessment.id == assessment_id,
-        models.Assessment.deleted_at.is_(None),
+    query = (
+        db.query(models.Assessment)
+        .options(selectinload(models.Assessment.questions).selectinload(models.AssessmentQuestion.options))
+        .filter(
+            models.Assessment.id == assessment_id,
+            models.Assessment.deleted_at.is_(None),
+        )
     )
     if sede_id is not None:
         # A-06: Assessment carece de sede_id propia; el scope proviene del Course
@@ -434,26 +436,31 @@ def get_assessment(
     return query.first()
 
 
-def get_lesson_progress(
-    db: Session, persona_id: UUID, lesson_id: UUID
-) -> models.LessonProgress | None:
-    return db.query(models.LessonProgress).filter(
-        models.LessonProgress.persona_id == persona_id,
-        models.LessonProgress.lesson_id == lesson_id,
-    ).first()
+def get_lesson_progress(db: Session, persona_id: UUID, lesson_id: UUID) -> models.LessonProgress | None:
+    return (
+        db.query(models.LessonProgress)
+        .filter(
+            models.LessonProgress.persona_id == persona_id,
+            models.LessonProgress.lesson_id == lesson_id,
+        )
+        .first()
+    )
 
 
 def list_certificates(db: Session, persona_id: UUID) -> list[models.Certificate]:
-    return db.query(models.Certificate).join(models.Enrollment).filter(
-        models.Enrollment.persona_id == persona_id,
-        models.Enrollment.deleted_at.is_(None),
-    ).all()
+    return (
+        db.query(models.Certificate)
+        .join(models.Enrollment)
+        .filter(
+            models.Enrollment.persona_id == persona_id,
+            models.Enrollment.deleted_at.is_(None),
+        )
+        .all()
+    )
 
 
 def get_certificate_by_code(db: Session, code: str) -> models.Certificate | None:
-    return db.query(models.Certificate).filter(
-        models.Certificate.certificate_code == code
-    ).first()
+    return db.query(models.Certificate).filter(models.Certificate.certificate_code == code).first()
 
 
 def list_forum_threads(

@@ -41,8 +41,15 @@ def test_youtube_videos_response_shape(client):
     assert resp.status_code == 200
     data = resp.json()
     expected_video_keys = {
-        "id", "title", "description", "published_at",
-        "view_count", "thumbnail_hq", "thumbnail_mq", "url", "embed_url",
+        "id",
+        "title",
+        "description",
+        "published_at",
+        "view_count",
+        "thumbnail_hq",
+        "thumbnail_mq",
+        "url",
+        "embed_url",
     }
     if data["total"] > 0:
         for video in data["videos"]:
@@ -65,9 +72,7 @@ def test_youtube_videos_total_matches_list_length(client):
     resp = client.get("/api/youtube/videos")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["total"] == len(data["videos"]), (
-        f"total={data['total']} != len(videos)={len(data['videos'])}"
-    )
+    assert data["total"] == len(data["videos"]), f"total={data['total']} != len(videos)={len(data['videos'])}"
 
 
 def test_youtube_videos_channel_name(client):

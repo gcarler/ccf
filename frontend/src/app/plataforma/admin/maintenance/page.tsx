@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Wrench, 
-    AlertCircle, 
-    CheckCircle2, 
-    Plus, 
-    Clock, 
+import {
+    Wrench,
+    AlertCircle,
+    CheckCircle2,
+    Plus,
+    Clock,
     Shield,
     History,
     Zap,
@@ -192,7 +192,7 @@ export default function AdminMaintenancePage() {
                 }
             `}</style>
 
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Admin', icon: Shield }, { label: 'Mantenimiento Técnico', icon: Wrench }]}
                 viewType={viewType}
                 setViewType={setViewType}
@@ -206,7 +206,7 @@ export default function AdminMaintenancePage() {
                     {/* Cinematic Header */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                         <div className="space-y-4">
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                                 className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--warning))]/10 text-warning-text dark:text-[hsl(var(--warning))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--warning)/100%)]/20"
                             >
@@ -220,7 +220,7 @@ export default function AdminMaintenancePage() {
                             </p>
                         </div>
 
-                        <motion.button 
+                        <motion.button
                             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                             className="px-4 py-1.5 bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] text-[hsl(var(--text-primary))] text-xs font-semibold uppercase tracking-wide rounded-lg transition-all shadow-2xl shadow-[hsl(var(--warning)/20%)] flex items-center gap-3 group"
                         >
@@ -258,11 +258,11 @@ export default function AdminMaintenancePage() {
                                             <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizando con Servidor...</p>
                                         </div>
                                     ) : tasks.length > 0 ? tasks.map((row, i) => (
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: i * 0.05 }}
-                                            key={i} 
+                                            key={i}
                                             className="p-4 hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
                                         >
                                             <div className="flex items-center gap-3">
@@ -301,7 +301,7 @@ export default function AdminMaintenancePage() {
 
                         {/* Health Radar Sidebar */}
                         <div className="lg:col-span-4 space-y-3">
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
                                 className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-sm space-y-3 aura-tech"
                             >
@@ -361,4 +361,3 @@ function HealthRow({ label, value, color }: { label: string, value: number, colo
         </div>
     );
 }
-

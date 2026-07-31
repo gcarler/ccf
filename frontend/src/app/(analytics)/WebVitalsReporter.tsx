@@ -7,4 +7,3 @@ export function WebVitalsReporter() {
   useReportWebVitals(reportWebVitals);
   return null;
 }
-

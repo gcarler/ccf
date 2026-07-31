@@ -483,7 +483,7 @@ export default function BuilderRightPanel({
             <div className="space-y-4 animate-fade-in">
               <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistente IA Editorial</p>
-                
+
                 <div className="space-y-3">
                   <div>
                     <label className="text-2xs uppercase tracking-wide font-bold text-[hsl(var(--text-secondary))] block mb-1">Plantilla IA</label>
@@ -703,7 +703,7 @@ export default function BuilderRightPanel({
                     {abTestingActive ? "Activo" : "Inactivo"}
                   </button>
                 </div>
-                
+
                 {abTestingActive ? (
                   <div className="space-y-2.5 animate-fade-in text-2xs">
                     <div className="space-y-1">
@@ -780,7 +780,7 @@ export default function BuilderRightPanel({
                     </div>
                   </div>
                 )}
-                
+
                 <p className="text-2xs text-[hsl(var(--text-secondary))]">Representación visual interactiva en tiempo real sobre el canvas del comportamiento del usuario.</p>
               </div>
             </div>

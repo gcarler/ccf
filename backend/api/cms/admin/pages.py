@@ -1,5 +1,5 @@
-"""Pages, sections, versions, preview and readiness admin endpoints (Fase 4 refactor).
-"""
+"""Pages, sections, versions, preview and readiness admin endpoints (Fase 4 refactor)."""
+
 from __future__ import annotations
 
 import logging
@@ -8,12 +8,12 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
-from sqlalchemy.orm import Session, lazyload
+from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
+from backend.api.cms.section_types import get_allowed_section_types
 from backend.api.cms_v2._shared import (
     CMS_EDITOR_ROLES,
-    CMS_PUBLISHER_ROLES,
     _assert_role,
     _build_section_defaults,
     _get_page_or_404,
@@ -21,7 +21,6 @@ from backend.api.cms_v2._shared import (
     _get_system_var,
     _slugify,
 )
-from backend.api.cms.section_types import get_allowed_section_types
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
@@ -329,8 +328,12 @@ def list_publish_log(
 # ── CMS Readiness ────────────────────────────────────────────────────────────
 
 
-def _cms_readiness_issue(*, code: str, severity: str, title: str, detail: str, count: int, href: str | None = None) -> cms_schemas.CmsReadinessIssue:
-    return cms_schemas.CmsReadinessIssue(code=code, severity=severity, title=title, detail=detail, count=count, href=href)
+def _cms_readiness_issue(
+    *, code: str, severity: str, title: str, detail: str, count: int, href: str | None = None
+) -> cms_schemas.CmsReadinessIssue:
+    return cms_schemas.CmsReadinessIssue(
+        code=code, severity=severity, title=title, detail=detail, count=count, href=href
+    )
 
 
 @router.get("/sites/{site_key}/readiness", response_model=cms_schemas.CmsReadinessResponse)
@@ -348,89 +351,288 @@ def cms_readiness(
     draft_pages = page_base.filter(models.CmsPage.status == "draft").count()
     in_review_pages = page_base.filter(models.CmsPage.status == "in_review").count()
     archived_pages = page_base.filter(models.CmsPage.status == "archived").count()
-    scheduled_without_date = page_base.filter(models.CmsPage.status == "scheduled", models.CmsPage.publish_at.is_(None)).count()
-    published_without_version = page_base.filter(models.CmsPage.status == "published", models.CmsPage.published_version_id.is_(None)).count()
+    scheduled_without_date = page_base.filter(
+        models.CmsPage.status == "scheduled", models.CmsPage.publish_at.is_(None)
+    ).count()
+    published_without_version = page_base.filter(
+        models.CmsPage.status == "published", models.CmsPage.published_version_id.is_(None)
+    ).count()
 
-    section_base = db.query(models.CmsSection).join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id).filter(models.CmsPage.site_id == site.id)
-    visible_sections = section_base.filter(models.CmsSection.is_visible.is_(True), models.CmsSection.status != "archived", models.CmsSection.deleted_at.is_(None)).count()
-    hidden_sections = section_base.filter((models.CmsSection.is_visible.is_(False)) | (models.CmsSection.status == "archived") | (models.CmsSection.deleted_at.isnot(None))).count()
+    section_base = (
+        db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
+        .filter(models.CmsPage.site_id == site.id)
+    )
+    visible_sections = section_base.filter(
+        models.CmsSection.is_visible.is_(True),
+        models.CmsSection.status != "archived",
+        models.CmsSection.deleted_at.is_(None),
+    ).count()
+    hidden_sections = section_base.filter(
+        (models.CmsSection.is_visible.is_(False))
+        | (models.CmsSection.status == "archived")
+        | (models.CmsSection.deleted_at.isnot(None))
+    ).count()
     pages_without_visible_sections = (
-        db.query(models.CmsPage.id).filter(models.CmsPage.site_id == site.id)
-        .outerjoin(models.CmsSection, (models.CmsSection.page_id == models.CmsPage.id) & (models.CmsSection.is_visible.is_(True)) & (models.CmsSection.status != "archived") & (models.CmsSection.deleted_at.is_(None)))
-        .group_by(models.CmsPage.id).having(func.count(models.CmsSection.id) == 0).count()
+        db.query(models.CmsPage.id)
+        .filter(models.CmsPage.site_id == site.id)
+        .outerjoin(
+            models.CmsSection,
+            (models.CmsSection.page_id == models.CmsPage.id)
+            & (models.CmsSection.is_visible.is_(True))
+            & (models.CmsSection.status != "archived")
+            & (models.CmsSection.deleted_at.is_(None)),
+        )
+        .group_by(models.CmsPage.id)
+        .having(func.count(models.CmsSection.id) == 0)
+        .count()
     )
     allowed_section_types = get_allowed_section_types(db)
-    unsupported_sections = section_base.filter(models.CmsSection.deleted_at.is_(None), ~models.CmsSection.type.in_(allowed_section_types)).count()
-    active_themes = db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site.id, models.CmsTheme.is_active.is_(True), models.CmsTheme.status != "archived").count()
-    active_menus = db.query(models.CmsMenu).filter(models.CmsMenu.site_id == site.id, models.CmsMenu.is_active.is_(True)).count()
-    menu_items = db.query(models.CmsMenuItem).join(models.CmsMenu, models.CmsMenuItem.menu_id == models.CmsMenu.id).filter(models.CmsMenu.site_id == site.id, models.CmsMenu.is_active.is_(True)).count()
+    unsupported_sections = section_base.filter(
+        models.CmsSection.deleted_at.is_(None), ~models.CmsSection.type.in_(allowed_section_types)
+    ).count()
+    active_themes = (
+        db.query(models.CmsTheme)
+        .filter(
+            models.CmsTheme.site_id == site.id,
+            models.CmsTheme.is_active.is_(True),
+            models.CmsTheme.status != "archived",
+        )
+        .count()
+    )
+    active_menus = (
+        db.query(models.CmsMenu).filter(models.CmsMenu.site_id == site.id, models.CmsMenu.is_active.is_(True)).count()
+    )
+    menu_items = (
+        db.query(models.CmsMenuItem)
+        .join(models.CmsMenu, models.CmsMenuItem.menu_id == models.CmsMenu.id)
+        .filter(models.CmsMenu.site_id == site.id, models.CmsMenu.is_active.is_(True))
+        .count()
+    )
 
     media_query = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.status != "archived")
     if site.sede_id is not None:
         media_query = media_query.filter(models.CmsMediaItem.sede_id == site.sede_id)
     media_total = media_query.count()
-    media_without_alt = media_query.filter((models.CmsMediaItem.alt_text.is_(None)) | (func.length(func.trim(models.CmsMediaItem.alt_text)) == 0)).count()
+    media_without_alt = media_query.filter(
+        (models.CmsMediaItem.alt_text.is_(None)) | (func.length(func.trim(models.CmsMediaItem.alt_text)) == 0)
+    ).count()
     recent_publish_events = db.query(models.CmsPublishLog).filter(models.CmsPublishLog.site_id == site.id).count()
 
     active_redirects = 0
     unresolved_broken_links = 0
     try:
-        active_redirects = db.query(models.CmsRedirect).filter(models.CmsRedirect.site_key == site.site_key, models.CmsRedirect.is_active.is_(True)).count()
-        unresolved_broken_links = db.query(models.BrokenLinkCheck).filter(models.BrokenLinkCheck.site_key == site.site_key, models.BrokenLinkCheck.is_broken.is_(True), models.BrokenLinkCheck.resolved_at.is_(None)).count()
+        active_redirects = (
+            db.query(models.CmsRedirect)
+            .filter(models.CmsRedirect.site_key == site.site_key, models.CmsRedirect.is_active.is_(True))
+            .count()
+        )
+        unresolved_broken_links = (
+            db.query(models.BrokenLinkCheck)
+            .filter(
+                models.BrokenLinkCheck.site_key == site.site_key,
+                models.BrokenLinkCheck.is_broken.is_(True),
+                models.BrokenLinkCheck.resolved_at.is_(None),
+            )
+            .count()
+        )
     except Exception:
         logger.exception("Failed to query redirects or broken links for CMS readiness")
         db.rollback()
 
     issues: list[cms_schemas.CmsReadinessIssue] = []
     if published_pages == 0:
-        issues.append(_cms_readiness_issue(code="no_published_pages", severity="error", title="Sin páginas publicadas", detail="El sitio no tiene contenido CMS publicado para alimentar las páginas públicas.", count=1, href="/cms/pages"))
+        issues.append(
+            _cms_readiness_issue(
+                code="no_published_pages",
+                severity="error",
+                title="Sin páginas publicadas",
+                detail="El sitio no tiene contenido CMS publicado para alimentar las páginas públicas.",
+                count=1,
+                href="/cms/pages",
+            )
+        )
     if active_themes == 0:
-        issues.append(_cms_readiness_issue(code="no_active_theme", severity="error", title="Sin tema activo", detail="El render público necesita un tema activo para resolver tokens visuales del sitio.", count=1, href="/cms/themes"))
+        issues.append(
+            _cms_readiness_issue(
+                code="no_active_theme",
+                severity="error",
+                title="Sin tema activo",
+                detail="El render público necesita un tema activo para resolver tokens visuales del sitio.",
+                count=1,
+                href="/cms/themes",
+            )
+        )
     if unsupported_sections:
-        issues.append(_cms_readiness_issue(code="unsupported_sections", severity="error", title="Secciones no soportadas", detail="Hay secciones cuyo tipo no está activo en el catálogo CMS.", count=unsupported_sections, href="/cms/section-types"))
+        issues.append(
+            _cms_readiness_issue(
+                code="unsupported_sections",
+                severity="error",
+                title="Secciones no soportadas",
+                detail="Hay secciones cuyo tipo no está activo en el catálogo CMS.",
+                count=unsupported_sections,
+                href="/cms/section-types",
+            )
+        )
     if unresolved_broken_links:
-        issues.append(_cms_readiness_issue(code="broken_links", severity="error", title="Links rotos pendientes", detail="Hay enlaces marcados como rotos que pueden producir 404 en navegación pública.", count=unresolved_broken_links, href="/cms/broken-links"))
+        issues.append(
+            _cms_readiness_issue(
+                code="broken_links",
+                severity="error",
+                title="Links rotos pendientes",
+                detail="Hay enlaces marcados como rotos que pueden producir 404 en navegación pública.",
+                count=unresolved_broken_links,
+                href="/cms/broken-links",
+            )
+        )
     if active_menus == 0:
-        issues.append(_cms_readiness_issue(code="no_active_menus", severity="warning", title="Sin menús activos", detail="La navegación pública queda limitada si no hay menús activos configurados.", count=1, href="/cms/menus"))
+        issues.append(
+            _cms_readiness_issue(
+                code="no_active_menus",
+                severity="warning",
+                title="Sin menús activos",
+                detail="La navegación pública queda limitada si no hay menús activos configurados.",
+                count=1,
+                href="/cms/menus",
+            )
+        )
     if pages_without_visible_sections:
-        issues.append(_cms_readiness_issue(code="pages_without_visible_sections", severity="warning", title="Páginas sin secciones visibles", detail="Estas páginas pueden publicar una experiencia vacía o depender de fallback anterior.", count=pages_without_visible_sections, href="/cms/pages"))
+        issues.append(
+            _cms_readiness_issue(
+                code="pages_without_visible_sections",
+                severity="warning",
+                title="Páginas sin secciones visibles",
+                detail="Estas páginas pueden publicar una experiencia vacía o depender de fallback anterior.",
+                count=pages_without_visible_sections,
+                href="/cms/pages",
+            )
+        )
     if published_without_version:
-        issues.append(_cms_readiness_issue(code="published_without_version", severity="warning", title="Publicadas sin versión fijada", detail="Conviene publicar con snapshot para proteger la salida pública ante cambios de borrador.", count=published_without_version, href="/cms/pages"))
+        issues.append(
+            _cms_readiness_issue(
+                code="published_without_version",
+                severity="warning",
+                title="Publicadas sin versión fijada",
+                detail="Conviene publicar con snapshot para proteger la salida pública ante cambios de borrador.",
+                count=published_without_version,
+                href="/cms/pages",
+            )
+        )
     if media_without_alt:
-        issues.append(_cms_readiness_issue(code="media_without_alt", severity="warning", title="Media sin alt text", detail="Las imágenes sin texto alternativo reducen accesibilidad y calidad SEO.", count=media_without_alt, href="/cms/media"))
+        issues.append(
+            _cms_readiness_issue(
+                code="media_without_alt",
+                severity="warning",
+                title="Media sin alt text",
+                detail="Las imágenes sin texto alternativo reducen accesibilidad y calidad SEO.",
+                count=media_without_alt,
+                href="/cms/media",
+            )
+        )
     if scheduled_without_date:
-        issues.append(_cms_readiness_issue(code="scheduled_without_date", severity="warning", title="Programadas sin fecha", detail="Hay páginas en estado scheduled sin publish_at, por lo que no podrán publicarse automáticamente.", count=scheduled_without_date, href="/cms/pages"))
+        issues.append(
+            _cms_readiness_issue(
+                code="scheduled_without_date",
+                severity="warning",
+                title="Programadas sin fecha",
+                detail="Hay páginas en estado scheduled sin publish_at, por lo que no podrán publicarse automáticamente.",
+                count=scheduled_without_date,
+                href="/cms/pages",
+            )
+        )
 
     penalty = sum(20 if issue.severity == "error" else 8 for issue in issues)
     score = max(0, 100 - penalty)
 
     capabilities = [
-        cms_schemas.CmsReadinessCapability(key="pages", label="Gestión de páginas", status="ready" if total_pages else "partial", detail=f"{total_pages} páginas, {published_pages} publicadas.", href="/cms/pages"),
-        cms_schemas.CmsReadinessCapability(key="builder", label="Constructor de secciones", status="ready" if visible_sections and not unsupported_sections else "attention", detail=f"{visible_sections} visibles, {unsupported_sections} no soportadas.", href="/cms/builder"),
-        cms_schemas.CmsReadinessCapability(key="media", label="Media y recursos", status="ready" if media_total and not media_without_alt else ("partial" if media_total else "attention"), detail=f"{media_total} archivos activos, {media_without_alt} sin alt.", href="/cms/media"),
-        cms_schemas.CmsReadinessCapability(key="seo", label="SEO y publicación", status="ready" if published_pages and not published_without_version else "partial", detail=f"{published_pages} publicadas, {published_without_version} sin snapshot.", href="/cms/seo-audit"),
-        cms_schemas.CmsReadinessCapability(key="menus", label="Menús y navegación", status="ready" if active_menus and menu_items else "attention", detail=f"{active_menus} menús activos, {menu_items} ítems.", href="/cms/menus"),
-        cms_schemas.CmsReadinessCapability(key="themes", label="Temas y tokens", status="ready" if active_themes else "attention", detail=f"{active_themes} temas activos.", href="/cms/themes"),
-        cms_schemas.CmsReadinessCapability(key="operations", label="Operación y auditoría", status="ready" if recent_publish_events or active_redirects or unresolved_broken_links == 0 else "partial", detail=f"{recent_publish_events} eventos, {active_redirects} redirects, {unresolved_broken_links} links rotos.", href="/cms/audit"),
+        cms_schemas.CmsReadinessCapability(
+            key="pages",
+            label="Gestión de páginas",
+            status="ready" if total_pages else "partial",
+            detail=f"{total_pages} páginas, {published_pages} publicadas.",
+            href="/cms/pages",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="builder",
+            label="Constructor de secciones",
+            status="ready" if visible_sections and not unsupported_sections else "attention",
+            detail=f"{visible_sections} visibles, {unsupported_sections} no soportadas.",
+            href="/cms/builder",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="media",
+            label="Media y recursos",
+            status="ready" if media_total and not media_without_alt else ("partial" if media_total else "attention"),
+            detail=f"{media_total} archivos activos, {media_without_alt} sin alt.",
+            href="/cms/media",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="seo",
+            label="SEO y publicación",
+            status="ready" if published_pages and not published_without_version else "partial",
+            detail=f"{published_pages} publicadas, {published_without_version} sin snapshot.",
+            href="/cms/seo-audit",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="menus",
+            label="Menús y navegación",
+            status="ready" if active_menus and menu_items else "attention",
+            detail=f"{active_menus} menús activos, {menu_items} ítems.",
+            href="/cms/menus",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="themes",
+            label="Temas y tokens",
+            status="ready" if active_themes else "attention",
+            detail=f"{active_themes} temas activos.",
+            href="/cms/themes",
+        ),
+        cms_schemas.CmsReadinessCapability(
+            key="operations",
+            label="Operación y auditoría",
+            status="ready" if recent_publish_events or active_redirects or unresolved_broken_links == 0 else "partial",
+            detail=f"{recent_publish_events} eventos, {active_redirects} redirects, {unresolved_broken_links} links rotos.",
+            href="/cms/audit",
+        ),
     ]
 
     metrics = [
         cms_schemas.CmsReadinessMetric(key="total_pages", label="Páginas", value=total_pages, href="/cms/pages"),
-        cms_schemas.CmsReadinessMetric(key="published_pages", label="Publicadas", value=published_pages, href="/cms/pages"),
+        cms_schemas.CmsReadinessMetric(
+            key="published_pages", label="Publicadas", value=published_pages, href="/cms/pages"
+        ),
         cms_schemas.CmsReadinessMetric(key="draft_pages", label="Borradores", value=draft_pages, href="/cms/pages"),
-        cms_schemas.CmsReadinessMetric(key="in_review_pages", label="En revisión", value=in_review_pages, href="/cms/pages"),
-        cms_schemas.CmsReadinessMetric(key="archived_pages", label="Archivadas", value=archived_pages, href="/cms/pages"),
-        cms_schemas.CmsReadinessMetric(key="visible_sections", label="Secciones visibles", value=visible_sections, href="/cms/builder"),
-        cms_schemas.CmsReadinessMetric(key="hidden_sections", label="Secciones ocultas", value=hidden_sections, href="/cms/builder"),
+        cms_schemas.CmsReadinessMetric(
+            key="in_review_pages", label="En revisión", value=in_review_pages, href="/cms/pages"
+        ),
+        cms_schemas.CmsReadinessMetric(
+            key="archived_pages", label="Archivadas", value=archived_pages, href="/cms/pages"
+        ),
+        cms_schemas.CmsReadinessMetric(
+            key="visible_sections", label="Secciones visibles", value=visible_sections, href="/cms/builder"
+        ),
+        cms_schemas.CmsReadinessMetric(
+            key="hidden_sections", label="Secciones ocultas", value=hidden_sections, href="/cms/builder"
+        ),
         cms_schemas.CmsReadinessMetric(key="media_total", label="Media activa", value=media_total, href="/cms/media"),
-        cms_schemas.CmsReadinessMetric(key="active_menus", label="Menús activos", value=active_menus, href="/cms/menus"),
-        cms_schemas.CmsReadinessMetric(key="active_themes", label="Temas activos", value=active_themes, href="/cms/themes"),
-        cms_schemas.CmsReadinessMetric(key="broken_links", label="Links rotos", value=unresolved_broken_links, href="/cms/broken-links"),
+        cms_schemas.CmsReadinessMetric(
+            key="active_menus", label="Menús activos", value=active_menus, href="/cms/menus"
+        ),
+        cms_schemas.CmsReadinessMetric(
+            key="active_themes", label="Temas activos", value=active_themes, href="/cms/themes"
+        ),
+        cms_schemas.CmsReadinessMetric(
+            key="broken_links", label="Links rotos", value=unresolved_broken_links, href="/cms/broken-links"
+        ),
     ]
 
     return cms_schemas.CmsReadinessResponse(
-        site_key=site.site_key, score=score, generated_at=datetime.now(timezone.utc),
-        metrics=metrics, issues=issues, capabilities=capabilities,
+        site_key=site.site_key,
+        score=score,
+        generated_at=datetime.now(timezone.utc),
+        metrics=metrics,
+        issues=issues,
+        capabilities=capabilities,
     )
 
 
@@ -448,7 +650,11 @@ def preview_page(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     sections_list, _ = crud.list_cms_sections(db, page.id)
-    sections = [section for section in sections_list if section.is_visible and getattr(section, "status", "active") != "archived"]
+    sections = [
+        section
+        for section in sections_list
+        if section.is_visible and getattr(section, "status", "active") != "archived"
+    ]
     section_reads = []
     for section in sections:
         sr = schemas.CmsSectionRead.model_validate(section)
@@ -458,14 +664,27 @@ def preview_page(
     base_url = settings.frontend_url.rstrip("/")
     page_url = f"{base_url}/{page.slug.lstrip('/')}"
     canonical = (page.seo_json or {}).get("canonical_url") if isinstance(page.seo_json, dict) else None
-    json_ld_data = auto_json_ld_for_page(page, site, sections=sections, base_url=base_url, site_name=_get_system_var(db, site_key, "church_name", site.name))
+    json_ld_data = auto_json_ld_for_page(
+        page,
+        site,
+        sections=sections,
+        base_url=base_url,
+        site_name=_get_system_var(db, site_key, "church_name", site.name),
+    )
     if isinstance(page.seo_json, dict) and page.seo_json.get("json_ld"):
         json_ld_data = page.seo_json["json_ld"]
-    breadcrumb_items = build_breadcrumb_items_from_slug(page.slug, page.title, base_url=base_url, site_name=site.name or "Home")
+    breadcrumb_items = build_breadcrumb_items_from_slug(
+        page.slug, page.title, base_url=base_url, site_name=site.name or "Home"
+    )
     breadcrumb_json_ld = build_breadcrumb_list_json_ld(breadcrumb_items, base_url=base_url)
     return schemas.CmsPublicPageRead(
-        site_key=site.site_key, slug=page.slug, title=page.title,
-        seo_json=page.seo_json or {}, sections=section_reads,
-        json_ld=json_ld_data, canonical_url=canonical or page_url,
-        breadcrumbs=breadcrumb_items, breadcrumb_json_ld=breadcrumb_json_ld,
+        site_key=site.site_key,
+        slug=page.slug,
+        title=page.title,
+        seo_json=page.seo_json or {},
+        sections=section_reads,
+        json_ld=json_ld_data,
+        canonical_url=canonical or page_url,
+        breadcrumbs=breadcrumb_items,
+        breadcrumb_json_ld=breadcrumb_json_ld,
     )

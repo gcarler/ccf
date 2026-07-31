@@ -26,7 +26,7 @@ export default function TemplatesPage() {
   const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Plantilla>>({});
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -72,7 +72,7 @@ export default function TemplatesPage() {
         const formDataUpload = new FormData();
         formDataUpload.append("file", selectedFile);
         formDataUpload.append("nombre_recurso", "Adjunto Principal");
-        
+
         await apiFetch(`/api/crm/resources/plantillas/${createdPlantilla.id}/adjuntos`, {
           method: "POST",
           headers: {}, // FormData headers are automatically set by browser
@@ -152,7 +152,7 @@ export default function TemplatesPage() {
                 {formData.id ? "Editar Plantilla" : "Nueva Plantilla"}
               </h2>
             </div>
-            
+
             <form onSubmit={handleSave} className="overflow-y-auto p-6 flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white mb-1">Categoría</label>

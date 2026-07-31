@@ -1,6 +1,7 @@
 """
 Tests for evangelism_events/_shared.py — covers require_event_access, is_event_reader_role.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -25,7 +26,8 @@ def full(client, db_session):
 
 def _make_event(db, sede_id, titulo="Evento Test"):
     e = models.CrmEvent(
-        id=uuid.uuid4(), name=titulo,
+        id=uuid.uuid4(),
+        name=titulo,
         sede_id=sede_id,
         event_date=datetime.now(timezone.utc) + timedelta(days=1),
         description="Test event",
@@ -36,7 +38,6 @@ def _make_event(db, sede_id, titulo="Evento Test"):
 
 
 class TestEventRoles:
-
     def test_admin_is_reader(self, full):
         assert is_event_reader_role(full["admin"]) is True
 
@@ -53,7 +54,6 @@ class TestEventRoles:
 
 
 class TestRequireEventAccess:
-
     def test_admin_access_own_event(self, full):
         event = _make_event(full["db"], full["sede"].id)
         full["db"].commit()
@@ -66,12 +66,14 @@ class TestRequireEventAccess:
         event = _make_event(full["db"], other_sede_id)
         full["db"].commit()
         from fastapi import HTTPException
+
         with pytest.raises(HTTPException) as exc_info:
             require_event_access(full["db"], full["admin"], event.id)
         assert exc_info.value.status_code == 404
 
     def test_nonexistent_event_404(self, full):
         from fastapi import HTTPException
+
         with pytest.raises(HTTPException) as exc_info:
             require_event_access(full["db"], full["admin"], uuid.uuid4())
         assert exc_info.value.status_code == 404

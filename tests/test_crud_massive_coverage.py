@@ -2,6 +2,7 @@
 CRUD MASSIVE COVERAGE — Direct CRUD function calls for maximum coverage.
 Uses try/except to ensure all functions get called even if data is missing.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -26,7 +27,8 @@ def full(client, db_session):
     personas = []
     for i in range(12):
         p = models.Persona(
-            first_name=f"U{i}", last_name=f"T{i}",
+            first_name=f"U{i}",
+            last_name=f"T{i}",
             email=f"u{i}_{uuid.uuid4().hex[:6]}@t.com",
             phone=f"+5730011122{i:02d}",
             spiritual_status=["Miembro", "Visitante", "Nuevo", "Activo"][i % 4],
@@ -64,8 +66,11 @@ def full(client, db_session):
     cases = []
     for i, p in enumerate(personas[:4]):
         c = CasoCRM(
-            persona_id=p.id, sede_id=sede.id, titulo_caso=f"Case_{i}",
-            pipeline_id=pipe.id, etapa_actual_id=e1.id,
+            persona_id=p.id,
+            sede_id=sede.id,
+            titulo_caso=f"Case_{i}",
+            pipeline_id=pipe.id,
+            etapa_actual_id=e1.id,
             origen_canal=CanalOrigenEnum.EVANGELISMO,
         )
         db_session.add(c)
@@ -77,8 +82,11 @@ def full(client, db_session):
     events = []
     for i in range(4):
         ev = models.CrmEvent(
-            name=f"Event_{i}", event_date=datetime.now(timezone.utc) + timedelta(days=i * 10),
-            sede_id=sede.id, status="SCHEDULED", location=f"Loc_{i}",
+            name=f"Event_{i}",
+            event_date=datetime.now(timezone.utc) + timedelta(days=i * 10),
+            sede_id=sede.id,
+            status="SCHEDULED",
+            location=f"Loc_{i}",
         )
         db_session.add(ev)
         events.append(ev)
@@ -91,20 +99,24 @@ def full(client, db_session):
         db_session.add(models.CounselingTicket(persona_id=personas[i].id, subject=f"C_{i}", status="open"))
         db_session.add(models.PrayerRequest(requester_name=personas[i].first_name, request_text="P", sede_id=sede.id))
         db_session.add(models.CommunicationLog(persona_id=personas[i].id, channel="email", content=f"Msg_{i}"))
-        db_session.add(models.VolunteerShift(
-            persona_id=personas[i].id,
-            role_name=["worship", "kids", "tech", "media"][i],
-            team_name=["worship", "kids", "tech", "media"][i],
-            shift_start=datetime.now(timezone.utc) - timedelta(hours=4),
-            shift_end=datetime.now(timezone.utc),
-        ))
+        db_session.add(
+            models.VolunteerShift(
+                persona_id=personas[i].id,
+                role_name=["worship", "kids", "tech", "media"][i],
+                team_name=["worship", "kids", "tech", "media"][i],
+                shift_start=datetime.now(timezone.utc) - timedelta(hours=4),
+                shift_end=datetime.now(timezone.utc),
+            )
+        )
     db_session.commit()
 
     cat = CategoriaEstrategia(nombre="Cat")
     db_session.add(cat)
     db_session.flush()
     strategy = EstrategiaEvangelismo(
-        nombre="Strat", sede_id=sede.id, frecuencia="semanal",
+        nombre="Strat",
+        sede_id=sede.id,
+        frecuencia="semanal",
         categoria_id=cat.id,
         fecha_inicio=datetime.now(timezone.utc) - timedelta(days=90),
         fecha_fin=datetime.now(timezone.utc) + timedelta(days=90),
@@ -115,9 +127,13 @@ def full(client, db_session):
     groups = []
     for i in range(3):
         g = GrupoEvangelismo(
-            nombre=f"G{i}", ubicacion=f"U{i}", sede_id=sede.id,
-            lider_persona_id=personas[i].id, codigo=f"G{uuid.uuid4().hex[:6]}",
-            capacidad=20, estrategia_id=strategy.id,
+            nombre=f"G{i}",
+            ubicacion=f"U{i}",
+            sede_id=sede.id,
+            lider_persona_id=personas[i].id,
+            codigo=f"G{uuid.uuid4().hex[:6]}",
+            capacidad=20,
+            estrategia_id=strategy.id,
         )
         db_session.add(g)
         groups.append(g)
@@ -131,9 +147,16 @@ def full(client, db_session):
     db_session.commit()
 
     return {
-        "c": client, "sede": sede, "admin": admin, "admin_persona": admin_persona,
-        "personas": personas, "families": families, "cases": cases,
-        "events": events, "groups": groups, "strategy": strategy,
+        "c": client,
+        "sede": sede,
+        "admin": admin,
+        "admin_persona": admin_persona,
+        "personas": personas,
+        "families": families,
+        "cases": cases,
+        "events": events,
+        "groups": groups,
+        "strategy": strategy,
     }
 
 
@@ -144,6 +167,7 @@ def _call(fn, *args, **kwargs):
 class TestCRMCrudMassive:
     def test_crm_crud(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         pid = str(full["personas"][0].id)
         sid = str(full["sede"].id)
@@ -186,6 +210,7 @@ class TestCRMCrudMassive:
 
     def test_crm_crud_update_delete(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         pid = str(full["personas"][0].id)
         _call(crm.get_crm_event, db, full["events"][0].id)
@@ -218,12 +243,15 @@ class TestCRMCrudMassive:
 
         tasks = crm.get_crm_tasks(db_session)
         assert all(str(t.id) != str(row.id) for t in tasks)
-        assert crm.update_crm_task(
-            db_session,
-            row.id,
-            schemas.CrmTaskUpdate(status="completed"),
-            actor_user_id=full["admin"].id,
-        ) is None
+        assert (
+            crm.update_crm_task(
+                db_session,
+                row.id,
+                schemas.CrmTaskUpdate(status="completed"),
+                actor_user_id=full["admin"].id,
+            )
+            is None
+        )
         assert crm.delete_crm_task(db_session, row.id) is False
 
     def test_counseling_ignore_soft_deleted(self, db_session, full):
@@ -238,11 +266,14 @@ class TestCRMCrudMassive:
         tickets = crm.get_counseling_tickets(db_session)
         assert all(str(t.id) != str(row.id) for t in tickets)
         assert crm.get_counseling_ticket(db_session, row.id) is None
-        assert crm.update_counseling_ticket(
-            db_session,
-            row.id,
-            schemas.CounselingTicketUpdate(status="resolved"),
-        ) is None
+        assert (
+            crm.update_counseling_ticket(
+                db_session,
+                row.id,
+                schemas.CounselingTicketUpdate(status="resolved"),
+            )
+            is None
+        )
         assert crm.delete_counseling_ticket(db_session, row.id) is False
 
     def test_community_ignore_soft_deleted(self, db_session, full):
@@ -267,6 +298,7 @@ class TestCRMCrudMassive:
 class TestCMSCrudMassive:
     def test_cms_crud(self, db_session, full):
         from backend.crud import cms
+
         db = db_session
         # Old page_contents / content_publications removed — CMS v2 CRUD
         # (list_cms_sites, get_cms_site_by_key) exercise the same code paths.
@@ -303,6 +335,7 @@ class TestCMSCrudMassive:
 class TestAcademyCrudMassive:
     def test_academy_crud(self, db_session, full):
         from backend.crud import academy
+
         db = db_session
         _call(academy.list_courses, db)
         _call(academy.list_courses, db, modality="online")
@@ -319,6 +352,7 @@ class TestCrmExtendedMassive:
     def test_extended_crud(self, db_session, full):
         from backend import models
         from backend.crud import crm_extended
+
         db = db_session
         pid = str(full["personas"][0].id)
         _call(crm_extended.get_positions, db)
@@ -354,7 +388,10 @@ class TestCrmExtendedMassive:
         db.commit()
         assert crm_extended.get_event_assignment(db, assignment.id) is None
         assert all(str(a.id) != str(assignment.id) for a in crm_extended.get_event_assignments(db, event_id=event.id))
-        assert crm_extended.update_event_assignment(db, assignment.id, crm_extended.EventAssignmentUpdate(role="HOST")) is None
+        assert (
+            crm_extended.update_event_assignment(db, assignment.id, crm_extended.EventAssignmentUpdate(role="HOST"))
+            is None
+        )
         assert crm_extended.delete_event_assignment(db, assignment.id) is False
 
         msg = models.ChatMessage(sender_id=full["admin"].id, room_id="r1", content="Hola")
@@ -371,6 +408,7 @@ class TestCrmExtendedMassive:
 class TestProjectsMassive:
     def test_projects_crud(self, db_session, full):
         from backend.crud import projects
+
         db = db_session
         sid = str(full["sede"].id)
         _call(projects.get_projects, db)
@@ -396,6 +434,7 @@ class TestProjectsMassive:
 class TestKernelMassive:
     def test_kernel_crud(self, db_session, full):
         from backend.crud import kernel
+
         db = db_session
         pid = str(full["personas"][0].id)
         uid = str(full["admin"].id)

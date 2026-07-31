@@ -36,40 +36,80 @@ MODULE_ALIASES: Dict[str, str] = {
 KERNEL_ROLE_PERMISSIONS: Dict[str, Set[str]] = {
     "ADMINISTRADOR": {
         "system:config",
-        "crm:manage", "crm:read", "crm:edit",
-        "academy:manage", "academy:read", "academy:edit", "academy:study",
-        "projects:manage", "projects:read", "projects:edit",
-        "evangelism:manage", "evangelism:read", "evangelism:edit",
-        "cms:manage", "cms:read", "cms:edit",
-        "finance:manage", "finance:read", "finance:edit",
-        "community:manage", "community:read", "community:edit",
-        "support:manage", "support:read",
-        "spiritual_life:manage", "spiritual_life:read", "spiritual_life:edit",
+        "crm:manage",
+        "crm:read",
+        "crm:edit",
+        "academy:manage",
+        "academy:read",
+        "academy:edit",
+        "academy:study",
+        "projects:manage",
+        "projects:read",
+        "projects:edit",
+        "evangelism:manage",
+        "evangelism:read",
+        "evangelism:edit",
+        "cms:manage",
+        "cms:read",
+        "cms:edit",
+        "finance:manage",
+        "finance:read",
+        "finance:edit",
+        "community:manage",
+        "community:read",
+        "community:edit",
+        "support:manage",
+        "support:read",
+        "spiritual_life:manage",
+        "spiritual_life:read",
+        "spiritual_life:edit",
         "profile:manage",
-        "messaging:edit", "messaging:read",
-        "governance:manage", "governance:read",
+        "messaging:edit",
+        "messaging:read",
+        "governance:manage",
+        "governance:read",
     },
     "GESTOR": {
-        "crm:manage", "crm:read", "crm:edit",
-        "academy:manage", "academy:read", "academy:edit",
-        "projects:manage", "projects:read", "projects:edit",
-        "evangelism:manage", "evangelism:read", "evangelism:edit",
-        "cms:read", "cms:edit",
-        "community:manage", "community:read", "community:edit",
+        "crm:manage",
+        "crm:read",
+        "crm:edit",
+        "academy:manage",
+        "academy:read",
+        "academy:edit",
+        "projects:manage",
+        "projects:read",
+        "projects:edit",
+        "evangelism:manage",
+        "evangelism:read",
+        "evangelism:edit",
+        "cms:read",
+        "cms:edit",
+        "community:manage",
+        "community:read",
+        "community:edit",
         "finance:read",
         "profile:manage",
-        "messaging:edit", "messaging:read",
-        "spiritual_life:manage", "spiritual_life:read", "spiritual_life:edit",
+        "messaging:edit",
+        "messaging:read",
+        "spiritual_life:manage",
+        "spiritual_life:read",
+        "spiritual_life:edit",
     },
     "EDITOR": {
-        "crm:read", "crm:edit",
+        "crm:read",
+        "crm:edit",
         "academy:read",
-        "projects:read", "projects:edit",
-        "evangelism:read", "evangelism:edit",
-        "cms:read", "cms:edit",
-        "community:read", "community:edit",
+        "projects:read",
+        "projects:edit",
+        "evangelism:read",
+        "evangelism:edit",
+        "cms:read",
+        "cms:edit",
+        "community:read",
+        "community:edit",
         "finance:read",
-        "spiritual_life:read", "spiritual_life:edit",
+        "spiritual_life:read",
+        "spiritual_life:edit",
         "profile:manage",
         "messaging:read",
     },
@@ -122,9 +162,7 @@ def _resolve_role_model_permissions(db: Session, user) -> Set[str]:
     return result
 
 
-def resolve_effective_permissions(
-    db: Session, user
-) -> Set[str]:
+def resolve_effective_permissions(db: Session, user) -> Set[str]:
     """Calcula los permisos efectivos de un usuario.
 
     Orden de resolución:
@@ -140,14 +178,13 @@ def resolve_effective_permissions(
     return kernel_perms | role_model_perms
 
 
-def has_permission(
-    db: Session, user, permission: str
-) -> bool:
+def has_permission(db: Session, user, permission: str) -> bool:
     """Verifica si un usuario tiene un permiso específico.
 
     También verifica el estado vital — usuarios INACTIVOS no tienen permisos.
     """
     from backend.crud.kernel import is_persona_active
+
     if not is_persona_active(db, str(user.id)):
         return False
 
@@ -184,6 +221,7 @@ def has_permission(
 # ──────────────────────────────────────────────
 # DEPENDENCIAS FASTAPI
 # ──────────────────────────────────────────────
+
 
 def require_kernel_permission(permission: str):
     """Factory: dependencia FastAPI que verifica un permiso del Kernel.
@@ -227,6 +265,7 @@ def require_active_for_assignment():
         db: Session = Depends(get_db),
     ):
         from backend.crud.kernel import is_persona_active
+
         if is_persona_active(db, str(current_user.id)):
             return current_user
 

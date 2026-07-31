@@ -29,12 +29,8 @@ from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_two_sedes(db_session):
-    admin_a, persona_a, sede_a = seed_admin(
-        db_session, email="aboxA@example.com", password="testpass123"
-    )
-    admin_b, persona_b, sede_b = seed_admin(
-        db_session, email="aboxB@example.com", password="testpass123"
-    )
+    admin_a, persona_a, sede_a = seed_admin(db_session, email="aboxA@example.com", password="testpass123")
+    admin_b, persona_b, sede_b = seed_admin(db_session, email="aboxB@example.com", password="testpass123")
     assert sede_a.id != sede_b.id
     return (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b)
 
@@ -151,12 +147,8 @@ def test_persona_subroutes_block_cross_sede(client, db_session):
     pid = str(persona_b.id)
 
     resp = client.get(f"/api/crm/personas/{pid}/communications", headers=headers_a)
-    assert resp.status_code == 404, (
-        f"Leak comunicaciones cross-sede: status {resp.status_code} body={resp.text}"
-    )
-    assert "secret pastoral" not in resp.text, (
-        "FUGA CONFIRMADA: communications de sede_b llegaron a la respuesta"
-    )
+    assert resp.status_code == 404, f"Leak comunicaciones cross-sede: status {resp.status_code} body={resp.text}"
+    assert "secret pastoral" not in resp.text, "FUGA CONFIRMADA: communications de sede_b llegaron a la respuesta"
 
     resp = client.get(f"/api/crm/personas/{pid}/ministries", headers=headers_a)
     assert resp.status_code == 404, f"Leak ministries cross-sede: {resp.status_code}"
@@ -202,17 +194,13 @@ def test_list_families_scoped_by_sede(client, db_session):
     assert resp_a.status_code == 200
     names_a = {f["name"] for f in resp_a.json()}
     assert "Familia A" in names_a
-    assert "Familia B (cross-sede target)" not in names_a, (
-        f"FUGA: admin A ve familia B: {names_a}"
-    )
+    assert "Familia B (cross-sede target)" not in names_a, f"FUGA: admin A ve familia B: {names_a}"
 
     resp_b = client.get("/api/crm/families/", headers=headers_b)
     assert resp_b.status_code == 200
     names_b = {f["name"] for f in resp_b.json()}
     assert "Familia B (cross-sede target)" in names_b
-    assert "Familia A" not in names_b, (
-        f"FUGA: admin B ve familia A: {names_b}"
-    )
+    assert "Familia A" not in names_b, f"FUGA: admin B ve familia A: {names_b}"
 
 
 def test_get_family_detail_blocks_cross_sede(client, db_session):
@@ -235,9 +223,7 @@ def test_get_family_detail_blocks_cross_sede(client, db_session):
 
     headers_a = auth_headers(client, email="aboxA@example.com")
     resp = client.get(f"/api/crm/family/{fam_b.id}", headers=headers_a)
-    assert resp.status_code == 404, (
-        f"Leak: admin A leyó family de sede_b; status {resp.status_code}, body={resp.text}"
-    )
+    assert resp.status_code == 404, f"Leak: admin A leyó family de sede_b; status {resp.status_code}, body={resp.text}"
 
 
 def test_regression_admin_block_role_assignment_cross_sede(client, db_session):
@@ -287,12 +273,8 @@ def test_get_counseling_detail_blocks_cross_sede(client, db_session):
 
     headers_a = auth_headers(client, email="aboxA@example.com")
     resp = client.get(f"/api/crm/counseling/{secret_ticket.id}", headers=headers_a)
-    assert resp.status_code == 404, (
-        f"Leak counseling cross-sede: status {resp.status_code}, body={resp.text}"
-    )
-    assert "Abuso espiritual" not in resp.text, (
-        "FUGA CONFIRMADA: tema pastoral de sede_b expuesto a sede_a"
-    )
+    assert resp.status_code == 404, f"Leak counseling cross-sede: status {resp.status_code}, body={resp.text}"
+    assert "Abuso espiritual" not in resp.text, "FUGA CONFIRMADA: tema pastoral de sede_b expuesto a sede_a"
 
 
 def test_create_counseling_ticket_blocks_cross_sede(client, db_session):
@@ -324,13 +306,9 @@ def test_create_counseling_ticket_blocks_cross_sede(client, db_session):
 
     # Sanity: NO se creó ningún ticket en la base de datos
     leaked = (
-        db_session.query(models.CounselingTicket)
-        .filter(models.CounselingTicket.persona_id == persona_b.id)
-        .first()
+        db_session.query(models.CounselingTicket).filter(models.CounselingTicket.persona_id == persona_b.id).first()
     )
-    assert leaked is None, (
-        "FUGA CONFIRMADA: ticket de sede_b fue persistido a pesar del cross-sede"
-    )
+    assert leaked is None, "FUGA CONFIRMADA: ticket de sede_b fue persistido a pesar del cross-sede"
 
     # 2. Sanity positiva: admin A SÍ puede crear ticket para su propia persona
     resp_ok = client.post(
@@ -401,9 +379,7 @@ def test_create_counseling_ticket_pastor_id_resolves_and_validates_scope(client,
         )
         .all()
     )
-    assert len(leaked_rows) == 0, (
-        f"FUGA: {len(leaked_rows)} ticket(s) cross-sede persistido(s) pese al 404"
-    )
+    assert len(leaked_rows) == 0, f"FUGA: {len(leaked_rows)} ticket(s) cross-sede persistido(s) pese al 404"
 
     # 3. El actor local comparte el UUID canónico de su Persona.
     resp_local_user = client.post(
@@ -532,9 +508,7 @@ def test_update_counseling_ticket_blocks_cross_sede(client, db_session):
     )
     # Sanity: el ticket NO debe haber mutado el pastor_id
     db_session.refresh(local_ticket)
-    assert str(local_ticket.pastor_id) != str(persona_b_admin.id), (
-        "El pastor_id NO debe haberse mutado a un cross-sede"
-    )
+    assert str(local_ticket.pastor_id) != str(persona_b_admin.id), "El pastor_id NO debe haberse mutado a un cross-sede"
 
     # 4. El UUID canónico cross-sede continúa fuera de scope.
     resp_pastor_user_cross = client.patch(
@@ -577,15 +551,9 @@ def test_get_prayer_request_detail_blocks_cross_sede(client, db_session):
     db_session.commit()
 
     headers_a = auth_headers(client, email="aboxA@example.com")
-    resp = client.get(
-        f"/api/crm/prayer-requests/{secret_prayer.id}", headers=headers_a
-    )
-    assert resp.status_code == 404, (
-        f"Leak prayer cross-sede: status {resp.status_code}, body={resp.text}"
-    )
-    assert "conflicto familiar" not in resp.text, (
-        "FUGA CONFIRMADA: prayer text de sede_b en respuesta a sede_a"
-    )
+    resp = client.get(f"/api/crm/prayer-requests/{secret_prayer.id}", headers=headers_a)
+    assert resp.status_code == 404, f"Leak prayer cross-sede: status {resp.status_code}, body={resp.text}"
+    assert "conflicto familiar" not in resp.text, "FUGA CONFIRMADA: prayer text de sede_b en respuesta a sede_a"
 
 
 def test_get_grupo_detail_blocks_cross_sede(client, db_session):
@@ -602,12 +570,8 @@ def test_get_grupo_detail_blocks_cross_sede(client, db_session):
 
     headers_a = auth_headers(client, email="aboxA@example.com")
     resp = client.get(f"/api/crm/grupos/{grupo_b.id}", headers=headers_a)
-    assert resp.status_code == 404, (
-        f"Leak grupo detail cross-sede: status {resp.status_code}, body={resp.text}"
-    )
-    assert "Grupo B Secreto" not in resp.text, (
-        "FUGA CONFIRMADA: nombre de grupo de sede_b en respuesta a sede_a"
-    )
+    assert resp.status_code == 404, f"Leak grupo detail cross-sede: status {resp.status_code}, body={resp.text}"
+    assert "Grupo B Secreto" not in resp.text, "FUGA CONFIRMADA: nombre de grupo de sede_b en respuesta a sede_a"
 
 
 def test_update_grupo_blocks_cross_sede(client, db_session):
@@ -628,15 +592,11 @@ def test_update_grupo_blocks_cross_sede(client, db_session):
         headers=headers_a,
         json={"name": "Grupo B Editado Por A (debería fallar)"},
     )
-    assert resp.status_code == 404, (
-        f"Leak update_grupo cross-sede: status {resp.status_code}, body={resp.text}"
-    )
+    assert resp.status_code == 404, f"Leak update_grupo cross-sede: status {resp.status_code}, body={resp.text}"
 
     # Sanity: el grupo NO debe haber sido mutado
     db_session.refresh(grupo_b)
-    assert grupo_b.nombre == "Grupo B Original", (
-        "El grupo NO debe mutarse cross-sede"
-    )
+    assert grupo_b.nombre == "Grupo B Original", "El grupo NO debe mutarse cross-sede"
 
 
 def test_get_messaging_history_item_blocks_cross_sede(client, db_session):
@@ -656,9 +616,7 @@ def test_get_messaging_history_item_blocks_cross_sede(client, db_session):
 
     headers_a = auth_headers(client, email="aboxA@example.com")
     resp = client.get(f"/api/crm/messaging/history/{secret_log.id}", headers=headers_a)
-    assert resp.status_code == 404, (
-        f"Leak messaging history cross-sede: status {resp.status_code}, body={resp.text}"
-    )
+    assert resp.status_code == 404, f"Leak messaging history cross-sede: status {resp.status_code}, body={resp.text}"
     assert "Mensaje confidencial" not in resp.text, (
         "FUGA CONFIRMADA: contenido de mensaje de sede_b en respuesta a sede_a"
     )
@@ -764,9 +722,7 @@ def test_delete_automation_edge_blocks_cross_sede(client, db_session):
 
     headers_a = auth_headers(client, email="aboxA@example.com")
     resp = client.delete(f"/api/crm/resources/automation-edges/{edge_b.id}", headers=headers_a)
-    assert resp.status_code == 404, (
-        f"FUGA: admin_a borró edge de sede_b (status {resp.status_code}, body={resp.text})"
-    )
+    assert resp.status_code == 404, f"FUGA: admin_a borró edge de sede_b (status {resp.status_code}, body={resp.text})"
 
 
 def test_export_newsletter_leads_csv_blocks_cross_sede(client, db_session):
@@ -833,9 +789,7 @@ def test_export_newsletter_leads_csv_blocks_cross_sede(client, db_session):
     assert resp.status_code == 200
     body_text = resp.text
     # Axioma 3 core: el cross-sede NO debe aparecer
-    assert "LEAD SECRETO SEDE B" not in body_text, (
-        f"FUGA: lead cross-sede en export admin A: {body_text[:300]}"
-    )
+    assert "LEAD SECRETO SEDE B" not in body_text, f"FUGA: lead cross-sede en export admin A: {body_text[:300]}"
     assert "lead legitimo A" in body_text
 
 
@@ -911,9 +865,7 @@ def test_get_newsletter_leads_blocks_cross_sede(client, db_session):
     resp_b = client.get("/api/crm/leads/newsletter", headers=headers_b)
     assert resp_b.status_code == 200
     body_b = resp_b.text
-    assert "lead legitimo lista A" not in body_b, (
-        f"FUGA: admin B ve lead de sede_a: {body_b[:500]}"
-    )
+    assert "lead legitimo lista A" not in body_b, f"FUGA: admin B ve lead de sede_a: {body_b[:500]}"
 
 
 # ── TareaCRM (CRM Tasks) endpoints cross-sede (Axioma 3 — Fase 3) ─────────
@@ -935,6 +887,7 @@ def _seed_task_in(
     import uuid as _u
 
     from backend.models_crm_pipeline import TareaCRM
+
     t = TareaCRM(
         id=_u.uuid4(),
         titulo=title,
@@ -977,13 +930,9 @@ def test_create_crm_task_blocks_cross_sede_persona(client, db_session):
     )
     # Sanity: NO se creó la task en la base de datos
     leaked = (
-        db_session.query(models.TareaCRM)
-        .filter(models.TareaCRM.descripcion == "apuntando a persona de sede_b")
-        .first()
+        db_session.query(models.TareaCRM).filter(models.TareaCRM.descripcion == "apuntando a persona de sede_b").first()
     )
-    assert leaked is None, (
-        "FUGA CONFIRMADA: task cross-sede persistida pese al 404"
-    )
+    assert leaked is None, "FUGA CONFIRMADA: task cross-sede persistida pese al 404"
 
     # 2. Sanity positiva: admin A puede crear task con persona LOCAL → 201
     resp_ok = client.post(
@@ -996,8 +945,7 @@ def test_create_crm_task_blocks_cross_sede_persona(client, db_session):
         },
     )
     assert resp_ok.status_code == 200, (
-        f"Regresión: admin A no puede crear task en su sede "
-        f"(status {resp_ok.status_code}): {resp_ok.text}"
+        f"Regresión: admin A no puede crear task en su sede (status {resp_ok.status_code}): {resp_ok.text}"
     )
     data = resp_ok.json()
     assert data["title"] == "Tarea local legítima"
@@ -1023,8 +971,7 @@ def test_create_crm_task_blocks_cross_sede_assignee_uuid(client, db_session):
         },
     )
     assert resp.status_code == 404, (
-        f"Leak: assignee_id como UUID de persona de sede_b debería 404 "
-        f"(status {resp.status_code}): {resp.text}"
+        f"Leak: assignee_id como UUID de persona de sede_b debería 404 (status {resp.status_code}): {resp.text}"
     )
     leaked = (
         db_session.query(models.TareaCRM)
@@ -1054,14 +1001,11 @@ def test_create_crm_task_blocks_cross_sede_assignee_persona_id(client, db_sessio
         },
     )
     assert resp.status_code == 404, (
-        f"assignee_id cross-sede debe rechazarse con 404 "
-        f"(status {resp.status_code}): {resp.text}"
+        f"assignee_id cross-sede debe rechazarse con 404 (status {resp.status_code}): {resp.text}"
     )
     leaked = (
         db_session.query(models.TareaCRM)
-        .filter(
-            models.TareaCRM.descripcion == "tarea con destino a user de sede_b via user_id"
-        )
+        .filter(models.TareaCRM.descripcion == "tarea con destino a user de sede_b via user_id")
         .first()
     )
     assert leaked is None, "FUGA CONFIRMADA: task persistida con assignee cross-sede via user_id"
@@ -1085,8 +1029,7 @@ def test_create_crm_task_allows_local_assignee_persona_id(client, db_session):
         },
     )
     assert resp.status_code == 200, (
-        f"assignee_id local canónico debe funcionar "
-        f"(status {resp.status_code}): {resp.text}"
+        f"assignee_id local canónico debe funcionar (status {resp.status_code}): {resp.text}"
     )
 
 
@@ -1103,9 +1046,7 @@ def test_create_crm_task_validates_status_whitelist(client, db_session):
             "status": "BOGUS_STATUS",
         },
     )
-    assert resp.status_code == 422, (
-        f"status fuera de whitelist debería 422 (status {resp.status_code}): {resp.text}"
-    )
+    assert resp.status_code == 422, f"status fuera de whitelist debería 422 (status {resp.status_code}): {resp.text}"
 
 
 def test_create_crm_task_validates_priority_whitelist(client, db_session):
@@ -1121,9 +1062,7 @@ def test_create_crm_task_validates_priority_whitelist(client, db_session):
             "priority": "BOGUS_PRIORITY",
         },
     )
-    assert resp.status_code == 422, (
-        f"priority fuera de whitelist debería 422 (status {resp.status_code}): {resp.text}"
-    )
+    assert resp.status_code == 422, f"priority fuera de whitelist debería 422 (status {resp.status_code}): {resp.text}"
 
 
 def test_update_crm_task_blocks_cross_sede(client, db_session):
@@ -1219,9 +1158,7 @@ def test_update_crm_task_blocks_cross_sede(client, db_session):
         headers=headers_a,
         json={"status": "completed"},
     )
-    assert resp.status_code == 404, (
-        f"Leak PATCH task cross-sede via caso: status {resp.status_code}, body={resp.text}"
-    )
+    assert resp.status_code == 404, f"Leak PATCH task cross-sede via caso: status {resp.status_code}, body={resp.text}"
     db_session.refresh(task_via_caso)
     assert task_via_caso.estado == "pending", "estado NO debe mutarse cross-sede"
 
@@ -1266,9 +1203,7 @@ def test_update_crm_task_blocks_cross_sede_assignee_change(client, db_session):
         f"Leak reasignación UUID cross-sede: status {resp_uuid.status_code}, body={resp_uuid.text}"
     )
     db_session.refresh(task_local)
-    assert task_local.asignado_a_id == persona_a_admin.id, (
-        "El asignado NO debe haber mutado a cross-sede via UUID"
-    )
+    assert task_local.asignado_a_id == persona_a_admin.id, "El asignado NO debe haber mutado a cross-sede via UUID"
 
     # 2. El UUID canónico cross-sede queda fuera de scope.
     resp_user = client.patch(
@@ -1280,9 +1215,7 @@ def test_update_crm_task_blocks_cross_sede_assignee_change(client, db_session):
         f"Reasignación cross-sede debe ser 404: status {resp_user.status_code}, body={resp_user.text}"
     )
     db_session.refresh(task_local)
-    assert task_local.asignado_a_id == persona_a_admin.id, (
-        "El asignado NO debe haber mutado a cross-sede via user_id"
-    )
+    assert task_local.asignado_a_id == persona_a_admin.id, "El asignado NO debe haber mutado a cross-sede via user_id"
 
     # 3. El UUID canónico local puede recibir la tarea.
     resp_local = client.patch(
@@ -1291,8 +1224,7 @@ def test_update_crm_task_blocks_cross_sede_assignee_change(client, db_session):
         json={"assignee_id": str(admin_a.id)},  # self user_id local
     )
     assert resp_local.status_code == 200, (
-        f"persona_id local debe aceptarse "
-        f"(status {resp_local.status_code}): {resp_local.text}"
+        f"persona_id local debe aceptarse (status {resp_local.status_code}): {resp_local.text}"
     )
     db_session.refresh(task_local)
     assert task_local.asignado_a_id == persona_a_admin.id
@@ -1323,9 +1255,7 @@ def test_update_crm_task_blocks_cross_sede_persona_change(client, db_session):
         f"Leak reasignación de persona_id cross-sede: status {resp.status_code}, body={resp.text}"
     )
     db_session.refresh(task_local)
-    assert task_local.persona_id == persona_a_local.id, (
-        "persona_id NO debe haber mutado a cross-sede"
-    )
+    assert task_local.persona_id == persona_a_local.id, "persona_id NO debe haber mutado a cross-sede"
 
 
 def test_update_crm_task_auto_stamps_completed_at(client, db_session):
@@ -1351,9 +1281,7 @@ def test_update_crm_task_auto_stamps_completed_at(client, db_session):
     assert resp.status_code == 200, resp.text
     db_session.refresh(task_local)
     assert task_local.estado == "completed"
-    assert task_local.fecha_completada is not None, (
-        "fecha_completada debe auto-estamparse al completar"
-    )
+    assert task_local.fecha_completada is not None, "fecha_completada debe auto-estamparse al completar"
 
     # Reabrir: limpiar fecha_completada
     resp_reopen = client.patch(
@@ -1364,9 +1292,7 @@ def test_update_crm_task_auto_stamps_completed_at(client, db_session):
     assert resp_reopen.status_code == 200, resp_reopen.text
     db_session.refresh(task_local)
     assert task_local.estado == "in_progress"
-    assert task_local.fecha_completada is None, (
-        "fecha_completada debe limpiarse al reabrir"
-    )
+    assert task_local.fecha_completada is None, "fecha_completada debe limpiarse al reabrir"
 
 
 def test_update_crm_task_rejects_out_of_whitelist(client, db_session):
@@ -1430,9 +1356,7 @@ def test_create_crm_task_audit_log_recorded(client, db_session):
         )
         .first()
     )
-    assert audit_row is not None, (
-        f"No se registró audit log para CREATE de task {task_id}"
-    )
+    assert audit_row is not None, f"No se registró audit log para CREATE de task {task_id}"
     assert audit_row.detalles_cambio.get("title") == "Task audit test"
     assert audit_row.detalles_cambio.get("priority") == "high"
 
@@ -1486,9 +1410,7 @@ def test_crud_create_crm_task_logs_audit_directly(db_session):
         persona_id=persona_a.id,
     )
 
-    task = crud.create_crm_task(
-        db_session, create_payload, actor_user_id=str(persona_a.id)
-    )
+    task = crud.create_crm_task(db_session, create_payload, actor_user_id=str(persona_a.id))
     db_session.commit()
     assert task.id is not None
 
@@ -1525,9 +1447,7 @@ def test_crud_create_crm_task_logs_audit_directly(db_session):
         .first()
     )
     assert row2 is not None
-    assert str(row2.usuario_id) == str(persona_a.id), (
-        f"actor_user_id no se propagó: {row2.usuario_id}"
-    )
+    assert str(row2.usuario_id) == str(persona_a.id), f"actor_user_id no se propagó: {row2.usuario_id}"
 
 
 def test_crud_update_crm_task_logs_audit_on_real_change(db_session):
@@ -1564,9 +1484,7 @@ def test_crud_update_crm_task_logs_audit_on_real_change(db_session):
         .count()
     )
     # El seed directo no pasó por el CRUD, así que no debe haber audit aún.
-    assert initial_audit_count == 0, (
-        "El seed directo SQL no debe generar audit previo"
-    )
+    assert initial_audit_count == 0, "El seed directo SQL no debe generar audit previo"
 
     # Update con cambio real vía CRUD.
     updated = crud.update_crm_task(
@@ -1638,9 +1556,7 @@ def test_crud_update_crm_task_no_audit_when_idempotent(db_session):
         )
         .all()
     )
-    assert len(rows) == 0, (
-        f"Update idempotente NO debe generar audit (encontrados {len(rows)})"
-    )
+    assert len(rows) == 0, f"Update idempotente NO debe generar audit (encontrados {len(rows)})"
 
 
 def test_crud_update_crm_task_logs_audit_with_schema_payload(db_session):
@@ -1728,19 +1644,13 @@ def test_crud_create_crm_task_blocks_cross_sede_when_actor_in_sede(db_session):
         )
     except HTTPException as exc:
         raised = True
-        assert exc.status_code == 404, (
-            f"Cross-sede CREATE en CRUD debe ser 404, got {exc.status_code}"
-        )
+        assert exc.status_code == 404, f"Cross-sede CREATE en CRUD debe ser 404, got {exc.status_code}"
 
-    assert raised, (
-        "El CRUD NO emitió HTTPException al validar scope — defense-in-depth falló"
-    )
+    assert raised, "El CRUD NO emitió HTTPException al validar scope — defense-in-depth falló"
     # Sanity: row NO fue persistido.
     db_session.rollback()
     count_after = db_session.query(TareaCRM).count()
-    assert count_after == count_before, (
-        "FUGA: CREATE cross-sede persistió la fila pese al 404"
-    )
+    assert count_after == count_before, "FUGA: CREATE cross-sede persistió la fila pese al 404"
 
 
 def test_crud_update_crm_task_blocks_toctou_when_actor_in_sede(db_session):
@@ -1818,18 +1728,12 @@ def test_crud_update_crm_task_blocks_toctou_when_actor_in_sede(db_session):
         )
     except HTTPException as exc:
         raised = True
-        assert exc.status_code == 404, (
-            f"TOCTOU cross-sede UPDATE en CRUD debe ser 404, got {exc.status_code}"
-        )
+        assert exc.status_code == 404, f"TOCTOU cross-sede UPDATE en CRUD debe ser 404, got {exc.status_code}"
 
-    assert raised, (
-        "TOCTOU cerró el update sin raise — defense-in-depth falló"
-    )
+    assert raised, "TOCTOU cerró el update sin raise — defense-in-depth falló"
     db_session.rollback()
     db_session.refresh(raw_task)
-    assert raw_task.estado == "pending", (
-        "El estado NO debe mutarse cuando el CRUD detecta TOCTOU cross-sede"
-    )
+    assert raw_task.estado == "pending", "El estado NO debe mutarse cuando el CRUD detecta TOCTOU cross-sede"
 
 
 def test_crud_create_crm_task_requires_actor(db_session):
@@ -1895,18 +1799,12 @@ def test_crud_update_crm_task_blocks_assignee_change_cross_sede(db_session):
         )
     except HTTPException as exc:
         raised = True
-        assert exc.status_code == 404, (
-            f"Reasignación cross-sede en CRUD debe ser 404, got {exc.status_code}"
-        )
+        assert exc.status_code == 404, f"Reasignación cross-sede en CRUD debe ser 404, got {exc.status_code}"
 
-    assert raised, (
-        "Reasignación cross-sede en CRUD bypasseó el scope re-check"
-    )
+    assert raised, "Reasignación cross-sede en CRUD bypasseó el scope re-check"
     db_session.rollback()
     db_session.refresh(task)
-    assert task.asignado_a_id == persona_a_admin.id, (
-        "El asignado NO debe mutarse a cross-sede"
-    )
+    assert task.asignado_a_id == persona_a_admin.id, "El asignado NO debe mutarse a cross-sede"
 
 
 def test_crud_update_crm_task_blocks_tropical_case_under_strict(db_session):
@@ -1928,6 +1826,7 @@ def test_crud_update_crm_task_blocks_tropical_case_under_strict(db_session):
     from fastapi import HTTPException
 
     from backend import crud, schemas
+
     (admin_a, persona_a_admin, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
     persona_a_local = _persona_in(db_session, sede_a.id, "crud-tropical-local-a")
 
@@ -1957,9 +1856,9 @@ def test_crud_update_crm_task_blocks_tropical_case_under_strict(db_session):
     task = _seed_task_in(
         db_session,
         title="Task tropical",
-        persona_id=persona_a_local.id,        # sede_a (ancla OK)
-        asignado_a_id=persona_a_admin.id,    # sede_a (ancla OK)
-        caso_id=caso_b.id,                   # sede_b → STRICT reject
+        persona_id=persona_a_local.id,  # sede_a (ancla OK)
+        asignado_a_id=persona_a_admin.id,  # sede_a (ancla OK)
+        caso_id=caso_b.id,  # sede_b → STRICT reject
     )
     db_session.commit()
     db_session.refresh(task)
@@ -1977,19 +1876,12 @@ def test_crud_update_crm_task_blocks_tropical_case_under_strict(db_session):
         raised = True
         assert exc.status_code == 404
         # Mensaje genérico: SIN nombre del anchor (no info leak).
-        assert "anchor" not in (exc.detail or "").lower(), (
-            f"detail message filtra vector de violation: {exc.detail!r}"
-        )
+        assert "anchor" not in (exc.detail or "").lower(), f"detail message filtra vector de violation: {exc.detail!r}"
 
-    assert raised, (
-        "STRICT policy: caso_b cross-sede debe rechazar UPDATE aunque "
-        "persona/asignado sean locales"
-    )
+    assert raised, "STRICT policy: caso_b cross-sede debe rechazar UPDATE aunque persona/asignado sean locales"
     db_session.rollback()
     db_session.refresh(task)
-    assert task.prioridad == priority_before, (
-        "La priority NO debe mutarse cuando el CRUD detecta STRICT violation"
-    )
+    assert task.prioridad == priority_before, "La priority NO debe mutarse cuando el CRUD detecta STRICT violation"
 
 
 def test_crud_create_crm_task_orphan_rejected_for_editor(db_session):
@@ -2027,6 +1919,7 @@ def test_crud_create_crm_task_orphan_rejected_for_editor(db_session):
         "STRICT policy + orphan guard: editor en sede NO debe poder crear "
         "tarea huérfana (consistencia con API que rechaza orphans en lectura)"
     )
+
 
 def test_create_prayer_request_no_user_sede_returns_400(client, db_session, monkeypatch):
     """M3 — Axioma 3: create_prayer_request rechaza 400 cuando el editor
@@ -2073,26 +1966,19 @@ def test_create_prayer_request_no_user_sede_returns_400(client, db_session, monk
 
     # Branch 400 debe disparar
     assert resp.status_code == 400, (
-        f"create_prayer_request debería 400 cuando get_user_sede_id=None; "
-        f"got {resp.status_code}: {resp.text}"
+        f"create_prayer_request debería 400 cuando get_user_sede_id=None; got {resp.status_code}: {resp.text}"
     )
     detail = resp.json().get("detail", "")
     assert detail == "El usuario no tiene sede asignada", (
-        f"exact detail contract esperado: 'El usuario no tiene sede asignada', "
-        f"got {detail!r}"
+        f"exact detail contract esperado: 'El usuario no tiene sede asignada', got {detail!r}"
     )
 
     # Defense-in-depth: NO se creó ningún prayer con ese requester_name.
     db_session.commit()
     leaks = (
-        db_session.query(models.PrayerRequest)
-        .filter(models.PrayerRequest.requester_name == "Superadmin Old")
-        .count()
+        db_session.query(models.PrayerRequest).filter(models.PrayerRequest.requester_name == "Superadmin Old").count()
     )
-    assert leaks == 0, (
-        f"FUGA: {leaks} prayer(s) creados pese al 400 "
-        f"(el guard del API fue bypaseado)"
-    )
+    assert leaks == 0, f"FUGA: {leaks} prayer(s) creados pese al 400 (el guard del API fue bypaseado)"
 
 
 # ── M-04: response_model drift dict → List[dict] ────────────────────────────────
@@ -2101,6 +1987,7 @@ def test_create_prayer_request_no_user_sede_returns_400(client, db_session, monk
 # serializan correctamente como arrays. La RL de FastAPI serializa
 # List[dict] validando campos JSON legibles; si alguien reintroduce
 # response_model=dict sobre retorno de array, el contrato cambiaría.
+
 
 def test_get_counseling_by_lead_returns_list(client, db_session):
     """GET /counseling/lead/{lead_id}: response_model=List[dict] (M-04).
@@ -2123,9 +2010,7 @@ def test_get_counseling_by_lead_returns_list(client, db_session):
     assert resp.status_code == 200
     # Debe ser array (resp.json() es list), no dict — el drift anterior hubiera
     # roto el parse al imponer dict schema sobre list.
-    assert isinstance(resp.json(), list), (
-        f"Drift regresado: got {type(resp.json()).__name__}, esperado list"
-    )
+    assert isinstance(resp.json(), list), f"Drift regresado: got {type(resp.json()).__name__}, esperado list"
 
 
 def test_list_crm_groups_returns_list(client, db_session):
@@ -2141,18 +2026,18 @@ def test_list_crm_groups_returns_list(client, db_session):
     ministry = models.Ministry(name="Ministerio M-04 smoke")
     db_session.add(ministry)
     db_session.flush()
-    db_session.add_all([
-        models.PersonaMinistryAssignment(persona_id=persona_a.id, ministry_id=ministry.id, is_active=True),
-        models.PersonaMinistryAssignment(persona_id=persona_b.id, ministry_id=ministry.id, is_active=True),
-    ])
+    db_session.add_all(
+        [
+            models.PersonaMinistryAssignment(persona_id=persona_a.id, ministry_id=ministry.id, is_active=True),
+            models.PersonaMinistryAssignment(persona_id=persona_b.id, ministry_id=ministry.id, is_active=True),
+        ]
+    )
     db_session.commit()
 
     headers_a = auth_headers(client, email="aboxA@example.com")
     resp = client.get("/api/crm/groups", headers=headers_a)
     assert resp.status_code == 200
-    assert isinstance(resp.json(), list), (
-        f"Drift regresado: got {type(resp.json()).__name__}, esperado list"
-    )
+    assert isinstance(resp.json(), list), f"Drift regresado: got {type(resp.json()).__name__}, esperado list"
     # Regression del contract: el ministerio aparece porque persona_a (sede A)
     # está asignada. Y el recuento debe ser 1 (sólo persona_a), no 2.
     names = {g["name"] for g in resp.json() if g.get("name")}
@@ -2216,6 +2101,4 @@ def test_list_caso_calls_returns_list(client, db_session):
     headers = auth_headers(client, email="aboxA@example.com")
     resp = client.get(f"/api/crm/casos/{caso.id}/calls", headers=headers)
     assert resp.status_code == 200
-    assert isinstance(resp.json(), list), (
-        f"Drift regresado: got {type(resp.json()).__name__}, esperado list"
-    )
+    assert isinstance(resp.json(), list), f"Drift regresado: got {type(resp.json()).__name__}, esperado list"

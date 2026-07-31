@@ -7,9 +7,7 @@ from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_sede(db_session):
-    sede = models.Sede(
-        id=str(uuid.uuid4()), nombre="Test Sede", ciudad="Bogota", es_activa=True
-    )
+    sede = models.Sede(id=str(uuid.uuid4()), nombre="Test Sede", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.commit()
     db_session.refresh(sede)
@@ -31,6 +29,7 @@ def test_attendance_pdf_for_group(client, db_session):
     cat = _seed_categoria(db_session)
 
     import uuid
+
     estrategia = models.EstrategiaEvangelismo(
         id=str(uuid.uuid4()),
         nombre="Estrategia Test",
@@ -95,10 +94,7 @@ def test_attendance_excel_for_group(client, db_session):
         headers=headers,
     )
     assert resp.status_code == 200
-    assert (
-        resp.headers["content-type"]
-        == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    assert resp.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 def test_strategy_summary(client, db_session):
@@ -144,8 +140,6 @@ def test_strategy_summary_404_for_missing_strategy(client, db_session):
 
     seed_admin(db_session)
     headers = auth_headers(client)
-    resp = client.get(
-        f"/api/evangelism/reports/strategy/{uuid.uuid4()}/summary", headers=headers
-    )
+    resp = client.get(f"/api/evangelism/reports/strategy/{uuid.uuid4()}/summary", headers=headers)
     assert resp.status_code == 404
     assert resp.json()["detail"] == "Estrategia no encontrada"

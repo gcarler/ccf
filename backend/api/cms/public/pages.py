@@ -1,5 +1,5 @@
-"""Public page endpoints (Fase 4 refactor & query optimization).
-"""
+"""Public page endpoints (Fase 4 refactor & query optimization)."""
+
 from __future__ import annotations
 
 import logging
@@ -46,7 +46,11 @@ def public_pages_list(
     limit: int = Query(200, ge=1, le=500),
 ):
     site = _get_public_site_or_404(db, site_key)
-    query = db.query(models.CmsPage).options(lazyload("*")).filter(models.CmsPage.site_id == site.id, models.CmsPage.status == "published")
+    query = (
+        db.query(models.CmsPage)
+        .options(lazyload("*"))
+        .filter(models.CmsPage.site_id == site.id, models.CmsPage.status == "published")
+    )
     total = query.count()
     pages = query.order_by(models.CmsPage.updated_at.desc()).offset(skip).limit(limit).all()
     return PaginatedResponse[schemas.CmsPageRead](items=pages, total=total, skip=skip, limit=limit)
@@ -61,8 +65,13 @@ def public_pages_list(
 def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
     page = (
-        db.query(models.CmsPage).options(lazyload("*"))
-        .filter(models.CmsPage.site_id == site.id, models.CmsPage.slug == _slugify(slug), models.CmsPage.status == "published")
+        db.query(models.CmsPage)
+        .options(lazyload("*"))
+        .filter(
+            models.CmsPage.site_id == site.id,
+            models.CmsPage.slug == _slugify(slug),
+            models.CmsPage.status == "published",
+        )
         .first()
     )
     if not page:
@@ -70,7 +79,12 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
 
     published_version = None
     if page.published_version_id:
-        published_version = db.query(models.CmsPageVersion).options(lazyload("*")).filter(models.CmsPageVersion.page_id == page.id, models.CmsPageVersion.id == page.published_version_id).first()
+        published_version = (
+            db.query(models.CmsPageVersion)
+            .options(lazyload("*"))
+            .filter(models.CmsPageVersion.page_id == page.id, models.CmsPageVersion.id == page.published_version_id)
+            .first()
+        )
 
     settings = get_settings()
     base_url = settings.frontend_url.rstrip("/")
@@ -82,33 +96,63 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         section_rows = [
             _snapshot_section_read(section_data, page_id=page.id, index=index, timestamp=published_version.created_at)
             for index, section_data in enumerate(
-                sorted([item for item in sections_snapshot if isinstance(item, dict)],
-                       key=lambda item: item.get("sort_order") if isinstance(item.get("sort_order"), int) else 0)
+                sorted(
+                    [item for item in sections_snapshot if isinstance(item, dict)],
+                    key=lambda item: item.get("sort_order") if isinstance(item.get("sort_order"), int) else 0,
+                )
             )
             if section_data.get("is_visible", True) is not False and section_data.get("status", "active") != "archived"
         ]
         section_rows = [
-            schemas.CmsSectionRead(**{**s.model_dump(), "props_json": _build_section_defaults(db, site_key, s.type, s.props_json)})
+            schemas.CmsSectionRead(
+                **{**s.model_dump(), "props_json": _build_section_defaults(db, site_key, s.type, s.props_json)}
+            )
             for s in section_rows
         ]
         slug_val = str(page_snapshot.get("slug") or page.slug) if isinstance(page_snapshot, dict) else page.slug
         title_val = str(page_snapshot.get("title") or page.title) if isinstance(page_snapshot, dict) else page.title
-        breadcrumb_items = build_breadcrumb_items_from_slug(slug_val, title_val, base_url=base_url, site_name=site.name or "Home")
+        breadcrumb_items = build_breadcrumb_items_from_slug(
+            slug_val, title_val, base_url=base_url, site_name=site.name or "Home"
+        )
         breadcrumb_json_ld = build_breadcrumb_list_json_ld(breadcrumb_items, base_url=base_url)
         page_url = f"{base_url}/{slug_val.lstrip('/')}"
-        canonical = page_snapshot.get("canonical_url") if isinstance(page_snapshot, dict) and page_snapshot.get("canonical_url") else None
-        json_ld_data = auto_json_ld_for_page(page, site, sections=section_rows, base_url=base_url, site_name=_get_system_var(db, site_key, "church_name", site.name))
-        snapshot_seo = page_snapshot.get("seo_json") if isinstance(page_snapshot, dict) and isinstance(page_snapshot.get("seo_json"), dict) else {}
+        canonical = (
+            page_snapshot.get("canonical_url")
+            if isinstance(page_snapshot, dict) and page_snapshot.get("canonical_url")
+            else None
+        )
+        json_ld_data = auto_json_ld_for_page(
+            page,
+            site,
+            sections=section_rows,
+            base_url=base_url,
+            site_name=_get_system_var(db, site_key, "church_name", site.name),
+        )
+        snapshot_seo = (
+            page_snapshot.get("seo_json")
+            if isinstance(page_snapshot, dict) and isinstance(page_snapshot.get("seo_json"), dict)
+            else {}
+        )
         if snapshot_seo.get("json_ld"):
             json_ld_data = snapshot_seo["json_ld"]
         return schemas.CmsPublicPageRead(
-            site_key=site.site_key, slug=slug_val, title=title_val, seo_json=snapshot_seo,
-            sections=section_rows, json_ld=json_ld_data, canonical_url=canonical or page_url,
-            breadcrumbs=breadcrumb_items, breadcrumb_json_ld=breadcrumb_json_ld,
+            site_key=site.site_key,
+            slug=slug_val,
+            title=title_val,
+            seo_json=snapshot_seo,
+            sections=section_rows,
+            json_ld=json_ld_data,
+            canonical_url=canonical or page_url,
+            breadcrumbs=breadcrumb_items,
+            breadcrumb_json_ld=breadcrumb_json_ld,
         )
 
     sections_list, _ = crud.list_cms_sections(db, page.id)
-    sections = [section for section in sections_list if section.is_visible and getattr(section, "status", "active") != "archived"]
+    sections = [
+        section
+        for section in sections_list
+        if section.is_visible and getattr(section, "status", "active") != "archived"
+    ]
     section_reads = []
     for section in sections:
         sr = schemas.CmsSectionRead.model_validate(section)
@@ -116,13 +160,27 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         section_reads.append(sr)
     page_url = f"{base_url}/{page.slug.lstrip('/')}"
     canonical = (page.seo_json or {}).get("canonical_url") if isinstance(page.seo_json, dict) else None
-    json_ld_data = auto_json_ld_for_page(page, site, sections=sections, base_url=base_url, site_name=_get_system_var(db, site_key, "church_name", site.name))
+    json_ld_data = auto_json_ld_for_page(
+        page,
+        site,
+        sections=sections,
+        base_url=base_url,
+        site_name=_get_system_var(db, site_key, "church_name", site.name),
+    )
     if isinstance(page.seo_json, dict) and page.seo_json.get("json_ld"):
         json_ld_data = page.seo_json["json_ld"]
-    breadcrumb_items = build_breadcrumb_items_from_slug(page.slug, page.title, base_url=base_url, site_name=site.name or "Home")
+    breadcrumb_items = build_breadcrumb_items_from_slug(
+        page.slug, page.title, base_url=base_url, site_name=site.name or "Home"
+    )
     breadcrumb_json_ld = build_breadcrumb_list_json_ld(breadcrumb_items, base_url=base_url)
     return schemas.CmsPublicPageRead(
-        site_key=site.site_key, slug=page.slug, title=page.title, seo_json=page.seo_json or {},
-        sections=section_reads, json_ld=json_ld_data, canonical_url=canonical or page_url,
-        breadcrumbs=breadcrumb_items, breadcrumb_json_ld=breadcrumb_json_ld,
+        site_key=site.site_key,
+        slug=page.slug,
+        title=page.title,
+        seo_json=page.seo_json or {},
+        sections=section_reads,
+        json_ld=json_ld_data,
+        canonical_url=canonical or page_url,
+        breadcrumbs=breadcrumb_items,
+        breadcrumb_json_ld=breadcrumb_json_ld,
     )

@@ -66,5 +66,3 @@ class TestDonationModel:
         full["db"].add(donation)
         full["db"].commit()
         assert donation.id is not None
-
-

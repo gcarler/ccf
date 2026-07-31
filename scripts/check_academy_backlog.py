@@ -9,6 +9,7 @@ Reglas (matching docs/ACADEMY_BACKLOG.md §7):
   3. IDs ACAD-TKT-NNN consecutivos sin duplicados.
   4. Los 3 docs antiguos tienen banner DEPRECADO + redirect.
 """
+
 from __future__ import annotations
 
 import re
@@ -27,9 +28,7 @@ VALID_STATES = {"⬜", "🟡", "✅", "📜"}
 VALID_SEVERITIES = {"CRIT", "HIGH", "MED", "LOW", "TEST"}
 
 
-_RE_TKT_HEADER = re.compile(
-    r"^- \*\*ACAD-TKT-(\d+)\*\* \[(?:CRIT|HIGH|MED|LOW|TEST)\] "
-)
+_RE_TKT_HEADER = re.compile(r"^- \*\*ACAD-TKT-(\d+)\*\* \[(?:CRIT|HIGH|MED|LOW|TEST)\] ")
 
 
 def parse_tickets(backlog_text: str) -> list[dict]:
@@ -71,10 +70,7 @@ def check_backlog() -> list[str]:
     tickets = parse_tickets(text)
 
     # 1. ⬜ sin gate → bloqueante.
-    pending_without_gate = [
-        t for t in tickets
-        if t["state"] == "⬜" and not t["gate"]
-    ]
+    pending_without_gate = [t for t in tickets if t["state"] == "⬜" and not t["gate"]]
     if pending_without_gate:
         issues.append(
             f"❌ {len(pending_without_gate)} ticket(s) ⬜ sin gate ejecutable. "
@@ -83,10 +79,9 @@ def check_backlog() -> list[str]:
 
     # 2. Severidades inválidas.
     invalid_sev = [
-        t for t in tickets
-        if t["severity"] is not None
-        and t["state"] is not None
-        and t["severity"] not in VALID_SEVERITIES
+        t
+        for t in tickets
+        if t["severity"] is not None and t["state"] is not None and t["severity"] not in VALID_SEVERITIES
     ]
     if invalid_sev:
         issues.append(
@@ -111,14 +106,10 @@ def check_backlog() -> list[str]:
             issues.append(f"❌ {old_doc.name} sin redirect a docs/ACADEMY_BACKLOG.md")
 
     # 5. Estados válidos.
-    invalid_state = [
-        t for t in tickets
-        if t["state"] is not None and t["state"] not in VALID_STATES
-    ]
+    invalid_state = [t for t in tickets if t["state"] is not None and t["state"] not in VALID_STATES]
     if invalid_state:
         issues.append(
-            f"❌ {len(invalid_state)} ticket(s) con estado inválido: "
-            f"{[t['state'] for t in invalid_state[:5]]}"
+            f"❌ {len(invalid_state)} ticket(s) con estado inválido: {[t['state'] for t in invalid_state[:5]]}"
         )
 
     return issues

@@ -167,4 +167,3 @@ function Field({ label, value, editing, onChange, multiline }: {
         </div>
     );
 }
-

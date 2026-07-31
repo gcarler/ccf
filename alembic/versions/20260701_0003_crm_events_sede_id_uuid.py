@@ -69,17 +69,13 @@ def _has_table(table: str) -> bool:
 def _has_column(table: str, column: str) -> bool:
     if not _has_table(table):
         return False
-    return any(
-        col.get("name") == column for col in _inspector().get_columns(table)
-    )
+    return any(col.get("name") == column for col in _inspector().get_columns(table))
 
 
 def _has_index(table: str, index_name: str) -> bool:
     if not _has_table(table):
         return False
-    return any(
-        idx.get("name") == index_name for idx in _inspector().get_indexes(table)
-    )
+    return any(idx.get("name") == index_name for idx in _inspector().get_indexes(table))
 
 
 def _has_fk(table: str, *, column: str) -> bool:
@@ -130,12 +126,7 @@ def _drop_sede_id_legacy(table: str = "crm_events") -> None:
 
     # Postgres: DROP CONSTRAINT primero (si existe FK), luego DROP INDEX,
     # luego DROP COLUMN. Usamos IF EXISTS para idempotencia.
-    op.execute(
-        sa.text(
-            "ALTER TABLE crm_events "
-            "DROP CONSTRAINT IF EXISTS crm_events_sede_id_fkey"
-        )
-    )
+    op.execute(sa.text("ALTER TABLE crm_events DROP CONSTRAINT IF EXISTS crm_events_sede_id_fkey"))
     # Cualquier FK que el dialect haya nombrado diferente:
     op.execute(
         sa.text(

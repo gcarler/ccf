@@ -9,9 +9,7 @@ from tests.conftest import seed_admin as _seed_admin
 
 
 def _seed_sede(db_session):
-    sede = models.Sede(
-        id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True
-    )
+    sede = models.Sede(id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.commit()
     db_session.refresh(sede)
@@ -129,9 +127,7 @@ def test_donation_certificate_success(client, db_session):
     db_session.commit()
     db_session.refresh(donation)
 
-    resp = client.get(
-        f"/api/donations/{donation.id}/certificate", headers=headers
-    )
+    resp = client.get(f"/api/donations/{donation.id}/certificate", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
     assert data["donor"] == "Maria Gomez"
@@ -144,9 +140,7 @@ def test_donation_certificate_not_found(client, db_session):
     _seed_admin(db_session)
     headers = _auth_headers(client)
     fake_id = uuid.uuid4()
-    resp = client.get(
-        f"/api/donations/{fake_id}/certificate", headers=headers
-    )
+    resp = client.get(f"/api/donations/{fake_id}/certificate", headers=headers)
     assert resp.status_code == 404
     data = resp.json()
     assert "detail" in data
@@ -178,9 +172,7 @@ def test_donation_certificate_sede_mismatch(client, db_session):
     db_session.commit()
     db_session.refresh(donation)
 
-    resp = client.get(
-        f"/api/donations/{donation.id}/certificate", headers=headers
-    )
+    resp = client.get(f"/api/donations/{donation.id}/certificate", headers=headers)
     assert resp.status_code == 404
 
 
@@ -203,9 +195,7 @@ def test_mercadopago_create_preference_success(mock_create, client, db_session):
         "donor_name": "Test Donor",
         "email": "donor@example.com",
     }
-    resp = client.post(
-        "/api/donations/mercadopago/create-preference", json=payload
-    )
+    resp = client.post("/api/donations/mercadopago/create-preference", json=payload)
     assert resp.status_code == 200
     data = resp.json()
     assert data["id"] == "pref_123"
@@ -224,9 +214,7 @@ def test_mercadopago_create_preference_runtime_error(mock_create, client):
         "donor_name": "Test Donor",
         "email": "donor@example.com",
     }
-    resp = client.post(
-        "/api/donations/mercadopago/create-preference", json=payload
-    )
+    resp = client.post("/api/donations/mercadopago/create-preference", json=payload)
     assert resp.status_code == 501
     assert "MP" in resp.json()["detail"]
 
@@ -242,9 +230,7 @@ def test_mercadopago_create_preference_generic_error(mock_create, client):
         "donor_name": "Test Donor",
         "email": "donor@example.com",
     }
-    resp = client.post(
-        "/api/donations/mercadopago/create-preference", json=payload
-    )
+    resp = client.post("/api/donations/mercadopago/create-preference", json=payload)
     assert resp.status_code == 500
 
 
@@ -280,11 +266,7 @@ def test_mercadopago_webhook_approved_payment(mock_process, client, db_session):
     assert resp.json()["status"] == "ok"
 
     # Verificar que se creó la donación en la base de datos
-    donation = (
-        db_session.query(models.Donation)
-        .filter(models.Donation.donor_name == "Juan Perez")
-        .first()
-    )
+    donation = db_session.query(models.Donation).filter(models.Donation.donor_name == "Juan Perez").first()
     assert donation is not None
     assert donation.amount == 100000
     assert donation.reference_code == "MP-pay_123"
@@ -322,9 +304,7 @@ def test_mercadopago_payment_status_success(mock_status, client, db_session):
 
     mock_status.return_value = MockResult()
 
-    resp = client.get(
-        "/api/donations/mercadopago/payments/pay_123", headers=headers
-    )
+    resp = client.get("/api/donations/mercadopago/payments/pay_123", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "approved"
@@ -339,9 +319,7 @@ def test_mercadopago_payment_status_runtime_error(mock_status, client, db_sessio
     headers = _auth_headers(client)
     mock_status.side_effect = RuntimeError("MP no disponible")
 
-    resp = client.get(
-        "/api/donations/mercadopago/payments/pay_123", headers=headers
-    )
+    resp = client.get("/api/donations/mercadopago/payments/pay_123", headers=headers)
     assert resp.status_code == 501
 
 
@@ -352,7 +330,5 @@ def test_mercadopago_payment_status_generic_error(mock_status, client, db_sessio
     headers = _auth_headers(client)
     mock_status.side_effect = ValueError("Error de conexion")
 
-    resp = client.get(
-        "/api/donations/mercadopago/payments/pay_123", headers=headers
-    )
+    resp = client.get("/api/donations/mercadopago/payments/pay_123", headers=headers)
     assert resp.status_code == 500

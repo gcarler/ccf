@@ -23,9 +23,7 @@ def upgrade() -> None:
         sa.text("SELECT COUNT(*) FROM auth_users WHERE rol_plataforma_id IS NULL")
     ).scalar_one()
     if missing_roles:
-        raise RuntimeError(
-            f"Cannot remove Kernel roles: {missing_roles} auth users lack a canonical auth role"
-        )
+        raise RuntimeError(f"Cannot remove Kernel roles: {missing_roles} auth users lack a canonical auth role")
 
     op.drop_column("auth_users", "platform_role_id")
     op.drop_table("persona_platform_roles")
@@ -69,9 +67,7 @@ def downgrade() -> None:
         sa.Column("notes", sa.Text(), nullable=True),
         sa.UniqueConstraint("persona_id", "role_id", name="uq_persona_platform_role"),
     )
-    op.add_column(
-        "auth_users", sa.Column("platform_role_id", sa.Integer(), nullable=True)
-    )
+    op.add_column("auth_users", sa.Column("platform_role_id", sa.Integer(), nullable=True))
     op.create_foreign_key(
         "fk_auth_users_platform_role_id",
         "auth_users",

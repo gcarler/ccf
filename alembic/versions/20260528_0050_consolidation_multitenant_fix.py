@@ -28,10 +28,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def _col_exists(table: str, col: str) -> bool:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM information_schema.columns "
-        "WHERE table_name=:t AND column_name=:c"
-    ), {"t": table, "c": col})
+    r = conn.execute(
+        sa.text("SELECT count(*) FROM information_schema.columns WHERE table_name=:t AND column_name=:c"),
+        {"t": table, "c": col},
+    )
     return r.scalar() > 0
 
 
@@ -40,16 +40,13 @@ def upgrade() -> None:
 
     # A) Renombrar member_id → persona_id en communication_logs
     if _col_exists("communication_logs", "member_id") and not _col_exists("communication_logs", "persona_id"):
-        conn.execute(sa.text(
-            "ALTER TABLE communication_logs RENAME COLUMN member_id TO persona_id"
-        ))
+        conn.execute(sa.text("ALTER TABLE communication_logs RENAME COLUMN member_id TO persona_id"))
 
     # B) sede_id en consolidation_cases
     if not _col_exists("consolidation_cases", "sede_id"):
         op.add_column(
             "consolidation_cases",
-            sa.Column("sede_id", sa.Integer(),
-                      sa.ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True),
+            sa.Column("sede_id", sa.Integer(), sa.ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True),
         )
         op.create_index("ix_consolidation_cases_sede_id", "consolidation_cases", ["sede_id"])
 
@@ -79,6 +76,4 @@ def downgrade() -> None:
         op.drop_column("consolidation_cases", "sede_id")
 
     if _col_exists("communication_logs", "persona_id") and not _col_exists("communication_logs", "member_id"):
-        conn.execute(sa.text(
-            "ALTER TABLE communication_logs RENAME COLUMN persona_id TO member_id"
-        ))
+        conn.execute(sa.text("ALTER TABLE communication_logs RENAME COLUMN persona_id TO member_id"))

@@ -49,12 +49,7 @@ def upgrade() -> None:
     conn = op.get_bind()
     for idx_name, table, column in INDEXES:
         if not _index_exists(idx_name):
-            conn.execute(
-                sa.text(
-                    f"CREATE INDEX IF NOT EXISTS {idx_name} "
-                    f"ON {table} ({column})"
-                )
-            )
+            conn.execute(sa.text(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table} ({column})"))
 
 
 def downgrade() -> None:

@@ -74,8 +74,13 @@ def test_dashboard_metrics_returns_data(client, db_session):
     assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
     data = resp.json()
     expected_keys = {
-        "active_students", "completion_rate", "certificates_issued",
-        "cards", "top_courses", "formal_stats", "no_formal_stats",
+        "active_students",
+        "completion_rate",
+        "certificates_issued",
+        "cards",
+        "top_courses",
+        "formal_stats",
+        "no_formal_stats",
     }
     assert expected_keys.issubset(data.keys()), f"Missing keys: {expected_keys - set(data.keys())}"
     assert isinstance(data["active_students"], int)

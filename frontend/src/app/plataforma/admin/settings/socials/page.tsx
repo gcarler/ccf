@@ -201,13 +201,13 @@ export default function SocialMediaSettings() {
                 }
             `}</style>
 
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Ajustes', icon: Globe }, { label: 'Canales Sociales', icon: Smartphone }]}
                 viewType={viewType}
                 setViewType={setViewType}
                 availableViews={SOCIAL_VIEWS}
                 rightActions={
-                    <button 
+                    <button
                         onClick={handleSave} disabled={isSaving}
                         className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
                     >
@@ -220,10 +220,10 @@ export default function SocialMediaSettings() {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--info)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
-                    
+
                     {/* Cinematic Header */}
                     <header className="space-y-4">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                             className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                         >
@@ -255,14 +255,14 @@ export default function SocialMediaSettings() {
                         ) : viewType === 'wiki' ? (
                             <UniversalWikiView moduleName="Canales sociales" storageKey="wiki_admin_socials" />
                         ) : (
-                            <motion.section 
+                            <motion.section
                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                                 className="grid grid-cols-1 gap-3"
                             >
                                 {PLATFORMS.map((platform, i) => {
                                     const channel = socials.find(s => s.platform.toLowerCase() === platform.id);
                                     return (
-                                        <motion.div 
+                                        <motion.div
                                             key={platform.id}
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
@@ -281,7 +281,7 @@ export default function SocialMediaSettings() {
                                                     </div>
                                                     <div className="relative group/input">
                                                         <Link2 className="absolute left-5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] group-focus-within/input:text-[hsl(var(--primary))] transition-colors" size={18} />
-                                                        <input 
+                                                        <input
                                                             defaultValue={channel?.url || ''}
                                                             className="w-full pl-14 pr-6 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/40 border border-transparent focus:border-[hsl(var(--info)/100%)] rounded-lg text-xs font-bold outline-none transition-all placeholder:text-[hsl(var(--text-secondary))]"
                                                             placeholder={`URL de tu ${platform.label}...`}
@@ -300,14 +300,14 @@ export default function SocialMediaSettings() {
                     </AnimatePresence>
 
                     {/* Streaming Pro Card */}
-                    <motion.section 
+                    <motion.section
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 }}
                         className="bg-[hsl(var(--bg-muted))] p-4 rounded-lg text-white relative overflow-hidden group shadow-2xl"
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Radio size={200} /></div>
-                        
+
                         <div className="relative z-10 flex flex-col md:flex-row items-center gap-3">
                             <div className="size-10 rounded-lg bg-[hsl(var(--danger))] flex items-center justify-center shadow-2xl shadow-[hsl(var(--danger)/40%)] border border-[hsl(var(--danger)/40%)]/20 shrink-0">
                                 <Radio size={48} className="animate-pulse" />
@@ -320,7 +320,7 @@ export default function SocialMediaSettings() {
                                     </p>
                                 </div>
                                 <div className="flex flex-col md:flex-row gap-4">
-                                    <input 
+                                    <input
                                         className="flex-1 px-4 py-2 bg-black/40 border border-white/10 rounded-lg text-sm font-bold outline-none focus:border-[hsl(var(--danger)/100%)] transition-all"
                                         placeholder="rtmp://servidor.iglesia.com/live"
                                     />
@@ -334,4 +334,3 @@ export default function SocialMediaSettings() {
         </div>
     );
 }
-

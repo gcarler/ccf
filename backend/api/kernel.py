@@ -374,4 +374,3 @@ def check_can_receive_assignment(
 
     can_assign = kernel_crud.can_receive_assignment(db, persona_id)
     return {"persona_id": persona_id, "can_receive_assignment": can_assign}
-

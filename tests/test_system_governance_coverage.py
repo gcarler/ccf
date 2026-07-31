@@ -1,6 +1,7 @@
 """
 Coverage for critical backend services with low coverage.
 """
+
 import pytest
 
 from tests.conftest import auth_headers as _auth_headers

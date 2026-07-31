@@ -28,9 +28,7 @@ class AgentConversation(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True
-    )
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     title = Column(String(300), nullable=True)
     agent_name = Column(String(100), nullable=False, server_default="Optimus")
     is_active = Column(Boolean, default=True, index=True)

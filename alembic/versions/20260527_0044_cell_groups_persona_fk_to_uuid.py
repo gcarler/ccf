@@ -39,22 +39,17 @@ def upgrade() -> None:
 
     # Alter column types: INTEGER → UUID (existing integer values become NULL)
     for col in ["leader_persona_id", "assistant_persona_id", "host_persona_id"]:
-        conn.execute(sa.text(
-            f"ALTER TABLE cell_groups ALTER COLUMN {col} DROP DEFAULT"
-        ))
-        conn.execute(sa.text(
-            f"UPDATE cell_groups SET {col} = NULL"
-        ))
-        conn.execute(sa.text(
-            f"ALTER TABLE cell_groups ALTER COLUMN {col} TYPE UUID "
-            f"USING NULL"
-        ))
+        conn.execute(sa.text(f"ALTER TABLE cell_groups ALTER COLUMN {col} DROP DEFAULT"))
+        conn.execute(sa.text(f"UPDATE cell_groups SET {col} = NULL"))
+        conn.execute(sa.text(f"ALTER TABLE cell_groups ALTER COLUMN {col} TYPE UUID USING NULL"))
         # Re-add FK constraint
         persona_fk = col.replace("_id", "")
-        conn.execute(sa.text(
-            f"ALTER TABLE cell_groups ADD CONSTRAINT fk_cell_groups_{persona_fk} "
-            f"FOREIGN KEY ({col}) REFERENCES personas(id) ON DELETE SET NULL"
-        ))
+        conn.execute(
+            sa.text(
+                f"ALTER TABLE cell_groups ADD CONSTRAINT fk_cell_groups_{persona_fk} "
+                f"FOREIGN KEY ({col}) REFERENCES personas(id) ON DELETE SET NULL"
+            )
+        )
 
 
 def downgrade() -> None:

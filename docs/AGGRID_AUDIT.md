@@ -1,9 +1,9 @@
 # Auditoría Técnica: Configuración de AG Grid en la Plataforma CCF
 
-**Fecha de auditoría:** 2026-07-25  
-**Autor:** Buffy (Freebuff)  
-**Módulo afectado:** Frontend — Plataforma CCF (Proyectos, CRM, UI genérica)  
-**Estado:** Consolidación implementada y validada  
+**Fecha de auditoría:** 2026-07-25
+**Autor:** Buffy (Freebuff)
+**Módulo afectado:** Frontend — Plataforma CCF (Proyectos, CRM, UI genérica)
+**Estado:** Consolidación implementada y validada
 
 ---
 
@@ -268,5 +268,5 @@ Estos deben abordarse en una auditoría transversal de TypeScript.
 
 La consolidación de AG Grid en la plataforma CCF eliminó la fragmentación de temas, centralizó la detección de modo oscuro y estableció un wrapper tipo-safe en el design system. Esto reduce la deuda técnica, mejora la coherencia visual y facilita futuras actualizaciones de AG Grid o del sistema de diseño.
 
-**Estado de la auditoría:** Cerrada con éxito.  
+**Estado de la auditoría:** Cerrada con éxito.
 **Próximo paso recomendado:** ejecutar la auditoría transversal de TypeScript y agregar tests de regresión visual en Storybook.

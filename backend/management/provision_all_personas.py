@@ -31,8 +31,12 @@ def _generate_password(length: int = 12) -> str:
     alphabet = string.ascii_letters + string.digits + "!@#$%&*"
     while True:
         pw = "".join(secrets.choice(alphabet) for _ in range(length))
-        if (any(c.islower() for c in pw) and any(c.isupper() for c in pw)
-                and any(c.isdigit() for c in pw) and any(c in "!@#$%&*" for c in pw)):
+        if (
+            any(c.islower() for c in pw)
+            and any(c.isupper() for c in pw)
+            and any(c.isdigit() for c in pw)
+            and any(c in "!@#$%&*" for c in pw)
+        ):
             return pw
 
 
@@ -61,19 +65,13 @@ def provision_all(db: Session) -> tuple[int, list[dict[str, str]]]:
     persona_default_role = _resolve_persona_default_role(db)
 
     # Find the first sede (required FK for Usuario)
-    sede_id = db.execute(
-        text("SELECT id FROM sedes ORDER BY nombre ASC LIMIT 1")
-    ).scalar()
+    sede_id = db.execute(text("SELECT id FROM sedes ORDER BY nombre ASC LIMIT 1")).scalar()
     if not sede_id:
         log.error("No sedes found in DB.")
         return 0, []
 
     # Normalize any account that still lacks its canonical Auth role.
-    existing_persona_users = (
-        db.query(Usuario)
-        .filter(Usuario.rol_plataforma_id.is_(None))
-        .all()
-    )
+    existing_persona_users = db.query(Usuario).filter(Usuario.rol_plataforma_id.is_(None)).all()
     normalized = 0
     for user in existing_persona_users:
         user.rol_plataforma_id = persona_default_role.id
@@ -119,7 +117,7 @@ def provision_all(db: Session) -> tuple[int, list[dict[str, str]]]:
                 break
             attempt += 1
             suffix = str(attempt)
-            username = f"{base_username[:60 - len(suffix) - 1]}_{suffix}"
+            username = f"{base_username[: 60 - len(suffix) - 1]}_{suffix}"
 
         # Also avoid email collisions (shouldn't happen since email is unique)
         existing_email = db.execute(
@@ -165,6 +163,7 @@ def provision_all(db: Session) -> tuple[int, list[dict[str, str]]]:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     from backend.core.database import get_db
+
     db = next(get_db())
     try:
         count, credentials = provision_all(db)

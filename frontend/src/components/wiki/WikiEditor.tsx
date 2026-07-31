@@ -16,11 +16,11 @@ interface WikiEditorProps {
     placeholder?: string;
 }
 
-export default function WikiEditor({ 
-    initialContent, 
-    onSave, 
+export default function WikiEditor({
+    initialContent,
+    onSave,
     onContentChange,
-    placeholder = "Escribe algo increíble..." 
+    placeholder = "Escribe algo increíble..."
 }: WikiEditorProps) {
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [lastSaved, setLastSaved] = useState<Date | null>(null);

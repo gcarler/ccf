@@ -1,5 +1,5 @@
-"""Public menu endpoints (Fase 4 refactor).
-"""
+"""Public menu endpoints (Fase 4 refactor)."""
+
 from __future__ import annotations
 
 import logging
@@ -37,16 +37,28 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
         db.query(models.CmsMenuItem)
         .options(lazyload("*"))
         .filter(models.CmsMenuItem.menu_id == menu.id)
-        .order_by(models.CmsMenuItem.sort_order.asc(), models.CmsMenuItem.id.asc()).all()
+        .order_by(models.CmsMenuItem.sort_order.asc(), models.CmsMenuItem.id.asc())
+        .all()
     )
     public_ids = {item.id for item in all_items if item.visibility == "public"}
-    items = [item for item in all_items if item.visibility == "public" and (item.parent_id is None or item.parent_id in public_ids)]
+    items = [
+        item
+        for item in all_items
+        if item.visibility == "public" and (item.parent_id is None or item.parent_id in public_ids)
+    ]
     visible_ids = {item.id for item in items}
     serialized = [
-        {"id": item.id, "parent_id": item.parent_id if item.parent_id in visible_ids else None,
-         "label": item.label, "href": item.href, "target": item.target,
-         "is_external": item.is_external, "visibility": item.visibility,
-         "sort_order": item.sort_order, "meta_json": item.meta_json or {}}
+        {
+            "id": item.id,
+            "parent_id": item.parent_id if item.parent_id in visible_ids else None,
+            "label": item.label,
+            "href": item.href,
+            "target": item.target,
+            "is_external": item.is_external,
+            "visibility": item.visibility,
+            "sort_order": item.sort_order,
+            "meta_json": item.meta_json or {},
+        }
         for item in items
     ]
     return {"site_key": site.site_key, "menu_key": menu.menu_key, "items": serialized}

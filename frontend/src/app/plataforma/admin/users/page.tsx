@@ -107,7 +107,7 @@ export default function AdminUsersPage() {
         });
     };
 
-    const filteredUsers = users.filter(u => 
+    const filteredUsers = users.filter(u =>
         u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -124,7 +124,7 @@ export default function AdminUsersPage() {
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden font-sans relative">
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Gestión de Accesos', icon: Users }]}
                 onSearch={setSearchTerm}
                 rightActions={
@@ -145,7 +145,7 @@ export default function AdminUsersPage() {
             />
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-3 lg:p-4 relative z-10">
-                <motion.div 
+                <motion.div
                     variants={containerVariants} initial="hidden" animate="show"
  className="w-full space-y-3"
                 >
@@ -174,9 +174,9 @@ export default function AdminUsersPage() {
                                             <tr key={i}><td colSpan={5} className="px-4 py-2"><div className="h-8 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg animate-pulse" /></td></tr>
                                         ))
                                     ) : filteredUsers.map((user) => (
-                                        <tr 
-                                            key={user.id} 
-                                            className="group hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all cursor-pointer" 
+                                        <tr
+                                            key={user.id}
+                                            className="group hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all cursor-pointer"
                                             onClick={() => { setSelectedUser(user); setIsDrawerOpen(true); }}
                                         >
                                             <td className="px-4 py-2">
@@ -232,7 +232,7 @@ export default function AdminUsersPage() {
             </main>
 
             {/* User Control Drawer */}
-            <WorkspaceDrawer 
+            <WorkspaceDrawer
                 isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
                 title={selectedUser?.username || 'Control de Acceso'}
                 subtitle="Ajustes de Seguridad y Rol"
@@ -259,13 +259,13 @@ export default function AdminUsersPage() {
                             <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2"><Shield size={14} className="text-[hsl(var(--primary))]" /> Cambio de Rango Ministerial</h4>
                             <div className="grid grid-cols-1 gap-2">
                                 {['admin', 'pastor', 'docente', 'lider', 'estudiante'].map((role) => (
-                                    <button 
+                                    <button
                                         key={role}
                                         onClick={() => handleUpdateUser(selectedUser.id, { role })}
                                         className={clsx(
                                             "flex items-center justify-between p-3 rounded-lg border-2 transition-all group",
-                                            selectedUser.role === role 
-                                                ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-xl shadow-[hsl(var(--primary))/0.2]" 
+                                            selectedUser.role === role
+                                                ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-xl shadow-[hsl(var(--primary))/0.2]"
                                                 : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/100%)]/30"
                                         )}
                                     >

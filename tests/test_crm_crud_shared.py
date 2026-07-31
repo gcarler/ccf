@@ -1,14 +1,13 @@
 """Coverage for backend/crud/crm_/shared.py — target 90%+."""
+
 from __future__ import annotations
 
 import uuid as _uuid
 
 import pytest
-from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud.crm_ import shared as crud_shared
-from backend.crud._utils import _utcnow
 
 
 def _seed_sede(db, name="Sede") -> models.Sede:
@@ -26,14 +25,17 @@ def _seed_persona(db, sede_id, first="Persona") -> models.Persona:
 
 
 def _seed_caso(db, sede_id, persona_id) -> models.CasoCRM:
-    from backend.models_crm_pipeline import CasoCRM
-    from backend.models_crm_pipeline import EstadoCasoEnum, PrioridadCasoEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EstadoCasoEnum, PrioridadCasoEnum
+
     pipeline_id = _uuid.uuid4()
     etapa_id = _uuid.uuid4()
     c = CasoCRM(
-        id=_uuid.uuid4(), sede_id=sede_id, persona_id=persona_id,
+        id=_uuid.uuid4(),
+        sede_id=sede_id,
+        persona_id=persona_id,
         titulo_caso="Caso Test",
-        pipeline_id=pipeline_id, etapa_actual_id=etapa_id,
+        pipeline_id=pipeline_id,
+        etapa_actual_id=etapa_id,
         origen_canal=CanalOrigenEnum.WEB_FORM,
         prioridad=PrioridadCasoEnum.MEDIA,
         estado=EstadoCasoEnum.ABIERTO,
@@ -48,7 +50,6 @@ def _commit(db):
 
 
 class TestIsUuidLike:
-
     def test_valid_uuid(self):
         assert crud_shared._is_uuid_like(_uuid.uuid4()) is True
 
@@ -66,7 +67,6 @@ class TestIsUuidLike:
 
 
 class TestResolvePersonaIdForUser:
-
     def test_none_input(self, db_session):
         assert crud_shared.resolve_persona_id_for_user(db_session, None) is None
 
@@ -86,7 +86,6 @@ class TestResolvePersonaIdForUser:
 
 
 class TestResolvePersonaIdFromIdentity:
-
     def test_delegates(self, db_session):
         assert crud_shared.resolve_persona_id_from_identity(db_session, None) is None
         sede = _seed_sede(db_session)
@@ -97,12 +96,12 @@ class TestResolvePersonaIdFromIdentity:
 
 
 class TestGetUserSedeId:
-
     def test_no_persona(self, db_session):
         assert crud_shared.get_user_sede_id(db_session, _uuid.uuid4()) is None
 
     def test_invalid_uuid(self, db_session):
         from unittest.mock import patch
+
         with patch("backend.core.tenant.get_user_sede_id", return_value="not-a-uuid"):
             assert crud_shared.get_user_sede_id(db_session, _uuid.uuid4()) is None
 
@@ -115,7 +114,6 @@ class TestGetUserSedeId:
 
 
 class TestActorSedeOrNone:
-
     def test_invalid_uuid_raises(self, db_session):
         with pytest.raises(Exception):
             crud_shared._actor_sede_or_none(db_session, "bad-uuid")
@@ -133,7 +131,6 @@ class TestActorSedeOrNone:
 
 
 class TestResolveAnchorSede:
-
     def test_none_anchor_value(self, db_session):
         assert crud_shared._resolve_anchor_sede(db_session, "caso_id", None) is None
 
@@ -168,7 +165,6 @@ class TestResolveAnchorSede:
 
 
 class TestCrudScopeReCheckTask:
-
     def test_no_user_sede_returns(self, db_session):
         p = models.Persona(id=_uuid.uuid4(), first_name="NoSede", last_name="X")
         db_session.add(p)
@@ -181,7 +177,8 @@ class TestCrudScopeReCheckTask:
         _commit(db_session)
         with pytest.raises(Exception):
             crud_shared._crud_scope_re_check_task(
-                db_session, p.id,
+                db_session,
+                p.id,
                 incoming_anchors={"caso_id": None},
                 current_row_anchors={"persona_id": None},
             )
@@ -200,7 +197,8 @@ class TestCrudScopeReCheckTask:
         _commit(db_session)
         with pytest.raises(Exception):
             crud_shared._crud_scope_re_check_task(
-                db_session, p1.id,
+                db_session,
+                p1.id,
                 incoming_anchors={"persona_id": p2.id},
             )
 
@@ -210,7 +208,8 @@ class TestCrudScopeReCheckTask:
         p2 = _seed_persona(db_session, sede.id, "Other")
         _commit(db_session)
         crud_shared._crud_scope_re_check_task(
-            db_session, p1.id,
+            db_session,
+            p1.id,
             incoming_anchors={"persona_id": p2.id},
         )
 
@@ -220,15 +219,16 @@ class TestCrudScopeReCheckTask:
         p2 = _seed_persona(db_session, sede.id, "Other")
         _commit(db_session)
         crud_shared._crud_scope_re_check_task(
-            db_session, p1.id,
+            db_session,
+            p1.id,
             incoming_anchors={"persona_id": p2.id, "caso_id": None},
         )
 
 
 class TestAuditLog:
-
     def test_basic(self, db_session):
         from backend.models_evangelism import LogAuditoria
+
         crud_shared._audit_log(db_session, "test_table", "123", "CREATE", {"key": "val"})
         _commit(db_session)
         entry = db_session.query(LogAuditoria).first()
@@ -237,6 +237,7 @@ class TestAuditLog:
 
     def test_with_usuario_id(self, db_session):
         from backend.models_evangelism import LogAuditoria
+
         uid = _uuid.uuid4()
         crud_shared._audit_log(db_session, "t", "1", "UPDATE", usuario_id=str(uid))
         _commit(db_session)
@@ -245,7 +246,6 @@ class TestAuditLog:
 
 
 class TestGetLiveColumnNames:
-
     def test_personas(self, db_session):
         result = crud_shared._get_live_column_names(db_session, "personas")
         assert "id" in result
@@ -261,28 +261,24 @@ class TestGetLiveColumnNames:
 
 
 class TestCaseCreatedColumn:
-
     def test_returns_something(self, db_session):
         result = crud_shared._case_created_column(db_session)
         assert result is not None
 
 
 class TestPersonaQuery:
-
     def test_returns_query(self, db_session):
         q = crud_shared.persona_query(db_session)
         assert q is not None
 
 
 class TestCaseQuery:
-
     def test_returns_query(self, db_session):
         q = crud_shared.case_query(db_session)
         assert q is not None
 
 
 class TestPreparePersonaForOutput:
-
     def test_basic(self, db_session):
         sede = _seed_sede(db_session)
         p = _seed_persona(db_session, sede.id, "Output")
@@ -292,7 +288,6 @@ class TestPreparePersonaForOutput:
 
 
 class TestPrepareCaseForOutput:
-
     def test_basic(self, db_session):
         sede = _seed_sede(db_session)
         p = _seed_persona(db_session, sede.id)

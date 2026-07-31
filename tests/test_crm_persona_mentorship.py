@@ -105,9 +105,7 @@ def test_assigning_same_mentor_updates_active_assignment(client, db_session):
     assert data["notes"] == "Notas actualizadas"
 
     rows = (
-        db_session.query(models.PersonaMentorship)
-        .filter(models.PersonaMentorship.mentee_persona_id == mentee.id)
-        .all()
+        db_session.query(models.PersonaMentorship).filter(models.PersonaMentorship.mentee_persona_id == mentee.id).all()
     )
     assert len(rows) == 1
     assert rows[0].status == "active"

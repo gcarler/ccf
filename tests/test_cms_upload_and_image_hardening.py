@@ -32,12 +32,8 @@ from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 
 def _seed_two_sedes(db_session):
-    admin_a, persona_a, sede_a = seed_admin(
-        db_session, email="cmsUploadA@example.com", password="testpass123"
-    )
-    admin_b, persona_b, sede_b = seed_admin(
-        db_session, email="cmsUploadB@example.com", password="testpass123"
-    )
+    admin_a, persona_a, sede_a = seed_admin(db_session, email="cmsUploadA@example.com", password="testpass123")
+    admin_b, persona_b, sede_b = seed_admin(db_session, email="cmsUploadB@example.com", password="testpass123")
     assert sede_a.id != sede_b.id
     return (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b)
 
@@ -79,8 +75,8 @@ def _make_cms_media(db, persona, sede, url, filename, alt_text, status="active")
 
 # (D) validate_mime_extension_alignment — unit tests
 
-class TestValidateMimeExtensionAlignment:
 
+class TestValidateMimeExtensionAlignment:
     def test_image_extensions_align_with_image_mime_prefix(self):
         from backend.core.uploads import validate_mime_extension_alignment
 
@@ -133,8 +129,7 @@ class TestValidateMimeExtensionAlignment:
             assert "no coincide" in str(exc).lower()
             return
         raise AssertionError(
-            "validate_mime_extension_alignment dejo pasar un binario "
-            "con image-ext pero mime de ejecutable"
+            "validate_mime_extension_alignment dejo pasar un binario con image-ext pero mime de ejecutable"
         )
 
     def test_rejects_video_extension_with_audio_mime(self):
@@ -166,16 +161,13 @@ class TestValidateMimeExtensionAlignment:
                 validate_mime_extension_alignment(ext, "")
             except ValueError:
                 raised = True
-            assert raised, (
-                f"Content-Type vacio debe rejectar extension categorizable "
-                f"({ext})"
-            )
+            assert raised, f"Content-Type vacio debe rejectar extension categorizable ({ext})"
 
 
 # (A) upload_cms_media — extension allow-list + MIME alignment
 
-class TestUploadCmsMediaHardening:
 
+class TestUploadCmsMediaHardening:
     PNG_BYTES = (
         b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"
         + b"\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4"
@@ -185,15 +177,14 @@ class TestUploadCmsMediaHardening:
 
     def _stub_storage_save(self, monkeypatch, save_calls):
         from backend.services import cms_media_service as _cms_media_service
+
         monkeypatch.setattr(
             _cms_media_service.storage_service,
             "save_file",
             lambda content, name, subfolder: save_calls.append(name) or f"/uploads/{name}",
         )
 
-    def test_upload_accepts_legit_png_with_image_mime(
-        self, client, db_session, monkeypatch
-    ):
+    def test_upload_accepts_legit_png_with_image_mime(self, client, db_session, monkeypatch):
         save_calls = []
         self._stub_storage_save(monkeypatch, save_calls)
 
@@ -211,13 +202,9 @@ class TestUploadCmsMediaHardening:
                 )
             ],
         )
-        assert resp.status_code in (200, 201), (
-            f"Upload happy-path fallo: {resp.status_code} {resp.text}"
-        )
+        assert resp.status_code in (200, 201), f"Upload happy-path fallo: {resp.status_code} {resp.text}"
 
-    def test_upload_rejects_executable_extension(
-        self, client, db_session, monkeypatch
-    ):
+    def test_upload_rejects_executable_extension(self, client, db_session, monkeypatch):
         save_calls = []
         self._stub_storage_save(monkeypatch, save_calls)
 
@@ -239,16 +226,10 @@ class TestUploadCmsMediaHardening:
                 )
             ],
         )
-        assert resp.status_code == 400, (
-            f"Upload de .exe permitida: {resp.status_code} {resp.text}"
-        )
-        assert save_calls == [], (
-            "storage_service.save_file fue invocado pese al extension-block"
-        )
+        assert resp.status_code == 400, f"Upload de .exe permitida: {resp.status_code} {resp.text}"
+        assert save_calls == [], "storage_service.save_file fue invocado pese al extension-block"
 
-    def test_upload_rejects_html_extension(
-        self, client, db_session, monkeypatch
-    ):
+    def test_upload_rejects_html_extension(self, client, db_session, monkeypatch):
         save_calls = []
         self._stub_storage_save(monkeypatch, save_calls)
 
@@ -270,13 +251,9 @@ class TestUploadCmsMediaHardening:
                 )
             ],
         )
-        assert resp.status_code == 400, (
-            f"Upload de .html permitido: {resp.status_code} {resp.text}"
-        )
+        assert resp.status_code == 400, f"Upload de .html permitido: {resp.status_code} {resp.text}"
 
-    def test_upload_rejects_spoofed_mime_for_png_extension(
-        self, client, db_session, monkeypatch
-    ):
+    def test_upload_rejects_spoofed_mime_for_png_extension(self, client, db_session, monkeypatch):
         """CRITICO: el allow-list deja pasar .png porque esta permitida,
         pero si el cliente manda un Content-Type falsificado, el
         alignment check lo rechaza."""
@@ -301,16 +278,10 @@ class TestUploadCmsMediaHardening:
                 )
             ],
         )
-        assert resp.status_code == 400, (
-            f"Spoof-MIME permitido: {resp.status_code} {resp.text}"
-        )
-        assert save_calls == [], (
-            "storage_service.save_file invocado pese al MIME-alignment block"
-        )
+        assert resp.status_code == 400, f"Spoof-MIME permitido: {resp.status_code} {resp.text}"
+        assert save_calls == [], "storage_service.save_file invocado pese al MIME-alignment block"
 
-    def test_upload_rejects_pdf_extension_with_image_mime(
-        self, client, db_session, monkeypatch
-    ):
+    def test_upload_rejects_pdf_extension_with_image_mime(self, client, db_session, monkeypatch):
         save_calls = []
         self._stub_storage_save(monkeypatch, save_calls)
 
@@ -332,14 +303,9 @@ class TestUploadCmsMediaHardening:
                 )
             ],
         )
-        assert resp.status_code == 400, (
-            f"MIME mismatch cross-category permitido: "
-            f"{resp.status_code} {resp.text}"
-        )
+        assert resp.status_code == 400, f"MIME mismatch cross-category permitido: {resp.status_code} {resp.text}"
 
-    def test_upload_rejects_oversize_file(
-        self, client, db_session, monkeypatch
-    ):
+    def test_upload_rejects_oversize_file(self, client, db_session, monkeypatch):
         save_calls = []
         self._stub_storage_save(monkeypatch, save_calls)
 
@@ -359,9 +325,7 @@ class TestUploadCmsMediaHardening:
                 )
             ],
         )
-        assert resp.status_code == 400, (
-            f"Oversize permitido: {resp.status_code} {resp.text}"
-        )
+        assert resp.status_code == 400, f"Oversize permitido: {resp.status_code} {resp.text}"
 
     def test_lector_cannot_upload_media(self, client, db_session, monkeypatch):
         save_calls = []
@@ -386,16 +350,14 @@ class TestUploadCmsMediaHardening:
                 )
             ],
         )
-        assert resp.status_code == 403, (
-            f"Leak RBAC: LECTOR pudo subir media v1: {resp.status_code} {resp.text}"
-        )
+        assert resp.status_code == 403, f"Leak RBAC: LECTOR pudo subir media v1: {resp.status_code} {resp.text}"
         assert save_calls == []
 
 
 # (B) /images/optimize — cross-sede IDOR
 
-class TestImagesOptimizeCrossSedeIDOR:
 
+class TestImagesOptimizeCrossSedeIDOR:
     def _seed_two_media_items(self, db_session, persona_a, persona_b, sede_a, sede_b):
         m_local = _make_cms_media(
             db_session,
@@ -416,9 +378,7 @@ class TestImagesOptimizeCrossSedeIDOR:
         db_session.commit()
         return m_local, m_cross
 
-    def test_optimize_blocks_cross_sede_attempt(
-        self, client, db_session
-    ):
+    def test_optimize_blocks_cross_sede_attempt(self, client, db_session):
         """CRITICO IDOR — Axioma 3: editor de sede_a NO puede optimizar
         media de sede_b. 404 existence-leak safe. Y crucialmente: NO
         escribe un JPEG optimizado en uploads_dir para el filename del
@@ -426,9 +386,7 @@ class TestImagesOptimizeCrossSedeIDOR:
         import os
 
         (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
-        m_local, m_cross = self._seed_two_media_items(
-            db_session, persona_a, persona_b, sede_a, sede_b
-        )
+        m_local, m_cross = self._seed_two_media_items(db_session, persona_a, persona_b, sede_a, sede_b)
 
         from backend.core.config import get_settings
 
@@ -440,19 +398,14 @@ class TestImagesOptimizeCrossSedeIDOR:
         opt_expected = f"opt_{m_cross.filename.rsplit('.', 1)[0]}_1920w.jpg"
         opt_path = os.path.join(settings.uploads_dir, opt_expected)
 
-        assert not os.path.exists(opt_path), (
-            "Sanity: optimized file no deberia existir antes del request"
-        )
+        assert not os.path.exists(opt_path), "Sanity: optimized file no deberia existir antes del request"
 
         headers = _auth_headers(client, "cmsUploadA@example.com")
         resp = client.post(
             f"/api/cms/v2/images/optimize?media_id={m_cross.id}",
             headers=headers,
         )
-        assert resp.status_code == 404, (
-            f"Leak: optimize cross-sede permitido: "
-            f"{resp.status_code} {resp.text}"
-        )
+        assert resp.status_code == 404, f"Leak: optimize cross-sede permitido: {resp.status_code} {resp.text}"
         assert not os.path.exists(opt_path), (
             f"FUGA CRITICA: optimize cross-sede escribio {opt_path} en "
             f"uploads_dir (modificacion cross-sede del filesystem)."
@@ -463,8 +416,8 @@ class TestImagesOptimizeCrossSedeIDOR:
 
 # (C) /images/{media_id}/resize — archived 404 defense-in-depth
 
-class TestImagesResizeArchivedDefenseInDepth:
 
+class TestImagesResizeArchivedDefenseInDepth:
     def test_resize_returns_url_for_active_media(self, client, db_session):
         (_, _, _), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
         m_active = _make_cms_media(
@@ -478,9 +431,7 @@ class TestImagesResizeArchivedDefenseInDepth:
         )
         db_session.commit()
 
-        resp = client.get(
-            f"/api/cms/v2/images/{m_active.id}/resize?width=800&quality=80"
-        )
+        resp = client.get(f"/api/cms/v2/images/{m_active.id}/resize?width=800&quality=80")
         assert resp.status_code == 200, resp.text
         body = resp.json()
         assert body["url"] == "https://cdn.example.com/public-hero.png"
@@ -500,21 +451,13 @@ class TestImagesResizeArchivedDefenseInDepth:
         )
         db_session.commit()
 
-        resp = client.get(
-            f"/api/cms/v2/images/{m_archived.id}/resize?width=800"
-        )
-        assert resp.status_code == 404, (
-            f"Archived media filtro via resize: {resp.status_code} {resp.text}"
-        )
-        assert "retired" not in resp.text, (
-            "FUGA: alt_text de media archivado expuesto en respuesta"
-        )
+        resp = client.get(f"/api/cms/v2/images/{m_archived.id}/resize?width=800")
+        assert resp.status_code == 404, f"Archived media filtro via resize: {resp.status_code} {resp.text}"
+        assert "retired" not in resp.text, "FUGA: alt_text de media archivado expuesto en respuesta"
 
     def test_resize_returns_404_for_nonexistent_media(self, client, db_session):
         fake_id = _uuid.uuid4()
-        resp = client.get(
-            f"/api/cms/v2/images/{fake_id}/resize?width=800"
-        )
+        resp = client.get(f"/api/cms/v2/images/{fake_id}/resize?width=800")
         assert resp.status_code == 404
 
 
@@ -528,8 +471,8 @@ class TestImagesResizeArchivedDefenseInDepth:
 # and reject anything outside the uploads root with a 400 before any
 # ``os.remove`` runs.
 
-class TestDeleteCmsMediaPathTraversalHardening:
 
+class TestDeleteCmsMediaPathTraversalHardening:
     def test_permanent_delete_blocks_traversal_url(self, client, db_session):
         """CRITICO path traversal: un media item con url que resuelve a
         fuera de /root/ccf/uploads debe rejectar permanent-delete con
@@ -577,13 +520,11 @@ class TestDeleteCmsMediaPathTraversalHardening:
 
         # The sentinel file must still exist and be byte-identical.
         assert os.path.exists(target_path), (
-            "REGRESSION: el archivo sandbox fue eliminado por la "
-            "respuesta no-bloqueada del path traversal"
+            "REGRESSION: el archivo sandbox fue eliminado por la respuesta no-bloqueada del path traversal"
         )
         with open(target_path, "rb") as f:
             assert f.read() == sentinel, (
-                "REGRESSION: el archivo sandbox fue modificado por la "
-                "respuesta no-bloqueada del path traversal"
+                "REGRESSION: el archivo sandbox fue modificado por la respuesta no-bloqueada del path traversal"
             )
 
         os.remove(target_path)
@@ -621,12 +562,9 @@ class TestDeleteCmsMediaPathTraversalHardening:
             headers=headers,
         )
         assert resp.status_code == 204, (
-            f"False-positive: legit permanent delete bloqueado: "
-            f"{resp.status_code} {resp.text}"
+            f"False-positive: legit permanent delete bloqueado: {resp.status_code} {resp.text}"
         )
-        assert not os.path.exists(legit_path), (
-            "El physical file legitimo NO fue removido por permanent delete"
-        )
+        assert not os.path.exists(legit_path), "El physical file legitimo NO fue removido por permanent delete"
 
     def test_soft_delete_does_not_touch_filesystem(self, client, db_session):
         """Regression: permanent=False (default) solo archives el row;
@@ -649,10 +587,7 @@ class TestDeleteCmsMediaPathTraversalHardening:
             f"/api/cms/media/{m.id}",
             headers=headers,  # permanent defaults to False
         )
-        assert resp.status_code == 204, (
-            f"Soft delete fallo pese a no tocar filesystem: "
-            f"{resp.status_code} {resp.text}"
-        )
+        assert resp.status_code == 204, f"Soft delete fallo pese a no tocar filesystem: {resp.status_code} {resp.text}"
 
 
 # (F) C-02 false-positive verification — TOCTOU actor-sede-mutation vector
@@ -668,8 +603,8 @@ class TestDeleteCmsMediaPathTraversalHardening:
 # removes the check #1 (``current_row_sede`` vs ``actor_sede``) will make
 # the suite fail instead of silently re-opening the TOCTOU.
 
-class TestC02TOCTOUFalsePositive:
 
+class TestC02TOCTOUFalsePositive:
     def test_actor_sede_changed_blocks_update(self, client, db_session):
         """CRITICO TOCTOU coverage: un actor crea contenido en sede_a
         (ya con sede_a assignment), todo limpio.  Simulamos que el actor
@@ -687,9 +622,7 @@ class TestC02TOCTOUFalsePositive:
         from backend.crud.crm import get_user_sede_id
         from backend.models_auth import Usuario
 
-        (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b) = (
-            _seed_two_sedes(db_session)
-        )
+        (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b) = _seed_two_sedes(db_session)
         # Media created in sede_a by admin_a (row.sede_id = sede_a).
         m = _make_cms_media(
             db_session,
@@ -705,12 +638,12 @@ class TestC02TOCTOUFalsePositive:
         # sede_id (and persona_a.sede_id) to sede_b.  The user_id stays
         # the same so the JWT stays valid, but
         # ``_actor_sede_or_none_cms`` now returns sede_b.
-        db_session.query(Usuario).filter(
-            Usuario.id == admin_a.id
-        ).update({"sede_id": sede_b.id}, synchronize_session=False)
-        db_session.query(models.Persona).filter(
-            models.Persona.id == persona_a.id
-        ).update({"sede_id": sede_b.id}, synchronize_session=False)
+        db_session.query(Usuario).filter(Usuario.id == admin_a.id).update(
+            {"sede_id": sede_b.id}, synchronize_session=False
+        )
+        db_session.query(models.Persona).filter(models.Persona.id == persona_a.id).update(
+            {"sede_id": sede_b.id}, synchronize_session=False
+        )
         db_session.flush()
         assert str(get_user_sede_id(db_session, str(admin_a.id))) == str(sede_b.id)
 
@@ -729,8 +662,7 @@ class TestC02TOCTOUFalsePositive:
             )
         except _HE as exc:
             assert exc.status_code == 404, (
-                f"Cross-sede update no debe rejectar 404 existence-leak safe: "
-                f"{exc.status_code}"
+                f"Cross-sede update no debe rejectar 404 existence-leak safe: {exc.status_code}"
             )
             raised = True
         assert raised, (

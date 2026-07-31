@@ -1,4 +1,5 @@
 """Support ticket CRUD."""
+
 from typing import List, Optional
 from uuid import UUID
 

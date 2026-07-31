@@ -7,6 +7,7 @@ Spanish labels and static copy currently used by the frontend detail pages.
 The script is idempotent: it upserts the section and publishes a new version
 of each page.
 """
+
 from __future__ import annotations
 
 import sys
@@ -125,21 +126,14 @@ def main() -> int:
         published = 0
 
         for slug, props in DETAIL_TEMPLATE_PROPS.items():
-            page = (
-                db.query(models.CmsPage)
-                .filter_by(site_id=site.id, slug=slug)
-                .first()
-            )
+            page = db.query(models.CmsPage).filter_by(site_id=site.id, slug=slug).first()
             if page is None:
                 print(f"Skip {slug}: CMS page not found")
                 continue
 
             # Gather existing sections to preserve them in the new version.
             existing_sections = (
-                db.query(models.CmsSection)
-                .filter_by(page_id=page.id)
-                .order_by(models.CmsSection.sort_order)
-                .all()
+                db.query(models.CmsSection).filter_by(page_id=page.id).order_by(models.CmsSection.sort_order).all()
             )
 
             section_specs: list[dict[str, Any]] = []

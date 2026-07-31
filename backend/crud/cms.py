@@ -74,9 +74,7 @@ def _commit_or_conflict(db: Session) -> bool:
 # ── Axioma 3 — Multi-Tenant defense-in-depth helpers (CMS CRUD) ──────────
 
 
-def _actor_sede_or_none_cms(
-    db: Session, actor_user_id: str | uuid.UUID
-) -> str | None:
+def _actor_sede_or_none_cms(db: Session, actor_user_id: str | uuid.UUID) -> str | None:
     """Resolve la sede de un actor autenticado.
 
     ``None`` sólo representa un superadministrador canónico sin sede. La
@@ -111,11 +109,7 @@ def _resolve_persona_sede(db: Session, persona_id) -> str | None:
         persona_uuid = uuid.UUID(str(persona_id))
     except (TypeError, ValueError, AttributeError):
         return None
-    row = (
-        db.query(models.Persona.sede_id)
-        .filter(models.Persona.id == persona_uuid)
-        .first()
-    )
+    row = db.query(models.Persona.sede_id).filter(models.Persona.id == persona_uuid).first()
     if not row or row[0] is None:
         return None
     return str(row[0])
@@ -164,9 +158,7 @@ def _crud_scope_re_check_cms_content_create(
             author_persona_id,
             target_sede,
         )
-        raise _HTTPException(
-            status_code=404, detail="CMS content creation blocked"
-        )
+        raise _HTTPException(status_code=404, detail="CMS content creation blocked")
 
     return target_sede
 
@@ -206,9 +198,7 @@ def _crud_scope_re_check_cms_content_update(
             actor_user_id,
             current_row_sede,
         )
-        raise _HTTPException(
-            status_code=404, detail="CMS content update blocked"
-        )
+        raise _HTTPException(status_code=404, detail="CMS content update blocked")
 
     if incoming_author_persona_id is not None:
         incoming_sede = _resolve_persona_sede(db, incoming_author_persona_id)
@@ -221,9 +211,7 @@ def _crud_scope_re_check_cms_content_update(
                 incoming_author_persona_id,
                 incoming_sede,
             )
-            raise _HTTPException(
-                status_code=404, detail="CMS content update blocked"
-            )
+            raise _HTTPException(status_code=404, detail="CMS content update blocked")
 
 
 def _resolve_site_sede(db: Session, site_id) -> str | None:
@@ -239,11 +227,7 @@ def _resolve_site_sede(db: Session, site_id) -> str | None:
         site_uuid = uuid.UUID(str(site_id))
     except (TypeError, ValueError, AttributeError):
         return None
-    row = (
-        db.query(models.CmsSite.sede_id)
-        .filter(models.CmsSite.id == site_uuid)
-        .first()
-    )
+    row = db.query(models.CmsSite.sede_id).filter(models.CmsSite.id == site_uuid).first()
     if not row or row[0] is None:
         return None
     return str(row[0])
@@ -291,9 +275,7 @@ def _crud_scope_re_check_cms_site_content(
             site_id,
             site_sede,
         )
-        raise _HTTPException(
-            status_code=404, detail="CMS site content blocked"
-        )
+        raise _HTTPException(status_code=404, detail="CMS site content blocked")
 
 
 def _crud_scope_re_check_pastoral_profile(
@@ -327,9 +309,7 @@ def _crud_scope_re_check_pastoral_profile(
             target_persona_id,
             target_persona_sede,
         )
-        raise _HTTPException(
-            status_code=404, detail="Pastoral profile update blocked"
-        )
+        raise _HTTPException(status_code=404, detail="Pastoral profile update blocked")
 
 
 # ── CMS Media ──────────────────────────────────────────
@@ -414,19 +394,12 @@ def list_cms_media_items(
             )
         )
     total = q.count()
-    items = (
-        q.order_by(models.CmsMediaItem.updated_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    items = q.order_by(models.CmsMediaItem.updated_at.desc()).offset(skip).limit(limit).all()
     return items, total
 
 
 def get_cms_media_item(db: Session, item_id: uuid.UUID):
-    return (
-        db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
-    )
+    return db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
 
 
 def update_cms_media_item(
@@ -531,18 +504,18 @@ def delete_cms_media_item(
 
 def list_cms_sites(db: Session, *, only_active: bool = False, sede_id: uuid.UUID | None = None):
     from sqlalchemy.orm import lazyload
+
     q = db.query(models.CmsSite).options(lazyload("*"))
     if only_active:
         q = q.filter(models.CmsSite.is_active.is_(True))
     if sede_id is not None:
-        q = q.filter(
-            (models.CmsSite.sede_id == sede_id) | (models.CmsSite.sede_id.is_(None))
-        )
+        q = q.filter((models.CmsSite.sede_id == sede_id) | (models.CmsSite.sede_id.is_(None)))
     return q.order_by(models.CmsSite.site_key.asc()).all()
 
 
 def get_cms_site_by_key(db: Session, site_key: str):
     from sqlalchemy.orm import lazyload
+
     return db.query(models.CmsSite).options(lazyload("*")).filter(models.CmsSite.site_key == site_key).first()
 
 
@@ -608,12 +581,7 @@ def create_cms_theme(
     payload: schemas.CmsThemeCreate,
     created_by: uuid.UUID | str | None,
 ):
-    version = (
-        db.query(func.max(models.CmsTheme.version))
-        .filter(models.CmsTheme.site_id == site_id)
-        .scalar()
-        or 0
-    )
+    version = db.query(func.max(models.CmsTheme.version)).filter(models.CmsTheme.site_id == site_id).scalar() or 0
     status = (payload.status or "active").strip().lower()
     row = models.CmsTheme(
         site_id=site_id,
@@ -636,16 +604,10 @@ def create_cms_theme(
 
 
 def get_cms_theme(db: Session, site_id: uuid.UUID, theme_id: uuid.UUID):
-    return (
-        db.query(models.CmsTheme)
-        .filter(models.CmsTheme.site_id == site_id, models.CmsTheme.id == theme_id)
-        .first()
-    )
+    return db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site_id, models.CmsTheme.id == theme_id).first()
 
 
-def update_cms_theme(
-    db: Session, row: models.CmsTheme, payload: schemas.CmsThemeUpdate
-):
+def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThemeUpdate):
     data = payload.model_dump(exclude_unset=True)
     if "name" in data and data["name"] is not None:
         row.name = str(data["name"]).strip()
@@ -672,9 +634,7 @@ def activate_cms_theme(db: Session, site_id: uuid.UUID, theme_id: uuid.UUID):
     row = get_cms_theme(db, site_id, theme_id)
     if not row:
         return None
-    db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site_id).update(
-        {"is_active": False}
-    )
+    db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site_id).update({"is_active": False})
     row.is_active = True
     row.status = "active"
     db.commit()
@@ -708,18 +668,13 @@ def get_active_cms_theme(db: Session, site_id: uuid.UUID):
 
 def list_cms_menus(db: Session, site_id: uuid.UUID):
     return (
-        db.query(models.CmsMenu)
-        .filter(models.CmsMenu.site_id == site_id)
-        .order_by(models.CmsMenu.menu_key.asc())
-        .all()
+        db.query(models.CmsMenu).filter(models.CmsMenu.site_id == site_id).order_by(models.CmsMenu.menu_key.asc()).all()
     )
 
 
 def get_cms_menu(db: Session, site_id: uuid.UUID, menu_key: str):
     return (
-        db.query(models.CmsMenu)
-        .filter(models.CmsMenu.site_id == site_id, models.CmsMenu.menu_key == menu_key)
-        .first()
+        db.query(models.CmsMenu).filter(models.CmsMenu.site_id == site_id, models.CmsMenu.menu_key == menu_key).first()
     )
 
 
@@ -820,15 +775,13 @@ def get_cms_menu_item(
         models.CmsMenuItem.id == item_id,
     )
     if site_id is not None:
-        query = query.join(
-            models.CmsMenu, models.CmsMenuItem.menu_id == models.CmsMenu.id
-        ).filter(models.CmsMenu.site_id == site_id)
+        query = query.join(models.CmsMenu, models.CmsMenuItem.menu_id == models.CmsMenu.id).filter(
+            models.CmsMenu.site_id == site_id
+        )
     return query.first()
 
 
-def update_cms_menu_item(
-    db: Session, row: models.CmsMenuItem, payload: schemas.CmsMenuItemUpdate
-):
+def update_cms_menu_item(db: Session, row: models.CmsMenuItem, payload: schemas.CmsMenuItemUpdate):
     data = payload.model_dump(exclude_unset=True)
     for field in ["parent_id", "target", "is_external", "visibility", "sort_order"]:
         if field in data:
@@ -850,14 +803,9 @@ def delete_cms_menu_item(db: Session, row: models.CmsMenuItem) -> bool:
     return True
 
 
-def reorder_cms_menu_items(
-    db: Session, menu_id: uuid.UUID, items: list[schemas.CmsMenuItemReorderItem]
-):
+def reorder_cms_menu_items(db: Session, menu_id: uuid.UUID, items: list[schemas.CmsMenuItemReorderItem]):
     rows_by_id = {
-        row.id: row
-        for row in db.query(models.CmsMenuItem)
-        .filter(models.CmsMenuItem.menu_id == menu_id)
-        .all()
+        row.id: row for row in db.query(models.CmsMenuItem).filter(models.CmsMenuItem.menu_id == menu_id).all()
     }
     for item in items:
         row = rows_by_id.get(item.id)
@@ -879,29 +827,16 @@ def list_cms_pages(
     limit: int = 50,
     status: str | None = None,
 ):
-    query = (
-        db.query(models.CmsPage)
-        .filter(models.CmsPage.site_id == site_id)
-    )
+    query = db.query(models.CmsPage).filter(models.CmsPage.site_id == site_id)
     if status:
         query = query.filter(models.CmsPage.status == status)
     total = query.count()
-    items = (
-        query
-        .order_by(models.CmsPage.updated_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    items = query.order_by(models.CmsPage.updated_at.desc()).offset(skip).limit(limit).all()
     return items, total
 
 
 def get_cms_page(db: Session, site_id: uuid.UUID, slug: str):
-    return (
-        db.query(models.CmsPage)
-        .filter(models.CmsPage.site_id == site_id, models.CmsPage.slug == slug)
-        .first()
-    )
+    return db.query(models.CmsPage).filter(models.CmsPage.site_id == site_id, models.CmsPage.slug == slug).first()
 
 
 def create_cms_page(
@@ -1001,10 +936,7 @@ def clone_cms_page(
 
     # Clone active sections (exclude archived/soft-deleted)
     sections, _ = list_cms_sections(db, source.id, limit=1000)
-    active_sections = [
-        s for s in sections
-        if s.status != "archived" and s.deleted_at is None
-    ]
+    active_sections = [s for s in sections if s.status != "archived" and s.deleted_at is None]
     for source_section in active_sections:
         cloned_section = models.CmsSection(
             page_id=cloned_page.id,
@@ -1055,11 +987,7 @@ def list_cms_sections(
         query = query.filter(models.CmsSection.type == section_type)
     total = query.count()
     items = (
-        query
-        .order_by(models.CmsSection.sort_order.asc(), models.CmsSection.id.asc())
-        .offset(skip)
-        .limit(limit)
-        .all()
+        query.order_by(models.CmsSection.sort_order.asc(), models.CmsSection.id.asc()).offset(skip).limit(limit).all()
     )
     return items, total
 
@@ -1109,15 +1037,13 @@ def get_cms_section(
         models.CmsSection.id == section_id,
     )
     if site_id is not None:
-        query = query.join(
-            models.CmsPage, models.CmsSection.page_id == models.CmsPage.id
-        ).filter(models.CmsPage.site_id == site_id)
+        query = query.join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id).filter(
+            models.CmsPage.site_id == site_id
+        )
     return query.first()
 
 
-def update_cms_section(
-    db: Session, row: models.CmsSection, payload: schemas.CmsSectionUpdate
-):
+def update_cms_section(db: Session, row: models.CmsSection, payload: schemas.CmsSectionUpdate):
     from backend.schemas.cms_v2_sections import validate_section_props
 
     data = payload.model_dump(exclude_unset=True)
@@ -1154,15 +1080,8 @@ def archive_cms_section(db: Session, row: models.CmsSection) -> models.CmsSectio
     return row
 
 
-def reorder_cms_sections(
-    db: Session, page_id: uuid.UUID, items: list[schemas.CmsSectionReorderItem]
-):
-    rows_by_id = {
-        row.id: row
-        for row in db.query(models.CmsSection)
-        .filter(models.CmsSection.page_id == page_id)
-        .all()
-    }
+def reorder_cms_sections(db: Session, page_id: uuid.UUID, items: list[schemas.CmsSectionReorderItem]):
+    rows_by_id = {row.id: row for row in db.query(models.CmsSection).filter(models.CmsSection.page_id == page_id).all()}
     for item in items:
         row = rows_by_id.get(item.id)
         if not row:
@@ -1185,18 +1104,18 @@ def _build_page_snapshot(db: Session, page: models.CmsPage):
     sections, _ = list_cms_sections(db, page.id)
 
     def _jsonable(value):
-            # Convert SQLAlchemy/runtime types into JSON-serializable primitives.
-            # UUID and datetime objects cannot be encoded by ``json.dumps`` which
-            # is what SQLAlchemy uses for JSONB columns; this helper avoids the
-            # ``TypeError: Object of type UUID is not JSON serializable`` that
-            # crashed ``create_cms_page_version`` on first publish.
-            if value is None:
-                return None
-            if isinstance(value, uuid.UUID):
-                return str(value)
-            if isinstance(value, (dt.date, dt.datetime)):
-                return value.isoformat()
-            return value
+        # Convert SQLAlchemy/runtime types into JSON-serializable primitives.
+        # UUID and datetime objects cannot be encoded by ``json.dumps`` which
+        # is what SQLAlchemy uses for JSONB columns; this helper avoids the
+        # ``TypeError: Object of type UUID is not JSON serializable`` that
+        # crashed ``create_cms_page_version`` on first publish.
+        if value is None:
+            return None
+        if isinstance(value, uuid.UUID):
+            return str(value)
+        if isinstance(value, (dt.date, dt.datetime)):
+            return value.isoformat()
+        return value
 
     return {
         "page": {
@@ -1221,9 +1140,7 @@ def _build_page_snapshot(db: Session, page: models.CmsPage):
     }
 
 
-def create_cms_page_version(
-    db: Session, page: models.CmsPage, user_id: uuid.UUID | None, notes: str | None = None
-):
+def create_cms_page_version(db: Session, page: models.CmsPage, user_id: uuid.UUID | None, notes: str | None = None):
     max_version = (
         db.query(func.max(models.CmsPageVersion.version_number))
         .filter(models.CmsPageVersion.page_id == page.id)
@@ -1252,13 +1169,7 @@ def list_cms_page_versions(
 ):
     query = db.query(models.CmsPageVersion).filter(models.CmsPageVersion.page_id == page_id)
     total = query.count()
-    items = (
-        query
-        .order_by(models.CmsPageVersion.version_number.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    items = query.order_by(models.CmsPageVersion.version_number.desc()).offset(skip).limit(limit).all()
     return items, total
 
 
@@ -1281,19 +1192,11 @@ def list_cms_publish_logs(
     skip: int = 0,
     limit: int = 50,
 ):
-    query = db.query(models.CmsPublishLog).filter(
-        models.CmsPublishLog.site_id == site_id
-    )
+    query = db.query(models.CmsPublishLog).filter(models.CmsPublishLog.site_id == site_id)
     if page_id is not None:
         query = query.filter(models.CmsPublishLog.page_id == page_id)
     total = query.count()
-    items = (
-        query
-        .order_by(models.CmsPublishLog.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    items = query.order_by(models.CmsPublishLog.created_at.desc()).offset(skip).limit(limit).all()
     return items, total
 
 
@@ -1312,9 +1215,7 @@ def restore_cms_page_version(
         page.seo_json = page_data.get("seo_json") or {}
     page.status = "draft"
     page.updated_by_persona_id = resolve_persona_uuid_for_user(db, user_id)
-    db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(
-        synchronize_session=False
-    )
+    db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(synchronize_session=False)
     for idx, section_data in enumerate(sections_data):
         if not isinstance(section_data, dict):
             continue
@@ -1404,6 +1305,7 @@ def get_public_cms_page(db: Session, site_id: uuid.UUID, slug: str):
 # lógica de filtrado + transición para que tests pytest y el worker
 # compartan contrato.
 
+
 def _now_utc() -> dt.datetime:
     """Now in UTC. Toler a naive vs aware: SQLAlchemy almacena tz-aware
     pero para comparaciones consistentes usamos UTC explícito.
@@ -1412,7 +1314,10 @@ def _now_utc() -> dt.datetime:
 
 
 def find_pages_due_for_publish(
-    db: Session, *, now: dt.datetime | None = None, with_for_update: bool = True,
+    db: Session,
+    *,
+    now: dt.datetime | None = None,
+    with_for_update: bool = True,
 ) -> list[models.CmsPage]:
     """Páginas con ``status='scheduled'`` cuyo ``publish_at`` ya pasó.
 
@@ -1439,7 +1344,10 @@ def find_pages_due_for_publish(
 
 
 def find_pages_due_for_archive(
-    db: Session, *, now: dt.datetime | None = None, with_for_update: bool = True,
+    db: Session,
+    *,
+    now: dt.datetime | None = None,
+    with_for_update: bool = True,
 ) -> list[models.CmsPage]:
     """Páginas con ``status='published'`` cuyo ``expires_at`` ya pasó.
 
@@ -1460,7 +1368,10 @@ def find_pages_due_for_archive(
 
 
 def find_posts_due_for_archive(
-    db: Session, *, now: dt.datetime | None = None, with_for_update: bool = True,
+    db: Session,
+    *,
+    now: dt.datetime | None = None,
+    with_for_update: bool = True,
 ) -> list[models.CmsPost]:
     """Posts ``published`` cuyo ``expires_at`` ya pasó."""
     cutoff = now or _now_utc()
@@ -1478,9 +1389,7 @@ def find_posts_due_for_archive(
 # ── SEO score snapshots (daily cron) ──────────────────────────────────────────────────
 
 
-def capture_daily_seo_snapshots(
-    db: Session, *, today: dt.date | None = None, dry_run: bool = False
-) -> dict:
+def capture_daily_seo_snapshots(db: Session, *, today: dt.date | None = None, dry_run: bool = False) -> dict:
     """Capture one SEO score snapshot per active faro site for ``today``.
 
     Idempotente: usa ``UNIQUE(site_id, captured_date)`` para garantizar
@@ -1491,7 +1400,7 @@ def capture_daily_seo_snapshots(
 
     Retorna un dict ``{snapshots_count, skipped_count, sites_captured}``
     con conteos para heartbeat.
-    """        # Gate 6 anti-drift: SEO audit helpers viven ahora en
+    """  # Gate 6 anti-drift: SEO audit helpers viven ahora en
     # ``backend.api._cms_helpers._shared`` (post-merge de ``seo_audit.py``)
     # y se re-exportan vía el __init__ del paquete para que callers
     # consuman la API pública (alineado con cms_v2.py).
@@ -1502,11 +1411,7 @@ def capture_daily_seo_snapshots(
         group_sections_by_page,
     )
 
-    sites = (
-        db.query(models.CmsSite)
-        .filter(models.CmsSite.is_active.is_(True))
-        .all()
-    )
+    sites = db.query(models.CmsSite).filter(models.CmsSite.is_active.is_(True)).all()
     counts = {"snapshots_count": 0, "skipped_count": 0, "sites_captured": 0}
     target_date = today or dt.date.today()
 
@@ -1531,11 +1436,7 @@ def capture_daily_seo_snapshots(
             continue
 
         # Carga eager de páginas + secciones (no N+1).
-        pages = (
-            db.query(models.CmsPage)
-            .filter(models.CmsPage.site_id == site.id)
-            .all()
-        )
+        pages = db.query(models.CmsPage).filter(models.CmsPage.site_id == site.id).all()
         sections = (
             db.query(models.CmsSection)
             .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
@@ -1547,9 +1448,7 @@ def capture_daily_seo_snapshots(
         media_ids = collect_section_media_ids(sections)
         media_alt_lookup = build_media_alt_lookup(db, media_ids)
 
-        _audits, aggregate = audit_pages(
-            pages, sections_by_page, media_alt_lookup
-        )
+        _audits, aggregate = audit_pages(pages, sections_by_page, media_alt_lookup)
 
         if dry_run:
             counts["sites_captured"] += 1
@@ -1610,16 +1509,9 @@ def list_seo_snapshots(
     Retorna una tupla ``(rows, total)`` para que el endpoint pueda
     construir una respuesta paginada.
     """
-    q = db.query(models.CmsSeoSnapshot).filter(
-        models.CmsSeoSnapshot.site_id == site_id
-    )
+    q = db.query(models.CmsSeoSnapshot).filter(models.CmsSeoSnapshot.site_id == site_id)
     total = q.count()
-    rows = (
-        q.order_by(models.CmsSeoSnapshot.captured_date.desc())
-        .offset(offset)
-        .limit(limit)
-        .all()
-    )
+    rows = q.order_by(models.CmsSeoSnapshot.captured_date.desc()).offset(offset).limit(limit).all()
     return rows, total
 
 
@@ -1638,9 +1530,7 @@ def get_seo_trend(
     eficiente). Promedio simple por día across sites.
     """
     cutoff = dt.date.today() - dt.timedelta(days=max(1, days) - 1)
-    query = db.query(models.CmsSeoSnapshot).filter(
-        models.CmsSeoSnapshot.captured_date >= cutoff
-    )
+    query = db.query(models.CmsSeoSnapshot).filter(models.CmsSeoSnapshot.captured_date >= cutoff)
     if site_id is not None:
         query = query.filter(models.CmsSeoSnapshot.site_id == site_id)
     if sede_id is not None:
@@ -1649,17 +1539,13 @@ def get_seo_trend(
     rows = query.order_by(models.CmsSeoSnapshot.captured_date.asc()).all()
     by_date: dict[str, list[int]] = {}
     for row in rows:
-        by_date.setdefault(
-            row.captured_date.isoformat(), []
-        ).append(int(row.average_score or 0))
+        by_date.setdefault(row.captured_date.isoformat(), []).append(int(row.average_score or 0))
 
     series: list[dict] = []
     for key in sorted(by_date.keys()):
         scores = by_date[key]
         avg = round(sum(scores) / len(scores)) if scores else 0
-        sample = next(
-            (r for r in rows if r.captured_date.isoformat() == key), None
-        )
+        sample = next((r for r in rows if r.captured_date.isoformat() == key), None)
         series.append(
             {
                 "captured_date": key,
@@ -1705,9 +1591,7 @@ def _archive_post_with_audit(db: Session, post: models.CmsPost, *, dry_run: bool
     return True
 
 
-def process_due_content(
-    db: Session, *, dry_run: bool = False
-) -> dict[str, int]:
+def process_due_content(db: Session, *, dry_run: bool = False) -> dict[str, int]:
     """Materializa transiciones programadas.
 
     Idempotente bajo el contrato:
@@ -1734,7 +1618,10 @@ def process_due_content(
             pages_published += 1
             continue
         result = transition_cms_page_status(
-            db, page, action="publish", user_id=None,
+            db,
+            page,
+            action="publish",
+            user_id=None,
             notes="Auto-published by scheduler",
         )
         if result is not None:
@@ -1746,7 +1633,10 @@ def process_due_content(
             pages_archived += 1
             continue
         result = transition_cms_page_status(
-            db, page, action="archive", user_id=None,
+            db,
+            page,
+            action="archive",
+            user_id=None,
             notes="Auto-archived by scheduler (expires_at reached)",
         )
         if result is not None:
@@ -1768,7 +1658,6 @@ def process_due_content(
 
 
 # ── Announcements ───────────────────────────────────────
-
 
 
 # ── Pastoral Profile ───────────────────────────────────────────────────────
@@ -1794,9 +1683,7 @@ def update_pastoral_profile(
     antes de comparar.
     """
     actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
-    target_persona_sede = (
-        str(persona.sede_id) if getattr(persona, "sede_id", None) else None
-    )
+    target_persona_sede = str(persona.sede_id) if getattr(persona, "sede_id", None) else None
     _crud_scope_re_check_pastoral_profile(
         db,
         actor_user_id,
@@ -1839,9 +1726,7 @@ def list_pastoral_team(
 # ── CMS Posts & Taxonomías ─────────────────────────────────────────────────
 
 
-def _assert_parent_category_same_site(
-    db: Session, site_id: uuid.UUID, parent_id: uuid.UUID | None
-) -> None:
+def _assert_parent_category_same_site(db: Session, site_id: uuid.UUID, parent_id: uuid.UUID | None) -> None:
     """Defensa Axioma 3 (multi-tenant) para ``CmsCategory.parent_id``.
 
     Si ``parent_id`` no es ``None`` valida que el parent exista Y pertenezca
@@ -1855,11 +1740,7 @@ def _assert_parent_category_same_site(
     """
     if parent_id is None:
         return
-    parent = (
-        db.query(models.CmsCategory)
-        .filter(models.CmsCategory.id == parent_id)
-        .first()
-    )
+    parent = db.query(models.CmsCategory).filter(models.CmsCategory.id == parent_id).first()
     if parent is None or parent.site_id != site_id:
         raise ValueError("parent_id must belong to the same site")
 
@@ -1882,14 +1763,19 @@ def get_cms_category(db: Session, site_id: uuid.UUID, slug: str):
 
 
 def create_cms_category(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsCategoryCreate,
+    db: Session,
+    site_id: uuid.UUID,
+    payload: schemas.CmsCategoryCreate,
     *,
     actor_user_id: str | uuid.UUID | None = None,
 ):
     if actor_user_id is not None:
         actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
         _crud_scope_re_check_cms_site_content(
-            db, actor_user_id, actor_sede=actor_sede, site_id=site_id,
+            db,
+            actor_user_id,
+            actor_sede=actor_sede,
+            site_id=site_id,
         )
     _assert_parent_category_same_site(db, site_id, payload.parent_id)
     row = models.CmsCategory(
@@ -1907,14 +1793,19 @@ def create_cms_category(
 
 
 def update_cms_category(
-    db: Session, row: models.CmsCategory, payload: schemas.CmsCategoryUpdate,
+    db: Session,
+    row: models.CmsCategory,
+    payload: schemas.CmsCategoryUpdate,
     *,
     actor_user_id: str | uuid.UUID | None = None,
 ):
     if actor_user_id is not None:
         actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
         _crud_scope_re_check_cms_site_content(
-            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+            db,
+            actor_user_id,
+            actor_sede=actor_sede,
+            site_id=row.site_id,
         )
     data = payload.model_dump(exclude_unset=True)
     if "slug" in data and data["slug"] is not None:
@@ -1934,14 +1825,18 @@ def update_cms_category(
 
 
 def delete_cms_category(
-    db: Session, row: models.CmsCategory,
+    db: Session,
+    row: models.CmsCategory,
     *,
     actor_user_id: str | uuid.UUID | None = None,
 ) -> bool:
     if actor_user_id is not None:
         actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
         _crud_scope_re_check_cms_site_content(
-            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+            db,
+            actor_user_id,
+            actor_sede=actor_sede,
+            site_id=row.site_id,
         )
     row.is_active = False
     db.commit()
@@ -1949,31 +1844,27 @@ def delete_cms_category(
 
 
 def list_cms_tags(db: Session, site_id: uuid.UUID):
-    return (
-        db.query(models.CmsTag)
-        .filter(models.CmsTag.site_id == site_id)
-        .order_by(models.CmsTag.name.asc())
-        .all()
-    )
+    return db.query(models.CmsTag).filter(models.CmsTag.site_id == site_id).order_by(models.CmsTag.name.asc()).all()
 
 
 def get_cms_tag(db: Session, site_id: uuid.UUID, slug: str):
-    return (
-        db.query(models.CmsTag)
-        .filter(models.CmsTag.site_id == site_id, models.CmsTag.slug == slug)
-        .first()
-    )
+    return db.query(models.CmsTag).filter(models.CmsTag.site_id == site_id, models.CmsTag.slug == slug).first()
 
 
 def create_cms_tag(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsTagCreate,
+    db: Session,
+    site_id: uuid.UUID,
+    payload: schemas.CmsTagCreate,
     *,
     actor_user_id: str | uuid.UUID | None = None,
 ):
     if actor_user_id is not None:
         actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
         _crud_scope_re_check_cms_site_content(
-            db, actor_user_id, actor_sede=actor_sede, site_id=site_id,
+            db,
+            actor_user_id,
+            actor_sede=actor_sede,
+            site_id=site_id,
         )
     row = models.CmsTag(
         site_id=site_id,
@@ -1988,14 +1879,19 @@ def create_cms_tag(
 
 
 def update_cms_tag(
-    db: Session, row: models.CmsTag, payload: schemas.CmsTagUpdate,
+    db: Session,
+    row: models.CmsTag,
+    payload: schemas.CmsTagUpdate,
     *,
     actor_user_id: str | uuid.UUID | None = None,
 ):
     if actor_user_id is not None:
         actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
         _crud_scope_re_check_cms_site_content(
-            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+            db,
+            actor_user_id,
+            actor_sede=actor_sede,
+            site_id=row.site_id,
         )
     data = payload.model_dump(exclude_unset=True)
     if "slug" in data and data["slug"] is not None:
@@ -2010,14 +1906,18 @@ def update_cms_tag(
 
 
 def delete_cms_tag(
-    db: Session, row: models.CmsTag,
+    db: Session,
+    row: models.CmsTag,
     *,
     actor_user_id: str | uuid.UUID | None = None,
 ) -> bool:
     if actor_user_id is not None:
         actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
         _crud_scope_re_check_cms_site_content(
-            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+            db,
+            actor_user_id,
+            actor_sede=actor_sede,
+            site_id=row.site_id,
         )
     row.is_active = False
     db.commit()
@@ -2025,17 +1925,13 @@ def delete_cms_tag(
 
 
 def _set_post_categories(db: Session, post_id: uuid.UUID, category_ids: list[uuid.UUID]):
-    db.query(models.CmsPostCategory).filter(models.CmsPostCategory.post_id == post_id).delete(
-        synchronize_session=False
-    )
+    db.query(models.CmsPostCategory).filter(models.CmsPostCategory.post_id == post_id).delete(synchronize_session=False)
     for cid in category_ids:
         db.add(models.CmsPostCategory(post_id=post_id, category_id=cid))
 
 
 def _set_post_tags(db: Session, post_id: uuid.UUID, tag_ids: list[uuid.UUID]):
-    db.query(models.CmsPostTag).filter(models.CmsPostTag.post_id == post_id).delete(
-        synchronize_session=False
-    )
+    db.query(models.CmsPostTag).filter(models.CmsPostTag.post_id == post_id).delete(synchronize_session=False)
     for tid in tag_ids:
         db.add(models.CmsPostTag(post_id=post_id, tag_id=tid))
 
@@ -2053,38 +1949,23 @@ def list_cms_posts(
     if status:
         query = query.filter(models.CmsPost.status == status)
     if category_id:
-        query = query.join(models.CmsPostCategory).filter(
-            models.CmsPostCategory.category_id == category_id
-        )
+        query = query.join(models.CmsPostCategory).filter(models.CmsPostCategory.category_id == category_id)
     if tag_id:
-        query = query.join(models.CmsPostTag).filter(
-            models.CmsPostTag.tag_id == tag_id
-        )
+        query = query.join(models.CmsPostTag).filter(models.CmsPostTag.tag_id == tag_id)
     total = query.count()
-    items = (
-        query.order_by(models.CmsPost.updated_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    items = query.order_by(models.CmsPost.updated_at.desc()).offset(skip).limit(limit).all()
     return items, total
 
 
 def get_cms_post(db: Session, site_id: uuid.UUID, slug: str):
-    return (
-        db.query(models.CmsPost)
-        .filter(models.CmsPost.site_id == site_id, models.CmsPost.slug == slug)
-        .first()
-    )
+    return db.query(models.CmsPost).filter(models.CmsPost.site_id == site_id, models.CmsPost.slug == slug).first()
 
 
 def get_cms_post_by_id(db: Session, post_id: uuid.UUID):
     return db.query(models.CmsPost).filter(models.CmsPost.id == post_id).first()
 
 
-def _assert_post_published_before_expires(
-    published_at: dt.datetime | None, expires_at: dt.datetime | None
-) -> None:
+def _assert_post_published_before_expires(published_at: dt.datetime | None, expires_at: dt.datetime | None) -> None:
     """F-09: valida coherencia temporal de ``CmsPost``.
 
     Un post con auto-archivo (``expires_at``) debe publicarse antes de
@@ -2118,7 +1999,10 @@ def create_cms_post(
     if actor_user_id is not None:
         actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
         _crud_scope_re_check_cms_site_content(
-            db, actor_user_id, actor_sede=actor_sede, site_id=site_id,
+            db,
+            actor_user_id,
+            actor_sede=actor_sede,
+            site_id=site_id,
         )
     _assert_post_published_before_expires(payload.published_at, payload.expires_at)
     row = models.CmsPost(
@@ -2159,7 +2043,10 @@ def update_cms_post(
     if actor_user_id is not None:
         actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
         _crud_scope_re_check_cms_site_content(
-            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+            db,
+            actor_user_id,
+            actor_sede=actor_sede,
+            site_id=row.site_id,
         )
     data = payload.model_dump(exclude_unset=True)
     if "slug" in data and data["slug"] is not None:
@@ -2201,14 +2088,18 @@ def update_cms_post(
 
 
 def delete_cms_post(
-    db: Session, row: models.CmsPost,
+    db: Session,
+    row: models.CmsPost,
     *,
     actor_user_id: str | uuid.UUID | None = None,
 ) -> bool:
     if actor_user_id is not None:
         actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
         _crud_scope_re_check_cms_site_content(
-            db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id,
+            db,
+            actor_user_id,
+            actor_sede=actor_sede,
+            site_id=row.site_id,
         )
     row.status = "archived"
     db.commit()
@@ -2225,12 +2116,7 @@ def get_post_categories(db: Session, post_id: uuid.UUID):
 
 
 def get_post_tags(db: Session, post_id: uuid.UUID):
-    return (
-        db.query(models.CmsTag)
-        .join(models.CmsPostTag)
-        .filter(models.CmsPostTag.post_id == post_id)
-        .all()
-    )
+    return db.query(models.CmsTag).join(models.CmsPostTag).filter(models.CmsPostTag.post_id == post_id).all()
 
 
 def get_posts_categories_batch(db: Session, post_ids: list[uuid.UUID]) -> dict[str, list]:
@@ -2283,29 +2169,15 @@ def get_public_cms_posts(
     category_slug: str | None = None,
     tag_slug: str | None = None,
 ):
-    query = (
-        db.query(models.CmsPost)
-        .filter(models.CmsPost.site_id == site_id, models.CmsPost.status == "published")
-    )
+    query = db.query(models.CmsPost).filter(models.CmsPost.site_id == site_id, models.CmsPost.status == "published")
     if category_slug:
         query = (
-            query.join(models.CmsPostCategory)
-            .join(models.CmsCategory)
-            .filter(models.CmsCategory.slug == category_slug)
+            query.join(models.CmsPostCategory).join(models.CmsCategory).filter(models.CmsCategory.slug == category_slug)
         )
     if tag_slug:
-        query = (
-            query.join(models.CmsPostTag)
-            .join(models.CmsTag)
-            .filter(models.CmsTag.slug == tag_slug)
-        )
+        query = query.join(models.CmsPostTag).join(models.CmsTag).filter(models.CmsTag.slug == tag_slug)
     total = query.count()
-    items = (
-        query.order_by(models.CmsPost.published_at.desc().nullslast())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    items = query.order_by(models.CmsPost.published_at.desc().nullslast()).offset(skip).limit(limit).all()
     return items, total
 
 
@@ -2369,12 +2241,7 @@ def list_cms_posts_by_category(
     if not include_archived:
         query = query.filter(models.CmsPost.status != "archived")
     total = query.count()
-    items = (
-        query.order_by(models.CmsPost.updated_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    items = query.order_by(models.CmsPost.updated_at.desc()).offset(skip).limit(limit).all()
     return items, total
 
 
@@ -2450,9 +2317,7 @@ def cleanup_old_publish_logs(
         Número de logs purgados (o que se purgarían en dry_run).
     """
     cutoff = (now or _now_utc()) - dt.timedelta(days=max(1, retention_days))
-    stale = db.query(models.CmsPublishLog).filter(
-        models.CmsPublishLog.created_at < cutoff
-    )
+    stale = db.query(models.CmsPublishLog).filter(models.CmsPublishLog.created_at < cutoff)
     if dry_run:
         return stale.count()
     deleted = stale.delete(synchronize_session=False)
@@ -2630,28 +2495,18 @@ def _apply_cleanup_orphan_cms_media(
 # ── Native Popups (R3-BE) ───────────────────────────────────────────────────
 
 
-def list_cms_popups(
-    db: Session, site_id: uuid.UUID, *, only_active: bool = False
-) -> list[models.CmsPopup]:
+def list_cms_popups(db: Session, site_id: uuid.UUID, *, only_active: bool = False) -> list[models.CmsPopup]:
     query = db.query(models.CmsPopup).filter(models.CmsPopup.site_id == site_id)
     if only_active:
         query = query.filter(models.CmsPopup.is_active.is_(True))
     return query.order_by(models.CmsPopup.created_at.desc()).all()
 
 
-def get_cms_popup(
-    db: Session, site_id: uuid.UUID, popup_id: uuid.UUID
-) -> models.CmsPopup | None:
-    return (
-        db.query(models.CmsPopup)
-        .filter(models.CmsPopup.site_id == site_id, models.CmsPopup.id == popup_id)
-        .first()
-    )
+def get_cms_popup(db: Session, site_id: uuid.UUID, popup_id: uuid.UUID) -> models.CmsPopup | None:
+    return db.query(models.CmsPopup).filter(models.CmsPopup.site_id == site_id, models.CmsPopup.id == popup_id).first()
 
 
-def create_cms_popup(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsPopupCreate
-) -> models.CmsPopup:
+def create_cms_popup(db: Session, site_id: uuid.UUID, payload: schemas.CmsPopupCreate) -> models.CmsPopup:
     row = models.CmsPopup(
         site_id=site_id,
         name=payload.name,
@@ -2667,9 +2522,7 @@ def create_cms_popup(
     return row
 
 
-def update_cms_popup(
-    db: Session, row: models.CmsPopup, payload: schemas.CmsPopupUpdate
-) -> models.CmsPopup:
+def update_cms_popup(db: Session, row: models.CmsPopup, payload: schemas.CmsPopupUpdate) -> models.CmsPopup:
     data = payload.model_dump(exclude_unset=True)
     for field, val in data.items():
         setattr(row, field, val)
@@ -2687,9 +2540,7 @@ def delete_cms_popup(db: Session, row: models.CmsPopup) -> bool:
 # ── Contact Forms (R1-BE) ───────────────────────────────────────────────────
 
 
-def list_cms_forms(
-    db: Session, site_id: uuid.UUID, *, only_active: bool = False
-) -> list[models.CmsForm]:
+def list_cms_forms(db: Session, site_id: uuid.UUID, *, only_active: bool = False) -> list[models.CmsForm]:
     query = db.query(models.CmsForm).filter(models.CmsForm.site_id == site_id)
     if only_active:
         query = query.filter(models.CmsForm.is_active.is_(True))
@@ -2704,14 +2555,8 @@ def list_cms_forms(
     return forms
 
 
-def get_cms_form(
-    db: Session, site_id: uuid.UUID, form_id: uuid.UUID
-) -> models.CmsForm | None:
-    form = (
-        db.query(models.CmsForm)
-        .filter(models.CmsForm.site_id == site_id, models.CmsForm.id == form_id)
-        .first()
-    )
+def get_cms_form(db: Session, site_id: uuid.UUID, form_id: uuid.UUID) -> models.CmsForm | None:
+    form = db.query(models.CmsForm).filter(models.CmsForm.site_id == site_id, models.CmsForm.id == form_id).first()
     if form:
         count = (
             db.query(func.count(models.CmsFormSubmission.id))
@@ -2726,9 +2571,7 @@ def get_cms_form_by_id(db: Session, form_id: uuid.UUID) -> models.CmsForm | None
     return db.query(models.CmsForm).filter(models.CmsForm.id == form_id).first()
 
 
-def create_cms_form(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsFormCreate
-) -> models.CmsForm:
+def create_cms_form(db: Session, site_id: uuid.UUID, payload: schemas.CmsFormCreate) -> models.CmsForm:
     row = models.CmsForm(
         site_id=site_id,
         name=payload.name,
@@ -2746,18 +2589,14 @@ def create_cms_form(
     return row
 
 
-def update_cms_form(
-    db: Session, row: models.CmsForm, payload: schemas.CmsFormUpdate
-) -> models.CmsForm:
+def update_cms_form(db: Session, row: models.CmsForm, payload: schemas.CmsFormUpdate) -> models.CmsForm:
     data = payload.model_dump(exclude_unset=True)
     for field, val in data.items():
         setattr(row, field, val)
     db.commit()
     db.refresh(row)
     count = (
-        db.query(func.count(models.CmsFormSubmission.id))
-        .filter(models.CmsFormSubmission.form_id == row.id)
-        .scalar()
+        db.query(func.count(models.CmsFormSubmission.id)).filter(models.CmsFormSubmission.form_id == row.id).scalar()
     )
     setattr(row, "submission_count", count or 0)
     return row
@@ -2799,9 +2638,8 @@ def list_cms_form_submissions(
 
 # ── Newsletters & Subscribers (R2) ──────────────────────────────────────────
 
-def list_cms_newsletters(
-    db: Session, site_id: uuid.UUID
-) -> list[models.CmsNewsletter]:
+
+def list_cms_newsletters(db: Session, site_id: uuid.UUID) -> list[models.CmsNewsletter]:
     return (
         db.query(models.CmsNewsletter)
         .filter(models.CmsNewsletter.site_id == site_id)
@@ -2810,9 +2648,7 @@ def list_cms_newsletters(
     )
 
 
-def get_cms_newsletter(
-    db: Session, site_id: uuid.UUID, newsletter_id: uuid.UUID
-) -> models.CmsNewsletter | None:
+def get_cms_newsletter(db: Session, site_id: uuid.UUID, newsletter_id: uuid.UUID) -> models.CmsNewsletter | None:
     return (
         db.query(models.CmsNewsletter)
         .filter(models.CmsNewsletter.site_id == site_id, models.CmsNewsletter.id == newsletter_id)
@@ -2909,17 +2745,12 @@ def list_cms_subscribers(
         )
     total = query.count()
     items = (
-        query.order_by(models.CmsSubscriber.subscribed_at.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
+        query.order_by(models.CmsSubscriber.subscribed_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
     )
     return items, total
 
 
-def get_cms_subscriber(
-    db: Session, site_id: uuid.UUID, subscriber_id: uuid.UUID
-) -> models.CmsSubscriber | None:
+def get_cms_subscriber(db: Session, site_id: uuid.UUID, subscriber_id: uuid.UUID) -> models.CmsSubscriber | None:
     return (
         db.query(models.CmsSubscriber)
         .filter(models.CmsSubscriber.site_id == site_id, models.CmsSubscriber.id == subscriber_id)
@@ -2959,9 +2790,7 @@ def create_cms_subscriber(
     return row
 
 
-def import_cms_subscribers(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsSubscriberImportPayload
-) -> dict:
+def import_cms_subscribers(db: Session, site_id: uuid.UUID, payload: schemas.CmsSubscriberImportPayload) -> dict:
     imported_count = 0
     items_to_process: list[tuple[str, str | None]] = []
 
@@ -3036,9 +2865,7 @@ def delete_cms_subscriber(db: Session, row: models.CmsSubscriber) -> bool:
     return True
 
 
-def public_subscribe(
-    db: Session, site_id: uuid.UUID, email: str, name: str | None = None
-) -> models.CmsSubscriber:
+def public_subscribe(db: Session, site_id: uuid.UUID, email: str, name: str | None = None) -> models.CmsSubscriber:
     email_clean = email.strip().lower()
     existing = (
         db.query(models.CmsSubscriber)
@@ -3068,9 +2895,7 @@ def public_subscribe(
     return row
 
 
-def public_unsubscribe(
-    db: Session, email: str, site_id: uuid.UUID | None = None
-) -> bool:
+def public_unsubscribe(db: Session, email: str, site_id: uuid.UUID | None = None) -> bool:
     email_clean = email.strip().lower()
     query = db.query(models.CmsSubscriber).filter(models.CmsSubscriber.email == email_clean)
     if site_id:
@@ -3103,9 +2928,7 @@ def list_cms_ab_tests(
     return query.order_by(models.CmsAbTest.created_at.desc()).all()
 
 
-def get_cms_ab_test(
-    db: Session, site_id: uuid.UUID, test_id: uuid.UUID
-) -> models.CmsAbTest | None:
+def get_cms_ab_test(db: Session, site_id: uuid.UUID, test_id: uuid.UUID) -> models.CmsAbTest | None:
     return (
         db.query(models.CmsAbTest)
         .filter(
@@ -3128,9 +2951,7 @@ def get_cms_ab_test_by_id(db: Session, test_id: uuid.UUID) -> models.CmsAbTest |
     )
 
 
-def create_cms_ab_test(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsAbTestCreate
-) -> models.CmsAbTest:
+def create_cms_ab_test(db: Session, site_id: uuid.UUID, payload: schemas.CmsAbTestCreate) -> models.CmsAbTest:
     row = models.CmsAbTest(
         site_id=site_id,
         page_id=payload.page_id,
@@ -3147,9 +2968,7 @@ def create_cms_ab_test(
     return row
 
 
-def update_cms_ab_test(
-    db: Session, row: models.CmsAbTest, payload: schemas.CmsAbTestUpdate
-) -> models.CmsAbTest:
+def update_cms_ab_test(db: Session, row: models.CmsAbTest, payload: schemas.CmsAbTestUpdate) -> models.CmsAbTest:
     data = payload.model_dump(exclude_unset=True)
     if "status" in data and data["status"] == "completed" and row.status != "completed":
         row.ended_at = _utcnow()
@@ -3182,14 +3001,8 @@ def record_cms_ab_test_event(
     return event
 
 
-def get_cms_ab_test_results(
-    db: Session, test_id: uuid.UUID
-) -> schemas.CmsAbTestResults:
-    events = (
-        db.query(models.CmsAbTestEvent)
-        .filter(models.CmsAbTestEvent.test_id == test_id)
-        .all()
-    )
+def get_cms_ab_test_results(db: Session, test_id: uuid.UUID) -> schemas.CmsAbTestResults:
+    events = db.query(models.CmsAbTestEvent).filter(models.CmsAbTestEvent.test_id == test_id).all()
     views_a = sum(1 for e in events if e.variant == "a" and e.event_type == "view")
     views_b = sum(1 for e in events if e.variant == "b" and e.event_type == "view")
     clicks_a = sum(1 for e in events if e.variant == "a" and e.event_type == "click")
@@ -3266,29 +3079,17 @@ def apply_cms_ab_test_winner(
             else:
                 winner_section_id = test.section_a_id
 
-    winning_section = (
-        db.query(models.CmsSection)
-        .filter(models.CmsSection.id == winner_section_id)
-        .first()
-    )
+    winning_section = db.query(models.CmsSection).filter(models.CmsSection.id == winner_section_id).first()
     if winning_section:
         winning_section.is_visible = True
         # If variant B won and is different from section A, make section A hidden
         if winner_section_id == test.section_b_id and test.section_a_id != test.section_b_id:
-            sec_a = (
-                db.query(models.CmsSection)
-                .filter(models.CmsSection.id == test.section_a_id)
-                .first()
-            )
+            sec_a = db.query(models.CmsSection).filter(models.CmsSection.id == test.section_a_id).first()
             if sec_a:
                 winning_section.sort_order = sec_a.sort_order
                 sec_a.is_visible = False
         elif winner_section_id == test.section_a_id and test.section_a_id != test.section_b_id:
-            sec_b = (
-                db.query(models.CmsSection)
-                .filter(models.CmsSection.id == test.section_b_id)
-                .first()
-            )
+            sec_b = db.query(models.CmsSection).filter(models.CmsSection.id == test.section_b_id).first()
             if sec_b:
                 sec_b.is_visible = False
 
@@ -3299,7 +3100,3 @@ def apply_cms_ab_test_winner(
     db.commit()
     db.refresh(test)
     return test
-
-
-
-

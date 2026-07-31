@@ -50,9 +50,7 @@ def file_lock(file_path: str | Path) -> None:
     lock_path = target.with_suffix(target.suffix + ".lock")
 
     if not _acquire_file_lock(lock_path):
-        raise TimeoutError(
-            f"Could not acquire lock on {target} within {_LOCK_TIMEOUT}s"
-        )
+        raise TimeoutError(f"Could not acquire lock on {target} within {_LOCK_TIMEOUT}s")
 
     try:
         yield

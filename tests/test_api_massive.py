@@ -6,6 +6,7 @@ Strategy: For each API module, test every endpoint's:
   3. Validation error (422) with bad body
   4. 404 with invalid ID where applicable
 """
+
 import uuid
 
 import pytest
@@ -29,6 +30,7 @@ def client_auth(client, db_session, admin_data):
 # ADMIN ENDPOINTS (/api/admin/*)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestAdminRoles:
     def test_list_roles(self, client_auth):
         client, headers, _ = client_auth
@@ -47,14 +49,18 @@ class TestAdminRoles:
     def test_update_role_permissions(self, client_auth, db_session):
         client, headers, _ = client_auth
         from backend.models_auth import RolPlataforma
+
         role = db_session.query(RolPlataforma).first()
         if role:
-            resp = client.patch(f"/api/admin/roles/{role.id}", json={"permissions": {"crm:read": "allow"}}, headers=headers)
+            resp = client.patch(
+                f"/api/admin/roles/{role.id}", json={"permissions": {"crm:read": "allow"}}, headers=headers
+            )
             assert resp.status_code in (200, 404)
 
     def test_delete_role(self, client_auth, db_session):
         client, headers, _ = client_auth
         from backend.models_auth import RolPlataforma
+
         role = RolPlataforma(nombre=f"del_{uuid.uuid4().hex[:6]}", permisos={})
         db_session.add(role)
         db_session.flush()
@@ -70,11 +76,15 @@ class TestAdminUsers:
 
     def test_create_user(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/users", json={
-            "email": f"new_{uuid.uuid4().hex[:6]}@test.com",
-            "password": "testpass123",
-            "username": f"user_{uuid.uuid4().hex[:6]}",
-        }, headers=headers)
+        resp = client.post(
+            "/api/admin/users",
+            json={
+                "email": f"new_{uuid.uuid4().hex[:6]}@test.com",
+                "password": "testpass123",
+                "username": f"user_{uuid.uuid4().hex[:6]}",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_get_user(self, client_auth, db_session):
@@ -164,6 +174,7 @@ class TestAdminOther:
 # AUTH_V3 ENDPOINTS (/api/v3/auth/*)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestAuthV3:
     def test_login(self, client, admin_data):
         # admin_data fixture seeds an admin so the login can succeed (200).
@@ -197,6 +208,7 @@ class TestAuthV3:
 # CRM ENDPOINTS (/api/crm/*)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCRM:
     def test_list_casos(self, client_auth):
         client, headers, _ = client_auth
@@ -218,6 +230,7 @@ class TestCRM:
 # ACADEMY ENDPOINTS (/api/academy/*)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestAcademy:
     def test_list_courses(self, client_auth):
         client, headers, _ = client_auth
@@ -238,6 +251,7 @@ class TestAcademy:
 # ═══════════════════════════════════════════════════════════════════════════════
 # AGENDA ENDPOINTS (/api/agenda/*)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAgenda:
     def test_list_eventos(self, client_auth):
@@ -264,6 +278,7 @@ class TestAgenda:
 # ═══════════════════════════════════════════════════════════════════════════════
 # PROJECTS ENDPOINTS (/api/projects/*)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestProjects:
     def test_list_projects(self, client_auth):
@@ -295,6 +310,7 @@ class TestProjects:
 # ═══════════════════════════════════════════════════════════════════════════════
 # CMS ENDPOINTS (/api/cms/*, /api/cms/v2/*)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCMS:
     def test_list_pages(self, client_auth):
@@ -389,6 +405,7 @@ class TestCMSV2:
 # EVANGELISM ENDPOINTS (/api/evangelism/*)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEvangelism:
     def test_list_estrategias(self, client_auth):
         client, headers, _ = client_auth
@@ -429,6 +446,7 @@ class TestEvangelism:
 # ═══════════════════════════════════════════════════════════════════════════════
 # OTHER ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAgents:
     def test_list_tasks(self, client_auth):

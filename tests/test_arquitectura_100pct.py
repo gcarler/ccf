@@ -57,7 +57,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # detecte self-violation. La deteccion real SI pasa tras aplicar las
 # exclusiones canonicales (ver is_live_code y los glob -g).
 
-_BAN_FK = "ForeignKey(" + '"us' + 'ers.' + 'id' + '")'
+_BAN_FK = "ForeignKey(" + '"us' + "ers." + "id" + '")'
 _BAN_PREFIX = "CCF-" + "MBR"
 _BAN_V2 = "/api/v" + "2/academy"
 _BAN_TMP_PREFIXES = ("_tmp_", "_scratch_", "_validate_old_")
@@ -73,18 +73,20 @@ _THIS_AUDIT_FILE = str(Path(__file__).resolve().as_posix())
 _STRUCTURAL_CONTRACTS = "tests/test_structural_contracts.py"
 
 
-_EXCLUDED_PATHS = frozenset({
-    _THIS_AUDIT_FILE,  # Self-reference (no wildcard).
-    str((ROOT / "tests" / "structural_contracts.py").as_posix()),  # Old name.
-    str((ROOT / _STRUCTURAL_CONTRACTS).as_posix()),
-    "alembic/versions",  # Old migrations — REGLAS §9.1.
-    "docs/",  # Definicion de la regla, no su uso.
-    "REGLAS.md",
-    ".venv/",
-    "venv/",
-    "node_modules/",
-    "__pycache__/",
-})
+_EXCLUDED_PATHS = frozenset(
+    {
+        _THIS_AUDIT_FILE,  # Self-reference (no wildcard).
+        str((ROOT / "tests" / "structural_contracts.py").as_posix()),  # Old name.
+        str((ROOT / _STRUCTURAL_CONTRACTS).as_posix()),
+        "alembic/versions",  # Old migrations — REGLAS §9.1.
+        "docs/",  # Definicion de la regla, no su uso.
+        "REGLAS.md",
+        ".venv/",
+        "venv/",
+        "node_modules/",
+        "__pycache__/",
+    }
+)
 
 
 def is_live_code(path: Path) -> bool:
@@ -158,9 +160,7 @@ def test_no_old_users_fk_in_live_code():
                 out += str(path) + "\n"
 
     out = out.strip()
-    assert out == "", (
-        f"REGLAS §1 violada: ForeignKey(\"users.id\") en codigo vivo:\n{out}"
-    )
+    assert out == "", f'REGLAS §1 violada: ForeignKey("users.id") en codigo vivo:\n{out}'
 
 
 # ── Gate 2: CCF-MBR solo en migraciones antiguas (REGLAS §9.1) ──────────────
@@ -199,9 +199,7 @@ def test_no_old_ccf_mbr_in_live_code():
                 out += str(path) + "\n"
 
     out = out.strip()
-    assert out == "", (
-        f"REGLAS §9.1 violada: CCF-MBR en codigo vivo:\n{out}"
-    )
+    assert out == "", f"REGLAS §9.1 violada: CCF-MBR en codigo vivo:\n{out}"
 
 
 # ── Gate 3: Sin rutas /api/v2/academy (REGLAS §7) ──────────────────────────
@@ -235,9 +233,7 @@ def test_no_old_api_v2_academy():
                 out += str(path) + "\n"
 
     out = out.strip()
-    assert out == "", (
-        f"REGLAS §7 violada: /api/v2/academy en codigo vivo:\n{out}"
-    )
+    assert out == "", f"REGLAS §7 violada: /api/v2/academy en codigo vivo:\n{out}"
 
 
 # ── Gate 4: Sin scripts _tmp_/_scratch_/_validate_old_ (REGLAS §9.2) ───
@@ -261,10 +257,7 @@ def test_no_old_operational_scripts():
             continue
         if any(prefix in path.name for prefix in _BAN_TMP_PREFIXES):
             offenders.append(str(path))
-    assert not offenders, (
-        "REGLAS §9.2 violada: scripts antiguos operacionales:\n"
-        + "\n".join(offenders)
-    )
+    assert not offenders, "REGLAS §9.2 violada: scripts antiguos operacionales:\n" + "\n".join(offenders)
 
 
 # ── Gate 5: Cobertura multi-tenant >= 194 refs (cierre v3.0.1) ─────────────
@@ -284,10 +277,7 @@ def test_multitenant_coverage_refs_baseline():
     rg = shutil.which("rg")
     baseline = 194  # Cierre v3.0.1 (2026-07-01).
     if rg:
-        out = _run(
-            "rg -c 'get_user_sede_id|_scope_|_get_scoped_' backend "
-            "-g '!**/__init__.py'"
-        )
+        out = _run("rg -c 'get_user_sede_id|_scope_|_get_scoped_' backend -g '!**/__init__.py'")
     else:
         # Fallback: contamos lineas unicas con match, alineado con rg -c.
         out_lines: list[str] = []
@@ -303,11 +293,7 @@ def test_multitenant_coverage_refs_baseline():
             line_count = sum(
                 1
                 for line in content.splitlines()
-                if (
-                    "get_user_sede_id" in line
-                    or "_scope_" in line
-                    or "_get_scoped_" in line
-                )
+                if ("get_user_sede_id" in line or "_scope_" in line or "_get_scoped_" in line)
             )
             if line_count > 0:
                 total += line_count
@@ -356,19 +342,11 @@ def test_cms_sede_id_migration_present_and_reversible():
     """La migration que cierra Axioma 3 en CMS (20260701_0001) debe estar
     presente y tener ``downgrade()`` definido (regla REGLAS §9).
     """
-    mig_path = (
-        ROOT / "alembic" / "versions" / "20260701_0001_cms_content_sede_id.py"
-    )
-    assert mig_path.exists(), (
-        f"Migration de cierre v3.0.1 no encontrada: {mig_path}"
-    )
+    mig_path = ROOT / "alembic" / "versions" / "20260701_0001_cms_content_sede_id.py"
+    assert mig_path.exists(), f"Migration de cierre v3.0.1 no encontrada: {mig_path}"
     src = mig_path.read_text()
-    assert "def upgrade()" in src, (
-        "Migration 20260701_0001 carece de upgrade()"
-    )
-    assert "def downgrade()" in src, (
-        "Migration 20260701_0001 carece de downgrade() — REGLAS §9 violada"
-    )
+    assert "def upgrade()" in src, "Migration 20260701_0001 carece de upgrade()"
+    assert "def downgrade()" in src, "Migration 20260701_0001 carece de downgrade() — REGLAS §9 violada"
 
 
 # ── Gate 8: Triple de coherencia documental (REGLAS ↔ ESTADO ↔ CIERRE) ────
@@ -392,9 +370,7 @@ def test_closure_v301_docs_synced():
     for needle in expected_anchors:
         assert needle in reglas, f"REGLAS.md no contiene anchor {needle}"
 
-    assert "Axioma 3" in estado, (
-        "ESTADO_ARQUITECTURA_CCF.md no menciona Axioma 3"
-    )
+    assert "Axioma 3" in estado, "ESTADO_ARQUITECTURA_CCF.md no menciona Axioma 3"
     assert "v3.0.1" in cierre and "2026-07-01" in cierre, (
         "CIERRE_ARQUITECTURA_CCF.md no declara el cierre v3.0.1 fechado"
     )
@@ -435,18 +411,13 @@ def test_auth_v3_uses_personas_uuid():
         from backend.models_auth import AuthUser  # type: ignore
         from backend.models_identity import Persona  # type: ignore
     except ImportError as exc:
-        pytest.skip(
-            f"Gate 9 (Auth v3) requiere modelos consolidados: {exc}. "
-            f"Pre-cierre: skip explicito."
-        )
+        pytest.skip(f"Gate 9 (Auth v3) requiere modelos consolidados: {exc}. Pre-cierre: skip explicito.")
 
     assert _column_is_uuid(Persona.__table__), (
-        "REGLAS §1 violada: personas.id no es Column(UUID) — "
-        f"tipo={type(Persona.__table__.c.id.type).__name__}"
+        f"REGLAS §1 violada: personas.id no es Column(UUID) — tipo={type(Persona.__table__.c.id.type).__name__}"
     )
     assert _column_is_uuid(AuthUser.__table__), (
-        "REGLAS §2 violada: auth_users.id no es UUID — "
-        "Kernel compartido con personas.id esta roto"
+        "REGLAS §2 violada: auth_users.id no es UUID — Kernel compartido con personas.id esta roto"
     )
 
 
@@ -478,8 +449,7 @@ def test_runtime_has_no_old_write_bypasses():
     for function, parameter in guarded:
         value = inspect.signature(function).parameters[parameter]
         assert value.default is inspect.Parameter.empty, (
-            f"{function.__module__}.{function.__name__} permite omitir "
-            f"{parameter}"
+            f"{function.__module__}.{function.__name__} permite omitir {parameter}"
         )
 
     required_columns = (
@@ -493,12 +463,7 @@ def test_runtime_has_no_old_write_bypasses():
     )
     assert all(not column.nullable for column in required_columns)
 
-    migration = (
-        ROOT
-        / "alembic"
-        / "versions"
-        / "20260701_0002_eradicate_runtime_legacy.py"
-    )
+    migration = ROOT / "alembic" / "versions" / "20260701_0002_eradicate_runtime_legacy.py"
     assert migration.exists(), "Falta migration de erradicacion runtime"
 
     academy_source = (ROOT / "backend" / "crud" / "academy.py").read_text()
@@ -508,26 +473,22 @@ def test_runtime_has_no_old_write_bypasses():
     crm_crud_source = (ROOT / "backend" / "crud" / "crm.py").read_text()
     kernel_source = (ROOT / "backend" / "crud" / "kernel.py").read_text()
     evangelism_schema = (ROOT / "backend" / "schemas" / "evangelism.py").read_text()
-    public_tracker = (
-        ROOT / "backend" / "services" / "public_contact_tracking.py"
-    ).read_text()
+    public_tracker = (ROOT / "backend" / "services" / "public_contact_tracking.py").read_text()
     config_source = (ROOT / "backend" / "core" / "config.py").read_text()
-    counseling_ui = (
-        ROOT / "frontend" / "src" / "app" / "plataforma" / "crm" / "counseling" / "page.tsx"
-    ).read_text()
+    counseling_ui = (ROOT / "frontend" / "src" / "app" / "plataforma" / "crm" / "counseling" / "page.tsx").read_text()
     assert "Test compatibility" not in academy_source
     assert "Test compatibility" not in projects_source
     assert "assignee_user_id" not in crm_api_source
     assert "Integer user_id" not in crm_api_source
-    assert "hasattr(payload, \"model_dump\")" not in crm_crud_source
-    assert "hasattr(payload, \"model_dump\")" not in projects_source
+    assert 'hasattr(payload, "model_dump")' not in crm_crud_source
+    assert 'hasattr(payload, "model_dump")' not in projects_source
     assert "_persona_id_for_user" not in kernel_source
     assert "is_user_active" not in kernel_source
     assert "_coerce_labels" not in project_schema_source
     assert "PRIORITY_MAP" not in project_schema_source
     assert "def completado(" not in evangelism_schema
     assert 'stage="new"' not in public_tracker
-    assert 'source=record.source' not in public_tracker
+    assert "source=record.source" not in public_tracker
     assert "user?.id || 1" not in counseling_ui
     # REGLAS §10 — AliasChoices path-scoped carve-out (Gate 10):
     # ``AliasChoices`` es feature legítima de pydantic v2 SOLO para

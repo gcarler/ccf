@@ -1,17 +1,18 @@
 """Cover remaining uncovered lines in evangelism_analytics.py — pure functions + rich data."""
+
 from __future__ import annotations
 
 import uuid
 
 import pytest
 
-from backend.api import evangelism_analytics as analytics
 from backend import models
+from backend.api import evangelism_analytics as analytics
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
 
-
 # ── PURE FUNCTION TESTS ─────────────────────────────────────────────────────────
+
 
 class TestSemaforoICS:
     def test_optimo(self):
@@ -61,6 +62,7 @@ class TestClassifyGroup:
 
 # ── RICH DATA INTEGRATION TEST ──────────────────────────────────────────────────
 
+
 def _ok(status):
     return status in (200, 201, 204)
 
@@ -77,14 +79,17 @@ class TestRichData:
     def test_all_analytics_with_rich_data(self, full, db_session):
         """Create multi-persona data with varied attendance for deep analytics coverage."""
         c, h, s = full["c"], full["h"], full["s"]
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta, timezone
+
         now = datetime.now(timezone.utc)
 
         # Create personas (some active, some absent)
         personas = []
         for i in range(5):
             p = models.Persona(
-                id=uuid.uuid4(), first_name=f"P{i}", last_name="Test",
+                id=uuid.uuid4(),
+                first_name=f"P{i}",
+                last_name="Test",
                 sede_id=s.id,
                 church_role_effective="miembro" if i < 3 else "visitante",
             )
@@ -93,14 +98,16 @@ class TestRichData:
         db_session.flush()
 
         # Create strategy
-        strat = c.post("/api/evangelism/strategies",
-            json={"name": f"RA-{uuid.uuid4().hex[:6]}"}, headers=h).json()
+        strat = c.post("/api/evangelism/strategies", json={"name": f"RA-{uuid.uuid4().hex[:6]}"}, headers=h).json()
         sid = uuid.UUID(strat["id"])
 
         # Create grupo
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre="Rich Analytics", sede_id=s.id,
-            lider_persona_id=personas[0].id, estrategia_id=sid,
+            id=uuid.uuid4(),
+            nombre="Rich Analytics",
+            sede_id=s.id,
+            lider_persona_id=personas[0].id,
+            estrategia_id=sid,
         )
         db_session.add(g)
         db_session.flush()
@@ -108,7 +115,8 @@ class TestRichData:
         # Create multiple sessions with varied attendance
         for week in range(4):
             ses = models.SesionGrupo(
-                id=uuid.uuid4(), grupo_id=g.id,
+                id=uuid.uuid4(),
+                grupo_id=g.id,
                 fecha_sesion=now - timedelta(weeks=week),
                 estado="REALIZADA",
             )
@@ -119,15 +127,21 @@ class TestRichData:
             for i, p in enumerate(personas):
                 estado = "ASISTIO" if i < 3 else "FALTO"
                 att = models.Asistencia(
-                    id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado=estado,
+                    id=uuid.uuid4(),
+                    sesion_id=ses.id,
+                    persona_id=p.id,
+                    estado=estado,
                 )
                 db_session.add(att)
 
         # Add ParticipanteGrupo for participant counting
         for p in personas[:3]:  # Only 3 active participants
             pg = models.ParticipanteGrupo(
-                id=uuid.uuid4(), grupo_id=g.id, persona_id=p.id,
-                rol_base="miembro", activo=True,
+                id=uuid.uuid4(),
+                grupo_id=g.id,
+                persona_id=p.id,
+                rol_base="miembro",
+                activo=True,
             )
             db_session.add(pg)
 

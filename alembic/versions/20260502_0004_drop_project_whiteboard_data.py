@@ -18,9 +18,7 @@ depends_on = None
 
 
 def _has_column(inspector: sa.Inspector, table_name: str, column_name: str) -> bool:
-    return any(
-        column["name"] == column_name for column in inspector.get_columns(table_name)
-    )
+    return any(column["name"] == column_name for column in inspector.get_columns(table_name))
 
 
 def _drop_sqlite_project_triggers(bind) -> None:
@@ -132,9 +130,7 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
 
-    if inspector.has_table("projects") and _has_column(
-        inspector, "projects", "whiteboard_data"
-    ):
+    if inspector.has_table("projects") and _has_column(inspector, "projects", "whiteboard_data"):
         bind.execute(sa.text("DROP TABLE IF EXISTS _alembic_tmp_projects"))
         if bind.dialect.name == "sqlite":
             _drop_sqlite_project_triggers(bind)
@@ -148,9 +144,7 @@ def downgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
 
-    if inspector.has_table("projects") and not _has_column(
-        inspector, "projects", "whiteboard_data"
-    ):
+    if inspector.has_table("projects") and not _has_column(inspector, "projects", "whiteboard_data"):
         bind.execute(sa.text("DROP TABLE IF EXISTS _alembic_tmp_projects"))
         if bind.dialect.name == "sqlite":
             _drop_sqlite_project_triggers(bind)

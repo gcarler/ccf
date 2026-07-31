@@ -3,6 +3,7 @@
 Revision ID: 20260725_0004
 Revises: 20260725_0003
 """
+
 from alembic import op
 
 revision = "20260725_0004"

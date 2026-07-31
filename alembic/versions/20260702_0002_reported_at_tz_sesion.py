@@ -88,9 +88,7 @@ def _has_table(table: str) -> bool:
 def _has_column(table: str, column: str) -> bool:
     if not _has_table(table):
         return False
-    return any(
-        col.get("name") == column for col in _inspector().get_columns(table)
-    )
+    return any(col.get("name") == column for col in _inspector().get_columns(table))
 
 
 def _has_index(table: str, index_name: str) -> bool:
@@ -112,19 +110,13 @@ def _has_index(table: str, index_name: str) -> bool:
         pass
     if bind.dialect.name == "postgresql":
         row = bind.execute(
-            sa.text(
-                "SELECT 1 FROM pg_indexes "
-                "WHERE tablename = :t AND indexname = :i"
-            ),
+            sa.text("SELECT 1 FROM pg_indexes WHERE tablename = :t AND indexname = :i"),
             {"t": table, "i": index_name},
         ).fetchone()
         return row is not None
     # SQLite fallback.
     row = bind.execute(
-        sa.text(
-            "SELECT 1 FROM sqlite_master "
-            "WHERE type = 'index' AND tbl_name = :t AND name = :i"
-        ),
+        sa.text("SELECT 1 FROM sqlite_master WHERE type = 'index' AND tbl_name = :t AND name = :i"),
         {"t": table, "i": index_name},
     ).fetchone()
     return row is not None
@@ -142,10 +134,7 @@ def _column_pg_type(table: str, column: str) -> str | None:
     if not (_has_table(table) and _has_column(table, column)):
         return None
     row = bind.execute(
-        sa.text(
-            "SELECT data_type FROM information_schema.columns "
-            "WHERE table_name = :t AND column_name = :c"
-        ),
+        sa.text("SELECT data_type FROM information_schema.columns WHERE table_name = :t AND column_name = :c"),
         {"t": table, "c": column},
     ).fetchone()
     return row[0] if row else None
@@ -201,10 +190,7 @@ def _ensure_partial_index() -> None:
     bind = op.get_bind()
     if bind.dialect.name == "postgresql":
         op.execute(
-            sa.text(
-                f"CREATE INDEX IF NOT EXISTS {idx_name} "
-                f"ON sesiones_grupo (grupo_id) WHERE reported_at IS NULL"
-            )
+            sa.text(f"CREATE INDEX IF NOT EXISTS {idx_name} ON sesiones_grupo (grupo_id) WHERE reported_at IS NULL")
         )
         return
 
@@ -234,8 +220,7 @@ def _ensure_reported_at_is_timestamptz() -> None:
         return  # Ya es TIMESTAMPTZ o no existe (idempotente).
     bind.execute(
         sa.text(
-            "ALTER TABLE sesiones_grupo ALTER COLUMN reported_at "
-            "TYPE TIMESTAMPTZ USING reported_at AT TIME ZONE 'UTC'"
+            "ALTER TABLE sesiones_grupo ALTER COLUMN reported_at TYPE TIMESTAMPTZ USING reported_at AT TIME ZONE 'UTC'"
         )
     )
 

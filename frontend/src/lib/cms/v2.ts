@@ -1501,8 +1501,3 @@ export async function patchCmsPostCommentStatus(
     body: { status },
   });
 }
-
-
-
-
-

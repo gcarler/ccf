@@ -2,6 +2,7 @@
 REMAINING GAPS — Tests for the 5 modules with most missed lines.
 Uses populated database to exercise CRUD branches with real data.
 """
+
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
@@ -37,13 +38,15 @@ def full(client, db_session):
     personas = []
     for i in range(20):
         p = models.Persona(
-            first_name=f"U{i}", last_name=f"T{i}",
+            first_name=f"U{i}",
+            last_name=f"T{i}",
             email=f"u{i}_{uuid.uuid4().hex[:6]}@t.com",
             phone=f"+5730011122{i:02d}",
             spiritual_status=["Miembro", "Visitante", "Nuevo", "Activo", "Inactivo"][i % 5],
             church_role=["Miembro", "Líder", "Pastor", "Voluntario", "Coordinador"][i % 5],
             estado_vital=["ACTIVO", "ACTIVO", "INACTIVO", "ACTIVO", "ACTIVO"][i % 5],
-            sede_id=sede.id, sex=["M", "F"][i % 2],
+            sede_id=sede.id,
+            sex=["M", "F"][i % 2],
         )
         db_session.add(p)
         personas.append(p)
@@ -72,8 +75,14 @@ def full(client, db_session):
 
     cases = []
     for i, p in enumerate(personas[:6]):
-        c = CasoCRM(persona_id=p.id, sede_id=sede.id, titulo_caso=f"C{i}",
-            pipeline_id=pipe.id, etapa_actual_id=e1.id, origen_canal=CanalOrigenEnum.EVANGELISMO)
+        c = CasoCRM(
+            persona_id=p.id,
+            sede_id=sede.id,
+            titulo_caso=f"C{i}",
+            pipeline_id=pipe.id,
+            etapa_actual_id=e1.id,
+            origen_canal=CanalOrigenEnum.EVANGELISMO,
+        )
         db_session.add(c)
         cases.append(c)
     db_session.commit()
@@ -82,8 +91,13 @@ def full(client, db_session):
 
     events = []
     for i in range(5):
-        ev = models.CrmEvent(name=f"E{i}", event_date=datetime.now(timezone.utc)+timedelta(days=i*10),
-            sede_id=sede.id, status="SCHEDULED", location=f"L{i}")
+        ev = models.CrmEvent(
+            name=f"E{i}",
+            event_date=datetime.now(timezone.utc) + timedelta(days=i * 10),
+            sede_id=sede.id,
+            status="SCHEDULED",
+            location=f"L{i}",
+        )
         db_session.add(ev)
         events.append(ev)
     db_session.commit()
@@ -101,24 +115,41 @@ def full(client, db_session):
 
     for i, pr in enumerate(projects[:3]):
         for j in range(3):
-            db_session.add(models.ProjectTask(project_id=pr.id, title=f"T{i}_{j}", status=["pending","in_progress","done"][j]))
-        db_session.add(models.ProjectMilestone(project_id=pr.id, title=f"MS_{i}", target_date=datetime.now(timezone.utc)+timedelta(days=30)))
+            db_session.add(
+                models.ProjectTask(project_id=pr.id, title=f"T{i}_{j}", status=["pending", "in_progress", "done"][j])
+            )
+        db_session.add(
+            models.ProjectMilestone(
+                project_id=pr.id, title=f"MS_{i}", target_date=datetime.now(timezone.utc) + timedelta(days=30)
+            )
+        )
     db_session.commit()
 
     cat = CategoriaEstrategia(nombre="Cat")
     db_session.add(cat)
     db_session.flush()
-    strategy = EstrategiaEvangelismo(nombre="Strat", sede_id=sede.id, frecuencia="semanal",
-        categoria_id=cat.id, fecha_inicio=datetime.now(timezone.utc)-timedelta(days=90),
-        fecha_fin=datetime.now(timezone.utc)+timedelta(days=90))
+    strategy = EstrategiaEvangelismo(
+        nombre="Strat",
+        sede_id=sede.id,
+        frecuencia="semanal",
+        categoria_id=cat.id,
+        fecha_inicio=datetime.now(timezone.utc) - timedelta(days=90),
+        fecha_fin=datetime.now(timezone.utc) + timedelta(days=90),
+    )
     db_session.add(strategy)
     db_session.flush()
 
     groups = []
     for i in range(5):
-        g = GrupoEvangelismo(nombre=f"G{i}", ubicacion=f"U{i}", sede_id=sede.id,
-            lider_persona_id=personas[i].id, codigo=f"G{uuid.uuid4().hex[:6]}",
-            capacidad=20, estrategia_id=strategy.id)
+        g = GrupoEvangelismo(
+            nombre=f"G{i}",
+            ubicacion=f"U{i}",
+            sede_id=sede.id,
+            lider_persona_id=personas[i].id,
+            codigo=f"G{uuid.uuid4().hex[:6]}",
+            capacidad=20,
+            estrategia_id=strategy.id,
+        )
         db_session.add(g)
         groups.append(g)
     db_session.commit()
@@ -133,8 +164,11 @@ def full(client, db_session):
     sessions = []
     for g in groups:
         for j in range(4):
-            s = SesionGrupo(grupo_id=g.id, tema_estudio=f"S{j}",
-                fecha_sesion=datetime.now(timezone.utc)-timedelta(days=35-j*7))
+            s = SesionGrupo(
+                grupo_id=g.id,
+                tema_estudio=f"S{j}",
+                fecha_sesion=datetime.now(timezone.utc) - timedelta(days=35 - j * 7),
+            )
             db_session.add(s)
             sessions.append(s)
     db_session.commit()
@@ -142,32 +176,53 @@ def full(client, db_session):
         db_session.refresh(s)
 
     for s in sessions:
-        for pg in db_session.query(ParticipanteGrupo).filter(ParticipanteGrupo.grupo_id==s.grupo_id).limit(3).all():
+        for pg in db_session.query(ParticipanteGrupo).filter(ParticipanteGrupo.grupo_id == s.grupo_id).limit(3).all():
             db_session.add(Asistencia(sesion_id=s.id, persona_id=pg.persona_id, estado="ASISTIO"))
     db_session.commit()
 
     for i in range(6):
-        db_session.add(models.TareaCRM(title=f"Task_{i}", persona_id=personas[i].id, status=["pending","completed","in_progress"][i%3]))
-        db_session.add(models.CounselingTicket(persona_id=personas[i].id, subject=f"CT_{i}", status=["open","resolved"][i%2]))
-        db_session.add(models.PrayerRequest(requester_name=personas[i].first_name, request_text="P", sede_id=sede.id, source=["web","app"][i%2]))
+        db_session.add(
+            models.TareaCRM(
+                title=f"Task_{i}", persona_id=personas[i].id, status=["pending", "completed", "in_progress"][i % 3]
+            )
+        )
+        db_session.add(
+            models.CounselingTicket(persona_id=personas[i].id, subject=f"CT_{i}", status=["open", "resolved"][i % 2])
+        )
+        db_session.add(
+            models.PrayerRequest(
+                requester_name=personas[i].first_name, request_text="P", sede_id=sede.id, source=["web", "app"][i % 2]
+            )
+        )
         db_session.add(models.CommunicationLog(persona_id=personas[i].id, channel="email", content=f"Msg_{i}"))
-        db_session.add(models.VolunteerShift(persona_id=personas[i].id,
-            role_name=["worship","kids","tech","media","sound"][i%5],
-            team_name=["worship","kids","tech","media","sound"][i%5],
-            shift_start=datetime.now(timezone.utc)-timedelta(hours=4),
-            shift_end=datetime.now(timezone.utc)))
+        db_session.add(
+            models.VolunteerShift(
+                persona_id=personas[i].id,
+                role_name=["worship", "kids", "tech", "media", "sound"][i % 5],
+                team_name=["worship", "kids", "tech", "media", "sound"][i % 5],
+                shift_start=datetime.now(timezone.utc) - timedelta(hours=4),
+                shift_end=datetime.now(timezone.utc),
+            )
+        )
     db_session.commit()
 
     for i in range(3):
         db_session.add(models.SystemVariable(key=f"faro_var_{i}", value=f"val_{i}"))
 
-
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
-        "c": client, "h": headers, "sede": sede, "admin": admin,
-        "personas": personas, "families": families, "cases": cases,
-        "events": events, "projects": projects, "groups": groups,
-        "sessions": sessions, "strategy": strategy,
+        "c": client,
+        "h": headers,
+        "sede": sede,
+        "admin": admin,
+        "personas": personas,
+        "families": families,
+        "cases": cases,
+        "events": events,
+        "projects": projects,
+        "groups": groups,
+        "sessions": sessions,
+        "strategy": strategy,
     }
 
 
@@ -175,9 +230,11 @@ def full(client, db_session):
 # CRM CRUD DIRECT — crm.py (453 missed, 44%)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCRMDeep:
     def test_search_with_all_filters(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         sid = str(full["sede"].id)
         pid = str(full["personas"][0].id)
@@ -203,6 +260,7 @@ class TestCRMDeep:
     def test_crud_with_data(self, db_session, full):
         from backend.crud import crm
         from backend.schemas import PersonaUpdate
+
         db = db_session
         pid = str(full["personas"][0].id)
         # get
@@ -219,6 +277,7 @@ class TestCRMDeep:
 
     def test_events_crud(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         sid = str(full["sede"].id)
         eid = full["events"][0].id
@@ -240,6 +299,7 @@ class TestCRMDeep:
 
     def test_tasks_crud(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         pid = str(full["personas"][0].id)
         # list with filters
@@ -249,6 +309,7 @@ class TestCRMDeep:
 
     def test_counseling_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         pid = str(full["personas"][0].id)
         sid = str(full["sede"].id)
@@ -261,6 +322,7 @@ class TestCRMDeep:
 
     def test_prayer_requests_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         _call(crm.get_prayer_requests, db)
         _call(crm.get_prayer_requests, db, status="pending")
@@ -268,6 +330,7 @@ class TestCRMDeep:
 
     def test_grupos_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         gid = str(full["groups"][0].id)
         _call(crm.get_grupos, db)
@@ -275,6 +338,7 @@ class TestCRMDeep:
 
     def test_volunteer_shifts_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         pid = str(full["personas"][0].id)
         _call(crm.get_volunteer_shifts, db)
@@ -282,18 +346,21 @@ class TestCRMDeep:
 
     def test_communication_logs_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         _call(crm.get_communication_logs, db)
         _call(crm.get_communication_logs, db, limit=3)
 
     def test_donations_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         _call(crm.get_donations, db)
         _call(crm.get_total_donations_amount, db)
 
     def test_families_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         fid = str(full["families"][0].id)
         _call(crm.get_families, db)
@@ -302,18 +369,21 @@ class TestCRMDeep:
 
     def test_community_cards_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         _call(crm.get_community_cards, db)
         _call(crm.get_community_cards, db, column_id="test")
 
     def test_support_tickets_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         _call(crm.get_support_tickets, db)
         _call(crm.get_support_tickets, db, user_id=str(full["admin"].id))
 
     def test_notifications_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         pid = str(full["personas"][0].id)
         _call(crm.get_user_notifications, db, pid)
@@ -322,6 +392,7 @@ class TestCRMDeep:
 
     def test_talents_deep(self, db_session, full):
         from backend.crud import crm
+
         db = db_session
         _call(crm.get_talents, db)
         _call(crm.get_talents, db, search="U")
@@ -330,6 +401,7 @@ class TestCRMDeep:
 # ═══════════════════════════════════════════════════════════════════════════════
 # PROJECTS API — projects.py (405 missed, 31%)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestProjectsDeep:
     def test_list_projects_deep(self, full):
@@ -342,9 +414,15 @@ class TestProjectsDeep:
     def test_project_crud_deep(self, full):
         c, h = full["c"], full["h"]
         # Create
-        resp = c.post("/api/projects", json={
-            "name": f"P_{uuid.uuid4().hex[:6]}", "description": "Test", "status": "active",
-        }, headers=h)
+        resp = c.post(
+            "/api/projects",
+            json={
+                "name": f"P_{uuid.uuid4().hex[:6]}",
+                "description": "Test",
+                "status": "active",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code == 201:
             pid = resp.json().get("id")
@@ -360,9 +438,14 @@ class TestProjectsDeep:
         c.get(f"/api/projects/{pid}/tasks", headers=h)
         c.get(f"/api/projects/{pid}/tasks?status=pending", headers=h)
         # Create task
-        resp = c.post(f"/api/projects/{pid}/tasks", json={
-            "title": f"T_{uuid.uuid4().hex[:6]}", "description": "D",
-        }, headers=h)
+        resp = c.post(
+            f"/api/projects/{pid}/tasks",
+            json={
+                "title": f"T_{uuid.uuid4().hex[:6]}",
+                "description": "D",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             tid = resp.json().get("id")
@@ -375,19 +458,28 @@ class TestProjectsDeep:
         c, h, projects = full["c"], full["h"], full["projects"]
         pid = str(projects[0].id)
         c.get(f"/api/projects/{pid}/phases", headers=h)
-        c.put(f"/api/projects/{pid}/phases", json=[
-            {"name": "Phase 1", "order": 1, "status": "active"},
-            {"name": "Phase 2", "order": 2, "status": "pending"},
-        ], headers=h)
+        c.put(
+            f"/api/projects/{pid}/phases",
+            json=[
+                {"name": "Phase 1", "order": 1, "status": "active"},
+                {"name": "Phase 2", "order": 2, "status": "pending"},
+            ],
+            headers=h,
+        )
 
     def test_project_milestones_deep(self, full):
         c, h, projects = full["c"], full["h"], full["projects"]
         pid = str(projects[0].id)
         c.get(f"/api/projects/{pid}/milestones", headers=h)
-        resp = c.post(f"/api/projects/{pid}/milestones", json={
-            "title": f"MS_{uuid.uuid4().hex[:6]}", "description": "D",
-            "target_date": (date.today() + timedelta(days=30)).isoformat(),
-        }, headers=h)
+        resp = c.post(
+            f"/api/projects/{pid}/milestones",
+            json={
+                "title": f"MS_{uuid.uuid4().hex[:6]}",
+                "description": "D",
+                "target_date": (date.today() + timedelta(days=30)).isoformat(),
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             mid = resp.json().get("id")
@@ -399,9 +491,13 @@ class TestProjectsDeep:
         c, h, projects = full["c"], full["h"], full["projects"]
         pid = str(projects[0].id)
         c.get(f"/api/projects/{pid}/comments", headers=h)
-        resp = c.post(f"/api/projects/{pid}/comments", json={
-            "content": f"Comment_{uuid.uuid4().hex[:6]}",
-        }, headers=h)
+        resp = c.post(
+            f"/api/projects/{pid}/comments",
+            json={
+                "content": f"Comment_{uuid.uuid4().hex[:6]}",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_all_comments(self, full):
@@ -455,14 +551,20 @@ class TestProjectsDeep:
             tid = tasks.json()[0].get("id")
             if tid:
                 c.get(f"/api/projects/tasks/{tid}/attachments", headers=h)
-                c.post(f"/api/projects/tasks/{tid}/attachments", json={
-                    "file_url": "http://test.com/file.pdf", "filename": "file.pdf",
-                }, headers=h)
+                c.post(
+                    f"/api/projects/tasks/{tid}/attachments",
+                    json={
+                        "file_url": "http://test.com/file.pdf",
+                        "filename": "file.pdf",
+                    },
+                    headers=h,
+                )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # EVANGELISM MAIN — evangelism.py (293 missed, 39%)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestEvangelismDeep:
     def test_counseling_full_crud(self, full):
@@ -470,59 +572,94 @@ class TestEvangelismDeep:
         # List
         _ok(c.get("/api/evangelism/counseling/", headers=h).status_code)
         # Create
-        resp = c.post("/api/evangelism/counseling/", json={
-            "persona_id": str(personas[0].id), "subject": "Deep",
-        }, headers=h)
+        resp = c.post(
+            "/api/evangelism/counseling/",
+            json={
+                "persona_id": str(personas[0].id),
+                "subject": "Deep",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             tid = resp.json().get("id")
             if tid:
                 c.get(f"/api/evangelism/counseling/{tid}", headers=h)
-                c.patch(f"/api/evangelism/counseling/{tid}", json={
-                    "status": "resolved", "notes": "Done", "priority_level": "high",
-                }, headers=h)
+                c.patch(
+                    f"/api/evangelism/counseling/{tid}",
+                    json={
+                        "status": "resolved",
+                        "notes": "Done",
+                        "priority_level": "high",
+                    },
+                    headers=h,
+                )
                 c.get(f"/api/evangelism/counseling/lead/{personas[0].id}", headers=h)
 
     def test_prayer_full_crud(self, full):
         c, h, personas, sede = full["c"], full["h"], full["personas"], full["sede"]
         _ok(c.get("/api/evangelism/prayer-requests/", headers=h).status_code)
-        resp = c.post("/api/evangelism/prayer-requests/", json={
-            "requester_name": "Deep Prayer", "request_text": "Healing",
-            "sede_id": str(sede.id),
-        }, headers=h)
+        resp = c.post(
+            "/api/evangelism/prayer-requests/",
+            json={
+                "requester_name": "Deep Prayer",
+                "request_text": "Healing",
+                "sede_id": str(sede.id),
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             rid = resp.json().get("id")
             if rid:
                 c.get(f"/api/evangelism/prayer-requests/{rid}", headers=h)
-                c.patch(f"/api/evangelism/prayer-requests/{rid}", json={
-                    "status": "answered", "is_answered": True,
-                }, headers=h)
+                c.patch(
+                    f"/api/evangelism/prayer-requests/{rid}",
+                    json={
+                        "status": "answered",
+                        "is_answered": True,
+                    },
+                    headers=h,
+                )
 
     def test_messaging_send_all_channels(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
         for channel in ["email", "whatsapp", "sms"]:
-            c.post("/api/evangelism/messaging/send", json={
-                "channel": channel,
-                "persona_id": str(personas[0].id),
-                "content": f"Test {channel}",
-            }, headers=h)
+            c.post(
+                "/api/evangelism/messaging/send",
+                json={
+                    "channel": channel,
+                    "persona_id": str(personas[0].id),
+                    "content": f"Test {channel}",
+                },
+                headers=h,
+            )
 
     def test_messaging_segments(self, full):
         c, h = full["c"], full["h"]
         for seg in ["active", "groups"]:
-            c.post("/api/evangelism/messaging/send", json={
-                "channel": "email", "content": "Seg",
-                "target_segments": [seg],
-                "campaign_name": "C",
-            }, headers=h)
+            c.post(
+                "/api/evangelism/messaging/send",
+                json={
+                    "channel": "email",
+                    "content": "Seg",
+                    "target_segments": [seg],
+                    "campaign_name": "C",
+                },
+                headers=h,
+            )
 
     def test_messaging_no_target(self, full):
         c, h = full["c"], full["h"]
-        c.post("/api/evangelism/messaging/send", json={
-            "channel": "email", "content": "No target",
-            "target_segments": ["nonexistent"],
-        }, headers=h)
+        c.post(
+            "/api/evangelism/messaging/send",
+            json={
+                "channel": "email",
+                "content": "No target",
+                "target_segments": ["nonexistent"],
+            },
+            headers=h,
+        )
 
     def test_messaging_history_deep(self, full):
         c, h = full["c"], full["h"]
@@ -544,9 +681,11 @@ class TestEvangelismDeep:
 # ACADEMY CRUD DIRECT — academy.py (361 missed, 23%)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCMSDeep:
     def test_cms_crud_all(self, db_session, full):
         from backend.crud import cms
+
         db = db_session
         # Old page_contents / content_publications removed — CMS v2 CRUD
         # (list_cms_sites, get_cms_site_by_key) exercise the same code paths.
@@ -593,13 +732,19 @@ class TestCMSDeep:
 # ENTERPRISE CMS — enterprise_cms.py (262 missed, 42%)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEnterpriseCMSDeep:
     def test_webhooks_full(self, full):
         c, h = full["c"], full["h"]
         _ok(c.get("/api/cms/v2/webhooks", headers=h).status_code)
-        resp = c.post("/api/cms/v2/webhooks", json={
-            "url": "https://hook.test", "events": ["page.published"],
-        }, headers=h)
+        resp = c.post(
+            "/api/cms/v2/webhooks",
+            json={
+                "url": "https://hook.test",
+                "events": ["page.published"],
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             wid = resp.json().get("id")
@@ -611,9 +756,15 @@ class TestEnterpriseCMSDeep:
     def test_redirects_full(self, full):
         c, h = full["c"], full["h"]
         _ok(c.get("/api/cms/v2/redirects", headers=h).status_code)
-        resp = c.post("/api/cms/v2/redirects", json={
-            "source_path": "/old", "target_path": "/new", "status_code": 301,
-        }, headers=h)
+        resp = c.post(
+            "/api/cms/v2/redirects",
+            json={
+                "source_path": "/old",
+                "target_path": "/new",
+                "status_code": 301,
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             rid = resp.json().get("id")
@@ -625,9 +776,14 @@ class TestEnterpriseCMSDeep:
     def test_custom_types_full(self, full):
         c, h = full["c"], full["h"]
         _ok(c.get("/api/cms/v2/custom-types", headers=h).status_code)
-        resp = c.post("/api/cms/v2/custom-types", json={
-            "name": f"CT_{uuid.uuid4().hex[:6]}", "schema": {"fields": []},
-        }, headers=h)
+        resp = c.post(
+            "/api/cms/v2/custom-types",
+            json={
+                "name": f"CT_{uuid.uuid4().hex[:6]}",
+                "schema": {"fields": []},
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             tid = resp.json().get("id")
@@ -639,9 +795,14 @@ class TestEnterpriseCMSDeep:
     def test_glossary_full(self, full):
         c, h = full["c"], full["h"]
         _ok(c.get("/api/cms/v2/glossary", headers=h).status_code)
-        resp = c.post("/api/cms/v2/glossary", json={
-            "term": f"T_{uuid.uuid4().hex[:6]}", "definition": "Def",
-        }, headers=h)
+        resp = c.post(
+            "/api/cms/v2/glossary",
+            json={
+                "term": f"T_{uuid.uuid4().hex[:6]}",
+                "definition": "Def",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             gid = resp.json().get("id")

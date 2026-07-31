@@ -2,6 +2,7 @@
 
 CRUD of menus and menu items.
 """
+
 from __future__ import annotations
 
 import logging

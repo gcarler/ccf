@@ -22,19 +22,19 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def _table_exists(table: str) -> bool:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM information_schema.tables "
-        "WHERE table_schema='public' AND table_name=:t"
-    ), {"t": table})
+    r = conn.execute(
+        sa.text("SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name=:t"),
+        {"t": table},
+    )
     return r.scalar() > 0
 
 
 def _col_exists(table: str, col: str) -> bool:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM information_schema.columns "
-        "WHERE table_name=:t AND column_name=:c"
-    ), {"t": table, "c": col})
+    r = conn.execute(
+        sa.text("SELECT count(*) FROM information_schema.columns WHERE table_name=:t AND column_name=:c"),
+        {"t": table, "c": col},
+    )
     return r.scalar() > 0
 
 
@@ -42,7 +42,8 @@ def upgrade() -> None:
     # crm_events may not exist if never bootstrapped (compat model, no prior migration)
     if not _table_exists("crm_events"):
         conn = op.get_bind()
-        conn.execute(sa.text("""
+        conn.execute(
+            sa.text("""
             CREATE TABLE crm_events (
                 id SERIAL PRIMARY KEY,
                 sede_id INTEGER REFERENCES sedes(id) ON DELETE SET NULL,
@@ -64,17 +65,15 @@ def upgrade() -> None:
                 fixed_date TIMESTAMP,
                 created_at TIMESTAMP DEFAULT NOW()
             )
-        """))
-        conn.execute(sa.text(
-            "CREATE INDEX ix_crm_events_sede_id ON crm_events (sede_id)"
-        ))
+        """)
+        )
+        conn.execute(sa.text("CREATE INDEX ix_crm_events_sede_id ON crm_events (sede_id)"))
         return
 
     if not _col_exists("crm_events", "sede_id"):
         op.add_column(
             "crm_events",
-            sa.Column("sede_id", sa.Integer(),
-                      sa.ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True),
+            sa.Column("sede_id", sa.Integer(), sa.ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True),
         )
         op.create_index("ix_crm_events_sede_id", "crm_events", ["sede_id"])
 

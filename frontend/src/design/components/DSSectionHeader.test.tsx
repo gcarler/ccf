@@ -22,9 +22,9 @@ describe('DSSectionHeader', () => {
 
     it('renders with actions', () => {
         render(
-            <DSSectionHeader 
-                title="Title" 
-                actions={<button>Action</button>} 
+            <DSSectionHeader
+                title="Title"
+                actions={<button>Action</button>}
             />
         );
         expect(screen.getByText('Action')).toBeInTheDocument();

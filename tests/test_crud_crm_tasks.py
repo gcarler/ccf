@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
-
-import pytest
+from datetime import datetime, timezone
 
 from backend import models, schemas
 from backend.crud.crm_.tasks import (
@@ -17,8 +15,6 @@ from backend.crud.crm_.tasks import (
     update_crm_task,
 )
 from tests.conftest import seed_admin
-
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -184,11 +180,11 @@ class TestCreateCrmTask:
         persona = _make_persona(db_session, admin_sede.id)
 
         from backend.models_crm_pipeline import (
-            CasoCRM,
-            PipelineCRM,
-            EtapaPipeline,
-            TipoPipelineEnum,
             CanalOrigenEnum,
+            CasoCRM,
+            EtapaPipeline,
+            PipelineCRM,
+            TipoPipelineEnum,
         )
 
         pipeline = PipelineCRM(

@@ -146,11 +146,11 @@
   --bg-secondary: 222 47% 6%;
   --text-primary: 210 40% 98%;
   --text-secondary: 215 20.2% 65.1%;
-  
+
   --surface-1: 222 47% 4%;
   --surface-2: 222 47% 10%;
   --surface-3: 222 47% 15%;
-  
+
   --primary: 197 78% 50%; /* azul CCF más claro para fondos oscuros */
   --primary-foreground: 0 0% 100%;
 
@@ -339,25 +339,25 @@
   .dark .sidebar-nav-item:hover {
     color: white !important;
   }
-  
+
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.05);
     border-radius: 10px;
   }
-  
+
   .dark .scrollbar-thin::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.05);
   }

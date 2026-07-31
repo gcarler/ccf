@@ -26,7 +26,6 @@ correct).
 from __future__ import annotations
 
 import uuid as _uuid
-import datetime as dt
 from typing import Optional
 
 import pytest
@@ -42,6 +41,7 @@ from backend.crud.crm_.personas import (
 )
 
 # ─── Fixtures local — re-uses conftest.db_session + seed_admin via _seed_sede ──
+
 
 def _seed_sede(db: Session, name: str = "Sede QC-18", ciudad: str = "QC18 City") -> models.Sede:
     sede = models.Sede(id=_uuid.uuid4(), nombre=name, ciudad=ciudad)
@@ -259,6 +259,7 @@ def test_get_persona_found(db_session):
     p = _persona_in(db_session, sede_id=sede.id, first_name="FoundMe")
     _commit(db_session)
     from backend.crud.crm_.personas import get_persona
+
     result = get_persona(db_session, str(p.id))
     assert result is not None
     assert result.id == p.id
@@ -266,6 +267,7 @@ def test_get_persona_found(db_session):
 
 def test_get_persona_not_found(db_session):
     from backend.crud.crm_.personas import get_persona
+
     result = get_persona(db_session, str(_uuid.uuid4()))
     assert result is None
 
@@ -275,12 +277,14 @@ def test_get_persona_donations(db_session):
     p = _persona_in(db_session, sede_id=sede.id, first_name="Donor")
     _commit(db_session)
     from backend.crud.crm_.personas import get_persona_donations
+
     result = get_persona_donations(db_session, str(p.id))
     assert result == []
 
 
 def test_create_persona_no_sede(db_session):
     from backend.crud.crm_.personas import create_persona
+
     payload = _persona_create_payload(first_name="NoSede")
     result = create_persona(db_session, payload)
     assert result is not None
@@ -289,6 +293,7 @@ def test_create_persona_no_sede(db_session):
 
 def test_delete_persona_soft_deletes(db_session):
     from backend.crud.crm_.personas import delete_persona
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="ToDelete")
     _commit(db_session)
@@ -301,11 +306,13 @@ def test_delete_persona_soft_deletes(db_session):
 
 def test_delete_persona_not_found(db_session):
     from backend.crud.crm_.personas import delete_persona
+
     assert delete_persona(db_session, str(_uuid.uuid4())) is False
 
 
 def test_search_personas_basic(db_session):
     from backend.crud.crm_.personas import search_personas
+
     sede = _seed_sede(db_session)
     _persona_in(db_session, sede_id=sede.id, first_name="Alice")
     _persona_in(db_session, sede_id=sede.id, first_name="Bob")
@@ -317,6 +324,7 @@ def test_search_personas_basic(db_session):
 
 def test_search_personas_filter_role(db_session):
     from backend.crud.crm_.personas import search_personas
+
     sede = _seed_sede(db_session)
     p1 = _persona_in(db_session, sede_id=sede.id, first_name="Pastor")
     p2 = _persona_in(db_session, sede_id=sede.id, first_name="Member")
@@ -330,6 +338,7 @@ def test_search_personas_filter_role(db_session):
 
 def test_search_personas_spiritual_status(db_session):
     from backend.crud.crm_.personas import search_personas
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Spiritual")
     _commit(db_session)
@@ -341,6 +350,7 @@ def test_search_personas_spiritual_status(db_session):
 
 def test_search_personas_sex_filter(db_session):
     from backend.crud.crm_.personas import search_personas
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Male")
     _commit(db_session)
@@ -352,6 +362,7 @@ def test_search_personas_sex_filter(db_session):
 
 def test_search_personas_estado_vital(db_session):
     from backend.crud.crm_.personas import search_personas
+
     sede = _seed_sede(db_session)
     _persona_in(db_session, sede_id=sede.id, first_name="Active", estado_vital="ACTIVO")
     _persona_in(db_session, sede_id=sede.id, first_name="Inactive", estado_vital="INACTIVO")
@@ -363,6 +374,7 @@ def test_search_personas_estado_vital(db_session):
 
 def test_search_personas_sede_filter(db_session):
     from backend.crud.crm_.personas import search_personas
+
     s1 = _seed_sede(db_session, "S1")
     s2 = _seed_sede(db_session, "S2")
     _persona_in(db_session, sede_id=s1.id, first_name="S1Person")
@@ -375,6 +387,7 @@ def test_search_personas_sede_filter(db_session):
 
 def test_search_personas_sort_dir_desc(db_session):
     from backend.crud.crm_.personas import search_personas
+
     sede = _seed_sede(db_session)
     _persona_in(db_session, sede_id=sede.id, first_name="Alpha")
     _persona_in(db_session, sede_id=sede.id, first_name="Beta")
@@ -386,6 +399,7 @@ def test_search_personas_sort_dir_desc(db_session):
 
 def test_search_personas_paginated_basic(db_session):
     from backend.crud.crm_.personas import search_personas_paginated
+
     sede = _seed_sede(db_session)
     for i in range(5):
         _persona_in(db_session, sede_id=sede.id, first_name=f"P{i}")
@@ -397,6 +411,7 @@ def test_search_personas_paginated_basic(db_session):
 
 def test_search_personas_paginated_filter_role(db_session):
     from backend.crud.crm_.personas import search_personas_paginated
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Leader")
     _commit(db_session)
@@ -409,6 +424,7 @@ def test_search_personas_paginated_filter_role(db_session):
 
 def test_search_personas_paginated_search(db_session):
     from backend.crud.crm_.personas import search_personas_paginated
+
     sede = _seed_sede(db_session)
     _persona_in(db_session, sede_id=sede.id, first_name="FindMe")
     _commit(db_session)
@@ -418,6 +434,7 @@ def test_search_personas_paginated_search(db_session):
 
 def test_search_personas_page_basic(db_session):
     from backend.crud.crm_.personas import search_personas_page
+
     sede = _seed_sede(db_session)
     _persona_in(db_session, sede_id=sede.id, first_name="PageTest")
     _commit(db_session)
@@ -428,6 +445,7 @@ def test_search_personas_page_basic(db_session):
 
 def test_get_personas_delegates(db_session):
     from backend.crud.crm_.personas import get_personas
+
     sede = _seed_sede(db_session)
     _persona_in(db_session, sede_id=sede.id, first_name="ViaGet")
     _commit(db_session)
@@ -437,6 +455,7 @@ def test_get_personas_delegates(db_session):
 
 def test_get_talents_delegates(db_session):
     from backend.crud.crm_.personas import get_talents
+
     sede = _seed_sede(db_session)
     _persona_in(db_session, sede_id=sede.id, first_name="Talented")
     _commit(db_session)
@@ -446,35 +465,41 @@ def test_get_talents_delegates(db_session):
 
 def test_normalize_token_empty(db_session):
     from backend.crud.crm_.personas import _normalize_token
+
     assert _normalize_token(None) == ""
     assert _normalize_token("") == ""
 
 
 def test_normalize_token_accented(db_session):
     from backend.crud.crm_.personas import _normalize_token
+
     assert _normalize_token("Música") == "MUSICA"
 
 
 def test_enrich_personas_with_progress_empty(db_session):
     from backend.crud.crm_.personas import _enrich_personas_with_progress
+
     result = _enrich_personas_with_progress(db_session, [])
     assert result == []
 
 
 def test_attendance_rate_map_empty(db_session):
     from backend.crud.crm_.personas import _attendance_rate_map
+
     result = _attendance_rate_map(db_session, [])
     assert result == {}
 
 
 def test_volunteer_commitment_map_empty(db_session):
     from backend.crud.crm_.personas import _volunteer_commitment_map
+
     result = _volunteer_commitment_map(db_session, [])
     assert result == {}
 
 
 def test_compute_days_in_state_no_history(db_session):
     from backend.crud.crm_.personas import _compute_days_in_state
+
     pid = _uuid.uuid4()
     result = _compute_days_in_state(db_session, pid, "miembro")
     assert result is None
@@ -482,6 +507,7 @@ def test_compute_days_in_state_no_history(db_session):
 
 def test_update_persona_basic(db_session):
     from backend.crud.crm_.personas import update_persona
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Old")
     _commit(db_session)
@@ -493,6 +519,7 @@ def test_update_persona_basic(db_session):
 
 def test_update_persona_not_found(db_session):
     from backend.crud.crm_.personas import update_persona
+
     payload = schemas.PersonaUpdate(first_name="Ghost")
     result = update_persona(db_session, str(_uuid.uuid4()), payload)
     assert result is None
@@ -501,6 +528,7 @@ def test_update_persona_not_found(db_session):
 def test_update_persona_tracks_funnel_church_role(db_session):
     from backend.crud.crm_.personas import update_persona
     from backend.models_evangelism import HistorialEmbudo
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="RoleChange")
     _commit(db_session)
@@ -508,9 +536,7 @@ def test_update_persona_tracks_funnel_church_role(db_session):
     _commit(db_session)
     payload = schemas.PersonaUpdate(church_role="lider")
     result = update_persona(db_session, str(p.id), payload)
-    entry = db_session.query(HistorialEmbudo).filter(
-        HistorialEmbudo.persona_id == p.id
-    ).first()
+    entry = db_session.query(HistorialEmbudo).filter(HistorialEmbudo.persona_id == p.id).first()
     assert entry is not None
     assert entry.rol_anterior == "miembro"
     assert entry.rol_nuevo == "lider"
@@ -519,6 +545,7 @@ def test_update_persona_tracks_funnel_church_role(db_session):
 def test_update_persona_tracks_funnel_estado_vital(db_session):
     from backend.crud.crm_.personas import update_persona
     from backend.models_evangelism import HistorialEmbudo
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="VitalChange")
     _commit(db_session)
@@ -526,32 +553,37 @@ def test_update_persona_tracks_funnel_estado_vital(db_session):
     _commit(db_session)
     payload = schemas.PersonaUpdate(estado_vital="INACTIVO")
     result = update_persona(db_session, str(p.id), payload)
-    entry = db_session.query(HistorialEmbudo).filter(
-        HistorialEmbudo.persona_id == p.id
-    ).first()
+    entry = db_session.query(HistorialEmbudo).filter(HistorialEmbudo.persona_id == p.id).first()
     assert entry is not None
     assert entry.rol_anterior == "ACTIVO"
     assert entry.rol_nuevo == "INACTIVO"
 
 
 def test_update_persona_tracks_baptism(db_session):
+    import datetime as dt
+
     from backend.crud.crm_.personas import update_persona
     from backend.models_evangelism import HistorialEmbudo
-    import datetime as dt
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Baptism")
     _commit(db_session)
     payload = schemas.PersonaUpdate(baptism_date=dt.date.today())
     result = update_persona(db_session, str(p.id), payload)
-    entry = db_session.query(HistorialEmbudo).filter(
-        HistorialEmbudo.persona_id == p.id,
-        HistorialEmbudo.rol_anterior == "NO_BAUTIZADO",
-    ).first()
+    entry = (
+        db_session.query(HistorialEmbudo)
+        .filter(
+            HistorialEmbudo.persona_id == p.id,
+            HistorialEmbudo.rol_anterior == "NO_BAUTIZADO",
+        )
+        .first()
+    )
     assert entry is not None
 
 
 def test_assign_persona_mentor_success(db_session):
     from backend.crud.crm_.personas import assign_persona_mentor
+
     sede = _seed_sede(db_session)
     mentee = _persona_in(db_session, sede_id=sede.id, first_name="Mentee")
     mentor = _persona_in(db_session, sede_id=sede.id, first_name="Mentor")
@@ -565,38 +597,45 @@ def test_assign_persona_mentor_success(db_session):
 
 def test_assign_persona_mentor_self_assignment_raises(db_session):
     from backend.crud.crm_.personas import assign_persona_mentor
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Self")
     _commit(db_session)
     import pytest
+
     with pytest.raises(ValueError, match="no puede ser su propio mentor"):
         assign_persona_mentor(db_session, str(p.id), str(p.id))
 
 
 def test_assign_persona_mentor_cross_sede_raises(db_session):
     from backend.crud.crm_.personas import assign_persona_mentor
+
     s1 = _seed_sede(db_session, "S1")
     s2 = _seed_sede(db_session, "S2")
     mentee = _persona_in(db_session, sede_id=s1.id, first_name="Mentee")
     mentor = _persona_in(db_session, sede_id=s2.id, first_name="Mentor")
     _commit(db_session)
     import pytest
+
     with pytest.raises(ValueError, match="misma sede"):
         assign_persona_mentor(db_session, str(mentee.id), str(mentor.id))
 
 
 def test_assign_persona_mentor_not_found_raises(db_session):
     from backend.crud.crm_.personas import assign_persona_mentor
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Only")
     _commit(db_session)
     import pytest
+
     with pytest.raises(ValueError, match="no encontrado"):
         assign_persona_mentor(db_session, str(p.id), str(_uuid.uuid4()))
 
 
 def test_assign_persona_mentor_reactivates_same_mentor(db_session):
     from backend.crud.crm_.personas import assign_persona_mentor
+
     sede = _seed_sede(db_session)
     mentee = _persona_in(db_session, sede_id=sede.id, first_name="Mentee")
     mentor = _persona_in(db_session, sede_id=sede.id, first_name="Mentor")
@@ -609,6 +648,7 @@ def test_assign_persona_mentor_reactivates_same_mentor(db_session):
 
 def test_assign_persona_mentor_reassigns_different_mentor(db_session):
     from backend.crud.crm_.personas import assign_persona_mentor
+
     sede = _seed_sede(db_session)
     mentee = _persona_in(db_session, sede_id=sede.id, first_name="Mentee")
     m1 = _persona_in(db_session, sede_id=sede.id, first_name="Mentor1")
@@ -619,18 +659,22 @@ def test_assign_persona_mentor_reassigns_different_mentor(db_session):
     assert r2.status == "active"
     assert str(r2.mentor_persona_id) == str(m2.id)
     from backend.crud.crm_.personas import _active_mentorship_query
+
     active = _active_mentorship_query(db_session, mentee.id)
     assert str(active.mentor_persona_id) == str(m2.id)
 
 
 def test_decorate_mentorship_none(db_session):
     from backend.crud.crm_.personas import _decorate_mentorship
+
     assert _decorate_mentorship(None) is None
 
 
 def test_persona_live_column_names_no_bind(db_session):
-    from backend.crud.crm_.personas import _persona_live_column_names
     import warnings
+
+    from backend.crud.crm_.personas import _persona_live_column_names
+
     with warnings.catch_warnings():
         bind = db_session.get_bind()
         assert bind is not None
@@ -640,6 +684,7 @@ def test_persona_live_column_names_no_bind(db_session):
 
 def test_search_build_with_group_name(db_session):
     from backend.crud.crm_.personas import _build_persona_search_query
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Grouped")
     _commit(db_session)
@@ -651,6 +696,7 @@ def test_search_build_with_group_name(db_session):
 
 def test_search_build_with_participation_type(db_session):
     from backend.crud.crm_.personas import _build_persona_search_query
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="PartType")
     _commit(db_session)
@@ -662,6 +708,7 @@ def test_search_build_with_participation_type(db_session):
 
 def test_search_build_with_id_type(db_session):
     from backend.crud.crm_.personas import _build_persona_search_query
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="IdTyped")
     _commit(db_session)
@@ -672,8 +719,10 @@ def test_search_build_with_id_type(db_session):
 
 
 def test_search_build_with_min_age(db_session):
-    from backend.crud.crm_.personas import _build_persona_search_query
     import datetime as dt
+
+    from backend.crud.crm_.personas import _build_persona_search_query
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Old")
     _commit(db_session)
@@ -684,8 +733,10 @@ def test_search_build_with_min_age(db_session):
 
 
 def test_search_build_with_max_age(db_session):
-    from backend.crud.crm_.personas import _build_persona_search_query
     import datetime as dt
+
+    from backend.crud.crm_.personas import _build_persona_search_query
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Young")
     _commit(db_session)
@@ -697,6 +748,7 @@ def test_search_build_with_max_age(db_session):
 
 def test_search_build_with_family_id(db_session):
     from backend.crud.crm_.personas import _build_persona_search_query
+
     sede = _seed_sede(db_session)
     fid = _uuid.uuid4()
     p = _persona_in(db_session, sede_id=sede.id, first_name="Family")
@@ -709,6 +761,7 @@ def test_search_build_with_family_id(db_session):
 
 def test_list_mentor_candidates_basic(db_session):
     from backend.crud.crm_.personas import list_mentor_candidates
+
     sede = _seed_sede(db_session)
     target = _persona_in(db_session, sede_id=sede.id, first_name="Target")
     candidate = _persona_in(db_session, sede_id=sede.id, first_name="Mentor")
@@ -721,6 +774,7 @@ def test_list_mentor_candidates_basic(db_session):
 
 def test_list_mentor_candidates_excludes_target(db_session):
     from backend.crud.crm_.personas import list_mentor_candidates
+
     sede = _seed_sede(db_session)
     target = _persona_in(db_session, sede_id=sede.id, first_name="Target")
     _commit(db_session)
@@ -733,6 +787,7 @@ def test_list_mentor_candidates_excludes_target(db_session):
 
 def test_list_mentor_candidates_excludes_inactive(db_session):
     from backend.crud.crm_.personas import list_mentor_candidates
+
     sede = _seed_sede(db_session)
     target = _persona_in(db_session, sede_id=sede.id, first_name="Target")
     inactive_candidate = _persona_in(db_session, sede_id=sede.id, first_name="Inactive", estado_vital="INACTIVO")
@@ -746,6 +801,7 @@ def test_list_mentor_candidates_excludes_inactive(db_session):
 
 def test_list_mentor_candidates_search(db_session):
     from backend.crud.crm_.personas import list_mentor_candidates
+
     sede = _seed_sede(db_session)
     target = _persona_in(db_session, sede_id=sede.id, first_name="Target")
     c1 = _persona_in(db_session, sede_id=sede.id, first_name="Pedro")
@@ -761,19 +817,23 @@ def test_list_mentor_candidates_search(db_session):
 
 @pytest.mark.skipif(True, reason="SQLite pierde tzinfo — bug conocido solo en test")
 def test_compute_days_in_state_with_history(db_session):
+    import datetime as dt
+
     from backend.crud.crm_.personas import _compute_days_in_state
     from backend.models_evangelism import HistorialEmbudo
-    from backend.crud._utils import _utcnow
-    import datetime as dt
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="StateHist")
     _commit(db_session)
     past = dt.datetime.utcnow() - dt.timedelta(days=10)
-    db_session.add(HistorialEmbudo(
-        persona_id=p.id,
-        rol_anterior="miembro", rol_nuevo="lider",
-        fecha_cambio=past,
-    ))
+    db_session.add(
+        HistorialEmbudo(
+            persona_id=p.id,
+            rol_anterior="miembro",
+            rol_nuevo="lider",
+            fecha_cambio=past,
+        )
+    )
     _commit(db_session)
     days = _compute_days_in_state(db_session, p.id, "miembro")
     assert days is not None
@@ -782,6 +842,7 @@ def test_compute_days_in_state_with_history(db_session):
 
 def test_build_mesh_insight_estable(db_session):
     from backend.crud.crm_.personas import _build_persona_mesh_insight
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Estable")
     _commit(db_session)
@@ -794,6 +855,7 @@ def test_build_mesh_insight_estable(db_session):
 
 def test_build_mesh_insight_en_riesgo(db_session):
     from backend.crud.crm_.personas import _build_persona_mesh_insight
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="EnRiesgo")
     _commit(db_session)
@@ -806,6 +868,7 @@ def test_build_mesh_insight_en_riesgo(db_session):
 
 def test_build_mesh_insight_unknown_status(db_session):
     from backend.crud.crm_.personas import _build_persona_mesh_insight
+
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="Unknown")
     _commit(db_session)
@@ -818,6 +881,7 @@ def test_build_mesh_insight_unknown_status(db_session):
 
 def test_search_paginated_with_search(db_session):
     from backend.crud.crm_.personas import search_personas_paginated
+
     sede = _seed_sede(db_session)
     _persona_in(db_session, sede_id=sede.id, first_name="Searched")
     _commit(db_session)
@@ -827,6 +891,7 @@ def test_search_paginated_with_search(db_session):
 
 def test_search_paginated_sort_by_church_role(db_session):
     from backend.crud.crm_.personas import search_personas_paginated
+
     sede = _seed_sede(db_session)
     _persona_in(db_session, sede_id=sede.id, first_name="A")
     _commit(db_session)

@@ -181,9 +181,7 @@ def test_cache_invalidated_on_interaccion_crm_insert(db_session):
     _, admin_persona, sede = seed_admin(db_session)
     persona = _create_persona(db_session, sede)
 
-    pipeline = models.PipelineCRM(
-        id=uuid.uuid4(), sede_id=sede.id, nombre="P", tipo="NUEVOS_VISITANTES"
-    )
+    pipeline = models.PipelineCRM(id=uuid.uuid4(), sede_id=sede.id, nombre="P", tipo="NUEVOS_VISITANTES")
     etapa = models.EtapaPipeline(id=uuid.uuid4(), pipeline_id=pipeline.id, nombre="E", orden=1)
     db_session.add_all([pipeline, etapa])
     db_session.commit()
@@ -312,11 +310,7 @@ def test_update_pastoral_health_cache_hit_does_not_commit(db_session):
     db_session.rollback()
 
     # Si se hubiera hecho commit, la asistencia existiría en DB
-    asist_count = (
-        db_session.query(models.Asistencia)
-        .filter(models.Asistencia.id == pending_asist.id)
-        .count()
-    )
+    asist_count = db_session.query(models.Asistencia).filter(models.Asistencia.id == pending_asist.id).count()
     assert asist_count == 0
 
 
@@ -343,9 +337,7 @@ def test_cache_invalidated_on_bulk_asistencia_update(db_session):
 
     # Bulk update que bypass eventos de instancia
     db_session.execute(
-        update(models.Asistencia)
-        .where(models.Asistencia.persona_id == persona.id)
-        .values(estado="ausente")
+        update(models.Asistencia).where(models.Asistencia.persona_id == persona.id).values(estado="ausente")
     )
     db_session.commit()
 
@@ -374,9 +366,7 @@ def test_cache_invalidated_on_bulk_communication_log_delete(db_session):
     assert _get_cached_health(persona.id) is not None
 
     # Bulk delete que bypass eventos de instancia
-    db_session.execute(
-        delete(models.CommunicationLog).where(models.CommunicationLog.persona_id == persona.id)
-    )
+    db_session.execute(delete(models.CommunicationLog).where(models.CommunicationLog.persona_id == persona.id))
     db_session.commit()
 
     assert _get_cached_health(persona.id) is None
@@ -398,4 +388,3 @@ def test_cache_not_invalidated_on_unrelated_table_bulk_update(db_session):
     cached_after = _get_cached_health(persona.id)
     assert cached_after is not None
     assert cached_after == cached_before
-

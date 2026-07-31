@@ -73,15 +73,16 @@ def upgrade() -> None:
     op.create_index("ix_projects_owner_id", "projects", ["owner_id"])
     op.create_index("ix_projects_status", "projects", ["status"])
     op.create_index("ix_projects_created_at", "projects", ["created_at"])
-    op.create_index("ix_projects_active", "projects", ["deleted_at"],
-                    postgresql_where=sa.text("deleted_at IS NULL"))
+    op.create_index("ix_projects_active", "projects", ["deleted_at"], postgresql_where=sa.text("deleted_at IS NULL"))
 
     # ── project_tasks ─────────────────────────────────────────────────────
     op.create_table(
         "project_tasks",
         sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
         sa.Column("project_id", UUID(as_uuid=True), sa.ForeignKey("projects.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("parent_id", UUID(as_uuid=True), sa.ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=True),
+        sa.Column(
+            "parent_id", UUID(as_uuid=True), sa.ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=True
+        ),
         sa.Column("order_index", sa.Integer(), server_default="0"),
         sa.Column("title", sa.String(200), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
@@ -98,8 +99,9 @@ def upgrade() -> None:
     op.create_index("ix_project_tasks_project_id", "project_tasks", ["project_id"])
     op.create_index("ix_project_tasks_assignee_id", "project_tasks", ["assignee_id"])
     op.create_index("ix_project_tasks_status", "project_tasks", ["status"])
-    op.create_index("ix_project_tasks_active", "project_tasks", ["deleted_at"],
-                    postgresql_where=sa.text("deleted_at IS NULL"))
+    op.create_index(
+        "ix_project_tasks_active", "project_tasks", ["deleted_at"], postgresql_where=sa.text("deleted_at IS NULL")
+    )
 
     # ── project_milestones ────────────────────────────────────────────────
     op.create_table(
@@ -170,7 +172,13 @@ def upgrade() -> None:
     op.create_table(
         "project_whiteboards",
         sa.Column("id", sa.Integer(), sa.Identity(), primary_key=True),
-        sa.Column("project_id", UUID(as_uuid=True), sa.ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, unique=True),
+        sa.Column(
+            "project_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("projects.id", ondelete="CASCADE"),
+            nullable=False,
+            unique=True,
+        ),
         sa.Column("title", sa.String(200), nullable=False, server_default="'Pizarra'"),
         sa.Column("elements_json", sa.Text(), nullable=False, server_default="'[]'"),
         sa.Column("thumbnail_url", sa.String(500), nullable=True),

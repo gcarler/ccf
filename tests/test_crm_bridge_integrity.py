@@ -1,16 +1,16 @@
 """Cover remaining IntegrityError paths in evangelism_crm_bridge.py."""
+
 from __future__ import annotations
 
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import pytest
 from sqlalchemy.exc import IntegrityError
 
 from backend.services.evangelism_crm_bridge import (
     _crm_casos_live_column_names,
-    _obtener_o_crear_pipeline_nuevos_visitantes,
     _obtener_o_crear_etapa_nuevo_contacto,
+    _obtener_o_crear_pipeline_nuevos_visitantes,
 )
 
 
@@ -27,8 +27,7 @@ class TestCrmCasosLiveColumnNames:
         mock_db = MagicMock()
         mock_bind = MagicMock()
         mock_db.get_bind.return_value = mock_bind
-        with patch("backend.services.evangelism_crm_bridge.inspect",
-                   side_effect=Exception("no table")):
+        with patch("backend.services.evangelism_crm_bridge.inspect", side_effect=Exception("no table")):
             result = _crm_casos_live_column_names(mock_db)
         assert result == set()
 
@@ -38,9 +37,13 @@ class TestPipelineIntegrityError:
         """Lines 224-237: IntegrityError during pipeline creation."""
         # Create a pipeline first so there's something in the DB
         from backend.models_crm_pipeline import PipelineCRM, TipoPipelineEnum
+
         existing = PipelineCRM(
-            id=uuid.uuid4(), sede_id=sede.id, nombre="Nuevos Visitantes",
-            tipo=TipoPipelineEnum.NUEVOS_VISITANTES, activo=True,
+            id=uuid.uuid4(),
+            sede_id=sede.id,
+            nombre="Nuevos Visitantes",
+            tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+            activo=True,
         )
         db_session.add(existing)
         db_session.commit()
@@ -71,7 +74,6 @@ class TestPipelineIntegrityError:
 class TestEtapaIntegrityError:
     def test_integrity_error_fallback_to_existing(self, db_session, sede):
         """Lines 319-347: IntegrityError during etapa creation."""
-        from backend.models_crm_pipeline import PipelineCRM
         pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)
 
         # First, create an etapa normally

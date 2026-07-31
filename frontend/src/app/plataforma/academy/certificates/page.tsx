@@ -75,7 +75,7 @@ export default function StudentCertificates() {
             const base = typeof window !== 'undefined' ? window.location.origin : '';
             const url = `${base}/academy/certificates/${certificate.certificate_code}`;
             if (navigator?.clipboard) {
-                navigator.clipboard.writeText(url).then(() => toast.success('Enlace copiado')); 
+                navigator.clipboard.writeText(url).then(() => toast.success('Enlace copiado'));
             } else {
                 toast.message('Comparte este enlace', { description: url });
             }

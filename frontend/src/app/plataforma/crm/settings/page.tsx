@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { SITE_NAME, SITE_EMAIL } from '@/lib/site-config';
-import { 
+import {
     Settings as SettingsIcon, Save, Globe, Shield,
     Smartphone, Users, Database, Bell,
     AlertTriangle, Zap,
@@ -188,7 +188,7 @@ export default function CrmSettingsPage() {
             ) : undefined}
         >
             <div className="max-w-[1000px] mx-auto space-y-3 pb-4 pt-6 px-4 font-sans">
-                
+
                 {/* 1. Header */}
                 <div className="flex flex-col space-y-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -202,7 +202,7 @@ export default function CrmSettingsPage() {
 
                 {/* 2. Settings Grid Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                    
+
                     {/* Navigation Sidebar */}
                     <motion.aside variants={containerVariants} initial="hidden" animate="show" className="space-y-1">
                         <SettingsNavButton active={activeSection === 'general'} onClick={() => canEditCrm && setActiveTab('general')} icon={Globe} label="Información General" />
@@ -245,15 +245,15 @@ export default function CrmSettingsPage() {
                                     </div>
 
                                     <div className="space-y-4">
-                                        <ToggleSetting 
+                                        <ToggleSetting
                                             disabled={!canEditCrm}
-                                            icon={Smartphone} color="text-[hsl(var(--success))] bg-success-soft dark:bg-[hsl(var(--success))]/10" title="Canal de WhatsApp Business" 
+                                            icon={Smartphone} color="text-[hsl(var(--success))] bg-success-soft dark:bg-[hsl(var(--success))]/10" title="Canal de WhatsApp Business"
                                             desc="Habilita envío de notificaciones y seguimiento automático."
                                             active={config.enableWhatsApp} onToggle={(v: boolean) => setConfig({...config, enableWhatsApp: v})}
                                         />
-                                        <ToggleSetting 
+                                        <ToggleSetting
                                             disabled={!canEditCrm}
-                                            icon={Smartphone} color="text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10" title="Notificaciones SMS (Twilio)" 
+                                            icon={Smartphone} color="text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10" title="Notificaciones SMS (Twilio)"
                                             desc="Para alertas urgentes cuando no hay internet."
                                             active={config.enableSMS} onToggle={(v: boolean) => setConfig({...config, enableSMS: v})}
                                         />

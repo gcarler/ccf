@@ -21,7 +21,7 @@ export const SOURCES: Record<string, string> = {
     'Redes Sociales': '📱', Evento: '🎯', Otro: '📌',
 };
 
-export const STAGE_PROGRESS: Record<string, number> = { 
+export const STAGE_PROGRESS: Record<string, number> = {
     new: 20, call: 40, visit: 60, discipleship: 80, consolidated: 100,
     contacted: 40, visited: 60, in_process: 80, integrated: 100, converted: 100, lost: 0,
 };

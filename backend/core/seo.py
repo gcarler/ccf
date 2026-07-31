@@ -2,6 +2,7 @@
 
 This module is framework-agnostic and works with the CCF CMS models.
 """
+
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
@@ -158,14 +159,16 @@ def build_faq_page_json_ld(
         a = item.get("answer", "")
         if not q or not a:
             continue
-        main_entity.append({
-            "@type": "Question",
-            "name": q,
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": a,
-            },
-        })
+        main_entity.append(
+            {
+                "@type": "Question",
+                "name": q,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": a,
+                },
+            }
+        )
     data: Dict[str, Any] = {
         "@context": "https://schema.org",
         "@type": "FAQPage",

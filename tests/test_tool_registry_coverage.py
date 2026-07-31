@@ -1,6 +1,7 @@
 """
 Coverage for tool_registry module.
 """
+
 from backend.services.tool_registry import (
     ToolDefinition,
     ToolParameter,

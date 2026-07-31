@@ -161,14 +161,22 @@ class TestRBACPersonas:
         assert _post(client, "/api/crm/personas", json={"first_name": "X"}, h=miembro_h).status_code == 403
 
     def test_post_editor_ok(self, client, editor_h):
-        resp = _post(client, "/api/crm/personas",
-                     json={"first_name": "Test", "last_name": "User", "email": "t@ccf.test"}, h=editor_h)
+        resp = _post(
+            client,
+            "/api/crm/personas",
+            json={"first_name": "Test", "last_name": "User", "email": "t@ccf.test"},
+            h=editor_h,
+        )
         assert resp.status_code in (200, 201)
 
     def test_post_persona_inherits_user_sede(self, client, editor_h, db_session):
         unique_email = f"sede_{_uuid.uuid4().hex[:6]}@ccf.test"
-        resp = _post(client, "/api/crm/personas",
-                     json={"first_name": "Sede", "last_name": "Test", "email": unique_email}, h=editor_h)
+        resp = _post(
+            client,
+            "/api/crm/personas",
+            json={"first_name": "Sede", "last_name": "Test", "email": unique_email},
+            h=editor_h,
+        )
         assert resp.status_code in (200, 201)
         data = resp.json()
         persona_id = data.get("id") or data.get("persona_id")
@@ -265,19 +273,25 @@ class TestRBACAutomations:
         assert _get(client, "/api/crm/automations/palette", miembro_h).status_code == 403
 
     def test_flows_requires_edit(self, client, lector_h):
-        resp = _post(client, "/api/crm/automations/flows",
-                     json={"name": "test", "nodes": [], "edges": []}, h=lector_h)
+        resp = _post(client, "/api/crm/automations/flows", json={"name": "test", "nodes": [], "edges": []}, h=lector_h)
         assert resp.status_code == 403
 
     def test_flows_editor_ok(self, client, editor_h):
-        resp = _post(client, "/api/crm/automations/flows",
-                     json={"name": "test-flow", "nodes": [], "edges": []}, h=editor_h)
+        resp = _post(
+            client, "/api/crm/automations/flows", json={"name": "test-flow", "nodes": [], "edges": []}, h=editor_h
+        )
         assert resp.status_code in (200, 201)
 
     def test_validate_path_requires_edit(self, client, lector_h):
-        resp = _post(client, "/api/crm/automations/flows/validate-path",
-                     json={"nodes": ["n1", "n2", "n3"], "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n3"}]},
-                     h=lector_h)
+        resp = _post(
+            client,
+            "/api/crm/automations/flows/validate-path",
+            json={
+                "nodes": ["n1", "n2", "n3"],
+                "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n3"}],
+            },
+            h=lector_h,
+        )
         assert resp.status_code == 403
 
 
@@ -326,6 +340,5 @@ class TestRBACProfile:
         assert _patch(client, "/api/crm/personas/me/profile", json={"phone": "123"}).status_code == 401
 
     def test_patch_me_profile_any_role_ok(self, client, miembro_h):
-        resp = _patch(client, "/api/crm/personas/me/profile",
-                      json={"phone": "+57 300 000 0000"}, h=miembro_h)
+        resp = _patch(client, "/api/crm/personas/me/profile", json={"phone": "+57 300 000 0000"}, h=miembro_h)
         assert resp.status_code == 200

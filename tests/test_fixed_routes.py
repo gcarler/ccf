@@ -1,4 +1,5 @@
 """Fixed tests with correct API routes — based on actual route inspection."""
+
 import uuid
 
 import pytest
@@ -21,6 +22,7 @@ def client_auth(client, db_session, admin_data):
 # ═══════════════════════════════════════════════════════════════════════════════
 # PASTORAL — routes confirmed from /api/crm/*
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestPastoralFixed:
     def test_list_cases(self, client_auth):
@@ -90,15 +92,20 @@ class TestPastoralFixed:
 
     def test_create_role(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/crm/roles", json={
-            "nombre": f"Role {uuid.uuid4().hex[:6]}",
-        }, headers=headers)
+        resp = client.post(
+            "/api/crm/roles",
+            json={
+                "nombre": f"Role {uuid.uuid4().hex[:6]}",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # ADMIN — routes confirmed from /api/admin/*
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAdminFixed:
     def test_list_roles(self, client_auth):
@@ -203,33 +210,48 @@ class TestAdminFixed:
 
     def test_set_variable(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/variables", json={"key": f"k_{uuid.uuid4().hex[:6]}", "value": "v"}, headers=headers)
+        resp = client.post(
+            "/api/admin/variables", json={"key": f"k_{uuid.uuid4().hex[:6]}", "value": "v"}, headers=headers
+        )
         assert resp.status_code in (200, 201, 400, 405, 422)
 
     def test_create_automation(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/automations", json={"name": f"A {uuid.uuid4().hex[:6]}", "trigger_type": "manual", "action_type": "notification"}, headers=headers)
+        resp = client.post(
+            "/api/admin/automations",
+            json={"name": f"A {uuid.uuid4().hex[:6]}", "trigger_type": "manual", "action_type": "notification"},
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 405, 422)
 
     def test_create_donation_category(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/donation-categories", json={"nombre": f"Cat {uuid.uuid4().hex[:6]}"}, headers=headers)
+        resp = client.post(
+            "/api/admin/donation-categories", json={"nombre": f"Cat {uuid.uuid4().hex[:6]}"}, headers=headers
+        )
         assert resp.status_code in (200, 201, 400, 405, 422)
 
     def test_create_testimonial(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/testimonials", json={"author_name": "Author", "content": "Great!"}, headers=headers)
+        resp = client.post(
+            "/api/admin/testimonials", json={"author_name": "Author", "content": "Great!"}, headers=headers
+        )
         assert resp.status_code in (200, 201, 400, 405, 422)
 
     def test_create_announcement(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/announcements", json={"title": f"Ann {uuid.uuid4().hex[:6]}", "content": "Test"}, headers=headers)
+        resp = client.post(
+            "/api/admin/announcements",
+            json={"title": f"Ann {uuid.uuid4().hex[:6]}", "content": "Test"},
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 405, 422)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # AUTH V3 — routes confirmed from /api/v3/auth/*
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAuthFixed:
     def test_login(self, client):
@@ -253,6 +275,7 @@ class TestAuthFixed:
 # ═══════════════════════════════════════════════════════════════════════════════
 # EVANGELISM — routes confirmed from /api/evangelism/*
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestEvangelismFixed:
     def test_list_grupos(self, client_auth):
@@ -300,6 +323,7 @@ class TestEvangelismFixed:
 # PROJECTS — routes confirmed from /api/projects/*
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestProjectsFixed:
     def test_list_projects(self, client_auth):
         client, headers, _ = client_auth
@@ -340,6 +364,7 @@ class TestProjectsFixed:
 # ═══════════════════════════════════════════════════════════════════════════════
 # AGENTS — routes confirmed from /api/agents/*
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAgentsFixed:
     def test_agents_root(self, client_auth):
@@ -386,6 +411,7 @@ class TestAgentsFixed:
 # ═══════════════════════════════════════════════════════════════════════════════
 # CMS V2 — routes confirmed from /api/cms/v2/*
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCMSV2Fixed:
     def test_list_sites(self, client_auth):
@@ -465,6 +491,7 @@ class TestCMSV2Fixed:
 # WORKSPACE — routes confirmed from /api/workspace/*
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestWorkspaceFixed:
     def test_config(self, client_auth):
         client, headers, _ = client_auth
@@ -521,6 +548,7 @@ class TestWorkspaceFixed:
 # SYSTEM — routes confirmed from /api/system/*
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestSystemFixed:
     def test_health(self, client):
         resp = client.get("/api/system/health")
@@ -554,6 +582,7 @@ class TestSystemFixed:
 # ═══════════════════════════════════════════════════════════════════════════════
 # OTHER ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestOtherFixed:
     def test_kernel_ministries(self, client_auth):

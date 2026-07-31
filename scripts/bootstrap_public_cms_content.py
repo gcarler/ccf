@@ -9,6 +9,7 @@ This orchestrator keeps the public content recovery path repeatable:
 
 The script is intentionally idempotent and can be rerun after content drift.
 """
+
 from __future__ import annotations
 
 import sys
@@ -28,9 +29,9 @@ if str(_PROJECT_ROOT / "scripts") not in sys.path:
 
 
 def main() -> int:
+    from ensure_public_cms_pages import main as ensure_public_pages
     from seed_public_cms_v2_sections import run as seed_public_sections
     from seed_public_menus_and_footer import main as seed_menus_and_footer
-    from ensure_public_cms_pages import main as ensure_public_pages
 
     print("=== Public CMS content bootstrap (ccf) ===")
     rc = seed_public_sections("ccf")

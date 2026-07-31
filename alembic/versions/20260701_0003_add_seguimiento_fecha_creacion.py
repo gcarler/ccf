@@ -35,9 +35,7 @@ def _has_column(table: str, column: str) -> bool:
 
 
 def upgrade() -> None:
-    if _has_table("registros_seguimiento") and not _has_column(
-        "registros_seguimiento", "fecha_creacion"
-    ):
+    if _has_table("registros_seguimiento") and not _has_column("registros_seguimiento", "fecha_creacion"):
         op.add_column(
             "registros_seguimiento",
             sa.Column(

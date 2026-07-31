@@ -2,6 +2,7 @@
 MASSIVE COVERAGE — One giant test that creates rich data and calls EVERY function.
 This is the most efficient approach: create data ONCE, then call 200+ functions.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -25,10 +26,13 @@ def _c(fn, *a, **kw):
 class P:
     def __init__(self, **kw):
         self._d = kw
+
     def model_dump(self, exclude_unset=False, exclude=None, **kw):
         return self._d
+
     def __getattr__(self, name):
         return self._d.get(name)
+
     def __getitem__(self, key):
         return self._d[key]
 
@@ -52,64 +56,111 @@ def rich_data(client, db_session):
     personas = []
     for i in range(20):
         p = models.Persona(
-            first_name=f"U{i}", last_name=f"T{i}",
+            first_name=f"U{i}",
+            last_name=f"T{i}",
             email=f"u{i}_{uuid.uuid4().hex[:6]}@t.com",
             phone=f"+5730011122{i:02d}",
-            spiritual_status=["Miembro","Visitante","Nuevo","Activo","Inactivo"][i%5],
-            church_role=["Miembro","Líder","Pastor","Voluntario","Coordinador"][i%5],
-            estado_vital=["ACTIVO","ACTIVO","INACTIVO","ACTIVO","ACTIVO"][i%5],
-            sede_id=sede.id, sex=["M","F"][i%2])
-        db_session.add(p); personas.append(p)
+            spiritual_status=["Miembro", "Visitante", "Nuevo", "Activo", "Inactivo"][i % 5],
+            church_role=["Miembro", "Líder", "Pastor", "Voluntario", "Coordinador"][i % 5],
+            estado_vital=["ACTIVO", "ACTIVO", "INACTIVO", "ACTIVO", "ACTIVO"][i % 5],
+            sede_id=sede.id,
+            sex=["M", "F"][i % 2],
+        )
+        db_session.add(p)
+        personas.append(p)
     db_session.commit()
-    for p in personas: db_session.refresh(p)
+    for p in personas:
+        db_session.refresh(p)
 
     # Cases
     pipe = PipelineCRM(sede_id=sede.id, nombre="P", tipo=TipoPipelineEnum.NUEVOS_VISITANTES)
-    db_session.add(pipe); db_session.flush()
+    db_session.add(pipe)
+    db_session.flush()
     e1 = EtapaPipeline(pipeline_id=pipe.id, nombre="E1", orden=1)
-    db_session.add(e1); db_session.flush()
+    db_session.add(e1)
+    db_session.flush()
     cases = []
     for i, p in enumerate(personas[:8]):
-        c = CasoCRM(persona_id=p.id, sede_id=sede.id, titulo_caso=f"C{i}",
-            pipeline_id=pipe.id, etapa_actual_id=e1.id, origen_canal=CanalOrigenEnum.EVANGELISMO)
-        db_session.add(c); cases.append(c)
+        c = CasoCRM(
+            persona_id=p.id,
+            sede_id=sede.id,
+            titulo_caso=f"C{i}",
+            pipeline_id=pipe.id,
+            etapa_actual_id=e1.id,
+            origen_canal=CanalOrigenEnum.EVANGELISMO,
+        )
+        db_session.add(c)
+        cases.append(c)
     db_session.commit()
-    for c in cases: db_session.refresh(c)
+    for c in cases:
+        db_session.refresh(c)
 
     # Projects
     projects = []
     for i in range(6):
         pr = models.Project(title=f"P{i}", description=f"D{i}", status="active", sede_id=sede.id)
-        db_session.add(pr); projects.append(pr)
+        db_session.add(pr)
+        projects.append(pr)
     db_session.commit()
-    for pr in projects: db_session.refresh(pr)
+    for pr in projects:
+        db_session.refresh(pr)
     for i, pr in enumerate(projects[:4]):
         for j in range(4):
-            db_session.add(models.ProjectTask(project_id=pr.id, title=f"T{i}_{j}",
-                status=["pending","in_progress","done","pending"][j]))
-        db_session.add(models.ProjectMilestone(project_id=pr.id, title=f"MS{i}",
-            target_date=datetime.now(timezone.utc)+timedelta(days=30)))
-        db_session.add(models.ProjectComment(project_id=pr.id, author_id=str(personas[i].id),
-            content=f"Cmt{i}", is_resolved=i%2==0))
-        db_session.add(models.ProjectActivityLog(project_id=pr.id, persona_id=str(personas[i].id),
-            action_type="project_created", description=f"Created {pr.title}"))
+            db_session.add(
+                models.ProjectTask(
+                    project_id=pr.id, title=f"T{i}_{j}", status=["pending", "in_progress", "done", "pending"][j]
+                )
+            )
+        db_session.add(
+            models.ProjectMilestone(
+                project_id=pr.id, title=f"MS{i}", target_date=datetime.now(timezone.utc) + timedelta(days=30)
+            )
+        )
+        db_session.add(
+            models.ProjectComment(
+                project_id=pr.id, author_id=str(personas[i].id), content=f"Cmt{i}", is_resolved=i % 2 == 0
+            )
+        )
+        db_session.add(
+            models.ProjectActivityLog(
+                project_id=pr.id,
+                persona_id=str(personas[i].id),
+                action_type="project_created",
+                description=f"Created {pr.title}",
+            )
+        )
     db_session.commit()
 
     # Evangelism
     cat = CategoriaEstrategia(nombre="Cat")
-    db_session.add(cat); db_session.flush()
-    strat = EstrategiaEvangelismo(nombre="S", sede_id=sede.id, frecuencia="semanal",
-        categoria_id=cat.id, fecha_inicio=datetime.now(timezone.utc)-timedelta(days=90),
-        fecha_fin=datetime.now(timezone.utc)+timedelta(days=90))
-    db_session.add(strat); db_session.flush()
+    db_session.add(cat)
+    db_session.flush()
+    strat = EstrategiaEvangelismo(
+        nombre="S",
+        sede_id=sede.id,
+        frecuencia="semanal",
+        categoria_id=cat.id,
+        fecha_inicio=datetime.now(timezone.utc) - timedelta(days=90),
+        fecha_fin=datetime.now(timezone.utc) + timedelta(days=90),
+    )
+    db_session.add(strat)
+    db_session.flush()
     groups = []
     for i in range(6):
-        g = GrupoEvangelismo(nombre=f"G{i}", ubicacion=f"U{i}", sede_id=sede.id,
-            lider_persona_id=personas[i].id, codigo=f"G{uuid.uuid4().hex[:6]}",
-            capacidad=25, estrategia_id=strat.id)
-        db_session.add(g); groups.append(g)
+        g = GrupoEvangelismo(
+            nombre=f"G{i}",
+            ubicacion=f"U{i}",
+            sede_id=sede.id,
+            lider_persona_id=personas[i].id,
+            codigo=f"G{uuid.uuid4().hex[:6]}",
+            capacidad=25,
+            estrategia_id=strat.id,
+        )
+        db_session.add(g)
+        groups.append(g)
     db_session.commit()
-    for g in groups: db_session.refresh(g)
+    for g in groups:
+        db_session.refresh(g)
     for g in groups:
         for i in range(6):
             db_session.add(ParticipanteGrupo(grupo_id=g.id, persona_id=personas[i].id, rol_base="Miembro"))
@@ -117,42 +168,77 @@ def rich_data(client, db_session):
     sessions = []
     for g in groups:
         for j in range(4):
-            s = SesionGrupo(grupo_id=g.id, tema_estudio=f"S{j}",
-                fecha_sesion=datetime.now(timezone.utc)-timedelta(days=35-j*7))
-            db_session.add(s); sessions.append(s)
+            s = SesionGrupo(
+                grupo_id=g.id,
+                tema_estudio=f"S{j}",
+                fecha_sesion=datetime.now(timezone.utc) - timedelta(days=35 - j * 7),
+            )
+            db_session.add(s)
+            sessions.append(s)
     db_session.commit()
-    for s in sessions: db_session.refresh(s)
     for s in sessions:
-        for pg in db_session.query(ParticipanteGrupo).filter(
-            ParticipanteGrupo.grupo_id==s.grupo_id).limit(3).all():
+        db_session.refresh(s)
+    for s in sessions:
+        for pg in db_session.query(ParticipanteGrupo).filter(ParticipanteGrupo.grupo_id == s.grupo_id).limit(3).all():
             db_session.add(Asistencia(sesion_id=s.id, persona_id=pg.persona_id, estado="ASISTIO"))
     db_session.commit()
 
     # CRM entities
     for i in range(8):
-        db_session.add(models.TareaCRM(title=f"Task{i}", persona_id=personas[i].id,
-            status=["pending","completed","in_progress"][i%3]))
-        db_session.add(models.CounselingTicket(persona_id=personas[i].id,
-            subject=f"CT{i}", status=["open","resolved"][i%2], notes=f"N{i}"))
-        db_session.add(models.PrayerRequest(requester_name=personas[i].first_name,
-            request_text=f"P{i}", sede_id=sede.id, source=["web","app"][i%2]))
-        db_session.add(models.CommunicationLog(persona_id=personas[i].id,
-            channel=["email","whatsapp","sms"][i%3], content=f"M{i}"))
-        db_session.add(models.VolunteerShift(persona_id=personas[i].id,
-            role_name=["worship","kids","tech","media","sound","media","worship","kids"][i],
-            team_name=["worship","kids","tech","media","sound","media","worship","kids"][i],
-            shift_start=datetime.now(timezone.utc)-timedelta(hours=8),
-            shift_end=datetime.now(timezone.utc)))
+        db_session.add(
+            models.TareaCRM(
+                title=f"Task{i}", persona_id=personas[i].id, status=["pending", "completed", "in_progress"][i % 3]
+            )
+        )
+        db_session.add(
+            models.CounselingTicket(
+                persona_id=personas[i].id, subject=f"CT{i}", status=["open", "resolved"][i % 2], notes=f"N{i}"
+            )
+        )
+        db_session.add(
+            models.PrayerRequest(
+                requester_name=personas[i].first_name,
+                request_text=f"P{i}",
+                sede_id=sede.id,
+                source=["web", "app"][i % 2],
+            )
+        )
+        db_session.add(
+            models.CommunicationLog(
+                persona_id=personas[i].id, channel=["email", "whatsapp", "sms"][i % 3], content=f"M{i}"
+            )
+        )
+        db_session.add(
+            models.VolunteerShift(
+                persona_id=personas[i].id,
+                role_name=["worship", "kids", "tech", "media", "sound", "media", "worship", "kids"][i],
+                team_name=["worship", "kids", "tech", "media", "sound", "media", "worship", "kids"][i],
+                shift_start=datetime.now(timezone.utc) - timedelta(hours=8),
+                shift_end=datetime.now(timezone.utc),
+            )
+        )
     db_session.commit()
 
     headers = _auth_headers(client, email=admin.email, password="testpass123")
-    return {"c": client, "h": headers, "sede": sede, "admin": admin, "personas": personas,
-            "cases": cases, "projects": projects, "groups": groups, "sessions": sessions, "strat": strat, "db": db_session}
+    return {
+        "c": client,
+        "h": headers,
+        "sede": sede,
+        "admin": admin,
+        "personas": personas,
+        "cases": cases,
+        "projects": projects,
+        "groups": groups,
+        "sessions": sessions,
+        "strat": strat,
+        "db": db_session,
+    }
 
 
 class TestCRMAllFunctions:
     def test_search_personas_every_filter(self, rich_data):
         from backend.crud.crm import search_personas
+
         db, sid = rich_data["db"], str(rich_data["sede"].id)
         for kw in [
             dict(search="U0", sede_id=sid),
@@ -170,6 +256,7 @@ class TestCRMAllFunctions:
 
     def test_search_personas_every_filter(self, rich_data):
         from backend.crud.crm import search_personas
+
         db, sid = rich_data["db"], str(rich_data["sede"].id)
         for kw in [
             dict(sede_id=sid),
@@ -183,6 +270,7 @@ class TestCRMAllFunctions:
 
     def test_search_personas_paginated_every_filter(self, rich_data):
         from backend.crud.crm import search_personas_paginated
+
         db, sid = rich_data["db"], str(rich_data["sede"].id)
         for kw in [
             dict(sede_id=sid, offset=0, limit=5),
@@ -196,22 +284,31 @@ class TestCRMAllFunctions:
     def test_create_persona_new(self, rich_data):
         from backend.crud.crm import create_persona
         from backend.schemas import PersonaCreate
+
         db = rich_data["db"]
-        p = create_persona(db, PersonaCreate(first_name="Brand", last_name="NewPerson",
-            email=f"br_{uuid.uuid4().hex[:6]}@t.com", phone="+573008888888"))
+        p = create_persona(
+            db,
+            PersonaCreate(
+                first_name="Brand",
+                last_name="NewPerson",
+                email=f"br_{uuid.uuid4().hex[:6]}@t.com",
+                phone="+573008888888",
+            ),
+        )
         assert p.id is not None
 
     def test_create_persona_duplicate_phone(self, rich_data):
         from backend.crud.crm import create_persona
         from backend.schemas import PersonaCreate
+
         db = rich_data["db"]
-        p = create_persona(db, PersonaCreate(first_name="Dup", last_name="Phone",
-            phone=rich_data["personas"][0].phone))
+        p = create_persona(db, PersonaCreate(first_name="Dup", last_name="Phone", phone=rich_data["personas"][0].phone))
         assert str(p.id) == str(rich_data["personas"][0].id)
 
     def test_create_persona_duplicate_id_number(self, rich_data):
         from backend.crud.crm import create_persona
         from backend.schemas import PersonaCreate
+
         db = rich_data["db"]
         rich_data["personas"][0].id_number = "ID123"
         db.commit()
@@ -221,29 +318,40 @@ class TestCRMAllFunctions:
     def test_update_persona_every_field(self, rich_data):
         from backend.crud.crm import update_persona
         from backend.schemas import PersonaUpdate
+
         db = rich_data["db"]
         pid = str(rich_data["personas"][0].id)
-        result = update_persona(db, pid, PersonaUpdate(
-            first_name="Updated", last_name="Name",
-            email=f"upd_{uuid.uuid4().hex[:6]}@t.com",
-            phone="+573007777777", church_role="Líder",
-            estado_vital="ACTIVO"))
+        result = update_persona(
+            db,
+            pid,
+            PersonaUpdate(
+                first_name="Updated",
+                last_name="Name",
+                email=f"upd_{uuid.uuid4().hex[:6]}@t.com",
+                phone="+573007777777",
+                church_role="Líder",
+                estado_vital="ACTIVO",
+            ),
+        )
         assert result is not None
 
     def test_delete_persona(self, rich_data):
         from backend.crud.crm import delete_persona
+
         db = rich_data["db"]
         result = delete_persona(db, str(rich_data["personas"][19].id))
         assert result is True
 
     def test_persona_timeline(self, rich_data):
         from backend.crud.crm import get_persona_timeline
+
         db = rich_data["db"]
         result = _c(get_persona_timeline, db, str(rich_data["personas"][0].id))
         assert result is not None and len(result) > 0
 
     def test_families_crud(self, rich_data):
         from backend.crud.crm import create_family, get_families, get_family_personas
+
         db = rich_data["db"]
         families = _c(get_families, db)
         assert isinstance(families, list)
@@ -252,11 +360,18 @@ class TestCRMAllFunctions:
 
     def test_counseling_tickets_every_filter(self, rich_data):
         from backend.crud.crm import get_counseling_tickets
+
         db = rich_data["db"]
         sid = str(rich_data["sede"].id)
         pid = str(rich_data["personas"][0].id)
-        for kw in [dict(), dict(status="open"), dict(status="resolved"),
-                   dict(persona_id=pid), dict(sede_id=sid), dict(skip=0, limit=3)]:
+        for kw in [
+            dict(),
+            dict(status="open"),
+            dict(status="resolved"),
+            dict(persona_id=pid),
+            dict(sede_id=sid),
+            dict(skip=0, limit=3),
+        ]:
             result = _c(get_counseling_tickets, db, **kw)
             assert isinstance(result, (list, dict))
 
@@ -277,14 +392,15 @@ class TestCRMAllFunctions:
 
     def test_prayer_requests_every_filter(self, rich_data):
         from backend.crud.crm import get_prayer_requests
+
         db = rich_data["db"]
-        for kw in [dict(), dict(status="pending"), dict(status="answered"),
-                   dict(skip=0, limit=3)]:
+        for kw in [dict(), dict(status="pending"), dict(status="answered"), dict(skip=0, limit=3)]:
             result = _c(get_prayer_requests, db, **kw)
             assert isinstance(result, (list, dict))
 
     def test_grupos(self, rich_data):
         from backend.crud.crm import get_grupo, get_grupos
+
         db = rich_data["db"]
         groups = _c(get_grupos, db)
         assert isinstance(groups, list)
@@ -292,6 +408,7 @@ class TestCRMAllFunctions:
 
     def test_volunteer_shifts_every_filter(self, rich_data):
         from backend.crud.crm import get_volunteer_shifts
+
         db = rich_data["db"]
         pid = str(rich_data["personas"][0].id)
         for kw in [dict(), dict(persona_id=pid)]:
@@ -300,6 +417,7 @@ class TestCRMAllFunctions:
 
     def test_communication_logs(self, rich_data):
         from backend.crud.crm import get_communication_logs
+
         db = rich_data["db"]
         result = _c(get_communication_logs, db)
         assert isinstance(result, (list, dict))
@@ -308,7 +426,9 @@ class TestCRMAllFunctions:
 
     def test_crm_events(self, rich_data):
         from backend.crud.crm import get_crm_events
-        db = rich_data["db"]; sid = str(rich_data["sede"].id)
+
+        db = rich_data["db"]
+        sid = str(rich_data["sede"].id)
         result = _c(get_crm_events, db, sede_id=sid)
         assert isinstance(result, (list, dict))
         result = _c(get_crm_events, db, sede_id=sid, skip=0, limit=3)
@@ -316,6 +436,7 @@ class TestCRMAllFunctions:
 
     def test_crm_tasks_every_filter(self, rich_data):
         from backend.crud.crm import get_crm_tasks
+
         db = rich_data["db"]
         pid = str(rich_data["personas"][0].id)
         for kw in [dict(), dict(assignee_persona_id=pid), dict(persona_id=pid)]:
@@ -339,6 +460,7 @@ class TestCRMAllFunctions:
 
     def test_donations(self, rich_data):
         from backend.crud.crm import get_donations, get_total_donations_amount
+
         db = rich_data["db"]
         result = _c(get_donations, db)
         assert isinstance(result, (list, dict))
@@ -347,6 +469,7 @@ class TestCRMAllFunctions:
 
     def test_talents(self, rich_data):
         from backend.crud.crm import get_talents
+
         db = rich_data["db"]
         result = _c(get_talents, db)
         assert isinstance(result, (list, dict))
@@ -355,6 +478,7 @@ class TestCRMAllFunctions:
 
     def test_community_cards(self, rich_data):
         from backend.crud.crm import get_community_cards
+
         db = rich_data["db"]
         for kw in [dict(), dict(column_id="test")]:
             result = _c(get_community_cards, db, **kw)
@@ -378,6 +502,7 @@ class TestCRMAllFunctions:
 
     def test_support_tickets(self, rich_data):
         from backend.crud.crm import get_support_tickets
+
         db = rich_data["db"]
         result = _c(get_support_tickets, db)
         assert isinstance(result, (list, dict))
@@ -386,6 +511,7 @@ class TestCRMAllFunctions:
 
     def test_notifications(self, rich_data):
         from backend.crud.crm import get_user_notifications, mark_all_notifications_read
+
         db = rich_data["db"]
         pid = str(rich_data["personas"][0].id)
         result = _c(get_user_notifications, db, pid)
@@ -396,6 +522,7 @@ class TestCRMAllFunctions:
 class TestCMSAllFunctions:
     def test_all_list_functions(self, rich_data):
         from backend.crud import cms
+
         db = rich_data["db"]
         # Old page_contents functions removed — CMS v2 uses CmsPage/CmsSection.
         # list_cms_sites / get_cms_site_by_key exercise the same coverage path.
@@ -505,6 +632,11 @@ class TestFlowEndpoints:
 
     def test_enterprise_cms_all_endpoints(self, rich_data):
         c, h = rich_data["c"], rich_data["h"]
-        for ep in ["/api/cms/v2/webhooks", "/api/cms/v2/redirects",
-                   "/api/cms/v2/custom-types", "/api/cms/v2/glossary", "/api/cms/v2/media-folders"]:
+        for ep in [
+            "/api/cms/v2/webhooks",
+            "/api/cms/v2/redirects",
+            "/api/cms/v2/custom-types",
+            "/api/cms/v2/glossary",
+            "/api/cms/v2/media-folders",
+        ]:
             c.get(ep, headers=h)

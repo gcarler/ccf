@@ -15,9 +15,9 @@ export default function SpiritualLifeLayout({ children }: { children: React.Reac
             title: 'Mi Caminar',
             items: [
                 { id: 'sl-home',  label: 'Panel Espiritual',  href: '/plataforma/spiritual-life', icon: Heart },
-                { 
-                    id: 'sl-tl',    
-                    label: 'Línea de Tiempo',   
+                {
+                    id: 'sl-tl',
+                    label: 'Línea de Tiempo',
                     href: '/plataforma/spiritual-life/timeline',
                     icon: Calendar,
                     onClick: () => pushSidebarPanel({
@@ -26,9 +26,9 @@ export default function SpiritualLifeLayout({ children }: { children: React.Reac
                         content: <SpiritualTimelinePanel />
                     })
                 },
-                { 
-                    id: 'sl-certs', 
-                    label: 'Mis Certificados',  
+                {
+                    id: 'sl-certs',
+                    label: 'Mis Certificados',
                     href: '/plataforma/spiritual-life/certificates',
                     icon: Award,
                     onClick: () => pushSidebarPanel({
@@ -55,4 +55,3 @@ export default function SpiritualLifeLayout({ children }: { children: React.Reac
         </ModuleErrorBoundary>
     );
 }
-

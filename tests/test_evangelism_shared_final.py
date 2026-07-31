@@ -1,4 +1,5 @@
 """Final batch of unit tests for evangelism_shared.py uncovered functions."""
+
 from __future__ import annotations
 
 import uuid
@@ -11,16 +12,21 @@ class TestIsCRmAdminOrPastor:
         class M:
             role = "ADMIN"
             rol_plataforma = None
+
         assert shared._is_crm_admin_or_pastor(M()) is True
+
     def test_pastor(self):
         class M:
             role = "PASTOR"
             rol_plataforma = None
+
         assert shared._is_crm_admin_or_pastor(M()) is True
+
     def test_persona(self):
         class M:
             role = "persona"
             rol_plataforma = None
+
         assert shared._is_crm_admin_or_pastor(M()) is False
 
 
@@ -32,6 +38,7 @@ class TestNormalizeRoleScopePayload:
 class TestChannelLabel:
     def test_whatsapp(self):
         assert shared._channel_label("whatsapp") == "WhatsApp"
+
     def test_email(self):
         assert shared._channel_label("email") == "Email"
 

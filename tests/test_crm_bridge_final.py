@@ -1,14 +1,13 @@
 """Final push for evangelism_crm_bridge.py — remaining uncovered lines."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from backend import models
 from backend.models_evangelism import Sede
 from backend.services.evangelism_crm_bridge import (
     _crm_casos_live_column_names,
@@ -36,8 +35,7 @@ class TestCrmCasosLiveColumnNames:
         mock_db = MagicMock()
         mock_bind = MagicMock()
         mock_db.get_bind.return_value = mock_bind
-        with patch("backend.services.evangelism_crm_bridge.inspect",
-                   side_effect=Exception("no table")):
+        with patch("backend.services.evangelism_crm_bridge.inspect", side_effect=Exception("no table")):
             result = _crm_casos_live_column_names(mock_db)
         assert result == set()
 
@@ -50,8 +48,11 @@ class TestPipelineIntegrityErrorFinal:
 
         # Create pipeline so it exists in DB (needed for the query-after-error path)
         p1 = PipelineCRM(
-            id=uuid.uuid4(), sede_id=sede.id, nombre="Nuevos Visitantes",
-            tipo=TipoPipelineEnum.NUEVOS_VISITANTES, activo=True,
+            id=uuid.uuid4(),
+            sede_id=sede.id,
+            nombre="Nuevos Visitantes",
+            tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+            activo=True,
         )
         db_session.add(p1)
         db_session.commit()
@@ -80,10 +81,18 @@ class TestPipelineIntegrityErrorFinal:
     def test_integrity_error_pipeline_found(self, db_session, sede):
         """Lines 224-241: IntegrityError, pipeline found after rollback."""
         from backend.models_crm_pipeline import PipelineCRM
-        result = self._run_pipeline_integrity_test(db_session, sede, PipelineCRM(
-            id=uuid.uuid4(), sede_id=sede.id, nombre="Nuevos Visitantes",
-            tipo=None, activo=True,
-        ))
+
+        result = self._run_pipeline_integrity_test(
+            db_session,
+            sede,
+            PipelineCRM(
+                id=uuid.uuid4(),
+                sede_id=sede.id,
+                nombre="Nuevos Visitantes",
+                tipo=None,
+                activo=True,
+            ),
+        )
         assert result is not None
 
     def test_integrity_error_pipeline_not_found(self, db_session, sede):
@@ -95,10 +104,9 @@ class TestPipelineIntegrityErrorFinal:
 class TestEtapaIntegrityErrorFinal:
     def test_integrity_error_returns_existing(self, db_session, sede):
         """Cover etapa IntegrityError + fallback paths (lines 319-365)."""
-        from backend.models_crm_pipeline import PipelineCRM, EtapaPipeline, TipoPipelineEnum
         from backend.services.evangelism_crm_bridge import (
-            _obtener_o_crear_pipeline_nuevos_visitantes,
             _obtener_o_crear_etapa_nuevo_contacto,
+            _obtener_o_crear_pipeline_nuevos_visitantes,
         )
 
         # Create pipeline
@@ -122,10 +130,13 @@ class TestEtapaIntegrityErrorFinal:
                 class FakeQuery:
                     def filter(self, *a, **kw):
                         return self
+
                     def order_by(self, *a, **kw):
                         return self
+
                     def options(self, *a, **kw):
                         return self
+
                     def first(self):
                         call_count[0] += 1
                         if call_count[0] == 1:
@@ -142,10 +153,9 @@ class TestEtapaIntegrityErrorFinal:
 
     def test_integrity_error_etapa_not_found(self, db_session, sede):
         """Lines 342-365: etapa still missing after error -> warning."""
-        from backend.models_crm_pipeline import PipelineCRM, EtapaPipeline, TipoPipelineEnum
         from backend.services.evangelism_crm_bridge import (
-            _obtener_o_crear_pipeline_nuevos_visitantes,
             _obtener_o_crear_etapa_nuevo_contacto,
+            _obtener_o_crear_pipeline_nuevos_visitantes,
         )
 
         pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)

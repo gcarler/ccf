@@ -47,5 +47,5 @@ Importar desde `@/design`:
 
 ## Regla de oro
 
-> Si el backend dice "personas", el frontend dice "personas". 
+> Si el backend dice "personas", el frontend dice "personas".
 > Nunca inventes términos que no existen en el kernel.

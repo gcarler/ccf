@@ -2,6 +2,7 @@
 Comprehensive tests for evangelism_analytics.py — target 90%+.
 Covers all 9 analytics endpoints + helper functions.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -42,7 +43,9 @@ def _make_strategy(db, sede_id):
     db.add(cat)
     db.flush()
     s = EstrategiaEvangelismo(
-        id=uuid.uuid4(), nombre="Estrategia Analytics Test", sede_id=sede_id,
+        id=uuid.uuid4(),
+        nombre="Estrategia Analytics Test",
+        sede_id=sede_id,
         categoria_id=cat.id,
         fecha_inicio=datetime.now(timezone.utc),
         fecha_fin=datetime.now(timezone.utc) + timedelta(days=90),
@@ -54,9 +57,13 @@ def _make_strategy(db, sede_id):
 
 def _make_grupo(db, strategy_id, sede_id, lider_id=None):
     g = GrupoEvangelismo(
-        id=uuid.uuid4(), nombre=f"Grupo_{uuid.uuid4().hex[:6]}",
-        estrategia_id=strategy_id, sede_id=sede_id,
-        lider_persona_id=lider_id, activo=True, capacidad=20,
+        id=uuid.uuid4(),
+        nombre=f"Grupo_{uuid.uuid4().hex[:6]}",
+        estrategia_id=strategy_id,
+        sede_id=sede_id,
+        lider_persona_id=lider_id,
+        activo=True,
+        capacidad=20,
     )
     db.add(g)
     db.flush()
@@ -65,9 +72,11 @@ def _make_grupo(db, strategy_id, sede_id, lider_id=None):
 
 def _make_session(db, grupo_id, estado="REALIZADA", days_ago=1):
     s = SesionGrupo(
-        id=uuid.uuid4(), grupo_id=grupo_id,
+        id=uuid.uuid4(),
+        grupo_id=grupo_id,
         fecha_sesion=datetime.now(timezone.utc).date() - timedelta(days=days_ago),
-        estado=estado, estado_habilitacion="HABILITADO",
+        estado=estado,
+        estado_habilitacion="HABILITADO",
     )
     db.add(s)
     db.flush()
@@ -76,8 +85,10 @@ def _make_session(db, grupo_id, estado="REALIZADA", days_ago=1):
 
 def _make_participante(db, grupo_id, persona_id, rol_base="miembro"):
     p = ParticipanteGrupo(
-        grupo_id=grupo_id, persona_id=persona_id,
-        activo=True, rol_base=rol_base,
+        grupo_id=grupo_id,
+        persona_id=persona_id,
+        activo=True,
+        rol_base=rol_base,
         fecha_ingreso=datetime.now(timezone.utc).date() - timedelta(days=30),
     )
     db.add(p)
@@ -87,7 +98,9 @@ def _make_participante(db, grupo_id, persona_id, rol_base="miembro"):
 
 def _make_asistencia(db, session_id, persona_id, estado="ASISTIO"):
     a = Asistencia(
-        id=uuid.uuid4(), sesion_id=session_id, persona_id=persona_id,
+        id=uuid.uuid4(),
+        sesion_id=session_id,
+        persona_id=persona_id,
         estado=estado,
     )
     db.add(a)
@@ -201,6 +214,7 @@ class TestAnalyticsEndpoints:
 
     def test_strategy_kpis_with_data(self, full):
         from backend.models_crm import Persona
+
         strategy = _make_strategy(full["db"], full["sede"].id)
         p = Persona(id=uuid.uuid4(), first_name="A", last_name="K", sede_id=full["sede"].id)
         full["db"].add(p)
@@ -246,6 +260,7 @@ class TestAnalyticsEndpoints:
 
     def test_strategy_funnel(self, full):
         from backend.models_crm import Persona
+
         strategy = _make_strategy(full["db"], full["sede"].id)
         p = Persona(id=uuid.uuid4(), first_name="F", last_name="U", sede_id=full["sede"].id)
         full["db"].add(p)
@@ -284,6 +299,7 @@ class TestAnalyticsEndpoints:
 
     def test_strategy_alerts_with_low_attendance(self, full):
         from backend.models_crm import Persona
+
         strategy = _make_strategy(full["db"], full["sede"].id)
         p = Persona(id=uuid.uuid4(), first_name="L", last_name="A", sede_id=full["sede"].id)
         full["db"].add(p)
@@ -305,6 +321,7 @@ class TestAnalyticsEndpoints:
 
     def test_strategy_velocity(self, full):
         from backend.models_crm import Persona
+
         strategy = _make_strategy(full["db"], full["sede"].id)
         p = Persona(id=uuid.uuid4(), first_name="V", last_name="E", sede_id=full["sede"].id)
         full["db"].add(p)
@@ -319,6 +336,7 @@ class TestAnalyticsEndpoints:
 
     def test_strategy_groups_detail(self, full):
         from backend.models_crm import Persona
+
         strategy = _make_strategy(full["db"], full["sede"].id)
         p = Persona(id=uuid.uuid4(), first_name="G", last_name="D", sede_id=full["sede"].id)
         full["db"].add(p)
@@ -346,6 +364,7 @@ class TestAnalyticsEndpoints:
 
     def test_strategy_full_analytics(self, full):
         from backend.models_crm import Persona
+
         strategy = _make_strategy(full["db"], full["sede"].id)
         p = Persona(id=uuid.uuid4(), first_name="F", last_name="A", sede_id=full["sede"].id)
         full["db"].add(p)
@@ -427,8 +446,10 @@ class TestAnalyticsRBAC:
     def test_no_perms_403_on_kpis(self, client, db_session):
         _seed_admin(db_session)
         persona_user, _, _ = seed_user_with_role(
-            db_session, role_name="persona",
-            email="noanakpi@test.com", permisos={"default": "allow"},
+            db_session,
+            role_name="persona",
+            email="noanakpi@test.com",
+            permisos={"default": "allow"},
         )
         h = _auth_headers(client, email="noanakpi@test.com")
         resp = client.get(f"/api/evangelism/analytics/strategy/{uuid.uuid4()}", headers=h)
@@ -437,8 +458,10 @@ class TestAnalyticsRBAC:
     def test_read_only_200_on_kpis(self, client, db_session):
         admin, persona, sede = _seed_admin(db_session)
         read_user, _, _ = seed_user_with_role(
-            db_session, role_name="lector_analytics",
-            email="readana@test.com", permisos={"evangelism:read": "allow"},
+            db_session,
+            role_name="lector_analytics",
+            email="readana@test.com",
+            permisos={"evangelism:read": "allow"},
         )
         strategy = _make_strategy(db_session, sede.id)
         db_session.commit()
@@ -449,8 +472,10 @@ class TestAnalyticsRBAC:
     def test_no_perms_403_on_alerts(self, client, db_session):
         _seed_admin(db_session)
         persona_user, _, _ = seed_user_with_role(
-            db_session, role_name="persona",
-            email="noanaalt@test.com", permisos={"default": "allow"},
+            db_session,
+            role_name="persona",
+            email="noanaalt@test.com",
+            permisos={"default": "allow"},
         )
         h = _auth_headers(client, email="noanaalt@test.com")
         resp = client.get(f"/api/evangelism/analytics/strategy/{uuid.uuid4()}/alerts", headers=h)

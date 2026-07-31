@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    X as CloseIcon, 
-    Heart, 
-    History, 
-    Zap, 
-    XCircle, 
-    Eye, 
+import {
+    X as CloseIcon,
+    Heart,
+    History,
+    Zap,
+    XCircle,
+    Eye,
     EyeOff,
     CheckCircle2,
     Lock,
@@ -30,7 +30,7 @@ interface CounselingDetailSidebarProps {
 export default function CounselingDetailSidebar({ session: initialSession, onUpdate, onClose }: CounselingDetailSidebarProps) {
     const { token } = useAuth();
     const { addToast } = useToast();
-    
+
     const [session, setSession] = useState(initialSession);
     const [loading, setLoading] = useState(false);
     const [showNotes, setShowNotes] = useState(false);
@@ -56,10 +56,10 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
     const handleUpdateStatus = async (status: string) => {
         if (!token) return;
         try {
-            await apiFetch(`/crm/counseling/${session.id}`, { 
-                method: 'PATCH', 
-                token, 
-                body: { status } 
+            await apiFetch(`/crm/counseling/${session.id}`, {
+                method: 'PATCH',
+                token,
+                body: { status }
             });
             addToast(`Estado actualizado a ${status}`, 'success');
             fetchSessionDetails(session.id);
@@ -85,10 +85,10 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                 <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-info-text dark:text-white">
                     <Heart size={160} />
                 </div>
-                
+
                 <div className="flex justify-between items-start mb-3 relative z-10">
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="p-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all shadow-sm border border-[hsl(var(--border))] dark:border-white/5 active:scale-95"
                         aria-label="Cerrar"
                     >
@@ -106,7 +106,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                 </div>
 
                 <div className="flex items-center gap-4 relative z-10">
-                    <motion.div 
+                    <motion.div
                         whileHover={{ scale: 1.05 }}
                         className="size-10 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white shadow-2xl shadow-[hsl(var(--info)/30%)] border-4 border-white dark:border-[hsl(var(--border))]"
                     >
@@ -143,9 +143,9 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                     { id: 'timeline', label: 'Historial', icon: History },
                     { id: 'ai', label: 'Análisis IA', icon: Zap }
                 ].map(tab => (
-                    <button 
+                    <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)} 
+                        onClick={() => setActiveTab(tab.id as any)}
                         className={clsx(
                             "px-3 py-2 text-2xs font-bold uppercase tracking-wide border-b-2 transition-all flex items-center gap-2.5 shrink-0",
                             activeTab === tab.id ? "border-[hsl(var(--info)/100%)] text-info-text" : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white"
@@ -175,7 +175,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                     <h3 className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
                                         <Lock size={14} className="text-[hsl(var(--danger))]" /> Notas Confidenciales
                                     </h3>
-                                    <button 
+                                    <button
                                         onClick={() => setShowNotes(!showNotes)}
                                         className="text-2xs font-bold text-info-text uppercase tracking-wider flex items-center gap-1.5 p-1 px-2.5 bg-info-soft dark:bg-white/5 rounded-md border border-[hsl(var(--info)/20%)] dark:border-white/10 active:scale-90 transition-all"
                                     >
@@ -185,7 +185,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                 <div className="relative group overflow-hidden rounded-md">
                                     <AnimatePresence>
                                         {!showNotes && (
-                                            <motion.div 
+                                            <motion.div
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 exit={{ opacity: 0 }}
@@ -201,8 +201,8 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                     </AnimatePresence>
                                     <div className={clsx(
                                         "p-4 rounded-md border transition-all duration-700 min-h-[140px]",
-                                        showNotes 
-                                            ? "bg-danger-soft dark:bg-[hsl(var(--danger))]/[0.03] border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/100%)]/20" 
+                                        showNotes
+                                            ? "bg-danger-soft dark:bg-[hsl(var(--danger))]/[0.03] border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/100%)]/20"
                                             : "bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border-[hsl(var(--border))] dark:border-white/[0.05]"
                                     )}>
                                         <p className={clsx(
@@ -213,7 +213,7 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
                                         </p>
                                     </div>
                                     {showNotes && (
-                                        <motion.div 
+                                        <motion.div
                                             initial={{ y: -100 }}
                                             animate={{ y: 300 }}
                                             transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
@@ -225,13 +225,13 @@ export default function CounselingDetailSidebar({ session: initialSession, onUpd
 
                             {session.status === 'Pendiente' && (
                                 <div className="grid grid-cols-2 gap-3 pt-4">
-                                    <button 
+                                    <button
                                         onClick={() => handleUpdateStatus('Realizada')}
                                         className="py-2 bg-[hsl(var(--success))] text-white rounded-lg text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] flex items-center justify-center gap-2"
                                     >
                                         <CheckCircle2 size={14} /> Completar
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => handleUpdateStatus('Cancelada')}
                                         className="py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-bold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center gap-2"
                                     >

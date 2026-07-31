@@ -63,9 +63,7 @@ NOOPENER_PATTERN = re.compile(
     r'target\s*=\s*["\']_blank["\'][^>]{0,400}?rel\s*=\s*["\']noopener\s+noreferrer["\']',
     re.DOTALL,
 )
-ANY_TYPE_PATTERN = re.compile(
-    r":\s*any\b(?!\w)|<\s*any\s*>|\bas\s+any\b|Array\s*<\s*any\s*>"
-)
+ANY_TYPE_PATTERN = re.compile(r":\s*any\b(?!\w)|<\s*any\s*>|\bas\s+any\b|Array\s*<\s*any\s*>")
 AI_HARDCODED_PATTERN = re.compile(
     r"\b(AI\s+insight|inteligencia\s+artificial|generateInsight|suggestion\s+for\s+you|recommend\s+you\s+to)\b",
     re.IGNORECASE,
@@ -151,9 +149,9 @@ def test_acad_tkt_076_077_target_blank_with_noopener(relative_path: str) -> None
     """
     text = _read(relative_path)
     assert NOOPENER_PATTERN.search(text), (
-        f"TKT-076/TKT-077 drift: target=\"_blank\" sin rel=\"noopener noreferrer\" "
+        f'TKT-076/TKT-077 drift: target="_blank" sin rel="noopener noreferrer" '
         f"detectado en {relative_path}. Vulnerabilidad de window.opener — completar "
-        f"el tag <a target=\"_blank\" rel=\"noopener noreferrer\"> para cada link externo."
+        f'el tag <a target="_blank" rel="noopener noreferrer"> para cada link externo.'
     )
 
 

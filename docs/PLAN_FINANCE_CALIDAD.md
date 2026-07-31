@@ -135,4 +135,3 @@
 ## Hallazgo Estrella (Histórico)
 
 > **El módulo de finanzas tenía 30+ modelos con `sede_id` en la base de datos, pero CERO endpoints lo usaban para filtrar.** ✅ **Resuelto** en la sesión de hardening previa a 2026-07-25.
-

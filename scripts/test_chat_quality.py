@@ -7,6 +7,7 @@ Usage:
 
 Exit code 0 = all gates pass.
 """
+
 import subprocess
 import sys
 
@@ -24,25 +25,44 @@ def run(label: str, cmd: list[str]) -> bool:
         for line in result.stderr.splitlines()[-5:]:
             print(f"  ! {line}")
         return False
-    print(f"  ✅ passed")
+    print("  ✅ passed")
     return True
 
 
 def main():
     gates = [
-        ("🧪 Chat API tests", [
-            VENV_PYTHON, "-m", "pytest", "tests/test_chat_api.py",
-            "tests/test_chat_sede_isolation.py",
-            "-q", "--tb=short", "--no-cov"]),
-        ("🔍 Health endpoint", [
-            "curl", "-sf", "http://127.0.0.1:8000/healthz"]),
+        (
+            "🧪 Chat API tests",
+            [
+                VENV_PYTHON,
+                "-m",
+                "pytest",
+                "tests/test_chat_api.py",
+                "tests/test_chat_sede_isolation.py",
+                "-q",
+                "--tb=short",
+                "--no-cov",
+            ],
+        ),
+        ("🔍 Health endpoint", ["curl", "-sf", "http://127.0.0.1:8000/healthz"]),
     ]
 
     if "--backend-deep" in sys.argv:
-        gates.append(("📊 Deep tests", [
-            VENV_PYTHON, "-m", "pytest", "tests/test_chat_api.py",
-            "tests/test_chat_sede_isolation.py",
-            "-v", "--tb=short", "--no-cov"]))
+        gates.append(
+            (
+                "📊 Deep tests",
+                [
+                    VENV_PYTHON,
+                    "-m",
+                    "pytest",
+                    "tests/test_chat_api.py",
+                    "tests/test_chat_sede_isolation.py",
+                    "-v",
+                    "--tb=short",
+                    "--no-cov",
+                ],
+            )
+        )
 
     all_ok = True
     for label, cmd in gates:

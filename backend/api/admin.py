@@ -58,7 +58,10 @@ def list_roles(
         for r in roles
     ]
     return PaginatedResponse[schemas.AdminRoleRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -87,9 +90,7 @@ def create_role(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     record_admin_action(db, current_user, "role.create", "role", str(rol.id))
-    return schemas.AdminRoleRead(
-        id=rol.id, nombre=rol.nombre, permisos=rol.permisos or {}, users_count=0
-    )
+    return schemas.AdminRoleRead(id=rol.id, nombre=rol.nombre, permisos=rol.permisos or {}, users_count=0)
 
 
 @router.patch("/roles/{role_id}", response_model=schemas.AdminRoleRead)
@@ -108,9 +109,7 @@ def update_role(
     if not rol:
         raise HTTPException(status_code=404, detail="Role not found")
     record_admin_action(db, current_user, "role.update", "role", str(rid))
-    return schemas.AdminRoleRead(
-        id=rol.id, nombre=rol.nombre, permisos=rol.permisos or {}, users_count=0
-    )
+    return schemas.AdminRoleRead(id=rol.id, nombre=rol.nombre, permisos=rol.permisos or {}, users_count=0)
 
 
 @router.delete("/roles/{role_id}", status_code=204)
@@ -126,9 +125,7 @@ def delete_role(
         raise HTTPException(status_code=400, detail="Role ID inválido")
     success = admin_crud.delete_admin_role(db, rid)
     if not success:
-        raise HTTPException(
-            status_code=409, detail="Cannot delete role with active assignments"
-        )
+        raise HTTPException(status_code=409, detail="Cannot delete role with active assignments")
     record_admin_action(db, current_user, "role.delete", "role", str(rid))
 
 
@@ -143,10 +140,7 @@ def read_all_permissions(current_user: models.User = Depends(require_admin)):
     perms = get_all_permissions()
     return {
         "permissions": perms,
-        "modules": {
-            module: list(levels.keys())
-            for module, levels in MODULE_PERMISSION_MAP.items()
-        },
+        "modules": {module: list(levels.keys()) for module, levels in MODULE_PERMISSION_MAP.items()},
         "levels": {k: list(v) for k, v in PERMISSION_LEVELS.items()},
     }
 
@@ -200,15 +194,23 @@ def set_user_permissions(
         raise HTTPException(status_code=400, detail="user_id inválido")
     try:
         result = admin_crud.set_user_permissions(
-            db, current_user, uid, payload,
-            MODULE_PERMISSION_MAP, expand_module_permissions,
+            db,
+            current_user,
+            uid,
+            payload,
+            MODULE_PERMISSION_MAP,
+            expand_module_permissions,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     if not result:
         raise HTTPException(status_code=404, detail="User not found")
     record_admin_action(
-        db, current_user, "permissions.set", "user", user_id,
+        db,
+        current_user,
+        "permissions.set",
+        "user",
+        user_id,
         {"modules": list(payload.keys())},
     )
     return result
@@ -240,7 +242,10 @@ def list_locations(
         for loc in locs
     ]
     return PaginatedResponse[schemas.AdminLocationRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -257,8 +262,12 @@ def create_location(
     loc = admin_crud.create_admin_location(db, name, body.address, body.phone)
     record_admin_action(db, current_user, "location.create", "location", str(loc.id))
     return schemas.AdminLocationRead(
-        id=loc.id, name=loc.name, address=loc.address,
-        pastor=loc.pastor_name, active=loc.is_active, type=loc.location_type,
+        id=loc.id,
+        name=loc.name,
+        address=loc.address,
+        pastor=loc.pastor_name,
+        active=loc.is_active,
+        type=loc.location_type,
     )
 
 
@@ -271,16 +280,29 @@ def update_location(
 ):
     """Actualiza una sede existente."""
     loc = admin_crud.update_admin_location(
-        db, location_id, body.name, body.address, body.phone, body.is_active,
+        db,
+        location_id,
+        body.name,
+        body.address,
+        body.phone,
+        body.is_active,
     )
     if not loc:
         raise HTTPException(status_code=404, detail="Location not found")
     record_admin_action(
-        db, current_user, "location.update", "location", location_id,
+        db,
+        current_user,
+        "location.update",
+        "location",
+        location_id,
     )
     return schemas.AdminLocationRead(
-        id=loc.id, name=loc.name, address=loc.address,
-        pastor=loc.pastor_name, active=loc.is_active, type=loc.location_type,
+        id=loc.id,
+        name=loc.name,
+        address=loc.address,
+        pastor=loc.pastor_name,
+        active=loc.is_active,
+        type=loc.location_type,
     )
 
 
@@ -295,7 +317,11 @@ def delete_location(
     if not success:
         raise HTTPException(status_code=404, detail="Location not found")
     record_admin_action(
-        db, current_user, "location.delete", "location", location_id,
+        db,
+        current_user,
+        "location.delete",
+        "location",
+        location_id,
     )
 
 
@@ -315,12 +341,18 @@ def list_socials(
     channels, total = admin_crud.list_admin_socials(db, skip=skip, limit=limit)
     items = [
         schemas.AdminSocialRead(
-            id=c.id, platform=c.platform, url=c.url, visible=c.is_visible,
+            id=c.id,
+            platform=c.platform,
+            url=c.url,
+            visible=c.is_visible,
         )
         for c in channels
     ]
     return PaginatedResponse[schemas.AdminSocialRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -334,7 +366,10 @@ def create_social(
     ch = admin_crud.create_admin_social(db, body.platform, body.url, body.is_visible)
     record_admin_action(db, current_user, "social.create", "social", str(ch.id))
     return schemas.AdminSocialRead(
-        id=ch.id, platform=ch.platform, url=ch.url, visible=ch.is_visible,
+        id=ch.id,
+        platform=ch.platform,
+        url=ch.url,
+        visible=ch.is_visible,
     )
 
 
@@ -347,13 +382,20 @@ def update_social(
 ):
     """Actualiza un canal social."""
     ch = admin_crud.update_admin_social(
-        db, social_id, body.platform, body.url, body.is_visible,
+        db,
+        social_id,
+        body.platform,
+        body.url,
+        body.is_visible,
     )
     if not ch:
         raise HTTPException(status_code=404, detail="Social channel not found")
     record_admin_action(db, current_user, "social.update", "social", social_id)
     return schemas.AdminSocialRead(
-        id=ch.id, platform=ch.platform, url=ch.url, visible=ch.is_visible,
+        id=ch.id,
+        platform=ch.platform,
+        url=ch.url,
+        visible=ch.is_visible,
     )
 
 
@@ -394,7 +436,11 @@ def set_variable(
     """Define o actualiza una variable de sistema."""
     admin_crud.set_admin_variable(db, payload.key, payload.value)
     record_admin_action(
-        db, current_user, "variable.set", "variable", payload.key,
+        db,
+        current_user,
+        "variable.set",
+        "variable",
+        payload.key,
     )
     return {"status": "success"}
 
@@ -453,7 +499,10 @@ def list_admin_personas(
         for m in personas
     ]
     return PaginatedResponse[schemas.AdminPersonaRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -472,7 +521,10 @@ def list_admin_users(
     """Lista usuarios de auth_users para gestión de permisos granulares."""
     items, total = admin_crud.list_admin_users(db, current_user, skip=skip, limit=limit)
     return PaginatedResponse[schemas.AdminUserRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -502,7 +554,8 @@ def create_admin_user(
     """Crea un nuevo usuario Auth v3 desde el panel de administración."""
     try:
         result = admin_crud.create_admin_user(
-            db, current_user,
+            db,
+            current_user,
             username=body.username.strip(),
             email=body.email.strip(),
             password=body.password,
@@ -530,7 +583,9 @@ def update_admin_user(
     except ValueError:
         raise HTTPException(status_code=400, detail="user_id inválido")
     result = admin_crud.update_admin_user(
-        db, current_user, uid,
+        db,
+        current_user,
+        uid,
         username=body.username,
         email=body.email,
         first_name=body.first_name,
@@ -584,7 +639,11 @@ def change_user_role(
     if not result:
         raise HTTPException(status_code=404, detail="User or role not found")
     record_admin_action(
-        db, current_user, "user.role_change", "user", user_id,
+        db,
+        current_user,
+        "user.role_change",
+        "user",
+        user_id,
         {"role_id": str(rid)},
     )
     return result
@@ -632,7 +691,10 @@ def list_all_comments(
     """Lista todos los comentarios para moderación."""
     items, total = admin_crud.list_all_comments(db, skip=skip, limit=limit)
     return PaginatedResponse[schemas.AdminCommentRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -647,7 +709,11 @@ def delete_comment(
     if not success:
         raise HTTPException(status_code=404, detail="Comment not found")
     record_admin_action(
-        db, current_user, "comment.delete", "comment", comment_id,
+        db,
+        current_user,
+        "comment.delete",
+        "comment",
+        comment_id,
     )
     return {"status": "success"}
 
@@ -667,7 +733,10 @@ def list_milestones(
     """Lista hitos espirituales (insignias) y estadísticas de obtención."""
     items, total = admin_crud.list_admin_milestones(db, skip=skip, limit=limit)
     return PaginatedResponse[schemas.AdminMilestoneRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -680,7 +749,10 @@ def award_milestone_bulk(
     """Asigna un hito a una persona."""
     try:
         result = admin_crud.award_milestone(
-            db, body.persona_id, body.badge_id, body.awarded_by,
+            db,
+            body.persona_id,
+            body.badge_id,
+            body.awarded_by,
         )
     except ValueError as e:
         msg = str(e)
@@ -709,13 +781,19 @@ def list_donation_categories(
     cats, total = admin_crud.list_admin_donation_categories(db, skip=skip, limit=limit)
     items = [
         schemas.AdminDonationCategoryRead(
-            id=c.id, name=c.name, description=c.description,
-            color=c.color_code, active=c.is_active,
+            id=c.id,
+            name=c.name,
+            description=c.description,
+            color=c.color_code,
+            active=c.is_active,
         )
         for c in cats
     ]
     return PaginatedResponse[schemas.AdminDonationCategoryRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -735,11 +813,18 @@ def create_donation_category(
         raise HTTPException(status_code=400, detail="nombre es requerido")
     cat = admin_crud.create_admin_donation_category(db, name, body.description)
     record_admin_action(
-        db, current_user, "donation_category.create", "donation_category", str(cat.id),
+        db,
+        current_user,
+        "donation_category.create",
+        "donation_category",
+        str(cat.id),
     )
     return schemas.AdminDonationCategoryRead(
-        id=cat.id, name=cat.name, description=cat.description,
-        color=cat.color_code, active=cat.is_active,
+        id=cat.id,
+        name=cat.name,
+        description=cat.description,
+        color=cat.color_code,
+        active=cat.is_active,
     )
 
 
@@ -755,16 +840,28 @@ def update_donation_category(
 ):
     """Actualiza una categoría de donación."""
     cat = admin_crud.update_admin_donation_category(
-        db, category_id, body.name, body.description, body.color_code, body.is_active,
+        db,
+        category_id,
+        body.name,
+        body.description,
+        body.color_code,
+        body.is_active,
     )
     if not cat:
         raise HTTPException(status_code=404, detail="Donation category not found")
     record_admin_action(
-        db, current_user, "donation_category.update", "donation_category", category_id,
+        db,
+        current_user,
+        "donation_category.update",
+        "donation_category",
+        category_id,
     )
     return schemas.AdminDonationCategoryRead(
-        id=cat.id, name=cat.name, description=cat.description,
-        color=cat.color_code, active=cat.is_active,
+        id=cat.id,
+        name=cat.name,
+        description=cat.description,
+        color=cat.color_code,
+        active=cat.is_active,
     )
 
 
@@ -779,7 +876,11 @@ def delete_donation_category(
     if not success:
         raise HTTPException(status_code=404, detail="Donation category not found")
     record_admin_action(
-        db, current_user, "donation_category.delete", "donation_category", category_id,
+        db,
+        current_user,
+        "donation_category.delete",
+        "donation_category",
+        category_id,
     )
 
 
@@ -810,7 +911,10 @@ def list_automations(
         for rule in rules
     ]
     return PaginatedResponse[schemas.AutomationRuleRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -822,9 +926,14 @@ def create_automation(
 ):
     """Crea una nueva regla de automatización pastoral."""
     from backend.crud.governance import create_automation_rule
+
     rule = create_automation_rule(db, payload)
     record_admin_action(
-        db, current_user, "automation.create", "automation", str(rule.id),
+        db,
+        current_user,
+        "automation.create",
+        "automation",
+        str(rule.id),
     )
     return schemas.AutomationRuleRead(
         id=str(rule.id),
@@ -846,6 +955,7 @@ def update_automation(
 ):
     """Actualiza una regla de automatización."""
     from backend.crud.governance import update_automation_rule
+
     try:
         rid = uuid.UUID(rule_id)
     except ValueError:
@@ -854,7 +964,11 @@ def update_automation(
     if not rule:
         raise HTTPException(status_code=404, detail="Automation rule not found")
     record_admin_action(
-        db, current_user, "automation.update", "automation", rule_id,
+        db,
+        current_user,
+        "automation.update",
+        "automation",
+        rule_id,
     )
     return schemas.AutomationRuleRead(
         id=str(rule.id),
@@ -875,6 +989,7 @@ def delete_automation(
 ):
     """Elimina una regla de automatización permanentemente."""
     from backend.crud.governance import delete_automation_rule
+
     try:
         rid = uuid.UUID(rule_id)
     except ValueError:
@@ -883,7 +998,11 @@ def delete_automation(
     if not success:
         raise HTTPException(status_code=404, detail="Automation rule not found")
     record_admin_action(
-        db, current_user, "automation.delete", "automation", rule_id,
+        db,
+        current_user,
+        "automation.delete",
+        "automation",
+        rule_id,
     )
     return {"status": "success"}
 
@@ -906,7 +1025,10 @@ def list_user_module_roles(
     """Lista todas las asignaciones de roles modulares."""
     items, total = admin_crud.list_user_module_roles(db, skip=skip, limit=limit)
     return PaginatedResponse[schemas.AdminModuleRoleRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -927,12 +1049,19 @@ def assign_user_module_role(
         raise HTTPException(status_code=400, detail="user_id o rol_id inválidos")
     try:
         result = admin_crud.assign_user_module_role(
-            db, current_user, uid, modulo, rid,
+            db,
+            current_user,
+            uid,
+            modulo,
+            rid,
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     record_admin_action(
-        db, current_user, "module_role.assign", "module_role",
+        db,
+        current_user,
+        "module_role.assign",
+        "module_role",
         result.get("id", ""),
     )
     return result
@@ -953,7 +1082,11 @@ def remove_user_module_role(
     if not success:
         raise HTTPException(status_code=404, detail="Asignación no encontrada")
     record_admin_action(
-        db, current_user, "module_role.remove", "module_role", assignment_id,
+        db,
+        current_user,
+        "module_role.remove",
+        "module_role",
+        assignment_id,
     )
 
 
@@ -975,7 +1108,10 @@ def list_users_with_roles(
     """Lista todos los usuarios auth v3 con sus roles de plataforma y modulares."""
     items, total = admin_crud.list_users_with_roles(db, current_user, skip=skip, limit=limit)
     return PaginatedResponse[schemas.AdminUserWithRolesRead](
-        items=items, total=total, skip=skip, limit=limit,
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -995,7 +1131,10 @@ def provision_personas_sin_cuenta(
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
     record_admin_action(
-        db, current_user, "provision_accounts", "accounts",
+        db,
+        current_user,
+        "provision_accounts",
+        "accounts",
         metadata={"created": result["created"], "skipped": result["skipped"]},
     )
     return result

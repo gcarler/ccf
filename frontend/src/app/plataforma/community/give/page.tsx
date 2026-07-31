@@ -25,7 +25,7 @@ export default function GivingAndConnection() {
 
     const handleDonate = async () => {
         if (!amount || parseFloat(amount) <= 0) return;
-        
+
         setIsSubmitting(true);
         try {
             await apiFetch('/donations/', {
@@ -37,7 +37,7 @@ export default function GivingAndConnection() {
                     donor_name: isAnonymous ? "Anónimo" : (user?.username || "Anónimo")
                 }
             });
-            
+
             setStep(2);
             addToast('¡Gracias por tu generosidad! Tu ofrenda ha sido procesada con éxito.', 'success');
         } catch (error) {
@@ -50,7 +50,7 @@ export default function GivingAndConnection() {
 
     const handlePrayerRequest = async () => {
         if (!prayerRequest.trim()) return;
-        
+
         try {
             await apiFetch('/prayer/', {
                 method: 'POST',
@@ -120,7 +120,7 @@ export default function GivingAndConnection() {
             {/* Hero Section */}
             <div className="relative overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] p-3 md:p-4 group">
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 bg-[hsl(var(--primary)/0.05)] size-10 rounded-full blur-[100px] transition-all duration-1000 group-hover:bg-[hsl(var(--primary)/0.1)]"></div>
-                
+
                 <div className="relative z-10 flex flex-col md:flex-row gap-3 items-center">
                     <div className="flex-1 space-y-4">
                         <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs">
@@ -134,7 +134,7 @@ export default function GivingAndConnection() {
                             Tu generosidad impulsa nuestro alcance comunitario y nos ayuda a difundir el mensaje de esperanza.
                         </p>
                     </div>
-                    
+
                     <div className="size-10 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] shadow-sm rotate-3 group-hover:rotate-6 transition-transform duration-500">
                         <HeartHandshake size={60} strokeWidth={1} />
                     </div>
@@ -227,7 +227,7 @@ export default function GivingAndConnection() {
                             <p className="text-[hsl(var(--text-secondary))] text-xs font-semibold leading-relaxed">
                                 Comparte tus peticiones con nuestro equipo. Estamos creyendo junto a ti por cada milagro.
                             </p>
-                            
+
                             <textarea
                                 className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 text-[hsl(var(--text-primary))] placeholder-[hsl(var(--text-secondary)/0.5)] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none min-h-[140px] shadow-inner text-sm font-medium outline-none transition-all"
                                 placeholder="¿Cómo podemos orar por ti?"
@@ -235,7 +235,7 @@ export default function GivingAndConnection() {
                                 onChange={(e) => setPrayerRequest(e.target.value)}
                             />
 
-                            <button 
+                            <button
                                 onClick={handlePrayerRequest}
                                 disabled={!prayerRequest.trim()}
                                 className="w-full h-8 flex items-center justify-center gap-2 bg-[hsl(var(--surface-3))] text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs hover:bg-[hsl(var(--primary))] hover:text-white rounded-md transition-all border border-[hsl(var(--primary)/0.1)] disabled:opacity-50 disabled:hover:bg-[hsl(var(--surface-3))] disabled:hover:text-[hsl(var(--primary))]"
@@ -274,10 +274,10 @@ export default function GivingAndConnection() {
             {/* Social Hub */}
             <footer className="pt-10 flex justify-center gap-4 border-t border-[hsl(var(--border))]">
                 {[Globe, Youtube, Users, Podcast].map((Icon, idx) => (
-                    <motion.a 
-                        key={idx} 
+                    <motion.a
+                        key={idx}
                         whileHover={{ y: -5, scale: 1.1 }}
-                        className="text-[hsl(var(--text-secondary)/0.5)] hover:text-[hsl(var(--primary))] transition-colors cursor-pointer" 
+                        className="text-[hsl(var(--text-secondary)/0.5)] hover:text-[hsl(var(--primary))] transition-colors cursor-pointer"
                         href="#"
                     >
                         <Icon size={24} strokeWidth={1.5} />

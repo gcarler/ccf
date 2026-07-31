@@ -15,6 +15,7 @@ Posture mirrors `tests/test_crm_crud_personas.py`: SQLite in-memory via the
   * Enum coercion `CanalEnvio` / `EstadoEnvioPlantilla` on write paths.
   * `count_envios` returns 0 on empty / plantilla inexistente (defensive).
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -43,6 +44,7 @@ from backend.schemas.crm.resources import (
 )
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
+
 
 def _seed_sede(db: Session, name: str = "Sede QC-18.A") -> models.Sede:
     sede = models.Sede(id=_uuid.uuid4(), nombre=name, ciudad="QC18 City", es_activa=True)
@@ -194,7 +196,8 @@ def test_update_categoria_updates_provided_fields_only(db_session):
     _commit(db_session)
 
     out = resources.update_categoria(
-        db_session, str(cat.id),
+        db_session,
+        str(cat.id),
         CategoriaRecursoUpdate(nombre="Renombrado"),
     )
     assert out.nombre == "Renombrado"
@@ -324,7 +327,8 @@ def test_update_plantilla_coerces_canal_and_categoria_on_update(db_session):
     _commit(db_session)
 
     out = resources.update_plantilla(
-        db_session, str(p.id),
+        db_session,
+        str(p.id),
         PlantillaMensajeUpdate(canal="SMS", categoria_id=cat2.id, contenido_texto="new body"),
     )
     assert out.canal == CanalEnvio.SMS
@@ -483,6 +487,7 @@ def test_list_envios_plantilla_filters_by_plantilla_and_orders_desc(db_session):
     p = _seed_plantilla(db_session, sede_id=sede.id, categoria=cat)
     # Seed two envíos but ensure distinct timestamps so the DESC order is observable.
     import datetime as dt
+
     e1 = _seed_envio(db_session, sede_id=sede.id, plantilla=p)
     e1.fecha_envio = dt.datetime(2026, 7, 1, 10, 0, tzinfo=dt.timezone.utc)
     e2 = _seed_envio(db_session, sede_id=sede.id, plantilla=p)

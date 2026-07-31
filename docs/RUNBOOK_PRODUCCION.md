@@ -1,7 +1,7 @@
 # Runbook de Operaciones — Plataforma CCF v3.0
 
 **Fecha:** 2026-06-05
-**Autor:** Equipo de Arquitectura CCF  
+**Autor:** Equipo de Arquitectura CCF
 **Audiencia:** DevOps, Desarrolladores Backend, Administradores
 
 ---

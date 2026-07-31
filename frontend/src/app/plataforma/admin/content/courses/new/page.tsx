@@ -2,15 +2,15 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-    ChevronLeft, 
-    Save, 
-    Layers, 
-    BookOpen, 
-    Zap, 
-    Award, 
-    FileText, 
-    ImageIcon, 
+import {
+    ChevronLeft,
+    Save,
+    Layers,
+    BookOpen,
+    Zap,
+    Award,
+    FileText,
+    ImageIcon,
     Settings,
     Target
 } from 'lucide-react';
@@ -78,7 +78,7 @@ export default function NewCoursePage() {
                 <div className="lg:col-span-8 space-y-3">
                     <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
                         <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-[hsl(var(--info))]/5 rounded-full blur-[100px]" />
-                        
+
                         <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-3">
                                 <FileText size={20} className="text-[hsl(var(--primary))]" />
@@ -88,7 +88,7 @@ export default function NewCoursePage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="space-y-2">
                                     <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Nombre del Curso</label>
-                                    <input 
+                                    <input
                                         value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
                                         placeholder="Ej: Fundamentos de la Fe"
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 px-3 text-sm font-semibold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all"
@@ -96,7 +96,7 @@ export default function NewCoursePage() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Código Único (ID)</label>
-                                    <input 
+                                    <input
                                         value={formData.code} onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})}
                                         placeholder="Ej: FUND-01"
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 px-3 text-sm font-semibold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all uppercase"
@@ -106,7 +106,7 @@ export default function NewCoursePage() {
 
                             <div className="space-y-2">
                                 <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Descripción Pastoral</label>
-                                <textarea 
+                                <textarea
                                     value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
                                     placeholder="Describe el propósito espiritual y académico del curso..."
                                     className="w-full h-40 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 text-sm font-medium outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none"
@@ -124,7 +124,7 @@ export default function NewCoursePage() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div className="space-y-2">
                                 <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Modalidad</label>
-                                <select 
+                                <select
                                     value={formData.modality} onChange={e => setFormData({...formData, modality: e.target.value})}
                                     className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 px-3 text-sm font-semibold outline-none appearance-none"
                                 >
@@ -134,14 +134,14 @@ export default function NewCoursePage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">XP por Lección</label>
-                                <input 
+                                <input
                                     type="number" value={formData.xp_per_lesson} onChange={e => setFormData({...formData, xp_per_lesson: parseInt(e.target.value)})}
                                     className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 px-3 text-sm font-semibold outline-none"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Nota de Aprobación</label>
-                                <input 
+                                <input
                                     type="number" value={formData.passing_score} onChange={e => setFormData({...formData, passing_score: parseInt(e.target.value)})}
                                     className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-1.5 px-3 text-sm font-semibold outline-none"
                                 />
@@ -196,4 +196,3 @@ function GoalRow({ label, value }: GoalRowProps) {
         </div>
     );
 }
-

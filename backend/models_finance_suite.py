@@ -1,6 +1,7 @@
 """
 Finance Suite Models — Contabilidad, Facturación, Gastos, Documentos, Firma
 """
+
 from __future__ import annotations
 
 import enum as _enum
@@ -28,6 +29,7 @@ from backend.models_shared import Base, _utcnow
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. CONTABILIDAD (Accounting)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class FiscalCountry(_enum.Enum):
     CO = "CO"  # Colombia — DIAN
@@ -57,7 +59,9 @@ class BankAccount(Base):
 class BankTransaction(Base):
     __tablename__ = "bank_transactions"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    bank_account_id = Column(UUID(as_uuid=True), ForeignKey("bank_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    bank_account_id = Column(
+        UUID(as_uuid=True), ForeignKey("bank_accounts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     transaction_date = Column(Date, nullable=False, index=True)
     description = Column(Text, nullable=False)
     reference = Column(String(100), nullable=True, index=True)
@@ -71,13 +75,17 @@ class BankTransaction(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     bank_account = relationship("BankAccount", back_populates="transactions")
-    reconciliation_lines = relationship("ReconciliationLine", back_populates="bank_transaction", cascade="all, delete-orphan")
+    reconciliation_lines = relationship(
+        "ReconciliationLine", back_populates="bank_transaction", cascade="all, delete-orphan"
+    )
 
 
 class BankReconciliation(Base):
     __tablename__ = "bank_reconciliations"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    bank_account_id = Column(UUID(as_uuid=True), ForeignKey("bank_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    bank_account_id = Column(
+        UUID(as_uuid=True), ForeignKey("bank_accounts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     period_start = Column(Date, nullable=False, index=True)
     period_end = Column(Date, nullable=False, index=True)
     starting_balance = Column(Numeric(14, 2), nullable=False)
@@ -96,8 +104,12 @@ class BankReconciliation(Base):
 class ReconciliationLine(Base):
     __tablename__ = "reconciliation_lines"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    reconciliation_id = Column(UUID(as_uuid=True), ForeignKey("bank_reconciliations.id", ondelete="CASCADE"), nullable=False, index=True)
-    bank_transaction_id = Column(UUID(as_uuid=True), ForeignKey("bank_transactions.id", ondelete="CASCADE"), nullable=False, index=True)
+    reconciliation_id = Column(
+        UUID(as_uuid=True), ForeignKey("bank_reconciliations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    bank_transaction_id = Column(
+        UUID(as_uuid=True), ForeignKey("bank_transactions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     is_matched = Column(Boolean, default=False, index=True)
     difference = Column(Numeric(14, 2), default=0)
     notes = Column(Text, nullable=True)
@@ -115,7 +127,9 @@ class ChartOfAccount(Base):
     code = Column(String(20), nullable=False, index=True)
     name = Column(String(150), nullable=False)
     account_type = Column(String(30), nullable=False, index=True)  # asset, liability, equity, revenue, expense
-    parent_id = Column(UUID(as_uuid=True), ForeignKey("chart_of_accounts.id", ondelete="SET NULL"), nullable=True, index=True)
+    parent_id = Column(
+        UUID(as_uuid=True), ForeignKey("chart_of_accounts.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     is_active = Column(Boolean, default=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -143,8 +157,12 @@ class AccountingEntry(Base):
 class AccountingEntryLine(Base):
     __tablename__ = "accounting_entry_lines"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    entry_id = Column(UUID(as_uuid=True), ForeignKey("accounting_entries.id", ondelete="CASCADE"), nullable=False, index=True)
-    account_id = Column(UUID(as_uuid=True), ForeignKey("chart_of_accounts.id", ondelete="RESTRICT"), nullable=False, index=True)
+    entry_id = Column(
+        UUID(as_uuid=True), ForeignKey("accounting_entries.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    account_id = Column(
+        UUID(as_uuid=True), ForeignKey("chart_of_accounts.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
     debit = Column(Numeric(14, 2), default=0)
     credit = Column(Numeric(14, 2), default=0)
     description = Column(Text, nullable=True)
@@ -187,6 +205,7 @@ class TaxConfiguration(Base):
 # 2. FACTURACIÓN (Invoicing)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class SalesOrder(Base):
     __tablename__ = "sales_orders"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -212,7 +231,9 @@ class SalesOrder(Base):
 class SalesOrderItem(Base):
     __tablename__ = "sales_order_items"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    sales_order_id = Column(UUID(as_uuid=True), ForeignKey("sales_orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    sales_order_id = Column(
+        UUID(as_uuid=True), ForeignKey("sales_orders.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     description = Column(Text, nullable=False)
     quantity = Column(Numeric(10, 2), default=1)
     unit_price = Column(Numeric(14, 2), nullable=False)
@@ -224,10 +245,13 @@ class SalesOrderItem(Base):
 
 class Invoice(Base):
     """Invoice model — status values: draft, sent, paid, partial, overdue, cancelled."""
+
     __tablename__ = "invoices"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
-    sales_order_id = Column(UUID(as_uuid=True), ForeignKey("sales_orders.id", ondelete="SET NULL"), nullable=True, index=True)
+    sales_order_id = Column(
+        UUID(as_uuid=True), ForeignKey("sales_orders.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     invoice_number = Column(String(50), unique=True, nullable=False, index=True)
     customer_name = Column(String(200), nullable=False)
     customer_email = Column(String(200), nullable=True)
@@ -284,6 +308,7 @@ class InvoicePayment(Base):
 # 3. GASTOS (Expenses)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class ExpenseReport(Base):
     __tablename__ = "expense_reports"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -311,7 +336,9 @@ class ExpenseReport(Base):
 class ExpenseItem(Base):
     __tablename__ = "expense_items"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    expense_report_id = Column(UUID(as_uuid=True), ForeignKey("expense_reports.id", ondelete="CASCADE"), nullable=False, index=True)
+    expense_report_id = Column(
+        UUID(as_uuid=True), ForeignKey("expense_reports.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     expense_date = Column(Date, nullable=False, index=True)
     category = Column(String(50), nullable=False, index=True)
     description = Column(Text, nullable=False)
@@ -328,7 +355,9 @@ class ExpenseItem(Base):
 class ExpenseReceipt(Base):
     __tablename__ = "expense_receipts"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    expense_item_id = Column(UUID(as_uuid=True), ForeignKey("expense_items.id", ondelete="CASCADE"), nullable=False, index=True)
+    expense_item_id = Column(
+        UUID(as_uuid=True), ForeignKey("expense_items.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     image_url = Column(String(500), nullable=False)
     thumbnail_url = Column(String(500), nullable=True)
     ocr_text = Column(Text, nullable=True)
@@ -343,6 +372,7 @@ class ExpenseReceipt(Base):
 # ═══════════════════════════════════════════════════════════════════════════════
 # 4. DOCUMENTOS (Documents)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class Document(Base):
     __tablename__ = "documents"
@@ -375,9 +405,7 @@ class DocumentTag(Base):
     is_ai_generated = Column(Boolean, default=False, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    __table_args__ = (
-        UniqueConstraint("sede_id", "name", name="uq_document_tag_sede_name"),
-    )
+    __table_args__ = (UniqueConstraint("sede_id", "name", name="uq_document_tag_sede_name"),)
 
 
 class DocumentTagLink(Base):
@@ -393,6 +421,7 @@ class DocumentTagLink(Base):
 # ═══════════════════════════════════════════════════════════════════════════════
 # 5. FIRMA DIGITAL (Sign)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class SignRequest(Base):
     __tablename__ = "sign_requests"
@@ -416,7 +445,9 @@ class SignRequest(Base):
 class SignSigner(Base):
     __tablename__ = "sign_signers"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    sign_request_id = Column(UUID(as_uuid=True), ForeignKey("sign_requests.id", ondelete="CASCADE"), nullable=False, index=True)
+    sign_request_id = Column(
+        UUID(as_uuid=True), ForeignKey("sign_requests.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=True, index=True)
     email = Column(String(200), nullable=False)
     full_name = Column(String(200), nullable=False)

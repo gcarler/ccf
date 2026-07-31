@@ -27,6 +27,7 @@ import uuid
 
 # ── Helpers ─────────────────────────────────────────────────────────────────────
 
+
 def _iso_days_ago(n: int) -> str:
     return (dt.date.today() - dt.timedelta(days=n)).isoformat()
 
@@ -64,8 +65,7 @@ def _make_sede(db, *, nombre: str = "Sede Test"):
     return sede
 
 
-def _make_page(db, site_id, *, slug: str = "p1", title: str = "Página 1",
-               status: str = "published", seo=None):
+def _make_page(db, site_id, *, slug: str = "p1", title: str = "Página 1", status: str = "published", seo=None):
     from backend import models
 
     page = models.CmsPage(
@@ -74,7 +74,8 @@ def _make_page(db, site_id, *, slug: str = "p1", title: str = "Página 1",
         slug=slug,
         title=title,
         status=status,
-        seo_json=seo or {
+        seo_json=seo
+        or {
             "meta_description": "Una descripción razonable de longitud media "
             "para que el auditor la apruebe sin warnings.",
             "robots_meta": "index, follow",
@@ -85,8 +86,9 @@ def _make_page(db, site_id, *, slug: str = "p1", title: str = "Página 1",
     return page
 
 
-def _make_snapshot(db, *, site, score: int, captured_date: dt.date,
-                   total_pages: int = 5, errors: int = 0, critical: int = 0):
+def _make_snapshot(
+    db, *, site, score: int, captured_date: dt.date, total_pages: int = 5, errors: int = 0, critical: int = 0
+):
     from backend import models
 
     snap = models.CmsSeoSnapshot(
@@ -108,6 +110,7 @@ def _make_snapshot(db, *, site, score: int, captured_date: dt.date,
 
 # ── 1. Migration shape ──────────────────────────────────────────────────────────
 
+
 class TestMigrationShape:
     """Verify the alembic migration creates the table + indexes correctly."""
 
@@ -118,15 +121,10 @@ class TestMigrationShape:
         import importlib.util
         import pathlib
 
-        path = (
-            pathlib.Path(__file__).parent.parent
-            / "alembic" / "versions" / "20260706_0002_cms_seo_snapshots.py"
-        )
+        path = pathlib.Path(__file__).parent.parent / "alembic" / "versions" / "20260706_0002_cms_seo_snapshots.py"
         assert path.exists(), f"missing migration file at {path}"
 
-        spec = importlib.util.spec_from_file_location(
-            "milestone_20260706_0002", str(path)
-        )
+        spec = importlib.util.spec_from_file_location("milestone_20260706_0002", str(path))
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
 
@@ -136,12 +134,11 @@ class TestMigrationShape:
 
 # ── 2. capture_daily_seo_snapshots: idempotency ──────────────────────────────────
 
+
 class TestCaptureDailySeoSnapshotsIdempotency:
     """Same-day retries must collapse to a single snapshot row."""
 
-    def test_double_pass_same_day_creates_only_one_row(
-        self, client, db_session
-    ):
+    def test_double_pass_same_day_creates_only_one_row(self, client, db_session):
         from backend import crud, models
 
         sede = _make_sede(db_session)
@@ -172,9 +169,7 @@ class TestCaptureDailySeoSnapshotsIdempotency:
         )
         assert len(rows) == 1
 
-    def test_dry_run_does_not_persist(
-        self, client, db_session
-    ):
+    def test_dry_run_does_not_persist(self, client, db_session):
         from backend import crud, models
 
         sede = _make_sede(db_session)
@@ -182,9 +177,7 @@ class TestCaptureDailySeoSnapshotsIdempotency:
         _make_page(db_session, site.id)
 
         today = dt.date.today()
-        result = crud.capture_daily_seo_snapshots(
-            db_session, today=today, dry_run=True
-        )
+        result = crud.capture_daily_seo_snapshots(db_session, today=today, dry_run=True)
         db_session.commit()
 
         # dry_run cuenta los sites que habría procesado pero no debe
@@ -192,16 +185,10 @@ class TestCaptureDailySeoSnapshotsIdempotency:
         assert result["sites_captured"] >= 1
         assert result["snapshots_count"] == 0
 
-        rows = (
-            db_session.query(models.CmsSeoSnapshot)
-            .filter(models.CmsSeoSnapshot.site_id == site.id)
-            .all()
-        )
+        rows = db_session.query(models.CmsSeoSnapshot).filter(models.CmsSeoSnapshot.site_id == site.id).all()
         assert len(rows) == 0
 
-    def test_inactive_sites_are_skipped(
-        self, client, db_session
-    ):
+    def test_inactive_sites_are_skipped(self, client, db_session):
         from backend import crud
 
         sede = _make_sede(db_session)
@@ -217,12 +204,11 @@ class TestCaptureDailySeoSnapshotsIdempotency:
 
 # ── 3. capture_daily_seo_snapshots: aggregate fields ────────────────────────────
 
+
 class TestCaptureDailySeoSnapshotsAggregate:
     """Ensure aggregate (avg, total, errors, critical, by_severity) populates."""
 
-    def test_snapshot_uses_actual_audit_aggregate(
-        self, client, db_session
-    ):
+    def test_snapshot_uses_actual_audit_aggregate(self, client, db_session):
         from backend import crud, models
 
         sede = _make_sede(db_session)
@@ -262,10 +248,9 @@ class TestCaptureDailySeoSnapshotsAggregate:
 
 # ── 4. get_seo_trend: scope + ordering ──────────────────────────────────────────
 
+
 class TestGetSeoTrend:
-    def test_returns_series_ascending_by_date(
-        self, client, db_session
-    ):
+    def test_returns_series_ascending_by_date(self, client, db_session):
         from backend import crud
 
         sede = _make_sede(db_session)
@@ -282,16 +267,12 @@ class TestGetSeoTrend:
             )
         db_session.commit()
 
-        result = crud.get_seo_trend(
-            db_session, sede_id=sede.id, days=30
-        )
+        result = crud.get_seo_trend(db_session, sede_id=sede.id, days=30)
         labels = [p["captured_date"] for p in result["series"]]
         assert labels == sorted(labels)
         assert result["days"] == 30
 
-    def test_sede_id_scope_filters_out_other_sedes(
-        self, client, db_session
-    ):
+    def test_sede_id_scope_filters_out_other_sedes(self, client, db_session):
         from backend import crud
 
         sede_a = _make_sede(db_session, nombre="A")
@@ -305,13 +286,9 @@ class TestGetSeoTrend:
         db_session.commit()
 
         scoped = crud.get_seo_trend(db_session, sede_id=sede_a.id, days=7)
-        assert all(
-            p["average_score"] == 80 for p in scoped["series"]
-        ), "Scope must exclude snapshots from other sedes"
+        assert all(p["average_score"] == 80 for p in scoped["series"]), "Scope must exclude snapshots from other sedes"
 
-    def test_empty_scope_returns_no_data(
-        self, client, db_session
-    ):
+    def test_empty_scope_returns_no_data(self, client, db_session):
         from backend import crud
 
         _make_sede(db_session)
@@ -323,12 +300,11 @@ class TestGetSeoTrend:
 
 # ── 5. Dashboard slice wiring ───────────────────────────────────────────────────
 
+
 class TestCmsDashboardSeoSliceWiring:
     """`GET /api/dashboard/cms` debe devolver `seo_trend` cuando hay datos."""
 
-    def test_dashboard_payload_includes_seo_trend_key(
-        self, client, db_session
-    ):
+    def test_dashboard_payload_includes_seo_trend_key(self, client, db_session):
         from backend import crud
 
         # ``seed_admin`` y ``auth_headers`` están definidos en
@@ -378,12 +354,11 @@ class TestCmsDashboardSeoSliceWiring:
 
 # ── 6. Alert logic ──────────────────────────────────────────────────────────────
 
+
 class TestSeoAlertLogic:
     """`is_alert=True` cuando la caída es >=10 pts."""
 
-    def test_alert_triggers_on_drop_ge_threshold(
-        self, client, db_session
-    ):
+    def test_alert_triggers_on_drop_ge_threshold(self, client, db_session):
         from backend.crud.dashboard import _build_seo_trend_slice
 
         sede = _make_sede(db_session)
@@ -392,11 +367,16 @@ class TestSeoAlertLogic:
 
         # Drop de 12 pts today: yesterday=92 → today=80 → is_alert=True
         _make_snapshot(
-            db_session, site=site, score=92,
+            db_session,
+            site=site,
+            score=92,
             captured_date=today - dt.timedelta(days=1),
         )
         _make_snapshot(
-            db_session, site=site, score=80, captured_date=today,
+            db_session,
+            site=site,
+            score=80,
+            captured_date=today,
         )
         db_session.commit()
 
@@ -405,9 +385,7 @@ class TestSeoAlertLogic:
         assert trend.is_alert is True
         assert trend.alert_threshold == 10
 
-    def test_alert_does_not_trigger_on_small_drop(
-        self, client, db_session
-    ):
+    def test_alert_does_not_trigger_on_small_drop(self, client, db_session):
         """Drop de 5 pts: NO debe disparar alerta."""
         from backend.crud.dashboard import _build_seo_trend_slice
 
@@ -417,11 +395,16 @@ class TestSeoAlertLogic:
 
         # ayer=90 → hoy=85 = -5 (umbral = -10)
         _make_snapshot(
-            db_session, site=site, score=90,
+            db_session,
+            site=site,
+            score=90,
             captured_date=today - dt.timedelta(days=1),
         )
         _make_snapshot(
-            db_session, site=site, score=85, captured_date=today,
+            db_session,
+            site=site,
+            score=85,
+            captured_date=today,
         )
         db_session.commit()
 
@@ -429,20 +412,22 @@ class TestSeoAlertLogic:
         assert trend.change_vs_prior == -5
         assert trend.is_alert is False
 
-    def test_rise_does_not_trigger_alert(
-        self, client, db_session
-    ):
+    def test_rise_does_not_trigger_alert(self, client, db_session):
         from backend.crud.dashboard import _build_seo_trend_slice
 
         sede = _make_sede(db_session)
         site = _make_site(db_session, site_key="faro-rise", sede_id=sede.id)
         today = dt.date.today()
         _make_snapshot(
-            db_session, site=site, score=60,
+            db_session,
+            site=site,
+            score=60,
             captured_date=today - dt.timedelta(days=1),
         )
         _make_snapshot(
-            db_session, site=site, score=85,
+            db_session,
+            site=site,
+            score=85,
             captured_date=today,
         )
         db_session.commit()
@@ -454,12 +439,11 @@ class TestSeoAlertLogic:
 
 # ── 7. Schema + fallback twin ───────────────────────────────────────────────────
 
+
 class TestCmsDashboardSeoSliceFallback:
     """Cuando NO hay snapshots, el slice debe caer en audit on-the-fly."""
 
-    def test_no_snapshots_yet_returns_fallback_with_has_data_true(
-        self, client, db_session
-    ):
+    def test_no_snapshots_yet_returns_fallback_with_has_data_true(self, client, db_session):
         from backend.crud.dashboard import _build_seo_trend_slice
 
         sede = _make_sede(db_session)
@@ -476,12 +460,11 @@ class TestCmsDashboardSeoSliceFallback:
 
 # ── 8. Multi-tenant boundary ────────────────────────────────────────────────────
 
+
 class TestSeoTrendMultiTenantBoundary:
     """Las snapshots de sede_b NUNCA deben aparecer en widgets de sede_a."""
 
-    def test_widget_slices_a_does_not_leak_b_snapshots(
-        self, client, db_session
-    ):
+    def test_widget_slices_a_does_not_leak_b_snapshots(self, client, db_session):
         from backend.crud.dashboard import _build_seo_trend_slice
 
         sede_a = _make_sede(db_session, nombre="Widget A")

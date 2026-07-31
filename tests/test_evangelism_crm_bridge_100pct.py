@@ -1,29 +1,34 @@
 """Tests exhaustivos y estructurales para backend/services/evangelism_crm_bridge.py (100% Cobertura)."""
 
 import uuid
-import pytest
 from unittest.mock import MagicMock, patch
+
 from sqlalchemy.exc import IntegrityError
 
 from backend.models_crm import Persona
-from backend.models_evangelism import Sede, Asistencia, GrupoEvangelismo, SesionGrupo, EstrategiaEvangelismo, CategoriaEstrategia
-from backend.models_crm_pipeline import PipelineCRM, EtapaPipeline, TipoPipelineEnum
+from backend.models_crm_pipeline import EtapaPipeline, PipelineCRM
+from backend.models_evangelism import (
+    Asistencia,
+    CategoriaEstrategia,
+    EstrategiaEvangelismo,
+    GrupoEvangelismo,
+    Sede,
+    SesionGrupo,
+)
 from backend.services.evangelism_crm_bridge import (
-    _stringify_uuid_payload,
-    _crm_etapa_pipeline_live_column_names,
     _crm_casos_live_column_names,
+    _crm_etapa_pipeline_live_column_names,
     _crm_etapa_pipeline_read_only_options,
-    _build_transient_caso,
     _insert_caso_nuevo_visitante,
-    _obtener_o_crear_pipeline_nuevos_visitantes,
     _obtener_o_crear_etapa_nuevo_contacto,
+    _obtener_o_crear_pipeline_nuevos_visitantes,
+    _stringify_uuid_payload,
     crear_caso_desde_asistencia,
     crear_caso_nuevo_visitante,
 )
 
 
 class TestEvangelismCrmBridge100Pct:
-
     def test_stringify_uuid_payload(self):
         u1 = uuid.uuid4()
         payload = {"id": u1, "name": "Test", "val": 123}
@@ -94,6 +99,7 @@ class TestEvangelismCrmBridge100Pct:
         db_session.commit()
 
         from datetime import datetime, timezone
+
         sesion = SesionGrupo(grupo_id=grupo.id, fecha_sesion=datetime.now(timezone.utc))
         db_session.add(sesion)
         db_session.commit()
@@ -131,10 +137,23 @@ class TestEvangelismCrmBridge100Pct:
         etapa = EtapaPipeline(id=uuid.uuid4())
         sede_id = uuid.uuid4()
 
-        with patch("backend.services.evangelism_crm_bridge._crm_casos_live_column_names", return_value={"id", "persona_id", "sede_id", "pipeline_id", "etapa_actual_id", "titulo_caso", "sort_order", "is_locked_for_reorder"}), \
-             patch("backend.services.evangelism_crm_bridge.Table"), \
-             patch("backend.services.evangelism_crm_bridge.insert"):
-
+        with (
+            patch(
+                "backend.services.evangelism_crm_bridge._crm_casos_live_column_names",
+                return_value={
+                    "id",
+                    "persona_id",
+                    "sede_id",
+                    "pipeline_id",
+                    "etapa_actual_id",
+                    "titulo_caso",
+                    "sort_order",
+                    "is_locked_for_reorder",
+                },
+            ),
+            patch("backend.services.evangelism_crm_bridge.Table"),
+            patch("backend.services.evangelism_crm_bridge.insert"),
+        ):
             caso = _insert_caso_nuevo_visitante(
                 db=mock_db,
                 persona=persona,
@@ -160,7 +179,10 @@ class TestEvangelismCrmBridge100Pct:
         q2 = MagicMock()
         q2.first.return_value = existing_p  # after rollback
 
-        mock_db.query.return_value.filter.return_value.filter.return_value.filter.return_value.filter.side_effect = [q1, q2]
+        mock_db.query.return_value.filter.return_value.filter.return_value.filter.return_value.filter.side_effect = [
+            q1,
+            q2,
+        ]
         mock_db.query.return_value.filter.return_value.filter.return_value.filter.side_effect = [q1, q2]
 
         p = _obtener_o_crear_pipeline_nuevos_visitantes(mock_db, uuid.uuid4())
@@ -196,19 +218,29 @@ class TestEvangelismCrmBridge100Pct:
 
         mock_db.query.return_value = mock_query
 
-        with patch("backend.services.evangelism_crm_bridge._crm_etapa_pipeline_live_column_names", return_value={"id", "pipeline_id", "nombre", "visual_color"}):
+        with patch(
+            "backend.services.evangelism_crm_bridge._crm_etapa_pipeline_live_column_names",
+            return_value={"id", "pipeline_id", "nombre", "visual_color"},
+        ):
             etapa = _obtener_o_crear_etapa_nuevo_contacto(mock_db, pipeline, uuid.uuid4())
             assert etapa == existing_etapa
 
     def test_crear_caso_nuevo_visitante_returns_none_when_pipeline_missing(self):
         mock_db = MagicMock()
-        with patch("backend.services.evangelism_crm_bridge._obtener_o_crear_pipeline_nuevos_visitantes", return_value=None):
+        with patch(
+            "backend.services.evangelism_crm_bridge._obtener_o_crear_pipeline_nuevos_visitantes", return_value=None
+        ):
             res = crear_caso_nuevo_visitante(mock_db, MagicMock(), uuid.uuid4())
             assert res is None
 
     def test_crear_caso_nuevo_visitante_returns_none_when_etapa_missing(self):
         mock_db = MagicMock()
-        with patch("backend.services.evangelism_crm_bridge._obtener_o_crear_pipeline_nuevos_visitantes", return_value=MagicMock()), \
-             patch("backend.services.evangelism_crm_bridge._obtener_o_crear_etapa_nuevo_contacto", return_value=None):
+        with (
+            patch(
+                "backend.services.evangelism_crm_bridge._obtener_o_crear_pipeline_nuevos_visitantes",
+                return_value=MagicMock(),
+            ),
+            patch("backend.services.evangelism_crm_bridge._obtener_o_crear_etapa_nuevo_contacto", return_value=None),
+        ):
             res = crear_caso_nuevo_visitante(mock_db, MagicMock(), uuid.uuid4())
             assert res is None

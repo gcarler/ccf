@@ -64,21 +64,21 @@ export const AllPositions: Story = {
             <DSTooltip content="Arriba" side="top">
                 <DSButton>Top</DSButton>
             </DSTooltip>
-            
+
             <div className="flex gap-8">
                 <DSTooltip content="Izquierda" side="left">
                     <DSButton>Left</DSButton>
                 </DSTooltip>
-                
+
                 <DSTooltip content="Centro" side="top">
                     <DSButton>Center</DSButton>
                 </DSTooltip>
-                
+
                 <DSTooltip content="Derecha" side="right">
                     <DSButton>Right</DSButton>
                 </DSTooltip>
             </div>
-            
+
             <DSTooltip content="Abajo" side="bottom">
                 <DSButton>Bottom</DSButton>
             </DSTooltip>

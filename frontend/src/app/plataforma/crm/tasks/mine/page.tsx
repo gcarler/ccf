@@ -61,7 +61,7 @@ export default function MyTasks() {
     }, [authLoading, fetchTasks, isAuthenticated, reloadKey]);
 
     const filteredTasks = useMemo(() => {
-        return tasks.filter(t => 
+        return tasks.filter(t =>
             activeTab === 'completed' ? t.status === 'done' : t.status !== 'done'
         );
     }, [activeTab, tasks]);
@@ -150,7 +150,7 @@ export default function MyTasks() {
         <div className="space-y-4">
             {/* Summary Cards Cinematic */}
             <section className="flex gap-4 overflow-x-auto hide-scrollbar">
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="flex-1 min-w-[240px] bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--primary))] rounded-md p-4 text-white shadow-2xl shadow-[hsl(var(--primary)/0.2)] relative overflow-hidden group"
@@ -164,7 +164,7 @@ export default function MyTasks() {
                     <p className="text-2xs font-bold text-[hsl(var(--info)/60%)] uppercase tracking-wide relative z-10">Compromisos activos</p>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
@@ -232,12 +232,12 @@ export default function MyTasks() {
                                 <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5 bg-[hsl(var(--surface-1))] dark:bg-transparent">
                                     <AnimatePresence mode="popLayout">
                                         {filteredTasks.map((task, idx) => (
-                                            <motion.tr 
+                                            <motion.tr
                                                 layout
                                                 initial={{ opacity: 0, x: -20 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: idx * 0.05 }}
-                                                key={task.id} 
+                                                key={task.id}
                                                 className="group hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/5 transition-all cursor-pointer"
                                             >
                                                 <td className="px-3 py-2">

@@ -30,18 +30,16 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def _col_exists(table: str, col: str) -> bool:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM information_schema.columns "
-        "WHERE table_name=:t AND column_name=:c"
-    ), {"t": table, "c": col})
+    r = conn.execute(
+        sa.text("SELECT count(*) FROM information_schema.columns WHERE table_name=:t AND column_name=:c"),
+        {"t": table, "c": col},
+    )
     return r.scalar() > 0
 
 
 def _index_exists(name: str) -> bool:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM pg_indexes WHERE indexname=:n"
-    ), {"n": name})
+    r = conn.execute(sa.text("SELECT count(*) FROM pg_indexes WHERE indexname=:n"), {"n": name})
     return r.scalar() > 0
 
 
@@ -63,9 +61,7 @@ def upgrade() -> None:
 
         idx_name = f"ix_{table}_active"
         if not _index_exists(idx_name):
-            conn.execute(sa.text(
-                f"CREATE INDEX {idx_name} ON {table} (id) WHERE deleted_at IS NULL"
-            ))
+            conn.execute(sa.text(f"CREATE INDEX {idx_name} ON {table} (id) WHERE deleted_at IS NULL"))
 
 
 def downgrade() -> None:

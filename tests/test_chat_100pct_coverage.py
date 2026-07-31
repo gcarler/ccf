@@ -2,6 +2,7 @@
 Exhaustive test suite for backend/api/chat.py to achieve 100% test coverage.
 Covers all edge cases: cross-sede defense, TOCTOU guards, orphan/invalid UUIDs, pagination formats, and message deletion.
 """
+
 from __future__ import annotations
 
 import json
@@ -132,7 +133,9 @@ class TestChat100PctCoverage:
         assert exc_info.value.status_code == 404
 
         # Valid UUID suffix but user not participant
-        msg_other_conv = models.ChatMessage(id=uuid.uuid4(), room_id=f"dm_{uuid.uuid4()}", sender_id=user.id, content="Hi")
+        msg_other_conv = models.ChatMessage(
+            id=uuid.uuid4(), room_id=f"dm_{uuid.uuid4()}", sender_id=user.id, content="Hi"
+        )
         with pytest.raises(HTTPException) as exc_info:
             _assert_actor_is_active_participant(db, msg_other_conv, user)
         assert exc_info.value.status_code == 404
@@ -189,7 +192,9 @@ class TestChat100PctCoverage:
         conv_res = c.post("/api/chat/conversations", json={"participant_ids": [str(p2.id)]}, headers=h).json()
         conv_id = conv_res["id"]
 
-        msg_res = c.post(f"/api/chat/conversations/{conv_id}/messages", json={"content": "To be deleted"}, headers=h).json()
+        msg_res = c.post(
+            f"/api/chat/conversations/{conv_id}/messages", json={"content": "To be deleted"}, headers=h
+        ).json()
         msg_id = msg_res["id"]
 
         # Delete message
@@ -202,6 +207,7 @@ class TestChat100PctCoverage:
         user = chat_setup["user"]
         from backend.api.chat import _get_persona
         from backend.models_auth import Usuario
+
         u = db.query(Usuario).filter(Usuario.id != user.id).first()
         if not u:
             u = Usuario(
@@ -223,6 +229,7 @@ class TestChat100PctCoverage:
         from unittest.mock import patch
 
         from backend.api.chat import _assert_conversation_sede_aligned
+
         with patch("backend.api.chat.get_user_sede_id", return_value=None):
             conv = models.Conversation(id=uuid.uuid4())
             db.add(conv)
@@ -234,6 +241,7 @@ class TestChat100PctCoverage:
         user = chat_setup["user"]
         conv = crud.create_conversation(db, [user.id])
         from backend.api.chat import _assert_conversation_sede_aligned
+
         _assert_conversation_sede_aligned(db, conv, user)
 
     def test_get_persona_returns_none_when_no_persona(self, chat_setup):
@@ -241,6 +249,7 @@ class TestChat100PctCoverage:
         user = chat_setup["user"]
         from backend.api.chat import _get_persona
         from backend.models_auth import Usuario
+
         u = db.query(Usuario).filter(Usuario.id != user.id).first()
         if not u:
             u = Usuario(
@@ -265,6 +274,7 @@ class TestChat100PctCoverage:
         db.commit()
         conv = crud.create_conversation(db, [user.id, p_orphan.id])
         from backend.api.chat import _assert_conversation_sede_aligned
+
         _assert_conversation_sede_aligned(db, conv, user)
 
     def test_assert_conversation_sede_aligned_no_other_user_ids(self, chat_setup):
@@ -289,6 +299,7 @@ class TestChat100PctCoverage:
         from unittest.mock import patch
 
         from backend.api.chat import _assert_sender_sede_matches_actor
+
         msg = models.ChatMessage(id=uuid.uuid4(), sender_id=user.id, content="test")
         db.add(msg)
         db.commit()
@@ -306,10 +317,12 @@ class TestChat100PctCoverage:
         db.add(msg)
         db.commit()
         from backend.api.chat import _assert_sender_sede_matches_actor
+
         _assert_sender_sede_matches_actor(db, msg, user)
 
     def test_schema_deduplicate_participants(self):
         from backend.schemas.chat import ConversationCreate
+
         payload = ConversationCreate(participant_ids=[uuid.UUID(int=1), uuid.UUID(int=2), uuid.UUID(int=1)])
         deduped = payload.deduplicate_participants()
         assert len(deduped.participant_ids) == 2
@@ -318,6 +331,7 @@ class TestChat100PctCoverage:
         import pytest
 
         from backend.schemas.chat import DirectMessageCreate
+
         with pytest.raises(ValueError, match="exceeds 5000"):
             DirectMessageCreate(content="x" * 5001)
 
@@ -327,6 +341,7 @@ class TestChat100PctCoverage:
         from unittest.mock import patch
 
         from backend.api.chat import _get_persona_id
+
         with patch("backend.api.chat.resolve_persona_id_for_user", return_value=None):
             pid = _get_persona_id(db, user)
             assert pid is None
@@ -335,6 +350,7 @@ class TestChat100PctCoverage:
         c = chat_setup["client"]
         h = chat_setup["headers"]
         from unittest.mock import patch
+
         with patch("backend.api.chat._get_persona_id", return_value=None):
             resp = c.get("/api/chat/conversations", headers=h)
             assert resp.status_code == 200
@@ -373,6 +389,7 @@ class TestChat100PctCoverage:
     def test_list_my_messages_no_user_id(self, chat_setup):
         c = chat_setup["client"]
         from unittest.mock import patch
+
         mock_user = type("MockUser", (), {"id": None})()
         with patch("backend.api.chat.require_module_access") as mock_req:
             mock_req.return_value = lambda: mock_user
@@ -383,6 +400,7 @@ class TestChat100PctCoverage:
         c = chat_setup["client"]
         h = chat_setup["headers"]
         from unittest.mock import patch
+
         with patch("backend.api.chat.crud.get_user_conversations", return_value=[]):
             resp = c.get("/api/chat/my-messages", headers=h)
             assert resp.status_code == 200
@@ -480,11 +498,7 @@ class TestChat100PctCoverage:
             json={"content": "msg with bad mentions raw"},
             headers=h,
         )
-        msg = (
-            db.query(models.ChatMessage)
-            .filter(models.ChatMessage.content == "msg with bad mentions raw")
-            .first()
-        )
+        msg = db.query(models.ChatMessage).filter(models.ChatMessage.content == "msg with bad mentions raw").first()
         msg.mentions_raw = "not-valid-json{{{"
         db.commit()
 
@@ -550,6 +564,7 @@ class TestChat100PctCoverage:
 
     def test_upload_chat_attachment_success(self, chat_setup):
         import io
+
         c = chat_setup["client"]
         h = chat_setup["headers"]
         resp = c.post(
@@ -564,6 +579,7 @@ class TestChat100PctCoverage:
 
     def test_upload_chat_attachment_invalid_type(self, chat_setup):
         import io
+
         c = chat_setup["client"]
         h = chat_setup["headers"]
         resp = c.post(
@@ -575,6 +591,7 @@ class TestChat100PctCoverage:
 
     def test_upload_chat_attachment_too_large(self, chat_setup):
         import io
+
         c = chat_setup["client"]
         h = chat_setup["headers"]
         big_data = b"x" * (26 * 1024 * 1024)
@@ -599,6 +616,7 @@ class TestChat100PctCoverage:
         conv_id = conv_res["id"]
 
         from tests.conftest import seed_user_with_role
+
         u_third, p_third, _ = seed_user_with_role(
             db_session=db,
             role_name="chat_user",
@@ -641,9 +659,14 @@ class TestChat100PctCoverage:
         db = chat_setup["db"]
         from backend.api.chat import list_my_chat_messages
         from backend.models_auth import Usuario
+
         mock_user = Usuario(
-            id=None, sede_id=None, username="test", email="test@test.com",
-            is_active=True, is_email_verified=True,
+            id=None,
+            sede_id=None,
+            username="test",
+            email="test@test.com",
+            is_active=True,
+            is_email_verified=True,
         )
         result = list_my_chat_messages(db=db, current_user=mock_user)
         assert result == []

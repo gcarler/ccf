@@ -34,20 +34,14 @@ def cleanup_agent_tasks():
         # 1. Eliminar tareas sin source válido (None o vacío)
         deleted_no_source = (
             db.query(models.AgentTask)
-            .filter(
-                (models.AgentTask.source.is_(None)) | (models.AgentTask.source == "")
-            )
+            .filter((models.AgentTask.source.is_(None)) | (models.AgentTask.source == ""))
             .delete(synchronize_session=False)
         )
         print(f"Eliminadas {deleted_no_source} tareas sin source válido.")
 
         # 2. Eliminar duplicados (mismo título y descripción)
         # Agrupamos por título y descripción y nos quedamos con el ID más reciente
-        all_tasks = (
-            db.query(models.AgentTask)
-            .order_by(models.AgentTask.created_at.desc())
-            .all()
-        )
+        all_tasks = db.query(models.AgentTask).order_by(models.AgentTask.created_at.desc()).all()
         seen = set()
         duplicates_ids = []
 

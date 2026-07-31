@@ -106,9 +106,7 @@ def test_concurrent_drag_drop_blocks_while_lock_held(client, db_session):
         headers=headers,
         json={"caso_id": str(case.id), "target_stage_id": str(target_stage.id)},
     )
-    assert resp.status_code == 409, (
-        f"Expected 409 due to active lock, got {resp.status_code}: {resp.text}"
-    )
+    assert resp.status_code == 409, f"Expected 409 due to active lock, got {resp.status_code}: {resp.text}"
 
     # After cleanup (lock is old enough), the request should succeed.
     lock.locked_at = datetime(2020, 1, 1, tzinfo=timezone.utc)
@@ -118,6 +116,4 @@ def test_concurrent_drag_drop_blocks_while_lock_held(client, db_session):
         headers=headers,
         json={"caso_id": str(case.id), "target_stage_id": str(target_stage.id)},
     )
-    assert resp2.status_code == 200, (
-        f"Expected 200 after lock cleanup, got {resp2.status_code}: {resp2.text}"
-    )
+    assert resp2.status_code == 200, f"Expected 200 after lock cleanup, got {resp2.status_code}: {resp2.text}"

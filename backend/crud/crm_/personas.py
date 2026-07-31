@@ -1,4 +1,5 @@
 """Persona CRUD and search helpers."""
+
 import datetime as dt
 from typing import List, Optional
 from uuid import UUID
@@ -24,11 +25,7 @@ def _persona_live_column_names(db: Session) -> set[str]:
 
 def persona_query(db: Session):
     live_cols = _persona_live_column_names(db)
-    live_attrs = [
-        getattr(models.Persona, name)
-        for name in live_cols
-        if hasattr(models.Persona, name)
-    ]
+    live_attrs = [getattr(models.Persona, name) for name in live_cols if hasattr(models.Persona, name)]
     query = db.query(models.Persona)
     if live_attrs:
         query = query.options(load_only(*live_attrs))
@@ -84,12 +81,16 @@ def create_persona(db: Session, payload: schemas.PersonaCreate, *, sede_id: UUID
     # Inter-módulos: notificar registro de nuevo miembro/persona
     try:
         from backend.services.event_consumers import dispatch_event
-        dispatch_event("persona_registered", {
-            "persona_id": str(row.id),
-            "name": f"{row.first_name} {row.last_name or ''}".strip(),
-            "church_role": str(row.church_role) if row.church_role else "Visitante",
-            "email": row.email,
-        })
+
+        dispatch_event(
+            "persona_registered",
+            {
+                "persona_id": str(row.id),
+                "name": f"{row.first_name} {row.last_name or ''}".strip(),
+                "church_role": str(row.church_role) if row.church_role else "Visitante",
+                "email": row.email,
+            },
+        )
     except Exception:
         pass
 
@@ -110,11 +111,7 @@ def _find_existing_persona(
     de documento coincidan cross-tenant. Cuando ``sede_id`` es ``None`` (caller
     sin tenant resuelto, ej. seed global) se mantiene el behaviour anterior.
     """
-    sede_filter = (
-        models.Persona.sede_id == sede_id
-        if sede_id is not None
-        else true()
-    )
+    sede_filter = models.Persona.sede_id == sede_id if sede_id is not None else true()
     phones = [p for p in (payload.phone, payload.mobile_phone) if p]
     if phones:
         match = (
@@ -132,11 +129,7 @@ def _find_existing_persona(
             return match
 
     if payload.id_number:
-        match = (
-            persona_query(db)
-            .filter(sede_filter, models.Persona.id_number == payload.id_number)
-            .first()
-        )
+        match = persona_query(db).filter(sede_filter, models.Persona.id_number == payload.id_number).first()
         if match:
             return match
 
@@ -284,10 +277,7 @@ def search_personas_page(
     available_groups = [
         row[0]
         for row in (
-            query.with_entities(models.Persona.group_name)
-            .order_by(models.Persona.group_name.asc())
-            .distinct()
-            .all()
+            query.with_entities(models.Persona.group_name).order_by(models.Persona.group_name.asc()).distinct().all()
         )
         if row[0]
     ]
@@ -387,7 +377,9 @@ def assign_persona_mentor(
     active_assignment = _active_mentorship_query(db, mentee_uuid)
     if active_assignment and active_assignment.mentor_persona_id == mentor_uuid:
         active_assignment.notes = notes or active_assignment.notes
-        active_assignment.assigned_by_user_id = _to_uuid(assigned_by_user_id) if assigned_by_user_id else active_assignment.assigned_by_user_id
+        active_assignment.assigned_by_user_id = (
+            _to_uuid(assigned_by_user_id) if assigned_by_user_id else active_assignment.assigned_by_user_id
+        )
         db.commit()
         db.refresh(active_assignment)
         return _decorate_mentorship(active_assignment)
@@ -443,19 +435,26 @@ def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate)
     # Inter-módulos: disparar eventos cuando cambia estado espiritual o rol
     try:
         from backend.services.event_consumers import dispatch_event
+
         if old_church_role != row.church_role:
-            dispatch_event("persona_status_changed", {
-                "persona_id": str(row.id),
-                "from_role": str(old_church_role) if old_church_role else None,
-                "to_role": str(row.church_role) if row.church_role else None,
-            })
+            dispatch_event(
+                "persona_status_changed",
+                {
+                    "persona_id": str(row.id),
+                    "from_role": str(old_church_role) if old_church_role else None,
+                    "to_role": str(row.church_role) if row.church_role else None,
+                },
+            )
         if old_estado_vital != row.estado_vital:
-            dispatch_event("spiritual_stage_transition", {
-                "persona_id": str(row.id),
-                "from_stage": old_estado_vital,
-                "to_stage": row.estado_vital,
-                "agent_id": str(row.id),
-            })
+            dispatch_event(
+                "spiritual_stage_transition",
+                {
+                    "persona_id": str(row.id),
+                    "from_stage": old_estado_vital,
+                    "to_stage": row.estado_vital,
+                    "agent_id": str(row.id),
+                },
+            )
     except Exception:
         pass  # eventos son best-effort, nunca bloquean la transacción
 
@@ -690,14 +689,12 @@ def _decorate_mentorship(row: models.PersonaMentorship | None) -> models.Persona
         return None
     mentor = getattr(row, "mentor", None)
     mentee = getattr(row, "mentee", None)
-    row.mentor_name = (
-        getattr(mentor, "nombre_completo", None)
-        or (f"{getattr(mentor, 'first_name', '')} {getattr(mentor, 'last_name', '')}".strip() if mentor else None)
+    row.mentor_name = getattr(mentor, "nombre_completo", None) or (
+        f"{getattr(mentor, 'first_name', '')} {getattr(mentor, 'last_name', '')}".strip() if mentor else None
     )
     row.mentor_role = getattr(mentor, "church_role", None)
-    row.mentee_name = (
-        getattr(mentee, "nombre_completo", None)
-        or (f"{getattr(mentee, 'first_name', '')} {getattr(mentee, 'last_name', '')}".strip() if mentee else None)
+    row.mentee_name = getattr(mentee, "nombre_completo", None) or (
+        f"{getattr(mentee, 'first_name', '')} {getattr(mentee, 'last_name', '')}".strip() if mentee else None
     )
     row.mentee_role = getattr(mentee, "church_role", None)
     return row

@@ -43,13 +43,9 @@ def seed_quality_motors():
             {"title": "Líder", "min_xp": 2000, "icon_key": "star"},
             {"title": "Pastor", "min_xp": 5000, "icon_key": "award"},
         ]
-        for l in levels:
-            if (
-                not db.query(models.Level)
-                .filter(models.Level.title == l["title"])
-                .first()
-            ):
-                db.add(models.Level(**l))
+        for level in levels:
+            if not db.query(models.Level).filter(models.Level.title == level["title"]).first():
+                db.add(models.Level(**level))
 
         print("--- Seeding Initial Badges ---")
         badges = [
@@ -73,11 +69,7 @@ def seed_quality_motors():
             },
         ]
         for b in badges:
-            if (
-                not db.query(models.Badge)
-                .filter(models.Badge.name == b["name"])
-                .first()
-            ):
+            if not db.query(models.Badge).filter(models.Badge.name == b["name"]).first():
                 db.add(models.Badge(**b))
 
         print("--- Seeding AI Initial Insights ---")

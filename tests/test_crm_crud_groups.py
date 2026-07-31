@@ -1,13 +1,14 @@
 """Coverage tests for backend/crud/crm_/groups.py — target 90%+."""
+
 from __future__ import annotations
 
 import uuid as _uuid
 
 from sqlalchemy.orm import Session
 
-from backend import models, schemas
-from backend.crud.crm_ import groups as crud_groups
+from backend import models
 from backend.crud._utils import _utcnow
+from backend.crud.crm_ import groups as crud_groups
 from backend.schemas.evangelism import GrupoEvangelismoCreate, GrupoEvangelismoUpdate, ParticipanteGrupoConRol
 
 
@@ -27,6 +28,7 @@ def _seed_persona(db: Session, sede_id, first="Persona") -> models.Persona:
 
 def _seed_categoria(db):
     from backend.models_evangelism import CategoriaEstrategia
+
     c = CategoriaEstrategia(id=_uuid.uuid4(), nombre="Cat")
     db.add(c)
     db.flush()
@@ -35,9 +37,12 @@ def _seed_categoria(db):
 
 def _seed_strategy(db, sede_id):
     from backend.models_evangelism import EstrategiaEvangelismo
+
     s = EstrategiaEvangelismo(
-        id=_uuid.uuid4(), nombre="Estrategia",
-        sede_id=sede_id, categoria_id=_seed_categoria(db).id,
+        id=_uuid.uuid4(),
+        nombre="Estrategia",
+        sede_id=sede_id,
+        categoria_id=_seed_categoria(db).id,
     )
     db.add(s)
     db.flush()
@@ -46,8 +51,10 @@ def _seed_strategy(db, sede_id):
 
 def _seed_grupo(db, sede_id, estrategia_id=None, deleted_at=None, nombre="Grupo Test"):
     g = models.GrupoEvangelismo(
-        id=_uuid.uuid4(), nombre=nombre,
-        sede_id=sede_id, deleted_at=deleted_at,
+        id=_uuid.uuid4(),
+        nombre=nombre,
+        sede_id=sede_id,
+        deleted_at=deleted_at,
         estrategia_id=estrategia_id,
     )
     db.add(g)
@@ -57,8 +64,10 @@ def _seed_grupo(db, sede_id, estrategia_id=None, deleted_at=None, nombre="Grupo 
 
 def _seed_custom_role(db, estrategia_id):
     from backend.models_evangelism import RolPersonalizadoEstrategia
+
     r = RolPersonalizadoEstrategia(
-        id=_uuid.uuid4(), nombre_rol="Líder",
+        id=_uuid.uuid4(),
+        nombre_rol="Líder",
         estrategia_id=estrategia_id,
     )
     db.add(r)
@@ -71,7 +80,6 @@ def _commit(db):
 
 
 class TestGroupParticipantRoleValues:
-
     def test_plain_role(self):
         item = type("Item", (), {"role": "miembro", "rol_personalizado_id": None})()
         role, custom_id = crud_groups._group_participant_role_values(item)
@@ -142,7 +150,6 @@ class TestGroupParticipantRoleValues:
 
 
 class TestCrudGrupos:
-
     def test_get_grupos_empty(self, db_session):
         result = crud_groups.get_grupos(db_session)
         assert result == []
@@ -229,9 +236,7 @@ class TestCrudGrupos:
         )
         g = crud_groups.create_grupo(db_session, payload, sede_id=sede.id)
         assert g.nombre == "Grupo Attendees"
-        pgs = db_session.query(models.ParticipanteGrupo).filter(
-            models.ParticipanteGrupo.grupo_id == g.id
-        ).all()
+        pgs = db_session.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == g.id).all()
         assert len(pgs) >= 1
 
     def test_create_grupo_with_base_attendees_with_roles(self, db_session):
@@ -244,9 +249,7 @@ class TestCrudGrupos:
             ],
         )
         g = crud_groups.create_grupo(db_session, payload, sede_id=sede.id)
-        pgs = db_session.query(models.ParticipanteGrupo).filter(
-            models.ParticipanteGrupo.grupo_id == g.id
-        ).all()
+        pgs = db_session.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == g.id).all()
         assert len(pgs) >= 1
 
     def test_create_grupo_with_custom_role(self, db_session):
@@ -259,15 +262,14 @@ class TestCrudGrupos:
             evangelism_strategy_id=s.id,
             base_attendees_with_roles=[
                 ParticipanteGrupoConRol(
-                    persona_id=p.id, role=f"custom:{cr.id}",
+                    persona_id=p.id,
+                    role=f"custom:{cr.id}",
                     rol_personalizado_id=cr.id,
                 ),
             ],
         )
         g = crud_groups.create_grupo(db_session, payload, sede_id=sede.id)
-        pgs = db_session.query(models.ParticipanteGrupo).filter(
-            models.ParticipanteGrupo.grupo_id == g.id
-        ).all()
+        pgs = db_session.query(models.ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == g.id).all()
         assert len(pgs) >= 1
         assert pgs[0].rol_personalizado_id == cr.id
 
@@ -313,7 +315,6 @@ class TestCrudGrupos:
 
 
 class TestUpdateGrupoAttendees:
-
     def test_update_with_base_attendees_with_roles_miembro(self, db_session):
         sede = _seed_sede(db_session)
         g = _seed_grupo(db_session, sede.id)
@@ -325,10 +326,14 @@ class TestUpdateGrupoAttendees:
             ],
         )
         result = crud_groups.update_grupo(db_session, g.id, payload)
-        pgs = db_session.query(models.ParticipanteGrupo).filter(
-            models.ParticipanteGrupo.grupo_id == g.id,
-            models.ParticipanteGrupo.deleted_at.is_(None),
-        ).all()
+        pgs = (
+            db_session.query(models.ParticipanteGrupo)
+            .filter(
+                models.ParticipanteGrupo.grupo_id == g.id,
+                models.ParticipanteGrupo.deleted_at.is_(None),
+            )
+            .all()
+        )
         assert len(pgs) >= 1
 
     def test_update_with_base_attendees_reassign(self, db_session):
@@ -348,10 +353,14 @@ class TestUpdateGrupoAttendees:
             ],
         )
         result = crud_groups.update_grupo(db_session, g.id, payload2)
-        pgs = db_session.query(models.ParticipanteGrupo).filter(
-            models.ParticipanteGrupo.grupo_id == g.id,
-            models.ParticipanteGrupo.deleted_at.is_(None),
-        ).all()
+        pgs = (
+            db_session.query(models.ParticipanteGrupo)
+            .filter(
+                models.ParticipanteGrupo.grupo_id == g.id,
+                models.ParticipanteGrupo.deleted_at.is_(None),
+            )
+            .all()
+        )
         assert len(pgs) == 1
         assert pgs[0].role == "asistente"
 
@@ -365,7 +374,8 @@ class TestUpdateGrupoAttendees:
         payload = GrupoEvangelismoUpdate(
             base_attendees_with_roles=[
                 ParticipanteGrupoConRol(
-                    persona_id=p.id, role=f"custom:{cr.id}",
+                    persona_id=p.id,
+                    role=f"custom:{cr.id}",
                     rol_personalizado_id=cr.id,
                 ),
             ],
@@ -382,10 +392,14 @@ class TestUpdateGrupoAttendees:
             base_attendee_ids=[p.id],
         )
         result = crud_groups.update_grupo(db_session, g.id, payload)
-        pgs = db_session.query(models.ParticipanteGrupo).filter(
-            models.ParticipanteGrupo.grupo_id == g.id,
-            models.ParticipanteGrupo.deleted_at.is_(None),
-        ).all()
+        pgs = (
+            db_session.query(models.ParticipanteGrupo)
+            .filter(
+                models.ParticipanteGrupo.grupo_id == g.id,
+                models.ParticipanteGrupo.deleted_at.is_(None),
+            )
+            .all()
+        )
         assert len(pgs) == 1
         assert pgs[0].role == "miembro"
 
@@ -398,10 +412,14 @@ class TestUpdateGrupoAttendees:
         crud_groups.update_grupo(db_session, g.id, payload1)
         payload2 = GrupoEvangelismoUpdate(base_attendee_ids=[p.id])
         result = crud_groups.update_grupo(db_session, g.id, payload2)
-        pgs = db_session.query(models.ParticipanteGrupo).filter(
-            models.ParticipanteGrupo.grupo_id == g.id,
-            models.ParticipanteGrupo.deleted_at.is_(None),
-        ).all()
+        pgs = (
+            db_session.query(models.ParticipanteGrupo)
+            .filter(
+                models.ParticipanteGrupo.grupo_id == g.id,
+                models.ParticipanteGrupo.deleted_at.is_(None),
+            )
+            .all()
+        )
         assert len(pgs) == 1
 
     def test_update_with_personalizado_rehidratacion(self, db_session):
@@ -414,7 +432,8 @@ class TestUpdateGrupoAttendees:
         payload1 = GrupoEvangelismoUpdate(
             base_attendees_with_roles=[
                 ParticipanteGrupoConRol(
-                    persona_id=p.id, role=f"custom:{cr.id}",
+                    persona_id=p.id,
+                    role=f"custom:{cr.id}",
                     rol_personalizado_id=cr.id,
                 ),
             ],
@@ -423,16 +442,21 @@ class TestUpdateGrupoAttendees:
         payload2 = GrupoEvangelismoUpdate(
             base_attendees_with_roles=[
                 ParticipanteGrupoConRol(
-                    persona_id=p.id, role="personalizado",
+                    persona_id=p.id,
+                    role="personalizado",
                     rol_personalizado_id=None,
                 ),
             ],
         )
         result = crud_groups.update_grupo(db_session, g.id, payload2)
-        pgs = db_session.query(models.ParticipanteGrupo).filter(
-            models.ParticipanteGrupo.grupo_id == g.id,
-            models.ParticipanteGrupo.deleted_at.is_(None),
-        ).all()
+        pgs = (
+            db_session.query(models.ParticipanteGrupo)
+            .filter(
+                models.ParticipanteGrupo.grupo_id == g.id,
+                models.ParticipanteGrupo.deleted_at.is_(None),
+            )
+            .all()
+        )
         assert len(pgs) == 1
         assert pgs[0].rol_personalizado_id == cr.id
 
@@ -489,5 +513,3 @@ class TestUpdateGrupoAttendees:
         )
         result = crud_groups.update_grupo(db_session, g.id, payload)
         assert result.anfitrion_persona_id == p1.id
-
-

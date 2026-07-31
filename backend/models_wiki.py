@@ -23,6 +23,7 @@ class WikiPage(Base):
 
 class WikiPageVersion(Base):
     """Version history for wiki pages. Snapshots created on every PATCH."""
+
     __tablename__ = "wiki_page_versions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

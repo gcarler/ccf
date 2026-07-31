@@ -92,12 +92,8 @@ def _seed_two_sedes(db_session):
     ``commit`` explícito al final para que las fixtures queden visibles
     a la API (mirror del patrón en ``tests/test_messaging_sede_isolation.py``).
     """
-    admin_a, persona_a, sede_a = seed_admin(
-        db_session, email="chatA@example.com", password="testpass123"
-    )
-    admin_b, persona_b, sede_b = seed_admin(
-        db_session, email="chatB@example.com", password="testpass123"
-    )
+    admin_a, persona_a, sede_a = seed_admin(db_session, email="chatA@example.com", password="testpass123")
+    admin_b, persona_b, sede_b = seed_admin(db_session, email="chatB@example.com", password="testpass123")
     db_session.commit()
     assert sede_a.id != sede_b.id
     return (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b)
@@ -134,14 +130,9 @@ def _persona_in(db, sede_id, email_suffix):
             try:
                 effective_sede_id = _uuid.UUID(sede_id)
             except (TypeError, ValueError) as exc:
-                raise ValueError(
-                    f"sede_id string no parseable como UUID: {sede_id!r}"
-                ) from exc
+                raise ValueError(f"sede_id string no parseable como UUID: {sede_id!r}") from exc
         else:
-            raise TypeError(
-                f"sede_id debe ser None, UUID, str o objeto Sede "
-                f"(got {type(sede_id).__name__})"
-            )
+            raise TypeError(f"sede_id debe ser None, UUID, str o objeto Sede (got {type(sede_id).__name__})")
     else:
         effective_sede_id = None
 
@@ -186,12 +177,8 @@ def _inject_cross_sede_conversation(db, participant_a, participant_b):
     db.add(conv)
     db.flush()
 
-    cp_a = models.ConversationParticipant(
-        conversation_id=conv_id, user_id=participant_a.id
-    )
-    cp_b = models.ConversationParticipant(
-        conversation_id=conv_id, user_id=participant_b.id
-    )
+    cp_a = models.ConversationParticipant(conversation_id=conv_id, user_id=participant_a.id)
+    cp_b = models.ConversationParticipant(conversation_id=conv_id, user_id=participant_b.id)
     db.add_all([cp_a, cp_b])
     db.flush()
     return conv
@@ -207,9 +194,7 @@ def _inject_message(db, sender_id, conv_id, content, room_id=None):
     ``room_id=""`` (string vacía => se considera sin scope y equivalente
     a ``None`` para el helper) o crear el ``models.ChatMessage(...)`` directo.
     """
-    effective_room_id = (
-        f"dm_{conv_id}" if room_id in (None, "") else room_id
-    )
+    effective_room_id = f"dm_{conv_id}" if room_id in (None, "") else room_id
     msg_id = _uuid.uuid4()
     msg = models.ChatMessage(
         id=msg_id,
@@ -244,26 +229,17 @@ def test_create_conversation_blocks_cross_sede_participant(client, db_session):
         headers=headers_a,
         json={"participant_ids": [str(persona_b.id)]},
     )
-    assert resp.status_code == 404, (
-        f"Leak o regression: cross-sede debe 404 (status {resp.status_code}): {resp.text}"
-    )
+    assert resp.status_code == 404, f"Leak o regression: cross-sede debe 404 (status {resp.status_code}): {resp.text}"
 
     # Sanity: NO se creó ninguna conversación nueva con este participant.
     # Como admin_a + sede_a están recién seeded y este test no crea
     # conversaciones same-sede válidas, la cuenta de conversaciones
     # nuevas que incluyen persona_b como participant debe ser 0.
     db_session.expire_all()
-    leaked = (
-        db_session.query(models.Conversation)
-        .all()
-    )
-    leaked_with_persona_b = sum(
-        1 for c in leaked
-        if any(str(cp.user_id) == str(persona_b.id) for cp in c.participants)
-    )
+    leaked = db_session.query(models.Conversation).all()
+    leaked_with_persona_b = sum(1 for c in leaked if any(str(cp.user_id) == str(persona_b.id) for cp in c.participants))
     assert leaked_with_persona_b == 0, (
-        f"FUGA: se creó conversación con persona_b cross-sede "
-        f"({leaked_with_persona_b} conversaciones encontradas)"
+        f"FUGA: se creó conversación con persona_b cross-sede ({leaked_with_persona_b} conversaciones encontradas)"
     )
 
 
@@ -279,10 +255,7 @@ def test_create_conversation_succeeds_when_participant_local(client, db_session)
         headers=headers_a,
         json={"participant_ids": [str(persona_local.id)]},
     )
-    assert resp.status_code == 201, (
-        f"Regresión: crear DM same-sede MUST succeed "
-        f"(got {resp.status_code}): {resp.text}"
-    )
+    assert resp.status_code == 201, f"Regresión: crear DM same-sede MUST succeed (got {resp.status_code}): {resp.text}"
     conv_id = resp.json()["id"]
 
     cps = (
@@ -314,8 +287,7 @@ def test_list_direct_messages_blocks_cross_sede_inherited(client, db_session):
         headers=headers_a,
     )
     assert resp.status_code == 404, (
-        f"Defense-in-depth leak: cross-sede conv accesible por GET "
-        f"(status {resp.status_code}): {resp.text}"
+        f"Defense-in-depth leak: cross-sede conv accesible por GET (status {resp.status_code}): {resp.text}"
     )
 
 
@@ -332,8 +304,7 @@ def test_send_direct_message_blocks_cross_sede_inherited(client, db_session):
         json={"content": "Mensaje cross-sede (debe fallar)"},
     )
     assert resp.status_code == 404, (
-        f"Defense-in-depth leak: POST a conv cross-sede allowed "
-        f"(status {resp.status_code}): {resp.text}"
+        f"Defense-in-depth leak: POST a conv cross-sede allowed (status {resp.status_code}): {resp.text}"
     )
 
     # Sanity: NO se persistió ningún mensaje en esta conv cross-sede.
@@ -353,12 +324,9 @@ def test_mark_conversation_read_blocks_cross_sede_inherited(client, db_session):
     db_session.commit()
 
     headers_a = auth_headers(client, email="chatA@example.com")
-    resp = client.post(
-        f"/api/chat/conversations/{cross_conv.id}/read", headers=headers_a
-    )
+    resp = client.post(f"/api/chat/conversations/{cross_conv.id}/read", headers=headers_a)
     assert resp.status_code == 404, (
-        f"Defense-in-depth leak: mark_read cross-sede allowed "
-        f"(status {resp.status_code}): {resp.text}"
+        f"Defense-in-depth leak: mark_read cross-sede allowed (status {resp.status_code}): {resp.text}"
     )
 
 
@@ -374,9 +342,7 @@ def test_get_conversation_returns_404_for_nonexistent(client, db_session):
         f"/api/chat/conversations/{_uuid.uuid4()}/messages",
         headers=headers_a,
     )
-    assert resp.status_code == 404, (
-        f"Nonexistent conv debe 404 (status {resp.status_code}): {resp.text}"
-    )
+    assert resp.status_code == 404, f"Nonexistent conv debe 404 (status {resp.status_code}): {resp.text}"
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -384,9 +350,7 @@ def test_get_conversation_returns_404_for_nonexistent(client, db_session):
 # ════════════════════════════════════════════════════════════════════════════
 
 
-def test_delete_chat_message_canonical_pass_when_sender_matches_actor(
-    client, db_session
-):
+def test_delete_chat_message_canonical_pass_when_sender_matches_actor(client, db_session):
     """Documenta el **invariante de tautología** del segundo guard:
 
     El guard primario ``msg.sender_id != current_user.id`` rechaza
@@ -408,9 +372,7 @@ def test_delete_chat_message_canonical_pass_when_sender_matches_actor(
     conv = models.Conversation(id=_uuid.uuid4())
     db_session.add(conv)
     db_session.flush()
-    cp_a = models.ConversationParticipant(
-        conversation_id=conv.id, user_id=admin_a.id
-    )
+    cp_a = models.ConversationParticipant(conversation_id=conv.id, user_id=admin_a.id)
     db_session.add(cp_a)
     msg = _inject_message(
         db_session,
@@ -421,22 +383,15 @@ def test_delete_chat_message_canonical_pass_when_sender_matches_actor(
     db_session.commit()
 
     headers_a = auth_headers(client, email="chatA@example.com")
-    resp = client.delete(
-        f"/api/chat/messages/{msg.id}", headers=headers_a
-    )
-    assert resp.status_code == 200, (
-        f"sender==actor canonical pass debe 200 "
-        f"(status {resp.status_code}): {resp.text}"
-    )
+    resp = client.delete(f"/api/chat/messages/{msg.id}", headers=headers_a)
+    assert resp.status_code == 200, f"sender==actor canonical pass debe 200 (status {resp.status_code}): {resp.text}"
 
     db_session.refresh(msg)
     assert msg.deleted_at is not None
     assert msg.content == "[Mensaje eliminado]"
 
 
-def test_delete_chat_message_blocks_other_sender_with_cross_sede_conv(
-    client, db_session
-):
+def test_delete_chat_message_blocks_other_sender_with_cross_sede_conv(client, db_session):
     """Axioma 3: admin_a intenta borrar un msg cuyo sender es persona_b
     (otra sede) en una conversación heredada cross-sede. El guard
     primario ``msg.sender_id != current_user.id`` retorna 404 (note: 404,
@@ -458,12 +413,9 @@ def test_delete_chat_message_blocks_other_sender_with_cross_sede_conv(
     db_session.commit()
 
     headers_a = auth_headers(client, email="chatA@example.com")
-    resp = client.delete(
-        f"/api/chat/messages/{msg_from_b.id}", headers=headers_a
-    )
+    resp = client.delete(f"/api/chat/messages/{msg_from_b.id}", headers=headers_a)
     assert resp.status_code == 404, (
-        f"Leak: admin A borró msg de persona de sede_b "
-        f"(status {resp.status_code}): {resp.text}"
+        f"Leak: admin A borró msg de persona de sede_b (status {resp.status_code}): {resp.text}"
     )
 
     db_session.refresh(msg_from_b)
@@ -476,12 +428,8 @@ def test_delete_chat_message_returns_404_for_nonexistent_msg(client, db_session)
     """
     (admin_a, _, _), _ = _seed_two_sedes(db_session)
     headers_a = auth_headers(client, email="chatA@example.com")
-    resp = client.delete(
-        f"/api/chat/messages/{_uuid.uuid4()}", headers=headers_a
-    )
-    assert resp.status_code == 404, (
-        f"Nonexistent msg debe 404 (status {resp.status_code}): {resp.text}"
-    )
+    resp = client.delete(f"/api/chat/messages/{_uuid.uuid4()}", headers=headers_a)
+    assert resp.status_code == 404, f"Nonexistent msg debe 404 (status {resp.status_code}): {resp.text}"
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -512,8 +460,7 @@ def test_search_chat_users_filters_by_actor_sede(client, db_session):
     local_results = resp_local.json()
     local_ids = {item["id"] for item in local_results}
     assert str(persona_local.id) in local_ids, (
-        f"Regresión: persona local NO aparece en búsqueda de admin A. "
-        f"got {local_results}"
+        f"Regresión: persona local NO aparece en búsqueda de admin A. got {local_results}"
     )
 
     # Buscar por email único de la persona de sede_b — NO debe aparecer.
@@ -526,8 +473,7 @@ def test_search_chat_users_filters_by_actor_sede(client, db_session):
     cross_results = resp_cross.json()
     cross_ids = {item["id"] for item in cross_results}
     assert str(persona_b.id) not in cross_ids, (
-        f"FUGA SEARCH: admin A ve persona de sede_b en búsqueda. "
-        f"got {cross_results}"
+        f"FUGA SEARCH: admin A ve persona de sede_b en búsqueda. got {cross_results}"
     )
 
 
@@ -540,9 +486,7 @@ def test_search_chat_users_filters_by_actor_sede(client, db_session):
 # after the superadmin-bypass test that precedes them.)
 
 
-def test_superadmin_can_create_cross_sede_conversation(
-    client, db_session, monkeypatch
-):
+def test_superadmin_can_create_cross_sede_conversation(client, db_session, monkeypatch):
     """Axioma 3 — back-compat: un actor canónico SIN sede asignada
     conserva la capacidad de crear conversaciones cross-sede (alcance
     administrativo global).
@@ -578,8 +522,7 @@ def test_superadmin_can_create_cross_sede_conversation(
         json={"participant_ids": [str(persona_b.id)]},
     )
     assert resp.status_code == 201, (
-        f"Superadmin sin sede debe poder cross-sede create "
-        f"(status {resp.status_code}): {resp.text}"
+        f"Superadmin sin sede debe poder cross-sede create (status {resp.status_code}): {resp.text}"
     )
 
     conv_id = resp.json()["id"]
@@ -599,9 +542,7 @@ def test_superadmin_can_create_cross_sede_conversation(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def test_delete_chat_message_toctou_blocks_after_participant_removal(
-    client, db_session
-):
+def test_delete_chat_message_toctou_blocks_after_participant_removal(client, db_session):
     """Axioma 3 — TOCTOU defense (gap #3 del code-reviewer):
 
     El actor admin_a fue participante del conv, mandó un mensaje,
@@ -671,25 +612,16 @@ def test_delete_chat_message_toctou_blocks_after_participant_removal(
     # TOCTOU defensa — debe 404, NO 200.
     resp_d = client.delete(f"/api/chat/messages/{msg_id}", headers=headers_a)
     assert resp_d.status_code == 404, (
-        f"TOCTOU defense faltó: admin_a pudo borrar msg tras remoción "
-        f"(status {resp_d.status_code}): {resp_d.text}"
+        f"TOCTOU defense faltó: admin_a pudo borrar msg tras remoción (status {resp_d.status_code}): {resp_d.text}"
     )
 
     # Sanity: el msg NO está soft-deleted.
     db_session.expire_all()
-    persisted = (
-        db_session.query(models.ChatMessage)
-        .filter(models.ChatMessage.id == msg_id)
-        .first()
-    )
-    assert persisted.deleted_at is None, (
-        "FUGA TOCTOU: msg soft-deleted pese al 404"
-    )
+    persisted = db_session.query(models.ChatMessage).filter(models.ChatMessage.id == msg_id).first()
+    assert persisted.deleted_at is None, "FUGA TOCTOU: msg soft-deleted pese al 404"
 
 
-def test_delete_chat_message_blocks_cross_conv_when_sender_matches(
-    client, db_session
-):
+def test_delete_chat_message_blocks_cross_conv_when_sender_matches(client, db_session):
     """Axioma 3 — cross-conv leak prevention:
 
     Actor admin_a tiene ``sender_id == current_user.id`` (pasaría
@@ -722,19 +654,12 @@ def test_delete_chat_message_blocks_cross_conv_when_sender_matches(
     headers_a = auth_headers(client, email="chatA@example.com")
     resp_d = client.delete(f"/api/chat/messages/{spurious_msg.id}", headers=headers_a)
     assert resp_d.status_code == 404, (
-        f"Cross-conv leak: admin_a borró msg en conv ajena "
-        f"(status {resp_d.status_code}): {resp_d.text}"
+        f"Cross-conv leak: admin_a borró msg en conv ajena (status {resp_d.status_code}): {resp_d.text}"
     )
 
     db_session.expire_all()
-    persisted = (
-        db_session.query(models.ChatMessage)
-        .filter(models.ChatMessage.id == spurious_msg.id)
-        .first()
-    )
-    assert persisted.deleted_at is None, (
-        "FUGA cross-conv: msg soft-deleted pese al 404"
-    )
+    persisted = db_session.query(models.ChatMessage).filter(models.ChatMessage.id == spurious_msg.id).first()
+    assert persisted.deleted_at is None, "FUGA cross-conv: msg soft-deleted pese al 404"
 
 
 def test_delete_chat_message_old_broadcast_succeeds(client, db_session):
@@ -757,10 +682,7 @@ def test_delete_chat_message_old_broadcast_succeeds(client, db_session):
 
     headers_a = auth_headers(client, email="chatA@example.com")
     resp_d = client.delete(f"/api/chat/messages/{old_msg.id}", headers=headers_a)
-    assert resp_d.status_code == 200, (
-        f"Old msg sin conv scope debe 200 "
-        f"(status {resp_d.status_code}): {resp_d.text}"
-    )
+    assert resp_d.status_code == 200, f"Old msg sin conv scope debe 200 (status {resp_d.status_code}): {resp_d.text}"
 
     db_session.refresh(old_msg)
     assert old_msg.deleted_at is not None
@@ -793,12 +715,9 @@ def test_delete_chat_message_blocks_with_malformed_room_id(client, db_session):
     db_session.commit()
 
     headers_a = auth_headers(client, email="chatA@example.com")
-    resp_d = client.delete(
-        f"/api/chat/messages/{tampered_msg.id}", headers=headers_a
-    )
+    resp_d = client.delete(f"/api/chat/messages/{tampered_msg.id}", headers=headers_a)
     assert resp_d.status_code == 404, (
-        f"Tampering con room_id malformado debe 404 "
-        f"(got {resp_d.status_code}): {resp_d.text}"
+        f"Tampering con room_id malformado debe 404 (got {resp_d.status_code}): {resp_d.text}"
     )
     # Anti-leak defensivo (tolerante a header evolution): parseamos JSON
     # y comparamos el ``detail`` exacto. NO verificamos subsets de keys
@@ -811,20 +730,13 @@ def test_delete_chat_message_blocks_with_malformed_room_id(client, db_session):
     except Exception:
         parsed = {}
     assert parsed.get("detail") == "Message not found", (
-        f"Anti-leak violation: detail no uniforme (got {parsed!r}, "
-        f"expected detail='Message not found')"
+        f"Anti-leak violation: detail no uniforme (got {parsed!r}, expected detail='Message not found')"
     )
     # Doble-check: el suffix crudo NUNCA debe aparecer en el body.
-    assert "NOT-A-UUID-VALUE" not in resp_d.text, (
-        f"Leak: el body expone el suffix corrupto: {resp_d.text}"
-    )
+    assert "NOT-A-UUID-VALUE" not in resp_d.text, f"Leak: el body expone el suffix corrupto: {resp_d.text}"
 
     db_session.expire_all()
-    persisted = (
-        db_session.query(models.ChatMessage)
-        .filter(models.ChatMessage.id == tampered_msg.id)
-        .first()
-    )
+    persisted = db_session.query(models.ChatMessage).filter(models.ChatMessage.id == tampered_msg.id).first()
     assert persisted.deleted_at is None
 
 
@@ -862,16 +774,11 @@ def test_delete_chat_message_local_succeeds_via_api(client, db_session):
 
     resp_d = client.delete(f"/api/chat/messages/{msg_id}", headers=headers_a)
     assert resp_d.status_code == 200, (
-        f"Regresión happy-path E2E same-sede delete MUST succeed "
-        f"(got {resp_d.status_code}): {resp_d.text}"
+        f"Regresión happy-path E2E same-sede delete MUST succeed (got {resp_d.status_code}): {resp_d.text}"
     )
 
     db_session.expire_all()
-    persisted = (
-        db_session.query(models.ChatMessage)
-        .filter(models.ChatMessage.id == msg_id)
-        .first()
-    )
+    persisted = db_session.query(models.ChatMessage).filter(models.ChatMessage.id == msg_id).first()
     assert persisted.deleted_at is not None
     assert persisted.content == "[Mensaje eliminado]"
 
@@ -882,9 +789,7 @@ def test_delete_chat_message_local_succeeds_via_api(client, db_session):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def test_send_direct_message_toctou_blocks_after_participant_removal(
-    client, db_session
-):
+def test_send_direct_message_toctou_blocks_after_participant_removal(client, db_session):
     """Axioma 3 — TOCTOU defense en send_direct_message:
 
     Admin_a fue participante del conv, luego fue REMOVIDO via ORM
@@ -921,8 +826,7 @@ def test_send_direct_message_toctou_blocks_after_participant_removal(
         json={"content": "msg antes de remoción"},
     )
     assert resp_m1.status_code == 201, (
-        f"Pre-condition falló: msg inicial debe 201 (got {resp_m1.status_code}): "
-        f"{resp_m1.text}"
+        f"Pre-condition falló: msg inicial debe 201 (got {resp_m1.status_code}): {resp_m1.text}"
     )
 
     # TOCTOU setup: remover admin_a del conv via ORM directo.
@@ -951,8 +855,7 @@ def test_send_direct_message_toctou_blocks_after_participant_removal(
         json={"content": "msg post-removal (debe fallar)"},
     )
     assert resp_m2.status_code == 404, (
-        f"TOCTOU defense faltó: admin_a pudo mandar msg tras remoción "
-        f"(status {resp_m2.status_code}): {resp_m2.text}"
+        f"TOCTOU defense faltó: admin_a pudo mandar msg tras remoción (status {resp_m2.status_code}): {resp_m2.text}"
     )
 
     # Sanity: NO se persistió el msg post-removal (no leak).
@@ -962,9 +865,7 @@ def test_send_direct_message_toctou_blocks_after_participant_removal(
         .filter(models.ChatMessage.content == "msg post-removal (debe fallar)")
         .first()
     )
-    assert leaked is None, (
-        "FUGA: msg post-removal persistido pese al 404 TOCTOU"
-    )
+    assert leaked is None, "FUGA: msg post-removal persistido pese al 404 TOCTOU"
 
     # Anti-leak defensivo (mirror del patrón ``malformed_room_id``):
     # sólo verificamos el ``detail`` uniforme. NO chequeamos subsets de
@@ -974,14 +875,10 @@ def test_send_direct_message_toctou_blocks_after_participant_removal(
         parsed = resp_m2.json()
     except Exception:
         parsed = {}
-    assert parsed.get("detail") == "Conversation not found", (
-        f"Anti-leak violation: detail no uniforme (got {parsed!r})"
-    )
+    assert parsed.get("detail") == "Conversation not found", f"Anti-leak violation: detail no uniforme (got {parsed!r})"
 
 
-def test_mark_conversation_read_toctou_blocks_after_participant_removal(
-    client, db_session
-):
+def test_mark_conversation_read_toctou_blocks_after_participant_removal(client, db_session):
     """Axioma 3 — TOCTOU defense en mark_conversation_read_endpoint:
 
     Admin_a fue participante, luego removido. El endpoint ``POST /read``
@@ -1012,11 +909,7 @@ def test_mark_conversation_read_toctou_blocks_after_participant_removal(
 
     # Capturar el last_read_at del conv admin_a antes de remover.
     db_session.expire_all()
-    pre_removal_row = (
-        db_session.query(models.Conversation)
-        .filter(models.Conversation.id == conv_id)
-        .first()
-    )
+    pre_removal_row = db_session.query(models.Conversation).filter(models.Conversation.id == conv_id).first()
     # No necesitamos un valor particulas, sólo verificar que el
     # ConversationParticipant row sigue la trazabilidad.
 
@@ -1032,10 +925,7 @@ def test_mark_conversation_read_toctou_blocks_after_participant_removal(
         f"/api/chat/conversations/{conv_id}/read",
         headers=headers_a,
     )
-    assert resp_r.status_code == 404, (
-        f"TOCTOU mark_read defense faltó "
-        f"(status {resp_r.status_code}): {resp_r.text}"
-    )
+    assert resp_r.status_code == 404, f"TOCTOU mark_read defense faltó (status {resp_r.status_code}): {resp_r.text}"
 
     # Sanity: el ConversationParticipant de admin_a sigue removido
     # (el endpoint NO debe re-insertarlo como side-effect).
@@ -1048,17 +938,13 @@ def test_mark_conversation_read_toctou_blocks_after_participant_removal(
         )
         .first()
     )
-    assert after_row is None, (
-        "FUGA: ConversationParticipant re-insertado por side-effect"
-    )
+    assert after_row is None, "FUGA: ConversationParticipant re-insertado por side-effect"
 
     # Anti-leak defensivo: el response body debe ser uniforme — sólo chequeamos
     # ``detail``. NO verificamos subsets de keys (legitimamente tolerante a
     # middleware que enriquezca con ``request_id``/``trace_id``).
     parsed = _json.loads(resp_r.text) if resp_r.text else {}
-    assert parsed.get("detail") == "Conversation not found", (
-        f"Anti-leak violation: detail no uniforme (got {parsed!r})"
-    )
+    assert parsed.get("detail") == "Conversation not found", f"Anti-leak violation: detail no uniforme (got {parsed!r})"
 
 
 def test_send_direct_message_blocks_actor_not_in_conv_with_404(client, db_session):
@@ -1086,16 +972,13 @@ def test_send_direct_message_blocks_actor_not_in_conv_with_404(client, db_sessio
         json={"content": "ataque cross-conv"},
     )
     assert resp.status_code == 404, (
-        f"Contract violation: actor_no_en_conv debe 404 "
-        f"(got {resp.status_code}): {resp.text}"
+        f"Contract violation: actor_no_en_conv debe 404 (got {resp.status_code}): {resp.text}"
     )
     try:
         parsed = resp.json()
     except Exception:
         parsed = {}
-    assert parsed.get("detail") == "Conversation not found", (
-        f"Anti-leak violation: detail no uniforme (got {parsed!r})"
-    )
+    assert parsed.get("detail") == "Conversation not found", f"Anti-leak violation: detail no uniforme (got {parsed!r})"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1104,9 +987,7 @@ def test_send_direct_message_blocks_actor_not_in_conv_with_404(client, db_sessio
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def test_assert_actor_still_participant_unit_positive_returns_none(
-    client, db_session
-):
+def test_assert_actor_still_participant_unit_positive_returns_none(client, db_session):
     """Direct unit test del helper _assert_actor_still_participant_at_commit_time.
 
     Caso positivo: el actor SI es participante del conv; el helper debe
@@ -1136,18 +1017,11 @@ def test_assert_actor_still_participant_unit_positive_returns_none(
     conv_id = resp_c.json()["id"]
 
     # Direct call del helper — debe retornar None silently.
-    result = chat_module._assert_actor_still_participant_at_commit_time(
-        db_session, conv_id, admin_a
-    )
-    assert result is None, (
-        f"Helper positive case debe retornar None silenciosamente "
-        f"(got {result!r})"
-    )
+    result = chat_module._assert_actor_still_participant_at_commit_time(db_session, conv_id, admin_a)
+    assert result is None, f"Helper positive case debe retornar None silenciosamente (got {result!r})"
 
 
-def test_assert_actor_still_participant_unit_negative_raises_404(
-    client, db_session
-):
+def test_assert_actor_still_participant_unit_negative_raises_404(client, db_session):
     """Direct unit test — caso negativo: actor NO es participante del conv
     → el helper debe raise HTTPException(404, "Conversation not found").
 
@@ -1184,26 +1058,16 @@ def test_assert_actor_still_participant_unit_negative_raises_404(
     # Direct call — debe raise HTTPException 404.
     raised = None
     try:
-        chat_module._assert_actor_still_participant_at_commit_time(
-            db_session, conv_id, admin_a
-        )
+        chat_module._assert_actor_still_participant_at_commit_time(db_session, conv_id, admin_a)
     except HTTPException as exc:
         raised = exc
-    assert raised is not None, (
-        "Helper no raise cuando actor no participante (drift no detectado)"
-    )
-    assert raised.status_code == 404, (
-        f"Helper debe raise 404, no {raised.status_code}"
-    )
+    assert raised is not None, "Helper no raise cuando actor no participante (drift no detectado)"
+    assert raised.status_code == 404, f"Helper debe raise 404, no {raised.status_code}"
     # Anti-leak: detail uniforme, sin keys extra.
-    assert raised.detail == "Conversation not found", (
-        f"Anti-leak violation: detail no uniforme (got {raised.detail!r})"
-    )
+    assert raised.detail == "Conversation not found", f"Anti-leak violation: detail no uniforme (got {raised.detail!r})"
 
 
-def test_assert_actor_still_participant_unit_malformed_conv_id_raises_404(
-    client, db_session
-):
+def test_assert_actor_still_participant_unit_malformed_conv_id_raises_404(client, db_session):
     """Direct unit test — conv_id malformado (no es UUID parseable) debe
     raise HTTPException(404, "Conversation not found").
 
@@ -1219,25 +1083,15 @@ def test_assert_actor_still_participant_unit_malformed_conv_id_raises_404(
 
     raised = None
     try:
-        chat_module._assert_actor_still_participant_at_commit_time(
-            db_session, "not-a-uuid", admin_a
-        )
+        chat_module._assert_actor_still_participant_at_commit_time(db_session, "not-a-uuid", admin_a)
     except HTTPException as exc:
         raised = exc
-    assert raised is not None, (
-        "Helper no raise cuando conv_id no es UUID parseable"
-    )
-    assert raised.status_code == 404, (
-        f"Helper debe raise 404 para malformed conv_id, no {raised.status_code}"
-    )
-    assert raised.detail == "Conversation not found", (
-        f"Anti-leak violation: detail no uniforme (got {raised.detail!r})"
-    )
+    assert raised is not None, "Helper no raise cuando conv_id no es UUID parseable"
+    assert raised.status_code == 404, f"Helper debe raise 404 para malformed conv_id, no {raised.status_code}"
+    assert raised.detail == "Conversation not found", f"Anti-leak violation: detail no uniforme (got {raised.detail!r})"
 
 
-def test_assert_actor_still_participant_unit_none_conv_id_raises_404(
-    client, db_session
-):
+def test_assert_actor_still_participant_unit_none_conv_id_raises_404(client, db_session):
     """Direct unit test — ``conv_id is None`` debe raise 404 en lugar
     de TypeError → 500 server error.
 
@@ -1254,25 +1108,15 @@ def test_assert_actor_still_participant_unit_none_conv_id_raises_404(
 
     raised = None
     try:
-        chat_module._assert_actor_still_participant_at_commit_time(
-            db_session, None, admin_a
-        )
+        chat_module._assert_actor_still_participant_at_commit_time(db_session, None, admin_a)
     except HTTPException as exc:
         raised = exc
-    assert raised is not None, (
-        "Helper no raise cuando conv_id es None"
-    )
-    assert raised.status_code == 404, (
-        f"Helper debe raise 404 para conv_id=None, no {raised.status_code}"
-    )
-    assert raised.detail == "Conversation not found", (
-        f"Anti-leak violation: detail no uniforme (got {raised.detail!r})"
-    )
+    assert raised is not None, "Helper no raise cuando conv_id es None"
+    assert raised.status_code == 404, f"Helper debe raise 404 para conv_id=None, no {raised.status_code}"
+    assert raised.detail == "Conversation not found", f"Anti-leak violation: detail no uniforme (got {raised.detail!r})"
 
 
-def test_assert_actor_still_participant_unit_accepts_string_uuid(
-    client, db_session
-):
+def test_assert_actor_still_participant_unit_accepts_string_uuid(client, db_session):
     """Direct unit test — el helper acepta conv_id como string (path
     params llegan como str en FastAPI). Verifica que el coerce funciona
     tanto para UUID objects como para strings parseables.
@@ -1295,13 +1139,8 @@ def test_assert_actor_still_participant_unit_accepts_string_uuid(
     conv_id = resp_c.json()["id"]
 
     # Pass conv_id as STRING (cómo llega en HTTP path).
-    result = chat_module._assert_actor_still_participant_at_commit_time(
-        db_session, str(conv_id), admin_a
-    )
-    assert result is None, (
-        f"Helper debe aceptar conv_id como string "
-        f"(got {result!r})"
-    )
+    result = chat_module._assert_actor_still_participant_at_commit_time(db_session, str(conv_id), admin_a)
+    assert result is None, f"Helper debe aceptar conv_id como string (got {result!r})"
 
     # Remover y verificar que el raise funciona cuando el string es válido.
     db_session.query(models.ConversationParticipant).filter(
@@ -1312,9 +1151,7 @@ def test_assert_actor_still_participant_unit_accepts_string_uuid(
 
     raised = None
     try:
-        chat_module._assert_actor_still_participant_at_commit_time(
-            db_session, str(conv_id), admin_a
-        )
+        chat_module._assert_actor_still_participant_at_commit_time(db_session, str(conv_id), admin_a)
     except HTTPException as exc:
         raised = exc
     assert raised is not None and raised.status_code == 404, (

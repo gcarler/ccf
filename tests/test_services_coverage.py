@@ -1,6 +1,7 @@
 """
 Coverage tests for backend services.
 """
+
 import pytest
 
 from backend import models

@@ -29,25 +29,25 @@ interface DSNombreComponenteProps {
     // Props requeridas primero
     label: string;
     value: string;
-    
+
     // Props opcionales
     variant?: 'primary' | 'secondary';
     disabled?: boolean;
-    
+
     // Eventos
     onChange?: (value: string) => void;
-    
+
     // Extienden de HTML si es necesario
 } extends React.HTMLAttributes<HTMLDivElement> {
 ```
 
 ### Exportación
 ```tsx
-export function DSNombreComponente({ 
-    label, 
-    variant = 'primary', 
+export function DSNombreComponente({
+    label,
+    variant = 'primary',
     className,
-    ...props 
+    ...props
 }: DSNombreComponenteProps) {
     return (
         <div className={clsx('base-classes', className)} {...props}>
@@ -74,14 +74,14 @@ interface DSNuevoProps {
     variant?: 'default' | 'alternative';
 }
 
-export function DSNuevo({ 
-    label, 
-    variant = 'default', 
+export function DSNuevo({
+    label,
+    variant = 'default',
     className,
-    ...props 
+    ...props
 }: DSNuevoProps) {
     return (
-        <div 
+        <div
             className={clsx('base-classes', className)}
             style={{ fontFamily: typography.family }}
             {...props}

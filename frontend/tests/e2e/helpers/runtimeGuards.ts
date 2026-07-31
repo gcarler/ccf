@@ -43,7 +43,7 @@ export function installRuntimeGuards(page: Page, apiBaseUrl?: string): RuntimeGu
 
 /**
  * Navigates to a route and waits for it to become stable.
- * 
+ *
  * For authenticated routes the SPA may show a brief splash/loading state
  * while the AuthContext bootstraps and data fetches complete. This helper
  * waits for network idle, then for the CCF brand splash to disappear,

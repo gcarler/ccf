@@ -133,7 +133,9 @@ def _fund_nodes(db: Session, sede_id: Optional[UUID] = None) -> List[Dict[str, A
 def _family_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> List[Dict[str, Any]]:
     q = db.query(models.Family)
     if sede_id is not None:
-        q = q.join(models.Persona, models.Persona.family_id == models.Family.id).filter(models.Persona.sede_id == sede_id)
+        q = q.join(models.Persona, models.Persona.family_id == models.Family.id).filter(
+            models.Persona.sede_id == sede_id
+        )
     families = q.limit(limit).all()
     return [
         {
@@ -169,7 +171,9 @@ def _project_nodes(db: Session, limit: int, sede_id: Optional[UUID] = None) -> L
 
 
 def build_graph_snapshot(
-    db: Session, limit: int = 50, types: Optional[Iterable[str]] = None,
+    db: Session,
+    limit: int = 50,
+    types: Optional[Iterable[str]] = None,
     sede_id: Optional[UUID] = None,
 ) -> Dict[str, Any]:
     nodes: List[Dict[str, Any]] = []

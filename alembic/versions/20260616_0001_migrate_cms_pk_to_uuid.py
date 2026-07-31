@@ -62,33 +62,41 @@ def _column_is_uuid(table: str, column: str) -> bool:
 
 
 def _pk_constraint_name(table: str) -> str | None:
-    rows = op.get_bind().execute(
-        sa.text(
-            "SELECT con.conname "
-            "FROM pg_catalog.pg_constraint con "
-            "JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
-            "WHERE con.contype = 'p' AND rel.relname = :table"
-        ),
-        {"table": table},
-    ).fetchall()
+    rows = (
+        op.get_bind()
+        .execute(
+            sa.text(
+                "SELECT con.conname "
+                "FROM pg_catalog.pg_constraint con "
+                "JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
+                "WHERE con.contype = 'p' AND rel.relname = :table"
+            ),
+            {"table": table},
+        )
+        .fetchall()
+    )
     return rows[0][0] if rows else None
 
 
 def _fk_name(table: str, column: str) -> str | None:
-    rows = op.get_bind().execute(
-        sa.text(
-            "SELECT con.conname "
-            "FROM pg_catalog.pg_constraint con "
-            "JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
-            "JOIN pg_catalog.pg_attribute att ON att.attrelid = con.conrelid "
-            "  AND att.attnum = ANY(con.conkey) "
-            "WHERE con.contype = 'f' "
-            "  AND rel.relname = :table "
-            "  AND att.attname = :column "
-            "ORDER BY con.conname"
-        ),
-        {"table": table, "column": column},
-    ).fetchall()
+    rows = (
+        op.get_bind()
+        .execute(
+            sa.text(
+                "SELECT con.conname "
+                "FROM pg_catalog.pg_constraint con "
+                "JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid "
+                "JOIN pg_catalog.pg_attribute att ON att.attrelid = con.conrelid "
+                "  AND att.attnum = ANY(con.conkey) "
+                "WHERE con.contype = 'f' "
+                "  AND rel.relname = :table "
+                "  AND att.attname = :column "
+                "ORDER BY con.conname"
+            ),
+            {"table": table, "column": column},
+        )
+        .fetchall()
+    )
     return rows[0][0] if rows else None
 
 
@@ -99,31 +107,33 @@ def _drop_fk(table: str, column: str) -> None:
 
 
 def _drop_index(table: str, column: str) -> None:
-    rows = op.get_bind().execute(
-        sa.text(
-            "SELECT i.indexrelid::regclass::text "
-            "FROM pg_catalog.pg_index i "
-            "JOIN pg_catalog.pg_class rel ON rel.oid = i.indrelid "
-            "WHERE rel.relname = :table "
-            "  AND i.indisprimary = false "
-            "  AND i.indisunique = false "
-            "  AND array_length(i.indkey, 1) = 1 "
-            "  AND i.indkey[0] = ("
-            "    SELECT att.attnum "
-            "    FROM pg_catalog.pg_attribute att "
-            "    WHERE att.attrelid = rel.oid AND att.attname = :column"
-            "  )"
-        ),
-        {"table": table, "column": column},
-    ).fetchall()
+    rows = (
+        op.get_bind()
+        .execute(
+            sa.text(
+                "SELECT i.indexrelid::regclass::text "
+                "FROM pg_catalog.pg_index i "
+                "JOIN pg_catalog.pg_class rel ON rel.oid = i.indrelid "
+                "WHERE rel.relname = :table "
+                "  AND i.indisprimary = false "
+                "  AND i.indisunique = false "
+                "  AND array_length(i.indkey, 1) = 1 "
+                "  AND i.indkey[0] = ("
+                "    SELECT att.attnum "
+                "    FROM pg_catalog.pg_attribute att "
+                "    WHERE att.attrelid = rel.oid AND att.attname = :column"
+                "  )"
+            ),
+            {"table": table, "column": column},
+        )
+        .fetchall()
+    )
     for row in rows:
         op.execute(f"DROP INDEX IF EXISTS {row[0]}")
 
 
 def _drop_constraint_if_exists(table: str, constraint: str) -> None:
-    op.execute(
-        f"ALTER TABLE {_quote(table)} DROP CONSTRAINT IF EXISTS {_quote(constraint)}"
-    )
+    op.execute(f"ALTER TABLE {_quote(table)} DROP CONSTRAINT IF EXISTS {_quote(constraint)}")
 
 
 def _add_uuid_ids() -> None:
@@ -131,10 +141,7 @@ def _add_uuid_ids() -> None:
         if not _has_table(table) or _column_is_uuid(table, "id"):
             continue
         if not _has_column(table, "uuid_id"):
-            op.execute(
-                f"ALTER TABLE {_quote(table)} "
-                "ADD COLUMN uuid_id UUID NOT NULL DEFAULT gen_random_uuid()"
-            )
+            op.execute(f"ALTER TABLE {_quote(table)} ADD COLUMN uuid_id UUID NOT NULL DEFAULT gen_random_uuid()")
 
 
 def _replace_fk_column(
@@ -165,28 +172,18 @@ def _replace_fk_column(
         missing_condition = f"{_quote(child_fk)} IS NOT NULL AND {_quote(new_col)} IS NULL"
     else:
         missing_condition = f"{_quote(new_col)} IS NULL"
-    missing = op.get_bind().execute(
-        sa.text(
-            f"SELECT count(*) FROM {_quote(child_table)} WHERE {missing_condition}"
-        )
-    ).scalar()
+    missing = (
+        op.get_bind().execute(sa.text(f"SELECT count(*) FROM {_quote(child_table)} WHERE {missing_condition}")).scalar()
+    )
     if missing:
-        raise RuntimeError(
-            f"Cannot migrate {child_table}.{child_fk}: {missing} rows did not map"
-        )
+        raise RuntimeError(f"Cannot migrate {child_table}.{child_fk}: {missing} rows did not map")
 
     _drop_fk(child_table, child_fk)
     _drop_index(child_table, child_fk)
     op.execute(f"ALTER TABLE {_quote(child_table)} DROP COLUMN {_quote(child_fk)}")
-    op.execute(
-        f"ALTER TABLE {_quote(child_table)} "
-        f"RENAME COLUMN {_quote(new_col)} TO {_quote(child_fk)}"
-    )
+    op.execute(f"ALTER TABLE {_quote(child_table)} RENAME COLUMN {_quote(new_col)} TO {_quote(child_fk)}")
     if not nullable:
-        op.execute(
-            f"ALTER TABLE {_quote(child_table)} "
-            f"ALTER COLUMN {_quote(child_fk)} SET NOT NULL"
-        )
+        op.execute(f"ALTER TABLE {_quote(child_table)} ALTER COLUMN {_quote(child_fk)} SET NOT NULL")
 
 
 def _replace_self_parent_id() -> None:
@@ -206,16 +203,13 @@ def _replace_self_parent_id() -> None:
         "FROM cms_menu_items parent "
         "WHERE child.parent_id = parent.id"
     )
-    missing = op.get_bind().execute(
-        sa.text(
-            "SELECT count(*) FROM cms_menu_items "
-            "WHERE parent_id IS NOT NULL AND uuid_parent_id IS NULL"
-        )
-    ).scalar()
+    missing = (
+        op.get_bind()
+        .execute(sa.text("SELECT count(*) FROM cms_menu_items WHERE parent_id IS NOT NULL AND uuid_parent_id IS NULL"))
+        .scalar()
+    )
     if missing:
-        raise RuntimeError(
-            f"Cannot migrate cms_menu_items.parent_id: {missing} rows did not map"
-        )
+        raise RuntimeError(f"Cannot migrate cms_menu_items.parent_id: {missing} rows did not map")
     _drop_fk(table, "parent_id")
     _drop_index(table, "parent_id")
     op.execute("ALTER TABLE cms_menu_items DROP COLUMN parent_id")
@@ -241,25 +235,24 @@ def _replace_published_version_id() -> None:
         "FROM cms_page_versions version "
         "WHERE page.published_version_id = version.id"
     )
-    missing = op.get_bind().execute(
-        sa.text(
-            "SELECT count(*) FROM cms_pages "
-            "WHERE published_version_id IS NOT NULL "
-            "AND uuid_published_version_id IS NULL"
+    missing = (
+        op.get_bind()
+        .execute(
+            sa.text(
+                "SELECT count(*) FROM cms_pages "
+                "WHERE published_version_id IS NOT NULL "
+                "AND uuid_published_version_id IS NULL"
+            )
         )
-    ).scalar()
+        .scalar()
+    )
     if missing:
-        raise RuntimeError(
-            f"Cannot migrate cms_pages.published_version_id: {missing} rows did not map"
-        )
+        raise RuntimeError(f"Cannot migrate cms_pages.published_version_id: {missing} rows did not map")
     _drop_fk(table, "published_version_id")
     _drop_index(table, "published_version_id")
     op.execute("DROP INDEX IF EXISTS ix_cms_pages_published_version_id")
     op.execute("ALTER TABLE cms_pages DROP COLUMN published_version_id")
-    op.execute(
-        "ALTER TABLE cms_pages "
-        "RENAME COLUMN uuid_published_version_id TO published_version_id"
-    )
+    op.execute("ALTER TABLE cms_pages RENAME COLUMN uuid_published_version_id TO published_version_id")
 
 
 def _promote_uuid_id(table: str) -> None:
@@ -293,10 +286,7 @@ def _add_fk(
     if not _column_is_uuid(child_table, child_fk):
         return
     if not nullable:
-        op.execute(
-            f"ALTER TABLE {_quote(child_table)} "
-            f"ALTER COLUMN {_quote(child_fk)} SET NOT NULL"
-        )
+        op.execute(f"ALTER TABLE {_quote(child_table)} ALTER COLUMN {_quote(child_fk)} SET NOT NULL")
     name = constraint_name or f"fk_{child_table}_{child_fk}"
     _drop_fk(child_table, child_fk)
     _drop_constraint_if_exists(child_table, name)
@@ -313,10 +303,7 @@ def _add_fk(
 
 def _alter_column_to_text(table: str, column: str) -> None:
     if _has_table(table) and _has_column(table, column):
-        op.execute(
-            f"ALTER TABLE {_quote(table)} ALTER COLUMN {_quote(column)} "
-            "TYPE VARCHAR(120)"
-        )
+        op.execute(f"ALTER TABLE {_quote(table)} ALTER COLUMN {_quote(column)} TYPE VARCHAR(120)")
 
 
 def upgrade() -> None:
@@ -370,14 +357,10 @@ def upgrade() -> None:
 
     if _has_table("cms_menus") and _has_column("cms_menus", "site_id"):
         _drop_constraint_if_exists("cms_menus", "uq_cms_menu_site_key")
-        op.create_unique_constraint(
-            "uq_cms_menu_site_key", "cms_menus", ["site_id", "menu_key"]
-        )
+        op.create_unique_constraint("uq_cms_menu_site_key", "cms_menus", ["site_id", "menu_key"])
     if _has_table("cms_pages") and _has_column("cms_pages", "site_id"):
         _drop_constraint_if_exists("cms_pages", "uq_cms_page_site_slug")
-        op.create_unique_constraint(
-            "uq_cms_page_site_slug", "cms_pages", ["site_id", "slug"]
-        )
+        op.create_unique_constraint("uq_cms_page_site_slug", "cms_pages", ["site_id", "slug"])
     if _has_table("cms_page_versions") and _has_column("cms_page_versions", "page_id"):
         _drop_constraint_if_exists("cms_page_versions", "uq_cms_page_version_number")
         op.create_unique_constraint(

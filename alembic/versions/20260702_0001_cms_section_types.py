@@ -89,7 +89,9 @@ def upgrade() -> None:
     if not _has_table("cms_section_types"):
         op.create_table(
             "cms_section_types",
-            sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
+            sa.Column(
+                "id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+            ),
             sa.Column("name", sa.String(80), nullable=False, unique=True, index=True),
             sa.Column("description", sa.String(255), nullable=True),
             sa.Column("is_active", sa.Boolean, default=True, index=True),
@@ -101,8 +103,7 @@ def upgrade() -> None:
         for name in SECTION_TYPES:
             op.execute(
                 sa.text(
-                    "INSERT INTO cms_section_types (name, is_active) VALUES (:name, true) "
-                    "ON CONFLICT (name) DO NOTHING"
+                    "INSERT INTO cms_section_types (name, is_active) VALUES (:name, true) ON CONFLICT (name) DO NOTHING"
                 ).bindparams(name=name)
             )
 

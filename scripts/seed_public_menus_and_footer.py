@@ -5,6 +5,7 @@ This script is idempotent: rerunning it updates rows only when the canonical
 payload changes, and it publishes a new page version only when the footer
 snapshot differs from the live CMS state.
 """
+
 from __future__ import annotations
 
 import json
@@ -22,9 +23,10 @@ if _PROJECT_ROOT is None:
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
+from sqlalchemy import text  # noqa: E402
+
 from backend import models  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
-from sqlalchemy import text  # noqa: E402
 
 SITE_KEY = "ccf"
 
@@ -98,17 +100,21 @@ def _stable_json(value: Any) -> str:
 
 
 def _load_site_id(db, site_key: str) -> Any:
-    row = db.execute(
-        text(
-            """
+    row = (
+        db.execute(
+            text(
+                """
             SELECT id
             FROM cms_sites
             WHERE site_key = :site_key
             LIMIT 1
             """
-        ),
-        {"site_key": site_key},
-    ).mappings().first()
+            ),
+            {"site_key": site_key},
+        )
+        .mappings()
+        .first()
+    )
     if row is None:
         raise RuntimeError(f"CMS site {site_key!r} not found")
     return row["id"]
@@ -138,9 +144,7 @@ def _ensure_menu(
     desired_specs: list[dict[str, Any]],
 ) -> tuple[bool, bool]:
     menu = (
-        db.query(models.CmsMenu)
-        .filter(models.CmsMenu.site_id == site_id, models.CmsMenu.menu_key == menu_key)
-        .first()
+        db.query(models.CmsMenu).filter(models.CmsMenu.site_id == site_id, models.CmsMenu.menu_key == menu_key).first()
     )
     created = False
     changed = False
@@ -162,7 +166,6 @@ def _ensure_menu(
             changed = True
 
     desired_items = [_menu_item_spec(spec, idx) for idx, spec in enumerate(desired_specs)]
-    desired_hrefs = {item["href"] for item in desired_items}
 
     current_items = (
         db.query(models.CmsMenuItem)
@@ -287,9 +290,7 @@ def _ensure_footer_page(db, site_id: Any) -> tuple[bool, bool]:
     desired_sections = [desired_section]
 
     if current_serialized != desired_sections:
-        db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(
-            synchronize_session=False
-        )
+        db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(synchronize_session=False)
         for section in desired_sections:
             db.add(models.CmsSection(page_id=page.id, **section))
         changed = True
@@ -311,9 +312,7 @@ def _ensure_footer_page(db, site_id: Any) -> tuple[bool, bool]:
     current_version = None
     if page.published_version_id:
         current_version = (
-            db.query(models.CmsPageVersion)
-            .filter(models.CmsPageVersion.id == page.published_version_id)
-            .first()
+            db.query(models.CmsPageVersion).filter(models.CmsPageVersion.id == page.published_version_id).first()
         )
 
     current_snapshot = current_version.snapshot_json if current_version else None
@@ -346,24 +345,16 @@ def main() -> int:
     with SessionLocal() as db:
         site_id = _load_site_id(db, SITE_KEY)
 
-        main_created, main_changed = _ensure_menu(
-            db, site_id, "main", "Menú principal", MAIN_MENU_ITEMS
-        )
-        mobile_created, mobile_changed = _ensure_menu(
-            db, site_id, "mobile", "Menú móvil", MOBILE_MENU_ITEMS
-        )
+        main_created, main_changed = _ensure_menu(db, site_id, "main", "Menú principal", MAIN_MENU_ITEMS)
+        mobile_created, mobile_changed = _ensure_menu(db, site_id, "mobile", "Menú móvil", MOBILE_MENU_ITEMS)
         footer_created, footer_changed = _ensure_footer_page(db, site_id)
 
         db.commit()
 
         print(f"Site: {SITE_KEY}")
+        print(f"Menu main: {'created' if main_created else 'exists'}; {'updated' if main_changed else 'unchanged'}")
         print(
-            f"Menu main: {'created' if main_created else 'exists'}; "
-            f"{'updated' if main_changed else 'unchanged'}"
-        )
-        print(
-            f"Menu mobile: {'created' if mobile_created else 'exists'}; "
-            f"{'updated' if mobile_changed else 'unchanged'}"
+            f"Menu mobile: {'created' if mobile_created else 'exists'}; {'updated' if mobile_changed else 'unchanged'}"
         )
         print(
             f"Page {FOOTER_PAGE_SLUG}: {'created' if footer_created else 'exists'}; "

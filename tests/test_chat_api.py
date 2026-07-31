@@ -1,4 +1,3 @@
-
 from unittest.mock import patch
 
 from backend import models
@@ -9,9 +8,7 @@ from tests.conftest import seed_user_with_role
 
 def test_search_chat_users(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role(
-        db_session, "estudiante", "user2@example.com"
-    )
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     db_session.add_all([user2, persona2])
@@ -75,9 +72,7 @@ def test_send_and_list_messages(client, db_session):
     msg = resp2.json()
     assert msg["content"] == "Hola!"
 
-    resp3 = client.get(
-        f"/api/chat/conversations/{conv_id}/messages", headers=headers
-    )
+    resp3 = client.get(f"/api/chat/conversations/{conv_id}/messages", headers=headers)
     assert resp3.status_code == 200
     messages = resp3.json()
     assert len(messages) >= 1
@@ -100,9 +95,7 @@ def test_mark_conversation_read(client, db_session):
     )
     conv_id = resp.json()["id"]
 
-    resp2 = client.post(
-        f"/api/chat/conversations/{conv_id}/read", headers=headers
-    )
+    resp2 = client.post(f"/api/chat/conversations/{conv_id}/read", headers=headers)
     assert resp2.status_code == 200
     assert resp2.json()["ok"] is True
 
@@ -125,9 +118,7 @@ def test_delete_own_message(client, db_session):
 
 def test_search_chat_users_includes_avatar_url(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role(
-        db_session, "estudiante", "avataruser@example.com"
-    )
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "avataruser@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     persona2.photo_url = "https://example.com/photo.jpg"
@@ -146,9 +137,7 @@ def test_search_chat_users_includes_avatar_url(client, db_session):
 
 def test_delete_own_dm_message_with_room_id(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role(
-        db_session, "ADMIN", "user2del@example.com"
-    )
+    user2, persona2, _ = seed_user_with_role(db_session, "ADMIN", "user2del@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     db_session.add_all([user2, persona2])
@@ -189,9 +178,7 @@ def test_delete_own_dm_message_with_room_id(client, db_session):
 
 def test_list_messages_before_cursor_pagination(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role(
-        db_session, "estudiante", "user2pag@example.com"
-    )
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2pag@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     db_session.add_all([user2, persona2])
@@ -240,9 +227,7 @@ def test_ws_broadcast_payload_on_send(client, db_session):
     """CHAT-MED-011: Verificar que enviar un mensaje agenda un broadcast
     con el payload correcto (event, conversation_id, message fields)."""
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role(
-        db_session, "estudiante", "user2ws@example.com"
-    )
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2ws@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     db_session.add_all([user2, persona2])
@@ -286,9 +271,7 @@ def test_ws_broadcast_payload_on_send(client, db_session):
 def test_send_empty_content_rejected(client, db_session):
     """CHAT-MED: DirectMessageCreate validation rejects empty content."""
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role(
-        db_session, "estudiante", "user2empty@example.com"
-    )
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2empty@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     db_session.add_all([user2, persona2])
@@ -316,9 +299,7 @@ def test_send_empty_content_rejected(client, db_session):
 def test_create_duplicate_conversation_returns_existing(client, db_session):
     """CHAT-MED-005: Creating the same DM conversation twice returns the existing one."""
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role(
-        db_session, "estudiante", "user2dedup@example.com"
-    )
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2dedup@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     db_session.add_all([user2, persona2])
@@ -346,9 +327,7 @@ def test_create_duplicate_conversation_returns_existing(client, db_session):
 def test_send_message_with_mention_creates_notification(client, db_session):
     """CHAT-MED: Sending a message with @mentions creates in-app notifications."""
     admin, persona, sede = _seed_admin(db_session)
-    user2, persona2, _ = seed_user_with_role(
-        db_session, "estudiante", "mentiontarget@example.com"
-    )
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "mentiontarget@example.com")
     user2.sede_id = sede.id
     persona2.sede_id = sede.id
     db_session.add_all([user2, persona2])
@@ -372,9 +351,7 @@ def test_send_message_with_mention_creates_notification(client, db_session):
     assert str(user2.id) in [str(m) for m in msg["mentions"]]
 
     notifications = (
-        db_session.query(models.NotificacionUsuario)
-        .filter(models.NotificacionUsuario.user_id == user2.id)
-        .all()
+        db_session.query(models.NotificacionUsuario).filter(models.NotificacionUsuario.user_id == user2.id).all()
     )
     assert len(notifications) >= 1
     assert notifications[0].title == "Te mencionaron en un chat"

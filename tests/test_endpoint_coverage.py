@@ -4,6 +4,7 @@ Endpoint Coverage Hitter — Calls every API endpoint to maximize code coverage.
 Each endpoint is called once with a dummy request. The goal is to exercise
 as many code paths as possible, even if they return errors.
 """
+
 import re
 import uuid
 
@@ -22,20 +23,21 @@ def authed_client(client, db_session):
 def get_all_endpoints():
     """Extract all endpoints from the app routers."""
     from backend.app import ROUTER_REGISTRY
+
     endpoints = []
     dummy_uuid = str(uuid.uuid4())
     for r in ROUTER_REGISTRY:
         prefix = r[1]
         router = r[0]
         for route in router.routes:
-            if hasattr(route, 'methods') and hasattr(route, 'path'):
+            if hasattr(route, "methods") and hasattr(route, "path"):
                 for method in route.methods:
-                    if method in ('GET', 'POST', 'PUT', 'PATCH', 'DELETE'):
+                    if method in ("GET", "POST", "PUT", "PATCH", "DELETE"):
                         path = route.path
-                        path = re.sub(r'\{[^}]+\}', dummy_uuid, path)
+                        path = re.sub(r"\{[^}]+\}", dummy_uuid, path)
                         full_path = prefix + path
                         # Skip websocket and internal endpoints
-                        if 'ws' in full_path or 'stream' in full_path:
+                        if "ws" in full_path or "stream" in full_path:
                             continue
                         endpoints.append((method, full_path))
     return sorted(set(endpoints))

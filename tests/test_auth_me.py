@@ -1,4 +1,5 @@
 """Tests for auth v3 /me profile update."""
+
 from fastapi.testclient import TestClient
 
 from tests.conftest import auth_headers as _auth_headers

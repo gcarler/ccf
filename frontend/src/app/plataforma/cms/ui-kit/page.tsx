@@ -123,8 +123,8 @@ export default function CmsUiKitPage() {
           <DSSectionHeader title="Select" description="Selects nativos estilizados." />
           <DSCard className="p-3">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <DSSelect 
-                label="País" 
+              <DSSelect
+                label="País"
                 placeholder="Selecciona un país"
                 options={[
                   { value: 'mx', label: 'México' },
@@ -132,15 +132,15 @@ export default function CmsUiKitPage() {
                   { value: 'ar', label: 'Argentina' },
                 ]}
               />
-              <DSSelect 
-                label="Rol" 
+              <DSSelect
+                label="Rol"
                 options={[
                   { value: 'admin', label: 'Administrador' },
                   { value: 'user', label: 'Usuario' },
                 ]}
               />
-              <DSSelect 
-                label="Con error" 
+              <DSSelect
+                label="Con error"
                 error="Selecciona una opción"
                 options={[{ value: '', label: 'Seleccionar...' }]}
               />
@@ -152,7 +152,7 @@ export default function CmsUiKitPage() {
         <section className="space-y-3">
           <DSSectionHeader title="Tabs" description="Navegación por pestañas." />
           <DSCard className="p-3">
-            <DSTabs 
+            <DSTabs
               tabs={[
                 { id: 'tab1', label: 'General' },
                 { id: 'tab2', label: 'Perfil' },
@@ -241,9 +241,9 @@ export default function CmsUiKitPage() {
           <DSSectionHeader title="Modal" description="Diálogos modales con backdrop." />
           <DSCard className="p-3">
             <DSButton onClick={() => setIsModalOpen(true)}>Abrir Modal</DSButton>
-            <DSModal 
-              open={isModalOpen} 
-              onClose={() => setIsModalOpen(false)} 
+            <DSModal
+              open={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
               title="Ejemplo de Modal"
             >
               <div className="space-y-3">

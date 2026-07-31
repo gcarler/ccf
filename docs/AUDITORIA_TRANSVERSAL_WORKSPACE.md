@@ -193,4 +193,3 @@ Auditar el workspace completo de CCF y cerrar discrepancias entre módulos para 
 > - Corregir con cambios pequeños y reversibles.
 > - Cada corrección debe cerrar con test, audit o e2e.
 > - No declarar éxito sin evidencia.
-

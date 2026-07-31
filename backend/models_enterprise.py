@@ -8,13 +8,16 @@ All models follow CCF conventions:
 - DateTime(timezone=True) for all timestamps
 - ForeignKey to personas.id for user references
 """
+
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
 # ─── 1. AUDIT TRAIL ─────────────────────────────────────────────────────────
 
+
 class AuditLog(Base):
     """Immutable audit trail. Every action on CMS content is logged here."""
+
     __tablename__ = "cms_audit_logs"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     actor_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
@@ -39,8 +42,10 @@ class AuditLog(Base):
 
 # ─── 2. CONTENT PERMISSIONS ─────────────────────────────────────────────────
 
+
 class ContentPermission(Base):
     """Per-page or per-category access control. Overrides global RBAC."""
+
     __tablename__ = "cms_content_permissions"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)
@@ -58,8 +63,10 @@ class ContentPermission(Base):
 
 # ─── 3. NOTIFICATIONS ───────────────────────────────────────────────────────
 
+
 class CmsNotification(Base):
     """In-app notifications for CMS events."""
+
     __tablename__ = "cms_notifications"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     recipient_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
@@ -81,8 +88,10 @@ class CmsNotification(Base):
 
 # ─── 4. WEBHOOKS ────────────────────────────────────────────────────────────
 
+
 class Webhook(Base):
     """Outbound webhook registrations for CMS events."""
+
     __tablename__ = "cms_webhooks"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)
@@ -102,6 +111,7 @@ class Webhook(Base):
 
 class WebhookDelivery(Base):
     """Delivery log for each webhook trigger."""
+
     __tablename__ = "cms_webhook_deliveries"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     webhook_id = Column(UUID(as_uuid=True), ForeignKey("cms_webhooks.id"), nullable=False, index=True)
@@ -116,8 +126,10 @@ class WebhookDelivery(Base):
 
 # ─── 5. CUSTOM POST TYPES ──────────────────────────────────────────────────
 
+
 class CmsCustomType(Base):
     """Registration of custom content types (policies, wiki, glossary, etc.)"""
+
     __tablename__ = "cms_custom_types"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)
@@ -136,6 +148,7 @@ class CmsCustomType(Base):
 
 class CmsCustomEntry(Base):
     """Individual entries of custom post types."""
+
     __tablename__ = "cms_custom_entries"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)
@@ -170,6 +183,7 @@ class CmsCustomEntry(Base):
 
 class CmsCustomEntryVersion(Base):
     """Version history for custom entries."""
+
     __tablename__ = "cms_custom_entry_versions"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     entry_id = Column(UUID(as_uuid=True), ForeignKey("cms_custom_entries.id"), nullable=False, index=True)
@@ -182,8 +196,10 @@ class CmsCustomEntryVersion(Base):
 
 # ─── 6. GLOSSARY ───────────────────────────────────────────────────────────
 
+
 class CmsGlossaryTerm(Base):
     """Centralized corporate glossary with tooltips."""
+
     __tablename__ = "cms_glossary_terms"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)
@@ -201,8 +217,10 @@ class CmsGlossaryTerm(Base):
 
 # ─── 7. SEARCH ──────────────────────────────────────────────────────────────
 
+
 class SearchIndex(Base):
     """Full-text search index for CMS content."""
+
     __tablename__ = "cms_search_index"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)
@@ -228,6 +246,7 @@ class SearchIndex(Base):
 
 class SearchPromotion(Base):
     """Admin-promoted search results for specific queries."""
+
     __tablename__ = "cms_search_promotions"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)
@@ -244,8 +263,10 @@ class SearchPromotion(Base):
 
 # ─── 8. SESSION MANAGEMENT ─────────────────────────────────────────────────
 
+
 class UserSession(Base):
     """Track active user sessions for security management."""
+
     __tablename__ = "cms_user_sessions"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
@@ -265,8 +286,10 @@ class UserSession(Base):
 
 # ─── 9. MEDIA FOLDERS ──────────────────────────────────────────────────────
 
+
 class MediaFolder(Base):
     """Real folder hierarchy for media organization."""
+
     __tablename__ = "cms_media_folders"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)
@@ -282,8 +305,10 @@ class MediaFolder(Base):
 
 # ─── 10. FILE VERSIONS ─────────────────────────────────────────────────────
 
+
 class MediaFileVersion(Base):
     """Version history for uploaded files (PDFs, docs, etc.)."""
+
     __tablename__ = "cms_media_file_versions"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     media_item_id = Column(UUID(as_uuid=True), ForeignKey("cms_media_items.id"), nullable=False, index=True)
@@ -299,6 +324,7 @@ class MediaFileVersion(Base):
 
 # ─── 11. REDIRECTS ─────────────────────────────────────────────────────────
 
+
 class CmsRedirect(Base):
     """URL redirects for maintaining coherence during restructuring.
 
@@ -312,6 +338,7 @@ class CmsRedirect(Base):
     En caso de empate dentro del mismo tipo, recorre por longitud descending
     de ``from_path`` (más específico primero).
     """
+
     __tablename__ = "cms_redirects"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)
@@ -330,8 +357,10 @@ class CmsRedirect(Base):
 
 # ─── 12. BROKEN LINK CHECK ────────────────────────────────────────────────
 
+
 class BrokenLinkCheck(Base):
     """Results of periodic broken link scans."""
+
     __tablename__ = "cms_broken_link_checks"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_key = Column(String(80), nullable=False, index=True)

@@ -9,13 +9,15 @@ Covers:
 - db_health (PostgreSQL/SQLite exception fallback)
 - run_db_maintenance
 """
+
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, patch
 
-from backend import models
-from tests.conftest import auth_headers as _auth_headers, seed_admin as _seed_admin
+import pytest
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture

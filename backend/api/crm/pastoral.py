@@ -202,8 +202,12 @@ def _serialize_case_safe(db: Session, case: models.CasoCRM) -> dict:
             "stage": _case_stage(case),
             "status": _case_status(case),
             "source": source,
-            "last_contact_at": last_contact_at.isoformat() if hasattr(last_contact_at, "isoformat") else last_contact_at,
-            "next_contact_at": next_contact_at.isoformat() if hasattr(next_contact_at, "isoformat") else next_contact_at,
+            "last_contact_at": last_contact_at.isoformat()
+            if hasattr(last_contact_at, "isoformat")
+            else last_contact_at,
+            "next_contact_at": next_contact_at.isoformat()
+            if hasattr(next_contact_at, "isoformat")
+            else next_contact_at,
             "assigned_pastor": None,
             "assigned_leader": None,
             "assignments_count": 0,
@@ -288,9 +292,7 @@ def create_caso_crm(
         if email:
             conditions.append(models.Persona.email == email)
         persona = (
-            persona_query(db)
-            .filter(or_(*conditions), models.Persona.sede_id == uuid.UUID(str(user_sede)))
-            .first()
+            persona_query(db).filter(or_(*conditions), models.Persona.sede_id == uuid.UUID(str(user_sede))).first()
             if conditions
             else None
         )
@@ -476,12 +478,7 @@ def list_crm_casos(
         cases_query = q.order_by(created_col.desc())
     else:
         cases_query = q.order_by(models.CasoCRM.id.desc())
-    cases = (
-        cases_query
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
-    )
+    cases = cases_query.offset((page - 1) * page_size).limit(page_size).all()
 
     return {
         "cases": [_serialize_case_safe(db, c) for c in cases],
@@ -614,12 +611,7 @@ def list_caso_interactions(
 
     q = db.query(models.InteraccionCRM).filter(models.InteraccionCRM.caso_id == case_uuid)
     total = q.count()
-    interactions = (
-        q.order_by(models.InteraccionCRM.fecha_interaccion.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    interactions = q.order_by(models.InteraccionCRM.fecha_interaccion.desc()).offset(skip).limit(limit).all()
     return {
         "items": [
             {
@@ -808,9 +800,11 @@ def list_crm_tasks(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Lista tareas CRM con scope Axioma 3 (JOIN Persona + validate assignee)."""
-    q = db.query(models.TareaCRM).join(
-        models.Persona, models.TareaCRM.persona_id == models.Persona.id
-    ).filter(models.TareaCRM.deleted_at.is_(None))
+    q = (
+        db.query(models.TareaCRM)
+        .join(models.Persona, models.TareaCRM.persona_id == models.Persona.id)
+        .filter(models.TareaCRM.deleted_at.is_(None))
+    )
     q = _scope_by_user_sede_via_persona(db, current_user, q)
     if assignee_persona_id:
         _get_scoped_persona(db, current_user, assignee_persona_id)
@@ -872,14 +866,10 @@ def create_crm_task(
     # Por defecto el editor se asigna la tarea (mantiene visibilidad dentro
     # de su propia sede vía _scope_by_user_sede_via_persona).
     if payload.assignee_id:
-        resolved_assignee_persona_id = _resolve_assignee_for_task(
-            db, current_user, payload.assignee_id
-        )
+        resolved_assignee_persona_id = _resolve_assignee_for_task(db, current_user, payload.assignee_id)
         payload.assignee_id = resolved_assignee_persona_id
     else:
-        resolved_assignee_persona_id = resolve_persona_id_for_user(
-            db, current_user.id
-        )
+        resolved_assignee_persona_id = resolve_persona_id_for_user(db, current_user.id)
         payload.assignee_id = resolved_assignee_persona_id
 
     # ── Side-effect: status ↔ completed_at ─────────────────────────────
@@ -891,9 +881,7 @@ def create_crm_task(
     # timestamp).
     from backend.schemas.crm.base import CrmTaskStatus
 
-    payload.completed_at = (
-        utc_now() if payload.status == CrmTaskStatus.completed else None
-    )
+    payload.completed_at = utc_now() if payload.status == CrmTaskStatus.completed else None
 
     # Pydantic YA validó Enum membership en frontera (`payload.status` es
     # instancia `CrmTaskStatus`). `use_enum_values=True` en
@@ -901,9 +889,7 @@ def create_crm_task(
     # alineados con `TareaCRM.estado` `String(20)` y JSONB-safe para
     # `logs_auditoria`.
 
-    task = crud.create_crm_task(
-        db, payload, actor_user_id=str(current_user.id)
-    )
+    task = crud.create_crm_task(db, payload, actor_user_id=str(current_user.id))
     return _serialize_task(task)
 
 
@@ -922,12 +908,7 @@ def list_my_crm_tasks(
         models.TareaCRM.deleted_at.is_(None),
     )
     total = q.count()
-    tasks = (
-        q.order_by(models.TareaCRM.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    tasks = q.order_by(models.TareaCRM.created_at.desc()).offset(skip).limit(limit).all()
     return {
         "items": [_serialize_task(task) for task in tasks],
         "total": total,
@@ -1009,9 +990,7 @@ def update_crm_task(
 
     # ── Axioma 3 — IDs referenciales validados contra sede ────────────
     if "assignee_id" in changes_in:
-        new_assignee = _resolve_assignee_for_task(
-            db, current_user, changes_in["assignee_id"]
-        )
+        new_assignee = _resolve_assignee_for_task(db, current_user, changes_in["assignee_id"])
         # Siempre emitimos el campo (incluso si es None) para que el CRUD
         # detecte el cambio contra el valor previo (auditoría honesta).
         changes_in["assignee_id"] = new_assignee
@@ -1050,9 +1029,7 @@ def update_crm_task(
 
     # ── Delegar al CRUD (atomic write + audit log + scope re-check) ────
     normalized_payload = schemas.CrmTaskUpdate.model_validate(changes_in)
-    updated_task = crud.update_crm_task(
-        db, task_id, normalized_payload, actor_user_id=str(current_user.id)
-    )
+    updated_task = crud.update_crm_task(db, task_id, normalized_payload, actor_user_id=str(current_user.id))
     if updated_task is None:
         # Race: la task fue borrada entre el GET scope-check y el UPDATE CRUD.
         raise HTTPException(status_code=404, detail="Task not found")
@@ -1133,7 +1110,7 @@ def get_copilot_draft(
         .filter(
             models.CounselingTicket.persona_id == ticket.persona_id,
             models.CounselingTicket.id != ticket.id,
-            models.CounselingTicket.deleted_at.is_(None)
+            models.CounselingTicket.deleted_at.is_(None),
         )
         .order_by(models.CounselingTicket.created_at.desc())
         .all()
@@ -1149,8 +1126,7 @@ def get_copilot_draft(
     spiritual_milestones = (
         db.query(models.SpiritualMilestone)
         .filter(
-            models.SpiritualMilestone.persona_id == ticket.persona_id,
-            models.SpiritualMilestone.deleted_at.is_(None)
+            models.SpiritualMilestone.persona_id == ticket.persona_id, models.SpiritualMilestone.deleted_at.is_(None)
         )
         .order_by(models.SpiritualMilestone.event_date.desc())
         .all()
@@ -1159,21 +1135,18 @@ def get_copilot_draft(
     import os
 
     from backend.core.config import get_settings
+
     settings = get_settings()
     openai_api_key = (
-        os.getenv("OPENAI_API_KEY") or
-        os.getenv("OPENROUTER_API_KEY") or
-        getattr(settings, "openai_api_key", None)
+        os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY") or getattr(settings, "openai_api_key", None)
     )
 
     if not openai_api_key:
         fallback_msg = "Fallback suggestion: OpenAI API key is missing. Please configure OPENAI_API_KEY."
-        return {
-            "draft": fallback_msg,
-            "suggestion": fallback_msg
-        }
+        return {"draft": fallback_msg, "suggestion": fallback_msg}
 
     from openai import OpenAI
+
     try:
         client = OpenAI(api_key=openai_api_key)
 
@@ -1223,29 +1196,20 @@ def get_copilot_draft(
 
         messages = [
             {"role": "system", "content": "You are a helpful counseling assistant."},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": prompt},
         ]
 
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=messages
-        )
+        response = client.chat.completions.create(model="gpt-4o-mini", messages=messages)
 
         generated_content = response.choices[0].message.content
         if not generated_content or not isinstance(generated_content, str):
             generated_content = "No se pudo generar sugerencia en este momento."
 
-        return {
-            "draft": generated_content,
-            "suggestion": generated_content
-        }
+        return {"draft": generated_content, "suggestion": generated_content}
     except Exception as e:
         logger.warning("get_copilot_draft OpenAI error: %s", e)
         fallback_msg = "Fallback suggestion: No se pudo generar sugerencia en este momento."
-        return {
-            "draft": fallback_msg,
-            "suggestion": fallback_msg
-        }
+        return {"draft": fallback_msg, "suggestion": fallback_msg}
 
 
 @router.get("/grupos/{grupo_id}", response_model=dict)
@@ -1428,8 +1392,8 @@ def list_counseling_tickets(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     user_sede = get_user_sede_id(db, current_user.id)
-    count_q = db.query(func.count()).select_from(models.CounselingTicket).filter(
-        models.CounselingTicket.deleted_at.is_(None)
+    count_q = (
+        db.query(func.count()).select_from(models.CounselingTicket).filter(models.CounselingTicket.deleted_at.is_(None))
     )
     if user_sede:
         count_q = count_q.join(models.Persona, models.CounselingTicket.persona_id == models.Persona.id).filter(
@@ -1458,9 +1422,7 @@ def list_counseling_tickets(
     }
 
 
-def _resolve_pastor_identity(
-    db: Session, current_user: models.User, pastor_id: Optional[uuid.UUID]
-):
+def _resolve_pastor_identity(db: Session, current_user: models.User, pastor_id: Optional[uuid.UUID]):
     """Valida el UUID canónico de persona del pastor dentro del scope."""
     if pastor_id is None:
         return None
@@ -1555,9 +1517,7 @@ def update_counseling_ticket(
     data = payload.model_dump(exclude_unset=True)
 
     if "pastor_id" in data:
-        resolved_pastor_id = _resolve_pastor_identity(
-            db, current_user, data["pastor_id"]
-        )
+        resolved_pastor_id = _resolve_pastor_identity(db, current_user, data["pastor_id"])
         ticket.pastor_id = resolved_pastor_id
 
     for field in ("status", "notes", "priority_level"):
@@ -1591,10 +1551,14 @@ _CRM_SETTINGS_KEY = "crm_settings"
 def _get_crm_settings_raw(db: Session) -> dict:
     import json
 
-    row = db.query(models.SystemVariable).filter(
-        models.SystemVariable.key == _CRM_SETTINGS_KEY,
-        models.SystemVariable.deleted_at.is_(None),
-    ).first()
+    row = (
+        db.query(models.SystemVariable)
+        .filter(
+            models.SystemVariable.key == _CRM_SETTINGS_KEY,
+            models.SystemVariable.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row or not row.value:
         return {}
     try:
@@ -1620,10 +1584,14 @@ def save_crm_settings(
     import json
 
     data = payload.model_dump(exclude_unset=True)
-    row = db.query(models.SystemVariable).filter(
-        models.SystemVariable.key == _CRM_SETTINGS_KEY,
-        models.SystemVariable.deleted_at.is_(None),
-    ).first()
+    row = (
+        db.query(models.SystemVariable)
+        .filter(
+            models.SystemVariable.key == _CRM_SETTINGS_KEY,
+            models.SystemVariable.deleted_at.is_(None),
+        )
+        .first()
+    )
     if row:
         row.value = json.dumps(data, ensure_ascii=False)
     else:
@@ -1645,9 +1613,7 @@ def list_crm_roles(
     user_sede = get_user_sede_id(db, current_user.id)
     q = db.query(models.RoleDefinition).filter(models.RoleDefinition.deleted_at.is_(None))
     if user_sede:
-        q = q.filter(
-            or_(models.RoleDefinition.sede_id == user_sede, models.RoleDefinition.sede_id.is_(None))
-        )
+        q = q.filter(or_(models.RoleDefinition.sede_id == user_sede, models.RoleDefinition.sede_id.is_(None)))
     rows = q.order_by(models.RoleDefinition.is_leadership.desc(), models.RoleDefinition.name.asc()).all()
     return [
         {
@@ -1875,9 +1841,7 @@ def get_crm_analytics_summary(
     counseling_q = _scope_by_user_sede_via_persona(db, current_user, counseling_q)
     open_counseling = counseling_q.count()
 
-    month_start = (
-        datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    )
+    month_start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     events_q = db.query(models.CrmEvent).filter(models.CrmEvent.event_date >= month_start)
     if user_sede:
         events_q = events_q.filter(models.CrmEvent.sede_id == user_sede)
@@ -1888,9 +1852,7 @@ def get_crm_analytics_summary(
         groups_q = groups_q.filter(models.GrupoEvangelismo.sede_id == user_sede)
     total_groups = groups_q.count()
 
-    total_families = db.query(models.Family).join(
-        models.Persona, models.Persona.family_id == models.Family.id
-    )
+    total_families = db.query(models.Family).join(models.Persona, models.Persona.family_id == models.Family.id)
     if user_sede:
         total_families = total_families.filter(models.Persona.sede_id == user_sede)
     total_families = total_families.distinct().count()
@@ -1904,9 +1866,8 @@ def get_crm_analytics_summary(
     total_leads = leads_q.count()
 
     pipeline_by_stage = {}
-    stage_rows = (
-        db.query(models.CasoCRM.estado, func.count(models.CasoCRM.id))
-        .filter(models.CasoCRM.deleted_at.is_(None))
+    stage_rows = db.query(models.CasoCRM.estado, func.count(models.CasoCRM.id)).filter(
+        models.CasoCRM.deleted_at.is_(None)
     )
     if user_sede:
         stage_rows = stage_rows.filter(models.CasoCRM.sede_id == user_sede)
@@ -2311,8 +2272,11 @@ def list_crm_groups(
                     models.PersonaMinistryAssignment.ministry_id == m.id,
                     models.Persona.sede_id == user_sede if user_sede else True,
                 )
-                .scalar() or 0
-            ) if user_sede else len(m.personas or []),
+                .scalar()
+                or 0
+            )
+            if user_sede
+            else len(m.personas or []),
         }
         for m in ministries
     ]
@@ -2399,9 +2363,7 @@ def get_newsletter_leads(
         .filter(
             models.CasoCRM.origen_canal == CanalOrigenEnum.WEB_FORM,
             models.CasoCRM.origen_detalle_id.ilike("%newsletter%"),
-            models.CasoCRM.estado.notin_(
-                (EstadoCasoEnum.RESUELTO_EXITO, EstadoCasoEnum.CERRADO_PERDIDO)
-            ),
+            models.CasoCRM.estado.notin_((EstadoCasoEnum.RESUELTO_EXITO, EstadoCasoEnum.CERRADO_PERDIDO)),
         )
     )
     query = _scope_by_user_sede_via_persona(db, current_user, query)
@@ -2475,9 +2437,7 @@ def export_newsletter_leads_csv(
         .filter(
             models.CasoCRM.origen_canal == CanalOrigenEnum.WEB_FORM,
             models.CasoCRM.origen_detalle_id.ilike("%newsletter%"),
-            models.CasoCRM.estado.notin_(
-                (EstadoCasoEnum.RESUELTO_EXITO, EstadoCasoEnum.CERRADO_PERDIDO)
-            ),
+            models.CasoCRM.estado.notin_((EstadoCasoEnum.RESUELTO_EXITO, EstadoCasoEnum.CERRADO_PERDIDO)),
         )
     )
     query = _scope_by_user_sede_via_persona(db, current_user, query)
@@ -2519,6 +2479,7 @@ def export_newsletter_leads_csv(
 # ──────────────────────────────────────────────
 # PASTORAL CALL LOGS (Registro de llamadas de consolidación)
 # ──────────────────────────────────────────────
+
 
 @router.get("/casos/{case_id}/calls", response_model=List[dict])
 def list_caso_calls(

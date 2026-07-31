@@ -1,4 +1,5 @@
 """CRUD — Biblioteca de Recursos CRM (plantillas, adjuntos, bitácora de envíos)."""
+
 from __future__ import annotations
 
 from typing import Dict, List, Optional
@@ -24,14 +25,17 @@ from backend.schemas.crm.resources import (
 
 # ── Categorías ────────────────────────────────────────────────────────────────
 
+
 def list_categorias(db: Session) -> List[CategoriaRecurso]:
     return db.query(CategoriaRecurso).filter_by(activo=True).order_by(CategoriaRecurso.nombre).all()
 
 
 def get_categoria(db: Session, categoria_id: str) -> Optional[CategoriaRecurso]:
-    return db.query(CategoriaRecurso).filter_by(
-        id=_coerce_uuid_or_404(categoria_id, "Categoría no encontrada"), activo=True
-    ).first()
+    return (
+        db.query(CategoriaRecurso)
+        .filter_by(id=_coerce_uuid_or_404(categoria_id, "Categoría no encontrada"), activo=True)
+        .first()
+    )
 
 
 def create_categoria(db: Session, payload: CategoriaRecursoCreate) -> CategoriaRecurso:
@@ -64,8 +68,10 @@ def delete_categoria(db: Session, categoria_id: str) -> bool:
 
 # ── Plantillas ────────────────────────────────────────────────────────────────
 
+
 def list_plantillas(
-    db: Session, *,
+    db: Session,
+    *,
     sede_id: str,
     canal: Optional[str] = None,
     categoria_id: Optional[str] = None,
@@ -73,27 +79,23 @@ def list_plantillas(
     skip: int = 0,
     limit: int = 100,
 ) -> List[PlantillaMensaje]:
-    qry = db.query(PlantillaMensaje).filter_by(
-        sede_id=_coerce_uuid_or_404(sede_id, "Sede no encontrada"), activo=True
-    )
+    qry = db.query(PlantillaMensaje).filter_by(sede_id=_coerce_uuid_or_404(sede_id, "Sede no encontrada"), activo=True)
     if canal:
         qry = qry.filter(PlantillaMensaje.canal == CanalEnvio(canal))
     if categoria_id:
-        qry = qry.filter(
-            PlantillaMensaje.categoria_id == _coerce_uuid_or_404(categoria_id, "Categoría no encontrada")
-        )
+        qry = qry.filter(PlantillaMensaje.categoria_id == _coerce_uuid_or_404(categoria_id, "Categoría no encontrada"))
     if q:
         term = f"%{q}%"
-        qry = qry.filter(
-            PlantillaMensaje.titulo.ilike(term) | PlantillaMensaje.contenido_texto.ilike(term)
-        )
+        qry = qry.filter(PlantillaMensaje.titulo.ilike(term) | PlantillaMensaje.contenido_texto.ilike(term))
     return qry.order_by(PlantillaMensaje.fecha_actualizacion.desc()).offset(skip).limit(limit).all()
 
 
 def get_plantilla(db: Session, plantilla_id: str) -> Optional[PlantillaMensaje]:
-    return db.query(PlantillaMensaje).filter_by(
-        id=_coerce_uuid_or_404(plantilla_id, "Plantilla no encontrada"), activo=True
-    ).first()
+    return (
+        db.query(PlantillaMensaje)
+        .filter_by(id=_coerce_uuid_or_404(plantilla_id, "Plantilla no encontrada"), activo=True)
+        .first()
+    )
 
 
 def create_plantilla(
@@ -117,9 +119,7 @@ def create_plantilla(
     return obj
 
 
-def update_plantilla(
-    db: Session, plantilla_id: str, payload: PlantillaMensajeUpdate
-) -> Optional[PlantillaMensaje]:
+def update_plantilla(db: Session, plantilla_id: str, payload: PlantillaMensajeUpdate) -> Optional[PlantillaMensaje]:
     obj = get_plantilla(db, plantilla_id)
     if not obj:
         return None
@@ -155,6 +155,7 @@ def count_envios(db: Session, plantilla_id: str) -> int:
 
 # ── Adjuntos ──────────────────────────────────────────────────────────────────
 
+
 def list_adjuntos(db: Session, *, plantilla_id: str) -> List[RecursoAdjunto]:
     return (
         db.query(RecursoAdjunto)
@@ -168,7 +169,8 @@ def list_adjuntos(db: Session, *, plantilla_id: str) -> List[RecursoAdjunto]:
 
 
 def create_adjunto(
-    db: Session, *,
+    db: Session,
+    *,
     sede_id: str,
     plantilla_id: Optional[str],
     nombre_recurso: str,
@@ -197,9 +199,11 @@ def create_adjunto(
 
 
 def delete_adjunto(db: Session, adjunto_id: str) -> bool:
-    obj = db.query(RecursoAdjunto).filter_by(
-        id=_coerce_uuid_or_404(adjunto_id, "Adjunto no encontrado"), activo=True
-    ).first()
+    obj = (
+        db.query(RecursoAdjunto)
+        .filter_by(id=_coerce_uuid_or_404(adjunto_id, "Adjunto no encontrado"), activo=True)
+        .first()
+    )
     if not obj:
         return False
     obj.activo = False
@@ -209,8 +213,10 @@ def delete_adjunto(db: Session, adjunto_id: str) -> bool:
 
 # ── Bitácora ──────────────────────────────────────────────────────────────────
 
+
 def create_envio(
-    db: Session, *,
+    db: Session,
+    *,
     sede_id: str,
     plantilla_id: Optional[str],
     caso_id: Optional[str],
@@ -236,9 +242,7 @@ def create_envio(
 def update_estado_envio(
     db: Session, envio_id: str, estado: str, log_error: Optional[str] = None
 ) -> Optional[BitacoraEnvioPlantilla]:
-    obj = db.query(BitacoraEnvioPlantilla).filter_by(
-        id=_coerce_uuid_or_404(envio_id, "Envío no encontrado")
-    ).first()
+    obj = db.query(BitacoraEnvioPlantilla).filter_by(id=_coerce_uuid_or_404(envio_id, "Envío no encontrado")).first()
     if not obj:
         return None
     obj.estado = EstadoEnvioPlantilla(estado)
@@ -262,9 +266,7 @@ def list_envios_plantilla(
     )
 
 
-def list_envios_sede(
-    db: Session, *, sede_id: str, skip: int = 0, limit: int = 100
-) -> List[BitacoraEnvioPlantilla]:
+def list_envios_sede(db: Session, *, sede_id: str, skip: int = 0, limit: int = 100) -> List[BitacoraEnvioPlantilla]:
     return (
         db.query(BitacoraEnvioPlantilla)
         .filter_by(sede_id=_coerce_uuid_or_404(sede_id, "Sede no encontrada"))

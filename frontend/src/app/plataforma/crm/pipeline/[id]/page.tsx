@@ -4,12 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { 
-    Users, 
-    MessageSquare, 
-    Phone, 
-    Mail, 
-    Clock, 
+import {
+    Users,
+    MessageSquare,
+    Phone,
+    Mail,
+    Clock,
     LayoutDashboard,
     User
 } from 'lucide-react';
@@ -27,7 +27,7 @@ export default function LeadDetailPage() {
         notFound();
     }
     const { token } = useAuth();
-    
+
     const [lead, setLead] = useState<any>(null);
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -145,9 +145,9 @@ export default function LeadDetailPage() {
                                         );
                                     })()}
                                 </div>
-                                
+
                                 <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
-                                
+
                                 <button className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
                                     Mover a Siguiente Etapa
                                 </button>

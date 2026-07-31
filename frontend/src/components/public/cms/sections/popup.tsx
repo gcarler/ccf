@@ -155,4 +155,3 @@ export function PopupBlock({ section }: { section: CmsSection<"popup_banner"> })
 }
 
 // ─── Button Row ────────────────────────────────────────────────────────────────
-

@@ -19,6 +19,7 @@ HISTÓRICO:
       (PLAN_ACADEMY_CALIDAD §P0) detectado contra código real. Comportamiento
       ya implementado en backend/api/academy.py y backend/schemas/academy.py.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -140,7 +141,7 @@ def test_acad_tkt_010_submit_assessment_blocks_cross_sede(client, db_session: Se
 
 
 def test_acad_tkt_011_get_lesson_progress_blocks_deleted_lesson(client, db_session: Session):
-    """"Lección con deleted_at setado NO debe ser visible vía progress → 404."""
+    """ "Lección con deleted_at setado NO debe ser visible vía progress → 404."""
     admin, _, sede = seed_admin(db_session, email="tkt011_admin@example.com", password="testpass123")
     course = models.Course(
         code=f"T011-{uuid.uuid4().hex[:6]}",
@@ -166,8 +167,7 @@ def test_acad_tkt_011_get_lesson_progress_blocks_deleted_lesson(client, db_sessi
     headers = auth_headers(client, email=admin.email, password="testpass123")
     resp = client.get(f"/api/academy/lessons/{lesson.id}/progress", headers=headers)
     assert resp.status_code == 404, (
-        f"ACAD-TKT-011 REGRESIÓN: lección soft-deleted retornó status "
-        f"{resp.status_code}. Body: {resp.text}"
+        f"ACAD-TKT-011 REGRESIÓN: lección soft-deleted retornó status {resp.status_code}. Body: {resp.text}"
     )
 
 
@@ -200,9 +200,7 @@ def test_acad_tkt_012_update_lesson_progress_blocks(
     assert expect_blocked_at_endpoint_or_scope is True, "Sanity: ambos escenarios deben bloquearse"
 
     if scenario == "unpublished_in_same_sede":
-        admin, persona, sede = seed_admin(
-            db_session, email="tkt012_unpub@example.com", password="testpass123"
-        )
+        admin, persona, sede = seed_admin(db_session, email="tkt012_unpub@example.com", password="testpass123")
         course = models.Course(
             code=f"T012U-{uuid.uuid4().hex[:6]}",
             title="Course T012",
@@ -225,9 +223,7 @@ def test_acad_tkt_012_update_lesson_progress_blocks(
         headers = auth_headers(client, email=admin.email, password="testpass123")
         target_lesson_id = lesson.id
     else:  # cross_sede
-        admin_a, _persona_a, sede_a = seed_admin(
-            db_session, email="tkt012_xsede_a@example.com", password="testpass123"
-        )
+        admin_a, _persona_a, sede_a = seed_admin(db_session, email="tkt012_xsede_a@example.com", password="testpass123")
         _admin_b, _persona_b, sede_b = seed_admin(
             db_session, email="tkt012_xsede_b@example.com", password="testpass123"
         )
@@ -291,9 +287,7 @@ def test_acad_tkt_013_submit_assessment_blocks_unpublished_course(client, db_ses
     # importa que ``user.sede_id`` matchee con ``sede`` para que ``_course_scope``
     # acepte el Course con scope correcto.
     seed_admin(db_session, email="tkt013_admin@example.com", password="testpass123")
-    admin_record = (
-        db_session.query(models.Usuario).filter(models.Usuario.email == "tkt013_admin@example.com").first()
-    )
+    admin_record = db_session.query(models.Usuario).filter(models.Usuario.email == "tkt013_admin@example.com").first()
     admin_record.sede_id = sede.id
     db_session.commit()
 
@@ -445,9 +439,7 @@ def test_acad_tkt_015_extra_forbid_assessment_submit(client, db_session: Session
     ["hacked_field", "is_old_admin", "force_publish", "__proto__"],
     ids=["hacked_field", "is_old_admin", "force_publish", "dunder_proto"],
 )
-def test_acad_tkt_015_extra_forbid_enrollment_create(
-    client, db_session: Session, extra_field
-):
+def test_acad_tkt_015_extra_forbid_enrollment_create(client, db_session: Session, extra_field):
     """EnrollmentCreate rechaza cualquier campo extra → 422 (4 vectores)."""
     student, persona, sede = seed_user_with_role(
         db_session,
@@ -489,9 +481,7 @@ def test_acad_tkt_015_extra_forbid_enrollment_create(
     ["hacked_field", "is_old_admin", "force_publish", "__proto__"],
     ids=["hacked_field", "is_old_admin", "force_publish", "dunder_proto"],
 )
-def test_acad_tkt_015_extra_forbid_forum_thread_create(
-    client, db_session: Session, extra_field
-):
+def test_acad_tkt_015_extra_forbid_forum_thread_create(client, db_session: Session, extra_field):
     """ForumThreadCreate rechaza cualquier campo extra → 422 (4 vectores).
 
     ForumThreadCreate hereda ``extra="forbid"`` de ``ForumThreadBase``.

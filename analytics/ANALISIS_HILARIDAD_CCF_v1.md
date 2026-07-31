@@ -1,8 +1,8 @@
 # 🔬 ANÁLISIS HILARIDAD CCF — Flujo Punto a Punto
 
-**Fecha:** 2026-06-02  
-**Scope:** BD → Backend → Frontend → Tests  
-**Metodología:** Análisis estático de código + verificación contra REGLAS.md v2.1  
+**Fecha:** 2026-06-02
+**Scope:** BD → Backend → Frontend → Tests
+**Metodología:** Análisis estático de código + verificación contra REGLAS.md v2.1
 
 ---
 
@@ -502,5 +502,5 @@ Ejemplos encontrados:
 ---
 
 > **"El código que escribes hoy es la plataforma que administrarás mañana."**
-> 
+>
 > — Este análisis encontró **7 hard deletes**, **~80 tablas con PK Integer**, **25+ FKs sin índice**, **N+1 en todos los CRUDs**, y **~1,500+ colores hardcodeados**. La arquitectura v2 es sólida, pero la deuda técnica compat es masiva.

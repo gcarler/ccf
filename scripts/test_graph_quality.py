@@ -29,9 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 HERE = Path(__file__).resolve()
-PROJECT_ROOT = next(
-    (p for p in HERE.parents if (p / "backend" / "__init__.py").is_file()), None
-)
+PROJECT_ROOT = next((p for p in HERE.parents if (p / "backend" / "__init__.py").is_file()), None)
 if PROJECT_ROOT is None:
     raise RuntimeError(f"backend package not found above {HERE}")
 
@@ -87,9 +85,7 @@ def run_command(check: Check) -> bool:
     if check.reason:
         info(check.reason)
     info("Ejecutando: " + " ".join(check.cmd))
-    result = subprocess.run(
-        list(check.cmd), cwd=check.cwd, text=True, capture_output=True
-    )
+    result = subprocess.run(list(check.cmd), cwd=check.cwd, text=True, capture_output=True)
     if result.stdout.strip():
         for line in result.stdout.strip().splitlines():
             print(f"    {line}")
@@ -191,16 +187,10 @@ def main() -> int:
     section("RESUMEN")
     total = PASS + FAIL
     if all(results):
-        print(
-            f"  {GREEN}RESUMEN: {PASS} passed, {FAIL} failed, "
-            f"{total} total suites{NC}"
-        )
+        print(f"  {GREEN}RESUMEN: {PASS} passed, {FAIL} failed, {total} total suites{NC}")
         return 0
 
-    print(
-        f"  {RED}RESUMEN: {PASS} passed, {FAIL} failed, "
-        f"{total} total suites{NC}"
-    )
+    print(f"  {RED}RESUMEN: {PASS} passed, {FAIL} failed, {total} total suites{NC}")
     return 1
 
 

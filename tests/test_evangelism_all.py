@@ -1,4 +1,5 @@
 """Full integration: strategy → grupo → session → attendance → analytics."""
+
 from __future__ import annotations
 
 import uuid
@@ -33,28 +34,35 @@ class TestFullAnalytics:
         db_session.commit()
 
         # 2. Create strategy
-        strat = c.post("/api/evangelism/strategies",
-            json={"name": f"S-{uuid.uuid4().hex[:6]}"}, headers=h).json()
+        strat = c.post("/api/evangelism/strategies", json={"name": f"S-{uuid.uuid4().hex[:6]}"}, headers=h).json()
         sid = strat["id"]
 
         # 3. Create grupo with leader
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre=f"G-{uuid.uuid4().hex[:6]}",
-            sede_id=s.id, lider_persona_id=p.id,
+            id=uuid.uuid4(),
+            nombre=f"G-{uuid.uuid4().hex[:6]}",
+            sede_id=s.id,
+            lider_persona_id=p.id,
         )
         db_session.add(g)
         db_session.flush()
 
         # 4. Create session
         ses = models.SesionGrupo(
-            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA",
+            id=uuid.uuid4(),
+            grupo_id=g.id,
+            fecha_sesion=now,
+            estado="REALIZADA",
         )
         db_session.add(ses)
         db_session.flush()
 
         # 5. Create attendance
         att = models.Asistencia(
-            id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO",
+            id=uuid.uuid4(),
+            sesion_id=ses.id,
+            persona_id=p.id,
+            estado="ASISTIO",
         )
         db_session.add(att)
         db_session.commit()
@@ -93,13 +101,16 @@ class TestFullAnalytics:
         assert resp.status_code in (200, 403)
 
         # 11. Add attendance via grupos path
-        resp = c.post(f"/api/evangelism/grupos/sessions/{ses.id}/attendance",
-            json={"persona_ids": [str(p.id)]}, headers=h)
+        resp = c.post(
+            f"/api/evangelism/grupos/sessions/{ses.id}/attendance", json={"persona_ids": [str(p.id)]}, headers=h
+        )
         assert resp.status_code in (200, 201, 403)
 
         # 12. Events
-        evt = c.post("/api/evangelism/events",
+        evt = c.post(
+            "/api/evangelism/events",
             json={"name": f"E-{uuid.uuid4().hex[:6]}", "event_date": "2026-09-01T10:00:00Z"},
-            headers=h).json()
+            headers=h,
+        ).json()
         assert _ok(c.get(f"/api/evangelism/events/{evt['id']}", headers=h).status_code)
         assert _ok(c.get("/api/evangelism/events/analytics/global", headers=h).status_code)

@@ -23,9 +23,7 @@ def trigger_intelligence():
     try:
         print("🧠 Iniciando Motores de Inteligencia MESH...")
         count = IntelligenceMESH.run_full_analysis(db)
-        print(
-            f"✅ Análisis completado. Se generaron/actualizaron {count} insights para los agentes."
-        )
+        print(f"✅ Análisis completado. Se generaron/actualizaron {count} insights para los agentes.")
     except Exception as e:
         print(f"❌ Error en los motores de inteligencia: {e}")
     finally:

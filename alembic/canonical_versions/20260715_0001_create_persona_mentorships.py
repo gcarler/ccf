@@ -54,7 +54,9 @@ def upgrade() -> None:
         sa.Column("assigned_by_user_id", uuid_t, sa.ForeignKey("auth_users.id", ondelete="SET NULL"), nullable=True),
         sa.Column("status", sa.String(length=20), nullable=False, server_default=sa.text("'active'")),
         sa.Column("notes", sa.Text(), nullable=True),
-        sa.Column("started_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "started_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")
+        ),
         sa.Column("ended_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
     )

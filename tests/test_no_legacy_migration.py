@@ -10,12 +10,7 @@ from alembic.operations import Operations
 from pydantic import ValidationError
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = (
-    ROOT
-    / "alembic"
-    / "versions"
-    / "20260701_0002_eradicate_runtime_legacy.py"
-)
+MIGRATION = ROOT / "alembic" / "versions" / "20260701_0002_eradicate_runtime_legacy.py"
 
 
 def _load_migration():
@@ -91,12 +86,7 @@ def test_runtime_old_migration_cleans_and_hardens_sqlite():
                     "VALUES ('valid', 'persona-a', NULL), ('orphan', NULL, NULL)"
                 )
             )
-        connection.execute(
-            sa.text(
-                "INSERT INTO communication_logs VALUES "
-                "('old', 'delivered'), ('new', 'sent_real')"
-            )
-        )
+        connection.execute(sa.text("INSERT INTO communication_logs VALUES ('old', 'delivered'), ('new', 'sent_real')"))
         connection.execute(
             sa.text(
                 "INSERT INTO project_tasks (id, labels, priority) VALUES "
@@ -110,58 +100,37 @@ def test_runtime_old_migration_cleans_and_hardens_sqlite():
         migration.upgrade()
 
         for table in ("cms_media_items", "announcements", "testimonials"):
-            rows = connection.execute(
-                sa.text(f'SELECT id, sede_id FROM "{table}"')
-            ).all()
+            rows = connection.execute(sa.text(f'SELECT id, sede_id FROM "{table}"')).all()
             assert rows == [("valid", "sede-a")]
             columns = {item["name"]: item for item in sa.inspect(connection).get_columns(table)}
             assert columns["sede_id"]["nullable"] is False
 
-        outcomes = connection.execute(
-            sa.text("SELECT outcome FROM communication_logs ORDER BY id")
-        ).scalars().all()
+        outcomes = connection.execute(sa.text("SELECT outcome FROM communication_logs ORDER BY id")).scalars().all()
         assert outcomes == ["sent_real", "sent_real"]
         token = connection.execute(sa.text("SELECT qr_token FROM personas")).scalar_one()
         assert not token.startswith("CCF-" + "MBR-")
-        persona_columns = {
-            item["name"] for item in sa.inspect(connection).get_columns("personas")
-        }
+        persona_columns = {item["name"] for item in sa.inspect(connection).get_columns("personas")}
         assert "baptism_date" in persona_columns
         assert "fecha_bautismo" not in persona_columns
-        labels = connection.execute(
-            sa.text("SELECT labels FROM project_tasks ORDER BY id")
-        ).scalars().all()
+        labels = connection.execute(sa.text("SELECT labels FROM project_tasks ORDER BY id")).scalars().all()
         assert [sa.JSON().result_processor(connection.dialect, None)(value) for value in labels] == [
             ["ready"],
             [],
             ["urgent"],
         ]
-        project_columns = {
-            item["name"]: item
-            for item in sa.inspect(connection).get_columns("project_tasks")
-        }
+        project_columns = {item["name"]: item for item in sa.inspect(connection).get_columns("project_tasks")}
         assert project_columns["labels"]["nullable"] is False
         assert project_columns["priority"]["nullable"] is False
-        priorities = connection.execute(
-            sa.text("SELECT priority FROM project_tasks ORDER BY id")
-        ).scalars().all()
+        priorities = connection.execute(sa.text("SELECT priority FROM project_tasks ORDER BY id")).scalars().all()
         assert priorities == ["urgent", "medium", "high"]
 
         migration.downgrade()
-        columns = {
-            item["name"]: item
-            for item in sa.inspect(connection).get_columns("testimonials")
-        }
+        columns = {item["name"]: item for item in sa.inspect(connection).get_columns("testimonials")}
         assert columns["sede_id"]["nullable"] is True
-        project_columns = {
-            item["name"]: item
-            for item in sa.inspect(connection).get_columns("project_tasks")
-        }
+        project_columns = {item["name"]: item for item in sa.inspect(connection).get_columns("project_tasks")}
         assert project_columns["labels"]["nullable"] is True
         assert project_columns["priority"]["nullable"] is True
-        persona_columns = {
-            item["name"] for item in sa.inspect(connection).get_columns("personas")
-        }
+        persona_columns = {item["name"] for item in sa.inspect(connection).get_columns("personas")}
         assert "fecha_bautismo" in persona_columns
         assert "baptism_date" not in persona_columns
 

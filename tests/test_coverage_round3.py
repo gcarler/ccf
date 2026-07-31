@@ -1,6 +1,7 @@
 """
 Tests for public.py
 """
+
 from __future__ import annotations
 
 import uuid
@@ -24,13 +25,19 @@ def full(client, db_session):
 
 class TestPublic:
     def test_register_event_not_found(self, full):
-        assert full["c"].post("/api/register",
-            json={"event_id": str(uuid.uuid4()), "first_name": "T", "last_name": "U"},
-            headers=full["h"]).status_code == 404
+        assert (
+            full["c"]
+            .post(
+                "/api/register",
+                json={"event_id": str(uuid.uuid4()), "first_name": "T", "last_name": "U"},
+                headers=full["h"],
+            )
+            .status_code
+            == 404
+        )
 
     def test_get_course_not_found(self, full):
         assert full["c"].get("/api/courses/nonexistent").status_code == 404
 
     def test_enroll_course_not_found(self, full):
-        assert full["c"].post(f"/api/courses/{uuid.uuid4()}/enroll",
-            json={"email": "test@test.com"}).status_code == 404
+        assert full["c"].post(f"/api/courses/{uuid.uuid4()}/enroll", json={"email": "test@test.com"}).status_code == 404

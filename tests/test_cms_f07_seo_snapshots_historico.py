@@ -16,6 +16,7 @@ Tests:
   7) API: paginacion expone total/skip/limit
   8) Schema: CmsSeoSnapshotRead roundtrip desde ORM
 """
+
 from __future__ import annotations
 
 import datetime as dt

@@ -1,6 +1,7 @@
 """
 Unit tests for evangelism_analytics.py — pure helper functions.
 """
+
 from __future__ import annotations
 
 from backend.api import evangelism_analytics as analytics
@@ -18,15 +19,20 @@ class TestRolToFunnelStage:
     def test_lider(self):
         assert analytics._rol_to_funnel_stage("Líder") == "lider"
         assert analytics._rol_to_funnel_stage("Pastor") == "lider"
+
     def test_colider(self):
         assert analytics._rol_to_funnel_stage("Colíder") == "colider"
+
     def test_anfitrion(self):
         assert analytics._rol_to_funnel_stage("Anfitrión") == "anfitrion"
+
     def test_asistente(self):
         assert analytics._rol_to_funnel_stage("Asistente") == "asistente"
         assert analytics._rol_to_funnel_stage("Colaborador") == "asistente"
+
     def test_visitante(self):
         assert analytics._rol_to_funnel_stage("Visitante") == "visitante"
+
     def test_unknown(self):
         assert analytics._rol_to_funnel_stage("Voluntario") == "personalizado"
 
@@ -35,6 +41,7 @@ class TestParsePeriod:
     def test_known(self):
         assert analytics._parse_period("7d") == 7
         assert analytics._parse_period("30d") == 30
+
     def test_unknown_defaults(self):
         assert analytics._parse_period("x") == 30
 
@@ -55,6 +62,7 @@ class TestDelta:
     def test_no_previous(self):
         assert analytics._delta(10, 0) == 100.0
         assert analytics._delta(0, 0) == 0.0
+
     def test_with_previous(self):
         assert analytics._delta(20, 10) == 100.0
         assert analytics._delta(10, 20) == -50.0

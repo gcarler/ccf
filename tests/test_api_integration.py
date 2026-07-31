@@ -3,6 +3,7 @@ Additional API Integration Tests — Admin, Academy, Auth, Projects.
 
 Focuses on endpoints with lowest coverage to push overall % up.
 """
+
 import pytest
 
 from tests.conftest import auth_headers, seed_admin
@@ -18,6 +19,7 @@ def authed_client(client, db_session):
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. ADMIN API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAdminAPI:
     def test_list_users(self, authed_client):
@@ -41,6 +43,7 @@ class TestAdminAPI:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 2. CMS V2 API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCmsV2API:
     def test_list_sites(self, authed_client):
@@ -83,6 +86,7 @@ class TestCmsV2API:
 # 4. PUBLIC API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestPublicAPI:
     def test_public_health(self, client):
         resp = client.get("/api/public/health")
@@ -93,13 +97,16 @@ class TestPublicAPI:
         assert resp.status_code in (200, 404)
 
     def test_public_contact(self, client):
-        resp = client.post("/api/public/contact", json={
-            "full_name": "Test User",
-            "phone": "+573001234567",
-            "notes": "Test message",
-            "status": "prospect",
-            "source": "test",
-        })
+        resp = client.post(
+            "/api/public/contact",
+            json={
+                "full_name": "Test User",
+                "phone": "+573001234567",
+                "notes": "Test message",
+                "status": "prospect",
+                "source": "test",
+            },
+        )
         assert resp.status_code in (200, 201, 404, 422, 500)
 
 
@@ -107,13 +114,18 @@ class TestPublicAPI:
 # 5. ANALYTICS API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestAnalyticsAPI:
     def test_analytics_page_view(self, authed_client):
         client, headers, sede = authed_client
-        resp = client.post("/api/cms/v2/track/faro_home", headers=headers, json={
-            "page_key": "faro_home",
-            "event_type": "page_view",
-        })
+        resp = client.post(
+            "/api/cms/v2/track/faro_home",
+            headers=headers,
+            json={
+                "page_key": "faro_home",
+                "event_type": "page_view",
+            },
+        )
         assert resp.status_code in (200, 201, 404)
 
     def test_analytics_page_stats(self, authed_client):
@@ -126,6 +138,7 @@ class TestAnalyticsAPI:
 # 6. GRAPH API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestGraphAPI:
     def test_graph_snapshot(self, authed_client):
         client, headers, sede = authed_client
@@ -136,6 +149,7 @@ class TestGraphAPI:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 7. DONATIONS API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestDonationsAPI:
     def test_list_donations(self, authed_client):
@@ -153,6 +167,7 @@ class TestDonationsAPI:
 # 8. SUPPORT API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestSupportAPI:
     def test_list_tickets(self, authed_client):
         client, headers, sede = authed_client
@@ -163,6 +178,7 @@ class TestSupportAPI:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 9. COMMUNITY API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCommunityAPI:
     def test_list_announcements(self, authed_client):
@@ -180,6 +196,7 @@ class TestCommunityAPI:
 # 10. MESSAGING API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestMessagingAPI:
     def test_list_conversations(self, authed_client):
         client, headers, sede = authed_client
@@ -190,6 +207,7 @@ class TestMessagingAPI:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 11. AGENDA API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAgendaAPI:
     def test_list_events(self, authed_client):
@@ -207,6 +225,7 @@ class TestAgendaAPI:
 # 12. SPIRITUAL LIFE API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestSpiritualLifeAPI:
     def test_list_certificates(self, authed_client):
         client, headers, sede = authed_client
@@ -223,6 +242,7 @@ class TestSpiritualLifeAPI:
 # 13. TABLES API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestTablesAPI:
     def test_list_tables(self, authed_client):
         client, headers, sede = authed_client
@@ -233,6 +253,7 @@ class TestTablesAPI:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 14. WORKSPACE API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestWorkspaceAPI:
     def test_list_workspace_items(self, authed_client):
@@ -245,6 +266,7 @@ class TestWorkspaceAPI:
 # 15. GOVERNANCE API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestGovernanceAPI:
     def test_list_automation_rules(self, authed_client):
         client, headers, sede = authed_client
@@ -255,6 +277,7 @@ class TestGovernanceAPI:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 16. ACADEMY API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAcademyAPI:
     def test_list_courses(self, authed_client):
@@ -276,6 +299,7 @@ class TestAcademyAPI:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 17. CRM API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCrmAPI:
     def test_list_personas(self, authed_client):
@@ -315,6 +339,7 @@ class TestCrmAPI:
 # 18. PROJECTS API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestProjectsAPI:
     def test_list_projects(self, authed_client):
         client, headers, sede = authed_client
@@ -331,6 +356,7 @@ class TestProjectsAPI:
 # 19. EVANGELISM API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEvangelismAPI:
     def test_list_strategies(self, authed_client):
         client, headers, sede = authed_client
@@ -346,6 +372,7 @@ class TestEvangelismAPI:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 20. FINANCE API TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestFinanceAPI:
     def test_list_funds(self, authed_client):

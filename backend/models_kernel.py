@@ -8,6 +8,7 @@ Dimensión B: Roles Iglesia — embudo de consolidación
 Dimensión C: Roles Plataforma — permisos RBAC
 Estado Vital: ACTIVO / INACTIVO
 """
+
 import enum
 import uuid as _uuid
 from datetime import datetime, timezone
@@ -24,6 +25,7 @@ from backend.models_shared import _utcnow
 # ENUMS DEL KERNEL
 # ──────────────────────────────────────────────
 
+
 class ActivityStatus(str, enum.Enum):
     ACTIVO = "ACTIVO"
     INACTIVO = "INACTIVO"
@@ -31,6 +33,7 @@ class ActivityStatus(str, enum.Enum):
 
 class MinistryOffice(str, enum.Enum):
     """Dimensión A — Ministerios (El Llamado / Oficio) — Efesios 4:11."""
+
     APOSTOL = "APOSTOL"
     PROFETA = "PROFETA"
     EVANGELISTA = "EVANGELISTA"
@@ -40,6 +43,7 @@ class MinistryOffice(str, enum.Enum):
 
 class ChurchRole(str, enum.Enum):
     """Dimensión B — Roles en la Iglesia (embudo de consolidación)."""
+
     LIDER = "LIDER"
     SERVIDOR = "SERVIDOR"
     MIEMBRO_BAUTIZADO = "MIEMBRO_BAUTIZADO"
@@ -49,13 +53,14 @@ class ChurchRole(str, enum.Enum):
     VISITANTE_ONLINE = "VISITANTE_ONLINE"
 
 
-
 # ──────────────────────────────────────────────
 # DIMENSIÓN A: MINISTERIOS
 # ──────────────────────────────────────────────
 
+
 class PersonaMinistry(Base):
     """Dimensión A — Ministerio espiritual de una persona (Efesios 4:11)."""
+
     __tablename__ = "persona_ministries"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -85,12 +90,14 @@ class PersonaMinistry(Base):
 # DIMENSIÓN B: ROL EN LA IGLESIA
 # ──────────────────────────────────────────────
 
+
 class PersonaRoleAssignment(Base):
     """Dimensión B — Rol en la iglesia (embudo de consolidación).
 
     Cada persona tiene UN rol principal en la iglesia en un momento dado.
     El historial de cambios se conserva en PersonaRoleHistory.
     """
+
     __tablename__ = "persona_church_roles"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -117,6 +124,7 @@ class PersonaRoleAssignment(Base):
 
 class PersonaRoleHistory(Base):
     """Historial de cambios en el rol de iglesia (Dimensión B)."""
+
     __tablename__ = "persona_role_history"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -135,6 +143,4 @@ class PersonaRoleHistory(Base):
     persona = relationship("Persona", foreign_keys=[persona_id])
     changed_by_persona = relationship("Persona", foreign_keys=[changed_by_persona_id])
 
-    __table_args__ = (
-        Index("ix_persona_role_history_lookup", "persona_id", "changed_at"),
-    )
+    __table_args__ = (Index("ix_persona_role_history_lookup", "persona_id", "changed_at"),)

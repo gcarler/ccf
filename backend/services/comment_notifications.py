@@ -1,14 +1,14 @@
 """Helpers for comment mentions and notifications."""
+
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List
 
 from backend.models_shared import _utcnow
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
-    from backend import models
 
 
 def _to_uuid(val: Any) -> uuid.UUID | None:

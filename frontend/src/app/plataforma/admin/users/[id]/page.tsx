@@ -5,11 +5,11 @@ import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { 
-    User, 
-    Shield, 
-    Mail, 
-    Clock, 
+import {
+    User,
+    Shield,
+    Mail,
+    Clock,
     LayoutDashboard,
     Lock,
     X,
@@ -45,10 +45,10 @@ export default function UserDetailPage() {
     const params = useParams();
     const id = params?.id as string;
     const { token, user: currentUser } = useAuth();
-    
+
     const [user, setUser] = useState<AdminUserDetail | null>(null);
     const [loading, setLoading] = useState(true);
-    
+
     // Drawer state
     const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
     const [newPassword, setNewPassword] = useState('');
@@ -57,7 +57,7 @@ export default function UserDetailPage() {
     // Edit States
     const [editEmail, setEditEmail] = useState('');
     const [isEditingEmail, setIsEditingEmail] = useState(false);
-    
+
     // Roles
     const [roles, setRoles] = useState<RoleItem[]>([]);
     const [editRoleId, setEditRoleId] = useState<string | null>(null);
@@ -182,12 +182,12 @@ export default function UserDetailPage() {
                 rightActions={
                     <div className="flex items-center gap-3">
                         {String(currentUser?.id) !== id && (
-                            <button 
+                            <button
                                 onClick={toggleStatus}
                                 disabled={isSubmitting}
                                 className={`px-3 py-2.5 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all shadow-sm border ${
-                                    user.is_active 
-                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--destructive))/0.3] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]' 
+                                    user.is_active
+                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--destructive))/0.3] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]'
                                     : 'bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)] text-[hsl(var(--success))] hover:bg-[hsl(var(--success))/0.15]'
                                 }`}
                             >
@@ -205,12 +205,12 @@ export default function UserDetailPage() {
                         {/* Profile Header */}
                         <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none flex flex-col md:flex-row items-center gap-3 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-48 bg-gradient-to-bl to-[hsl(var(--info)/10%)] to-transparent pointer-events-none rounded-bl-full" />
-                            
+
                             <div className="size-10 rounded-full bg-[hsl(var(--surface-1))] dark:bg-black/20 flex items-center justify-center border-4 border-white dark:border-[hsl(var(--bg-primary))] shadow-xl relative z-10">
                                 <User size={48} className="text-[hsl(var(--text-secondary))]" strokeWidth={1.5} />
                                 {user.is_active && <div className="absolute bottom-2 right-2 size-4 bg-[hsl(var(--success))] border-2 border-white dark:border-[hsl(var(--bg-primary))] rounded-full" />}
                             </div>
-                            
+
                             <div className="space-y-3 text-center md:text-left relative z-10 flex-1">
                                 <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{user.username}</h1>
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
@@ -235,8 +235,8 @@ export default function UserDetailPage() {
                                         <div>
                                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Rol Asignado (Permisos Granulares)</p>
                                             {isEditingRole ? (
-                                                <select 
-                                                    value={editRoleId || ''} 
+                                                <select
+                                                    value={editRoleId || ''}
                                                     onChange={e => setEditRoleId(e.target.value || null)}
                                                     className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] min-w-[200px]"
                                                 >
@@ -269,9 +269,9 @@ export default function UserDetailPage() {
                                         <div>
                                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Correo Electrónico</p>
                                             {isEditingEmail ? (
-                                                <input 
-                                                    type="email" 
-                                                    value={editEmail} 
+                                                <input
+                                                    type="email"
+                                                    value={editEmail}
                                                     onChange={e => setEditEmail(e.target.value)}
                                                     className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                     autoFocus
@@ -302,7 +302,7 @@ export default function UserDetailPage() {
                             <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
                                 <Lock size={14} className="text-[hsl(var(--warning))]"/> Seguridad
                             </h3>
-                            <button 
+                            <button
                                 onClick={() => setPasswordModalOpen(true)}
                                 className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
@@ -337,8 +337,8 @@ export default function UserDetailPage() {
                         <button type="button" onClick={() => !isSubmitting && setPasswordModalOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             onClick={handlePasswordReset}
                             disabled={isSubmitting || newPassword.length < 6}
                             className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--warning))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--warning))/0.2] hover:bg-[hsl(var(--warning))/0.85] active:scale-95 transition-all disabled:opacity-50"
@@ -351,8 +351,8 @@ export default function UserDetailPage() {
                 <div className="space-y-3 mt-4">
                     <div className="space-y-1.5">
                         <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2 block">Escribe la nueva clave</label>
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             value={newPassword}
                             onChange={e => setNewPassword(e.target.value)}
                             placeholder="Min. 6 caracteres..."

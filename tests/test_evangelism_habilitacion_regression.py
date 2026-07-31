@@ -16,6 +16,7 @@ Coverage:
 These tests are intentionally separate from the general coverage suite so that
 any regression in the enablement gate is caught immediately and in isolation.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -182,9 +183,7 @@ class TestHabilitacionFlujoCompleto:
         # Verificar en DB con sesión fresca (el endpoint usa otra transacción)
         fresh = TestingSessionLocal()
         sesion_reloaded = fresh.query(SesionGrupo).filter(SesionGrupo.id == sesion.id).first()
-        assert sesion_reloaded.reported_at is not None, (
-            "Regression: reported_at quedó NULL tras asistencia exitosa."
-        )
+        assert sesion_reloaded.reported_at is not None, "Regression: reported_at quedó NULL tras asistencia exitosa."
         asistencia = (
             fresh.query(Asistencia)
             .filter(Asistencia.sesion_id == sesion.id, Asistencia.persona_id == persona.id)
@@ -246,11 +245,7 @@ class TestHabilitacionFlujoCompleto:
 
         fresh = TestingSessionLocal()
         try:
-            persona = (
-                fresh.query(models.Persona)
-                .filter(models.Persona.phone == "+573001234567")
-                .first()
-            )
+            persona = fresh.query(models.Persona).filter(models.Persona.phone == "+573001234567").first()
             assert persona is not None
             assert str(persona.id) == body["persona_id"]
             assert persona.church_role == "Visitante"
@@ -367,10 +362,7 @@ class TestHabilitacionFlujoCompleto:
 
         # Reportar asistencia en todas
         for sesion in sesiones:
-            payload = [
-                {"persona_id": str(personas[j].id), "status": "present"}
-                for j in range(3)
-            ]
+            payload = [{"persona_id": str(personas[j].id), "status": "present"} for j in range(3)]
             r = client.post(
                 f"/api/evangelism/sessions/{sesion.id}/attendance",
                 json=payload,
@@ -526,8 +518,12 @@ class TestHabilitacionSedeIsolation:
         db_session.flush()
 
         grupo = GrupoEvangelismo(
-            nombre="Grupo A", sede_id=sede_a.id, estrategia_id=est.id,
-            ubicacion="u", capacidad=10, activo=True,
+            nombre="Grupo A",
+            sede_id=sede_a.id,
+            estrategia_id=est.id,
+            ubicacion="u",
+            capacidad=10,
+            activo=True,
         )
         db_session.add(grupo)
         db_session.flush()
@@ -578,21 +574,31 @@ class TestHabilitacionSedeIsolation:
         db_session.flush()
 
         p = models.Persona(
-            first_name="P", last_name="A", sede_id=sede_a.id,
-            email="pa@ccf.test", phone="3000000001",
+            first_name="P",
+            last_name="A",
+            sede_id=sede_a.id,
+            email="pa@ccf.test",
+            phone="3000000001",
         )
         db_session.add(p)
         db_session.flush()
 
         grupo = GrupoEvangelismo(
-            nombre="Grupo A2", sede_id=sede_a.id, estrategia_id=est.id,
-            ubicacion="u", capacidad=10, activo=True,
+            nombre="Grupo A2",
+            sede_id=sede_a.id,
+            estrategia_id=est.id,
+            ubicacion="u",
+            capacidad=10,
+            activo=True,
         )
         db_session.add(grupo)
         db_session.flush()
 
         pg = ParticipanteGrupo(
-            grupo_id=grupo.id, persona_id=p.id, rol_base="Miembro", activo=True,
+            grupo_id=grupo.id,
+            persona_id=p.id,
+            rol_base="Miembro",
+            activo=True,
         )
         db_session.add(pg)
 
@@ -926,6 +932,7 @@ class TestEvangelismRBACBoundary:
             permisos={"evangelism:manage": "allow"},
         )
         from backend.models import Sede
+
         sede2 = Sede(
             id=uuid.uuid4(),
             nombre="Sede Diferente",
@@ -966,9 +973,7 @@ class TestEvangelismSendReminders:
 
         # Make admin the leader so they have an auth_users entry
         grupo.lider_persona_id = admin_persona.id
-        tomorrow = (utc_now() + timedelta(days=1)).replace(
-            hour=14, minute=0, second=0, microsecond=0
-        )
+        tomorrow = (utc_now() + timedelta(days=1)).replace(hour=14, minute=0, second=0, microsecond=0)
         sesion.fecha_sesion = tomorrow
         sesion.estado = "PENDIENTE"
         sesion.estado_habilitacion = HabilitacionSesionEnum.DESHABILITADO.value
@@ -1002,9 +1007,7 @@ class TestEvangelismSendReminders:
 
         # Make admin the leader
         grupo.lider_persona_id = admin_persona.id
-        tomorrow = (utc_now() + timedelta(days=1)).replace(
-            hour=14, minute=0, second=0, microsecond=0
-        )
+        tomorrow = (utc_now() + timedelta(days=1)).replace(hour=14, minute=0, second=0, microsecond=0)
         sesion.fecha_sesion = tomorrow
         sesion.estado = "PENDIENTE"
         db_session.commit()

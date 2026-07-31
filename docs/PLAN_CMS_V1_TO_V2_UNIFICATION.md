@@ -2,7 +2,7 @@
 
 **Objetivo:** Eliminar la capa de compatibilidad `cms_v1_adapters.py` y endpoints `/cms/testimonials*`, `/cms/announcements*`, `/admin/testimonials*`, `/admin/announcements*` migrando 100% del panel CMS admin a `/cms/v2/sites/{site_key}/posts` con categorías `testimonials` / `announcements`.
 
-**Fecha:** 2026-07-30  
+**Fecha:** 2026-07-30
 **Estado:** En implementación — Fase 1 iniciada
 
 ---
@@ -328,16 +328,16 @@ chore(docs): update CMS_API_CONTRACTS and ARQUITECTURA_CMS
 
 ## 7. Decisiones Abiertas (requieren confirmación)
 
-1. **¿Mantener `/cms/testimonials` público como alias de `/cms/v2/public/sites/ccf/posts?category=testimonials`?**  
+1. **¿Mantener `/cms/testimonials` público como alias de `/cms/v2/public/sites/ccf/posts?category=testimonials`?**
    → Recomendación: **No**. Público ya usa v2 nativo (`PublicSeoManager`, `PublicSectionRenderer`). Eliminar alias reduce superficie.
 
-2. **¿Slug editable por editor en testimonio/anuncio?**  
+2. **¿Slug editable por editor en testimonio/anuncio?**
    → Actual shim genera slug automático (`testimonial-{uuid}`). v2 permite slug custom. Recomendación: **sí, editable** con validación unique por site.
 
-3. **¿Campos `emotion`, `media_type` etc. siguen en `seo_json` o mover a columnas dedicadas?**  
+3. **¿Campos `emotion`, `media_type` etc. siguen en `seo_json` o mover a columnas dedicadas?**
    → Recomendación: **quedarse en `seo_json`** (patrón v2 actual para campos extensibles). No justifica migración de esquema.
 
-4. **¿Eliminar `TestimonialForm`/`AnnouncementForm` y usar `PostForm` genérico con category preseleccionada?**  
+4. **¿Eliminar `TestimonialForm`/`AnnouncementForm` y usar `PostForm` genérico con category preseleccionada?**
    → Recomendación: **mantener formularios especializados** por UX (campos distintos), pero compartir componente base `PostFormBase`.
 
 ---

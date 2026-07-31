@@ -12,7 +12,7 @@
 ### DSButton
 ```tsx
 // ✅ Correcto
-<DSButton 
+<DSButton
     onClick={handleClick}
     aria-label="Guardar cambios"
     disabled={isDisabled}
@@ -29,7 +29,7 @@
 ### DSInput
 ```tsx
 // ✅ Correcto
-<DSInput 
+<DSInput
     label="Correo electrónico"
     aria-required="true"
     aria-invalid={hasError}
@@ -43,7 +43,7 @@
 ### DSModal
 ```tsx
 // ✅ Correcto
-<DSModal 
+<DSModal
     open={isOpen}
     onClose={handleClose}
     title="Confirmar acción"
@@ -73,7 +73,7 @@
 ### DSTable
 ```tsx
 // ✅ Correcto
-<DSTable 
+<DSTable
     data={data}
     columns={columns}
     aria-label="Lista de usuarios"
@@ -136,12 +136,12 @@ useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
         if (e.key === 'Escape') onClose();
     };
-    
+
     if (open) {
         document.addEventListener('keydown', handleEscape);
         // Focus trap
     }
-    
+
     return () => document.removeEventListener('keydown', handleEscape);
 }, [open, onClose]);
 ```

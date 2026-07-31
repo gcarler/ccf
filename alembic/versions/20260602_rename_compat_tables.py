@@ -42,10 +42,7 @@ RENAME_PAIRS = [
 def _table_exists(table: str) -> bool:
     conn = op.get_bind()
     r = conn.execute(
-        sa.text(
-            "SELECT count(*) FROM information_schema.tables "
-            "WHERE table_schema = 'public' AND table_name = :t"
-        ),
+        sa.text("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = :t"),
         {"t": table},
     )
     return r.scalar() > 0
@@ -91,19 +88,13 @@ def upgrade() -> None:
 
         # Renombrar solo si: vacía (test) O v2 tiene datos (prod post-migración)
         if not has_rows and not _table_exists(new_name):
-            conn.execute(
-                sa.text(f'ALTER TABLE {old_name} RENAME TO "{new_name}"')
-            )
+            conn.execute(sa.text(f'ALTER TABLE {old_name} RENAME TO "{new_name}"'))
         elif v2_has_data and not _table_exists(new_name):
-            conn.execute(
-                sa.text(f'ALTER TABLE {old_name} RENAME TO "{new_name}"')
-            )
+            conn.execute(sa.text(f'ALTER TABLE {old_name} RENAME TO "{new_name}"'))
 
 
 def downgrade() -> None:
     conn = op.get_bind()
     for old_name, new_name in RENAME_PAIRS:
         if _table_exists(new_name) and not _table_exists(old_name):
-            conn.execute(
-                sa.text(f'ALTER TABLE "{new_name}" RENAME TO "{old_name}"')
-            )
+            conn.execute(sa.text(f'ALTER TABLE "{new_name}" RENAME TO "{old_name}"'))

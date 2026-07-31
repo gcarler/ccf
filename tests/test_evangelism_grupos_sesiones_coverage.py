@@ -1,6 +1,7 @@
 """
 Coverage tests for evangelism_grupos/grupos_sesiones.py — target 80%+.
 """
+
 import uuid
 from datetime import datetime, timezone
 
@@ -19,15 +20,22 @@ def full(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
-        "c": client, "h": headers, "db": db_session,
-        "admin": admin, "persona": persona, "sede": sede,
+        "c": client,
+        "h": headers,
+        "db": db_session,
+        "admin": admin,
+        "persona": persona,
+        "sede": sede,
     }
 
 
 def _make_grupo(db, sede_id, persona_id=None):
     g = models.GrupoEvangelismo(
-        id=uuid.uuid4(), nombre=f"G_{uuid.uuid4().hex[:4]}",
-        sede_id=sede_id, lider_persona_id=persona_id, activo=True,
+        id=uuid.uuid4(),
+        nombre=f"G_{uuid.uuid4().hex[:4]}",
+        sede_id=sede_id,
+        lider_persona_id=persona_id,
+        activo=True,
     )
     db.add(g)
     db.flush()
@@ -50,7 +58,8 @@ class TestGrupoSesionesEndpoints:
     def test_list_sessions_with_group(self, full):
         grupo = _make_grupo(full["db"], full["sede"].id, full["persona"].id)
         s = models.SesionGrupo(
-            grupo_id=grupo.id, fecha_sesion=datetime.now(timezone.utc),
+            grupo_id=grupo.id,
+            fecha_sesion=datetime.now(timezone.utc),
         )
         full["db"].add(s)
         full["db"].commit()
@@ -69,7 +78,8 @@ class TestGrupoSesionesEndpoints:
     def test_list_pending_sessions_with_data(self, full):
         grupo = _make_grupo(full["db"], full["sede"].id, full["persona"].id)
         s = models.SesionGrupo(
-            grupo_id=grupo.id, fecha_sesion=datetime.now(timezone.utc),
+            grupo_id=grupo.id,
+            fecha_sesion=datetime.now(timezone.utc),
         )
         full["db"].add(s)
         full["db"].commit()

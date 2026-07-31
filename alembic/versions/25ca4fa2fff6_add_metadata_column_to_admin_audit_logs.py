@@ -5,6 +5,7 @@ Revises: 20260524_0024_prod_hardening3
 Create Date: 2026-05-24 03:22:55.880163
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -12,8 +13,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '25ca4fa2fff6'
-down_revision: Union[str, None] = '20260524_0024_prod_hardening3'
+revision: str = "25ca4fa2fff6"
+down_revision: Union[str, None] = "20260524_0024_prod_hardening3"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

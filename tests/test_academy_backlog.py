@@ -19,6 +19,7 @@ HISTÓRICO (no modificar):
     - ACAD-TKT-002 (CRIT): cierre documental 2026-07-19 → ACAD-TKT-NNN estancado
     - ACAD-TKT-003 (MED): cierre funcional 2026-07-18 → ACAD-TKT-003
 """
+
 from __future__ import annotations
 
 import re
@@ -73,15 +74,17 @@ def _parse_tickets(backlog_text: str) -> list[dict]:
         files_m = _RE_FILES.search(body)
         gate_m = _RE_GATE.search(body)
 
-        tickets.append({
-            "number": int(m.group(1)),
-            "severity": m.group("sev"),
-            "title": m.group("title").strip(),
-            "state": state_m.group(1) if state_m else None,
-            "source": source_m.group(1).strip() if source_m else None,
-            "files": files_m.group(1).strip() if files_m else None,
-            "gate": gate_m.group(1).strip() if gate_m else None,
-        })
+        tickets.append(
+            {
+                "number": int(m.group(1)),
+                "severity": m.group("sev"),
+                "title": m.group("title").strip(),
+                "state": state_m.group(1) if state_m else None,
+                "source": source_m.group(1).strip() if source_m else None,
+                "files": files_m.group(1).strip() if files_m else None,
+                "gate": gate_m.group(1).strip() if gate_m else None,
+            }
+        )
     return tickets
 
 
@@ -137,18 +140,12 @@ def test_backlog_documents_severity_taxonomy(backlog_text: str):
 def test_every_ticket_has_state(tickets):
     """Todo ticket debe declarar estado explícito."""
     no_state = [t for t in tickets if not t["state"]]
-    assert not no_state, (
-        f"Tickets sin **state::** {len(no_state)} encontrados. "
-        f"Primeros 3: {no_state[:3]}"
-    )
+    assert not no_state, f"Tickets sin **state::** {len(no_state)} encontrados. Primeros 3: {no_state[:3]}"
 
 
 def test_every_pending_ticket_has_gate(tickets):
     """Todos los ⬜ deben tener `gate:` ejecutable (regla anti-drift §7.3)."""
-    without_gate = [
-        t for t in tickets
-        if t["state"] == "⬜" and not t["gate"]
-    ]
+    without_gate = [t for t in tickets if t["state"] == "⬜" and not t["gate"]]
     assert not without_gate, (
         f"Tickets ⬜ sin gate ejecutable ({len(without_gate)}): "
         f"{[(t['number'], t['title'][:40]) for t in without_gate[:5]]}. "
@@ -159,8 +156,7 @@ def test_every_pending_ticket_has_gate(tickets):
 def test_every_done_ticket_has_gate_or_evidence(tickets):
     """Tickets ✅ deben tener gate documentado o al menos nota de evidencia."""
     done_without_anything = [
-        t for t in tickets
-        if t["state"] == "✅" and not t["gate"] and (t["source"] is None or "✅" not in t["source"])
+        t for t in tickets if t["state"] == "✅" and not t["gate"] and (t["source"] is None or "✅" not in t["source"])
     ]
     assert not done_without_anything, (
         f"Tickets ✅ sin gate + sin source: {[(t['number'], t['title'][:30]) for t in done_without_anything[:3]]}"
@@ -183,8 +179,7 @@ def test_every_historical_ticket_has_evidence(tickets):
         if "cierre" not in concat:
             no_date.append(t)
     assert not no_date, (
-        f"Tickets 📜 sin evidencia de cierre documental: "
-        f"{[(t['number'], t['title'][:40]) for t in no_date[:3]]}"
+        f"Tickets 📜 sin evidencia de cierre documental: {[(t['number'], t['title'][:40]) for t in no_date[:3]]}"
     )
 
 
@@ -236,9 +231,7 @@ def test_old_doc_redirects_to_backlog(old_path: Path):
     if not old_path.exists():
         pytest.skip(f"Doc antiguo no presente: {old_path}")
     text = _read(old_path)
-    assert "ACADEMY_BACKLOG.md" in text, (
-        f"❌ {old_path.name} no redirige a docs/ACADEMY_BACKLOG.md"
-    )
+    assert "ACADEMY_BACKLOG.md" in text, f"❌ {old_path.name} no redirige a docs/ACADEMY_BACKLOG.md"
 
 
 # ── A.4. No hay IDs antiguos (ACAD-HIGH-001, ACAD-CRIT-001, ACAD-H01, ...) sueltos ──
@@ -407,7 +400,9 @@ def test_high_pending_tickets_have_negative_evidence(tkt: int, needle: str, rati
 
     if tkt == 20:
         schemas_file = REPO_ROOT / "backend" / "schemas" / "academy.py"
-        assert "class AssessmentQuestionPayload" in _read(schemas_file) or "class AssessmentQuestionPayload" in _read(api_file)
+        assert "class AssessmentQuestionPayload" in _read(schemas_file) or "class AssessmentQuestionPayload" in _read(
+            api_file
+        )
     elif tkt == 21:
         text = _read(api_file)
         assert "MAX_SIZE" in text and "await file.read()" in text

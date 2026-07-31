@@ -80,7 +80,7 @@ export default function AdminContentList() {
         return () => controller.abort();
     }, [isAuthenticated, fetchData]);
 
-    const filteredItems = items.filter(item => 
+    const filteredItems = items.filter(item =>
         (item.title || item.name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -138,14 +138,14 @@ export default function AdminContentList() {
                 }
             `}</style>
 
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Fábrica de Contenidos', icon: BookOpen }]}
                 viewType={viewType}
                 setViewType={setViewType}
                 availableViews={CONTENT_VIEWS}
                 onSearch={setSearchQuery}
                 rightActions={
-                    <button 
+                    <button
                         onClick={() => router.push('/plataforma/admin/content/courses/new')}
                         className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
                     >
@@ -164,11 +164,11 @@ export default function AdminContentList() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
  <div className="w-full space-y-3 relative z-10">
-                    
+
                     {/* Search Bar Cinematic */}
                     <div className="relative group">
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))] transition-colors" size={22} />
-                        <input 
+                        <input
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 pl-16 pr-8 text-sm font-bold shadow-sm focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-[hsl(var(--info)/100%)] transition-all outline-none"
@@ -264,12 +264,12 @@ export default function AdminContentList() {
                         ) : filteredItems.length > 0 && viewType === 'wiki' ? (
                             <UniversalWikiView moduleName="Fábrica de contenidos" storageKey={`admin-content-wiki-${activeTab}`} />
                         ) : filteredItems.length > 0 ? (
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                                 className="grid grid-cols-1 gap-3"
                             >
                                 {filteredItems.map((item, i) => (
-                                    <motion.div 
+                                    <motion.div
                                         key={item.id}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
@@ -304,7 +304,7 @@ export default function AdminContentList() {
                                             )}>
                                                 {item.is_published ? 'Publicado' : 'Borrador'}
                                             </div>
-                                            <button 
+                                            <button
                                                 onClick={() => router.push(`/admin/content/courses/${item.id}`)}
                                                 className="p-4 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg shadow-xl hover:scale-110 active:scale-95 transition-all"
                                             >
@@ -334,7 +334,7 @@ export default function AdminContentList() {
 
 function TabBtn({ label, active, onClick, icon: Icon }: TabButtonProps) {
     return (
-        <button 
+        <button
             onClick={onClick}
             className={clsx(
                 "px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all relative flex items-center gap-3 shrink-0 border-b-2",
@@ -347,4 +347,3 @@ function TabBtn({ label, active, onClick, icon: Icon }: TabButtonProps) {
         </button>
     );
 }
-

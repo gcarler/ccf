@@ -5,6 +5,7 @@ Sub-modules:
 - grupos_sesiones.py: sesiones, gobernanza, helpers de ausencias
 - grupos_asistencias.py: asistencia, seguimiento/follow-up
 """
+
 from fastapi import APIRouter
 
 router = APIRouter(tags=["Evangelismo - Grupos"])

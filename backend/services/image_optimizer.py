@@ -40,8 +40,7 @@ class ImageOptimizer:
     # Raster formats we can process
     SUPPORTED_INPUT = frozenset({".jpg", ".jpeg", ".png", ".webp", ".gif"})
 
-    def __init__(self, max_width: int = _DEFAULT_MAX_WIDTH,
-                 quality: int = _DEFAULT_QUALITY):
+    def __init__(self, max_width: int = _DEFAULT_MAX_WIDTH, quality: int = _DEFAULT_QUALITY):
         self.max_width = max_width
         self.quality = quality
 
@@ -76,8 +75,7 @@ class ImageOptimizer:
         try:
             img = Image.open(io.BytesIO(content))
         except Exception:
-            log.warning("Cannot decode image '%s' — passthrough",
-                        original_filename)
+            log.warning("Cannot decode image '%s' — passthrough", original_filename)
             return content, ext, 0, 0
 
         original_w, original_h = img.size
@@ -125,8 +123,7 @@ class ImageOptimizer:
         try:
             img.save(buf, **save_kwargs)
         except Exception:
-            log.warning("WebP encode failed for '%s' — fallback to original",
-                        original_filename)
+            log.warning("WebP encode failed for '%s' — fallback to original", original_filename)
             return content, ext, original_w, original_h
 
         optimized = buf.getvalue()
@@ -135,15 +132,16 @@ class ImageOptimizer:
         # For WebP input that is already well-compressed, re-encoding can
         # bloat the file.  If that happens, return the original.
         if len(optimized) > len(content) * 1.05:  # 5 % tolerance
-            log.info("Re-encoded image is larger than original — keeping "
-                     "original for '%s'", original_filename)
+            log.info("Re-encoded image is larger than original — keeping original for '%s'", original_filename)
             return content, ext, original_w, original_h
 
         log.info(
             "Optimized '%s': %d×%d → %d×%d,  %s → %s  (%.1f× smaller)",
             original_filename,
-            original_w, original_h,
-            img.width, img.height,
+            original_w,
+            original_h,
+            img.width,
+            img.height,
             _fmt_size(len(content)),
             _fmt_size(len(optimized)),
             len(content) / max(len(optimized), 1),

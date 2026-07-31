@@ -168,11 +168,11 @@ function NavRow({
 
 export default function WorkspaceMainSidebar({ sections, isMini, onToggle, isCollapsed }: Props) {
     const pathname = usePathname();
-    const { 
-        sidebarStack, 
-        popSidebarPanel, 
-        resetSidebarStack, 
-        stackDirection 
+    const {
+        sidebarStack,
+        popSidebarPanel,
+        resetSidebarStack,
+        stackDirection
     } = useSidebarLayers();
 
     // Auto-reset when navigating to a different top-level module
@@ -256,9 +256,9 @@ export default function WorkspaceMainSidebar({ sections, isMini, onToggle, isCol
                         initial="enter"
                         animate="center"
                         exit="exit"
-                        transition={{ 
-                            type: 'spring', 
-                            damping: 32, 
+                        transition={{
+                            type: 'spring',
+                            damping: 32,
                             stiffness: 300,
                             mass: 0.6,
                             restDelta: 0.001

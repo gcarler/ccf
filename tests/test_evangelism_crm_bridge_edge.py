@@ -1,28 +1,26 @@
 """Edge case tests for evangelism_crm_bridge.py — PG paths, IntegrityError, etc."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone, timedelta
-from unittest.mock import patch, MagicMock
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from backend import models
-from backend.models_evangelism import Sede, Asistencia, GrupoEvangelismo, SesionGrupo
+from backend.models_crm import Persona
 from backend.models_crm_pipeline import (
     PipelineCRM,
-    EtapaPipeline,
     TipoPipelineEnum,
 )
-from backend.models_crm import Persona
+from backend.models_evangelism import Asistencia, GrupoEvangelismo, Sede, SesionGrupo
 from backend.services.evangelism_crm_bridge import (
-    _crm_etapa_pipeline_live_column_names,
     _crm_casos_live_column_names,
+    _crm_etapa_pipeline_live_column_names,
     _crm_etapa_pipeline_read_only_options,
-    _insert_caso_nuevo_visitante,
-    _obtener_o_crear_pipeline_nuevos_visitantes,
     _obtener_o_crear_etapa_nuevo_contacto,
+    _obtener_o_crear_pipeline_nuevos_visitantes,
     crear_caso_desde_asistencia,
     crear_caso_nuevo_visitante,
 )
@@ -77,28 +75,33 @@ class TestReadOnlyOptions:
         mock_db = MagicMock()
         mock_bind = MagicMock()
         mock_db.get_bind.return_value = mock_bind
-        with patch("backend.services.evangelism_crm_bridge._crm_etapa_pipeline_live_column_names",
-                   return_value=set()):
+        with patch("backend.services.evangelism_crm_bridge._crm_etapa_pipeline_live_column_names", return_value=set()):
             result = _crm_etapa_pipeline_read_only_options(mock_db)
         assert result is None
+
 
 class TestPipelineIntegrityError:
     def test_integrity_error_on_create(self, db_session, sede):
         """Cover IntegrityError path in _obtener_o_crear_pipeline_nuevos_visitantes."""
         # First create a pipeline so the query finds it
         existing = PipelineCRM(
-            id=uuid.uuid4(), sede_id=sede.id, nombre="Nuevos Visitantes",
-            tipo=TipoPipelineEnum.NUEVOS_VISITANTES, activo=True,
+            id=uuid.uuid4(),
+            sede_id=sede.id,
+            nombre="Nuevos Visitantes",
+            tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+            activo=True,
         )
         db_session.add(existing)
         db_session.commit()
 
         # Now mock db.add to raise IntegrityError, then the function should find existing
         with patch.object(db_session, "add") as mock_add:
+
             def mock_add_side_effect(obj):
-                if hasattr(obj, 'tipo') and getattr(obj, 'tipo', None) == TipoPipelineEnum.NUEVOS_VISITANTES:
-                    if getattr(obj, 'id', None) != existing.id:
+                if hasattr(obj, "tipo") and getattr(obj, "tipo", None) == TipoPipelineEnum.NUEVOS_VISITANTES:
+                    if getattr(obj, "id", None) != existing.id:
                         raise IntegrityError("test", "test", "test")
+
             mock_add.side_effect = mock_add_side_effect
 
             pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)
@@ -124,6 +127,7 @@ class TestEtapaIntegrityError:
             # Make the sp.commit raise IntegrityError
             def mock_commit():
                 raise IntegrityError("test", "test", "test")
+
             mock_sp.commit.side_effect = mock_commit
 
             etapa2 = _obtener_o_crear_etapa_nuevo_contacto(db_session, pipeline, sede.id)
@@ -140,11 +144,13 @@ class TestCrearCasoEdgeCases:
         ses = SesionGrupo(id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=datetime.now(timezone.utc), estado="REALIZADA")
         db_session.add(ses)
         db_session.flush()
-        att = Asistencia(id=uuid.uuid4(), sesion_id=ses.id, persona_id=persona.id,
-                        estado="first_time", es_primera_vez=True)
+        att = Asistencia(
+            id=uuid.uuid4(), sesion_id=ses.id, persona_id=persona.id, estado="first_time", es_primera_vez=True
+        )
 
-        with patch("backend.services.evangelism_crm_bridge._obtener_o_crear_pipeline_nuevos_visitantes",
-                   return_value=None):
+        with patch(
+            "backend.services.evangelism_crm_bridge._obtener_o_crear_pipeline_nuevos_visitantes", return_value=None
+        ):
             result = crear_caso_desde_asistencia(db_session, att, persona, g, ses, sede.id)
             assert result is None
 
@@ -156,28 +162,32 @@ class TestCrearCasoEdgeCases:
         ses = SesionGrupo(id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=datetime.now(timezone.utc), estado="REALIZADA")
         db_session.add(ses)
         db_session.flush()
-        att = Asistencia(id=uuid.uuid4(), sesion_id=ses.id, persona_id=persona.id,
-                        estado="first_time", es_primera_vez=True)
+        att = Asistencia(
+            id=uuid.uuid4(), sesion_id=ses.id, persona_id=persona.id, estado="first_time", es_primera_vez=True
+        )
 
-        with patch("backend.services.evangelism_crm_bridge._obtener_o_crear_etapa_nuevo_contacto",
-                   return_value=None):
+        with patch("backend.services.evangelism_crm_bridge._obtener_o_crear_etapa_nuevo_contacto", return_value=None):
             result = crear_caso_desde_asistencia(db_session, att, persona, g, ses, sede.id)
             assert result is None
 
     def test_crear_caso_nuevo_pipeline_none(self, db_session, sede, persona):
         """Lines 422-423: pipeline None returns None."""
-        with patch("backend.services.evangelism_crm_bridge._obtener_o_crear_pipeline_nuevos_visitantes",
-                   return_value=None):
+        with patch(
+            "backend.services.evangelism_crm_bridge._obtener_o_crear_pipeline_nuevos_visitantes", return_value=None
+        ):
             result = crear_caso_nuevo_visitante(
-                db=db_session, persona=persona, sede_id=sede.id,
+                db=db_session,
+                persona=persona,
+                sede_id=sede.id,
             )
             assert result is None
 
     def test_crear_caso_nuevo_etapa_none(self, db_session, sede, persona):
         """Lines 427-428: etapa None returns None."""
-        with patch("backend.services.evangelism_crm_bridge._obtener_o_crear_etapa_nuevo_contacto",
-                   return_value=None):
+        with patch("backend.services.evangelism_crm_bridge._obtener_o_crear_etapa_nuevo_contacto", return_value=None):
             result = crear_caso_nuevo_visitante(
-                db=db_session, persona=persona, sede_id=sede.id,
+                db=db_session,
+                persona=persona,
+                sede_id=sede.id,
             )
             assert result is None

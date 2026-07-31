@@ -76,6 +76,7 @@ def _scope_by_user_sede_via_persona(db: Session, user: models.User, query):
 def _get_scoped_persona(db: Session, user: models.User, persona_id) -> models.Persona:
     # Persona NO tiene columna deleted_at (usa estado_vital para soft-delete).
     from backend.crud._utils import _to_uuid
+
     try:
         persona_uuid = _to_uuid(persona_id)
     except (TypeError, ValueError):
@@ -118,6 +119,7 @@ def _get_scoped_family(db: Session, user: models.User, family_id: UUID) -> model
 
 def _get_scoped_grupo(db: Session, user: models.User, grupo_id) -> models.GrupoEvangelismo:
     from backend.crud._utils import _to_uuid
+
     try:
         grupo_uuid = _to_uuid(grupo_id)
     except (TypeError, ValueError):
@@ -134,6 +136,7 @@ def _get_scoped_grupo(db: Session, user: models.User, grupo_id) -> models.GrupoE
 
 def _get_scoped_counseling_ticket(db: Session, user: models.User, ticket_id) -> models.CounselingTicket:
     from backend.crud._utils import _to_uuid
+
     try:
         ticket_uuid = _to_uuid(ticket_id)
     except (TypeError, ValueError):
@@ -144,9 +147,9 @@ def _get_scoped_counseling_ticket(db: Session, user: models.User, ticket_id) -> 
         models.CounselingTicket.deleted_at.is_(None),
     )
     if user_sede:
-        query = query.join(
-            models.Persona, models.CounselingTicket.persona_id == models.Persona.id
-        ).filter(models.Persona.sede_id == user_sede)
+        query = query.join(models.Persona, models.CounselingTicket.persona_id == models.Persona.id).filter(
+            models.Persona.sede_id == user_sede
+        )
     ticket = query.first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Counseling ticket not found")
@@ -155,6 +158,7 @@ def _get_scoped_counseling_ticket(db: Session, user: models.User, ticket_id) -> 
 
 def _get_scoped_prayer_request(db: Session, user: models.User, request_id) -> models.PrayerRequest:
     from backend.crud._utils import _to_uuid
+
     try:
         req_uuid = _to_uuid(request_id)
     except (TypeError, ValueError):
@@ -174,6 +178,7 @@ def _get_scoped_plantilla(db: Session, user: models.User, plantilla_id: str):
     el scope del usuario. Retorna el ORM object para los CRUD existentes.
     """
     from backend.crud.crm_.resources import get_plantilla
+
     obj = get_plantilla(db, plantilla_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Plantilla no encontrada")
@@ -213,6 +218,7 @@ def _get_scoped_automation(db: Session, user: models.User, automation_id) -> mod
     explícitamente — este proxy protege el edge case).
     """
     from backend.crud.crm_.extended import get_crm_automation
+
     try:
         auto_uuid = _to_uuid(automation_id) if not isinstance(automation_id, UUID) else automation_id
     except (TypeError, ValueError):
@@ -231,6 +237,7 @@ def _get_scoped_automation(db: Session, user: models.User, automation_id) -> mod
         # revalidar que también esté en scope (catch edge cases de backfill
         # partial / migración de plantillas cross-sede).
         from backend.crud.crm_.resources import get_plantilla as _get_plantilla
+
         ap = auto.action_payload or {}
         plantilla_id = ap.get("plantilla_id")
         if plantilla_id:
@@ -264,6 +271,7 @@ def _get_scoped_task(db: Session, user: models.User, task_id) -> models.TareaCRM
       - Superadmin sin sede asignada: ve TODO lo no-borrado.
     """
     from backend.crud._utils import _to_uuid
+
     try:
         task_uuid = _to_uuid(task_id)
     except (TypeError, ValueError):
@@ -288,6 +296,7 @@ def _get_scoped_task(db: Session, user: models.User, task_id) -> models.TareaCRM
     # 1. Scope via caso_id → CasoCRM.sede_id
     if task.caso_id is not None:
         from backend.models_crm_pipeline import CasoCRM
+
         caso = db.query(CasoCRM).filter(CasoCRM.id == task.caso_id).first()
         if caso and str(caso.sede_id) == str(user_sede):
             return task
@@ -308,9 +317,7 @@ def _get_scoped_task(db: Session, user: models.User, task_id) -> models.TareaCRM
     raise HTTPException(status_code=404, detail="Task not found")
 
 
-def _resolve_assignee_for_task(
-    db: Session, current_user: models.User, raw_assignee_id
-):
+def _resolve_assignee_for_task(db: Session, current_user: models.User, raw_assignee_id):
     """Valida ``assignee_id`` como UUID canónico de persona y aplica scope.
 
     Raises 404 (no 403, para evitar existence-leaks) si:
@@ -343,21 +350,11 @@ def _serialize_persona_position(persona_position: models.PersonaPosition) -> dic
         "position_id": persona_position.position_id,
         "position_name": position.name if position else None,
         "category": position.category if position else None,
-        "start_date": (
-            persona_position.start_date.isoformat()
-            if persona_position.start_date
-            else None
-        ),
-        "end_date": (
-            persona_position.end_date.isoformat() if persona_position.end_date else None
-        ),
+        "start_date": (persona_position.start_date.isoformat() if persona_position.start_date else None),
+        "end_date": (persona_position.end_date.isoformat() if persona_position.end_date else None),
         "is_active": persona_position.is_active,
         "notes": persona_position.notes,
-        "created_at": (
-            persona_position.created_at.isoformat()
-            if persona_position.created_at
-            else None
-        ),
+        "created_at": (persona_position.created_at.isoformat() if persona_position.created_at else None),
     }
 
 
@@ -418,7 +415,11 @@ def _serialize_case(case: models.CasoCRM) -> dict:
         or payload.get(_payload_key("next_contact_at"))
         or getattr(case, "sla_vencimiento_contacto", None)
     )
-    source = getattr(case, "source", None) or payload.get(_payload_key("source")) or _enum_value(getattr(case, "origen_canal", None))
+    source = (
+        getattr(case, "source", None)
+        or payload.get(_payload_key("source"))
+        or _enum_value(getattr(case, "origen_canal", None))
+    )
     return {
         "id": str(case.id),
         "persona_id": str(case.persona_id) if case.persona_id else None,
@@ -433,12 +434,8 @@ def _serialize_case(case: models.CasoCRM) -> dict:
         "stage": _case_stage(case),
         "status": _case_status(case),
         "source": source,
-        "last_contact_at": (
-            last_contact_at.isoformat() if hasattr(last_contact_at, "isoformat") else last_contact_at
-        ),
-        "next_contact_at": (
-            next_contact_at.isoformat() if hasattr(next_contact_at, "isoformat") else next_contact_at
-        ),
+        "last_contact_at": (last_contact_at.isoformat() if hasattr(last_contact_at, "isoformat") else last_contact_at),
+        "next_contact_at": (next_contact_at.isoformat() if hasattr(next_contact_at, "isoformat") else next_contact_at),
         "assigned_pastor": (
             {
                 "id": assigned.id,
@@ -456,11 +453,7 @@ def _serialize_case(case: models.CasoCRM) -> dict:
             else None
         ),
         "assignments_count": len(getattr(case, "assignments", []) or []),
-        "interactions_count": len(
-            getattr(case, "interactions", None)
-            or getattr(case, "interacciones", [])
-            or []
-        ),
+        "interactions_count": len(getattr(case, "interactions", None) or getattr(case, "interacciones", []) or []),
         "open_tasks_count": sum(
             1
             for task in (getattr(case, "tasks", None) or getattr(case, "tareas", []) or [])
@@ -502,20 +495,14 @@ def _serialize_task(task: models.TareaCRM) -> dict:
 def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     logs = sorted(logs, key=lambda item: item.created_at or datetime.min, reverse=True)
     first = logs[0]
-    delivered_count = sum(
-        1 for item in logs if (item.outcome or "").lower() in DELIVERED_OUTCOMES
-    )
+    delivered_count = sum(1 for item in logs if (item.outcome or "").lower() in DELIVERED_OUTCOMES)
     failed_count = sum(1 for item in logs if (item.outcome or "").lower() == "failed")
     target_count = len(logs)
-    persona_name = (
-        _persona_full_name(first.persona) if getattr(first, "persona", None) else None
-    )
+    persona_name = _persona_full_name(first.persona) if getattr(first, "persona", None) else None
     campaign_name = first.campaign_name
     return {
         "id": first.id,
-        "name": (
-            campaign_name or f"Mensaje a {persona_name}" if persona_name else "Mensaje"
-        ),
+        "name": (campaign_name or f"Mensaje a {persona_name}" if persona_name else "Mensaje"),
         "channel": (first.channel or "").lower(),
         "status": (first.outcome or CommunicationOutcome.INTERNAL_LOG.value).lower(),
         "target_count": target_count,
@@ -535,19 +522,29 @@ def _persona_matches_segment(persona, segment: str, donation_persona_ids: set) -
     value = str(segment or "").strip().lower()
     if value == "active":
         return str(persona.church_role or "").strip().lower() in {
-            "miembro", "servidor", "lider", "lider", "pastor", "coordinador",
+            "miembro",
+            "servidor",
+            "lider",
+            "lider",
+            "pastor",
+            "coordinador",
         }
     if value == "new":
         return str(persona.spiritual_status or "").strip().lower() == "nuevo"
     if value == "staff":
         return str(persona.church_role or "").strip().lower() in {
-            "pastor", "coordinador", "staff", "administrador", "admin",
+            "pastor",
+            "coordinador",
+            "staff",
+            "administrador",
+            "admin",
         }
     if value == "groups":
         return persona.family_id is not None
     if value == "low":
         return str(persona.spiritual_status or "").strip().lower() in {
-            "nuevo", "creyente",
+            "nuevo",
+            "creyente",
         }
     if value == "vip":
         return persona.id in donation_persona_ids

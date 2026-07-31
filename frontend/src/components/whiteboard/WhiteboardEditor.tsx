@@ -178,7 +178,7 @@ export default function WhiteboardEditor({
 
     // History hook for undo/redo
     const history = useWhiteboardHistory({ maxStates: 50 });
-    
+
     const [snapEnabled, setSnapEnabled] = useState(true);
     const [showShapePicker, setShowShapePicker] = useState(false);
     const snapEnabledRef = useRef(true);
@@ -228,7 +228,7 @@ export default function WhiteboardEditor({
     const connectorPreviewRef = useRef<fabric.Line | null>(null);
     const hoveredShapeIdRef = useRef<string | null>(null);
     const toolRef = useRef<WhiteboardTool>("select");
-    
+
     const isPanningRef = useRef(false);
     const lastPanPointRef = useRef<{ x: number; y: number } | null>(null);
     const spaceDownRef = useRef(false);
@@ -470,7 +470,7 @@ export default function WhiteboardEditor({
             if (toolRef.current !== "connector") return;
             const pointer = opt.scenePoint;
             const target = findShapeNearPoint(canvas, pointer, 28);
-            
+
             if (!connectorFromRef.current) {
                 // Start connector — requires clicking on a shape anchor
                 if (target) {
@@ -682,7 +682,7 @@ export default function WhiteboardEditor({
         setTool(next);
         toolRef.current = next;
         if (!canvas) return;
-        
+
         if (next === "connector") {
             canvas.isDrawingMode = false;
             canvas.selection = false;
@@ -824,7 +824,7 @@ export default function WhiteboardEditor({
         activateTool("select");
     };
 
-    
+
     const addSubprocessShape = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
@@ -1027,11 +1027,11 @@ export default function WhiteboardEditor({
                     <ToolbarButton icon={Hand} active={tool === "pan"} onClick={() => activateTool("pan")} label="Mover lienzo (H)" />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <div className="relative">
-                        <ToolbarButton 
-                            icon={LayoutGrid} 
-                            active={showShapePicker} 
-                            onClick={() => setShowShapePicker(p => !p)} 
-                            label="Formas" 
+                        <ToolbarButton
+                            icon={LayoutGrid}
+                            active={showShapePicker}
+                            onClick={() => setShowShapePicker(p => !p)}
+                            label="Formas"
                         />
                         {showShapePicker && (
                             <div className="absolute left-full ml-3 top-0 z-30 grid grid-cols-3 gap-1.5 rounded-xl border border-[hsl(var(--border))] bg-white/95 p-3 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95" style={{ minWidth: '220px' }}>
@@ -1049,11 +1049,11 @@ export default function WhiteboardEditor({
                     </div>
                     <ToolbarButton icon={Type} active={false} onClick={addText} label="Texto (T)" data-testid="whiteboard-add-text" />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
-                    <ToolbarButton 
-                        icon={AlignCenter} 
-                        active={snapEnabled} 
-                        onClick={() => { setSnapEnabled(p => !p); snapEnabledRef.current = !snapEnabledRef.current; }} 
-                        label={snapEnabled ? 'Snap activado' : 'Snap desactivado'} 
+                    <ToolbarButton
+                        icon={AlignCenter}
+                        active={snapEnabled}
+                        onClick={() => { setSnapEnabled(p => !p); snapEnabledRef.current = !snapEnabledRef.current; }}
+                        label={snapEnabled ? 'Snap activado' : 'Snap desactivado'}
                     />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <ToolbarButton icon={Eraser} active={false} onClick={removeSelection} label="Borrar selección" />
@@ -1653,4 +1653,3 @@ function ShapePickerItem({ icon: Icon, label, shortcut, onClick }: { icon: React
         </button>
     );
 }
-

@@ -15,8 +15,8 @@ Reversible: drops the table + indexes on downgrade.
 from __future__ import annotations
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 revision = "20260706_0002_cms_seo_snapshots"
 down_revision = "20260706_0001_cms_schedule"

@@ -1,4 +1,5 @@
 """Shared CRM helpers used across multiple subdomains."""
+
 import logging
 import threading
 import uuid
@@ -33,11 +34,7 @@ def resolve_persona_id_for_user(db: Session, user_id: uuid.UUID | str | None):
             user_id,
         )
         return None
-    persona = (
-        db.query(models.Persona.id)
-        .filter(models.Persona.id == persona_uuid)
-        .first()
-    )
+    persona = db.query(models.Persona.id).filter(models.Persona.id == persona_uuid).first()
     return persona[0] if persona else None
 
 
@@ -78,9 +75,7 @@ def get_user_sede_id(db: Session, user_id: "str | uuid.UUID | Any") -> uuid.UUID
 # ── Axioma 3 — Multi-Tenant: Defense-in-Depth scope re-check (CRUD layer) ───
 
 
-def _actor_sede_or_none(
-    db: Session, actor_user_id: str | uuid.UUID
-) -> uuid.UUID | None:
+def _actor_sede_or_none(db: Session, actor_user_id: str | uuid.UUID) -> uuid.UUID | None:
     """Resolve la sede de un actor canónico autenticado.
 
     Retorna ``uuid.UUID`` (no ``str``) para que los callers CRUD puedan
@@ -101,9 +96,7 @@ def _actor_sede_or_none(
     return get_user_sede_id(db, actor_uuid)
 
 
-def _resolve_anchor_sede(
-    db: Session, anchor_name: str, anchor_value
-) -> uuid.UUID | None:
+def _resolve_anchor_sede(db: Session, anchor_name: str, anchor_value) -> uuid.UUID | None:
     """Resuelve la sede_id del target de un anchor FK. Retorna ``uuid.UUID``
     (no ``str``) para que los callers puedan comparar directamente con
     ``user_sede`` (también ``UUID``) en el re-check de scope Axioma 3.
@@ -122,17 +115,9 @@ def _resolve_anchor_sede(
         return None
 
     if anchor_name == "caso_id":
-        row = (
-            db.query(CasoCRM.sede_id)
-            .filter(CasoCRM.id == anchor_value)
-            .first()
-        )
+        row = db.query(CasoCRM.sede_id).filter(CasoCRM.id == anchor_value).first()
     elif anchor_name in ("persona_id", "asignado_a_id"):
-        row = (
-            db.query(models.Persona.sede_id)
-            .filter(models.Persona.id == anchor_value)
-            .first()
-        )
+        row = db.query(models.Persona.sede_id).filter(models.Persona.id == anchor_value).first()
     else:
         return None
 
@@ -230,6 +215,7 @@ def _crud_scope_re_check_task(
             actor_user_id,
         )
         from fastapi import HTTPException as _HTTPException
+
         raise _HTTPException(status_code=404, detail="Task not found")
 
     # STRICT: TODAS las anclas con valor deben estar en user_sede.
@@ -254,6 +240,7 @@ def _crud_scope_re_check_task(
                 anchor_sede,
             )
             from fastapi import HTTPException as _HTTPException
+
             # Mensaje genérico (sin nombre del anchor) para no leakear
             # información sobre qué vector fue cross-sede. El detalle
             # diagnóstico queda en `logging.warning(...)`.
@@ -338,11 +325,7 @@ def _stage_live_column_names(db: Session) -> set[str]:
 
 def persona_query(db: Session):
     live_cols = _persona_live_column_names(db)
-    live_attrs = [
-        getattr(models.Persona, name)
-        for name in live_cols
-        if hasattr(models.Persona, name)
-    ]
+    live_attrs = [getattr(models.Persona, name) for name in live_cols if hasattr(models.Persona, name)]
     query = db.query(models.Persona)
     if live_attrs:
         query = query.options(load_only(*live_attrs))
@@ -351,26 +334,16 @@ def persona_query(db: Session):
 
 def case_query(db: Session):
     live_cols = _case_live_column_names(db)
-    live_attrs = [
-        getattr(models.CasoCRM, name)
-        for name in live_cols
-        if hasattr(models.CasoCRM, name)
-    ]
+    live_attrs = [getattr(models.CasoCRM, name) for name in live_cols if hasattr(models.CasoCRM, name)]
     query = db.query(models.CasoCRM)
     if live_attrs:
         query = query.options(load_only(*live_attrs))
 
     persona_live_cols = _persona_live_column_names(db)
-    persona_live_attrs = [
-        getattr(models.Persona, name)
-        for name in persona_live_cols
-        if hasattr(models.Persona, name)
-    ]
+    persona_live_attrs = [getattr(models.Persona, name) for name in persona_live_cols if hasattr(models.Persona, name)]
     stage_live_cols = _stage_live_column_names(db)
     stage_live_attrs = [
-        getattr(models.EtapaPipeline, name)
-        for name in stage_live_cols
-        if hasattr(models.EtapaPipeline, name)
+        getattr(models.EtapaPipeline, name) for name in stage_live_cols if hasattr(models.EtapaPipeline, name)
     ]
 
     if persona_live_attrs:
@@ -379,9 +352,7 @@ def case_query(db: Session):
             selectinload(models.CasoCRM.asignado_a).load_only(*persona_live_attrs),
         )
     if stage_live_attrs:
-        query = query.options(
-            selectinload(models.CasoCRM.etapa_actual).load_only(*stage_live_attrs)
-        )
+        query = query.options(selectinload(models.CasoCRM.etapa_actual).load_only(*stage_live_attrs))
     return query
 
 

@@ -398,13 +398,17 @@ def test_forum_detail_and_comments_are_scoped(client, db_session):
     admin_a, persona_a, sede_a = seed_admin(db_session, email="forum-a@example.com", password="testpass123")
     admin_b, _, _ = seed_admin(db_session, email="forum-b@example.com", password="testpass123")
     course = models.Course(code=f"FORUM-{_uuid.uuid4().hex[:6]}", title="Foro", modality="online", sede_id=sede_a.id)
-    db_session.add(course); db_session.flush()
+    db_session.add(course)
+    db_session.flush()
     thread = models.ForumThread(course_id=course.id, author_persona_id=persona_a.id, title="Tema", content="Inicio")
-    db_session.add(thread); db_session.commit()
+    db_session.add(thread)
+    db_session.commit()
     headers_a = auth_headers(client, email=admin_a.email, password="testpass123")
     headers_b = auth_headers(client, email=admin_b.email, password="testpass123")
     assert client.get(f"/api/academy/forum/threads/{thread.id}", headers=headers_a).status_code == 200
-    created = client.post(f"/api/academy/forum/threads/{thread.id}/comments", headers=headers_a, json={"content": "Respuesta"})
+    created = client.post(
+        f"/api/academy/forum/threads/{thread.id}/comments", headers=headers_a, json={"content": "Respuesta"}
+    )
     assert created.status_code == 201, created.text
     assert len(client.get(f"/api/academy/forum/threads/{thread.id}/comments", headers=headers_a).json()) == 1
     assert client.get(f"/api/academy/forum/threads/{thread.id}", headers=headers_b).status_code == 404
@@ -433,22 +437,24 @@ def test_forum_category_filter_and_resource_lifecycle_are_scoped(client, db_sess
     )
     db_session.add(lesson)
     db_session.flush()
-    db_session.add_all([
-        models.ForumThread(
-            course_id=course.id,
-            author_persona_id=persona.id,
-            title="Pregunta",
-            category="question",
-            content="¿Cómo?",
-        ),
-        models.ForumThread(
-            course_id=course.id,
-            author_persona_id=persona.id,
-            title="Aviso",
-            category="announcement",
-            content="Atención",
-        ),
-    ])
+    db_session.add_all(
+        [
+            models.ForumThread(
+                course_id=course.id,
+                author_persona_id=persona.id,
+                title="Pregunta",
+                category="question",
+                content="¿Cómo?",
+            ),
+            models.ForumThread(
+                course_id=course.id,
+                author_persona_id=persona.id,
+                title="Aviso",
+                category="announcement",
+                content="Atención",
+            ),
+        ]
+    )
     db_session.commit()
     headers = auth_headers(client, email=editor.email, password="testpass123")
 
@@ -493,9 +499,7 @@ def test_a03_admin_scope_excludes_global_courses_in_all_enrollments(client, db_s
     """A-03 → ``all_enrollments`` oculta enrollments de cursos globales para admin con sede."""
     import uuid as _uuid
 
-    admin_a, _persona_a, sede_a = seed_admin(
-        db_session, email="a03-admin@example.com", password="testpass123"
-    )
+    admin_a, _persona_a, sede_a = seed_admin(db_session, email="a03-admin@example.com", password="testpass123")
     # Curso global (sede_id IS NULL) + su enrollment.
     global_course = models.Course(
         id=_uuid.uuid4(),
@@ -506,7 +510,9 @@ def test_a03_admin_scope_excludes_global_courses_in_all_enrollments(client, db_s
     )
     db_session.add(global_course)
     db_session.commit()
-    persona_global = models.Persona(id=_uuid.uuid4(), first_name="G", last_name="Student", email="g-student@example.com")
+    persona_global = models.Persona(
+        id=_uuid.uuid4(), first_name="G", last_name="Student", email="g-student@example.com"
+    )
     db_session.add(persona_global)
     db_session.commit()
     enrollment = models.Enrollment(
@@ -535,9 +541,7 @@ def test_a03_admin_scope_excludes_global_courses_in_list_submissions(client, db_
     """A-03 → ``list_submissions`` oculta entregas de cursos globales para admin con sede."""
     import uuid as _uuid
 
-    admin_a, _persona_a, sede_a = seed_admin(
-        db_session, email="a03-sub@example.com", password="testpass123"
-    )
+    admin_a, _persona_a, sede_a = seed_admin(db_session, email="a03-sub@example.com", password="testpass123")
     global_course = models.Course(
         id=_uuid.uuid4(),
         code=f"GS-{_uuid.uuid4().hex[:6]}",
@@ -547,7 +551,9 @@ def test_a03_admin_scope_excludes_global_courses_in_list_submissions(client, db_
     )
     db_session.add(global_course)
     db_session.commit()
-    lesson = models.Lesson(course_id=global_course.id, title="L global", content="", content_type="video", order_index=0)
+    lesson = models.Lesson(
+        course_id=global_course.id, title="L global", content="", content_type="video", order_index=0
+    )
     persona_global = models.Persona(id=_uuid.uuid4(), first_name="G", last_name="Submitter", email="g-sub@example.com")
     db_session.add_all([lesson, persona_global])
     db_session.commit()
@@ -575,8 +581,7 @@ def test_a03_admin_scope_excludes_global_courses_in_list_submissions(client, db_
     assert resp.status_code == 200, resp.text
     sub_ids = {row.get("id") for row in resp.json()}
     assert str(submission.id) not in sub_ids, (
-        "A-03 leak: admin con sede ve entrega de curso global en list_submissions — "
-        "scope admin debe ser estricto."
+        "A-03 leak: admin con sede ve entrega de curso global en list_submissions — scope admin debe ser estricto."
     )
 
 
@@ -584,9 +589,7 @@ def test_a03_admin_grade_blocks_global_course_submission(client, db_session):
     """A-03 → ``grade_submission`` 404 al editar entrega de curso global (admin con sede)."""
     import uuid as _uuid
 
-    admin_a, _persona_a, sede_a = seed_admin(
-        db_session, email="a03-grade@example.com", password="testpass123"
-    )
+    admin_a, _persona_a, sede_a = seed_admin(db_session, email="a03-grade@example.com", password="testpass123")
     global_course = models.Course(
         id=_uuid.uuid4(),
         code=f"GG-{_uuid.uuid4().hex[:6]}",
@@ -596,7 +599,9 @@ def test_a03_admin_grade_blocks_global_course_submission(client, db_session):
     )
     db_session.add(global_course)
     db_session.commit()
-    lesson = models.Lesson(course_id=global_course.id, title="L global", content="", content_type="video", order_index=0)
+    lesson = models.Lesson(
+        course_id=global_course.id, title="L global", content="", content_type="video", order_index=0
+    )
     persona_global = models.Persona(id=_uuid.uuid4(), first_name="G", last_name="Graded", email="g-graded@example.com")
     db_session.add_all([lesson, persona_global])
     db_session.commit()
@@ -635,9 +640,7 @@ def test_a03_admin_delete_blocks_global_course_submission(client, db_session):
     """A-03 → ``delete_submission_admin`` 404 al archivar entrega de curso global (admin con sede)."""
     import uuid as _uuid
 
-    admin_a, _persona_a, sede_a = seed_admin(
-        db_session, email="a03-del@example.com", password="testpass123"
-    )
+    admin_a, _persona_a, sede_a = seed_admin(db_session, email="a03-del@example.com", password="testpass123")
     global_course = models.Course(
         id=_uuid.uuid4(),
         code=f"GD-{_uuid.uuid4().hex[:6]}",
@@ -647,7 +650,9 @@ def test_a03_admin_delete_blocks_global_course_submission(client, db_session):
     )
     db_session.add(global_course)
     db_session.commit()
-    lesson = models.Lesson(course_id=global_course.id, title="L global", content="", content_type="video", order_index=0)
+    lesson = models.Lesson(
+        course_id=global_course.id, title="L global", content="", content_type="video", order_index=0
+    )
     persona_global = models.Persona(id=_uuid.uuid4(), first_name="G", last_name="Deleter", email="g-del@example.com")
     db_session.add_all([lesson, persona_global])
     db_session.commit()

@@ -26,7 +26,6 @@ def seed_secure():
 
         if response.status_code == 200:
             print("Admin already exists and is secure.")
-            token = response.json()["access_token"]
         else:
             # Create user
             response = requests.post(f"{BASE_URL}/users/", json=admin_data)
@@ -37,9 +36,6 @@ def seed_secure():
 
             # Login to get token
             response = requests.post(f"{BASE_URL}/token", data=login_data)
-            token = response.json()["access_token"]
-
-        headers = {"Authorization": f"Bearer {token}"}
 
         # Create Testimonials if needed
         test_testimonials = [

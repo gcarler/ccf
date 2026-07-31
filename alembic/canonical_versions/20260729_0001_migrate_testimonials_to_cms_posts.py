@@ -83,10 +83,7 @@ def upgrade() -> None:
     cms_post_categories = metadata.tables["cms_post_categories"]
 
     # Cache existing post IDs to avoid duplicates.
-    existing_post_ids = {
-        str(row[0])
-        for row in bind.execute(sa.select(cms_posts.c.id))
-    }
+    existing_post_ids = {str(row[0]) for row in bind.execute(sa.select(cms_posts.c.id))}
 
     site_cache: dict[str, uuid.UUID] = {}
     category_cache: dict[uuid.UUID, uuid.UUID] = {}

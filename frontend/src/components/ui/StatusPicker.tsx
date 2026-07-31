@@ -28,7 +28,7 @@ export default function StatusPicker({
 }: StatusPickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
-    
+
     const activeOption = options.find(o => o.value === currentValue) || options[0];
 
     useEffect(() => {
@@ -80,8 +80,8 @@ export default function StatusPicker({
                                     }}
                                     className={clsx(
                                         "w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-bold transition-colors",
-                                        currentValue === option.value 
-                                            ? "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white" 
+                                        currentValue === option.value
+                                            ? "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white"
                                             : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                                     )}
                                 >

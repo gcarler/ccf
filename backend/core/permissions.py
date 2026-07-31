@@ -410,11 +410,7 @@ def get_user_effective_permissions(db: Session, user) -> dict:
                 if key.startswith(prefix) and value:
                     user_perms[key] = "allow"
 
-        override = (
-            db.query(UsuarioPermisoOverride)
-            .filter(UsuarioPermisoOverride.user_id == user_id)
-            .first()
-        )
+        override = db.query(UsuarioPermisoOverride).filter(UsuarioPermisoOverride.user_id == user_id).first()
         override_permissions = override.permisos if override else {}
         if isinstance(override_permissions, dict):
             for key, value in override_permissions.items():
@@ -521,12 +517,7 @@ async def get_current_user(
 
     from backend.models_auth import Usuario
 
-    user = (
-        db.query(Usuario)
-        .options(joinedload(Usuario.rol_plataforma))
-        .filter(Usuario.id == user_id)
-        .first()
-    )
+    user = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == user_id).first()
 
     if user is None:
         raise credentials_exception
@@ -609,6 +600,7 @@ def check_ws_module_access(db: "Session", user, module: str, level: str = "read"
         return True
 
     from backend.core.permissions import MODULE_PERMISSION_MAP
+
     module_map = MODULE_PERMISSION_MAP.get(module, {})
     perm_key = module_map.get(level)
     if not perm_key:

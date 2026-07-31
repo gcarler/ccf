@@ -100,7 +100,7 @@ export default function EnrollmentWizard() {
             <div className="flex-1 px-4 pb-4">
                     <AnimatePresence mode="wait">
                         {step === 1 && (
-                            <motion.div 
+                            <motion.div
                                 key="step1"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -173,7 +173,7 @@ export default function EnrollmentWizard() {
                         )}
 
                         {step === 2 && (
-                            <motion.div 
+                            <motion.div
                                 key="step2"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -229,7 +229,7 @@ export default function EnrollmentWizard() {
                         )}
 
                         {step === 3 && (
-                            <motion.div 
+                            <motion.div
                                 key="step3"
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}

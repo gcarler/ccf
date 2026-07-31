@@ -111,7 +111,7 @@ export default function SpiritualTimelinePanel() {
                     {Object.entries(MILESTONE_DEFS)
                         .filter(([key]) => !milestones.some(m => m.type === key))
                         .map(([key, def]) => (
-                            <motion.div 
+                            <motion.div
                                 key={key}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 0.5 }}

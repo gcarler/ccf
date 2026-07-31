@@ -7,6 +7,7 @@ Usage:
 
 Exit code 0 = all gates pass.
 """
+
 import subprocess
 import sys
 
@@ -24,29 +25,33 @@ def run(label: str, cmd: list[str]) -> bool:
         for line in result.stderr.splitlines()[-5:]:
             print(f"  ! {line}")
         return False
-    print(f"  ✅ passed")
+    print("  ✅ passed")
     return True
 
 
 def main():
     gates = [
-        ("🧪 Unit tests", [
-            VENV_PYTHON, "-m", "pytest", "tests/test_admin_coverage.py",
-            "-q", "--tb=short", "--no-cov"]),
-        ("🔍 Health endpoint", [
-            "curl", "-sf", "http://127.0.0.1:8000/healthz"]),
-        ("📊 Admin stats endpoint (expect 401 without auth)", [
-            "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
-            "http://127.0.0.1:8000/api/admin/stats"]),
+        (
+            "🧪 Unit tests",
+            [VENV_PYTHON, "-m", "pytest", "tests/test_admin_coverage.py", "-q", "--tb=short", "--no-cov"],
+        ),
+        ("🔍 Health endpoint", ["curl", "-sf", "http://127.0.0.1:8000/healthz"]),
+        (
+            "📊 Admin stats endpoint (expect 401 without auth)",
+            ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "http://127.0.0.1:8000/api/admin/stats"],
+        ),
     ]
 
     # Para stats: 401 significa que el endpoint existe y pide auth (correcto)
     import re
 
     if "--backend-deep" in sys.argv:
-        gates.append(("📊 Deep coverage", [
-            VENV_PYTHON, "-m", "pytest", "tests/test_admin_coverage.py",
-            "-v", "--tb=short", "--no-cov"]))
+        gates.append(
+            (
+                "📊 Deep coverage",
+                [VENV_PYTHON, "-m", "pytest", "tests/test_admin_coverage.py", "-v", "--tb=short", "--no-cov"],
+            )
+        )
 
     all_ok = True
     stats_ok = True
@@ -57,7 +62,7 @@ def main():
             if code in ("401", "403", "404"):
                 print(f"\n── {label} ──")
                 print(f"  HTTP {code} (expected — auth required or middleware block)")
-                print(f"  ✅ passed")
+                print("  ✅ passed")
             else:
                 print(f"\n── {label} ──")
                 print(f"  HTTP {code} (unexpected)")

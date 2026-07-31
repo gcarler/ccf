@@ -54,7 +54,6 @@ import backend.models  # noqa: E402  — registers every model
 import backend.models_cms as m  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
 
-
 # ── Canonical site_key for this script (single-site operational) ────────────
 SITE_KEY = "faro"
 SITE_NAME = "Faro"
@@ -95,14 +94,78 @@ THEME_TOKENS: dict[str, str] = {
 # ``ensure_public_cms_pastors.py``); we keep this self-contained so the
 # script doesn't depend on old bootstrapping being present.
 SEED_MENU_ITEMS: list[dict[str, Any]] = [
-    {"label": "Inicio", "href": "/", "target": "_self", "is_external": False, "visibility": "public", "sort_order": 0, "meta_json": {}},
-    {"label": "Nosotros", "href": "/nosotros", "target": "_self", "is_external": False, "visibility": "public", "sort_order": 1, "meta_json": {}},
-    {"label": "Eventos", "href": "/eventos", "target": "_self", "is_external": False, "visibility": "public", "sort_order": 2, "meta_json": {}},
-    {"label": "Prédicas", "href": "/predicas", "target": "_self", "is_external": False, "visibility": "public", "sort_order": 3, "meta_json": {}},
-    {"label": "Cursos", "href": "/cursos", "target": "_self", "is_external": False, "visibility": "public", "sort_order": 4, "meta_json": {}},
-    {"label": "Sedes", "href": "/sedes", "target": "_self", "is_external": False, "visibility": "public", "sort_order": 5, "meta_json": {}},
-    {"label": "Conocer a Jesús", "href": "/conocer-a-jesus", "target": "_self", "is_external": False, "visibility": "public", "sort_order": 6, "meta_json": {}},
-    {"label": "Boletín", "href": "/boletin", "target": "_self", "is_external": False, "visibility": "public", "sort_order": 7, "meta_json": {}},
+    {
+        "label": "Inicio",
+        "href": "/",
+        "target": "_self",
+        "is_external": False,
+        "visibility": "public",
+        "sort_order": 0,
+        "meta_json": {},
+    },
+    {
+        "label": "Nosotros",
+        "href": "/nosotros",
+        "target": "_self",
+        "is_external": False,
+        "visibility": "public",
+        "sort_order": 1,
+        "meta_json": {},
+    },
+    {
+        "label": "Eventos",
+        "href": "/eventos",
+        "target": "_self",
+        "is_external": False,
+        "visibility": "public",
+        "sort_order": 2,
+        "meta_json": {},
+    },
+    {
+        "label": "Prédicas",
+        "href": "/predicas",
+        "target": "_self",
+        "is_external": False,
+        "visibility": "public",
+        "sort_order": 3,
+        "meta_json": {},
+    },
+    {
+        "label": "Cursos",
+        "href": "/cursos",
+        "target": "_self",
+        "is_external": False,
+        "visibility": "public",
+        "sort_order": 4,
+        "meta_json": {},
+    },
+    {
+        "label": "Sedes",
+        "href": "/sedes",
+        "target": "_self",
+        "is_external": False,
+        "visibility": "public",
+        "sort_order": 5,
+        "meta_json": {},
+    },
+    {
+        "label": "Conocer a Jesús",
+        "href": "/conocer-a-jesus",
+        "target": "_self",
+        "is_external": False,
+        "visibility": "public",
+        "sort_order": 6,
+        "meta_json": {},
+    },
+    {
+        "label": "Boletín",
+        "href": "/boletin",
+        "target": "_self",
+        "is_external": False,
+        "visibility": "public",
+        "sort_order": 7,
+        "meta_json": {},
+    },
 ]
 
 # Hero in the new 8-key shape consumed by ``PublicHeroWithSlides``. Kept
@@ -126,8 +189,7 @@ FEED_PROPS: dict[str, Any] = {
         "eyebrow": "Nuestra esencia",
         "section_title": "Bienvenidos a Casa",
         "section_description": (
-            "Rutas públicas para conocer la comunidad, profundizar en la fe y "
-            "encontrar dónde dar el siguiente paso."
+            "Rutas públicas para conocer la comunidad, profundizar en la fe y encontrar dónde dar el siguiente paso."
         ),
         "featured_card": {
             "title": "Conocer a Jesús",
@@ -177,11 +239,7 @@ def _ensure_site(db) -> tuple[m.CmsSite, bool]:
     """Axioma 3 — CmsSite is the documented cross-sede exception
     (see ``backend/api/_cms_helpers/_shared.py``); do NOT add ``sede_id``.
     """
-    site = (
-        db.query(m.CmsSite)
-        .filter(m.CmsSite.site_key == SITE_KEY)
-        .first()
-    )
+    site = db.query(m.CmsSite).filter(m.CmsSite.site_key == SITE_KEY).first()
     if site is not None:
         if not site.is_active:
             site.is_active = True
@@ -200,11 +258,7 @@ def _ensure_site(db) -> tuple[m.CmsSite, bool]:
 def _ensure_theme(db, site: m.CmsSite) -> tuple[bool, bool]:
     created = False
     changed = False
-    theme = (
-        db.query(m.CmsTheme)
-        .filter(m.CmsTheme.site_id == site.id, m.CmsTheme.name == THEME_NAME)
-        .first()
-    )
+    theme = db.query(m.CmsTheme).filter(m.CmsTheme.site_id == site.id, m.CmsTheme.name == THEME_NAME).first()
     if theme is None:
         theme = m.CmsTheme(
             site_id=site.id,
@@ -226,11 +280,7 @@ def _ensure_theme(db, site: m.CmsSite) -> tuple[bool, bool]:
         theme.tokens_json = THEME_TOKENS
         changed = True
     if not theme.is_active or theme.status != "active":
-        (
-            db.query(m.CmsTheme)
-            .filter(m.CmsTheme.site_id == site.id)
-            .update({"is_active": False})
-        )
+        (db.query(m.CmsTheme).filter(m.CmsTheme.site_id == site.id).update({"is_active": False}))
         theme.is_active = True
         theme.status = "active"
         changed = True
@@ -239,11 +289,7 @@ def _ensure_theme(db, site: m.CmsSite) -> tuple[bool, bool]:
 
 def _ensure_menu(db, site: m.CmsSite) -> tuple[bool, bool]:
     """Idempotent. If the menu already has items, do not rebuild them."""
-    menu = (
-        db.query(m.CmsMenu)
-        .filter(m.CmsMenu.site_id == site.id, m.CmsMenu.menu_key == MENU_KEY)
-        .first()
-    )
+    menu = db.query(m.CmsMenu).filter(m.CmsMenu.site_id == site.id, m.CmsMenu.menu_key == MENU_KEY).first()
     created = False
     changed = False
     if menu is None:
@@ -257,12 +303,7 @@ def _ensure_menu(db, site: m.CmsSite) -> tuple[bool, bool]:
         menu.is_active = True
         changed = True
 
-    items_count = (
-        db.query(func.count(m.CmsMenuItem.id))
-        .filter(m.CmsMenuItem.menu_id == menu.id)
-        .scalar()
-        or 0
-    )
+    items_count = db.query(func.count(m.CmsMenuItem.id)).filter(m.CmsMenuItem.menu_id == menu.id).scalar() or 0
     if items_count == 0:
         for item in SEED_MENU_ITEMS:
             db.add(m.CmsMenuItem(menu_id=menu.id, **item))
@@ -294,10 +335,7 @@ def _publish_version(db, site: m.CmsSite, page: m.CmsPage, sections: list[dict[s
         "sections": sections,
     }
     max_v = (
-        db.query(func.max(m.CmsPageVersion.version_number))
-        .filter(m.CmsPageVersion.page_id == page.id)
-        .scalar()
-        or 0
+        db.query(func.max(m.CmsPageVersion.version_number)).filter(m.CmsPageVersion.page_id == page.id).scalar() or 0
     )
     next_v = int(max_v) + 1
     version = m.CmsPageVersion(
@@ -331,11 +369,7 @@ def _ensure_home(db, site: m.CmsSite) -> tuple[bool, str]:
     """Ensure ``CmsPage(slug='home')`` exists with hero+feed sections.
     If the page already has a published version, do NOT touch it.
     """
-    page = (
-        db.query(m.CmsPage)
-        .filter(m.CmsPage.site_id == site.id, m.CmsPage.slug == HOME_SLUG)
-        .first()
-    )
+    page = db.query(m.CmsPage).filter(m.CmsPage.site_id == site.id, m.CmsPage.slug == HOME_SLUG).first()
     if page is not None and page.published_version_id is not None:
         return False, "preserved (editor has published_version)"
 
@@ -360,18 +394,17 @@ def _ensure_home(db, site: m.CmsSite) -> tuple[bool, str]:
         db.add(m.CmsSection(page_id=page.id, **sec))
     db.flush()
     next_v = _publish_version(
-        db, site, page, sections,
+        db,
+        site,
+        page,
+        sections,
         notes="Re-seeded /faro home with new-shape hero (8 keys)",
     )
     return True, f"created/seeded v#{next_v} with hero+feed"
 
 
 def _ensure_stub(db, site: m.CmsSite, slug: str, title: str) -> tuple[bool, str]:
-    page = (
-        db.query(m.CmsPage)
-        .filter(m.CmsPage.site_id == site.id, m.CmsPage.slug == slug)
-        .first()
-    )
+    page = db.query(m.CmsPage).filter(m.CmsPage.site_id == site.id, m.CmsPage.slug == slug).first()
     if page is not None and page.published_version_id is not None:
         return False, "preserved (editor has published_version)"
     if page is None:
@@ -385,7 +418,10 @@ def _ensure_stub(db, site: m.CmsSite, slug: str, title: str) -> tuple[bool, str]
         db.add(page)
         db.flush()
     next_v = _publish_version(
-        db, site, page, [],
+        db,
+        site,
+        page,
+        [],
         notes=f"Re-seeded stub /{slug} for /faro/* catch-all",
     )
     return True, f"created/seeded v#{next_v}"
@@ -416,13 +452,10 @@ def main() -> int:
             f"{'updated/activated' if theme_changed else 'unchanged'}"
         )
         print(
-            f"Menu {MENU_KEY}:  {'created' if menu_created else 'exists'}; "
-            f"{'updated' if menu_changed else 'unchanged'}"
+            f"Menu {MENU_KEY}:  {'created' if menu_created else 'exists'}; {'updated' if menu_changed else 'unchanged'}"
         )
         print(f"Home:    {home_status}")
-        print(
-            f"Stubs:   {stub_created} created/seeded, {stub_preserved} preserved"
-        )
+        print(f"Stubs:   {stub_created} created/seeded, {stub_preserved} preserved")
         return 0
 
 

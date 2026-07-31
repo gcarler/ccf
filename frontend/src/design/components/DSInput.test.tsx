@@ -27,10 +27,10 @@ describe('DSInput', () => {
 
   it('does not show helper text when error is present', () => {
     render(
-      <DSInput 
-        label="Email" 
-        error="Error" 
-        helperText="Helper text" 
+      <DSInput
+        label="Email"
+        error="Error"
+        helperText="Helper text"
       />
     );
     expect(screen.getByRole('alert')).toHaveTextContent('Error');

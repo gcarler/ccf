@@ -4,6 +4,7 @@ Covers automations (with sede scoping), event assignments (soft-delete),
 positions, ministries, role definitions, funds, volunteer skills, and
 persona-level associations.
 """
+
 from __future__ import annotations
 
 import datetime as dt

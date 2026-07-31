@@ -3,10 +3,10 @@
 import React from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
-import { 
-    HelpCircle, 
-    Book, 
-    MessageSquare, 
+import {
+    HelpCircle,
+    Book,
+    MessageSquare,
     LifeBuoy,
     FileText,
     History
@@ -54,4 +54,3 @@ export default function SupportLayout({
         </ModuleErrorBoundary>
     );
 }
-

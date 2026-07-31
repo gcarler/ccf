@@ -1,6 +1,6 @@
 # RFC — RBAC Contextual por Proyecto
 
-> **Estado:** Propuesta / Visión de futuro.  
+> **Estado:** Propuesta / Visión de futuro.
 > **Relación con el sistema actual:** Este documento **NO** reemplaza `docs/PROJECTS_RBAC_MATRIX.md` ni `docs/PROJECTS_API_CONTRACTS.md`. Esos documentos siguen siendo la fuente de verdad del comportamiento desplegado hoy. Este RFC describe el modelo de permisos objetivo para el módulo Proyectos una vez que el producto decida migrar de un RBAC de plataforma a un RBAC contextual por proyecto.
 
 ---

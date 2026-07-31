@@ -5,6 +5,7 @@ for Axioma-3 defense-in-depth and audit logging. This file provides a dedicated,
 lightweight suite focusing on the core CRUD contract of each public function
 without duplicating the deep security tests.
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -146,7 +147,10 @@ def test_delete_crm_task_not_found(db_session):
 def test_update_crm_task_not_found(db_session):
     payload = CrmTaskUpdate(title="Ghost")
     result = crud_tasks.update_crm_task(
-        db_session, _uuid.uuid4(), payload, actor_user_id=_uuid.uuid4(),
+        db_session,
+        _uuid.uuid4(),
+        payload,
+        actor_user_id=_uuid.uuid4(),
     )
     assert result is None
 
@@ -155,10 +159,14 @@ def test_update_crm_task_with_case_anchor(db_session):
     sede = _seed_sede(db_session)
     actor = _seed_persona(db_session, sede_id=sede.id, first="Actor")
     target = _seed_persona(db_session, sede_id=sede.id, first="Target")
-    from backend.models_crm_pipeline import CasoCRM, EstadoCasoEnum, PrioridadCasoEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EstadoCasoEnum, PrioridadCasoEnum
+
     caso = CasoCRM(
-        id=_uuid.uuid4(), sede_id=sede.id, persona_id=target.id,
-        titulo_caso="Caso", pipeline_id=_uuid.uuid4(),
+        id=_uuid.uuid4(),
+        sede_id=sede.id,
+        persona_id=target.id,
+        titulo_caso="Caso",
+        pipeline_id=_uuid.uuid4(),
         etapa_actual_id=_uuid.uuid4(),
         origen_canal=CanalOrigenEnum.WEB_FORM,
         prioridad=PrioridadCasoEnum.MEDIA,
@@ -166,14 +174,21 @@ def test_update_crm_task_with_case_anchor(db_session):
     )
     db_session.add(caso)
     task = models.TareaCRM(
-        id=_uuid.uuid4(), persona_id=target.id, titulo="Old",
-        estado="pending", prioridad="medium", caso_id=caso.id,
+        id=_uuid.uuid4(),
+        persona_id=target.id,
+        titulo="Old",
+        estado="pending",
+        prioridad="medium",
+        caso_id=caso.id,
     )
     db_session.add(task)
     _commit(db_session)
     payload = CrmTaskUpdate(caso_id=caso.id)
     result = crud_tasks.update_crm_task(
-        db_session, task.id, payload, actor_user_id=actor.id,
+        db_session,
+        task.id,
+        payload,
+        actor_user_id=actor.id,
     )
     assert result is not None
 
@@ -192,7 +207,6 @@ def test_get_crm_tasks_by_persona(db_session):
 
 
 class TestValuesEquivalent:
-
     def test_both_none(self):
         assert crud_tasks._values_equivalent(None, None) is True
 
@@ -202,6 +216,7 @@ class TestValuesEquivalent:
 
     def test_both_datetime(self):
         import datetime as dt
+
         t1 = dt.datetime(2024, 1, 1)
         t2 = dt.datetime(2024, 1, 1)
         t3 = dt.datetime(2024, 1, 2)
@@ -214,7 +229,6 @@ class TestValuesEquivalent:
 
 
 class TestValueForAudit:
-
     def test_none(self):
         assert crud_tasks._value_for_audit(None) is None
 
@@ -224,6 +238,7 @@ class TestValueForAudit:
 
     def test_datetime(self):
         import datetime as dt
+
         t = dt.datetime(2024, 6, 15, 10, 30)
         assert crud_tasks._value_for_audit(t) == t.isoformat()
 

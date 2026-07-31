@@ -74,9 +74,13 @@ def _ensure_actor(db, email: str | None = None) -> DemoActor:
     if email:
         candidate = db.query(Usuario).filter(Usuario.email == email).first()
     if candidate is None:
-        candidate = db.query(Usuario).join(RolPlataforma, Usuario.rol_plataforma_id == RolPlataforma.id).filter(
-            RolPlataforma.nombre == "ADMIN"
-        ).order_by(Usuario.created_at.asc()).first()
+        candidate = (
+            db.query(Usuario)
+            .join(RolPlataforma, Usuario.rol_plataforma_id == RolPlataforma.id)
+            .filter(RolPlataforma.nombre == "ADMIN")
+            .order_by(Usuario.created_at.asc())
+            .first()
+        )
     if candidate is None:
         candidate = db.query(Usuario).order_by(Usuario.created_at.asc()).first()
 
@@ -214,8 +218,7 @@ def _seed_project_bundle(db, actor: DemoActor, index: int, payload: dict, base_d
                 persona_id=actor.persona.id,
                 action_type=action_type,
                 description=(
-                    f"{payload['title']} · registro demo {activity_offset + 1} "
-                    f"({action_type.replace('_', ' ')})"
+                    f"{payload['title']} · registro demo {activity_offset + 1} ({action_type.replace('_', ' ')})"
                 ),
                 created_at=base_date + timedelta(days=activity_offset * 2 + index),
             )
@@ -235,7 +238,9 @@ def seed_projects_demo(db=None, *, actor_email: str | None = None, reset: bool =
         created = []
         base_anchor = _utcnow() - timedelta(days=21)
         for index, payload in enumerate(DEMO_PROJECTS):
-            created.append(_seed_project_bundle(session, actor, index, payload, base_anchor + timedelta(days=index * 7)))
+            created.append(
+                _seed_project_bundle(session, actor, index, payload, base_anchor + timedelta(days=index * 7))
+            )
         return created
     finally:
         if owns_session:

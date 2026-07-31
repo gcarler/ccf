@@ -141,7 +141,7 @@ export default function ProjectsInboxPage() {
                 ) : (
                     <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                         {filteredMessages.map((msg, idx) => (
-                            <motion.div 
+                            <motion.div
                                 key={msg.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                                 className={clsx(
                                     "p-4 flex gap-4 hover:bg-info-soft/30 dark:hover:bg-[hsl(var(--info))]/5 transition-all cursor-pointer group relative",

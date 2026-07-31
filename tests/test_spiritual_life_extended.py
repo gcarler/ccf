@@ -1,6 +1,7 @@
 """
 Extended API + unit tests for backend.api.spiritual_life.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -89,8 +90,11 @@ class TestAssertMilestoneInSede:
         db_session.add(persona)
         db_session.flush()
         milestone = models.SpiritualMilestone(
-            id=uuid.uuid4(), persona_id=persona.id, type="Bautismo_Aguas",
-            event_date=date(2026, 1, 1), sede_id=sede.id,
+            id=uuid.uuid4(),
+            persona_id=persona.id,
+            type="Bautismo_Aguas",
+            event_date=date(2026, 1, 1),
+            sede_id=sede.id,
         )
         db_session.add(milestone)
         db_session.commit()
@@ -106,8 +110,11 @@ class TestAssertMilestoneInSede:
         db_session.add(persona)
         db_session.flush()
         milestone = models.SpiritualMilestone(
-            id=uuid.uuid4(), persona_id=persona.id, type="Bautismo_Aguas",
-            event_date=date(2026, 1, 1), sede_id=sede_a.id,
+            id=uuid.uuid4(),
+            persona_id=persona.id,
+            type="Bautismo_Aguas",
+            event_date=date(2026, 1, 1),
+            sede_id=sede_a.id,
         )
         db_session.add(milestone)
         db_session.commit()
@@ -243,8 +250,11 @@ class TestGetSingleMilestone:
         db_session.add(persona)
         db_session.flush()
         milestone = models.SpiritualMilestone(
-            id=uuid.uuid4(), persona_id=persona.id, type="Bautismo_Aguas",
-            event_date=date(2026, 1, 1), sede_id=sede.id,
+            id=uuid.uuid4(),
+            persona_id=persona.id,
+            type="Bautismo_Aguas",
+            event_date=date(2026, 1, 1),
+            sede_id=sede.id,
         )
         db_session.add(milestone)
         db_session.commit()
@@ -261,8 +271,11 @@ class TestUpdateMilestone:
         db_session.add(persona)
         db_session.flush()
         milestone = models.SpiritualMilestone(
-            id=uuid.uuid4(), persona_id=persona.id, type="Bautismo_Aguas",
-            event_date=date(2026, 1, 1), sede_id=sede.id,
+            id=uuid.uuid4(),
+            persona_id=persona.id,
+            type="Bautismo_Aguas",
+            event_date=date(2026, 1, 1),
+            sede_id=sede.id,
         )
         db_session.add(milestone)
         db_session.commit()
@@ -290,8 +303,11 @@ class TestUpdateMilestone:
         db_session.add(persona)
         db_session.flush()
         milestone = models.SpiritualMilestone(
-            id=uuid.uuid4(), persona_id=persona.id, type="Bautismo_Aguas",
-            event_date=date(2026, 1, 1), sede_id=sede.id,
+            id=uuid.uuid4(),
+            persona_id=persona.id,
+            type="Bautismo_Aguas",
+            event_date=date(2026, 1, 1),
+            sede_id=sede.id,
         )
         db_session.add(milestone)
         db_session.commit()
@@ -311,8 +327,11 @@ class TestUpdateMilestone:
         db_session.add(minister)
         db_session.flush()
         milestone = models.SpiritualMilestone(
-            id=uuid.uuid4(), persona_id=persona.id, type="Bautismo_Aguas",
-            event_date=date(2026, 1, 1), sede_id=sede.id,
+            id=uuid.uuid4(),
+            persona_id=persona.id,
+            type="Bautismo_Aguas",
+            event_date=date(2026, 1, 1),
+            sede_id=sede.id,
         )
         db_session.add(milestone)
         db_session.commit()
@@ -332,8 +351,11 @@ class TestDeleteMilestone:
         db_session.add(persona)
         db_session.flush()
         milestone = models.SpiritualMilestone(
-            id=uuid.uuid4(), persona_id=persona.id, type="Bautismo_Aguas",
-            event_date=date(2026, 1, 1), sede_id=sede.id,
+            id=uuid.uuid4(),
+            persona_id=persona.id,
+            type="Bautismo_Aguas",
+            event_date=date(2026, 1, 1),
+            sede_id=sede.id,
         )
         db_session.add(milestone)
         db_session.commit()

@@ -1,6 +1,7 @@
 """
 API tests for backend.api.spiritual_life.
 """
+
 from __future__ import annotations
 
 import uuid

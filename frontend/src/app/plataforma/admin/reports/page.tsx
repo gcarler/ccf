@@ -81,8 +81,8 @@ export default function AdvancedBIReports() {
                         onClick={() => setActiveTab(tab.id as ReportTab)}
                         className={clsx(
                             "flex items-center gap-3 px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all active:scale-95",
-                            activeTab === tab.id 
-                                ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-xl shadow-[hsl(var(--info)/10%)]" 
+                            activeTab === tab.id
+                                ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-xl shadow-[hsl(var(--info)/10%)]"
                                 : "text-[hsl(var(--text-secondary))] hover:bg-white/50 dark:hover:bg-white/5"
                         )}
                     >
@@ -97,7 +97,7 @@ export default function AdvancedBIReports() {
                 <div className="lg:col-span-8 space-y-3">
                     <section className="relative overflow-hidden rounded-lg bg-[hsl(var(--bg-muted))] border border-white/5 p-4 text-white shadow-2xl group min-h-[400px] flex flex-col justify-between">
                         <div className="absolute top-0 right-0 -mr-24 -mt-24 size-96 bg-[hsl(var(--info))]/20 rounded-full blur-[100px] group-hover:bg-[hsl(var(--info))]/30 transition-all duration-1000" />
-                        
+
                         <div className="relative z-10 flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-3 mb-4">
@@ -121,8 +121,8 @@ export default function AdvancedBIReports() {
                         <div className="relative z-10 h-48 flex items-end gap-4 mt-3">
                             {[65, 40, 80, 55, 90, 70, 85, 60, 100, 75, 95, 80].map((h, i) => (
                                 <div key={i} className="flex-1 flex flex-col items-center gap-3 group/bar">
-                                    <div 
-                                        style={{ height: `${h}%` }} 
+                                    <div
+                                        style={{ height: `${h}%` }}
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative",
                                             i === 8 ? "bg-[hsl(var(--primary))] shadow-[0_0_30px_rgba(59,130,246,0.5)]" : "bg-white/10 opacity-30 group-hover/bar:opacity-60"
@@ -194,7 +194,7 @@ export default function AdvancedBIReports() {
                             <BrainCircuit size={20} className="text-[hsl(var(--primary))]" />
                             <h4 className="text-lg font-semibold uppercase tracking-wide tracking-tighter">Acciones BI</h4>
                         </div>
-                        
+
                         <div className="space-y-4">
                             <button className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent hover:border-[hsl(var(--info)/100%)]/30 transition-all group">
                                 <div className="flex items-center gap-4 text-left">
@@ -266,4 +266,3 @@ export default function AdvancedBIReports() {
         </AdminShell>
     );
 }
-

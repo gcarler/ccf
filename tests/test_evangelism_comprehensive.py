@@ -1,4 +1,5 @@
 """Comprehensive evangelism analytics test with real DB data."""
+
 from __future__ import annotations
 
 import uuid
@@ -25,6 +26,7 @@ class TestAnalyticsAllEndpoints:
     def test_all_analytics_with_data(self, full, db_session):
         c, h, s = full["c"], full["h"], full["s"]
         from datetime import datetime, timezone
+
         now = datetime.now(timezone.utc)
 
         # 1. Create persona
@@ -33,14 +35,16 @@ class TestAnalyticsAllEndpoints:
         db_session.commit()
 
         # 2. Create strategy via API
-        strat = c.post("/api/evangelism/strategies",
-            json={"name": f"S-{uuid.uuid4().hex[:6]}"}, headers=h).json()
+        strat = c.post("/api/evangelism/strategies", json={"name": f"S-{uuid.uuid4().hex[:6]}"}, headers=h).json()
         sid = strat["id"]
 
         # 3. Create grupo linked to strategy (direct DB to bypass role requirement)
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre=f"G-{uuid.uuid4().hex[:6]}",
-            sede_id=s.id, lider_persona_id=p.id, estrategia_id=uuid.UUID(sid),
+            id=uuid.uuid4(),
+            nombre=f"G-{uuid.uuid4().hex[:6]}",
+            sede_id=s.id,
+            lider_persona_id=p.id,
+            estrategia_id=uuid.UUID(sid),
         )
         db_session.add(g)
         db_session.flush()
@@ -48,7 +52,8 @@ class TestAnalyticsAllEndpoints:
         # 4. Create sessions (multiple for trend data)
         for i in range(3):
             ses = models.SesionGrupo(
-                id=uuid.uuid4(), grupo_id=g.id,
+                id=uuid.uuid4(),
+                grupo_id=g.id,
                 fecha_sesion=datetime(2026, 7, 10 + i, tzinfo=timezone.utc),
                 estado="REALIZADA",
             )
@@ -57,7 +62,10 @@ class TestAnalyticsAllEndpoints:
 
             # 5. Create attendance for each session
             att = models.Asistencia(
-                id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO",
+                id=uuid.uuid4(),
+                sesion_id=ses.id,
+                persona_id=p.id,
+                estado="ASISTIO",
             )
             db_session.add(att)
 
@@ -105,6 +113,7 @@ class TestAnalyticsAllEndpoints:
 
         # 10. Test attendance POST via grupos path
         for ses in all_sessions:
-            resp = c.post(f"/api/evangelism/grupos/sessions/{ses.id}/attendance",
-                json={"persona_ids": [str(p.id)]}, headers=h)
+            resp = c.post(
+                f"/api/evangelism/grupos/sessions/{ses.id}/attendance", json={"persona_ids": [str(p.id)]}, headers=h
+            )
             assert resp.status_code in (200, 201, 403), f"att post: {resp.status_code}"

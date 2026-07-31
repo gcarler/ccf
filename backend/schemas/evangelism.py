@@ -93,6 +93,7 @@ def _coerce_uuid_or_none(v):
 # ENUMS (re-exportados para uso en endpoints)
 # ──────────────────────────────────────────────
 
+
 class ClaseEstrategiaEnum(str, Enum):
     RELACIONAL = "RELACIONAL"
     EVENTO_MASIVO = "EVENTO_MASIVO"
@@ -148,6 +149,7 @@ class HabilitacionSesionEnum(str, Enum):
 # ──────────────────────────────────────────────
 # ESTRATEGIA DE EVANGELISMO
 # ──────────────────────────────────────────────
+
 
 class EstrategiaEvangelismoBase(BaseModel):
     name: str
@@ -211,6 +213,7 @@ class EstrategiaEvangelismoResponse(EstrategiaEvangelismoBase):
 # ROL PERSONALIZADO DE ESTRATEGIA
 # ──────────────────────────────────────────────
 
+
 class RolPersonalizadoEstrategiaBase(BaseModel):
     nombre_rol: str
     descripcion: Optional[str] = None
@@ -233,6 +236,7 @@ class RolPersonalizadoEstrategiaResponse(RolPersonalizadoEstrategiaBase):
 # ──────────────────────────────────────────────
 # PARTICIPANTE DE GRUPO
 # ──────────────────────────────────────────────
+
 
 class ParticipanteGrupoBase(BaseModel):
     role: str = "participante"
@@ -266,6 +270,7 @@ class ParticipanteGrupoResponse(ParticipanteGrupoBase):
 # ──────────────────────────────────────────────
 # ASISTENCIA A SESIÓN
 # ──────────────────────────────────────────────
+
 
 class AsistenciaSesionBase(BaseModel):
     estado: EstadoAsistenciaEnum = EstadoAsistenciaEnum.ASISTIO
@@ -315,11 +320,13 @@ class AsistenciaSesionResponse(AsistenciaSesionBase):
 #   tipo, fecha_seguimiento, observaciones, estado_completado, responsable_id
 # ──────────────────────────────────────────────
 
+
 class RegistroSeguimientoBase(BaseModel):
     tipo: TipoSeguimientoEnum
     observaciones: Optional[str] = None
     fecha_seguimiento: Optional[datetime] = None
     estado_completado: bool = True
+
 
 class RegistroSeguimientoCreate(RegistroSeguimientoBase):
     model_config = ConfigDict(extra="forbid")
@@ -347,6 +354,7 @@ class RegistroSeguimientoUpdate(BaseModel):
     @classmethod
     def _v_responsable_id(cls, v):
         return _coerce_uuid_or_none(v)
+
 
 class RegistroSeguimientoResponse(BaseModel):
     id: UUID
@@ -385,6 +393,7 @@ class RegistroSeguimientoResponse(BaseModel):
 # MOTIVO EXCUSA
 # ──────────────────────────────────────────────
 
+
 class MotivoExcusaBase(BaseModel):
     descripcion: str
     activo: bool = True
@@ -410,6 +419,7 @@ class MotivoExcusaResponse(MotivoExcusaBase):
 # ──────────────────────────────────────────────
 # BULK ASISTENCIA
 # ──────────────────────────────────────────────
+
 
 class AsistenciaBulkItem(BaseModel):
     persona_id: UUID
@@ -442,6 +452,7 @@ class AsistenciaBulkCreate(BaseModel):
 # ──────────────────────────────────────────────
 # GRUPO EVANGELISMO
 # ──────────────────────────────────────────────
+
 
 class GrupoEvangelismoCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -559,6 +570,7 @@ class AsistenciaGrupoCreate(BaseModel):
 # SESION GRUPO — respuesta
 # ──────────────────────────────────────────────
 
+
 class SesionGrupoResponse(BaseModel):
     """Schema de respuesta canonica para endpoints de ``SesionGrupo``.
 
@@ -575,6 +587,7 @@ class SesionGrupoResponse(BaseModel):
     automaticamente desde las columnas en espanol de
     ``backend.models_evangelism.SesionGrupo``.
     """
+
     id: str
     grupo_id: str
     session_date: Optional[datetime] = None

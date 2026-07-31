@@ -7,6 +7,7 @@ Usage:
 
 Exit code 0 = all gates pass.
 """
+
 import subprocess
 import sys
 
@@ -32,7 +33,7 @@ def run(label: str, cmd: list[str]) -> bool:
         for line in result.stderr.splitlines()[-3:]:
             print(f"  ! {line}")
         return False
-    print(f"  ✅ passed")
+    print("  ✅ passed")
     return True
 
 
@@ -40,8 +41,7 @@ def main():
     gates = [("🔍 Health endpoint", ["curl", "-sf", "http://127.0.0.1:8000/healthz"])]
 
     for name, testfile in MODULES.items():
-        gates.append((f"🧪 {name}", [
-            VENV_PYTHON, "-m", "pytest", testfile, "-q", "--tb=short", "--no-cov"]))
+        gates.append((f"🧪 {name}", [VENV_PYTHON, "-m", "pytest", testfile, "-q", "--tb=short", "--no-cov"]))
 
     all_ok = True
     for label, cmd in gates:

@@ -30,9 +30,7 @@ class Family(Base):
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
-    __table_args__ = (
-        Index("ix_chat_messages_room_id_created_at", "room_id", "created_at"),
-    )
+    __table_args__ = (Index("ix_chat_messages_room_id_created_at", "room_id", "created_at"),)
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sender_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id"), nullable=False, index=True)
     room_id = Column(String(100), nullable=True, index=True)
@@ -40,7 +38,7 @@ class ChatMessage(Base):
     is_read = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
-    
+
     attachment_url = Column(Text, nullable=True)  # URL del archivo subido
     attachment_type = Column(String(50), nullable=True)  # 'image', 'pdf', 'document', 'video', 'audio', 'other'
     attachment_name = Column(String(255), nullable=True)  # nombre original del archivo
@@ -714,6 +712,7 @@ class CommunicationLog(Base):
       - ``persona``: Persona destinataria ( ``persona_id`` ).
       - ``leader``: Persona que origina el mensaje ( ``leader_id`` ).
     """
+
     __tablename__ = "communication_logs"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(
@@ -796,7 +795,9 @@ class CrmAutomationFlow(Base):
 class CrmAutomationNode(Base):
     __tablename__ = "crm_automation_nodes"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    flow_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_flows.id", ondelete="CASCADE"), nullable=False, index=True)
+    flow_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_automation_flows.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     node_type = Column(String(50), nullable=False)
     ports_config = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
@@ -805,7 +806,9 @@ class CrmAutomationNode(Base):
 class CrmFlowCanvasConfig(Base):
     __tablename__ = "crm_flow_canvas_config"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    flow_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_flows.id", ondelete="CASCADE"), nullable=False, index=True)
+    flow_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_automation_flows.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     zoom = Column(Float, default=1.0)
     pan_x = Column(Float, default=0.0)
     pan_y = Column(Float, default=0.0)
@@ -814,27 +817,39 @@ class CrmFlowCanvasConfig(Base):
 class CrmFlowBranch(Base):
     __tablename__ = "crm_flow_branches"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    node_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=False, index=True)
+    node_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     conditions_logic = Column(JSON, nullable=True)
 
 
 class CrmFlowCycleCache(Base):
     __tablename__ = "crm_flow_cycle_cache"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    flow_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_flows.id", ondelete="CASCADE"), nullable=False, index=True)
+    flow_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_automation_flows.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     has_cycle = Column(Boolean, default=False)
 
 
 class CrmAutomationEdge(Base):
     __tablename__ = "crm_automation_edges"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    source_id = Column(UUID(as_uuid=True), ForeignKey("crm_automations.id", ondelete="CASCADE"), nullable=False, index=True)
-    target_id = Column(UUID(as_uuid=True), ForeignKey("crm_automations.id", ondelete="CASCADE"), nullable=False, index=True)
+    source_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_automations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    target_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_automations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     condition_type = Column(String(50), nullable=True)
     condition_key = Column(String(100), nullable=True)
     condition_value = Column(String(200), nullable=True)
-    source_node_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=True)
-    target_node_id = Column(UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=True)
+    source_node_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=True
+    )
+    target_node_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_automation_nodes.id", ondelete="CASCADE"), nullable=True
+    )
     on_delete_cascade = Column(Boolean, default=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 

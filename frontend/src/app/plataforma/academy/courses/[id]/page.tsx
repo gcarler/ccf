@@ -5,10 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { 
-    GraduationCap, 
-    ShieldCheck, 
-    BookOpen, 
+import {
+    GraduationCap,
+    ShieldCheck,
+    BookOpen,
     ArrowLeft,
     FileText,
     Calendar
@@ -44,14 +44,14 @@ export default function CourseCoordinationPage() {
     const id = params?.id as string;
     const router = useRouter();
     const { token, isAuthenticated } = useAuth();
-    
+
     const [course, setCourse] = useState<CourseDetail | null>(null);
     const [stats, setStats] = useState<CourseStats | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!token || !isAuthenticated || !id) return;
-        
+
         const ctrl = new AbortController();
         const loadData = async () => {
             try {
@@ -107,7 +107,7 @@ export default function CourseCoordinationPage() {
                 ]}
                 rightActions={
                     <div className="flex items-center gap-3">
-                        <button 
+                        <button
                             onClick={() => router.push(`/plataforma/academy/courses/${id}/manage`)}
                             className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all"
                         >
@@ -154,7 +154,7 @@ export default function CourseCoordinationPage() {
                                     </div>
                                     <DSBadge tone={course.is_published ? 'emerald' : 'amber'} label={course.is_published ? 'PUBLICADO' : 'BORRADOR'} />
                                 </div>
-                                
+
                                 <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
 
                                 <div className="flex items-center justify-between">

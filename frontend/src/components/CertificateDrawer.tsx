@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { SITE_NAME } from '@/lib/site-config';
-import { 
-    X, 
-    Download, 
-    Printer, 
-    Award, 
-    ShieldCheck, 
-    Calendar, 
+import {
+    X,
+    Download,
+    Printer,
+    Award,
+    ShieldCheck,
+    Calendar,
     QrCode,
     Verified
 } from 'lucide-react';
@@ -53,9 +53,9 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
     return (
         <RightPanel open={true} onClose={onClose} title="Certificado Oficial" width={960}>
             <div className="relative w-full h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] flex flex-col md:flex-row overflow-hidden">
-                
+
                 {/* Close Button - Premium Positioning */}
-                <button 
+                <button
                     onClick={onClose}
                     className="absolute top-3 right-6 p-3 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md rounded-full transition-all z-50 border border-white/10 print:hidden"
                 >
@@ -107,13 +107,13 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 mt-3">
-                        <button 
+                        <button
                             onClick={handlePrint}
                             className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl shadow-[hsl(var(--info)/20%)]"
                         >
                             <Printer size={18} /> Imprimir / PDF
                         </button>
-                        <button 
+                        <button
                             onClick={handleDownloadImage}
                             className="w-full py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10 transition-all flex items-center justify-center gap-3"
                         >
@@ -124,10 +124,10 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
 
                 {/* Certificate Viewport */}
                 <div className="flex-1 p-4 md:p-4 flex items-center justify-center bg-[#f1f5f9] dark:bg-black overflow-y-auto">
-                    
+
                     {/* The Actual Document */}
                     <div id="certificate-to-print" className="certificate-paper w-full aspect-[1.414/1] max-w-[850px] bg-[hsl(var(--bg-primary))] border-[16px] border-double border-[hsl(var(--border))] p-4 md:p-4 relative flex flex-col items-center text-center shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] print:shadow-none">
-                        
+
                         {/* Elegant Corner Motifs */}
                         <div className="absolute top-4 left-4 size-10 border-t-4 border-l-4 border-[hsl(var(--warning)/40%)]/30 rounded-tl-[2rem]"></div>
                         <div className="absolute top-4 right-4 size-10 border-t-4 border-r-4 border-[hsl(var(--warning)/40%)]/30 rounded-tr-[2rem]"></div>
@@ -149,7 +149,7 @@ export default function CertificateDrawer({ certificate, enrollment, userName, o
                         </div>
 
                         <h1 className="text-xl md:text-xl font-serif italic text-[hsl(var(--text-primary))] mb-3 relative z-10">Diploma de Reconocimiento</h1>
-                        
+
                         <p className="text-[hsl(var(--text-secondary))] font-bold italic mb-3 uppercase tracking-wide text-2xs relative z-10">Se otorga con distinción a:</p>
                         <div className="relative mb-3 px-4 z-10">
                             <h2 className="text-lg md:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">

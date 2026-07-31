@@ -33,42 +33,41 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def _col_exists(table: str, col: str) -> bool:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM information_schema.columns "
-        "WHERE table_name=:t AND column_name=:c AND table_schema='public'"
-    ), {"t": table, "c": col})
+    r = conn.execute(
+        sa.text(
+            "SELECT count(*) FROM information_schema.columns "
+            "WHERE table_name=:t AND column_name=:c AND table_schema='public'"
+        ),
+        {"t": table, "c": col},
+    )
     return r.scalar() > 0
 
 
 def upgrade() -> None:
     conn = op.get_bind()
     renames = [
-        ("donations",              "member_id",  "persona_id"),
-        ("crm_tasks",              "member_id",  "persona_id"),
-        ("volunteer_shifts",       "member_id",  "persona_id"),
-        ("ministries",             "leader_id",  "leader_persona_id"),
-        ("member_ministries",      "member_id",  "persona_id"),
-        ("member_volunteer_skills","member_id",  "persona_id"),
+        ("donations", "member_id", "persona_id"),
+        ("crm_tasks", "member_id", "persona_id"),
+        ("volunteer_shifts", "member_id", "persona_id"),
+        ("ministries", "leader_id", "leader_persona_id"),
+        ("member_ministries", "member_id", "persona_id"),
+        ("member_volunteer_skills", "member_id", "persona_id"),
     ]
     for table, old_col, new_col in renames:
         if _col_exists(table, old_col) and not _col_exists(table, new_col):
-            conn.execute(sa.text(
-                f"ALTER TABLE {table} RENAME COLUMN {old_col} TO {new_col}"
-            ))
+            conn.execute(sa.text(f"ALTER TABLE {table} RENAME COLUMN {old_col} TO {new_col}"))
 
 
 def downgrade() -> None:
     conn = op.get_bind()
     renames = [
-        ("donations",              "persona_id",  "member_id"),
-        ("crm_tasks",              "persona_id",  "member_id"),
-        ("volunteer_shifts",       "persona_id",  "member_id"),
-        ("ministries",             "leader_persona_id", "leader_id"),
-        ("member_ministries",      "persona_id",  "member_id"),
-        ("member_volunteer_skills","persona_id",  "member_id"),
+        ("donations", "persona_id", "member_id"),
+        ("crm_tasks", "persona_id", "member_id"),
+        ("volunteer_shifts", "persona_id", "member_id"),
+        ("ministries", "leader_persona_id", "leader_id"),
+        ("member_ministries", "persona_id", "member_id"),
+        ("member_volunteer_skills", "persona_id", "member_id"),
     ]
     for table, old_col, new_col in renames:
         if _col_exists(table, old_col) and not _col_exists(table, new_col):
-            conn.execute(sa.text(
-                f"ALTER TABLE {table} RENAME COLUMN {old_col} TO {new_col}"
-            ))
+            conn.execute(sa.text(f"ALTER TABLE {table} RENAME COLUMN {old_col} TO {new_col}"))

@@ -67,7 +67,7 @@ export default function CmsTestimonialDetailPage() {
     const params = useParams();
     const slug = params?.slug as string;
     const { token } = useAuth();
-    
+
     const [testimonial, setTestimonial] = useState<TestimonialData | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -149,14 +149,14 @@ export default function CmsTestimonialDetailPage() {
                             </h1>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button 
+                            <button
                                 onClick={() => handleAction(testimonial.status === 'archived' ? 'pending' : 'archived')}
                                 className="px-3 py-2 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--destructive))] hover:text-white hover:border-[hsl(var(--destructive))] transition-all flex items-center gap-2"
                             >
                                 {testimonial.status === 'archived' ? <RotateCcw size={14} /> : <Archive size={14} />}
                                 {testimonial.status === 'archived' ? 'Restaurar' : 'Archivar'}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => handleAction('approved')}
                                 disabled={testimonial.status === 'archived'}
                                 className="px-3 py-2 bg-[hsl(var(--success))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/0.2)] hover:scale-105 transition-all flex items-center gap-2"

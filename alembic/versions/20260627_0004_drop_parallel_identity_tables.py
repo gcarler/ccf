@@ -38,9 +38,7 @@ def upgrade() -> None:
             if count:
                 populated.append(f"{table}={count}")
     if populated:
-        raise RuntimeError(
-            "Parallel identity tables contain data; migration stopped: " + ", ".join(populated)
-        )
+        raise RuntimeError("Parallel identity tables contain data; migration stopped: " + ", ".join(populated))
     for table in PARALLEL_TABLES:
         if table in existing:
             op.drop_table(table)

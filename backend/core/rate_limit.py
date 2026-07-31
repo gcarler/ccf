@@ -42,8 +42,6 @@ def rate_limiter(limit: int = 5, window_seconds: int = 60):
         if os.getenv("PYTEST_CURRENT_TEST"):
             return
 
-
-
         if get_settings().environment.strip().lower() in {"test", "testing"}:
             return
         redis_client = get_redis()

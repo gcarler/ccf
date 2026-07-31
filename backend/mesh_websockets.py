@@ -87,9 +87,7 @@ class RedisPubSubManager:
                 for room_name in rooms:
                     self.rooms[room_name].add(client_id)
 
-    async def connect(
-        self, client_id: str, websocket: WebSocket, rooms: Optional[List[str]] = None
-    ) -> None:
+    async def connect(self, client_id: str, websocket: WebSocket, rooms: Optional[List[str]] = None) -> None:
         await websocket.accept()
         self.active_connections[client_id] = websocket
         for room in rooms or ["global"]:
@@ -132,9 +130,7 @@ class RedisPubSubManager:
 
     async def _send_local(self, data, room: Optional[str] = None) -> None:
         message = data if isinstance(data, str) else json.dumps(data)
-        targets = (
-            self.rooms.get(room, set()) if room else set(self.active_connections.keys())
-        )
+        targets = self.rooms.get(room, set()) if room else set(self.active_connections.keys())
         for client_id in targets:
             connection = self.active_connections.get(client_id)
             if not connection:

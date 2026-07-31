@@ -32,7 +32,9 @@ def build_roles_config() -> dict[str, dict[str, str]]:
     roles_config = {
         "ADMINISTRADOR": {m: "manage" for m in MODULE_PERMISSION_MAP},
         "GESTOR": {m: "manage" for m in ["crm", "academy", "projects", "evangelism", "community", "messaging"]},
-        "EDITOR": {m: "edit" for m in ["crm", "projects", "evangelism", "cms", "community", "messaging", "spiritual_life"]},
+        "EDITOR": {
+            m: "edit" for m in ["crm", "projects", "evangelism", "cms", "community", "messaging", "spiritual_life"]
+        },
         "LECTOR": {m: "read" for m in MODULE_PERMISSION_MAP},
         "MIEMBRO": {"academy": "study"},
     }

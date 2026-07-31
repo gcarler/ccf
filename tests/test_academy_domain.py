@@ -21,9 +21,7 @@ def seed_course(db_session, code="COURSE-1"):
 
 
 def test_create_enrollment_prevents_duplicates(db_session):
-    user, persona, _ = seed_user_with_role(
-        db_session, role_name="LECTOR", email="student@example.com"
-    )
+    user, persona, _ = seed_user_with_role(db_session, role_name="LECTOR", email="student@example.com")
     course = seed_course(db_session)
     payload = EnrollmentCreate(persona_id=persona.id, course_id=course.id)
 
@@ -34,9 +32,7 @@ def test_create_enrollment_prevents_duplicates(db_session):
 
 
 def test_create_enrollment_uses_persona_uuid(db_session):
-    user, persona, _ = seed_user_with_role(
-        db_session, role_name="LECTOR", email="student@example.com"
-    )
+    user, persona, _ = seed_user_with_role(db_session, role_name="LECTOR", email="student@example.com")
     course = seed_course(db_session)
 
     enrollment = academy_crud.create_enrollment(
@@ -49,9 +45,7 @@ def test_create_enrollment_uses_persona_uuid(db_session):
 
 
 def test_archived_enrollment_is_reactivated(db_session):
-    _, persona, _ = seed_user_with_role(
-        db_session, role_name="LECTOR", email="student@example.com"
-    )
+    _, persona, _ = seed_user_with_role(db_session, role_name="LECTOR", email="student@example.com")
     course = seed_course(db_session)
     payload = EnrollmentCreate(persona_id=persona.id, course_id=course.id)
     enrollment = academy_crud.create_enrollment(db_session, payload)
@@ -110,12 +104,8 @@ def test_a07_update_course_blocks_cross_sede_with_sede_id_kwarg(db_session):
     """A-07 → ``update_course(db, course_id, data, sede_id=sede_b)`` retorna
     None (no muta) para un Course de sede_a. La row no se modifica."""
     sede_a, course_a, sede_b, _ = _seed_two_sedes(db_session)
-    result = academy_crud.update_course(
-        db_session, course_a.id, {"title": "Hacked"}, sede_id=sede_b.id
-    )
-    assert result is None, (
-        "A-07 leak: update_course con sede_id incorrecto no debe retornar el row."
-    )
+    result = academy_crud.update_course(db_session, course_a.id, {"title": "Hacked"}, sede_id=sede_b.id)
+    assert result is None, "A-07 leak: update_course con sede_id incorrecto no debe retornar el row."
     db_session.expire_all()
     assert db_session.query(models.Course).get(course_a.id).title == "Curso A", (
         "A-07 leak: la row del Course fue mutada por actor de otra sede."
@@ -126,16 +116,12 @@ def test_a07_archive_course_blocks_cross_sede_with_sede_id_kwarg(db_session):
     """A-07 → ``archive_course(db, course_id, sede_id=sede_b)`` retorna False y
     no archiva para un Course de sede_a."""
     sede_a, course_a, sede_b, _ = _seed_two_sedes(db_session)
-    archived = academy_crud.archive_course(
-        db_session, course_a.id, sede_id=sede_b.id
-    )
-    assert archived is False, (
-        "A-07 leak: archive_course con sede_id incorrecto no debe retornar True."
-    )
+    archived = academy_crud.archive_course(db_session, course_a.id, sede_id=sede_b.id)
+    assert archived is False, "A-07 leak: archive_course con sede_id incorrecto no debe retornar True."
     db_session.expire_all()
-    assert (
-        db_session.query(models.Course).get(course_a.id).deleted_at is None
-    ), "A-07 leak: el Course fue archivado por actor de otra sede."
+    assert db_session.query(models.Course).get(course_a.id).deleted_at is None, (
+        "A-07 leak: el Course fue archivado por actor de otra sede."
+    )
 
 
 def test_h04_list_enrollments_filters_by_sede_id(db_session):
@@ -213,21 +199,15 @@ def test_h06_create_enrollment_reactivates_own_sede(db_session):
     import uuid as _uuid
 
     sede_a, course_a, _, _ = _seed_two_sedes(db_session)
-    persona = models.Persona(
-        id=_uuid.uuid4(), first_name="A", last_name="B", email="h6a@example.com"
-    )
+    persona = models.Persona(id=_uuid.uuid4(), first_name="A", last_name="B", email="h6a@example.com")
     db_session.add(persona)
     db_session.commit()
     payload = EnrollmentCreate(persona_id=persona.id, course_id=course_a.id)
-    enrollment = academy_crud.create_enrollment(
-        db_session, payload, sede_id=sede_a.id
-    )
+    enrollment = academy_crud.create_enrollment(db_session, payload, sede_id=sede_a.id)
     # Soft-delete y reaciclar con misma sede → reactiva.
     enrollment.deleted_at = _utcnow()
     db_session.commit()
-    restored = academy_crud.create_enrollment(
-        db_session, payload, sede_id=sede_a.id
-    )
+    restored = academy_crud.create_enrollment(db_session, payload, sede_id=sede_a.id)
     assert restored.id == enrollment.id
     assert restored.deleted_at is None
     assert restored.status == "active"
@@ -249,20 +229,14 @@ def test_h06_create_enrollment_reactivates_global_course(db_session):
     )
     db_session.add(course_global)
     db_session.commit()
-    persona = models.Persona(
-        id=_uuid.uuid4(), first_name="G", last_name="B", email="h6g@example.com"
-    )
+    persona = models.Persona(id=_uuid.uuid4(), first_name="G", last_name="B", email="h6g@example.com")
     db_session.add(persona)
     db_session.commit()
     payload = EnrollmentCreate(persona_id=persona.id, course_id=course_global.id)
-    enrollment = academy_crud.create_enrollment(
-        db_session, payload, sede_id=sede_a.id
-    )
+    enrollment = academy_crud.create_enrollment(db_session, payload, sede_id=sede_a.id)
     enrollment.deleted_at = _utcnow()
     db_session.commit()
-    restored = academy_crud.create_enrollment(
-        db_session, payload, sede_id=sede_a.id
-    )
+    restored = academy_crud.create_enrollment(db_session, payload, sede_id=sede_a.id)
     assert restored.id == enrollment.id
     assert restored.deleted_at is None
 
@@ -276,9 +250,7 @@ def test_h06_create_enrollment_blocks_cross_sede_reactivation(db_session):
     import uuid as _uuid
 
     sede_a, course_a, sede_b, _ = _seed_two_sedes(db_session)
-    persona = models.Persona(
-        id=_uuid.uuid4(), first_name="X", last_name="Y", email="h6x@example.com"
-    )
+    persona = models.Persona(id=_uuid.uuid4(), first_name="X", last_name="Y", email="h6x@example.com")
     db_session.add(persona)
     db_session.commit()
     payload = EnrollmentCreate(persona_id=persona.id, course_id=course_a.id)
@@ -402,11 +374,7 @@ def test_h08_create_course_unique_violation_surfaces_409(db_session):
     el wrapper, no un IntegrityError 500 sin tragar."""
     from fastapi import HTTPException
 
-    academy_crud.create_course(
-        db_session, {"title": "C1", "code": "DUP-H08", "modality": "online"}
-    )
+    academy_crud.create_course(db_session, {"title": "C1", "code": "DUP-H08", "modality": "online"})
     with pytest.raises(HTTPException) as exc_info:
-        academy_crud.create_course(
-            db_session, {"title": "C2", "code": "DUP-H08", "modality": "online"}
-        )
+        academy_crud.create_course(db_session, {"title": "C2", "code": "DUP-H08", "modality": "online"})
     assert exc_info.value.status_code == 409

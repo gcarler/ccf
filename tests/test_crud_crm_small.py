@@ -42,6 +42,7 @@ class TestCrudPipeline:
     def test_create_list_get_update_archive_pipeline(self, db_session):
         sede_id = uuid.uuid4()
         from backend.models_crm_pipeline import TipoPipelineEnum
+
         data = {"id": uuid.uuid4(), "sede_id": sede_id, "nombre": "Test Pipe", "tipo": TipoPipelineEnum.CONSEJERIA}
         row = pipeline.create_pipeline(db_session, data)
         assert row.id == data["id"]
@@ -81,9 +82,7 @@ class TestCrudPipeline:
 class TestCrudPrayer:
     def test_create_list_get_update_delete(self, db_session):
         sede = _make_sede(db_session)
-        payload = schemas.PrayerRequestCreate(
-            requester_name="Prayer Man", request_text="Pray for me", source="test"
-        )
+        payload = schemas.PrayerRequestCreate(requester_name="Prayer Man", request_text="Pray for me", source="test")
         row = prayer.create_prayer_request(db_session, payload)
         assert row.requester_name == "Prayer Man"
         row.sede_id = sede.id
@@ -95,9 +94,7 @@ class TestCrudPrayer:
         got = prayer.get_prayer_request(db_session, row.id)
         assert got is not None
 
-        upd = prayer.update_prayer_request(
-            db_session, row.id, schemas.PrayerRequestUpdate(status="answered")
-        )
+        upd = prayer.update_prayer_request(db_session, row.id, schemas.PrayerRequestUpdate(status="answered"))
         assert upd.status == "answered"
 
         assert prayer.delete_prayer_request(db_session, row.id) is True
@@ -114,8 +111,11 @@ class TestCrudVolunteers:
         sede = _make_sede(db_session)
         p = _make_persona(db_session, sede.id)
         payload = schemas.VolunteerShiftCreate(
-            persona_id=p.id, role_name="Usher", team_name="Greeting",
-            shift_start="2026-07-01T08:00:00Z", shift_end="2026-07-01T12:00:00Z",
+            persona_id=p.id,
+            role_name="Usher",
+            team_name="Greeting",
+            shift_start="2026-07-01T08:00:00Z",
+            shift_end="2026-07-01T12:00:00Z",
         )
         shift = volunteers.create_volunteer_shift(db_session, payload)
         assert shift.persona_id == p.id
@@ -126,9 +126,7 @@ class TestCrudVolunteers:
         got = volunteers.get_volunteer_shift(db_session, shift.id)
         assert got is not None
 
-        upd = volunteers.update_volunteer_shift(
-            db_session, shift.id, schemas.VolunteerShiftUpdate(status="cancelled")
-        )
+        upd = volunteers.update_volunteer_shift(db_session, shift.id, schemas.VolunteerShiftUpdate(status="cancelled"))
         assert upd.status == "cancelled"
 
         assert volunteers.delete_volunteer_shift(db_session, shift.id) is True
@@ -139,17 +137,17 @@ class TestCrudVolunteers:
 class TestCrudCommunication:
     def _make_admin_user(self, db_session):
         from tests.conftest import seed_admin
+
         admin, _, sede = seed_admin(db_session, email=f"comm_{uuid.uuid4().hex[:8]}@test.com")
         return admin, sede
 
     def _create_log(self, db_session, admin, persona_id):
-        payload = schemas.CommunicationLogCreate(
-            persona_id=persona_id, channel="call", content="Test call"
-        )
+        payload = schemas.CommunicationLogCreate(persona_id=persona_id, channel="call", content="Test call")
         return communication.create_communication_log(db_session, payload, actor_user_id=admin.id)
 
     def test_create_list_get_update_delete(self, db_session):
         from backend.schemas.notifications import CommunicationLogUpdate
+
         admin, sede = self._make_admin_user(db_session)
         p = _make_persona(db_session, sede.id)
 
@@ -162,9 +160,7 @@ class TestCrudCommunication:
         got = communication.get_communication_log(db_session, str(row.id))
         assert got is not None
 
-        upd = communication.update_communication_log(
-            db_session, str(row.id), CommunicationLogUpdate(content="Updated")
-        )
+        upd = communication.update_communication_log(db_session, str(row.id), CommunicationLogUpdate(content="Updated"))
         assert upd.content == "Updated"
 
         assert communication.delete_communication_log(db_session, str(row.id)) is True
@@ -177,6 +173,7 @@ class TestCrudCommunication:
         db_session.add(p)
         db_session.commit()
         from fastapi import HTTPException
+
         with pytest.raises(HTTPException):
             self._create_log(db_session, admin, p.id)
 
@@ -185,6 +182,7 @@ class TestCrudCommunication:
 class TestCrudCommunity:
     def test_create_list_get_update_delete(self, db_session):
         from backend.schemas.operational import CommunityBoardCardUpdate
+
         sede = _make_sede(db_session)
         payload = schemas.CommunityBoardCardCreate(title="Card 1", content="Hello")
         row = community.create_community_card(db_session, payload, actor_sede=sede.id)
@@ -197,9 +195,7 @@ class TestCrudCommunity:
         got = community.get_community_card(db_session, row.id)
         assert got is not None
 
-        upd = community.update_community_card(
-            db_session, row.id, CommunityBoardCardUpdate(title="Updated")
-        )
+        upd = community.update_community_card(db_session, row.id, CommunityBoardCardUpdate(title="Updated"))
         assert upd.title == "Updated"
 
         assert community.delete_community_card(db_session, row.id) is True
@@ -225,9 +221,7 @@ class TestCrudDonations:
         got = donations.get_donation(db_session, row.id)
         assert got is not None
 
-        upd = donations.update_donation(
-            db_session, row.id, schemas.DonationUpdate(amount=50.0)
-        )
+        upd = donations.update_donation(db_session, row.id, schemas.DonationUpdate(amount=50.0))
         assert upd.amount == 50.0
 
         assert donations.delete_donation(db_session, row.id) is True
@@ -239,7 +233,8 @@ class TestCrudEvents:
     def test_create_list_get_update_delete(self, db_session):
         sede = _make_sede(db_session)
         payload = schemas.CrmEventCreate(
-            name="Evento Test", event_date="2026-08-01T10:00:00Z",
+            name="Evento Test",
+            event_date="2026-08-01T10:00:00Z",
             target_audience="ALL",
         )
         row = events.create_crm_event(db_session, payload)
@@ -253,9 +248,7 @@ class TestCrudEvents:
         got = events.get_crm_event(db_session, row.id)
         assert got is not None
 
-        upd = events.update_crm_event(
-            db_session, row.id, schemas.CrmEventUpdate(name="Updated")
-        )
+        upd = events.update_crm_event(db_session, row.id, schemas.CrmEventUpdate(name="Updated"))
         assert upd.name == "Updated"
 
         assert events.delete_crm_event(db_session, row.id) is True
@@ -264,14 +257,13 @@ class TestCrudEvents:
     def test_event_attendance_create_get_delete(self, db_session):
         sede = _make_sede(db_session)
         payload = schemas.CrmEventCreate(
-            name="Event Attend", event_date="2026-08-01T10:00:00Z",
+            name="Event Attend",
+            event_date="2026-08-01T10:00:00Z",
             target_audience="ALL",
         )
         evt = events.create_crm_event(db_session, payload)
         att = events.create_event_attendance(
-            db_session, schemas.EventAttendanceCreate(
-                event_id=evt.id, persona_id=_make_persona(db_session, sede.id).id
-            )
+            db_session, schemas.EventAttendanceCreate(event_id=evt.id, persona_id=_make_persona(db_session, sede.id).id)
         )
         assert att.event_id == evt.id
 
@@ -326,9 +318,8 @@ class TestCrudMilestones:
         sede = _make_sede(db_session)
         p = _make_persona(db_session, sede.id)
         from datetime import datetime, timezone
-        ms = milestones.create_milestone(
-            db_session, p.id, "BAPTISM", datetime.now(timezone.utc), sede_id=sede.id
-        )
+
+        ms = milestones.create_milestone(db_session, p.id, "BAPTISM", datetime.now(timezone.utc), sede_id=sede.id)
         assert ms.type == "BAPTISM"
 
         lst1 = milestones.get_milestones(db_session, p.id)
@@ -351,6 +342,7 @@ class TestCrudMilestones:
 class TestCrudNotifications:
     def test_crud_cycle(self, db_session):
         from tests.conftest import seed_admin
+
         admin, _, _ = seed_admin(db_session, email=f"notif_{uuid.uuid4().hex[:8]}@test.com")
         p = resolve_persona_id_for_user(db_session, admin.id)
         n = models.Notification(id=uuid.uuid4(), user_id=p, title="Test", content="Hello")
@@ -387,9 +379,7 @@ class TestCrudCounseling:
     def test_create_list_get_update_delete(self, db_session):
         sede = _make_sede(db_session)
         p = _make_persona(db_session, sede.id)
-        payload = schemas.CounselingTicketCreate(
-            persona_id=p.id, subject="Need help", notes="Crisis"
-        )
+        payload = schemas.CounselingTicketCreate(persona_id=p.id, subject="Need help", notes="Crisis")
         ticket = counseling.create_counseling_ticket(db_session, payload)
         assert ticket.subject == "Need help"
 

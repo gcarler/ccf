@@ -1,4 +1,5 @@
 """Tests for evangelism_grupos_sesiones.py and evangelism_grupos_asistencias.py."""
+
 from __future__ import annotations
 
 import uuid
@@ -25,11 +26,15 @@ class TestSesiones:
         assert full["c"].get("/api/evangelism/grupos/sesiones", headers=full["h"]).status_code in (200, 404)
 
     def test_get_not_found(self, full):
-        assert full["c"].get(f"/api/evangelism/grupos/{uuid.uuid4()}/sesiones",
-            headers=full["h"]).status_code in (200, 404)
+        assert full["c"].get(f"/api/evangelism/grupos/{uuid.uuid4()}/sesiones", headers=full["h"]).status_code in (
+            200,
+            404,
+        )
 
 
 class TestAsistencias:
     def test_get_not_found(self, full):
-        assert full["c"].get(f"/api/evangelism/grupos/{uuid.uuid4()}/asistencias",
-            headers=full["h"]).status_code in (200, 404)
+        assert full["c"].get(f"/api/evangelism/grupos/{uuid.uuid4()}/asistencias", headers=full["h"]).status_code in (
+            200,
+            404,
+        )

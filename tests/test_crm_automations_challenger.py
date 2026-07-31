@@ -22,39 +22,43 @@ def test_check_for_cycles_dfs_direct():
     assert ["A", "A"] in cycles
 
     # 4. Simple cycle
-    has_cycle, cycles = check_for_cycles_dfs(["A", "B"], [
-        {"source": "A", "target": "B"},
-        {"source": "B", "target": "A"}
-    ])
+    has_cycle, cycles = check_for_cycles_dfs(
+        ["A", "B"], [{"source": "A", "target": "B"}, {"source": "B", "target": "A"}]
+    )
     assert has_cycle
     assert ["A", "B", "A"] in cycles or ["B", "A", "B"] in cycles
 
     # 5. Simple path (no cycle)
-    has_cycle, cycles = check_for_cycles_dfs(["A", "B", "C"], [
-        {"source": "A", "target": "B"},
-        {"source": "B", "target": "C"}
-    ])
+    has_cycle, cycles = check_for_cycles_dfs(
+        ["A", "B", "C"], [{"source": "A", "target": "B"}, {"source": "B", "target": "C"}]
+    )
     assert not has_cycle
     assert cycles == []
 
     # 6. Branching and merging (DAG, no cycle)
-    has_cycle, cycles = check_for_cycles_dfs(["A", "B", "C", "D"], [
-        {"source": "A", "target": "B"},
-        {"source": "A", "target": "C"},
-        {"source": "B", "target": "D"},
-        {"source": "C", "target": "D"}
-    ])
+    has_cycle, cycles = check_for_cycles_dfs(
+        ["A", "B", "C", "D"],
+        [
+            {"source": "A", "target": "B"},
+            {"source": "A", "target": "C"},
+            {"source": "B", "target": "D"},
+            {"source": "C", "target": "D"},
+        ],
+    )
     assert not has_cycle
     assert cycles == []
 
     # 7. Complex cycle (inner loop)
     # A -> B -> C -> D -> B
-    has_cycle, cycles = check_for_cycles_dfs(["A", "B", "C", "D"], [
-        {"source": "A", "target": "B"},
-        {"source": "B", "target": "C"},
-        {"source": "C", "target": "D"},
-        {"source": "D", "target": "B"}
-    ])
+    has_cycle, cycles = check_for_cycles_dfs(
+        ["A", "B", "C", "D"],
+        [
+            {"source": "A", "target": "B"},
+            {"source": "B", "target": "C"},
+            {"source": "C", "target": "D"},
+            {"source": "D", "target": "B"},
+        ],
+    )
     assert has_cycle
     assert len(cycles) > 0
     # The cycle path should contain B, C, D
@@ -66,24 +70,30 @@ def test_check_for_cycles_dfs_direct():
 
     # 8. Multiple cycles
     # A -> B -> A and C -> D -> C
-    has_cycle, cycles = check_for_cycles_dfs(["A", "B", "C", "D"], [
-        {"source": "A", "target": "B"},
-        {"source": "B", "target": "A"},
-        {"source": "C", "target": "D"},
-        {"source": "D", "target": "C"}
-    ])
+    has_cycle, cycles = check_for_cycles_dfs(
+        ["A", "B", "C", "D"],
+        [
+            {"source": "A", "target": "B"},
+            {"source": "B", "target": "A"},
+            {"source": "C", "target": "D"},
+            {"source": "D", "target": "C"},
+        ],
+    )
     assert has_cycle
     assert len(cycles) >= 2
 
     # 9. Disconnected components (one clean path, one with cycle)
     # Component 1: A -> B -> C
     # Component 2: D -> E -> D
-    has_cycle, cycles = check_for_cycles_dfs(["A", "B", "C", "D", "E"], [
-        {"source": "A", "target": "B"},
-        {"source": "B", "target": "C"},
-        {"source": "D", "target": "E"},
-        {"source": "E", "target": "D"}
-    ])
+    has_cycle, cycles = check_for_cycles_dfs(
+        ["A", "B", "C", "D", "E"],
+        [
+            {"source": "A", "target": "B"},
+            {"source": "B", "target": "C"},
+            {"source": "D", "target": "E"},
+            {"source": "E", "target": "D"},
+        ],
+    )
     assert has_cycle
     assert len(cycles) == 1
     assert ["D", "E", "D"] in cycles or ["E", "D", "E"] in cycles
@@ -91,7 +101,9 @@ def test_check_for_cycles_dfs_direct():
     # 10. Deep/long cycle
     # A -> B -> C -> D -> E -> F -> G -> A
     nodes = ["A", "B", "C", "D", "E", "F", "G"]
-    edges = [{"source": nodes[i], "target": nodes[i+1]} for i in range(len(nodes)-1)] + [{"source": "G", "target": "A"}]
+    edges = [{"source": nodes[i], "target": nodes[i + 1]} for i in range(len(nodes) - 1)] + [
+        {"source": "G", "target": "A"}
+    ]
     has_cycle, cycles = check_for_cycles_dfs(nodes, edges)
     assert has_cycle
     assert len(cycles) > 0
@@ -117,10 +129,7 @@ def client_auth_for_automations(client, db_session):
 def test_validate_path_api_scenarios(client_auth_for_automations):
     client, headers = client_auth_for_automations
     # Less than 3 nodes
-    payload = {
-        "nodes": ["n1", "n2"],
-        "edges": [{"source": "n1", "target": "n2"}]
-    }
+    payload = {"nodes": ["n1", "n2"], "edges": [{"source": "n1", "target": "n2"}]}
     response = client.post("/api/crm/automations/flows/validate-path", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is False
@@ -128,10 +137,7 @@ def test_validate_path_api_scenarios(client_auth_for_automations):
     # Valid linear 3 nodes path
     payload = {
         "nodes": ["n1", "n2", "n3"],
-        "edges": [
-            {"source": "n1", "target": "n2"},
-            {"source": "n2", "target": "n3"}
-        ]
+        "edges": [{"source": "n1", "target": "n2"}, {"source": "n2", "target": "n3"}],
     }
     response = client.post("/api/crm/automations/flows/validate-path", json=payload, headers=headers)
     assert response.status_code == 200
@@ -149,8 +155,8 @@ def test_validate_path_api_scenarios(client_auth_for_automations):
             {"source": "n1", "target": "n3"},
             {"source": "n2", "target": "n4"},
             {"source": "n4", "target": "n5"},
-            {"source": "n3", "target": "n5"}
-        ]
+            {"source": "n3", "target": "n5"},
+        ],
     }
     response = client.post("/api/crm/automations/flows/validate-path", json=payload, headers=headers)
     assert response.status_code == 200
@@ -161,21 +167,13 @@ def test_validate_path_api_scenarios(client_auth_for_automations):
 def test_validate_node_api_scenarios(client_auth_for_automations):
     client, headers = client_auth_for_automations
     # Normal node without self-reference
-    payload = {
-        "nodes": ["n1", "n2"],
-        "node_id": "n1",
-        "edges": [{"source": "n1", "target": "n2"}]
-    }
+    payload = {"nodes": ["n1", "n2"], "node_id": "n1", "edges": [{"source": "n1", "target": "n2"}]}
     response = client.post("/api/crm/automations/flows/validate-node", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is True
 
     # Node with self-reference
-    payload = {
-        "nodes": ["n1"],
-        "node_id": "n1",
-        "edges": [{"source": "n1", "target": "n1"}]
-    }
+    payload = {"nodes": ["n1"], "node_id": "n1", "edges": [{"source": "n1", "target": "n1"}]}
     response = client.post("/api/crm/automations/flows/validate-node", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json()["valid"] is False

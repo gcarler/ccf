@@ -13,6 +13,7 @@ Targets (Sprint 2 of the Projects-node debt roadmap):
 5. Concurrent rapid-fire saves (race) must coalesce on the client — backend
    accepts the last writer wins semantics. — Locks backend contract.
 """
+
 from __future__ import annotations
 
 import json as _json
@@ -30,9 +31,7 @@ class TestWhiteboardJSONValidation:
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
         headers = auth_headers(client)
-        payload = _json.dumps(
-            [{"type": "rectangle", "left": 10, "top": 10, "width": 80, "height": 40}]
-        )
+        payload = _json.dumps([{"type": "rectangle", "left": 10, "top": 10, "width": 80, "height": 40}])
 
         resp = client.post(
             f"/api/projects/{proj.id}/whiteboard",
@@ -118,9 +117,7 @@ class TestWhiteboardRoundTrip:
         # Round-trip equality: parse both and deep-compare
         posted = _json.loads(post.json()["elements_json"])
         refetched = _json.loads(get.json()["elements_json"])
-        assert posted == refetched, (
-            f"Round-trip drift:\n posted={posted}\n refetched={refetched}"
-        )
+        assert posted == refetched, f"Round-trip drift:\n posted={posted}\n refetched={refetched}"
         assert refetched == elements, "Get endpoint mutated the elements"
 
     def test_round_trip_with_unicode_and_emoji(self, client, db_session):
@@ -158,9 +155,7 @@ class TestWhiteboardRoundTrip:
 
         get = client.get(f"/api/projects/{proj.id}/whiteboard", headers=headers)
         final = _json.loads(get.json()["elements_json"])
-        assert final == [{"type": "i-text", "version": 2}], (
-            f"Last-writer-wins broken: {final}"
-        )
+        assert final == [{"type": "i-text", "version": 2}], f"Last-writer-wins broken: {final}"
 
 
 class TestWhiteboardSoftDelete:
@@ -191,9 +186,7 @@ class TestWhiteboardSoftDelete:
         )
         # And GET /projects/{id}/whiteboard must NOT return the board
         get = client.get(f"/api/projects/{proj.id}/whiteboard", headers=headers)
-        assert get.json() is None, (
-            f"GET must return null for soft-deleted board, got {get.json()}"
-        )
+        assert get.json() is None, f"GET must return null for soft-deleted board, got {get.json()}"
 
     def test_soft_delete_preserves_elements_json_in_db(self, client, db_session):
         """Soft delete is reversible for audit — elements_json retained."""
@@ -206,9 +199,7 @@ class TestWhiteboardSoftDelete:
         client.delete(f"/api/projects/{proj.id}/whiteboard", headers=headers)
 
         # Direct DB inspection
-        board_row = db_session.query(ProjectWhiteboard).filter(
-            ProjectWhiteboard.project_id == proj.id
-        ).first()
+        board_row = db_session.query(ProjectWhiteboard).filter(ProjectWhiteboard.project_id == proj.id).first()
         assert board_row is not None, "Soft delete removed the row (should NOT)"
         assert board_row.deleted_at is not None, "deleted_at not stamped"
         assert _json.loads(board_row.elements_json) == elements

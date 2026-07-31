@@ -205,7 +205,14 @@ def runtime_supervision_checks() -> list[Check]:
         if status != "online":
             checks.append(Check(f"PM2 {label}", "FAIL", f"{process_name} status={status} restarts={restarts}"))
         elif restarts > 120:
-            checks.append(Check(f"Runtime {label}", "WARN", f"{process_name} online but restart count is high: {restarts}", severity="high"))
+            checks.append(
+                Check(
+                    f"Runtime {label}",
+                    "WARN",
+                    f"{process_name} online but restart count is high: {restarts}",
+                    severity="high",
+                )
+            )
         else:
             checks.append(Check(f"Runtime {label}", "OK", f"{process_name} online restarts={restarts} memory={memory}"))
     return checks
@@ -263,9 +270,7 @@ def recent_log_checks() -> list[Check]:
         failures = [
             line
             for line in lines
-            if pattern.search(line)
-            and not youtube_ignored.search(line)
-            and not mercadopago_ignored.search(line)
+            if pattern.search(line) and not youtube_ignored.search(line) and not mercadopago_ignored.search(line)
         ]
         if failures:
             checks.append(Check(f"Recent log {log_path.name}", "FAIL", failures[-1][:240]))
@@ -281,7 +286,12 @@ def git_checks() -> list[Check]:
     first_line = output.splitlines()[0] if output else ""
     dirty = [line for line in output.splitlines()[1:] if line.strip()]
     checks = [
-        Check("Git branch sync", "OK" if "origin/main" in first_line else "WARN", first_line or "unknown", severity="medium"),
+        Check(
+            "Git branch sync",
+            "OK" if "origin/main" in first_line else "WARN",
+            first_line or "unknown",
+            severity="medium",
+        ),
         Check("Git worktree clean", "OK" if not dirty else "FAIL", "clean" if not dirty else "\n".join(dirty[:8])),
     ]
     return checks
@@ -294,7 +304,14 @@ def backup_checks() -> list[Check]:
         if backup_dir.exists():
             candidates.extend(path for path in backup_dir.glob("*") if path.is_file())
     if not candidates:
-        return [Check("Database backup artifact", "WARN", "No backup files found in /root/backups or repo backups/", severity="high")]
+        return [
+            Check(
+                "Database backup artifact",
+                "WARN",
+                "No backup files found in /root/backups or repo backups/",
+                severity="high",
+            )
+        ]
     newest = max(candidates, key=lambda path: path.stat().st_mtime)
     age_hours = (time.time() - newest.stat().st_mtime) / 3600
     if age_hours <= 24:
@@ -429,12 +446,14 @@ def markdown_report(report: dict) -> str:
         "",
     ]
     for module in report["modules"]:
-        lines.extend([
-            f"## {module['label']} - {module['status']} ({module['score']}%)",
-            "",
-            "| Check | Status | Detail |",
-            "|---|---:|---|",
-        ])
+        lines.extend(
+            [
+                f"## {module['label']} - {module['status']} ({module['score']}%)",
+                "",
+                "| Check | Status | Detail |",
+                "|---|---:|---|",
+            ]
+        )
         for check in module["checks"]:
             detail = str(check["detail"]).replace("\n", "<br>").replace("|", "\\|")
             lines.append(f"| {check['name']} | {check['status']} | {detail} |")

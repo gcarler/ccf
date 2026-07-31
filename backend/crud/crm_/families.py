@@ -1,4 +1,5 @@
 """Family CRUD and family personas."""
+
 from typing import Optional
 from uuid import UUID
 
@@ -31,12 +32,16 @@ def get_families(
     if sede_id is not None:
         # Family no tiene sede_id propio -> membership-scoped: la familia
         # aparece sólo si existe al menos una Persona con sede_id + family_id.
-        base_q = base_q.join(
-            models.Persona,
-            models.Persona.family_id == models.Family.id,
-        ).filter(
-            models.Persona.sede_id == sede_id,
-        ).distinct()
+        base_q = (
+            base_q.join(
+                models.Persona,
+                models.Persona.family_id == models.Family.id,
+            )
+            .filter(
+                models.Persona.sede_id == sede_id,
+            )
+            .distinct()
+        )
 
     families = base_q.order_by(models.Family.name.asc()).offset(skip).limit(limit).all()
 

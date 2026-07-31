@@ -1,19 +1,25 @@
 """Tests exhaustivos y estructurales para backend/services/automation_engine.py (100% Cobertura)."""
 
 import uuid
-import pytest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
-from backend.models_crm import Persona, CrmAutomation, CrmAutomationEdge, PendingCrmAction, PlantillaMensaje, CategoriaRecurso, CanalEnvio
+from backend.models_crm import (
+    CanalEnvio,
+    CategoriaRecurso,
+    CrmAutomation,
+    CrmAutomationEdge,
+    PendingCrmAction,
+    Persona,
+    PlantillaMensaje,
+)
+from backend.models_crm_pipeline import CanalOrigenEnum, CasoCRM, EtapaPipeline, PipelineCRM, TipoPipelineEnum
 from backend.models_evangelism import Sede
-from backend.models_crm_pipeline import CasoCRM, PipelineCRM, EtapaPipeline, TipoPipelineEnum, CanalOrigenEnum
 from backend.models_projects import ProjectTask
-from backend.services.automation_engine import AutomationEngine, engine
+from backend.services.automation_engine import AutomationEngine
 
 
 class TestAutomationEngine100Pct:
-
     def test_singleton_start_stop(self):
         eng1 = AutomationEngine()
         eng2 = AutomationEngine()
@@ -31,9 +37,11 @@ class TestAutomationEngine100Pct:
         mock_session.return_value = mock_db
 
         eng = AutomationEngine()
-        with patch.object(AutomationEngine, "_process_overload_rule") as m1, \
-             patch.object(AutomationEngine, "_process_deadline_rule") as m2, \
-             patch.object(AutomationEngine, "_process_crm_pending_actions") as m3:
+        with (
+            patch.object(AutomationEngine, "_process_overload_rule") as m1,
+            patch.object(AutomationEngine, "_process_deadline_rule") as m2,
+            patch.object(AutomationEngine, "_process_crm_pending_actions") as m3,
+        ):
             eng._check_all_rules()
             m1.assert_called_once()
             m2.assert_called_once()
@@ -57,6 +65,7 @@ class TestAutomationEngine100Pct:
 
     def test_process_deadline_rule(self, db_session):
         from backend.models_projects import Project
+
         eng = AutomationEngine()
         user_id = uuid.uuid4()
         project = Project(name="Proyecto Test")
@@ -78,7 +87,9 @@ class TestAutomationEngine100Pct:
         eng._process_deadline_rule(db_session)
 
     def test_trigger_crm_automation(self, db_session):
-        auto = CrmAutomation(name="Auto Welcome", trigger_event="persona_created", action_type="whatsapp", delay_minutes=5)
+        auto = CrmAutomation(
+            name="Auto Welcome", trigger_event="persona_created", action_type="whatsapp", delay_minutes=5
+        )
         db_session.add(auto)
         db_session.commit()
 
@@ -172,11 +183,15 @@ class TestAutomationEngine100Pct:
         db_session.commit()
 
         eng = AutomationEngine()
-        with patch("backend.services.messaging.get_messaging_gateway") as mock_gw, \
-             patch("backend.crud.crm_.resources.create_envio") as mock_envio:
+        with (
+            patch("backend.services.messaging.get_messaging_gateway") as mock_gw,
+            patch("backend.crud.crm_.resources.create_envio") as mock_envio,
+        ):
             mock_gateway = MagicMock()
+
             async def dummy_coro(*args, **kwargs):
                 return True
+
             mock_gateway.send_whatsapp.side_effect = lambda *a, **kw: dummy_coro()
             mock_gw.return_value = mock_gateway
 
@@ -284,11 +299,15 @@ class TestAutomationEngine100Pct:
         db_session.commit()
 
         eng = AutomationEngine()
-        with patch("backend.services.messaging.get_messaging_gateway") as mock_gw, \
-             patch("backend.crud.crm_.resources.create_envio") as mock_envio:
+        with (
+            patch("backend.services.messaging.get_messaging_gateway") as mock_gw,
+            patch("backend.crud.crm_.resources.create_envio") as mock_envio,
+        ):
             mock_gateway = MagicMock()
+
             async def dummy_coro(*args, **kwargs):
                 return True
+
             mock_gateway.send_email.side_effect = lambda *a, **kw: dummy_coro()
             mock_gateway.send_whatsapp.side_effect = lambda *a, **kw: dummy_coro()
             mock_gateway.send_sms.side_effect = lambda *a, **kw: dummy_coro()
@@ -344,34 +363,61 @@ class TestAutomationEngine100Pct:
 
         eng = AutomationEngine()
 
-        with patch("backend.services.messaging.get_messaging_gateway") as mock_gw, \
-             patch("backend.crud.crm_.resources.create_envio") as mock_envio:
+        with (
+            patch("backend.services.messaging.get_messaging_gateway") as mock_gw,
+            patch("backend.crud.crm_.resources.create_envio") as mock_envio,
+        ):
             mock_gateway = MagicMock()
+
             async def dummy_coro(*args, **kwargs):
                 return True
+
             mock_gateway.send_whatsapp.side_effect = lambda *a, **kw: dummy_coro()
             mock_gateway.send_email.side_effect = lambda *a, **kw: dummy_coro()
             mock_gateway.send_sms.side_effect = lambda *a, **kw: dummy_coro()
             mock_gw.return_value = mock_gateway
 
             for op, key, val, should_queue in operators:
-                auto_src = CrmAutomation(name=f"Src {op}", trigger_event="persona_created", action_type="whatsapp", action_payload={"canal": "whatsapp"})
-                auto_tgt = CrmAutomation(name=f"Tgt {op}", trigger_event="persona_created", action_type="whatsapp", action_payload={"canal": "whatsapp"}, delay_minutes=5)
+                auto_src = CrmAutomation(
+                    name=f"Src {op}",
+                    trigger_event="persona_created",
+                    action_type="whatsapp",
+                    action_payload={"canal": "whatsapp"},
+                )
+                auto_tgt = CrmAutomation(
+                    name=f"Tgt {op}",
+                    trigger_event="persona_created",
+                    action_type="whatsapp",
+                    action_payload={"canal": "whatsapp"},
+                    delay_minutes=5,
+                )
                 db_session.add_all([auto_src, auto_tgt])
                 db_session.commit()
 
-                edge = CrmAutomationEdge(source_id=auto_src.id, target_id=auto_tgt.id, condition_type=op, condition_key=key, condition_value=val)
+                edge = CrmAutomationEdge(
+                    source_id=auto_src.id,
+                    target_id=auto_tgt.id,
+                    condition_type=op,
+                    condition_key=key,
+                    condition_value=val,
+                )
                 db_session.add(edge)
                 db_session.commit()
 
-                p_act = PendingCrmAction(automation_id=auto_src.id, target_persona_id=persona.id, execute_at=datetime.now(timezone.utc) - timedelta(minutes=1))
+                p_act = PendingCrmAction(
+                    automation_id=auto_src.id,
+                    target_persona_id=persona.id,
+                    execute_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+                )
                 db_session.add(p_act)
                 db_session.commit()
 
                 eng._process_crm_pending_actions(db_session)
                 assert p_act.status == "executed"
 
-                tgt_queued = db_session.query(PendingCrmAction).filter(PendingCrmAction.automation_id == auto_tgt.id).first()
+                tgt_queued = (
+                    db_session.query(PendingCrmAction).filter(PendingCrmAction.automation_id == auto_tgt.id).first()
+                )
                 if should_queue:
                     assert tgt_queued is not None, f"Operator {op} should have queued target action"
                 else:

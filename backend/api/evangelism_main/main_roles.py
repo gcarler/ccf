@@ -45,10 +45,7 @@ def list_strategy_roles(
     _require_visible_strategy(db, strategy_id, _user)
     rows = get_roles_personalizados(db, estrategia_id=strategy_id)
     # Serializa cada ORM a dict (UUID→str) para ResponseValidation strict.
-    return [
-        schemas.RolPersonalizadoEstrategiaResponse.model_validate(r).model_dump(mode="json")
-        for r in rows
-    ]
+    return [schemas.RolPersonalizadoEstrategiaResponse.model_validate(r).model_dump(mode="json") for r in rows]
 
 
 def _serialize_rol_personalizado(obj) -> dict:
@@ -131,7 +128,9 @@ def update_motivo_excusa(
     """Actualiza un motivo de excusa (no permite modificar los del sistema)."""
     from backend.crud.evangelism import update_motivo_excusa
 
-    result = update_motivo_excusa(db, excusa_id, descripcion=payload.descripcion, activo=payload.activo, actor_user_id=str(_user.id))
+    result = update_motivo_excusa(
+        db, excusa_id, descripcion=payload.descripcion, activo=payload.activo, actor_user_id=str(_user.id)
+    )
     if not result:
         raise HTTPException(status_code=404, detail="Excusa no encontrada o es del sistema")
     return result

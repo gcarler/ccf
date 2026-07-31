@@ -29,7 +29,14 @@ ABSENCE_REASON_LABELS = {
 # FIRST_TIME_STATES) se derivan del enum para que cualquier extensión
 # solo requiera tocar el enum, no 4 sets paralelos.
 
-ATTENDED_STATES = {StatusAsistenciaCanonico.PRESENT.value, StatusAsistenciaCanonico.FIRST_TIME.value, "ASISTIO", "Presente", "presente", "first_time"}
+ATTENDED_STATES = {
+    StatusAsistenciaCanonico.PRESENT.value,
+    StatusAsistenciaCanonico.FIRST_TIME.value,
+    "ASISTIO",
+    "Presente",
+    "presente",
+    "first_time",
+}
 ABSENT_STATES = {StatusAsistenciaCanonico.ABSENT.value, "FALTO", "Ausente", "ausente"}
 EXCUSED_STATES = {StatusAsistenciaCanonico.EXCUSED.value, "EXCUSA", "Excusa", "excusa"}
 FIRST_TIME_STATES = {StatusAsistenciaCanonico.FIRST_TIME.value, "primera_vez", "first_time"}
@@ -106,11 +113,11 @@ def session_read_only_options(db: Session):
 
 def normalize_attendance_status(value) -> str:
     """Normaliza un estado de asistencia a un valor canónico.
-    
+
     Esta es la fuente de verdad única para la normalización de estados.
     Todos los valores de entrada se mapean a uno de los 4 miembros de
     ``StatusAsistenciaCanonico`` (present/absent/excused/first_time).
-    
+
     NOTA: ``primera_vez`` y ``first_time`` se normalizan a ``present``
     porque la semántica operativa es "asistió" (el flag de primera vez
     se maneja por separado en el modelo vía ``es_primera_vez``). Los
@@ -251,11 +258,7 @@ def _check_absence_trigger(db: Session, session_id: UUID, sede_id):
     if not session:
         return
 
-    house = (
-        db.query(GrupoEvangelismo)
-        .filter(GrupoEvangelismo.id == session.grupo_id)
-        .first()
-    )
+    house = db.query(GrupoEvangelismo).filter(GrupoEvangelismo.id == session.grupo_id).first()
     if not house:
         return
 
@@ -407,9 +410,7 @@ def normalize_role_scope_payload(payload: dict) -> dict:
             except (TypeError, ValueError):
                 normalized_role_id = None
             normalized["target_role_id"] = UUID(normalized_role_id) if normalized_role_id else None
-            normalized["target_role_ids"] = (
-                [normalized_role_id] if normalized_role_id is not None else None
-            )
+            normalized["target_role_ids"] = [normalized_role_id] if normalized_role_id is not None else None
         else:
             normalized["target_role_ids"] = None
             normalized["target_role_id"] = None
@@ -439,19 +440,14 @@ def resolve_target_role_ids(event: models.CrmEvent) -> list[UUID]:
     return list(dict.fromkeys(role_ids))
 
 
-def get_expected_personas_for_event(
-    db: Session, event: models.CrmEvent, sede_id=None
-) -> list[models.Persona]:
+def get_expected_personas_for_event(db: Session, event: models.CrmEvent, sede_id=None) -> list[models.Persona]:
     event_sede_id = sede_id or getattr(event, "sede_id", None)
     if event.target_audience == "ROLE":
         role_ids = resolve_target_role_ids(event)
         if not role_ids:
             return []
         role_names = [
-            row[0]
-            for row in db.query(models.RoleDefinition.name)
-            .filter(models.RoleDefinition.id.in_(role_ids))
-            .all()
+            row[0] for row in db.query(models.RoleDefinition.name).filter(models.RoleDefinition.id.in_(role_ids)).all()
         ]
         if not role_names:
             return []
@@ -461,6 +457,7 @@ def get_expected_personas_for_event(
         return q.order_by(models.Persona.nombre_completo.asc()).all()
     if event.target_audience == "MANUAL":
         import uuid
+
         persona_ids = []
         if isinstance(event.target_persona_ids, list):
             for raw_persona_id in event.target_persona_ids:
@@ -493,21 +490,13 @@ def expected_group_rows(db: Session, grupo_id: UUID):
         .order_by(models.Persona.nombre_completo.asc())
         .all()
     )
-    grupo = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.id == grupo_id)
-        .first()
-    )
+    grupo = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id == grupo_id).first()
     seen_ids = {persona.id for _, persona in rows}
     extra_personas = []
     if grupo:
         for pid in [grupo.lider_persona_id, grupo.asistente_persona_id, grupo.anfitrion_persona_id]:
             if pid and pid not in seen_ids:
-                p = (
-                    db.query(models.Persona)
-                    .filter(models.Persona.id == pid)
-                    .first()
-                )
+                p = db.query(models.Persona).filter(models.Persona.id == pid).first()
                 if p:
                     extra_personas.append((None, p))
                     seen_ids.add(p.id)
@@ -524,9 +513,7 @@ def _channel_label(channel: str) -> str:
     return "SMS"
 
 
-def _persona_matches_segment(
-    persona: models.Persona, segment: str, donation_persona_ids: set[str]
-) -> bool:
+def _persona_matches_segment(persona: models.Persona, segment: str, donation_persona_ids: set[str]) -> bool:
     value = str(segment or "").strip().lower()
     if value == "active":
         return str(persona.church_role_effective or "").strip().lower() in {
@@ -560,9 +547,7 @@ def _persona_matches_segment(
 
 
 def _resolve_campaign_personas(db: Session, segments: list[str], sede_id=None) -> list[models.Persona]:
-    normalized_segments = [
-        segment for segment in (s.strip().lower() for s in segments) if segment
-    ]
+    normalized_segments = [segment for segment in (s.strip().lower() for s in segments) if segment]
     if not normalized_segments:
         return []
 
@@ -579,10 +564,7 @@ def _resolve_campaign_personas(db: Session, segments: list[str], sede_id=None) -
     for persona in personas:
         if persona.id in seen_ids:
             continue
-        if any(
-            _persona_matches_segment(persona, segment, donation_persona_ids)
-            for segment in normalized_segments
-        ):
+        if any(_persona_matches_segment(persona, segment, donation_persona_ids) for segment in normalized_segments):
             selected.append(persona)
             seen_ids.add(persona.id)
     return selected
@@ -591,19 +573,13 @@ def _resolve_campaign_personas(db: Session, segments: list[str], sede_id=None) -
 def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     import datetime as _dt
 
-    ordered = sorted(
-        logs, key=lambda log: log.created_at or _dt.datetime.min, reverse=True
-    )
+    ordered = sorted(logs, key=lambda log: log.created_at or _dt.datetime.min, reverse=True)
     representative = ordered[0]
     persona = getattr(representative, "persona", None)
     persona_name = persona.nombre_completo if persona else "Desconocido"
-    campaign_name = next(
-        (log.campaign_name for log in ordered if log.campaign_name), None
-    )
+    campaign_name = next((log.campaign_name for log in ordered if log.campaign_name), None)
     sent_at_dt = ordered[0].created_at
-    delivered_count = sum(
-        1 for log in ordered if str(log.outcome).lower() in DELIVERED_OUTCOMES
-    )
+    delivered_count = sum(1 for log in ordered if str(log.outcome).lower() in DELIVERED_OUTCOMES)
     failed_count = sum(1 for log in ordered if str(log.outcome).lower() == "failed")
     if failed_count and not delivered_count:
         status = "failed"
@@ -612,9 +588,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     else:
         status = str(representative.outcome or CommunicationOutcome.INTERNAL_LOG.value).lower()
     display_name = campaign_name or (
-        f"Mensaje a {persona_name}"
-        if len(ordered) == 1
-        else f"Campaña a {len(ordered)} contactos"
+        f"Mensaje a {persona_name}" if len(ordered) == 1 else f"Campaña a {len(ordered)} contactos"
     )
     return {
         "id": representative.id,
@@ -639,9 +613,7 @@ def _serialize_crm_task(
     assignee_name: Optional[str] = None,
 ) -> dict:
     persona = getattr(task, "persona", None)
-    persona_name = contact_name or (
-        persona.nombre_completo if persona else None
-    )
+    persona_name = contact_name or (persona.nombre_completo if persona else None)
     assignee = getattr(task, "assignee", None)
     assigned_to = assignee_name or (assignee.username if assignee else None)
     return {

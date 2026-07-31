@@ -3,6 +3,7 @@
 Covers CRUD, API endpoints, multi-tenant isolation, and edge cases.
 Uses the same patterns as test_projects_wiki_slash_commands.py.
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -376,6 +377,7 @@ class TestWikiAPI:
         # GET with a non-admin user would be filtered by sede_id automatically
         # The test confirms the CRUD layer enforces sede_id filtering
         from backend.crud.wiki import list_wiki_pages
+
         other_sede = _uuid.uuid4()
         other_pages = list_wiki_pages(db_session, sede_id=other_sede)
         assert len(other_pages) == 0

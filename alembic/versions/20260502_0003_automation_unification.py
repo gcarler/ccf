@@ -20,9 +20,7 @@ depends_on = None
 
 
 def _has_column(inspector: sa.Inspector, table_name: str, column_name: str) -> bool:
-    return any(
-        column["name"] == column_name for column in inspector.get_columns(table_name)
-    )
+    return any(column["name"] == column_name for column in inspector.get_columns(table_name))
 
 
 def upgrade() -> None:
@@ -32,23 +30,14 @@ def upgrade() -> None:
     if inspector.has_table("automation_rules"):
         with op.batch_alter_table("automation_rules") as batch_op:
             if not _has_column(inspector, "automation_rules", "action_type"):
-                batch_op.add_column(
-                    sa.Column("action_type", sa.String(length=50), nullable=True)
-                )
+                batch_op.add_column(sa.Column("action_type", sa.String(length=50), nullable=True))
             if not _has_column(inspector, "automation_rules", "action_payload"):
-                batch_op.add_column(
-                    sa.Column("action_payload", sa.JSON(), nullable=True)
-                )
+                batch_op.add_column(sa.Column("action_payload", sa.JSON(), nullable=True))
 
     inspector = sa.inspect(bind)
-    if inspector.has_table("crm_automations") and inspector.has_table(
-        "automation_rules"
-    ):
+    if inspector.has_table("crm_automations") and inspector.has_table("automation_rules"):
         rows = bind.execute(
-            sa.text(
-                "SELECT id, name, trigger_event, action_type, action_payload, is_active "
-                "FROM crm_automations"
-            )
+            sa.text("SELECT id, name, trigger_event, action_type, action_payload, is_active FROM crm_automations")
         ).mappings()
         for row in rows:
             exists = bind.execute(
@@ -87,9 +76,7 @@ def upgrade() -> None:
 
     inspector = sa.inspect(bind)
     if inspector.has_table("automation_rules"):
-        existing_indexes = {
-            index["name"] for index in inspector.get_indexes("automation_rules")
-        }
+        existing_indexes = {index["name"] for index in inspector.get_indexes("automation_rules")}
         if "ix_automation_rules_action_type" not in existing_indexes:
             op.create_index(
                 "ix_automation_rules_action_type",
@@ -111,20 +98,14 @@ def downgrade() -> None:
             sa.Column("trigger_event", sa.String(length=50), nullable=False),
             sa.Column("action_type", sa.String(length=50), nullable=False),
             sa.Column("action_payload", sa.JSON(), nullable=True),
-            sa.Column(
-                "is_active", sa.Boolean(), nullable=True, server_default=sa.true()
-            ),
+            sa.Column("is_active", sa.Boolean(), nullable=True, server_default=sa.true()),
             sa.Column("created_at", sa.DateTime(), nullable=True),
             sa.PrimaryKeyConstraint("id"),
         )
-        op.create_index(
-            op.f("ix_crm_automations_id"), "crm_automations", ["id"], unique=False
-        )
+        op.create_index(op.f("ix_crm_automations_id"), "crm_automations", ["id"], unique=False)
 
     inspector = sa.inspect(bind)
-    if inspector.has_table("automation_rules") and _has_column(
-        inspector, "automation_rules", "action_type"
-    ):
+    if inspector.has_table("automation_rules") and _has_column(inspector, "automation_rules", "action_type"):
         rows = bind.execute(
             sa.text(
                 "SELECT id, name, trigger_type, action_type, action_payload, is_active "

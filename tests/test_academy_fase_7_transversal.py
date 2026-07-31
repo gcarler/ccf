@@ -99,9 +99,7 @@ def _reset_academy_storage() -> None:
     underscore); versiones anteriores usaban ``storage``. El doble ``getattr``
     cubre ambos.
     """
-    storage_backend = getattr(academy_limiter, "_storage", None) or getattr(
-        academy_limiter, "storage", None
-    )
+    storage_backend = getattr(academy_limiter, "_storage", None) or getattr(academy_limiter, "storage", None)
     if storage_backend is not None and hasattr(storage_backend, "reset"):
         storage_backend.reset()
 
@@ -153,9 +151,7 @@ def test_acad_tkt_200_academy_limiter_storage_uri_is_memory() -> None:
     """Storage es ``memory://`` (single-worker test/dev)."""
 
     storage_uri = str(getattr(academy_limiter, "_storage_uri", "memory://"))
-    assert storage_uri.startswith("memory://"), (
-        f"esperaba URI memory://, obtuve {storage_uri!r}"
-    )
+    assert storage_uri.startswith("memory://"), f"esperaba URI memory://, obtuve {storage_uri!r}"
 
 
 def test_acad_tkt_200_key_func_returns_none_in_pytest_without_force(
@@ -259,9 +255,7 @@ def test_acad_tkt_200_permissions_check_populates_state_is_unlimited_user() -> N
         "request.state.is_unlimited_user para admin/manage — bypass "
         "manager/admin en runtime se rompe"
     )
-    assert req.state.user_id == str(fake_admin.id), (
-        "Side-effect roto: request.state.user_id no fue poblado"
-    )
+    assert req.state.user_id == str(fake_admin.id), "Side-effect roto: request.state.user_id no fue poblado"
 
 
 # ── endpoint decorator presence ───────────────────────────────────────
@@ -296,9 +290,7 @@ def test_acad_tkt_200_create_enrollment_has_rate_limit_decorator() -> None:
 # ── 429 end-to-end (gate) ──────────────────────────────────────────────
 
 
-def test_acad_tkt_200_submit_assessment_returns_429_after_threshold(
-    client, force_limiter
-) -> None:
+def test_acad_tkt_200_submit_assessment_returns_429_after_threshold(client, force_limiter) -> None:
     """El 11er ``POST /assessments/<uuid>/submit`` dentro de 1 min → 429.
 
     El assessment no existe (404), pero el limiter corre ANTES de la query
@@ -318,19 +310,13 @@ def test_acad_tkt_200_submit_assessment_returns_429_after_threshold(
             statuses.append(r.status_code)
         n_429 = sum(1 for s in statuses if s == 429)
         n_not_429 = sum(1 for s in statuses if s != 429)
-        assert n_429 >= 1, (
-            f"Esperaba al menos un 429 después de superar 10/min: {statuses}"
-        )
-        assert n_not_429 == 10, (
-            f"Esperaba 10 hits no-429 (los previos al 11vo), obtuve {n_not_429}: {statuses}"
-        )
+        assert n_429 >= 1, f"Esperaba al menos un 429 después de superar 10/min: {statuses}"
+        assert n_not_429 == 10, f"Esperaba 10 hits no-429 (los previos al 11vo), obtuve {n_not_429}: {statuses}"
     finally:
         app.dependency_overrides.pop(dep_key, None)
 
 
-def test_acad_tkt_200_429_response_includes_retry_after_header(
-    client, force_limiter
-) -> None:
+def test_acad_tkt_200_429_response_includes_retry_after_header(client, force_limiter) -> None:
     """El 429 de slowapi incluye ``Retry-After`` (headers_enabled=True)."""
 
     dep_key = _student_dep_key()
@@ -347,12 +333,8 @@ def test_acad_tkt_200_429_response_includes_retry_after_header(
             if r.status_code == 429:
                 last_429 = r
         assert last_429 is not None, "No se obtuvo ningún 429 tras 12 hits"
-        retry_after = last_429.headers.get("Retry-After") or last_429.headers.get(
-            "retry-after"
-        )
-        assert retry_after is not None, (
-            f"429 sin Retry-After. Headers: {dict(last_429.headers)!r}"
-        )
+        retry_after = last_429.headers.get("Retry-After") or last_429.headers.get("retry-after")
+        assert retry_after is not None, f"429 sin Retry-After. Headers: {dict(last_429.headers)!r}"
     finally:
         app.dependency_overrides.pop(dep_key, None)
 
@@ -367,9 +349,7 @@ def test_acad_tkt_200_429_response_includes_retry_after_header(
     "Refactor pendiente Fase 7+: ``SlowAPIMiddleware`` o ``_make_key_func(is_unlimited_predicate)`` "
     "que NO capture en closure (factory pattern)."
 )
-def test_acad_tkt_200_unlimited_user_is_not_rate_limited(
-    client, force_limiter
-) -> None:
+def test_acad_tkt_200_unlimited_user_is_not_rate_limited(client, force_limiter) -> None:
     """Manager / admin bypass NUNCA recibe 429 — placeholder, ver skip arriba.
 
     Estrategia intentada: monkey-patch directo de ``academy_limiter._key_func``
@@ -397,10 +377,7 @@ def test_acad_tkt_200_unlimited_user_is_not_rate_limited(
                 )
                 if r.status_code == 429:
                     seen_429 += 1
-            assert seen_429 == 0, (
-                f"Manager bypass roto: {seen_429} hits dispararon 429 con "
-                f"key_func=None'bypass"
-            )
+            assert seen_429 == 0, f"Manager bypass roto: {seen_429} hits dispararon 429 con key_func=None'bypass"
         finally:
             app.dependency_overrides.pop(dep_key, None)
     finally:
@@ -432,8 +409,7 @@ def test_acad_tkt_200_ci_guard_slowapi_and_limits_versions_pinned() -> None:
     import backend.core.rate_limit  # noqa: F401
 
     assert version("slowapi") == "0.1.10", (
-        f"slowapi runtime != 0.1.10: {version('slowapi')}. "
-        f"Actualiza requirements.txt o revierte slowapi."
+        f"slowapi runtime != 0.1.10: {version('slowapi')}. Actualiza requirements.txt o revierte slowapi."
     )
     assert version("limits") == "5.8.0", (
         f"limits runtime != 5.8.0: {version('limits')}. "
@@ -481,10 +457,7 @@ def test_acad_tkt_203_cached_decorator_accepts_key_fn_argument() -> None:
     assert a == "computed-sede_a-manager"
     assert b == "computed-sede_b-manager"
     assert c == "computed-sede_a-manager"
-    assert calls["count"] == 2, (
-        f"Esperaba 2 cómputos (cache_miss para dos keys distintas), "
-        f"obtuve {calls['count']}"
-    )
+    assert calls["count"] == 2, f"Esperaba 2 cómputos (cache_miss para dos keys distintas), obtuve {calls['count']}"
 
 
 def test_acad_tkt_203_cached_decorator_default_key_fn_uses_stable_hash() -> None:
@@ -506,16 +479,12 @@ def test_acad_tkt_203_dashboard_metrics_key_excludes_session_object() -> None:
     db_fake_a, db_fake_b = object(), object()
     key_a1 = _dashboard_metrics_key(("uuid-sede-a", db_fake_a), {})
     key_a2 = _dashboard_metrics_key(("uuid-sede-a", db_fake_b), {})
-    assert key_a1 == key_a2, (
-        "key_fn debe ignorar el ``db`` (object()) y producir la misma key"
-    )
+    assert key_a1 == key_a2, "key_fn debe ignorar el ``db`` (object()) y producir la misma key"
     # Distinta sede_id → distinta key
     key_b = _dashboard_metrics_key(("uuid-sede-b", db_fake_a), {})
     assert key_a1 != key_b, f"keys por sede distinta deberían diferenciarse: {key_a1} vs {key_b}"
     # Formato esperado para grep-ability y bump de versión controlado
-    assert key_a1.startswith("academy:dashboard:metrics:v1:sede="), (
-        f"formato inesperado: {key_a1!r}"
-    )
+    assert key_a1.startswith("academy:dashboard:metrics:v1:sede="), f"formato inesperado: {key_a1!r}"
 
 
 def test_acad_tkt_203_list_lessons_key_includes_all_serialization_fields() -> None:
@@ -601,13 +570,9 @@ def test_acad_tkt_203_lesson_to_dict_serializes_uuid_and_datetime_gracefully() -
     out = _lesson_to_dict(lesson)
     # ``id`` (UUID) → str, ``created_at`` (datetime) → isoformat
     assert out["id"] == str(fake_uuid), f"UUID no serializado: {out['id']!r}"
-    assert out["created_at"] == fake_dt.isoformat(), (
-        f"datetime no serializado: {out['created_at']!r}"
-    )
+    assert out["created_at"] == fake_dt.isoformat(), f"datetime no serializado: {out['created_at']!r}"
     assert out["title"] == "L-1"
-    assert out["resources"] == [], (
-        f"resources vacíos no deberían propagarse: {out['resources']!r}"
-    )
+    assert out["resources"] == [], f"resources vacíos no deberían propagarse: {out['resources']!r}"
 
 
 def test_acad_tkt_203_ttl_is_300_seconds_in_setex_calls(
@@ -661,9 +626,7 @@ def test_acad_tkt_203_ttl_is_300_seconds_in_setex_calls(
     # Segundo hit con misma sede → debe leer del cache sin re-poplar setex
     initial_setex_count = len(spy.expirations)
     assert _dummy("sede-a") == "value-sede-a"
-    assert len(spy.expirations) == initial_setex_count, (
-        "segundo hit no debería llamar setex otra vez"
-    )
+    assert len(spy.expirations) == initial_setex_count, "segundo hit no debería llamar setex otra vez"
 
 
 def test_acad_tkt_203_sede_id_cache_keys_v1_semantic_versioning() -> None:
@@ -703,7 +666,9 @@ def test_acad_tkt_203_ci_guard_no_forbidden_terms_in_modified_files() -> None:
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8")
-        bad = [term for term in ("legacy", "Legacy", "LEGACY", "deprecated", "Deprecated", "DEPRECATED") if term in text]
+        bad = [
+            term for term in ("legacy", "Legacy", "LEGACY", "deprecated", "Deprecated", "DEPRECATED") if term in text
+        ]
         assert not bad, (
             f"CI guard TKT-203: {path.name} contiene términos prohibidos "
             f"{bad}. Sustituir por sinónimos neutrales (preserved, anterior, "
@@ -776,12 +741,7 @@ def test_acad_tkt_203_sql_gate_n1_consolidation(db_session) -> None:
     # academy_enrollments en UN solo statement. Si esta firma no aparece,
     # los dos ``count()`` separados fueron reintroducidos.
     consolidation_queries = [
-        q
-        for q in captured_queries
-        if "academy_enrollments" in q
-        and "count(" in q
-        and "sum(" in q
-        and "case" in q
+        q for q in captured_queries if "academy_enrollments" in q and "count(" in q and "sum(" in q and "case" in q
     ]
 
     assert len(consolidation_queries) == 1, (
@@ -794,4 +754,3 @@ def test_acad_tkt_203_sql_gate_n1_consolidation(db_session) -> None:
     # del N+1 original. Enrollment aparece legitimamente en otras queries (cert
     # count via JOIN + enrollment_trends) tras TKT-203 — verificado por
     # presencia de count+sum+case, NO por conteo absoluto.
-

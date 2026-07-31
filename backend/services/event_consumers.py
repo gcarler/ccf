@@ -32,7 +32,9 @@ class EventConsumer:
             except Exception as exc:
                 log.exception(
                     "Error handling event %s in %s: %s",
-                    event_name, self.__class__.__name__, exc,
+                    event_name,
+                    self.__class__.__name__,
+                    exc,
                 )
 
 

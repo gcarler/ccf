@@ -47,11 +47,7 @@ def get_flags_incidents(
     incidents = _load_incidents()
     if status:
         status_norm = status.strip().lower()
-        incidents = [
-            item
-            for item in incidents
-            if str(item.get("status", "")).lower() == status_norm
-        ]
+        incidents = [item for item in incidents if str(item.get("status", "")).lower() == status_norm]
 
     capped_limit = max(1, min(limit, 1000))
     incidents = incidents[-capped_limit:]
@@ -81,11 +77,7 @@ def get_flags_incidents_summary(
     incidents = _load_incidents()
     if status:
         status_norm = status.strip().lower()
-        incidents = [
-            item
-            for item in incidents
-            if str(item.get("status", "")).lower() == status_norm
-        ]
+        incidents = [item for item in incidents if str(item.get("status", "")).lower() == status_norm]
     return {
         "status": "ok",
         "requested_by": str(getattr(current_user, "id", "")),
@@ -140,30 +132,16 @@ def get_flags_incidents_stats(
     current_user: models.User = Depends(require_admin),
 ):
     incidents = _load_incidents()
-    current_start, current_end, previous_start, previous_end, days = _period_bounds(
-        window
-    )
+    current_start, current_end, previous_start, previous_end, days = _period_bounds(window)
     current_stats = _period_incident_stats(incidents, current_start, current_end)
     previous_stats = _period_incident_stats(incidents, previous_start, previous_end)
     deltas = {
-        "created_pct": _pct_delta(
-            current_stats.get("created"), previous_stats.get("created")
-        ),
-        "closed_pct": _pct_delta(
-            current_stats.get("closed"), previous_stats.get("closed")
-        ),
-        "closure_rate_pct": _pct_delta(
-            current_stats.get("closure_rate"), previous_stats.get("closure_rate")
-        ),
-        "mtta_pct": _pct_delta(
-            current_stats.get("mtta_minutes"), previous_stats.get("mtta_minutes")
-        ),
-        "mttr_pct": _pct_delta(
-            current_stats.get("mttr_minutes"), previous_stats.get("mttr_minutes")
-        ),
-        "active_end_pct": _pct_delta(
-            current_stats.get("active_end"), previous_stats.get("active_end")
-        ),
+        "created_pct": _pct_delta(current_stats.get("created"), previous_stats.get("created")),
+        "closed_pct": _pct_delta(current_stats.get("closed"), previous_stats.get("closed")),
+        "closure_rate_pct": _pct_delta(current_stats.get("closure_rate"), previous_stats.get("closure_rate")),
+        "mtta_pct": _pct_delta(current_stats.get("mtta_minutes"), previous_stats.get("mtta_minutes")),
+        "mttr_pct": _pct_delta(current_stats.get("mttr_minutes"), previous_stats.get("mttr_minutes")),
+        "active_end_pct": _pct_delta(current_stats.get("active_end"), previous_stats.get("active_end")),
     }
     trends = _incident_daily_trends(incidents, days=days)
     return {
@@ -192,18 +170,10 @@ def export_flags_incidents(
     incidents = _load_incidents()
     if status:
         status_norm = status.strip().lower()
-        incidents = [
-            item
-            for item in incidents
-            if str(item.get("status", "")).lower() == status_norm
-        ]
+        incidents = [item for item in incidents if str(item.get("status", "")).lower() == status_norm]
     if severity:
         severity_norm = severity.strip().lower()
-        incidents = [
-            item
-            for item in incidents
-            if str(item.get("severity", "")).lower() == severity_norm
-        ]
+        incidents = [item for item in incidents if str(item.get("severity", "")).lower() == severity_norm]
 
     capped_limit = max(1, min(limit, 1000))
     incidents = incidents[-capped_limit:]
@@ -218,9 +188,7 @@ def export_flags_incidents(
         return Response(
             content=json.dumps(payload, ensure_ascii=True, indent=2),
             media_type="application/json",
-            headers={
-                "Content-Disposition": "attachment; filename=feature_flags_incidents.json"
-            },
+            headers={"Content-Disposition": "attachment; filename=feature_flags_incidents.json"},
         )
 
     if normalized_format == "csv":
@@ -267,9 +235,7 @@ def export_flags_incidents(
         return Response(
             content=buffer.getvalue(),
             media_type="text/csv",
-            headers={
-                "Content-Disposition": "attachment; filename=feature_flags_incidents.csv"
-            },
+            headers={"Content-Disposition": "attachment; filename=feature_flags_incidents.csv"},
         )
 
     raise HTTPException(status_code=400, detail="format must be 'json' or 'csv'")
@@ -348,9 +314,7 @@ def update_flags_incident(
         )
 
     incidents = _load_incidents()
-    incident = next(
-        (item for item in incidents if str(item.get("id", "")) == incident_id), None
-    )
+    incident = next((item for item in incidents if str(item.get("id", "")) == incident_id), None)
     if not incident:
         raise HTTPException(status_code=404, detail="incident not found")
 
@@ -361,9 +325,7 @@ def update_flags_incident(
         incident["status"] = "acknowledged"
         incident["ack_by"] = actor_id
         incident["ack_at"] = now
-        _append_incident_history(
-            incident, event="acknowledged", actor_id=actor_id, note=note
-        )
+        _append_incident_history(incident, event="acknowledged", actor_id=actor_id, note=note)
     elif action == "close":
         incident["status"] = "closed"
         incident["closed_by"] = actor_id
@@ -372,21 +334,15 @@ def update_flags_incident(
     elif action == "reopen":
         incident["status"] = "open"
         incident["silenced_until"] = None
-        _append_incident_history(
-            incident, event="reopened", actor_id=actor_id, note=note
-        )
+        _append_incident_history(incident, event="reopened", actor_id=actor_id, note=note)
     elif action == "silence":
         try:
             minutes = max(1, min(int(silence_minutes), 60 * 24 * 7))
         except (TypeError, ValueError):
-            raise HTTPException(
-                status_code=422, detail="silence_minutes must be an integer"
-            )
+            raise HTTPException(status_code=422, detail="silence_minutes must be an integer")
         until_dt = datetime.now(tz=timezone.utc).timestamp() + (minutes * 60)
         incident["status"] = "silenced"
-        incident["silenced_until"] = datetime.fromtimestamp(
-            until_dt, tz=timezone.utc
-        ).isoformat()
+        incident["silenced_until"] = datetime.fromtimestamp(until_dt, tz=timezone.utc).isoformat()
         _append_incident_history(
             incident,
             event="silenced",
@@ -396,16 +352,12 @@ def update_flags_incident(
         )
     elif action == "note":
         if not note:
-            raise HTTPException(
-                status_code=422, detail="note is required when action=note"
-            )
+            raise HTTPException(status_code=422, detail="note is required when action=note")
         _append_incident_history(incident, event="note", actor_id=actor_id, note=note)
 
     if note:
         incident["note"] = note
-    _set_incident_severity(
-        incident, actor_id=actor_id, reason=f"incident_action:{action}"
-    )
+    _set_incident_severity(incident, actor_id=actor_id, reason=f"incident_action:{action}")
     incident["updated_at"] = now
     _save_incidents(incidents)
     _append_audit_event(

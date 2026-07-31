@@ -131,10 +131,18 @@ def upgrade() -> None:
     # 2. ATTACH AUDIT TRIGGERS TO SENSITIVE TABLES
     # ─────────────────────────────────────────────
     audit_tables = [
-        "members", "users", "donations", "enrollments",
-        "courses", "certificates", "consolidation_cases",
-        "projects", "project_tasks", "crm_events",
-        "grupos_evangelismo", "families",
+        "members",
+        "users",
+        "donations",
+        "enrollments",
+        "courses",
+        "certificates",
+        "consolidation_cases",
+        "projects",
+        "project_tasks",
+        "crm_events",
+        "grupos_evangelismo",
+        "families",
     ]
 
     for table_name in audit_tables:
@@ -175,10 +183,7 @@ def upgrade() -> None:
 
     # GIN index on tsvector for fast full-text search
     if "idx_members_search_vector" not in existing_indexes:
-        op.execute(
-            "CREATE INDEX idx_members_search_vector ON members "
-            "USING GIN (search_vector)"
-        )
+        op.execute("CREATE INDEX idx_members_search_vector ON members USING GIN (search_vector)")
 
     # ─────────────────────────────────────────────
     # 4. CHECK CONSTRAINTS — data integrity at DB level
@@ -193,10 +198,7 @@ def upgrade() -> None:
 
     # Donations: amount must be positive
     if "chk_donations_amount_positive" not in existing_constraints:
-        op.execute(
-            "ALTER TABLE donations ADD CONSTRAINT chk_donations_amount_positive "
-            "CHECK (amount >= 0)"
-        )
+        op.execute("ALTER TABLE donations ADD CONSTRAINT chk_donations_amount_positive CHECK (amount >= 0)")
 
     # Assessments: passing_score must be <= max_score
     if "chk_assessments_score_valid" not in existing_constraints:
@@ -333,10 +335,18 @@ def downgrade() -> None:
 
     # Drop audit triggers
     audit_tables = [
-        "members", "users", "donations", "enrollments",
-        "courses", "certificates", "consolidation_cases",
-        "projects", "project_tasks", "crm_events",
-        "grupos_evangelismo", "families",
+        "members",
+        "users",
+        "donations",
+        "enrollments",
+        "courses",
+        "certificates",
+        "consolidation_cases",
+        "projects",
+        "project_tasks",
+        "crm_events",
+        "grupos_evangelismo",
+        "families",
     ]
     for table_name in audit_tables:
         op.execute(f"DROP TRIGGER IF EXISTS tr_audit_{table_name} ON {table_name}")

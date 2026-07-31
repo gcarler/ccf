@@ -1,4 +1,5 @@
 """Tests for evangelism_events/_shared.py — permission helpers."""
+
 from __future__ import annotations
 
 import uuid
@@ -20,20 +21,24 @@ class TestGetUserRole:
         class MockUser:
             role = "ADMIN"
             rol_plataforma = None
+
         assert _get_user_role(MockUser()) == "admin"
 
     def test_no_role_fallback(self):
         class MockRol:
             nombre = "PASTOR"
+
         class MockUser:
             role = ""
             rol_plataforma = MockRol()
+
         assert _get_user_role(MockUser()) == "pastor"
 
     def test_no_role_at_all(self):
         class MockUser:
             role = ""
             rol_plataforma = None
+
         assert _get_user_role(MockUser()) == ""
 
 
@@ -42,12 +47,14 @@ class TestIsEventReader:
         class MockUser:
             role = "ADMIN"
             rol_plataforma = None
+
         assert is_event_reader_role(MockUser()) is True
 
     def test_persona_not_reader(self):
         class MockUser:
             role = "persona"
             rol_plataforma = None
+
         assert is_event_reader_role(MockUser()) is False
 
 
@@ -56,12 +63,14 @@ class TestIsEventManager:
         class MockUser:
             role = "ADMIN"
             rol_plataforma = None
+
         assert is_event_manager_role(MockUser()) is True
 
     def test_coordinador_not_manager(self):
         class MockUser:
             role = "coordinador"
             rol_plataforma = None
+
         assert is_event_manager_role(MockUser()) is False
 
 
@@ -87,9 +96,11 @@ class TestGetPersonaForUser:
 class TestRequireEventAccess:
     def test_event_not_found(self, db_session):
         from backend.api.evangelism_events._shared import require_event_access
+
         class MockUser:
             id = uuid.uuid4()
             role = "ADMIN"
+
         with pytest.raises(HTTPException) as exc:
             require_event_access(db_session, MockUser(), uuid.uuid4())
         assert exc.value.status_code == 404

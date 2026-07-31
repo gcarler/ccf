@@ -327,7 +327,7 @@ export default function PersonaDetailPage() {
     const [loadingMentorCandidates, setLoadingMentorCandidates] = useState(false);
     const [savingMentor, setSavingMentor] = useState(false);
     const [mentorError, setMentorError] = useState<string | null>(null);
-    
+
     // Extra data fetched on demand
     const [history, setHistory] = useState<any[]>([]);
     const [donations, setDonations] = useState<any[]>([]);
@@ -1064,7 +1064,7 @@ export default function PersonaDetailPage() {
                 </motion.div>
             </AnimatePresence>
         </div>
-        
+
             {/* Mentor Assignment Drawer */}
             <MentorAssignmentDrawer
                 open={mentorDrawerOpen}

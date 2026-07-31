@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    X, Bell, 
-    Settings, Inbox, User, 
+import {
+    X, Bell,
+    Settings, Inbox, User,
     Archive, CheckCircle2, Filter, Search
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -63,12 +63,12 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
         <AnimatePresence>
             {isOpen && (
                 <>
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         onClick={onClose}
                         className="fixed inset-x-0 bottom-0 top-10 z-[1000] bg-[hsl(var(--bg-muted))]/10 backdrop-blur-[2px]"
                     />
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: 400 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 400 }}
@@ -111,8 +111,8 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                         <div className="px-3 py-3 space-y-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={14} />
-                                <input 
-                                    type="text" placeholder="Buscar en notificaciones..." 
+                                <input
+                                    type="text" placeholder="Buscar en notificaciones..."
                                     className="w-full h-9 bg-[hsl(var(--surface-2))] dark:bg-black/20 border-transparent rounded-md pl-10 pr-4 text-sm font-medium focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-black/40 focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all outline-none"
                                 />
                             </div>
@@ -145,7 +145,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                         <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Reciente</span>
                                     </div>
                                     {notifications.map((notif, idx) => (
-                                        <motion.div 
+                                        <motion.div
                                             key={notif.id}
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
@@ -162,7 +162,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                                     notif.notif_type === 'task' ? "bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))]" :
                                                     "bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))]"
                                                 )}>
-                                                    {notif.notif_type === 'mention' ? <User size={20} /> : 
+                                                    {notif.notif_type === 'mention' ? <User size={20} /> :
                                                      notif.notif_type === 'task' ? <CheckCircle2 size={20} /> : <Bell size={20} />}
                                                 </div>
                                             </div>
@@ -172,7 +172,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                                     <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] whitespace-nowrap">{new Date(notif.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                                 </div>
                                                 <p className="text-base text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed line-clamp-2">{notif.content}</p>
-                                                
+
                                                 {/* Inline Actions */}
                                                 <div className="pt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button onClick={(e) => { e.stopPropagation(); handleClear(notif.id); }} className="px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">Archivar</button>
@@ -214,7 +214,7 @@ function HeaderAction({ icon: Icon, tooltip }: any) {
 
 function Tab({ active, label, count, onClick }: any) {
     return (
-        <button 
+        <button
             onClick={onClick}
             className={clsx(
                 "px-4 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2",
