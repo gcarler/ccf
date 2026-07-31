@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from backend.schemas._common import orm_config
+from backend.schemas._common import AwareDateTime, PaginatedResponse, orm_config
 
 
 class CmsMetrics(BaseModel):
@@ -892,5 +892,125 @@ class CmsPublicSubscribeRequest(BaseModel):
 class CmsPublicUnsubscribeRequest(BaseModel):
     site_key: Optional[str] = None
     email: str = Field(..., min_length=3, max_length=255)
+
+
+# ── A/B Testing of Sections (R3-BE) ─────────────────────────────────────────
+
+AbTestStatus = Literal["active", "paused", "completed"]
+AbTestVariant = Literal["a", "b"]
+AbTestEventType = Literal["view", "click", "conversion"]
+
+
+class CmsAbTestCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    page_id: UUID
+    section_a_id: UUID
+    section_b_id: UUID
+    traffic_split: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class CmsAbTestUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    traffic_split: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    status: Optional[AbTestStatus] = None
+
+
+class CmsAbTestRead(BaseModel):
+    id: UUID
+    site_id: UUID
+    page_id: UUID
+    name: str
+    section_a_id: UUID
+    section_b_id: UUID
+    traffic_split: float = 0.5
+    status: str = "active"
+    winner_section_id: Optional[UUID] = None
+    created_at: datetime
+    started_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
+
+    model_config = orm_config
+
+
+class CmsAbTestEventCreate(BaseModel):
+    variant: AbTestVariant
+    event_type: AbTestEventType
+    visitor_id: str = Field(..., min_length=1, max_length=255)
+
+
+class CmsAbTestEventRead(BaseModel):
+    id: UUID
+    test_id: UUID
+    variant: str
+    event_type: str
+    visitor_id: str
+    created_at: datetime
+
+    model_config = orm_config
+
+
+class CmsAbTestResults(BaseModel):
+    test_id: UUID
+    views_a: int = 0
+    views_b: int = 0
+    clicks_a: int = 0
+    clicks_b: int = 0
+    conversions_a: int = 0
+    conversions_b: int = 0
+    conversion_rate_a: float = 0.0
+    conversion_rate_b: float = 0.0
+    statistical_significance: float = 0.0
+    is_significant: bool = False
+    recommended_winner: Optional[str] = None
+
+
+class CmsAbTestApplyWinner(BaseModel):
+    winner_variant: Optional[AbTestVariant] = None
+    winner_section_id: Optional[UUID] = None
+
+
+class CmsPostCommentCreate(BaseModel):
+    author_name: str = Field(..., min_length=1, max_length=120)
+    author_email: str = Field(..., min_length=3, max_length=255)
+    content: str = Field(..., min_length=1)
+    parent_id: Optional[UUID] = None
+
+
+class CmsPostCommentStatusUpdate(BaseModel):
+    status: Literal["pending", "approved", "spam", "deleted"]
+
+
+class CmsPostCommentRead(BaseModel):
+    id: UUID
+    post_id: UUID
+    parent_id: Optional[UUID] = None
+    author_name: str
+    author_email: str
+    content: str
+    status: str
+    post_title: Optional[str] = None
+    post_slug: Optional[str] = None
+    created_at: AwareDateTime
+    updated_at: AwareDateTime
+
+    model_config = orm_config
+
+
+class CmsPostCommentPublicRead(BaseModel):
+    id: UUID
+    post_id: UUID
+    parent_id: Optional[UUID] = None
+    author_name: str
+    content: str
+    created_at: AwareDateTime
+    replies: List[CmsPostCommentPublicRead] = Field(default_factory=list)
+
+    model_config = orm_config
+
+
+class CmsPostCommentListResponse(PaginatedResponse[CmsPostCommentRead]):
+    pending_count: int = 0
+
+
 
 

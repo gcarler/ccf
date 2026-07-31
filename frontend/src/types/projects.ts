@@ -105,12 +105,13 @@ export interface ProjectCommentItem {
   content: string;
   author_id: string;
   author_name: string;
-  author: string;       // author display name
   is_resolved: boolean;
   created_at: string;
   updated_at: string;
   attachments?: ProjectCommentAttachment[];
   mentions?: string[];
+  module_type?: "project" | "activity" | "agenda";
+  context_title?: string | null;
 }
 
 export interface ProjectPortfolioSummaryRow {

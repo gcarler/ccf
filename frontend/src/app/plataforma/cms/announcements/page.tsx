@@ -6,8 +6,9 @@ import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import { SITE_KEY } from '@/lib/site-config';
 import {
-    listAnnouncements,
-    setAnnouncementStatus,
+    listCmsPostsByCategory,
+    patchCmsPostByCategory,
+    postToAnnouncement,
     type V1AnnouncementShape,
 } from '@/lib/cms/v2';
 import {
@@ -75,7 +76,7 @@ export default function AnnouncementsAdmin() {
         if (!token) return;
         setLoading(true);
         try {
-            const data = await listAnnouncements(SITE_KEY, { include_archived: true }, token);
+            const data = (await listCmsPostsByCategory(SITE_KEY, "announcements", { include_archived: true }, token)).map(postToAnnouncement);
             setAnnouncements(Array.isArray(data) ? data.map(normalizeAnnouncement) : []);
         } catch (err) {
             console.error(err);
@@ -99,8 +100,8 @@ export default function AnnouncementsAdmin() {
             return;
         }
         try {
-            const v1Status = status === 'published' ? 'active' : status === 'draft' ? 'draft' : 'archived';
-            const updated = await setAnnouncementStatus(SITE_KEY, ann.slug, v1Status as 'draft' | 'active' | 'archived', token);
+            const v2Status = status === 'published' ? 'published' : status === 'draft' ? 'draft' : 'archived';
+            const updated = postToAnnouncement(await patchCmsPostByCategory(SITE_KEY, ann.slug, "announcements", { status: v2Status }, token));
             setAnnouncements((items) => items.map((item) => item.id === ann.id ? normalizeAnnouncement(updated) : item));
             toast.success(`Comunicado marcado como ${STATUS_LABELS[status].toLowerCase()}`);
         } catch (err) {
@@ -112,7 +113,7 @@ export default function AnnouncementsAdmin() {
     const confirmArchive = async () => {
         if (!token || !pendingArchive) return;
         try {
-            const updated = await setAnnouncementStatus(SITE_KEY, pendingArchive.slug, 'archived', token);
+            const updated = postToAnnouncement(await patchCmsPostByCategory(SITE_KEY, pendingArchive.slug, "announcements", { status: "archived" }, token));
             setAnnouncements((items) => items.map((item) => item.id === pendingArchive.id ? normalizeAnnouncement(updated) : item));
             toast.success("Comunicado archivado");
         } catch (err) {

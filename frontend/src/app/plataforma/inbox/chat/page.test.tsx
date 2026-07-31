@@ -64,7 +64,12 @@ describe('ChatAdminPage', () => {
 
     render(<ChatAdminPage />);
 
-    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/chat/my-messages', expect.any(Object)));
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        '/chat/my-messages',
+        expect.objectContaining({ query: { limit: '50', offset: '0' } })
+      )
+    );
     expect(screen.getByText('Centro de mensajes')).toBeInTheDocument();
     expect(screen.getByText('Nos vemos en el seguimiento.')).toBeInTheDocument();
     expect(screen.getByText('Carlos Rueda')).toBeInTheDocument();
@@ -75,11 +80,21 @@ describe('ChatAdminPage', () => {
     vi.mocked(apiFetch).mockResolvedValueOnce(sentMessages).mockResolvedValueOnce(mentions);
 
     render(<ChatAdminPage />);
-    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/chat/my-messages', expect.any(Object)));
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        '/chat/my-messages',
+        expect.objectContaining({ query: { limit: '50', offset: '0' } })
+      )
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /Menciones/i }));
 
-    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith('/chat/mentions', expect.any(Object)));
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        '/chat/mentions',
+        expect.objectContaining({ query: { limit: '50', offset: '0' } })
+      )
+    );
     expect(screen.getByText('@pastor.e2e ¿ya quedó lista la reunión?')).toBeInTheDocument();
     expect(screen.getByText('Nuevo')).toBeInTheDocument();
   });
@@ -111,5 +126,37 @@ describe('ChatAdminPage', () => {
 
     render(<ChatAdminPage />);
     await waitFor(() => expect(screen.getByText('Network error')).toBeInTheDocument());
+  });
+
+  it('loads more items when the load more button is clicked', async () => {
+    const firstPage = Array.from({ length: 50 }, (_, i) => ({
+      ...sentMessages[0],
+      id: `msg-${i}`,
+      content: `Mensaje ${i}`,
+    }));
+    const secondPage = [
+      {
+        ...sentMessages[0],
+        id: 'msg-51',
+        content: 'Mensaje 51',
+      },
+    ];
+
+    vi.mocked(apiFetch)
+      .mockResolvedValueOnce(firstPage)
+      .mockResolvedValueOnce(secondPage);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText('Mensaje 0')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Cargar más/i }));
+
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenLastCalledWith(
+        '/chat/my-messages',
+        expect.objectContaining({ query: { limit: '50', offset: '50' } })
+      )
+    );
+    expect(screen.getByText('Mensaje 51')).toBeInTheDocument();
   });
 });

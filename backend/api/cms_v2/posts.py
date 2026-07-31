@@ -32,6 +32,7 @@ from backend.exceptions.cms import (
     SlugConflictError,
 )
 from backend.schemas._common import PaginatedResponse
+from backend.services.cms_search_indexer import delete_from_search_index, index_cms_post
 
 logger = logging.getLogger(__name__)
 
@@ -234,6 +235,7 @@ def create_post(
     p = schemas.CmsPostReadWithTaxonomies.model_validate(row)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, row.id)]
     p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, row.id)]
+    index_cms_post(db, row)
     return p
 
 
@@ -272,6 +274,7 @@ def patch_post(
     p = schemas.CmsPostReadWithTaxonomies.model_validate(updated)
     p.categories = [schemas.CmsCategoryRead.model_validate(c) for c in crud.get_post_categories(db, updated.id)]
     p.tags = [schemas.CmsTagRead.model_validate(t) for t in crud.get_post_tags(db, updated.id)]
+    index_cms_post(db, updated)
     return p
 
 
@@ -285,7 +288,9 @@ def delete_post(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_post_or_404(db, site.id, slug)
+    post_id_str = str(row.id)
     crud.delete_cms_post(db, row, actor_user_id=str(current_user.id))
+    delete_from_search_index(db, site_key, "post", post_id_str)
 
 
 # ── Posts by Canonical Category (Testimonials / Announcements) ────────────────

@@ -43,6 +43,9 @@ import { safeString } from "@/components/cms/builder/utils";
 import { deleteCmsSection } from "@/lib/cms/v2";
 import type { PageBuilderState } from "@/hooks/usePageBuilder";
 import type { CmsSection } from "@/types/cms-v2";
+import { useAuth } from "@/context/AuthContext";
+import { usePresence } from "@/hooks/usePresence";
+
 
 // ── Sortable Section Wrapper Component ──────────────────────────────────────────
 
@@ -403,6 +406,14 @@ export default function BuilderCanvas({
   const [showWysiwygBadge, setShowWysiwygBadge] = useState(true);
   const [wysiwygBannerSeen, setWysiwygBannerSeen] = useState(false);
 
+  const { token: authToken, user } = useAuth();
+  const { presenceUsers } = usePresence({
+    siteKey,
+    slug: activeSlug,
+    token: token ?? authToken,
+    user,
+  });
+
   // Configure Sensors with Pointer activation constraint (5px) and Keyboard WCAG support
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -421,7 +432,6 @@ export default function BuilderCanvas({
       const oldIndex = sections.findIndex((s) => s.id === active.id);
       const newIndex = sections.findIndex((s) => s.id === over.id);
       if (oldIndex !== -1 && newIndex !== -1) {
-        const newSections = arrayMove(sections, oldIndex, newIndex);
         await moveSectionToIndex(active.id as string, newIndex);
       }
     }
@@ -431,10 +441,42 @@ export default function BuilderCanvas({
     <section className="lg:col-span-6 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-4">
       {/* Top Canvas Header Bar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h2 className="text-lg font-semibold">
-          Canvas · {activeSlug ? `/${activeSlug}` : "Selecciona página"}
-        </h2>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h2 className="text-lg font-semibold">
+            Canvas · {activeSlug ? `/${activeSlug}` : "Selecciona página"}
+          </h2>
+          {/* Presence Avatar Bar */}
+          {presenceUsers.length > 0 && (
+            <div className="flex items-center gap-2" title="Usuarios presentes en esta página">
+              <div className="flex -space-x-2 overflow-hidden">
+                {presenceUsers.slice(0, 4).map((u) => (
+                  <div
+                    key={u.id}
+                    className="relative group flex items-center justify-center size-7 rounded-full text-white text-xs font-bold ring-2 ring-[hsl(var(--bg-primary))] dark:ring-[hsl(var(--admin-bg-tertiary))] cursor-pointer select-none"
+                    style={{ backgroundColor: u.color || "#3B82F6" }}
+                  >
+                    {u.initials}
+                    <div className="absolute top-full mt-1 hidden group-hover:block z-50 whitespace-nowrap rounded bg-gray-900 text-white text-[10px] py-1 px-2 shadow-lg">
+                      {u.name}
+                    </div>
+                  </div>
+                ))}
+                {presenceUsers.length > 4 && (
+                  <div className="flex items-center justify-center size-7 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold ring-2 ring-[hsl(var(--bg-primary))] dark:ring-[hsl(var(--admin-bg-tertiary))] select-none">
+                    +{presenceUsers.length - 4} más
+                  </div>
+                )}
+              </div>
+              <span className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
+                {presenceUsers.length === 1
+                  ? "1 persona editando ahora"
+                  : `${presenceUsers.length} personas editando ahora`}
+              </span>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-2 flex-wrap">
+
           {/* Active theme badge + reload + palette hover */}
           <div
             className="hidden sm:inline-flex relative group items-center gap-1.5 rounded-full border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2.5 py-1 text-2xs font-semibold text-[hsl(var(--text-secondary))] cursor-default"

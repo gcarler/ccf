@@ -129,6 +129,11 @@ class SubscriberNotFoundError(CmsNotFoundError):
     detail: str = "Subscriber not found"
 
 
+class AbTestNotFoundError(CmsNotFoundError):
+    detail: str = "A/B test not found"
+
+
+
 
 # ── 409: Conflict ────────────────────────────────────────────────────────────
 

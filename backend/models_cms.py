@@ -67,6 +67,7 @@ class CmsSite(Base):
     forms = relationship("CmsForm", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
     newsletters = relationship("CmsNewsletter", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
     subscribers = relationship("CmsSubscriber", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
+    ab_tests = relationship("CmsAbTest", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
 
 
 class CmsTheme(Base):
@@ -485,6 +486,12 @@ class CmsPost(Base):
         back_populates="posts",
         lazy="selectin",
     )
+    comments = relationship(
+        "CmsPostComment",
+        back_populates="post",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
 
 class CmsPostCategory(Base):
@@ -521,6 +528,35 @@ class CmsPostTag(Base):
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     post = relationship("CmsPost", lazy="joined", overlaps="posts,tags")
     tag = relationship("CmsTag", lazy="joined", overlaps="posts,tags")
+
+
+class CmsPostComment(Base):
+    __tablename__ = "cms_post_comments"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    post_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_posts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    parent_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_post_comments.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    author_name = Column(String(120), nullable=False)
+    author_email = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    status = Column(String(20), default="pending", nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    # ── Relationships (núcleo CMS) ──────────────────────────────────────
+    post = relationship("CmsPost", back_populates="comments", lazy="joined")
+    parent = relationship("CmsPostComment", remote_side=[id], back_populates="replies", lazy="joined")
+    replies = relationship("CmsPostComment", back_populates="parent", cascade="all, delete-orphan", lazy="selectin")
+
 
 
 class CmsSeoSnapshot(Base):
@@ -701,3 +737,71 @@ class CmsSubscriber(Base):
     source = Column(String(50), default="manual", nullable=False)
 
     site = relationship("CmsSite", back_populates="subscribers", lazy="joined")
+
+
+class CmsAbTest(Base):
+    __tablename__ = "cms_ab_tests"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    site_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sites.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    page_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_pages.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name = Column(String(255), nullable=False)
+    section_a_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sections.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    section_b_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sections.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    traffic_split = Column(Float, default=0.5, nullable=False)
+    status = Column(String(50), default="active", nullable=False, index=True)
+    winner_section_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_sections.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    started_at = Column(DateTime(timezone=True), default=_utcnow, nullable=True)
+    ended_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    # Relationships
+    site = relationship("CmsSite", back_populates="ab_tests", lazy="joined")
+    page = relationship("CmsPage", foreign_keys=[page_id], lazy="joined")
+    section_a = relationship("CmsSection", foreign_keys=[section_a_id], lazy="joined")
+    section_b = relationship("CmsSection", foreign_keys=[section_b_id], lazy="joined")
+    winner_section = relationship("CmsSection", foreign_keys=[winner_section_id], lazy="joined")
+    events = relationship("CmsAbTestEvent", back_populates="test", lazy="selectin", cascade="all, delete-orphan")
+
+
+class CmsAbTestEvent(Base):
+    __tablename__ = "cms_ab_test_events"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    test_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("cms_ab_tests.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    variant = Column(String(10), nullable=False, index=True)
+    event_type = Column(String(50), nullable=False, index=True)
+    visitor_id = Column(String(255), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+
+    # Relationships
+    test = relationship("CmsAbTest", back_populates="events", lazy="joined")
+

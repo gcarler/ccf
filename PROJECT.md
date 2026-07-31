@@ -1,38 +1,40 @@
-# Project: CCF Enterprise CMS
+# Project: CCF Enterprise CMS Phase 6
 
 ## Architecture
-- Enterprise CMS built with Next.js 15.5, React 18, Tailwind CSS, TypeScript, Sonner, TipTap.
-- Automated structural contract testing via pytest (`tests/test_structural_contracts.py`).
-- Design system modals via `DSModal` / `AnimatePresence` confirmation modals (raw Radix UI Dialog prohibited by contracts).
+- **Frontend**: Next.js 14 App Router, TypeScript (`frontend/src/`)
+  - Builder: `frontend/src/components/cms/builder/`
+  - Public Sections: `frontend/src/components/public/cms/sections/`
+  - Public Section Renderer: `frontend/src/components/public/cms/PublicSectionRenderer.tsx`
+  - Navigation: `frontend/src/components/cms/CmsModuleNav.tsx`
+- **Backend**: FastAPI + SQLAlchemy + PostgreSQL (`backend/`)
+  - API Endpoints: `backend/api/cms_v2/`
+  - Models: `backend/models_cms.py`
+  - Router Registration: `backend/app.py`
+- **Migrations**: Alembic in `alembic/canonical_versions/`
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | Exploration & Architecture Assessment | Full codebase, UI components, structural test suite analysis | None | DONE |
-| 2 | R1 & R2 CMS Gaps | Verify TipTap R1; fix R2 Testimonials missing modal UI block | M1 | DONE |
-| 3 | R3 Feedback Toasts Gaps | Add Sonner toast.success to Menus item visibility toggle & TestimonialForm CRUD | M1 | DONE |
-| 4 | R4 & R6 Announcements & Redirects Polish | Remove line 326 picsum image in Announcements; verify Redirects/Webhooks components | M1 | DONE |
-| 5 | R5 Dashboard CMS Audit | Verify animate-pulse skeletons, 4-button Quick Actions, recent audit log activity | M1 | DONE |
-| 6 | R7 Structural Contracts Fixes | Fix purple tokens, legacy comment labels, and direct fetch calls for 100% pytest pass | M1-M5 | DONE |
-| 7 | R7 Build, Test Verification & Git Delivery | Run Next.js build (0 TS errors), full pytest verification, pre-push, git commit feat(cms) (c8baa0e2) and git push to main | M6 | DONE |
-
-## Interface Contracts
-- Toasts: Sonner (`toast.success`, `toast.error`).
-- Modals: Native `DSModal` / `AnimatePresence` confirm dialogs across all 8 CMS areas.
-- Editor: TipTap (`RichEditor`) with reactive prop synchronization.
-- Structural Contracts: 100% compliant with `tests/test_structural_contracts.py` (43 passed, 1 skipped).
+| 1 | R1: 4 New Builder Blocks | `animated_counter`, `video_embed`, `gallery_masonry`, `map_embed` in `constants.ts`, `sections/`, `PublicSectionRenderer.tsx`, `BuilderSectionInspector.tsx` | None | DONE |
+| 2 | R2: Real-Time Presence | `backend/api/cms_v2/presence.py` WS + REST, `usePresence.ts` hook, `BuilderCanvas.tsx` / `builder/page.tsx` avatar bar | None | DONE |
+| 3 | R3: A/B Testing | Models in `models_cms.py`, migration, `backend/api/cms_v2/ab_testing.py`, `ab-testing/page.tsx`, `FlaskConical` in nav, `PublicSectionRenderer` variant split | None | PLANNED |
+| 4 | R4: Post Comments | `CmsPostComment` model, migration, `backend/api/cms_v2/post_comments.py`, `comments/page.tsx`, `MessageCircle` in nav, `PostComments.tsx` public component | None | PLANNED |
+| 5 | R5: Full-Text Search | `backend/api/cms_v2/search.py`, `search-admin/page.tsx`, `SearchBar.tsx` public component | None | PLANNED |
+| 6 | Final: E2E Verification & Git Commit | Run `tsc --noEmit`, run `pytest tests/test_structural_contracts.py`, git commit `feat(cms): ...`, verify clean tree | M1, M2, M3, M4, M5 | PLANNED |
 
 ## Code Layout
-- Frontend: `/root/ccf/frontend`
-  - CMS Pages: `/root/ccf/frontend/src/app/plataforma/cms`
-    - Posts: `posts/page.tsx`
-    - Testimonials: `testimonials/page.tsx`
-    - Menus: `menus/page.tsx`
-    - Webhooks: `webhooks/page.tsx`
-    - Redirects: `redirects/page.tsx`
-    - Announcements: `announcements/page.tsx`
-    - Dashboard: `/root/ccf/frontend/src/app/plataforma/cms/page.tsx`
-  - Components: `/root/ccf/frontend/src/components`
-  - Design System: `/root/ccf/frontend/src/design`
-- Backend: `/root/ccf/backend`
-- Structural Tests: `/root/ccf/tests/test_structural_contracts.py`
+- Backend Routers:
+  - `backend/api/cms_v2/presence.py`
+  - `backend/api/cms_v2/ab_testing.py`
+  - `backend/api/cms_v2/post_comments.py`
+  - `backend/api/cms_v2/search.py`
+- Frontend Pages & Components:
+  - `frontend/src/components/cms/builder/constants.ts`
+  - `frontend/src/components/cms/builder/BuilderSectionInspector.tsx`
+  - `frontend/src/components/public/cms/PublicSectionRenderer.tsx`
+  - `frontend/src/hooks/usePresence.ts`
+  - `frontend/src/app/plataforma/cms/ab-testing/page.tsx`
+  - `frontend/src/app/plataforma/cms/comments/page.tsx`
+  - `frontend/src/app/plataforma/cms/search-admin/page.tsx`
+  - `frontend/src/components/public/cms/PostComments.tsx`
+  - `frontend/src/components/public/cms/SearchBar.tsx`

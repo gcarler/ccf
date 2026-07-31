@@ -376,5 +376,82 @@ export interface CmsSubscriber {
   source: "form" | "manual" | "import" | string;
 }
 
+export type CmsAbTestStatus = "active" | "paused" | "completed";
+
+export interface CmsAbTest {
+  id: string;
+  site_id: string;
+  page_id: string;
+  name: string;
+  section_a_id: string;
+  section_b_id: string;
+  traffic_split: number;
+  status: CmsAbTestStatus;
+  winner_section_id: string | null;
+  created_at: string;
+  started_at: string | null;
+  ended_at: string | null;
+}
+
+export interface CmsAbTestEvent {
+  id: string;
+  test_id: string;
+  variant: "a" | "b";
+  event_type: "view" | "click" | "conversion";
+  visitor_id: string;
+  created_at: string;
+}
+
+export interface CmsAbTestResults {
+  test_id: string;
+  views_a: number;
+  views_b: number;
+  clicks_a: number;
+  clicks_b: number;
+  conversions_a: number;
+  conversions_b: number;
+  conversion_rate_a: number;
+  conversion_rate_b: number;
+  statistical_significance: number;
+  is_significant: boolean;
+  recommended_winner: "a" | "b" | null;
+}
+
+export type CmsCommentStatus = "pending" | "approved" | "spam" | "deleted";
+
+export interface CmsPostComment {
+  id: string;
+  post_id: string;
+  parent_id: string | null;
+  author_name: string;
+  author_email: string;
+  content: string;
+  status: CmsCommentStatus;
+  post_title?: string | null;
+  post_slug?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CmsPublicPostComment {
+  id: string;
+  post_id: string;
+  parent_id: string | null;
+  author_name: string;
+  content: string;
+  created_at: string;
+  replies: CmsPublicPostComment[];
+}
+
+export interface CmsPostCommentsPaginated {
+  items: CmsPostComment[];
+  total: number;
+  skip: number;
+  limit: number;
+  pending_count: number;
+}
+
+
+
 
 

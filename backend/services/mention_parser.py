@@ -134,8 +134,16 @@ def extract_mentions(content: str) -> tuple[Set[str], Set[str], Set[str]]:
         if not token:
             continue
         words = token.split()
-        while len(words) > 2 and words[-1].lower() in _FULLNAME_STOPWORDS:
-            words.pop()
+        # Trim trailing words that are unlikely to be part of a name.
+        # Stopwords and lower-cased words (verbs/adjectives/articles in the
+        # middle of a sentence) are removed so "@Juan Pérez revisa esto"
+        # resolves to "Juan Pérez". Keep at least 2 words.
+        while len(words) > 2:
+            last = words[-1]
+            if last.lower() in _FULLNAME_STOPWORDS or (last and last[0].islower()):
+                words.pop()
+            else:
+                break
         if words:
             fullname_tokens.add(" ".join(words))
     masked_content = _mask_ranges(

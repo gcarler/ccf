@@ -190,3 +190,192 @@ npm run test:e2e:cms:public
 - `cms_v2.py` sí separa mejor lectura (`cms:read`) y mutación (`cms:edit`).
 - `enterprise_cms.py` ahora expresa lectura con `cms:read` y mutación con `cms:manage` en la firma.
 - ver `CMS_RBAC_MATRIX.md` para la matriz completa y el contrato RBAC vigente.
+
+---
+
+## 11. Ejemplos de Request/Response — Endpoints Clave
+
+### 11.1 `GET /api/cms/v2/public/sites/{site_key}/pages/{slug}` — Página Pública
+
+**Sin auth requerida.** Devuelve la versión publicada de una página con sus secciones.
+
+**Request:**
+```http
+GET /api/cms/v2/public/sites/faro/pages/home
+```
+
+**Response (200):**
+```json
+{
+  "site_key": "faro",
+  "slug": "home",
+  "title": "Inicio — Faro CCF",
+  "seo_json": {
+    "meta_title": "Inicio | Centro Cristiano Faro",
+    "meta_description": "Bienvenidos a nuestra iglesia...",
+    "og_image": "https://cdn.ccf.com/og-home.jpg"
+  },
+  "canonical_url": "https://faro.ccf.com/home",
+  "sections": [
+    {
+      "id": "section-uuid",
+      "section_key": "hero-main",
+      "type": "hero",
+      "props_json": {
+        "title": "Bienvenidos a Faro",
+        "subtitle": "Una comunidad de fe",
+        "cta_text": "Conócenos",
+        "cta_link": "/pastores",
+        "image_url": "https://cdn.ccf.com/hero.jpg"
+      },
+      "sort_order": 1,
+      "is_visible": true
+    }
+  ]
+}
+```
+
+**Errores:**
+- `404` — Sitio o página no encontrados, o página no publicada.
+
+---
+
+### 11.2 `GET /api/cms/v2/public/sites/{site_key}/posts` — Lista de Posts Públicos
+
+**Sin auth requerida.** Devuelve posts publicados con paginación, filtro por categoría/tag.
+
+**Request:**
+```http
+GET /api/cms/v2/public/sites/faro/posts?page=1&page_size=10&category=anuncios
+```
+
+**Response (200):**
+```json
+{
+  "items": [
+    {
+      "id": "post-uuid",
+      "slug": "campamento-2026",
+      "title": "Campamento Juvenil 2026",
+      "excerpt": "Este verano viviremos una experiencia única...",
+      "cover_image_url": "https://cdn.ccf.com/campamento.jpg",
+      "published_at": "2026-07-15T10:00:00Z",
+      "author": {
+        "id": "persona-uuid",
+        "display_name": "Juan Pérez",
+        "avatar_url": null
+      },
+      "categories": [{ "id": "cat-uuid", "name": "Anuncios", "slug": "anuncios" }],
+      "tags": [{ "id": "tag-uuid", "name": "juventud" }]
+    }
+  ],
+  "total": 42,
+  "page": 1,
+  "page_size": 10,
+  "pages": 5
+}
+```
+
+**Errores:**
+- `404` — Sitio no encontrado.
+
+---
+
+### 11.3 `PATCH /api/cms/v2/sites/{site_key}/pages/{slug}/sections/{section_key}` — Editar Sección
+
+**Auth requerida:** rol `CMS_EDITOR` o `CMS_PUBLISHER`. La sección debe pertenecer a una página del sitio de la sede del actor.
+
+**Request:**
+```http
+PATCH /api/cms/v2/sites/faro/pages/home/sections/hero-main
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "props_json": {
+    "title": "Bienvenidos — Iglesia Faro",
+    "subtitle": "Una comunidad de fe y amor",
+    "cta_text": "Únete a nosotros",
+    "cta_link": "/contacto"
+  },
+  "is_visible": true
+}
+```
+
+**Response (200):**
+```json
+{
+  "id": "section-uuid",
+  "page_id": "page-uuid",
+  "section_key": "hero-main",
+  "type": "hero",
+  "props_json": {
+    "title": "Bienvenidos — Iglesia Faro",
+    "subtitle": "Una comunidad de fe y amor",
+    "cta_text": "Únete a nosotros",
+    "cta_link": "/contacto"
+  },
+  "sort_order": 1,
+  "is_visible": true,
+  "status": "active",
+  "updated_at": "2026-07-31T00:00:00Z"
+}
+```
+
+**Errores:**
+- `403` — Sin permisos de editor en el sitio.
+- `404` — Sitio, página o sección no encontrada.
+- `409` — Conflicto al guardar (IntegrityError).
+- `422` — `props_json` no cumple el schema del tipo de sección.
+
+---
+
+### 11.4 `POST /api/cms/v2/sites/{site_key}/pages/{slug}/workflow` — Transición de Estado
+
+**Auth requerida:** rol `CMS_PUBLISHER` para publicar; `CMS_EDITOR` para otras transiciones.
+
+**Transiciones válidas:**
+- `draft` → `review` → `approved` → `published`
+- `published` → `draft` (unpublish)
+
+**Request (publicar):**
+```http
+POST /api/cms/v2/sites/faro/pages/home/workflow
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "action": "publish",
+  "comment": "Aprobado para publicación — revisión editorial completada"
+}
+```
+
+**Response (200):**
+```json
+{
+  "id": "page-uuid",
+  "slug": "home",
+  "title": "Inicio",
+  "status": "published",
+  "published_version_id": "version-uuid",
+  "publish_at": null,
+  "expires_at": null,
+  "updated_at": "2026-07-31T00:00:00Z"
+}
+```
+
+**Errores:**
+- `400` — Acción inválida o transición de estado no permitida.
+- `403` — Sin permiso de publicación.
+- `404` — Sitio o página no encontrada.
+- `409` — Conflicto de versión.
+
+**Nota sobre `publish_at` programado:**
+```json
+// POST con publicación futura:
+{
+  "action": "schedule",
+  "publish_at": "2026-08-01T10:00:00Z"
+}
+```
+

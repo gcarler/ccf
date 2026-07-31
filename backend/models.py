@@ -28,6 +28,7 @@ from backend.models_academy_core import (
 
 # Agenda — Calendario Unificado, Recursos, Participantes
 from backend.models_agenda import (
+    AgendaEventComment,
     EventoAgenda,
     ParticipanteEvento,
     RecursoFisico,
@@ -67,6 +68,8 @@ from backend.models_auth import (
     UsuarioRolModulo,
 )
 from backend.models_cms import (  # noqa: F401
+    CmsAbTest,
+    CmsAbTestEvent,
     CmsCategory,
     CmsForm,
     CmsFormSubmission,
@@ -80,6 +83,7 @@ from backend.models_cms import (  # noqa: F401
     CmsPopup,
     CmsPost,
     CmsPostCategory,
+    CmsPostComment,
     CmsPostTag,
     CmsPublishLog,
     CmsSection,

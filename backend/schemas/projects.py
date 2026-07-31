@@ -15,6 +15,7 @@ def coerce_uuid_to_str(v: Any) -> str:
         return str(v)
     return v
 
+
 UUIDStr = Annotated[str, BeforeValidator(coerce_uuid_to_str)]
 
 
@@ -327,7 +328,7 @@ class ProjectCommentItem(ProjectCommentBase):
     is_resolved: bool = False
     created_at: datetime
     updated_at: datetime
-    module_type: Literal["project", "agenda"] = "project"
+    module_type: Literal["project", "activity", "agenda"] = "project"
     context_title: Optional[str] = None
 
 

@@ -36,9 +36,14 @@ logger = logging.getLogger(__name__)
 
 
 def rate_limiter(limit: int = 5, window_seconds: int = 60):
-    async def dependency(request: Request) -> None:
+    async def dependency(request: Request = None) -> None:
+        if request is None:
+            return
         if os.getenv("PYTEST_CURRENT_TEST"):
             return
+
+
+
         if get_settings().environment.strip().lower() in {"test", "testing"}:
             return
         redis_client = get_redis()
