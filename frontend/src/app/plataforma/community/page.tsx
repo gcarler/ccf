@@ -117,7 +117,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Media',
                 status: 'Pendiente',
                 comments: '8 hilos activos',
-                link: '/community/messages'
+                link: '/plataforma/messages'
             }
         ]
     },
@@ -250,7 +250,7 @@ const featureCards = [
         title: 'Mensajes',
         description: 'Chats privados y grupos para coordinar iniciativas.',
         icon: MessageSquare,
-        href: '/plataforma/community/messages',
+        href: '/plataforma/messages',
         tone: 'to-[hsl(var(--success)/40%)] to-[hsl(var(--success)/30%)]'
     },
     {
