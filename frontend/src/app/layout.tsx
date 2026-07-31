@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Roboto, Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Roboto, Inter, Open_Sans } from "next/font/google";
 import "./globals.css";
 
 // ── Typography: Load production fonts via next/font/google (self-hosted, no FOUC) ──
@@ -11,10 +11,10 @@ const roboto = Roboto({
     preload: true,
 });
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const openSans = Open_Sans({
     subsets: ["latin"],
     weight: ["400", "500", "600", "700", "800"],
-    variable: "--font-plus-jakarta",
+    variable: "--font-open-sans",
     display: "swap",
     preload: false,
 });
@@ -62,7 +62,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="es" suppressHydrationWarning className={`${roboto.variable} ${plusJakartaSans.variable} ${inter.variable}`}>
+        <html lang="es" suppressHydrationWarning className={`${roboto.variable} ${openSans.variable} ${inter.variable}`}>
             <head>
                 <script
                     dangerouslySetInnerHTML={{

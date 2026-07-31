@@ -68,7 +68,7 @@ Definidos en `tokens.ts`:
 - **colors**: primary, emerald, amber, blue, slate, danger
 - **radii**: sm (4px), md (6px), lg (8px), xl (12px), pill (9999px)
 - **shadows**: soft, card, dropdown, inner
-- **typography**: Manrope, 6 tamaños (11-18px), 5 pesos
+- **typography**: Roboto / Open Sans / Inter (vía `next/font/google`, ver `layout.tsx` y `globals.css`), 6 tamaños (11-18px), 5 pesos
 - **spacing**: xs (4px), sm (6px), md (8px), lg (12px), xl (16px)
 - **motion**: 3 duraciones, 2 easing curves
 
