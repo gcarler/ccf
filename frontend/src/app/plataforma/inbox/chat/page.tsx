@@ -266,7 +266,7 @@ export default function ChatAdminPage() {
                         {item.mentions && item.mentions.length > 0 && (
                           <span className="inline-flex items-center gap-1 text-2xs font-medium text-[hsl(var(--info))]">
                             <AtSign size={10} />
-                            {item.mentions.length} mención{item.mentions.length !== 1 ? "es" : ""}
+                            {item.mentions.length === 1 ? '1 mención' : `${item.mentions.length} menciones`}
                           </span>
                         )}
                       </div>
