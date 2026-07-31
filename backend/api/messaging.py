@@ -18,7 +18,7 @@ Este módulo expone el router ``/api/messaging/*`` agrupado bajo tres categoría
 3. **Chat interno (inbox app)** — ``GET /messaging/history`` y
    ``POST /messaging/send``. Modela un hilo conversacional dentro de la
    plataforma con ``channel='internal'`` en ``CommunicationLog``. Soporta la
-   bandeja ``/plataforma/inbox/messages`` y el sidebar CRM de la persona.
+   bandeja ``/plataforma/messages`` (ruta canónica unificada) y el sidebar CRM de la persona.
    Auth: ``require_staff_or_admin``. Soporta ``offset`` para paginación.
 
 Seguridad (Fase 1 de auditoría):
@@ -34,6 +34,10 @@ Seguridad (Fase 1 de auditoría):
 Multi-Tenant (Axioma 3):
   - ``GET /messaging/history`` filtra por ``Persona.sede_id == user_sede``.
   - ``POST /messaging/send`` rechaza 404 si ``persona_id`` es cross-sede.
+
+Rutas legacy (redirect 307):
+  - ``/plataforma/inbox/messages`` → ``/plataforma/messages``
+  - ``/plataforma/community/messages`` → ``/plataforma/messages``
   - ``PATCH /notifications/{id}`` requiere ownership (BOLA-style leak prevention).
 
 Notas operativas:

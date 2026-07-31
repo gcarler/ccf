@@ -22,7 +22,7 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
             items: [
                 { label: "Notificaciones", icon: Bell, href: "/community/notifications" },
                 { label: "Anuncios", icon: Megaphone, href: "/community/announcements" },
-                { label: "Mensajes", icon: MessageSquare, href: "/community/messages" }
+                { label: "Mensajes", icon: MessageSquare, href: "/plataforma/messages" }
             ]
         },
         {
