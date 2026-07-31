@@ -6,10 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import CrmShell from "@/components/crm/CrmShell";
 import { MessageSquare, Send, Clock, LayoutDashboard, Mail } from "lucide-react";
-import { DSCard } from '@/design';
-import { DSBadge } from '@/design';
-import { DSMetric } from '@/design';
-import { toast } from "sonner";
+import { DSCard, DSBadge, DSMetric } from '@/design';
+import { useToast } from "@/context/ToastContext";
 
 type MessagingHistoryDetail = {
     id: string;
@@ -28,17 +26,21 @@ type MessagingHistoryDetail = {
 };
 
 export default function MessagingDetailPage() {
+    // Hooks MUST run unconditionally before any early-return/notFound().
     const params = useParams();
     const id = params?.id as string;
-    // M-06 — validar formato (UUID o slug hex+guion); 404 otherwise.
-    if (!id || !/^[a-z0-9-]+$/i.test(id)) {
-        notFound();
-    }
     const { token, loading: authLoading } = useAuth();
+    const { addToast } = useToast();
     const [campaign, setCampaign] = useState<MessagingHistoryDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
+
+    // M-06 — validar formato (UUID o slug hex+guion); 404 otherwise.
+    // Runs AFTER all hooks so Rules of Hooks are respected.
+    if (!id || !/^[a-z0-9-]+$/i.test(id)) {
+        notFound();
+    }
 
     useEffect(() => {
         if (authLoading) return;
@@ -64,7 +66,7 @@ export default function MessagingDetailPage() {
                 if (controller.signal.aborted) return;
                 setCampaign(null);
                 setError('No se pudo cargar el detalle de la campaña.');
-                toast.error("Error al cargar detalle de campana");
+                addToast('Error al cargar detalle de campaña', 'error');
             } finally {
                 if (!controller.signal.aborted) setLoading(false);
             }
@@ -103,7 +105,7 @@ export default function MessagingDetailPage() {
         return (
             <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
                 <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                    No se pudo cargar la campana.
+                    No se pudo cargar la campaña.
                 </p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
