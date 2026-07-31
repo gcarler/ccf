@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-    Send, 
-    MessageSquare, 
-    Mail, 
-    Users, 
-    Smartphone, 
-    Zap, 
-    History, 
-    Filter, 
-    ChevronRight, 
+import {
+    Send,
+    MessageSquare,
+    Mail,
+    Users,
+    Smartphone,
+    Zap,
+    History,
+    Filter,
+    ChevronRight,
     Bot,
     Sparkles,
     CheckCircle2,
@@ -25,6 +25,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { useToast } from '@/context/ToastContext';
+import { onActivateKey } from '@/lib/a11y';
 import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import clsx from 'clsx';
@@ -210,12 +211,12 @@ export default function MessagingCampaignCenter() {
                                 </div>
                             ))
                         ) : history.map((item) => (
-                            <div 
-                                key={item.id} 
+                            <div
+                                key={item.id}
                                 onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                 role="button"
                                 tabIndex={0}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
+                                onKeyDown={onActivateKey(() => router.push(`/plataforma/crm/messaging/${item.id}`))}
                                 className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 flex items-center justify-between hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer group"
                             >
                                 <div>
@@ -249,12 +250,12 @@ export default function MessagingCampaignCenter() {
                                         </tr>
                                     ))
                                 ) : history.map((item) => (
-                                    <tr 
-                                        key={item.id} 
+                                    <tr
+                                        key={item.id}
                                         onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                         role="button"
                                         tabIndex={0}
-                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
+                                        onKeyDown={onActivateKey(() => router.push(`/plataforma/crm/messaging/${item.id}`))}
                                         className="border-t border-[hsl(var(--border))] dark:border-white/5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                                     >
                                         <td className="px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</td>
@@ -296,12 +297,12 @@ export default function MessagingCampaignCenter() {
                                 </div>
                                 <div className="space-y-2">
                                     {col.items.map((item: any) => (
-                                        <div 
-                                            key={item.id} 
+                                        <div
+                                            key={item.id}
                                             onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                             role="button"
                                             tabIndex={0}
-                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
+                                            onKeyDown={onActivateKey(() => router.push(`/plataforma/crm/messaging/${item.id}`))}
                                             className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3 hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer"
                                         >
                                             <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
@@ -335,12 +336,12 @@ export default function MessagingCampaignCenter() {
                                 <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {items.map((item: any) => (
-                                        <div 
-                                            key={item.id} 
+                                        <div
+                                            key={item.id}
                                             onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                             role="button"
                                             tabIndex={0}
-                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
+                                            onKeyDown={onActivateKey(() => router.push(`/plataforma/crm/messaging/${item.id}`))}
                                             className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-3 hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer bg-[hsl(var(--surface-1))] dark:bg-white/5"
                                         >
                                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</p>
@@ -367,12 +368,12 @@ export default function MessagingCampaignCenter() {
                                 </div>
                             ))
                         ) : history.map((item) => (
-                            <div 
-                                key={item.id} 
+                            <div
+                                key={item.id}
                                 onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                 role="button"
                                 tabIndex={0}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
+                                onKeyDown={onActivateKey(() => router.push(`/plataforma/crm/messaging/${item.id}`))}
                                 className="space-y-1 cursor-pointer group p-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-md transition-all"
                             >
                                 <div className="flex items-center justify-between text-xs">
@@ -401,12 +402,12 @@ export default function MessagingCampaignCenter() {
 
                 {viewType === 'grid' && (
  <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3">
-                    
+
                     {/* Left Column: Composer */}
                     <div className="lg:col-span-7 space-y-3">
                         <section className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 shadow-xl space-y-4 relative overflow-hidden">
                             <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-[hsl(var(--info))]/5 rounded-full blur-3xl" />
-                            
+
                             <div className="relative z-10 flex justify-between items-center">
                                 <div>
                                     <h2 className="text-lg font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none mb-2 uppercase">Campaign Composer</h2>
@@ -422,7 +423,7 @@ export default function MessagingCampaignCenter() {
                             <div className="space-y-3">
                                 <div className="space-y-2">
                                     <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Nombre de la Campaña</label>
-                                        <input 
+                                        <input
                                             required
                                             disabled={!canEditCrm}
                                             aria-invalid={!!campaignErrors.campaignName}
@@ -437,7 +438,7 @@ export default function MessagingCampaignCenter() {
                                 <div className="space-y-2">
                                     <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-4">Mensaje (Personalización con {`{nombre}`})</label>
                                     <div className="relative">
-                                        <textarea 
+                                        <textarea
                                             required
                                             disabled={!canEditCrm}
                                             aria-invalid={!!campaignErrors.message}
@@ -462,7 +463,7 @@ export default function MessagingCampaignCenter() {
                                         <FileText size={14} /> Guardar Borrador
                                     </button>
                                 </div>
-                                <button 
+                                <button
                                     onClick={handleSendCampaign} disabled={isSending || !canEditCrm}
                                     className="flex items-center gap-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50"
                                 >
@@ -519,12 +520,12 @@ export default function MessagingCampaignCenter() {
                                 {loadingHistory ? (
                                     <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded animate-pulse" />)}</div>
                                 ) : history.map((item) => (
-                                    <div 
-                                        key={item.id} 
+                                    <div
+                                        key={item.id}
                                         onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
                                         role="button"
                                         tabIndex={0}
-                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/messaging/${item.id}`); } }}
+                                        onKeyDown={onActivateKey(() => router.push(`/plataforma/crm/messaging/${item.id}`))}
                                         className="flex items-center justify-between group cursor-pointer hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 p-2 rounded-lg transition-all"
                                     >
                                         <div className="flex items-center gap-4">
