@@ -682,7 +682,7 @@ def test_tier3_flow_builder_three_node(client, db_session):
     from backend.models_crm import CrmAutomationFlow, CrmAutomationNode
     admin, persona, sede, pipeline, etapa1, etapa2, caso1, caso2 = _seed_test_data(db_session)
     # QC-13 (auditoría de calidad 2026-07-25): el flow se crea CON sede_id
-    # del admin (doctrina C-04 _owned_flow: legacy NULL = fuera-de-scope
+    # del admin (doctrina C-04 _owned_flow: old NULL = fuera-de-scope
     # desde sede concreta). Antes creaba flow sin sede_id → 404 en endpoint.
     flow = CrmAutomationFlow(name="Test Flow", is_active=True, sede_id=sede.id)
     db_session.add(flow)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 """Ensure the public pastors page exists in CMS v2 with live content.
 
-This script migrates the legacy page_content payloads for the public pastors
+This script migrates the old page_content payloads for the public pastors
 route into the canonical CMS v2 tables:
 
 - page slug: ``pastors``

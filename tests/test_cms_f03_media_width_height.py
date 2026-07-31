@@ -11,7 +11,7 @@ desde upload/optimize.  ``dimensions`` string se mantiene por compat.
 Tests:
   1) CRUD create con width/height → row persiste ambos + dimensions
   2) CRUD create sin width/height → row queda None (back-compat con
-     callers legacy que no pasan dimensiones, ej. pdf/mp4)
+     callers old que no pasan dimensiones, ej. pdf/mp4)
   3) CRUD update parcial (solo width) → height preservado, no None-out
   4) CRUD update con dimensions string → row.dimensions persiste
   5) Schema CmsMediaRead expone width/height/dimensions via API

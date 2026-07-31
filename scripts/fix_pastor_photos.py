@@ -9,7 +9,7 @@ A staff member manually uploaded the correct pastor photos to
 public pastors page showing the wrong photos. But those .jpg files were never
 registered in ``CmsMediaItem`` (the only key the CMS uses to serve images),
 so the public page continued showing the old (incorrect) hash-named .webp
-files referenced by the legacy ``page_contents`` payloads.
+files referenced by the old ``page_contents`` payloads.
 
 This script completes the fix end-to-end:
 
@@ -66,9 +66,9 @@ WHAT IS NOT IN SCOPE
 - Cleanup of the now-orphan hash-named .webp files: deliberately NOT touched.
   The audit ``scripts/audit_public_media_cms.py`` flags orphans; cleanup is
   a separate one-shot script once you confirm the fix works in production.
-- The legacy ``page_contents`` payloads (seed_public_content.py /
+- The old ``page_contents`` payloads (seed_public_content.py /
   ensure_public_content_blocks.py) are NOT modified; the public /pastores
-  page reads from the v2 ``CmsSection``, so the legacy table is dead weight
+  page reads from the v2 ``CmsSection``, so the old table is dead weight
   post-fix and can be addressed in a separate cleanup task.
 """
 from __future__ import annotations

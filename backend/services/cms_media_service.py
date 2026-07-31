@@ -1,7 +1,7 @@
 """Shared CMS media service.
 
 Encapsulates upload, optimization and deletion logic for ``CmsMediaItem``
-so that both the legacy v1 API (``backend/api/cms.py``) and the v2 API can
+so that both the old v1 API (``backend/api/cms.py``) and the v2 API can
 reuse the same code path. Keeping the business logic here prevents
 duplication between the two routers and makes the migration to the v2
 model easier.
@@ -47,7 +47,7 @@ def _uploads_root() -> str:
 def _guard_path(url: str) -> str:
     """Resolve a media URL to an absolute path inside the upload root.
 
-    Mirrors the traversal guard used by the legacy v1 endpoints so that
+    Mirrors the traversal guard used by the old v1 endpoints so that
     a malicious ``url`` like ``../../etc/passwd`` cannot escape the
     upload directory.
 

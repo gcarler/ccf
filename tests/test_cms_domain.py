@@ -53,7 +53,7 @@ def test_cms_page_versioning(db_session):
 
 
 def test_create_cms_media_item(db_session):
-    """CMS v2 media creation replaces legacy create_media_asset."""
+    """CMS v2 media creation replaces old create_media_asset."""
     user, persona = seed_user_and_persona(db_session)
     item = crud.create_cms_media_item(
         db_session,

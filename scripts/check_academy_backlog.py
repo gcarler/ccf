@@ -7,7 +7,7 @@ Reglas (matching docs/ACADEMY_BACKLOG.md §7):
   1. Tickets ⬜ deben tener `gate:` ejecutable.
   2. Severidades ∈ {CRIT, HIGH, MED, LOW, TEST}.
   3. IDs ACAD-TKT-NNN consecutivos sin duplicados.
-  4. Los 3 docs legacy tienen banner DEPRECADO + redirect.
+  4. Los 3 docs antiguos tienen banner DEPRECADO + redirect.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BACKLOG = REPO_ROOT / "docs" / "ACADEMY_BACKLOG.md"
-LEGACY_DOCS = [
+OLD_DOCS = [
     REPO_ROOT / "docs" / "PLAN_ACADEMY_CALIDAD.md",
     REPO_ROOT / "docs" / "ESTADO_ACADEMY.md",
     REPO_ROOT / "docs" / "ACADEMY_QA_CHECKLIST.md",
@@ -100,15 +100,15 @@ def check_backlog() -> list[str]:
     if duplicates:
         issues.append(f"❌ ACAD-TKT-NNN duplicados: {duplicates}")
 
-    # 4. Los 3 docs legacy tienen banner DEPRECADO + redirect.
-    for legacy in LEGACY_DOCS:
-        if not legacy.exists():
+    # 4. Los 3 docs antiguos tienen banner DEPRECADO + redirect.
+    for old_doc in OLD_DOCS:
+        if not old_doc.exists():
             continue
-        ltext = legacy.read_text(encoding="utf-8")
+        ltext = old_doc.read_text(encoding="utf-8")
         if "DEPRECADO" not in ltext:
-            issues.append(f"❌ {legacy.name} sin banner 'DEPRECADO'")
+            issues.append(f"❌ {old_doc.name} sin banner 'DEPRECADO'")
         if "ACADEMY_BACKLOG.md" not in ltext:
-            issues.append(f"❌ {legacy.name} sin redirect a docs/ACADEMY_BACKLOG.md")
+            issues.append(f"❌ {old_doc.name} sin redirect a docs/ACADEMY_BACKLOG.md")
 
     # 5. Estados válidos.
     invalid_state = [

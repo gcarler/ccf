@@ -313,17 +313,17 @@ class TestApiPatchPageScheduling:
         assert resp.json()["publish_at"] is None
 
 
-class TestLegacyScheduleEndpointCompat:
-    """The legacy ``/pages/{page_id}/schedule`` endpoint now stores into
-    ``publish_at`` (drops the legacy seo_json cruft).
+class TestOldScheduleEndpointCompat:
+    """The old ``/pages/{page_id}/schedule`` endpoint now stores into
+    ``publish_at`` (drops the old seo_json cruft).
     """
 
-    def test_legacy_schedule_writes_publish_at_column(self, client, db_session):
-        seed_admin(db_session, email="legacy-sched@example.com")
+    def test_old_schedule_writes_publish_at_column(self, client, db_session):
+        seed_admin(db_session, email="old-sched@example.com")
         site = _seed_site(db_session)
-        page = _make_page(db_session, site.id, slug="legacy-page")
+        page = _make_page(db_session, site.id, slug="old-page")
 
-        headers = auth_headers(client, email="legacy-sched@example.com")
+        headers = auth_headers(client, email="old-sched@example.com")
         resp = client.post(
             f"/api/cms/v2/pages/{page.id}/schedule?site_key={site.site_key}",
             json={"scheduled_at": "2099-01-01T00:00:00Z"},
@@ -331,16 +331,16 @@ class TestLegacyScheduleEndpointCompat:
         )
         assert resp.status_code == 200, resp.text
         # DB-level check: publish_at must be populated; seo_json must NOT
-        # contain _scheduled_at legacy.
+        # contain _scheduled_at old.
         db_session.refresh(page)
         assert page.publish_at is not None
         assert not (isinstance(page.seo_json, dict) and "_scheduled_at" in (page.seo_json or {}))
 
-    def test_legacy_schedule_invalid_datetime_returns_400(self, client, db_session):
-        seed_admin(db_session, email="legacy-bad@example.com")
+    def test_old_schedule_invalid_datetime_returns_400(self, client, db_session):
+        seed_admin(db_session, email="old-bad@example.com")
         site = _seed_site(db_session)
-        page = _make_page(db_session, site.id, slug="legacy-bad")
-        headers = auth_headers(client, email="legacy-bad@example.com")
+        page = _make_page(db_session, site.id, slug="old-bad")
+        headers = auth_headers(client, email="old-bad@example.com")
         resp = client.post(
             f"/api/cms/v2/pages/{page.id}/schedule?site_key={site.site_key}",
             json={"scheduled_at": "not-a-date"},
@@ -348,17 +348,17 @@ class TestLegacyScheduleEndpointCompat:
         )
         assert resp.status_code == 422
 
-    def test_legacy_schedule_rejects_cross_site_site_key(self, client, db_session):
-        seed_admin(db_session, email="legacy-cross-a@example.com")
-        _, _, other_sede = seed_admin(db_session, email="legacy-cross-b@example.com")
+    def test_old_schedule_rejects_cross_site_site_key(self, client, db_session):
+        seed_admin(db_session, email="old-cross-a@example.com")
+        _, _, other_sede = seed_admin(db_session, email="old-cross-b@example.com")
         from backend import models
 
-        site_a = _seed_site(db_session, key="legacy-a")
+        site_a = _seed_site(db_session, key="old-a")
         site_b = models.CmsSite(
             id=uuid.uuid4(),
-            site_key="legacy-b",
-            name="Site legacy-b",
-            base_path="/legacy-b",
+            site_key="old-b",
+            name="Site old-b",
+            base_path="/old-b",
             is_active=True,
             sede_id=other_sede.id,
         )
@@ -366,7 +366,7 @@ class TestLegacyScheduleEndpointCompat:
         db_session.commit()
 
         page = _make_page(db_session, site_b.id, slug="cross-site-page")
-        headers = auth_headers(client, email="legacy-cross-a@example.com")
+        headers = auth_headers(client, email="old-cross-a@example.com")
         resp = client.post(
             f"/api/cms/v2/pages/{page.id}/schedule?site_key={site_a.site_key}",
             json={"scheduled_at": "2099-01-01T00:00:00Z"},
@@ -620,7 +620,7 @@ class TestSchedulingSedeBoundary:
         assert log_entry is not None
         assert log_entry.site_id == site.id
 
-    def test_reader_role_cannot_schedule_page_via_legacy_endpoint(self, client, db_session):
+    def test_reader_role_cannot_schedule_page_via_old_endpoint(self, client, db_session):
         # Editor sin permisos de publish.
         seed_user_with_role(db_session, role_name="lector", email="reader-sched@example.com")
         site = _seed_site(db_session)

@@ -16,7 +16,7 @@ Behavior (2026-07-06 refactor):
     ``archived`` (posts no tienen ``scheduled`` como estado intermedio
     porque ``published_at`` opera como publish).
 
-El cruft legacy ``seo_json['_scheduled_at']`` (eliminado por la migration
+El cruft heredado ``seo_json['_scheduled_at']`` (eliminado por la migration
 ``20260706_0001_cms_schedule``) ya no se lee aquí.
 
 Cada transición se registra en ``CmsPublishLog`` con

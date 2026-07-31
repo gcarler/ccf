@@ -47,7 +47,7 @@ def create_app(monkeypatch):
         class DummyUser:
             id = uuid.uuid4()
             role = "admin"
-            # emulate rol_plataforma for legacy compatibility
+            # emulate rol_plataforma for old compatibility
             rol_plataforma = None
         return DummyUser()
 

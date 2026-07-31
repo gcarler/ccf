@@ -60,7 +60,7 @@ ROOT = Path(__file__).resolve().parents[1]
 _BAN_FK = "ForeignKey(" + '"us' + 'ers.' + 'id' + '")'
 _BAN_PREFIX = "CCF-" + "MBR"
 _BAN_V2 = "/api/v" + "2/academy"
-_BAN_TMP_PREFIXES = ("_tmp_", "_scratch_", "_validate_legacy_")
+_BAN_TMP_PREFIXES = ("_tmp_", "_scratch_", "_validate_old_")
 
 
 # ── Live-code classifier (single source of truth) ──────────────────────────
@@ -75,9 +75,9 @@ _STRUCTURAL_CONTRACTS = "tests/test_structural_contracts.py"
 
 _EXCLUDED_PATHS = frozenset({
     _THIS_AUDIT_FILE,  # Self-reference (no wildcard).
-    str((ROOT / "tests" / "structural_contracts.py").as_posix()),  # Legacy name.
+    str((ROOT / "tests" / "structural_contracts.py").as_posix()),  # Old name.
     str((ROOT / _STRUCTURAL_CONTRACTS).as_posix()),
-    "alembic/versions",  # Legacy migrations — REGLAS §9.1.
+    "alembic/versions",  # Old migrations — REGLAS §9.1.
     "docs/",  # Definicion de la regla, no su uso.
     "REGLAS.md",
     ".venv/",
@@ -93,7 +93,7 @@ def is_live_code(path: Path) -> bool:
     "Live code" = codigo de aplicacion activo donde una violacion REGLAS
     seria un bug. Excluye:
 
-    - ``alembic/versions/`` (legacy migrations — REGLAS §9.1)
+    - ``alembic/versions/`` (old migrations — REGLAS §9.1)
     - ``docs/`` y ``REGLAS.md`` (definicion de la regla, no uso)
     - El propio archivo de auditor (self-reference, NO wildcard glob)
     - ``tests/test_structural_contracts.py`` (assert estructural ausencia)
@@ -123,9 +123,9 @@ def _run(cmd: str) -> str:
 # ── Gate 1: Sin FK users.id en codigo vivo (REGLAS §1) ─────────────────────
 
 
-def test_no_legacy_users_fk_in_live_code():
+def test_no_old_users_fk_in_live_code():
     """REGLAS §1 (Kernel de Personas): CERO ForeignKey("users.id") en live
-    code. Permitido: legacy migrations (0024, 0025) son memoria inmutable.
+    code. Permitido: old migrations (0024, 0025) son memoria inmutable.
     NO permitido: nuevos modelos, schemas o fixtures referenciando
     ``users.id`` para representar personas.
     """
@@ -163,10 +163,10 @@ def test_no_legacy_users_fk_in_live_code():
     )
 
 
-# ── Gate 2: CCF-MBR solo en migraciones legacy (REGLAS §9.1) ──────────────
+# ── Gate 2: CCF-MBR solo en migraciones antiguas (REGLAS §9.1) ──────────────
 
 
-def test_no_legacy_ccf_mbr_in_live_code():
+def test_no_old_ccf_mbr_in_live_code():
     """REGLAS §9.1 (Inmutabilidad): la cadena ``CCF-MBR`` solo puede existir
     en ``alembic/versions/0024_prod_hardening3.py`` y ``0025_prod_final.py``.
     Cualquier otro lugar es regresion. Ver el signed calout en REGLAS.md
@@ -207,7 +207,7 @@ def test_no_legacy_ccf_mbr_in_live_code():
 # ── Gate 3: Sin rutas /api/v2/academy (REGLAS §7) ──────────────────────────
 
 
-def test_no_legacy_api_v2_academy():
+def test_no_old_api_v2_academy():
     """REGLAS §7 (Modulos Canonicos): Academy vive solo en ``/api/academy``.
     Excluido por diseno: ``tests/test_structural_contracts.py`` (assert de
     ausencia — comportamiento correcto).
@@ -240,12 +240,12 @@ def test_no_legacy_api_v2_academy():
     )
 
 
-# ── Gate 4: Sin scripts _tmp_/_scratch_/_validate_legacy_ (REGLAS §9.2) ───
+# ── Gate 4: Sin scripts _tmp_/_scratch_/_validate_old_ (REGLAS §9.2) ───
 
 
-def test_no_legacy_operational_scripts():
+def test_no_old_operational_scripts():
     """REGLAS §9.2: prohibidos prefijos ``_tmp_``, ``_scratch_``,
-    ``_validate_legacy_`` en ``scripts/``. Cleanup del cierre v3.0.1 ya
+    ``_validate_old_`` en ``scripts/``. Cleanup del cierre v3.0.1 ya
     elimino los 2 archivos existentes.
     """
     scripts_dir = ROOT / "scripts"
@@ -262,7 +262,7 @@ def test_no_legacy_operational_scripts():
         if any(prefix in path.name for prefix in _BAN_TMP_PREFIXES):
             offenders.append(str(path))
     assert not offenders, (
-        "REGLAS §9.2 violada: scripts legacy operacionales:\n"
+        "REGLAS §9.2 violada: scripts antiguos operacionales:\n"
         + "\n".join(offenders)
     )
 
@@ -453,7 +453,7 @@ def test_auth_v3_uses_personas_uuid():
 # ── Gate 10: runtime sin bypasses de compatibilidad ───────────────────────
 
 
-def test_runtime_has_no_legacy_write_bypasses():
+def test_runtime_has_no_old_write_bypasses():
     """Las mutaciones protegidas requieren actor/owner y UGC atribuible."""
     import inspect
 
@@ -531,7 +531,7 @@ def test_runtime_has_no_legacy_write_bypasses():
     assert "user?.id || 1" not in counseling_ui
     # REGLAS §10 — AliasChoices path-scoped carve-out (Gate 10):
     # ``AliasChoices`` es feature legítima de pydantic v2 SOLO para
-    # ``validation_alias`` multi-nombre (env-var resolution / legacy compatibility).
+    # ``validation_alias`` multi-nombre (env-var resolution / old compatibility).
     # El check usa un substring match — no distingue entre
     # ``validation_alias=AliasChoices(...)`` y otros usages;
     # permite ``AliasChoices`` en los archivos canónicos abajo
@@ -555,7 +555,7 @@ def test_runtime_has_no_legacy_write_bypasses():
         "  - backend/core/config.py (Settings.environment: ENV + environment)\n"
         "  - backend/schemas/admin.py (AdminRoleCreate/Update)\n"
         "  - backend/schemas/evangelism.py (campos equivalentes)\n"
-        "Cualquier otro uso es write-bypass o regresión de runtime legacy.\n"
+        "Cualquier otro uso es write-bypass o regresión de runtime antiguo.\n"
         "Si necesitas usarlo, añádelo al whitelist + documenta el motivo.\n"
         "Hallazgos:\n" + alias_offenders
     )

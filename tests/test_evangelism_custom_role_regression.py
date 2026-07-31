@@ -254,7 +254,7 @@ class TestPersonalizadoMarkerRehidrata:
         )
         sess.add(preexistente); sess.commit()
 
-        # Ahora el frontend (con bug legacy) envía role='personalizado'
+        # Ahora el frontend (con bug antiguo) envía role='personalizado'
         # sin UUID → antes del fix: 400 'Rol no configurado en la
         # estrategia: personalizado'. Después del fix: 200 + UUID preservado.
         resp = f["c"].put(
@@ -347,7 +347,7 @@ class TestPutMixtoSin400:
             ).first()
             assert pg is not None
             assert pg.rol_personalizado_id == rp_lider.id, (
-                f"Regresión: legacy participante {p.id} perdió su "
+                f"Regresión: antiguo participante {p.id} perdió su "
                 f"rol_personalizado_id tras el PUT. Esperado "
                 f"{rp_lider.id}, obtenido {pg.rol_personalizado_id}."
             )

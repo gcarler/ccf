@@ -8,10 +8,8 @@ WHY THIS EXISTS
 ===============
 ``scripts/fix_pastor_photos.py`` (2026-07-02 + 2026-07-07) ingested the staff-
 uploaded slug-named ``.jpg`` pastor photos into ``StorageService.save_file``,
-which generated a fresh ``<uuid>.webp`` URL and registered a ``CmsMediaItem``
-row. The republished ``/pastores`` page renders the new URLs; the legacy
-``.jpg`` files left on disk are now dead weight, and the
-``CmsMediaItem.filename`` metadata still says ``<slug>.jpg`` (pointer drift).
+which generated a fresh ``<uuid>.webp`` URL and registered a ``CmsMediaItem``    row. The republished ``/pastores`` page renders the new URLs; the old
+    ``.jpg`` files left on disk are now dead weight, and the    ``CmsMediaItem.filename`` metadata still says ``<slug>.jpg`` (pointer drift).
 
 This is the cleanup that ``fix_pastor_photos.py`` deliberately left for a
 later pass. Idempotent: re-runs after success are no-ops.

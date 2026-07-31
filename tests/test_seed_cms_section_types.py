@@ -124,12 +124,12 @@ class TestSeedCmsSectionTypes:
         """Rows in DB that are not in canonical land in ``extra``."""
         apply_section_types(db_session)
         db_session.add(
-            CmsSectionType(name="legacy_type", description="orphan", is_active=True)
+            CmsSectionType(name="old_type", description="orphan", is_active=True)
         )
         db_session.commit()
 
         result = verify_section_types(db_session)
-        assert result.extra == ["legacy_type"]
+        assert result.extra == ["old_type"]
         # An orphan is informational — sync status remains clean.
         assert result.is_synced is True
         assert result.missing == []

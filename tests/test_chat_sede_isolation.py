@@ -20,7 +20,7 @@ Patrón (mirror de ``tests/test_messaging_sede_isolation.py``):
   2. Crear una ``Conversation`` cross-sede vía ORM directo (bypass del
      guard estricto de ``create_conversation``) — esto reproduce el
      "estado heredado" donde la conversación existe con participantes
-     de ambas sedes (cualquier futura migración legacy / error de
+     de ambas sedes (cualquier futura migración antigua / error de
      operador antes del hardening).
   3. Autenticar como admin de sede_a y operar contra la conversación
      cross-sede. Debe rechazarse con **404** (existence-leak safe —
@@ -53,7 +53,7 @@ Coverage matrix (19 tests — Sprint 3 + 3.5 + 3.6):
   │ superadmin (no sede) puede crear/operar cross-sede                 │ 201     │
   │ DELETE /api/chat/messages/{msg}    TOCTOU participant removal      │ 404     │
   │ DELETE /api/chat/messages/{spoof}  cross-conv leak prevention      │ 404     │
-  │ DELETE /api/chat/messages/{legacy} room_id=None back-compat       │ 200     │
+  │ DELETE /api/chat/messages/{old} room_id=None back-compat       │ 200     │
   │ DELETE /api/chat/messages/{tamp}   malformed "dm_<garbage>UUID"    │ 404     │
   │ DELETE /api/chat/messages/{local}  E2E same-sede delete happy-path │ 200     │
   │ POST /api/chat/conversations/{x}/messages TOCTOU participant rem.  │ 404     │
@@ -202,7 +202,7 @@ def _inject_message(db, sender_id, conv_id, content, room_id=None):
 
     Defaults: ``room_id = f"dm_{conv_id}"`` (convención de producción)
     para activar la participation check en ``delete_chat_message_endpoint``
-    (TOCTOU + cross-conv defense). Para tests del path legacy
+    (TOCTOU + cross-conv defense). Para tests del path antiguo
     ``room_id=None`` (broadcast / system messages), pasar explícitamente
     ``room_id=""`` (string vacía => se considera sin scope y equivalente
     a ``None`` para el helper) o crear el ``models.ChatMessage(...)`` directo.
@@ -606,7 +606,7 @@ def test_delete_chat_message_toctou_blocks_after_participant_removal(
 
     El actor admin_a fue participante del conv, mandó un mensaje,
     luego fue REMOVIDO del conv (admin action, bulk migration, sync
-    cross-tenant o scripts legacy de purge). Cuando intenta borrar
+    cross-tenant o scripts antiguos de purge). Cuando intenta borrar
     el mensaje histórico, la participation check debe disparar 404
     ANTES del sender check (``sender_id == actor_id`` pasaría).
     """
@@ -737,34 +737,34 @@ def test_delete_chat_message_blocks_cross_conv_when_sender_matches(
     )
 
 
-def test_delete_chat_message_legacy_broadcast_succeeds(client, db_session):
+def test_delete_chat_message_old_broadcast_succeeds(client, db_session):
     """Axioma 3 — back-compat:
 
-    Mensaje con ``room_id is None`` (legacy / system broadcast / pre-migración)
+    Mensaje con ``room_id is None`` (old / system broadcast / pre-migración)
     no tiene scope de conv implícito. La participation check es no-op;
     el sender check basta. El actor debe poder borrar su propio msg.
     """
     (admin_a, _, _), _ = _seed_two_sedes(db_session)
 
-    legacy_msg = models.ChatMessage(
+    old_msg = models.ChatMessage(
         id=_uuid.uuid4(),
         sender_id=admin_a.id,
-        room_id=None,  # legacy broadcast, sin conv scope
-        content="Mensaje legacy / broadcast sin conv",
+        room_id=None,  # old broadcast, sin conv scope
+        content="Mensaje old / broadcast sin conv",
     )
-    db_session.add(legacy_msg)
+    db_session.add(old_msg)
     db_session.commit()
 
     headers_a = auth_headers(client, email="chatA@example.com")
-    resp_d = client.delete(f"/api/chat/messages/{legacy_msg.id}", headers=headers_a)
+    resp_d = client.delete(f"/api/chat/messages/{old_msg.id}", headers=headers_a)
     assert resp_d.status_code == 200, (
-        f"Legacy msg sin conv scope debe 200 "
+        f"Old msg sin conv scope debe 200 "
         f"(status {resp_d.status_code}): {resp_d.text}"
     )
 
-    db_session.refresh(legacy_msg)
-    assert legacy_msg.deleted_at is not None
-    assert legacy_msg.content == "[Mensaje eliminado]"
+    db_session.refresh(old_msg)
+    assert old_msg.deleted_at is not None
+    assert old_msg.content == "[Mensaje eliminado]"
 
 
 def test_delete_chat_message_blocks_with_malformed_room_id(client, db_session):

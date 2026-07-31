@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Deprecated legacy wrapper for the old `page_contents -> CMS` migration.
+"""Deprecated old wrapper for the old `page_contents -> CMS` migration.
 
 The canonical public CMS bootstrap now lives in
-``scripts/seed_public_cms_v2_sections.py`` and no longer depends on the legacy
+``scripts/seed_public_cms_v2_sections.py`` and no longer depends on the old
 ``page_contents`` tables.
 """
 from __future__ import annotations

@@ -108,21 +108,21 @@ class TestGroupParticipantRoleValues:
         assert role == "personalizado"
         assert str(custom_id) == str(rid)
 
-    def test_personalizado_legacy_explicit(self):
+    def test_personalizado_old_explicit(self):
         rid = _uuid.uuid4()
         item = type("Item", (), {"role": "personalizado", "rol_personalizado_id": rid})()
         role, custom_id = crud_groups._group_participant_role_values(item)
         assert role == "personalizado"
         assert str(custom_id) == str(rid)
 
-    def test_personalizado_legacy_str_uuid(self):
+    def test_personalizado_old_str_uuid(self):
         rid = _uuid.uuid4()
         item = type("Item", (), {"role": "personalizado", "rol_personalizado_id": str(rid)})()
         role, custom_id = crud_groups._group_participant_role_values(item)
         assert role == "personalizado"
         assert str(custom_id) == str(rid)
 
-    def test_personalizado_legacy_invalid(self):
+    def test_personalizado_old_invalid(self):
         item = type("Item", (), {"role": "personalizado", "rol_personalizado_id": "invalid"})()
         role, custom_id = crud_groups._group_participant_role_values(item)
         assert role == "personalizado"

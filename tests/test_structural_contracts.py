@@ -838,7 +838,7 @@ def test_ag_grid_module_registration_stays_centralized():
     frontend_root = root / "frontend" / "src"
     allowed_registration_file = "frontend/src/lib/agGrid.ts"
     direct_registration = []
-    legacy_css_imports = []
+    old_css_imports = []
 
     for path in frontend_root.rglob("*"):
         if path.suffix not in {".ts", ".tsx"}:
@@ -848,10 +848,10 @@ def test_ag_grid_module_registration_stays_centralized():
         if "ModuleRegistry.registerModules([AllCommunityModule])" in content and rel != allowed_registration_file:
             direct_registration.append(rel)
         if "ag-grid.css" in content:
-            legacy_css_imports.append(rel)
+            old_css_imports.append(rel)
 
     assert direct_registration == []
-    assert legacy_css_imports == []
+    assert old_css_imports == []
 
 
 def test_frontend_no_direct_fetch_calls():
@@ -901,7 +901,7 @@ def test_frontend_no_direct_fetch_calls():
     assert violations == [], "Usar apiFetch() de @/lib/http en vez de fetch() directo"
 
 
-def test_frontend_no_legacy_cms_ui_routes():
+def test_frontend_no_old_cms_ui_routes():
     """La UI del CMS debe enlazar solo rutas canónicas bajo /plataforma/cms.
 
     Este test cubre navegación, redirecciones y enlaces visibles. No inspecciona

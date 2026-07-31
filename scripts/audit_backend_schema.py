@@ -67,7 +67,7 @@ def main() -> int:
         "db_table_count": len(db_tables),
         "missing_tables": missing_tables,
         "extra_tables": extra_tables,
-        "legacy_tables": [],
+        "obsolete_tables": [],
         "table_diffs": table_diffs,
         "blocking_table_diffs": blocking_table_diffs,
     }

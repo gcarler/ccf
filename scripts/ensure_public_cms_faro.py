@@ -91,9 +91,9 @@ THEME_TOKENS: dict[str, str] = {
 # broken. The full nav surface is owned by the editor; we just give the
 # menu enough entries to render a recognizable top bar. Editors can
 # extend later via the CMS admin. The ccf site loads a fuller nav from
-# the legacy ``ccf_nav_items`` page_contents row (see
+# the old ``ccf_nav_items`` page_contents row (see
 # ``ensure_public_cms_pastors.py``); we keep this self-contained so the
-# script doesn't depend on legacy bootstrapping being present.
+# script doesn't depend on old bootstrapping being present.
 SEED_MENU_ITEMS: list[dict[str, Any]] = [
     {"label": "Inicio", "href": "/", "target": "_self", "is_external": False, "visibility": "public", "sort_order": 0, "meta_json": {}},
     {"label": "Nosotros", "href": "/nosotros", "target": "_self", "is_external": False, "visibility": "public", "sort_order": 1, "meta_json": {}},

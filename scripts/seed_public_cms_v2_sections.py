@@ -96,7 +96,7 @@ try:
     CMS_BLOCKS: dict[str, Any] = deepcopy(getattr(_ep, "BLOCKS", {}))
     CMS_MERGE: dict[str, Any] = deepcopy(getattr(_ep, "MERGE_BLOCKS", {}))
 except Exception as exc:  # pragma: no cover
-    print(f"Warning: could not import legacy seed modules ({exc}); using built-in fallbacks.")
+    print(f"Warning: could not import old seed modules ({exc}); using built-in fallbacks.")
     PUBLIC_BLOCKS = {}
     CMS_BLOCKS = {}
     CMS_MERGE = {}
@@ -199,7 +199,7 @@ def _replace_url_in_props(props: Any, old: str, new: str) -> Any:
 def _localize_external_images(db: Any, sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Replace any Unsplash/Picsum URLs with locally-hosted CmsMediaItem URLs.
 
-    This keeps the seed idempotent even though the legacy seed modules still
+    This keeps the seed idempotent even though the old seed modules still
     reference external placeholder images.
     """
     media_by_url_hash: dict[str, models.CmsMediaItem] = {}
