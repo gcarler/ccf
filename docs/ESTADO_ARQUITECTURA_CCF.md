@@ -127,8 +127,8 @@ rg -n "/api/v2/academy" \
 # Esperado: vacio. (El test structural_contracts es el assert de la ausencia.)
 
 # 4. Sin scripts legacy en scripts/.
-find scripts -name '_tmp_*' -o -name '_scratch_*' -o -name '_validate_legacy_*'
-find scripts -path '*/__pycache__/*' -prune -o -type f -print | grep -E '(_tmp_|_scratch_|_validate_legacy_)\.py$'
+find scripts -name '_tmp_*' -o -name '_scratch_*' -o -name '_validate_old_*'
+find scripts -path '*/__pycache__/*' -prune -o -type f -print | grep -E '(_tmp_|_scratch_|_validate_old_)\.py$'
 # Esperado: vacio. REGLAS §9.2.
 
 # 5. Conteo de cobertura multi-tenant — cuantificacion del "194+ referencias".

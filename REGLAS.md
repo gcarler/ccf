@@ -138,7 +138,7 @@ schema ni bypasses sin actor.
 Prohibido mantener en `scripts/` archivos cuyo proposito sea validacion
 manual, debug one-shot, auditoria ad-hoc, validacion de backfill on
 Postgres scratch, etc. Prefijos vetados: `_tmp_`, `_scratch_`,
-`_validate_legacy_`. Si surge la necesidad se hace via test pytest o
+`_validate_old_`. Si surge la necesidad se hace via test pytest o
 comando documentado en `docs/RUNBOOK_PRODUCCION.md`.
 
 Cleanup del cierre v3.0.1:
