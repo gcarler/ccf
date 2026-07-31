@@ -318,7 +318,7 @@ describe('ChatAdminPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Menciones/i }));
 
-    await waitFor(() => expect(screen.getByText('2 menciónes')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('2 menciones')).toBeInTheDocument());
   });
 
   it('shows generic attachment label when name is missing', async () => {
