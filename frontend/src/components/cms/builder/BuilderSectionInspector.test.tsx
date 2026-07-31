@@ -1076,4 +1076,101 @@ describe("BuilderSectionInspector", () => {
       expect.objectContaining({ name: "Nuevo plan", price: "$0" }),
     );
   });
+
+  // ── M1 Block Types (animated_counter, video_embed, gallery_masonry, map_embed) ──
+
+  it("renders and edits animated_counter inspector controls", () => {
+    const upsertArrayItem = vi.fn(() => ({}));
+    const addArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("animated_counter", {
+      props_json: {
+        items: [{ label: "Miembros", value: 1200, prefix: "$", suffix: "+", duration_ms: 2000 }],
+      },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.upsertArrayItem = upsertArrayItem;
+    builder.addArrayItem = addArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    expect(screen.getByDisplayValue("Miembros")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("1200")).toBeInTheDocument();
+
+    const labelInput = screen.getByDisplayValue("Miembros");
+    fireEvent.change(labelInput, { target: { value: "Usuarios" } });
+    expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { label: "Usuarios" });
+
+    fireEvent.click(screen.getByRole("button", { name: /añadir contador/i }));
+    expect(addArrayItem).toHaveBeenCalledWith("items", expect.objectContaining({ label: "Nuevo contador" }));
+  });
+
+  it("renders and edits video_embed inspector controls", () => {
+    const updateSectionPropsLocal = vi.fn();
+    const saveSectionField = vi.fn();
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("video_embed", {
+      props_json: { video_url: "https://youtube.com/watch?v=123", caption: "Video intro", autoplay: false },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.updateSectionPropsLocal = updateSectionPropsLocal;
+    builder.saveSectionField = saveSectionField;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const urlInput = screen.getByDisplayValue("https://youtube.com/watch?v=123");
+    fireEvent.change(urlInput, { target: { value: "https://youtu.be/456" } });
+    expect(updateSectionPropsLocal).toHaveBeenCalledWith(expect.objectContaining({ video_url: "https://youtu.be/456" }));
+
+    fireEvent.blur(urlInput, { target: { value: "https://youtu.be/456" } });
+    expect(saveSectionField).toHaveBeenCalledWith("video_url", "https://youtu.be/456");
+
+    const checkbox = screen.getByLabelText(/autoplay/i);
+    fireEvent.click(checkbox);
+    expect(saveSectionProps).toHaveBeenCalledWith(expect.objectContaining({ autoplay: true }));
+  });
+
+  it("renders and edits gallery_masonry inspector controls", () => {
+    const updateSectionPropsLocal = vi.fn();
+    const saveSectionProps = vi.fn();
+    const addArrayItem = vi.fn(() => ({}));
+    const section = createMockCmsSection("gallery_masonry", {
+      props_json: { columns: 3, images: [{ url: "/img1.jpg", alt: "Alt 1", caption: "Cap 1" }] },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.updateSectionPropsLocal = updateSectionPropsLocal;
+    builder.saveSectionProps = saveSectionProps;
+    builder.addArrayItem = addArrayItem;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const select = screen.getByDisplayValue("3 Columnas");
+    fireEvent.change(select, { target: { value: "4" } });
+    expect(saveSectionProps).toHaveBeenCalledWith(expect.objectContaining({ columns: 4 }));
+
+    fireEvent.click(screen.getByRole("button", { name: /añadir imagen/i }));
+    expect(addArrayItem).toHaveBeenCalledWith("images", expect.objectContaining({ status: "published" }));
+  });
+
+  it("renders and edits map_embed inspector controls", () => {
+    const updateSectionPropsLocal = vi.fn();
+    const saveSectionField = vi.fn();
+    const saveSectionProps = vi.fn();
+    const section = createMockCmsSection("map_embed", {
+      props_json: { address: "Bogotá", lat: 4.6097, lng: -74.0817, zoom: 14, height_px: 400 },
+    });
+    const builder = createMockBuilder({ activeSection: section });
+    builder.updateSectionPropsLocal = updateSectionPropsLocal;
+    builder.saveSectionField = saveSectionField;
+    builder.saveSectionProps = saveSectionProps;
+
+    render(<BuilderSectionInspector builder={builder} />);
+
+    const addressInput = screen.getByDisplayValue("Bogotá");
+    fireEvent.change(addressInput, { target: { value: "Cali" } });
+    expect(updateSectionPropsLocal).toHaveBeenCalledWith(expect.objectContaining({ address: "Cali" }));
+
+    fireEvent.blur(addressInput, { target: { value: "Cali" } });
+    expect(saveSectionField).toHaveBeenCalledWith("address", "Cali");
+  });
 });

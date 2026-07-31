@@ -63,3 +63,7 @@ export {
   CivicQuickLinksSection,
 } from "./civic-engagement";
 export { FooterConfigSection, MobileMenuConfigSection } from "./config";
+export { AnimatedCounterSection } from "./AnimatedCounterSection";
+export { VideoEmbedSection } from "./VideoEmbedSection";
+export { GalleryMasonrySection } from "./GalleryMasonrySection";
+export { MapEmbedSection } from "./MapEmbedSection";

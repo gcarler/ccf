@@ -1,10 +1,11 @@
 "use client";
 
-import { CmsSection } from "@/types/cms-v2";
+import { useEffect, useState, useRef } from "react";
+import { CmsSection, CmsAbTest } from "@/types/cms-v2";
+import { recordCmsAbTestEvent } from "@/lib/cms/v2";
+import { SITE_KEY } from "@/lib/site-config";
 
 // ── Section components ──────────────────────────────────────────────────────
-// All section components are extracted into grouped files under ``./sections``.
-// This file is now a thin dispatch table (~60 lines).
 import {
   HeroSection,
   VideoHeroSection,
@@ -53,11 +54,106 @@ import {
   PolicyDocumentSection,
   FooterConfigSection,
   MobileMenuConfigSection,
+  AnimatedCounterSection,
+  VideoEmbedSection,
+  GalleryMasonrySection,
+  MapEmbedSection,
 } from "./sections";
 // Shared type-cast helper for the dispatch switch.
 import { asTyped } from "./sections/shared";
 
-export default function PublicSectionRenderer({ section }: { section: CmsSection }) {
+interface PublicSectionRendererProps {
+  section: CmsSection;
+  abTest?: CmsAbTest | null;
+  sectionB?: CmsSection | null;
+  siteKey?: string;
+}
+
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp("(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, "\\$1") + "=([^;]*)"));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function setCookie(name: string, value: string, days = 365) {
+  if (typeof document === "undefined") return;
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+}
+
+export default function PublicSectionRenderer({
+  section,
+  abTest,
+  sectionB,
+  siteKey = SITE_KEY,
+}: PublicSectionRendererProps) {
+  const [variant, setVariant] = useState<"a" | "b">("a");
+  const [visitorId, setVisitorId] = useState<string>("");
+  const viewRecordedRef = useRef(false);
+  const clickRecordedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !abTest || abTest.status !== "active") return;
+
+    let vid = getCookie("ab_visitor_id") || getCookie("ccf_ab_visitor_id");
+    if (!vid && typeof localStorage !== "undefined") {
+      vid = localStorage.getItem("ab_visitor_id") || localStorage.getItem("ccf_ab_visitor_id");
+    }
+    if (!vid) {
+      vid = "v_" + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+    }
+    setCookie("ab_visitor_id", vid);
+    setCookie("ccf_ab_visitor_id", vid);
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("ab_visitor_id", vid);
+      localStorage.setItem("ccf_ab_visitor_id", vid);
+    }
+    setVisitorId(vid);
+
+    let hash = 0;
+    const key = vid + abTest.id;
+    for (let i = 0; i < key.length; i++) {
+      hash = (hash << 5) - hash + key.charCodeAt(i);
+      hash |= 0;
+    }
+    const normalized = (Math.abs(hash) % 100) / 100;
+    const resolvedVariant: "a" | "b" = normalized < (abTest.traffic_split ?? 0.5) ? "a" : "b";
+    setVariant(resolvedVariant);
+
+    if (!viewRecordedRef.current) {
+      viewRecordedRef.current = true;
+      recordCmsAbTestEvent(siteKey, abTest.id, {
+        variant: resolvedVariant,
+        event_type: "view",
+        visitor_id: vid,
+      }).catch(() => {});
+    }
+  }, [abTest, siteKey]);
+
+  const handleContainerClick = () => {
+    if (!abTest || abTest.status !== "active" || !visitorId || clickRecordedRef.current) return;
+    clickRecordedRef.current = true;
+    recordCmsAbTestEvent(siteKey, abTest.id, {
+      variant,
+      event_type: "click",
+      visitor_id: visitorId,
+    }).catch(() => {});
+  };
+
+  const targetSection = variant === "b" && sectionB ? sectionB : section;
+
+  return (
+    <div
+      data-ab-test-id={abTest?.id}
+      data-ab-variant={variant}
+      onClick={handleContainerClick}
+    >
+      {renderSection(targetSection)}
+    </div>
+  );
+}
+
+function renderSection(section: CmsSection) {
   switch (section.type) {
     case "hero":             return <HeroSection section={asTyped<"hero">(section)} />;
     case "video_hero":       return <VideoHeroSection section={asTyped<"video_hero">(section)} />;
@@ -78,7 +174,6 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
     case "icon_grid":        return <IconGridSection section={asTyped<"icon_grid">(section)} />;
     case "newsletter":       return <NewsletterSection section={asTyped<"newsletter">(section)} />;
     case "popup_banner":     return <PopupBlock section={asTyped<"popup_banner">(section)} />;
-    // New 11
     case "button":           return <ButtonSection section={asTyped<"button">(section)} />;
     case "toc":              return <TocSection section={asTyped<"toc">(section)} />;
     case "divider":          return <DividerSection section={asTyped<"divider">(section)} />;
@@ -90,7 +185,6 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
     case "document_upload":  return <DocumentUploadSection section={asTyped<"document_upload">(section)} />;
     case "content_blocks":   return <ContentBlocksSection section={asTyped<"content_blocks">(section)} />;
     case "accordion":              return <AccordionSection section={asTyped<"accordion">(section)} />;
-    // Civic blocks
     case "civic_file_downloads":   return <CivicFileDownloadsSection section={asTyped<"civic_file_downloads">(section)} />;
     case "civic_data_table":       return <CivicDataTableSection section={asTyped<"civic_data_table">(section)} />;
     case "civic_alert_banner":     return <CivicAlertBannerSection section={asTyped<"civic_alert_banner">(section)} />;
@@ -108,6 +202,10 @@ export default function PublicSectionRenderer({ section }: { section: CmsSection
     case "policy_document":        return <PolicyDocumentSection section={asTyped<"policy_document">(section)} />;
     case "footer_config":          return <FooterConfigSection section={asTyped<"footer_config">(section)} />;
     case "mobile_menu_config":     return <MobileMenuConfigSection section={asTyped<"mobile_menu_config">(section)} />;
+    case "animated_counter":       return <AnimatedCounterSection section={asTyped<"animated_counter">(section)} />;
+    case "video_embed":            return <VideoEmbedSection section={asTyped<"video_embed">(section)} />;
+    case "gallery_masonry":        return <GalleryMasonrySection section={asTyped<"gallery_masonry">(section)} />;
+    case "map_embed":              return <MapEmbedSection section={asTyped<"map_embed">(section)} />;
     default:                       return <RichTextSection section={asTyped<"rich_text">(section)} />;
   }
 }

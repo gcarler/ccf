@@ -64,6 +64,11 @@ EXPECTED_SECTION_TYPES: list[tuple[str, str]] = [
     ("civic_file_downloads", "Descargas de Archivos"),
     ("civic_data_table", "Tabla de Datos Accesible"),
     ("civic_alert_banner", "Banner de Alerta / Emergencia"),
+    # M1 Builder Blocks
+    ("animated_counter", "Animated counter display block"),
+    ("video_embed", "Video embed section block"),
+    ("gallery_masonry", "Masonry image gallery section block"),
+    ("map_embed", "Interactive map embed section block"),
 ]
 
 

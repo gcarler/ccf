@@ -620,6 +620,47 @@ export interface CivicAlertBannerProps {
   dismissible?: boolean;
 }
 
+export interface AnimatedCounterItem {
+  label?: string;
+  value?: number;
+  suffix?: string;
+  prefix?: string;
+  duration_ms?: number;
+}
+
+export interface GalleryMasonryImage {
+  url?: string;
+  alt?: string;
+  caption?: string;
+}
+
+export interface AnimatedCounterProps {
+  title?: string;
+  items?: AnimatedCounterItem[];
+}
+
+export interface VideoEmbedProps {
+  title?: string;
+  video_url?: string;
+  caption?: string;
+  autoplay?: boolean;
+}
+
+export interface GalleryMasonryProps {
+  title?: string;
+  columns?: number | string;
+  images?: GalleryMasonryImage[];
+}
+
+export interface MapEmbedProps {
+  title?: string;
+  address?: string;
+  lat?: number | null;
+  lng?: number | null;
+  zoom?: number;
+  height_px?: number;
+}
+
 // ─── Catalog & union -----------------------------------------------------------------
 
 /** Section type strings the CMS recognises (mirrors backend catalog). */
@@ -670,7 +711,11 @@ export type CmsSectionType =
   | "civic_quick_links"
   | "civic_file_downloads"
   | "civic_data_table"
-  | "civic_alert_banner";
+  | "civic_alert_banner"
+  | "animated_counter"
+  | "video_embed"
+  | "gallery_masonry"
+  | "map_embed";
 
 /**
  * Maps each section type string to its props interface.
@@ -725,6 +770,10 @@ export interface CmsSectionTypeToProps {
   civic_file_downloads: CivicFileDownloadsProps;
   civic_data_table: CivicDataTableProps;
   civic_alert_banner: CivicAlertBannerProps;
+  animated_counter: AnimatedCounterProps;
+  video_embed: VideoEmbedProps;
+  gallery_masonry: GalleryMasonryProps;
+  map_embed: MapEmbedProps;
 }
 
 /**
@@ -806,4 +855,8 @@ export type CmsSectionDiscriminated =
   | CmsSectionBase<"civic_quick_links", CivicQuickLinksProps>
   | CmsSectionBase<"civic_file_downloads", CivicFileDownloadsProps>
   | CmsSectionBase<"civic_data_table", CivicDataTableProps>
-  | CmsSectionBase<"civic_alert_banner", CivicAlertBannerProps>;
+  | CmsSectionBase<"civic_alert_banner", CivicAlertBannerProps>
+  | CmsSectionBase<"animated_counter", AnimatedCounterProps>
+  | CmsSectionBase<"video_embed", VideoEmbedProps>
+  | CmsSectionBase<"gallery_masonry", GalleryMasonryProps>
+  | CmsSectionBase<"map_embed", MapEmbedProps>;

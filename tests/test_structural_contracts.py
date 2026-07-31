@@ -877,6 +877,8 @@ def test_frontend_no_direct_fetch_calls():
         # Formularios públicos nativos del CMS (sin auth header)
         "frontend/src/components/public/cms/PublicSectionRenderer.tsx",
         "frontend/src/components/public/cms/sections/forms-interactive.tsx",
+        # Búsqueda pública del CMS (endpoint público sin auth, usa fetch nativo para streaming)
+        "frontend/src/components/public/cms/PublicSearchModal.tsx",
     }
     violations = []
     for scan_root in scan_roots:

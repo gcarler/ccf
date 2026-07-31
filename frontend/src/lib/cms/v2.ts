@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/http";
-import { CmsCategory, CmsForm, CmsFormSubmission, CmsFormSubmissionPaginated, CmsMenu, CmsMenuItem, CmsNewsletter, CmsPage, CmsPageVersion, CmsPopup, CmsPublicPopup, CmsPostWithTaxonomies, CmsPublicPost, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsSubscriber, CmsTag, CmsTheme, PopupTriggerType } from "@/types/cms-v2";
+import { CmsAbTest, CmsAbTestEvent, CmsAbTestResults, CmsAbTestStatus, CmsCategory, CmsCommentStatus, CmsForm, CmsFormSubmission, CmsFormSubmissionPaginated, CmsMenu, CmsMenuItem, CmsNewsletter, CmsPage, CmsPageVersion, CmsPopup, CmsPublicPopup, CmsPostComment, CmsPostCommentsPaginated, CmsPostWithTaxonomies, CmsPublicPost, CmsPublicPostComment, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsSubscriber, CmsTag, CmsTheme, PopupTriggerType } from "@/types/cms-v2";
+
 
 
 export async function listCmsSites(token?: string | null) {
@@ -1091,28 +1092,6 @@ export async function listPublicTestimonials(
 
 // ── Announcement wrappers (replaces GET/POST /cms/announcements, /admin/announcements) ──
 
-/** High-level wrapper: list announcements via v2, returning v1 AnnouncementRead shape. */
-export async function listAnnouncements(
-  siteKey: string,
-  options?: { status?: string; include_archived?: boolean; skip?: number; limit?: number },
-  token?: string | null,
-): Promise<V1AnnouncementShape[]> {
-  const posts = await listCmsPostsByCategory(siteKey, "announcements", options, token);
-  return posts.map(postToAnnouncement);
-}
-
-/** Toggle announcement status between draft/published/archived via v2. */
-export async function setAnnouncementStatus(
-  siteKey: string,
-  slug: string,
-  v1Status: "draft" | "active" | "archived",
-  token?: string | null,
-): Promise<V1AnnouncementShape> {
-  const v2Status = v1Status === "active" ? "published" : v1Status === "archived" ? "archived" : "draft";
-  const post = await patchCmsPostByCategory(siteKey, slug, "announcements", { status: v2Status }, token);
-  return postToAnnouncement(post);
-}
-
 // ── Public announcements (replaces GET /cms/announcements) ─────────────────
 
 export interface PublicAnnouncement {
@@ -1386,6 +1365,144 @@ export async function importCmsSubscribers(
     },
   );
 }
+
+
+// ── A/B Testing ─────────────────────────────────────────────────────────────
+
+export async function listCmsAbTests(
+  siteKey: string,
+  query?: { page_id?: string; status?: string },
+  token?: string | null,
+): Promise<CmsAbTest[]> {
+  return apiFetch<CmsAbTest[]>(`/cms/v2/sites/${siteKey}/ab-tests`, {
+    token,
+    query: query as Record<string, string | undefined>,
+  });
+}
+
+export async function createCmsAbTest(
+  siteKey: string,
+  payload: { name: string; page_id: string; section_a_id: string; section_b_id: string; traffic_split?: number },
+  token?: string | null,
+): Promise<CmsAbTest> {
+  return apiFetch<CmsAbTest>(`/cms/v2/sites/${siteKey}/ab-tests`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function getCmsAbTest(
+  siteKey: string,
+  id: string,
+  token?: string | null,
+): Promise<CmsAbTest> {
+  return apiFetch<CmsAbTest>(`/cms/v2/sites/${siteKey}/ab-tests/${id}`, {
+    token,
+  });
+}
+
+export async function patchCmsAbTest(
+  siteKey: string,
+  id: string,
+  payload: { name?: string; traffic_split?: number; status?: CmsAbTestStatus },
+  token?: string | null,
+): Promise<CmsAbTest> {
+  return apiFetch<CmsAbTest>(`/cms/v2/sites/${siteKey}/ab-tests/${id}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsAbTest(
+  siteKey: string,
+  id: string,
+  token?: string | null,
+): Promise<void> {
+  await apiFetch<{ message: string }>(`/cms/v2/sites/${siteKey}/ab-tests/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export async function recordCmsAbTestEvent(
+  siteKey: string,
+  id: string,
+  payload: { variant: "a" | "b"; event_type: "view" | "click" | "conversion"; visitor_id: string },
+): Promise<CmsAbTestEvent> {
+  return apiFetch<CmsAbTestEvent>(`/cms/v2/sites/${siteKey}/ab-tests/${id}/record-event`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function getCmsAbTestResults(
+  siteKey: string,
+  id: string,
+  token?: string | null,
+): Promise<CmsAbTestResults> {
+  return apiFetch<CmsAbTestResults>(`/cms/v2/sites/${siteKey}/ab-tests/${id}/results`, {
+    token,
+  });
+}
+
+export async function applyCmsAbTestWinner(
+  siteKey: string,
+  id: string,
+  payload?: { winner_variant?: "a" | "b"; winner_section_id?: string },
+  token?: string | null,
+): Promise<CmsAbTest> {
+  return apiFetch<CmsAbTest>(`/cms/v2/sites/${siteKey}/ab-tests/${id}/apply-winner`, {
+    method: "POST",
+    token,
+    body: payload || {},
+  });
+}
+
+export async function createPublicPostComment(
+  postId: string,
+  payload: { author_name: string; author_email: string; content: string; parent_id?: string | null }
+): Promise<CmsPostComment> {
+  return apiFetch<CmsPostComment>(`/cms/v2/public/posts/${postId}/comments`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function getPublicPostComments(postId: string): Promise<CmsPublicPostComment[]> {
+  return apiFetch<CmsPublicPostComment[]>(`/cms/v2/public/posts/${postId}/comments`);
+}
+
+export async function listCmsPostComments(
+  siteKey: string,
+  params?: { status?: string; skip?: number; limit?: number },
+  token?: string | null
+): Promise<CmsPostCommentsPaginated> {
+  return apiFetch<CmsPostCommentsPaginated>(`/cms/v2/sites/${siteKey}/post-comments`, {
+    token,
+    query: {
+      ...(params?.status ? { status: params.status } : {}),
+      ...(params?.skip !== undefined ? { skip: String(params.skip) } : {}),
+      ...(params?.limit !== undefined ? { limit: String(params.limit) } : {}),
+    },
+  });
+}
+
+export async function patchCmsPostCommentStatus(
+  siteKey: string,
+  commentId: string,
+  status: CmsCommentStatus,
+  token?: string | null
+): Promise<CmsPostComment> {
+  return apiFetch<CmsPostComment>(`/cms/v2/sites/${siteKey}/post-comments/${commentId}`, {
+    method: "PATCH",
+    token,
+    body: { status },
+  });
+}
+
+
 
 
 

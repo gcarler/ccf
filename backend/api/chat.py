@@ -311,28 +311,32 @@ def _assert_actor_is_active_participant(
 
 
 def _build_admin_message(
-    db: Session,
     current_user: models.User,
     msg: models.ChatMessage,
     is_read: bool = False,
+    conv_map: dict | None = None,
+    persona_map: dict | None = None,
 ) -> schemas.ChatMessageAdminRead:
-    """Serialize a ChatMessage for the message admin center."""
+    """Serialize a ChatMessage for the message admin center.
+
+    ``conv_map`` and ``persona_map`` are pre-fetched batch lookups so callers
+    can avoid N+1 queries when serializing many messages.
+    """
     conv_id = msg.room_id[3:] if msg.room_id and msg.room_id.startswith("dm_") else None
     conversation_id = _uuid.UUID(conv_id) if conv_id else None
 
     conversation_name = "Chat"
-    if conversation_id:
-        conv = db.query(models.Conversation).filter(models.Conversation.id == conversation_id).first()
+    if conversation_id and conv_map:
+        conv = conv_map.get(conversation_id)
         if conv:
             other = next(
                 (p for p in conv.participants if str(p.user_id) != str(current_user.id)),
                 None,
             )
-            if other:
-                persona = db.query(models.Persona).filter(models.Persona.id == other.user_id).first()
-                conversation_name = _persona_display_name(persona)
+            if other and persona_map:
+                conversation_name = _persona_display_name(persona_map.get(other.user_id))
 
-    sender = db.query(models.Persona).filter(models.Persona.id == msg.sender_id).first()
+    sender = persona_map.get(msg.sender_id) if persona_map else None
     mentions = None
     if msg.mentions_raw:
         try:
@@ -671,7 +675,21 @@ def list_my_chat_messages(
         .limit(limit)
         .all()
     )
-    return [_build_admin_message(db, current_user, msg, is_read=True) for msg in msgs]
+
+    # Batch lookup: one query for all related conversations and one for all personas.
+    conv_map = {c.id: c for c in convs}
+    persona_ids: set = set()
+    for msg in msgs:
+        if msg.sender_id:
+            persona_ids.add(msg.sender_id)
+    for c in convs:
+        for p in c.participants:
+            if p.user_id:
+                persona_ids.add(p.user_id)
+    personas = db.query(models.Persona).filter(models.Persona.id.in_(persona_ids)).all() if persona_ids else []
+    persona_map = {p.id: p for p in personas}
+
+    return [_build_admin_message(current_user, msg, is_read=True, conv_map=conv_map, persona_map=persona_map) for msg in msgs]
 
 
 @router.get(
@@ -711,20 +729,24 @@ def list_my_chat_mentions(
         .all()
     )
 
-    # Build a lookup of last_read_at per conversation to compute is_read.
+    # Batch lookup of last_read_at per conversation to compute is_read
+    # without N+1 queries.
     last_read_map = {
-        str(c.id): (
-            db.query(models.ConversationParticipant.last_read_at)
-            .filter(
-                models.ConversationParticipant.conversation_id == c.id,
-                models.ConversationParticipant.user_id == current_user.id,
-            )
-            .scalar()
+        str(row.conversation_id): row.last_read_at
+        for row in db.query(
+            models.ConversationParticipant.conversation_id,
+            models.ConversationParticipant.last_read_at,
         )
-        for c in convs
+        .filter(
+            models.ConversationParticipant.conversation_id.in_([c.id for c in convs]),
+            models.ConversationParticipant.user_id == current_user.id,
+        )
+        .all()
     }
 
-    result = []
+    # Pre-filter messages that actually mention the current user so we only
+    # batch-load data for relevant messages.
+    result_msgs = []
     for msg in msgs:
         mentions = []
         if msg.mentions_raw:
@@ -734,10 +756,35 @@ def list_my_chat_mentions(
                 continue
         if my_id not in mentions:
             continue
+        result_msgs.append(msg)
+
+    # Batch lookup: one query for all related conversations and one for all personas.
+    conv_map = {c.id: c for c in convs}
+    persona_ids: set = set()
+    for msg in result_msgs:
+        if msg.sender_id:
+            persona_ids.add(msg.sender_id)
+    for c in convs:
+        for p in c.participants:
+            if p.user_id:
+                persona_ids.add(p.user_id)
+    personas = db.query(models.Persona).filter(models.Persona.id.in_(persona_ids)).all() if persona_ids else []
+    persona_map = {p.id: p for p in personas}
+
+    result = []
+    for msg in result_msgs:
         conv_id = msg.room_id[3:] if msg.room_id and msg.room_id.startswith("dm_") else None
         read_at = last_read_map.get(conv_id)
         is_read = bool(read_at) and msg.created_at <= read_at
-        result.append(_build_admin_message(db, current_user, msg, is_read=is_read))
+        result.append(
+            _build_admin_message(
+                current_user,
+                msg,
+                is_read=is_read,
+                conv_map=conv_map,
+                persona_map=persona_map,
+            )
+        )
     return result
 
 

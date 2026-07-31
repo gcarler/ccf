@@ -28,16 +28,19 @@ import {
   Gauge,
   Layers,
   Mail,
+  FlaskConical,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
 import { apiFetch } from "@/lib/http";
-import { listCmsPostsByCategory, postToTestimonial } from "@/lib/cms/v2";
+import { listCmsPostComments, listCmsPostsByCategory, postToTestimonial } from "@/lib/cms/v2";
 import { SITE_KEY } from "@/lib/site-config";
 
 const CMS_TABS = [
   { id: "resumen", label: "Resumen", href: "/plataforma/cms", icon: LayoutDashboard },
   { id: "paginas", label: "Paginas", href: "/plataforma/cms/pages", icon: FileText },
+  { id: "comments", label: "Comentarios", href: "/plataforma/cms/comments", icon: MessageCircle },
+  { id: "ab-testing", label: "A/B Testing", href: "/plataforma/cms/ab-testing", icon: FlaskConical },
   { id: "newsletter", label: "Newsletter", href: "/plataforma/cms/newsletter", icon: Mail },
   { id: "popups", label: "Popups", href: "/plataforma/cms/popups", icon: Layers },
   { id: "forms", label: "Formularios", href: "/plataforma/cms/forms", icon: ClipboardList },
@@ -68,6 +71,7 @@ interface CmsNavStats {
   pagesTotal: number;
   testimonialsTotal: number;
   postsTotal: number;
+  pendingCommentsTotal: number;
 }
 
 export function CmsModuleNav() {
@@ -88,13 +92,15 @@ export function CmsModuleNav() {
       apiFetch<{ items: unknown[]; total: number }>("/cms/v2/sites/ccf/pages", { token, cache: "no-store", signal: controller.signal }),
       listCmsPostsByCategory(SITE_KEY, "testimonials", undefined, token).then(posts => posts.map(postToTestimonial)),
       apiFetch<{ items: unknown[]; total: number }>("/cms/v2/sites/ccf/posts", { token, cache: "no-store", signal: controller.signal }),
-    ]).then(([mediaRes, pagesRes, testRes, postsRes]) => {
+      listCmsPostComments(SITE_KEY, { status: "pending" }, token),
+    ]).then(([mediaRes, pagesRes, testRes, postsRes, commentsRes]) => {
       if (controller.signal.aborted) return;
       setStats({
         mediaTotal: mediaRes.status === "fulfilled" ? (mediaRes.value?.total ?? (Array.isArray(mediaRes.value) ? mediaRes.value.length : 0)) : 0,
         pagesTotal: pagesRes.status === "fulfilled" ? (pagesRes.value?.total ?? (Array.isArray(pagesRes.value) ? pagesRes.value.length : 0)) : 0,
         testimonialsTotal: testRes.status === "fulfilled" ? testRes.value.length : 0,
         postsTotal: postsRes.status === "fulfilled" ? (postsRes.value?.total ?? (Array.isArray(postsRes.value) ? postsRes.value.length : 0)) : 0,
+        pendingCommentsTotal: commentsRes.status === "fulfilled" ? (commentsRes.value?.pending_count ?? 0) : 0,
       });
     });
     return () => controller.abort();
@@ -142,6 +148,11 @@ export function CmsModuleNav() {
               >
                 <Icon size={8} />
                 {tab.label}
+                {tab.id === "comments" && (stats?.pendingCommentsTotal ?? 0) > 0 && (
+                  <span className="ml-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-2xs font-bold text-white">
+                    {stats?.pendingCommentsTotal}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -158,6 +169,10 @@ export function CmsModuleNav() {
             <ImageIcon size={10} />
             <span className="font-semibold">{stats.mediaTotal}</span> media
           </Link>
+          <Link href="/plataforma/cms/comments" className="flex items-center gap-1.5 text-2xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+            <MessageCircle size={10} />
+            <span className="font-semibold">{stats.pendingCommentsTotal}</span> comentarios pendientes
+          </Link>
           <Link href="/plataforma/cms/testimonials" className="flex items-center gap-1.5 text-2xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
             <MessageCircle size={10} />
             <span className="font-semibold">{stats.testimonialsTotal}</span> testimonios
@@ -171,3 +186,4 @@ export function CmsModuleNav() {
     </nav>
   );
 }
+

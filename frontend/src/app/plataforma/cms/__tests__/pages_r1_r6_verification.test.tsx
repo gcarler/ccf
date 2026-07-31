@@ -54,6 +54,7 @@ vi.mock('@/lib/cms/v2', () => ({
   deleteCmsPostByCategory: (...args: any[]) => mockDeleteCmsPostByCategory(...args),
   saveTestimonial: (...args: any[]) => mockSaveTestimonialV2(...args),
   postToTestimonial: (post: any) => post,
+  postToAnnouncement: (post: any) => post,
   listCmsSites: vi.fn().mockResolvedValue([
     { site_key: 'ccf', name: 'Centro Cristiano' },
   ]),
@@ -70,40 +71,6 @@ vi.mock('@/lib/cms/v2', () => ({
   patchCmsMenuItem: vi.fn(),
   deleteCmsMenuItem: vi.fn(),
   reorderCmsMenuItems: vi.fn(),
-  listAnnouncements: vi.fn().mockResolvedValue([
-    {
-      id: 'ann-1',
-      slug: 'comunicado-1',
-      title: 'Gran Evento de Sanidad',
-      content: 'Detalles del evento de sanidad',
-      category: 'Eventos',
-      is_featured: true,
-      published_at: '2026-07-30T10:00:00Z',
-      status: 'published',
-      is_active: true,
-    },
-    {
-      id: 'ann-2',
-      slug: 'comunicado-2',
-      title: 'Aviso sobre Cursos',
-      content: 'Nuevos horarios de inscripcion',
-      category: 'Academia',
-      is_featured: false,
-      published_at: '2026-07-30T12:00:00Z',
-      status: 'draft',
-      is_active: false,
-    },
-  ]),
-  setAnnouncementStatus: vi.fn().mockResolvedValue({
-    id: 'ann-1',
-    slug: 'comunicado-1',
-    title: 'Gran Evento de Sanidad',
-    content: 'Detalles del evento',
-    category: 'Eventos',
-    is_featured: true,
-    published_at: '2026-07-30T10:00:00Z',
-    status: 'archived',
-  }),
 }));
 
 vi.mock('sonner', () => ({

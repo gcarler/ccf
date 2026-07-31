@@ -2,8 +2,8 @@
 
 > **TL;DR:** El CMS de CCF es un sistema editorial multi-tenant para gestionar sites, páginas, secciones, menús, temas, media y contenido público. Este documento es la guía canónica de arquitectura y reglas de negocio. Cualquier agente que vaya a tocar el CMS debe leer este documento primero.
 
-**Última actualización:** 2026-07-24
-**Estado del módulo:** ✅ Auditoría forense 100% cerrada (48/48 findings, 10/10 funcionalidades)
+**Última actualización:** 2026-07-31
+**Estado del módulo:** ✅ Plan de calidad Fases 0-7 completado — arquitectura modular, tests E2E, a11y/SEO, runbook de operaciones.
 
 ---
 
@@ -14,8 +14,40 @@ El CMS está dividido en tres capas backend con responsabilidades distintas:
 | Capa | Archivo | Responsabilidad |
 |---|---|---|
 | **CMS v1** | `backend/api/cms.py` | Testimonios, announcements, media, métricas — flujos administrativos simples |
-| **CMS v2** | `backend/api/cms_v2.py` | Sites, themes, menus, pages, sections, preview, workflow, categories, tags, posts, analytics — el editor |
+| **CMS v2** | `backend/api/cms_v2/` (paquete) | Sites, themes, menus, pages, sections, preview, workflow, categories, tags, posts, analytics, forms, newsletter, popups, A/B testing — el editor |
 | **Enterprise CMS** | `backend/api/enterprise_cms.py` | Audit logs, content permissions, notifications, webhooks, custom types, search, redirects, sessions, media folders |
+
+### 1.1 Estructura del paquete CMS v2 (post-refactor Fase 4)
+
+> **Nota:** `backend/api/cms_v2.py` fue refactorizado en el paquete `backend/api/cms_v2/` con 14 submódulos especializados (2026-07-31).
+
+```
+backend/api/cms_v2/
+├── __init__.py         ← thin orchestrator: agrega sub-routers, re-exports de backward-compat
+├── _shared.py          ← helpers compartidos: scoping, caching, slugify, system vars
+├── section_types.py    ← CRUD tipos de sección (global, no multi-tenant)
+├── global_blocks.py    ← bloques globales reutilizables
+├── sites.py            ← CRUD de CmsSite
+├── themes_menus.py     ← temas + menús + ítems de menú
+├── pages.py            ← páginas + secciones + workflow + SEO audit + preview
+├── public.py           ← endpoints públicos: páginas, posts, menús, sitemap XML, robots.txt
+├── pastoral.py         ← lista de pastores + perfiles
+├── posts.py            ← categorías + tags + posts admin
+├── analytics_ops.py    ← tracking, analytics, scheduling, ops de imágenes
+├── forms.py            ← formularios de contacto
+├── newsletter.py       ← newsletter + suscriptores
+├── popups.py           ← popups nativos
+├── presence.py         ← presencia en tiempo real
+└── ab_testing.py       ← A/B testing de páginas
+
+backend/exceptions/cms.py   ← excepciones de dominio tipadas
+  ├── CmsNotFoundError      → HTTP 404
+  ├── CmsConflictError      → HTTP 409
+  ├── CmsPermissionError    → HTTP 403
+  ├── CmsValidationError    → HTTP 422
+  └── CmsServiceUnavailableError → HTTP 503
+  + 20+ subclases específicas (PageNotFoundError, SlugConflictError, etc.)
+```
 
 Otros archivos clave:
 
@@ -26,7 +58,8 @@ Otros archivos clave:
 | `backend/models_cms.py` | Modelos del dominio CMS principal |
 | `backend/models_enterprise.py` | Modelos Enterprise CMS (Redirect, AuditLog, Webhook, etc.) |
 | `backend/schemas/cms.py` | Schemas Pydantic CMS v1 y v2 |
-| `backend/schemas/cms_v2_sections.py` | Schemas por section type |
+| `backend/schemas/cms_v2_sections.py` | Schemas por section type (24 schemas, `extra='ignore'`) |
+| `backend/exceptions/cms.py` | Excepciones de dominio tipadas → HTTP codes |
 | `frontend/src/components/public/cms/PublicSectionRenderer.tsx` | Renderer rígido único para secciones públicas |
 | `frontend/src/lib/cms/sanitize.ts` | `sanitizeCmsHtml` — sanitización obligatoria de HTML del CMS |
 | `frontend/src/app/plataforma/cms/**` | UI administrativa del CMS |

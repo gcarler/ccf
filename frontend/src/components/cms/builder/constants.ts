@@ -11,6 +11,8 @@ export const SECTION_TYPES = [
   // Civic
   "civic_hero_search", "civic_convocatoria_cards", "civic_quick_links",
   "civic_file_downloads", "civic_data_table", "civic_alert_banner",
+  // M1 R1
+  "animated_counter", "video_embed", "gallery_masonry", "map_embed",
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -52,6 +54,10 @@ export const SECTION_TYPE_COLORS: Record<string, string> = {
   civic_file_downloads:   "bg-[hsl(var(--danger))]",
   civic_data_table:       "bg-[hsl(var(--domain-teal))]",
   civic_alert_banner:     "bg-[hsl(var(--destructive))]",
+  animated_counter:       "bg-[hsl(var(--domain-teal))]",
+  video_embed:            "bg-[hsl(var(--primary))]",
+  gallery_masonry:        "bg-[hsl(var(--domain-pink))]",
+  map_embed:              "bg-[hsl(var(--secondary))]",
 };
 
 export const SECTION_TYPE_LABEL: Record<string, string> = {
@@ -91,6 +97,10 @@ export const SECTION_TYPE_LABEL: Record<string, string> = {
   civic_file_downloads:   "Descargas de Archivos",
   civic_data_table:       "Tabla de Datos Accesible",
   civic_alert_banner:     "Banner de Alerta / Emergencia",
+  animated_counter:       "Contador Animado",
+  video_embed:            "Video Embed",
+  gallery_masonry:        "Galería Masonry",
+  map_embed:              "Mapa Embed",
 };
 
 // ── Page templates ──────────────────────────────────────────────────────────
@@ -250,4 +260,81 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
       ],
     },
   },
+  {
+    label: "Contador Animado",
+    type: "animated_counter",
+    props_json: {
+      title: "Nuestros Logros",
+      items: [
+        { label: "Miembros", value: 1200, prefix: "", suffix: "+", duration_ms: 2000 },
+        { label: "Sedes", value: 5, prefix: "", suffix: "", duration_ms: 1500 },
+        { label: "Proyectos", value: 48, prefix: "", suffix: "", duration_ms: 1800 },
+      ],
+    },
+  },
+  {
+    label: "Video Embed",
+    type: "video_embed",
+    props_json: {
+      title: "Video Destacado",
+      video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      caption: "Video explicativo sobre nuestra misión.",
+      autoplay: false,
+    },
+  },
+  {
+    label: "Galería Masonry",
+    type: "gallery_masonry",
+    props_json: {
+      title: "Nuestra Galería",
+      columns: 3,
+      images: [
+        { url: "/images/convenccion/IMG_6813.webp", alt: "Imagen 1", caption: "Evento de convención" },
+      ],
+    },
+  },
+  {
+    label: "Mapa Embed",
+    type: "map_embed",
+    props_json: {
+      title: "Ubicación",
+      address: "Bogotá, Colombia",
+      lat: 4.6097,
+      lng: -74.0817,
+      zoom: 14,
+      height_px: 400,
+    },
+  },
 ];
+
+export const DEFAULT_SECTION_PROPS: Record<string, Record<string, unknown>> = {
+  animated_counter: {
+    title: "Nuestros Logros",
+    items: [
+      { label: "Miembros", value: 1200, prefix: "", suffix: "+", duration_ms: 2000 },
+      { label: "Sedes", value: 5, prefix: "", suffix: "", duration_ms: 1500 },
+      { label: "Proyectos", value: 48, prefix: "", suffix: "", duration_ms: 1800 },
+    ],
+  },
+  video_embed: {
+    title: "Video Destacado",
+    video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    caption: "Video explicativo sobre nuestra misión.",
+    autoplay: false,
+  },
+  gallery_masonry: {
+    title: "Nuestra Galería",
+    columns: 3,
+    images: [
+      { url: "/images/convenccion/IMG_6813.webp", alt: "Imagen 1", caption: "Evento de convención" },
+    ],
+  },
+  map_embed: {
+    title: "Ubicación",
+    address: "Bogotá, Colombia",
+    lat: 4.6097,
+    lng: -74.0817,
+    zoom: 14,
+    height_px: 400,
+  },
+};

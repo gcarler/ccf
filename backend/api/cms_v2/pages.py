@@ -54,6 +54,7 @@ from backend.exceptions.cms import (
 from backend.schemas import cms as cms_schemas
 from backend.schemas._common import PaginatedResponse
 from backend.schemas.cms_v2_sections import validate_section_props
+from backend.services.cms_search_indexer import delete_from_search_index, index_cms_page
 from backend.services.cms_workflow import PageWorkflowService
 
 logger = logging.getLogger(__name__)
@@ -100,6 +101,7 @@ def create_page(
     row = crud.create_cms_page(db, site.id, payload, current_user.id, commit_with_conflict_check=True)
     if row is None:
         raise SlugConflictError()
+    index_cms_page(db, row)
     return row
 
 
@@ -135,6 +137,7 @@ def patch_page(
     if payload.publish_at is not None:
         wf = PageWorkflowService(db)
         updated = wf.apply_schedule(updated, publish_at=payload.publish_at, user_id=current_user.id)
+    index_cms_page(db, updated)
     return updated
 
 
@@ -148,7 +151,9 @@ def delete_page(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_page_or_404(db, site.id, slug)
+    page_id_str = str(row.id)
     crud.delete_cms_page(db, row)
+    delete_from_search_index(db, site_key, "page", page_id_str)
 
 
 @router.post("/sites/{site_key}/pages/{slug}/clone", response_model=schemas.CmsPageRead, status_code=201)
@@ -172,6 +177,7 @@ def clone_page(
     cloned = crud.clone_cms_page(db, source, new_slug, current_user.id, new_title=payload.new_title)
     if cloned is None:
         raise SlugConflictError()
+    index_cms_page(db, cloned)
     return cloned
 
 
@@ -222,6 +228,7 @@ def create_section(
     row = crud.create_cms_section(db, page.id, payload, commit_with_conflict_check=True)
     if row is None:
         raise SectionConflictError()
+    index_cms_page(db, page)
     return row
 
 
@@ -253,7 +260,9 @@ def patch_section(
             payload.props_json = validate_section_props(effective_type, payload.props_json)
         except ValueError as exc:
             raise CmsValidationError(str(exc)) from exc
-    return crud.update_cms_section(db, row, payload)
+    res = crud.update_cms_section(db, row, payload)
+    index_cms_page(db, page)
+    return res
 
 
 @router.delete("/sites/{site_key}/pages/{slug}/sections/{section_id}", status_code=204)
@@ -271,6 +280,7 @@ def delete_section(
     if not row:
         raise SectionNotFoundError()
     crud.archive_cms_section(db, row)
+    index_cms_page(db, page)
 
 
 @router.post("/sites/{site_key}/pages/{slug}/sections/reorder", response_model=list[schemas.CmsSectionRead])
@@ -284,7 +294,9 @@ def reorder_sections(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
-    return crud.reorder_cms_sections(db, page.id, payload.items)
+    reordered = crud.reorder_cms_sections(db, page.id, payload.items)
+    index_cms_page(db, page)
+    return reordered
 
 
 # ── Versions & Publish Log ───────────────────────────────────────────────────
@@ -545,6 +557,7 @@ def rollback_page(
     result = wf.rollback(page, version_id, user_id=current_user.id)
     if not result:
         raise VersionNotFoundError()
+    index_cms_page(db, result)
     return result
 
 
@@ -567,4 +580,8 @@ def workflow_page(
     row = wf.transition(page, action, current_user.id, notes=payload.notes)
     if not row:
         raise InvalidWorkflowActionError()
+    if action in {"unpublish", "archive"} or row.status != "published":
+        delete_from_search_index(db, site_key, "page", str(row.id))
+    else:
+        index_cms_page(db, row)
     return row

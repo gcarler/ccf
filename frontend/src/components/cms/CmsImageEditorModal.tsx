@@ -246,7 +246,7 @@ export default function CmsImageEditorModal({
         const deltaYPercent = ((e.clientY - dragStartRef.current.mouseY) / rect.height) * 100;
         const { initialBox } = dragStartRef.current;
 
-        let newBox = { ...initialBox };
+        const newBox = { ...initialBox };
 
         if (activeHandle === 'move') {
             newBox.x = Math.max(0, Math.min(100 - initialBox.width, initialBox.x + deltaXPercent));

@@ -54,36 +54,53 @@ function attachmentIcon(type: string | null | undefined) {
   }
 }
 
+const LIMIT = 50;
+
 export default function ChatAdminPage() {
   const { token } = useAuth();
   const [tab, setTab] = useState<ChatAdminTab>("sent");
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<ChatAdminMessageItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchItems = React.useCallback(async () => {
+  const fetchItems = React.useCallback(async (reset = true) => {
     if (!token) return;
-    setLoading(true);
+    const currentOffset = reset ? 0 : offset;
+
+    if (reset) {
+      setLoading(true);
+      setHasMore(true);
+    } else {
+      setLoadingMore(true);
+    }
     setError(null);
+
     try {
       const endpoint = tab === "sent" ? "/chat/my-messages" : "/chat/mentions";
       const data = await apiFetch<ChatAdminMessageItem[]>(endpoint, {
         token,
-        query: { limit: "50" },
+        query: { limit: String(LIMIT), offset: String(currentOffset) },
       });
-      setItems(data);
+      setItems((prev) => (reset ? data : [...prev, ...data]));
+      setHasMore(data.length === LIMIT);
+      setOffset(currentOffset + LIMIT);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar mensajes");
-      setItems([]);
+      if (reset) setItems([]);
     } finally {
-      setLoading(false);
+      if (reset) setLoading(false);
+      else setLoadingMore(false);
     }
-  }, [tab, token]);
+  }, [tab, token, offset]);
 
   React.useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+    fetchItems(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, token]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return items;
@@ -112,12 +129,13 @@ export default function ChatAdminPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar..."
+            aria-label="Buscar mensajes"
             className="pl-9 pr-3 py-1.5 text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-56 transition-all"
           />
         </div>
 
         <button
-          onClick={() => void fetchItems()}
+          onClick={() => void fetchItems(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--primary))] transition-colors"
         >
           <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
@@ -145,7 +163,11 @@ export default function ChatAdminPage() {
           ))}
         </div>
 
-        <span className="ml-auto text-xs font-semibold text-[hsl(var(--text-secondary))]">
+        <span
+          className="ml-auto text-xs font-semibold text-[hsl(var(--text-secondary))]"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
         </span>
       </div>
@@ -168,11 +190,11 @@ export default function ChatAdminPage() {
             >
               <p className="text-sm font-semibold text-[hsl(var(--danger))]">{error}</p>
               <button
-                onClick={() => void fetchItems()}
-                className="text-xs text-[hsl(var(--primary))] font-semibold hover:underline"
-              >
-                Reintentar
-              </button>
+              onClick={() => void fetchItems(true)}
+              className="text-xs text-[hsl(var(--primary))] font-semibold hover:underline"
+            >
+              Reintentar
+            </button>
             </motion.div>
           ) : filtered.length === 0 ? (
             <motion.div
@@ -255,6 +277,26 @@ export default function ChatAdminPage() {
                   </Link>
                 </motion.div>
               ))}
+
+              {hasMore && !search.trim() && !loadingMore && (
+                <div className="flex justify-center py-4">
+                  <button
+                    onClick={() => void fetchItems(false)}
+                    aria-label="Cargar más mensajes"
+                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors"
+                  >
+                    Cargar más
+                  </button>
+                </div>
+              )}
+              {loadingMore && (
+                <div className="flex justify-center py-4 text-xs font-semibold text-[hsl(var(--text-secondary))]">
+                  <span className="sr-only" aria-live="polite">
+                    Cargando más mensajes…
+                  </span>
+                  <span aria-hidden="true">Cargando más…</span>
+                </div>
+              )}
             </div>
           )}
         </AnimatePresence>

@@ -21,6 +21,10 @@ vi.mock("@/lib/cms/v2", () => ({
   reorderCmsSections: vi.fn(),
 }));
 
+vi.mock("@/context/AuthContext", () => ({
+  useAuth: () => ({ token: "mock-token", user: { id: "u1", name: "Test User", role: "admin" } }),
+}));
+
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function createMockBuilder(overrides: Partial<PageBuilderState> = {}): PageBuilderState {
