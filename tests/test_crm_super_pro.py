@@ -3,7 +3,6 @@ from __future__ import annotations
 import datetime
 import sys
 import uuid
-import warnings
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -49,14 +48,12 @@ def scoring_engine_patches(monkeypatch):
     """Return a factory that patches the pastoral health scoring engine.
 
     The factory accepts ``canonical_available`` and returns a tuple
-    ``(mock_canonical, mock_fallback, deprecated_mocks)``:
+    ``(mock_canonical, mock_fallback)``:
 
     - ``mock_canonical``: mock for
       ``backend.services.pastoral_health.recalculate_and_persist_pastoral_health``.
     - ``mock_fallback``: mock for
       ``backend.crud.crm_.health.recalculate_and_persist_pastoral_health``.
-    - ``deprecated_mocks``: dict of mocks for the deprecated wrapper functions in
-      ``backend.crud.crm_.health``.
 
     ``pytest``'s ``monkeypatch`` fixture guarantees all changes are undone after the
     test, avoiding the state leaks observed with ``unittest.mock.patch`` + context
@@ -66,27 +63,20 @@ def scoring_engine_patches(monkeypatch):
     def _patched(*, canonical_available: bool = True):
         mock_canonical = MagicMock()
         mock_fallback = MagicMock()
-        deprecated_mocks = {
-            "calculate_pastoral_health": MagicMock(),
-            "calculate_pastoral_health_score": MagicMock(),
-            "calculate_health_score": MagicMock(),
-        }
 
         monkeypatch.setattr(pastoral_health, "recalculate_and_persist_pastoral_health", mock_canonical)
         monkeypatch.setattr(health_module, "recalculate_and_persist_pastoral_health", mock_fallback)
-        for name, mock_obj in deprecated_mocks.items():
-            monkeypatch.setattr(health_module, name, mock_obj)
 
         if not canonical_available:
             mock_canonical.side_effect = AttributeError("pastoral_health is unavailable")
 
-        return mock_canonical, mock_fallback, deprecated_mocks
+        return mock_canonical, mock_fallback
 
     return _patched
 
 
 def test_call_scoring_engine_uses_canonical_function(db_session: Session, scoring_engine_patches):
-    """Verifies that the helper calls the canonical scoring engine and not deprecated wrappers."""
+    """Verifies that the helper calls the canonical scoring engine directly."""
     persona = models.Persona(
         first_name="Engine",
         last_name="Test",
@@ -95,18 +85,13 @@ def test_call_scoring_engine_uses_canonical_function(db_session: Session, scorin
     db_session.add(persona)
     db_session.commit()
 
-    mock_canonical, mock_fallback, deprecated_mocks = scoring_engine_patches(canonical_available=True)
+    mock_canonical, mock_fallback = scoring_engine_patches(canonical_available=True)
     mock_canonical.return_value = (75, "ESTABLE")
-    with warnings.catch_warnings(record=True) as captured:
-        warnings.simplefilter("always")
-        result = _call_scoring_engine(db_session, persona.id)
+    result = _call_scoring_engine(db_session, persona.id)
 
     assert result == (75, "ESTABLE")
     mock_canonical.assert_called_once_with(db_session, persona.id)
     mock_fallback.assert_not_called()
-    for deprecated_mock in deprecated_mocks.values():
-        deprecated_mock.assert_not_called()
-    assert not any(issubclass(w.category, DeprecationWarning) for w in captured)
 
 
 def test_call_scoring_engine_fallback_to_crm_health(db_session: Session, scoring_engine_patches):
@@ -119,15 +104,13 @@ def test_call_scoring_engine_fallback_to_crm_health(db_session: Session, scoring
     db_session.add(persona)
     db_session.commit()
 
-    mock_canonical, mock_fallback, deprecated_mocks = scoring_engine_patches(canonical_available=False)
+    mock_canonical, mock_fallback = scoring_engine_patches(canonical_available=False)
     mock_fallback.return_value = (42, "EN_RIESGO")
     result = _call_scoring_engine(db_session, persona.id)
 
     assert result == (42, "EN_RIESGO")
     mock_canonical.assert_called_once_with(db_session, persona.id)
     mock_fallback.assert_called_once_with(db_session, persona.id)
-    for deprecated_mock in deprecated_mocks.values():
-        deprecated_mock.assert_not_called()
 
 
 # ── OpenAI Mock Fixture ───────────────────────────────────────────────

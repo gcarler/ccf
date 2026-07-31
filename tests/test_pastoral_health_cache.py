@@ -10,9 +10,6 @@ from backend.core.cache import get_redis
 from backend.crud.crm_.health import (
     _cache_key,
     _get_cached_health,
-    calculate_health_score,
-    calculate_pastoral_health,
-    calculate_pastoral_health_score,
     recalculate_and_persist_pastoral_health,
     update_pastoral_health,
 )
@@ -402,18 +399,3 @@ def test_cache_not_invalidated_on_unrelated_table_bulk_update(db_session):
     assert cached_after is not None
     assert cached_after == cached_before
 
-
-@pytest.mark.parametrize(
-    "compat_fn",
-    [
-        calculate_pastoral_health,
-        calculate_pastoral_health_score,
-        calculate_health_score,
-    ],
-)
-def test_compat_wrapper_emits_deprecation_warning(db_session, compat_fn):
-    """Cada wrapper de compatibilidad debe emitir DeprecationWarning al usarse."""
-    _, _, sede = seed_admin(db_session)
-    persona = _create_persona(db_session, sede, is_baptized=True)
-    with pytest.warns(DeprecationWarning, match="recalculate_and_persist_pastoral_health"):
-        compat_fn(db_session, persona.id)
