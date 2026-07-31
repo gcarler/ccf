@@ -22,7 +22,7 @@ import { useProjects } from '@/hooks/useProjects';
 import type { ProjectRecord } from '@/types/projects';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Suspense } from 'react';
+
 import { getProjectMetricHref, PROJECTS_LIST_ANCHOR } from './projectsLinks';
 
 // Light views loaded synchronously

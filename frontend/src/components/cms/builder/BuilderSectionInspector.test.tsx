@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import type { PageBuilderState } from "@/hooks/usePageBuilder";
-import type { CmsSection } from "@/types/cms-v2";
+
 import BuilderSectionInspector from "./BuilderSectionInspector";
 import { createMockCmsSection } from "@/test-utils/factories";
 

@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { render, screen, fireEvent, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { toast } from 'sonner';
@@ -7,16 +8,20 @@ import { toast } from 'sonner';
 // Mock Framer Motion to prevent AnimatePresence async exit delays in tests
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, onClick, className, style, layout, initial, animate, exit, transition, ...props }: any) => (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    div: ({ children, onClick, className, style, layout: _layout, initial: _initial, animate: _animate, exit: _exit, transition: _transition, ...props }: any) => (
       <div onClick={onClick} className={className} style={style} {...props}>{children}</div>
     ),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     aside: ({ children, className, style, ...props }: any) => (
       <aside className={className} style={style} {...props}>{children}</aside>
     ),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     section: ({ children, className, style, ...props }: any) => (
       <section className={className} style={style} {...props}>{children}</section>
     ),
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 

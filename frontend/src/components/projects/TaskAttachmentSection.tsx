@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 export default function TaskAttachmentSection({
     task,
-    uploading,
+    uploading: _uploading,
     deletingAttachmentId,
     onUpload,
     onDelete,

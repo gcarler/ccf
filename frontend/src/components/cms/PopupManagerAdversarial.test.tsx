@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { PopupManager } from "./PopupManager";
 import CmsPopupsManagement from "@/app/plataforma/cms/popups/page";
-import { listPublicPopups, listCmsPopups, listCmsSites, patchCmsPopup, deleteCmsPopup, createCmsPopup } from "@/lib/cms/v2";
+import { listPublicPopups, listCmsPopups, patchCmsPopup, deleteCmsPopup, createCmsPopup } from "@/lib/cms/v2";
 import { PopupTriggerType } from "@/types/cms-v2";
 
 const mockUsePathname = vi.fn();
@@ -80,7 +81,7 @@ describe("Empirical Adversarial Tests for PopupManager and Popups Admin UI", () 
         },
       ]);
 
-      const { unmount } = render(<PopupManager />);
+      const { unmount: _unmount } = render(<PopupManager />);
 
       await act(async () => {
         await Promise.resolve();
@@ -226,7 +227,7 @@ describe("Empirical Adversarial Tests for PopupManager and Popups Admin UI", () 
 
       // Path '/cursos' should NOT match '/cursos/*' because '/cursos' does not start with '/cursos/'
       mockUsePathname.mockReturnValue("/cursos");
-      const { rerender, container } = render(<PopupManager />);
+      const { rerender, container: _container } = render(<PopupManager />);
 
       await act(async () => {
         await Promise.resolve();
@@ -358,6 +359,7 @@ describe("Empirical Adversarial Tests for PopupManager and Popups Admin UI", () 
         },
       ];
       vi.mocked(listCmsPopups).mockResolvedValue(initialPopups);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(deleteCmsPopup).mockResolvedValue(true as any);
 
       render(<CmsPopupsManagement />);
@@ -386,6 +388,7 @@ describe("Empirical Adversarial Tests for PopupManager and Popups Admin UI", () 
 
     it("4.3 Create popup drawer: validates empty name and calls createCmsPopup with formatted payload", async () => {
       vi.mocked(listCmsPopups).mockResolvedValue([]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.mocked(createCmsPopup).mockResolvedValue({} as any);
 
       render(<CmsPopupsManagement />);

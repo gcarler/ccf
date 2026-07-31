@@ -152,7 +152,7 @@ describe("CmsModuleNav", () => {
 
     // The stats container is a bordered div with links — it should NOT be present
     // because stats is null on initial render (Promise.allSettled hasn't resolved yet)
-    const statsContainer = document.querySelector(".border-t");
+    const _statsContainer = document.querySelector(".border-t");
     // There is only the nav's border-t element initially (stats container has border-t too)
     // When stats is null, the stats div is not rendered at all
     expect(screen.queryByText(/0 paginas/i)).not.toBeInTheDocument();

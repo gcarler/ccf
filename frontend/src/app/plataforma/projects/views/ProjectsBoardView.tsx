@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import ProjectCard from '@/components/projects/ProjectCard';
-import type { ProjectRecord } from '@/types/projects';
+
 import type { BaseProjectViewProps } from './types';
 
 interface ProjectsBoardViewProps extends BaseProjectViewProps {}

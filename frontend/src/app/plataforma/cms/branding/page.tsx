@@ -383,7 +383,7 @@ export default function CmsBrandingPage() {
             >
               <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Eliminar logo?</h3>
               <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
-                Se usará un fallback de texto en su lugar. Recuerda hacer clic en "Guardar" para aplicar los cambios.
+                Se usará un fallback de texto en su lugar. Recuerda hacer clic en &quot;Guardar&quot; para aplicar los cambios.
               </p>
               <div className="flex gap-3 justify-end">
                 <button

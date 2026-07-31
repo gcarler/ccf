@@ -10,7 +10,7 @@ import {
     getValidPriority,
     getPriorityOption,
 } from '@/lib/projects/constants';
-import type { TaskStatus, TaskPriority } from '@/lib/projects/constants';
+import type { TaskPriority } from '@/lib/projects/constants';
 import type { ProjectTaskRecord, TaskSupplyRecord } from '@/types/projects';
 import { AlignLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -192,6 +192,7 @@ export default function TaskDetailPanel({
     };
 
     // ── Sync on task change ─────────────────────────────────────
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (task) {
             setTitle(task.title ?? '');
@@ -205,6 +206,7 @@ export default function TaskDetailPanel({
             setLabels(task.labels ?? []);
             setSupplies(task.supplies ?? []);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [task?.id]);
 
     // ── Save ────────────────────────────────────────────────────

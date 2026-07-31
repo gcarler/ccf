@@ -816,7 +816,7 @@ export default function CmsPagesManagement() {
             >
               <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar página?</h3>
               <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
-                La página "{pendingArchivePage.title}" quedará archivada y podrás restaurarla después.
+                La página &quot;{pendingArchivePage.title}&quot; quedará archivada y podrás restaurarla después.
               </p>
               <div className="flex gap-3 justify-end">
                 <button

@@ -4,7 +4,10 @@ Covers all edge cases: cross-sede defense, TOCTOU guards, orphan/invalid UUIDs, 
 """
 from __future__ import annotations
 
+import json
 import uuid
+from unittest.mock import patch
+
 import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session

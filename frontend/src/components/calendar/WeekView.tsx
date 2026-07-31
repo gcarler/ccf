@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { format, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import clsx from 'clsx';
 import InlineEventPopover from '@/components/calendar/InlineEventPopover';
 import { CalEvent, EVENT_TYPE_META, HOURS, HOUR_HEIGHT, minutesToTop, formatHour } from '@/types/calendar';
-import type { ViewMode } from '@/types/calendar';
+
 
 interface WeekViewProps {
   weekDays: Date[];

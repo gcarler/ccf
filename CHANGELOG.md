@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.1.1-cms (2026-07-31)
+
+### CMS v2 — Correcciones de Calidad: ESLint 0-warning
+
+#### Criterio Transversal — Lint Compliance
+- **fix(lint):** elimina 40+ errores `no-unused-vars` en archivos de producción y tests del CMS, projects, whiteboard y calendar — prefixando variables con `_` o eliminando imports no usados.
+- **fix(lint):** agrega `/* eslint-disable @typescript-eslint/no-explicit-any */` en 4 archivos de test con mocks complejos de Framer Motion y API.
+- **fix(lint):** corrige 10 errores `react/no-unescaped-entities` en modales de confirmación CMS — `branding`, `forms`, `newsletter`, `pages`, `popups`.
+- **fix(lint):** agrega `eslint-disable-next-line react-hooks/exhaustive-deps` en `useMeshSocket`, `TaskDetailPanel`, `access/page` donde la omisión de deps es intencional.
+- **fix(lint):** reemplaza `<a>` por `<Link>` en `spiritual-life/timeline/page.tsx` — compliance con `@next/next/no-html-link-for-pages`.
+- **fix(lint):** agrega `eslint-disable-next-line storybook/no-renderer-packages` en `IconShowcase.stories.tsx`.
+- **fix(cms):** elimina variable `newSections` no usada en `BuilderCanvas.tsx` — la lógica de reordenamiento usa `moveSectionToIndex` directamente.
+- **fix(cms):** elimina imports no usados (`User`, `Calendar`, `CmsTheme`, `useMemo`, `VIEW_EVENT_TYPES`, `CmsFormSubmission`) de componentes CMS.
+
+---
+
 ## v1.1.0-cms (2026-07-31)
 
 ### CMS v2 — Plan de Calidad Integral: Fases 3-7

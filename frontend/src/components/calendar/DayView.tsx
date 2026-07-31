@@ -2,7 +2,6 @@
 
 import React, { useCallback, useRef } from 'react';
 import { format, isToday } from 'date-fns';
-import { es } from 'date-fns/locale';
 import clsx from 'clsx';
 import InlineEventPopover from '@/components/calendar/InlineEventPopover';
 import { CalEvent, EVENT_TYPE_META, HOURS, HOUR_HEIGHT, minutesToTop, formatHour } from '@/types/calendar';

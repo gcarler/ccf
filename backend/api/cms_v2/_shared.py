@@ -24,6 +24,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, lazyload
 
 from backend import crud, models, schemas
+from backend.core.cache_v2 import cached_public  # noqa: F401
 from backend.core.permissions import normalize_role
 from backend.exceptions.cms import (
     CategoryNotFoundError,
@@ -417,6 +418,8 @@ def _build_section_defaults(
             "button_link": "/contacto",
         }
     if section_type == "stats":
+        if props and isinstance(props, dict) and ("stats" in props or "items" in props):
+            return props
         active_personas = db.query(models.Persona).filter(models.Persona.estado_vital == "ACTIVO").count()
         group_count = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.status == "Activo").count()
         return {
@@ -427,8 +430,11 @@ def _build_section_defaults(
             ]
         }
     if section_type == "team":
+        if props and isinstance(props, dict) and ("personas" in props or "items" in props or "team" in props):
+            return props
         leaders = (
             db.query(models.Persona)
+            .options(lazyload("*"))
             .filter(models.Persona.is_pastoral_leader.is_(True))
             .order_by(models.Persona.is_main_pastor.desc(), models.Persona.nombre_completo.asc())
             .all()
@@ -446,8 +452,13 @@ def _build_section_defaults(
                         "slug": "pastor", "bio_short": ""}]
         return {"personas": personas, "title": "Nuestro Equipo Pastoral"}
     if section_type == "testimonials":
+        if props and isinstance(props, dict) and ("testimonials" in props or "items" in props):
+            return props
+        from sqlalchemy.orm import joinedload
         rows = (
             db.query(models.CmsPost)
+            .options(lazyload("*"))
+            .options(joinedload(models.CmsPost.author_persona))
             .join(models.CmsPost.categories)
             .filter(models.CmsCategory.slug == "testimonials", models.CmsPost.status == "published")
             .order_by(models.CmsPost.published_at.desc(), models.CmsPost.created_at.desc())
@@ -466,6 +477,8 @@ def _build_section_defaults(
                            "author": "Miembro de la Iglesia", "emotion": "Gratitud", "image_url": ""}]
         return {"testimonials": testimonials, "title": "Testimonios"}
     if section_type == "faq":
+        if props and isinstance(props, dict) and ("faqs" in props or "items" in props):
+            return props
         return {
             "faqs": [
                 {"question": "¿A qué hora son los servicios?", "answer": service_time},
@@ -478,6 +491,8 @@ def _build_section_defaults(
             "title": "Preguntas Frecuentes",
         }
     if section_type == "embed":
+        if props and isinstance(props, dict) and "embed_url" in props:
+            return props
         return {"embed_url": map_embed or "", "title": church_name, "description": address}
     return props or {}
 

@@ -231,3 +231,11 @@ class CmsServiceUnavailableError(CmsError):
 
     status_code: int = 503
     detail: str = "Service unavailable"
+
+
+# ── Aliases mapped to consistent HTTP status codes ────────────────────────────
+
+CmsNotFound = CmsNotFoundError
+CmsPermissionDenied = CmsPermissionError
+CmsConflict = CmsConflictError
+

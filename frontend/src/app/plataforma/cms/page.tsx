@@ -171,7 +171,7 @@ function formatDate(value?: string) {
   return date.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function metricValue(value: number | undefined, loading: boolean) {
+function _metricValue(value: number | undefined, loading: boolean) {
   if (loading) return "...";
   return value ?? 0;
 }
@@ -204,7 +204,7 @@ export default function CmsHomePage() {
   const [topPages, setTopPages] = useState<DashboardTopPage[]>([]);
   const [recentPosts, setRecentPosts] = useState<DashboardRecentPost[]>([]);
   const [recentActivity, setRecentActivity] = useState<DashboardActivity[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
+  const [_auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
   const [pubsChart, setPubsChart] = useState<Array<{ label: string; value: number }>>([]);
   const [contentTypeChart, setContentTypeChart] = useState<Array<{ label: string; value: number }>>([]);
   const [loading, setLoading] = useState(true);

@@ -68,7 +68,7 @@ describe("PopupManager", () => {
       },
     ]);
 
-    const { container } = render(<PopupManager />);
+    const { container: _container } = render(<PopupManager />);
 
     await act(async () => {
       await Promise.resolve();

@@ -955,7 +955,7 @@ export default function CmsFormsManagement() {
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Eliminar Formulario</h3>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              ¿Estás seguro de eliminar el formulario <strong className="text-zinc-900 dark:text-zinc-100">"{pendingDelete.name}"</strong>? Esta acción no se puede deshacer y borrará todas sus respuestas registradas.
+              ¿Estás seguro de eliminar el formulario <strong className="text-zinc-900 dark:text-zinc-100">&quot;{pendingDelete.name}&quot;</strong>? Esta acción no se puede deshacer y borrará todas sus respuestas registradas.
             </p>
             <div className="flex items-center justify-end gap-3 pt-2">
               <button

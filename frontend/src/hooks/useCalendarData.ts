@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/http';
-import { CalEvent, CalEventType, CalendarView, VIEW_EVENT_TYPES, getEventTypeColor } from '@/types/calendar';
+import { CalEvent, CalEventType, CalendarView, getEventTypeColor } from '@/types/calendar';
 import type { ProjectTaskRecord } from '@/types/projects';
 
 interface UseCalendarDataOptions {

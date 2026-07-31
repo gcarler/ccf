@@ -11,6 +11,7 @@ interface Row {
     role: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const baseColumns: ColumnDef<Row, any>[] = [
     { accessorKey: 'name', header: 'Nombre' },
     { accessorKey: 'role', header: 'Rol' },
@@ -335,7 +336,7 @@ describe('DSTable', () => {
         });
 
         it('deselects a row on a second checkbox click', () => {
-            const { container } = render(
+            const { container: _container } = render(
                 <DSTable
                     data={baseData}
                     columns={baseColumns}

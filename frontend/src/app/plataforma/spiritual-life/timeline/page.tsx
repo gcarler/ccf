@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
     Heart, Waves, Zap, CheckCircle2, Calendar, Star, Shield, Users, Lock, Plus
 } from 'lucide-react';
@@ -63,12 +64,12 @@ export default function SpiritualTimelinePage() {
                         </p>
                     </div>
                     {canManage && (
-                        <a
+                        <Link
                             href="/plataforma/admin/spiritual-life/milestones"
                             className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                         >
                             <Plus size={13} /> Administrar Hitos
-                        </a>
+                        </Link>
                     )}
                 </div>
 

@@ -8,7 +8,6 @@ import {
   FlaskConical,
   Plus,
   Search,
-  CheckCircle2,
   Pause,
   Play,
   Trash2,
@@ -69,7 +68,7 @@ export default function CmsAbTestingManagement() {
     test: CmsAbTest;
     results: CmsAbTestResults;
   } | null>(null);
-  const [loadingResults, setLoadingResults] = useState(false);
+  const [_loadingResults, setLoadingResults] = useState(false);
 
   // Delete / Apply modal state
   const [pendingDelete, setPendingDelete] = useState<CmsAbTest | null>(null);
