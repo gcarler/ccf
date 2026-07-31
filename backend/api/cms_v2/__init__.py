@@ -36,6 +36,7 @@ from backend.api.cms_v2 import (  # noqa: E402
     post_comments as _comments,
     posts as _posts,
     presence as _presence,
+    public as _v2_public,
 )
 from backend.api.cms_v2._shared import (  # noqa: E402, F401
     CMS_EDITOR_ROLES, CMS_PUBLISHER_ROLES, PUBLIC_CMS_RATE_LIMIT,
@@ -82,6 +83,7 @@ SUBROUTERS = (
     _presence,
     _ab,
     _comments,
+    _v2_public,
 )
 
 for _mod in SUBROUTERS:
