@@ -3,8 +3,8 @@ import { defineAuthenticatedModuleRouteSmoke } from '../helpers/moduleRouteSmoke
 const MESSAGING_ROUTES = [
   {
     id: 'messaging-inbox',
-    path: '/plataforma/inbox/messages',
-    expectedText: /mensajes|conversaciones|nuevo chat|mis mensajes/i,
+    path: '/plataforma/messages',
+    expectedText: /mensajes|conversaciones|nueva conversaci[oó]n|chat/i,
   },
   {
     id: 'messaging-chat-admin',

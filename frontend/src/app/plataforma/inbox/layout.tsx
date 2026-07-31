@@ -12,9 +12,14 @@ const INBOX_SECTIONS = [
             { id: 'inbox-all',      label: 'Todo',      href: '/plataforma/inbox',           icon: Bell },
             { id: 'inbox-mentions', label: 'Menciones', href: '/plataforma/inbox#menciones', icon: AtSign },
             { id: 'inbox-tasks',    label: 'Tareas',    href: '/plataforma/inbox#tareas',    icon: CheckCircle2 },
-            { id: 'inbox-ai',       label: 'MESH AI',   href: '/plataforma/inbox#ai',        icon: Bot },                { id: 'inbox-messages', label: 'Mensajes',  href: '/plataforma/inbox/messages',  icon: MessageSquare },
-                { id: 'inbox-chat',       label: 'Chat directo', href: '/plataforma/inbox/chat',       icon: MessageSquare },
-
+            { id: 'inbox-ai',       label: 'MESH AI',   href: '/plataforma/inbox#ai',        icon: Bot },
+            /**
+             * Consolidation (2026-07-31): /inbox/messages now redirects to
+             * /plataforma/messages (canonical DM system). The nav item is
+             * removed to avoid a dead link. Users should access DMs via
+             * the main "Mensajes" link in the workspace sidebar.
+             */
+            { id: 'inbox-chat',       label: 'Chat directo', href: '/plataforma/inbox/chat',       icon: MessageSquare },
         ],
     },
     {
@@ -35,4 +40,3 @@ export default function InboxLayout({ children }: { children: React.ReactNode })
         </ModuleErrorBoundary>
     );
 }
-

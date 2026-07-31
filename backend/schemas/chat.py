@@ -54,12 +54,14 @@ class DirectMessageCreate(BaseModel):
         if self.content and len(self.content) > 5000:
             raise ValueError("Message content exceeds 5000 characters")
 
+
 class ReplyPreview(BaseModel):
     id: UUID
     sender_name: str = ""
     content: str = ""
     attachment_type: Optional[str] = None
     model_config = orm_config
+
 
 class DirectMessageItem(BaseModel):
     id: UUID

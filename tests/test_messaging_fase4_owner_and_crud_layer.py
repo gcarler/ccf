@@ -35,12 +35,8 @@ from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_two_sedes(db_session):
-    admin_a, persona_a, sede_a = seed_admin(
-        db_session, email="msgF4A@example.com", password="testpass123"
-    )
-    admin_b, persona_b, sede_b = seed_admin(
-        db_session, email="msgF4B@example.com", password="testpass123"
-    )
+    admin_a, persona_a, sede_a = seed_admin(db_session, email="msgF4A@example.com", password="testpass123")
+    admin_b, persona_b, sede_b = seed_admin(db_session, email="msgF4B@example.com", password="testpass123")
     assert sede_a.id != sede_b.id
     return (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b)
 
@@ -98,22 +94,14 @@ def test_crud_create_communication_log_blocks_cross_sede_when_actor_in_sede(db_s
         )
     except HTTPException as exc:
         raised = True
-        assert exc.status_code == 404, (
-            f"Cross-sede write en CRUD debe 404, got {exc.status_code}"
-        )
+        assert exc.status_code == 404, f"Cross-sede write en CRUD debe 404, got {exc.status_code}"
         # Mensaje genérico (sin nombre del anchor) → no info leak
-        assert "cross-sede" not in (exc.detail or "").lower(), (
-            f"detail filtra anchor: {exc.detail!r}"
-        )
+        assert "cross-sede" not in (exc.detail or "").lower(), f"detail filtra anchor: {exc.detail!r}"
 
-    assert raised, (
-        "El CRUD NO emitió HTTPException al validar scope — defense-in-depth falló"
-    )
+    assert raised, "El CRUD NO emitió HTTPException al validar scope — defense-in-depth falló"
     db_session.rollback()
     count_after = db_session.query(models.CommunicationLog).count()
-    assert count_after == count_before, (
-        f"FUGA: log cross-sede persistido pese al 404 (Δ={count_after - count_before})"
-    )
+    assert count_after == count_before, f"FUGA: log cross-sede persistido pese al 404 (Δ={count_after - count_before})"
 
 
 def test_crud_create_communication_log_blocks_orphan_when_actor_in_sede(db_session):
@@ -145,13 +133,9 @@ def test_crud_create_communication_log_blocks_orphan_when_actor_in_sede(db_sessi
         )
     except HTTPException as exc:
         raised = True
-        assert exc.status_code == 404, (
-            f"Unresolvable persona_id anchor en CRUD debe 404, got {exc.status_code}"
-        )
+        assert exc.status_code == 404, f"Unresolvable persona_id anchor en CRUD debe 404, got {exc.status_code}"
 
-    assert raised, (
-        "CRUD CREATE con persona inexistente bypasseó el scope re-check"
-    )
+    assert raised, "CRUD CREATE con persona inexistente bypasseó el scope re-check"
 
 
 def test_crud_create_communication_log_allows_local_persona_when_actor_in_sede(db_session):
@@ -211,9 +195,7 @@ def test_patch_notification_blocks_cross_user_returns_404(client, db_session):
     """
     (admin_a, _persona_a, _), (admin_b, persona_b, _) = _seed_two_sedes(db_session)
 
-    notif_b = _seed_notification_for_persona(
-        db_session, admin_b.id, "LEAD SECRETO de admin B"
-    )
+    notif_b = _seed_notification_for_persona(db_session, admin_b.id, "LEAD SECRETO de admin B")
     db_session.commit()
 
     headers_a = auth_headers(client, email="msgF4A@example.com")
@@ -221,24 +203,18 @@ def test_patch_notification_blocks_cross_user_returns_404(client, db_session):
         f"/api/messaging/notifications/{notif_b.id}",
         headers=headers_a,
     )
-    assert resp.status_code == 404, (
-        f"Leak: PATCH cross-user debería 404, got {resp.status_code}: {resp.text}"
-    )
+    assert resp.status_code == 404, f"Leak: PATCH cross-user debería 404, got {resp.status_code}: {resp.text}"
 
     # Sanity: la notification NO fue mutada
     db_session.refresh(notif_b)
-    assert notif_b.is_read is False, (
-        "FUGA: notificación cross-user marcada como leída pese al 404"
-    )
+    assert notif_b.is_read is False, "FUGA: notificación cross-user marcada como leída pese al 404"
 
 
 def test_patch_notification_owner_update_succeeds(client, db_session):
     """Sanity regression: el dueño SÍ puede marcar su propia notification."""
     (admin_a, persona_a, _), _ = _seed_two_sedes(db_session)
 
-    notif_a = _seed_notification_for_persona(
-        db_session, admin_a.id, "notif legitima de admin A"
-    )
+    notif_a = _seed_notification_for_persona(db_session, admin_a.id, "notif legitima de admin A")
     db_session.commit()
 
     headers_a = auth_headers(client, email="msgF4A@example.com")
@@ -246,14 +222,10 @@ def test_patch_notification_owner_update_succeeds(client, db_session):
         f"/api/messaging/notifications/{notif_a.id}",
         headers=headers_a,
     )
-    assert resp.status_code == 200, (
-        f"Regresión: PATCH propio debería 200, got {resp.status_code}: {resp.text}"
-    )
+    assert resp.status_code == 200, f"Regresión: PATCH propio debería 200, got {resp.status_code}: {resp.text}"
     data = resp.json()
     assert data["id"] == str(notif_a.id)
-    assert data["is_read"] is True, (
-        "El owner update debe estampar is_read=True"
-    )
+    assert data["is_read"] is True, "El owner update debe estampar is_read=True"
 
     # Sanity persistente
     db_session.refresh(notif_a)
@@ -270,9 +242,7 @@ def test_patch_notification_nonexistent_returns_404(client, db_session):
         f"/api/messaging/notifications/{fake_id}",
         headers=headers_a,
     )
-    assert resp.status_code == 404, (
-        f"Notification inexistente debería 404, got {resp.status_code}: {resp.text}"
-    )
+    assert resp.status_code == 404, f"Notification inexistente debería 404, got {resp.status_code}: {resp.text}"
 
 
 def test_patch_notification_invalid_uuid_returns_404(client, db_session):
@@ -284,9 +254,7 @@ def test_patch_notification_invalid_uuid_returns_404(client, db_session):
         "/api/messaging/notifications/not-a-uuid",
         headers=headers_a,
     )
-    assert resp.status_code == 404, (
-        f"UUID inválido debería 404, got {resp.status_code}: {resp.text}"
-    )
+    assert resp.status_code == 404, f"UUID inválido debería 404, got {resp.status_code}: {resp.text}"
 
 
 def test_mark_notification_as_read_requires_owner(db_session):
@@ -297,9 +265,7 @@ def test_mark_notification_as_read_requires_owner(db_session):
         crud.mark_notification_as_read(db_session, notif_b.id)
 
 
-def test_api_messaging_send_propagates_actor_user_id_to_crud(
-    client, db_session, monkeypatch
-):
+def test_api_messaging_send_propagates_actor_user_id_to_crud(client, db_session, monkeypatch):
     """Defense-in-depth: el router /api/messaging/send propaga
     ``actor_user_id`` (no ``None``) al CRUD de ``create_communication_log``.
 

@@ -34,7 +34,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-
 def _create_log(
     db: Session,
     *,
@@ -56,8 +55,7 @@ def _create_log(
                 leader_uuid = uuid.UUID(str(leader_id))
             except (ValueError, TypeError):
                 logger.warning(
-                    "_create_log: leader_id con formato UUID inválido, "
-                    "leader_id quedará None en el log: %r",
+                    "_create_log: leader_id con formato UUID inválido, leader_id quedará None en el log: %r",
                     leader_id,
                 )
 
@@ -76,9 +74,11 @@ def _create_log(
     db.refresh(log)
     return log
 
+
 # ──────────────────────────────────────────────────────────────────────
 #  MessagingGateway  (real — intenta SMTP si configurado)
 # ──────────────────────────────────────────────────────────────────────
+
 
 class MessagingGateway:
     """Gateway real para comunicaciones ministeriales.
@@ -228,6 +228,7 @@ class MessagingGateway:
 #  StubMessagingGateway  (testing / staging — nunca envía al exterior)
 # ──────────────────────────────────────────────────────────────────────
 
+
 class StubMessagingGateway(MessagingGateway):
     """Gateway **stub** que NUNCA envía comunicaciones reales al exterior.
 
@@ -255,7 +256,9 @@ class StubMessagingGateway(MessagingGateway):
 
         logger.info(
             "[STUB WhatsApp] would send to persona=%s phone=%s: %.80s",
-            persona_id, phone, content,
+            persona_id,
+            phone,
+            content,
         )
         return _create_log(
             db,
@@ -284,7 +287,9 @@ class StubMessagingGateway(MessagingGateway):
 
         logger.info(
             "[STUB SMS] would send to persona=%s phone=%s: %.80s",
-            persona_id, phone, content,
+            persona_id,
+            phone,
+            content,
         )
         return _create_log(
             db,
@@ -320,13 +325,20 @@ class StubMessagingGateway(MessagingGateway):
                 email,
             )
             return await super().send_email(
-                db, persona_id, content, leader_id,
-                campaign_name=campaign_name, external_id=external_id, html=html,
+                db,
+                persona_id,
+                content,
+                leader_id,
+                campaign_name=campaign_name,
+                external_id=external_id,
+                html=html,
             )
 
         logger.info(
             "[STUB Email] would send to persona=%s email=%s: %.80s",
-            persona_id, email, content,
+            persona_id,
+            email,
+            content,
         )
         return _create_log(
             db,
