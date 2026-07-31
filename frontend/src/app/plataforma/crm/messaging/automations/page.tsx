@@ -68,8 +68,20 @@ export default function AutomationsPage() {
         setLoading(true);
         try {
             setError(null);
-            const data = await apiFetch<{ items: AutomationRule[]; total: number }>('/admin/automations', { token, signal });
-            setRules(data?.items ?? []);
+            // Backend returns trigger_type/action_type/is_active; map to the
+            // AutomationRule frontend shape (trigger/action/active) so the rest
+            // of the component reads canonical fields.
+            const data = await apiFetch<{ items: Record<string, any>[]; total: number }>('/admin/automations', { token, signal });
+            const mapped: AutomationRule[] = (data?.items ?? []).map(r => ({
+                id: String(r.id),
+                name: String(r.name ?? ''),
+                trigger: String(r.trigger_type ?? r.trigger ?? ''),
+                action: String(r.action_type ?? r.action ?? ''),
+                payload: (r.action_payload as Record<string, any>) ?? {},
+                active: Boolean(r.is_active ?? r.active),
+            }));
+            if (signal?.aborted) return;
+            setRules(mapped);
         } catch (err) {
             setRules([]);
             setError('No se pudieron cargar las automatizaciones');
@@ -108,11 +120,13 @@ export default function AutomationsPage() {
         e.preventDefault();
         if (!form.name.trim()) return;
         setIsSaving(true);
+        // Backend expects trigger_type/action_type (not trigger/action);
+        // payload is the action-specific body.
         const body = {
             name: form.name,
-            trigger: form.trigger,
-            action: form.action,
-            payload: form.action === 'create_task'
+            trigger_type: form.trigger,
+            action_type: form.action,
+            action_payload: form.action === 'create_task'
                 ? { task_title: form.taskTitle }
                 : { message: form.message },
         };
@@ -135,9 +149,10 @@ export default function AutomationsPage() {
 
     const handleToggle = async (rule: AutomationRule) => {
         try {
+            // Backend expects is_active (extra=forbid would 422 on "active").
             await apiFetch(`/admin/automations/${rule.id}`, {
                 method: 'PATCH', token,
-                body: { active: !rule.active }
+                body: { is_active: !rule.active }
             });
             setRules(prev => prev.map(r => r.id === rule.id ? { ...r, active: !r.active } : r));
         } catch {
@@ -146,6 +161,10 @@ export default function AutomationsPage() {
     };
 
     const handleDelete = async (id: string) => {
+        // A-07: destructive action requires explicit confirmation.
+        if (!window.confirm('¿Eliminar esta regla de automatización? Se desactivará y no se podrá reactivar.')) {
+            return;
+        }
         setDeletingId(id);
         try {
             await apiFetch(`/admin/automations/${id}`, { method: 'DELETE', token });
