@@ -56,6 +56,8 @@ ALLOWED_UNFILTERED = {
     "youtube.py",  # Proxy público RSS — sin queries de DB
     "wiki.py",  # Wiki CMS scoped por permisos CMS/page_key
     "system.py",  # sede_id en personal_filters (*unpack) — test no lo detecta en contexto
+    "academy_cache.py",  # Capa de cache scoped por course_id/user_id (catálogo académico)
+    "comments.py",  # Centro de comentarios scoped por user_id; batch lookups por IDs explícitos
 }
 
 # Tablas retiradas bloqueadas para nuevas referencias directas
