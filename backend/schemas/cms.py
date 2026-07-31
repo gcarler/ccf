@@ -66,8 +66,8 @@ class CmsMediaRead(BaseModel):
     # el frontend pueda auditar a qué sede pertenece cada media sin un
     # JOIN adicional. No editable vía Create/Update (server-side derivar).
     sede_id: Optional[UUID] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -99,8 +99,8 @@ class CmsSiteRead(BaseModel):
     base_path: str
     is_active: bool
     sede_id: Optional[UUID] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -130,8 +130,8 @@ class CmsThemeRead(BaseModel):
     status: CmsThemeStatus = "active"
     version: int
     created_by_persona_id: Optional[UUID] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -152,8 +152,8 @@ class CmsMenuRead(BaseModel):
     menu_key: str
     name: str
     is_active: bool
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -200,8 +200,8 @@ class CmsMenuItemRead(BaseModel):
     visibility: str
     sort_order: int
     meta_json: Dict[str, Any] = Field(default_factory=dict)
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -262,8 +262,8 @@ class CmsPageRead(BaseModel):
     expires_at: Optional[datetime] = None
     created_by_persona_id: Optional[UUID] = None
     updated_by_persona_id: Optional[UUID] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -308,8 +308,8 @@ class CmsSectionRead(BaseModel):
     status: str = "active"
     is_global: bool = False
     global_key: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -320,7 +320,7 @@ class CmsPageVersionRead(BaseModel):
     snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     notes: Optional[str] = None
     created_by_persona_id: Optional[UUID] = None
-    created_at: Optional[datetime] = None
+    created_at: datetime
     model_config = orm_config
 
 
@@ -335,7 +335,7 @@ class CmsPublishLogRead(BaseModel):
     to_status: Optional[str] = None
     actor_persona_id: Optional[UUID] = None
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
-    created_at: Optional[datetime] = None
+    created_at: datetime
     model_config = orm_config
 
 
@@ -430,8 +430,8 @@ class CmsSectionTypeRead(BaseModel):
     name: str
     description: Optional[str] = None
     is_active: bool
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -462,8 +462,8 @@ class CmsCategoryRead(BaseModel):
     name: str
     description: Optional[str] = None
     is_active: bool
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -485,8 +485,8 @@ class CmsTagRead(BaseModel):
     slug: str
     name: str
     is_active: bool
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -544,8 +544,8 @@ class CmsPostRead(BaseModel):
     author_persona_id: Optional[UUID] = None
     created_by_persona_id: Optional[UUID] = None
     updated_by_persona_id: Optional[UUID] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     model_config = orm_config
 
 
@@ -556,6 +556,7 @@ class CmsPostReadWithTaxonomies(CmsPostRead):
 
 class CmsPostCreateWithCategory(CmsPostCreate):
     """Create payload for posts that must belong to a canonical category."""
+
     category_slug: Literal["testimonials", "announcements"]
 
 
@@ -693,7 +694,6 @@ class CmsReadinessResponse(BaseModel):
 # frontend pueda renderizar tablas de historico y comparar dias.
 
 
-
 class CmsSeoSnapshotRead(BaseModel):
     id: UUID
     site_id: UUID
@@ -741,13 +741,14 @@ class CmsPopupRead(BaseModel):
     trigger_value: Optional[int] = None
     is_active: bool
     show_on_pages: List[str] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
     model_config = orm_config
 
 
 # ── Contact Forms (R1-BE) ───────────────────────────────────────────────────
+
 
 class CmsFormCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
@@ -779,8 +780,8 @@ class CmsFormRead(BaseModel):
     success_message: str = "¡Gracias por tu mensaje!"
     notify_emails: List[str] = Field(default_factory=list)
     is_active: bool = True
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
     submission_count: Optional[int] = None
 
     model_config = orm_config
@@ -839,8 +840,8 @@ class CmsNewsletterRead(BaseModel):
     scheduled_at: Optional[datetime] = None
     sent_at: Optional[datetime] = None
     recipient_count: int = 0
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
     model_config = orm_config
 
@@ -925,7 +926,7 @@ class CmsAbTestRead(BaseModel):
     traffic_split: float = 0.5
     status: str = "active"
     winner_section_id: Optional[UUID] = None
-    created_at: Optional[datetime] = None
+    created_at: datetime
     started_at: Optional[datetime] = None
     ended_at: Optional[datetime] = None
 
@@ -944,7 +945,7 @@ class CmsAbTestEventRead(BaseModel):
     variant: str
     event_type: str
     visitor_id: str
-    created_at: Optional[datetime] = None
+    created_at: datetime
 
     model_config = orm_config
 
@@ -1010,7 +1011,3 @@ class CmsPostCommentPublicRead(BaseModel):
 
 class CmsPostCommentListResponse(PaginatedResponse[CmsPostCommentRead]):
     pending_count: int = 0
-
-
-
-
