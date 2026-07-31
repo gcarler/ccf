@@ -50,6 +50,16 @@ export function MessageInput({
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // A-08: revoke any pending object URL on unmount to prevent blob leaks.
+    useEffect(() => {
+        return () => {
+            if (attachmentPreviewUrl) URL.revokeObjectURL(attachmentPreviewUrl);
+        };
+        // attachmentPreviewUrl is intentionally a dependency so the latest
+        // value is captured at unmount; the cleanup only runs on teardown.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [attachmentPreviewUrl]);
+
     useEffect(() => {
         if (!mentionState || !token) {
             setMentionResults([]);
