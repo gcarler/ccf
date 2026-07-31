@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import ChatAdminPage from './page';
 import { useAuth } from '@/context/AuthContext';
@@ -57,6 +57,10 @@ describe('ChatAdminPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders sent messages by default', async () => {
@@ -158,5 +162,215 @@ describe('ChatAdminPage', () => {
       )
     );
     expect(screen.getByText('Mensaje 51')).toBeInTheDocument();
+  });
+
+  it('renders attachment icons for different types', async () => {
+    const withAttachments: ChatAdminMessageItem[] = [
+      {
+        ...sentMessages[0],
+        id: 'msg-img',
+        attachment_url: '/img.png',
+        attachment_type: 'image',
+        attachment_name: 'foto.png',
+      },
+      {
+        ...sentMessages[0],
+        id: 'msg-vid',
+        attachment_url: '/vid.mp4',
+        attachment_type: 'video',
+        attachment_name: 'video.mp4',
+      },
+      {
+        ...sentMessages[0],
+        id: 'msg-aud',
+        attachment_url: '/aud.mp3',
+        attachment_type: 'audio',
+        attachment_name: 'audio.mp3',
+      },
+    ];
+    vi.mocked(apiFetch).mockResolvedValueOnce(withAttachments);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText('foto.png')).toBeInTheDocument());
+    expect(screen.getByText('video.mp4')).toBeInTheDocument();
+    expect(screen.getByText('audio.mp3')).toBeInTheDocument();
+  });
+
+  it('shows the mentions empty state when no mentions exist', async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce(sentMessages).mockResolvedValueOnce([]);
+
+    render(<ChatAdminPage />);
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        '/chat/my-messages',
+        expect.objectContaining({ query: { limit: '50', offset: '0' } })
+      )
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Menciones/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText('Aún no te han mencionado')).toBeInTheDocument()
+    );
+    expect(
+      screen.getByText('Cuando alguien te mencione con @, verás el mensaje aquí.')
+    ).toBeInTheDocument();
+  });
+
+  it('formats recent messages as "Ahora"', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const now = new Date('2026-07-16T08:58:30Z').getTime();
+    vi.setSystemTime(new Date(now));
+    vi.mocked(apiFetch).mockResolvedValueOnce([
+      { ...sentMessages[0], created_at: new Date(now - 5000).toISOString() },
+    ]);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText('Ahora')).toBeInTheDocument());
+  });
+
+  it('formats messages from minutes ago', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const now = new Date('2026-07-16T09:28:00Z').getTime();
+    vi.setSystemTime(new Date(now));
+    vi.mocked(apiFetch).mockResolvedValueOnce([
+      { ...sentMessages[0], created_at: new Date(now - 30 * 60000).toISOString() },
+    ]);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText('Hace 30 min')).toBeInTheDocument());
+  });
+
+  it('formats messages from hours ago', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const now = new Date('2026-07-16T14:00:00Z').getTime();
+    vi.setSystemTime(new Date(now));
+    vi.mocked(apiFetch).mockResolvedValueOnce([
+      { ...sentMessages[0], created_at: new Date(now - 5 * 3600000).toISOString() },
+    ]);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText('Hace 5 h')).toBeInTheDocument());
+  });
+
+  it('formats messages from yesterday', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const now = new Date('2026-07-17T15:00:00Z').getTime();
+    vi.setSystemTime(new Date(now));
+    vi.mocked(apiFetch).mockResolvedValueOnce([
+      { ...sentMessages[0], created_at: new Date(now - 30 * 3600000).toISOString() },
+    ]);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText('Ayer')).toBeInTheDocument());
+  });
+
+  it('formats invalid dates as "Sin fecha"', async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce([
+      { ...sentMessages[0], id: 'msg-invalid', created_at: 'not-a-date' },
+    ]);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText('Sin fecha')).toBeInTheDocument());
+  });
+
+  it('does not fetch when there is no token', async () => {
+    vi.mocked(useAuth).mockReturnValue({ token: null } as unknown as ReturnType<typeof useAuth>);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText('Centro de mensajes')).toBeInTheDocument());
+    expect(apiFetch).not.toHaveBeenCalled();
+  });
+
+  it('renders mention count on messages with mentions', async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce(sentMessages).mockResolvedValueOnce(mentions);
+
+    render(<ChatAdminPage />);
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        '/chat/my-messages',
+        expect.objectContaining({ query: { limit: '50', offset: '0' } })
+      )
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Menciones/i }));
+
+    await waitFor(() => expect(screen.getByText('1 mención')).toBeInTheDocument());
+  });
+
+  it('renders plural mention count', async () => {
+    const multiMentions: ChatAdminMessageItem[] = [
+      {
+        ...mentions[0],
+        id: 'msg-multi',
+        mentions: ['me', 'other'],
+      },
+    ];
+    vi.mocked(apiFetch).mockResolvedValueOnce(sentMessages).mockResolvedValueOnce(multiMentions);
+
+    render(<ChatAdminPage />);
+    await waitFor(() =>
+      expect(apiFetch).toHaveBeenCalledWith(
+        '/chat/my-messages',
+        expect.objectContaining({ query: { limit: '50', offset: '0' } })
+      )
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Menciones/i }));
+
+    await waitFor(() => expect(screen.getByText('2 menciónes')).toBeInTheDocument());
+  });
+
+  it('shows generic attachment label when name is missing', async () => {
+    const msgNoName: ChatAdminMessageItem[] = [
+      {
+        ...sentMessages[0],
+        id: 'msg-noname',
+        attachment_url: '/file.pdf',
+        attachment_type: 'pdf',
+      },
+    ];
+    vi.mocked(apiFetch).mockResolvedValueOnce(msgNoName);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText('Adjunto')).toBeInTheDocument());
+  });
+
+  it('shows fallback error message for non-Error rejections', async () => {
+    vi.mocked(apiFetch).mockRejectedValueOnce('string error');
+
+    render(<ChatAdminPage />);
+    await waitFor(() =>
+      expect(screen.getByText('Error al cargar mensajes')).toBeInTheDocument()
+    );
+  });
+
+  it('refetches on refresh button click', async () => {
+    vi.mocked(apiFetch).mockResolvedValue(sentMessages);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText(/Nos vemos/)).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Actualizar/i }));
+
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
+    expect(apiFetch).toHaveBeenLastCalledWith(
+      '/chat/my-messages',
+      expect.objectContaining({ query: { limit: '50', offset: '0' } })
+    );
+  });
+
+  it('recovers from error via retry button', async () => {
+    vi.mocked(apiFetch)
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce(sentMessages);
+
+    render(<ChatAdminPage />);
+    await waitFor(() => expect(screen.getByText('Network error')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Reintentar/i }));
+
+    await waitFor(() => expect(screen.getByText(/Nos vemos/)).toBeInTheDocument());
+    expect(screen.queryByText('Network error')).not.toBeInTheDocument();
   });
 });

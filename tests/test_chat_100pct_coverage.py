@@ -10,17 +10,17 @@ from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
-from backend import models, crud
+from backend import crud, models
 from backend.api.chat import (
-    _persona_display_name,
+    _assert_actor_is_active_participant,
+    _assert_actor_still_participant_at_commit_time,
     _assert_conversation_sede_aligned,
     _assert_sender_sede_matches_actor,
-    _assert_actor_still_participant_at_commit_time,
-    _assert_actor_is_active_participant,
+    _persona_display_name,
 )
-from tests.conftest import auth_headers as _auth_headers, seed_admin as _seed_admin
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture
@@ -220,8 +220,9 @@ class TestChat100PctCoverage:
     def test_assert_conversation_sede_aligned_superadmin(self, chat_setup):
         db = chat_setup["db"]
         user = chat_setup["user"]
-        from backend.api.chat import _assert_conversation_sede_aligned
         from unittest.mock import patch
+
+        from backend.api.chat import _assert_conversation_sede_aligned
         with patch("backend.api.chat.get_user_sede_id", return_value=None):
             conv = models.Conversation(id=uuid.uuid4())
             db.add(conv)
@@ -266,11 +267,28 @@ class TestChat100PctCoverage:
         from backend.api.chat import _assert_conversation_sede_aligned
         _assert_conversation_sede_aligned(db, conv, user)
 
+    def test_assert_conversation_sede_aligned_no_other_user_ids(self, chat_setup):
+        db = chat_setup["db"]
+        user = chat_setup["user"]
+        from unittest.mock import patch
+
+        from backend.api.chat import _assert_conversation_sede_aligned
+
+        class FakeParticipant:
+            user_id = None
+
+        class FakeConv:
+            participants = [FakeParticipant()]
+
+        with patch("backend.api.chat.get_user_sede_id", return_value=uuid.uuid4()):
+            _assert_conversation_sede_aligned(db, FakeConv(), user)
+
     def test_assert_sender_sede_matches_actor_superadmin(self, chat_setup):
         db = chat_setup["db"]
         user = chat_setup["user"]
-        from backend.api.chat import _assert_sender_sede_matches_actor
         from unittest.mock import patch
+
+        from backend.api.chat import _assert_sender_sede_matches_actor
         msg = models.ChatMessage(id=uuid.uuid4(), sender_id=user.id, content="test")
         db.add(msg)
         db.commit()
@@ -297,16 +315,18 @@ class TestChat100PctCoverage:
         assert len(deduped.participant_ids) == 2
 
     def test_schema_content_too_long_raises(self):
-        from backend.schemas.chat import DirectMessageCreate
         import pytest
+
+        from backend.schemas.chat import DirectMessageCreate
         with pytest.raises(ValueError, match="exceeds 5000"):
             DirectMessageCreate(content="x" * 5001)
 
     def test_list_conversations_no_persona_returns_empty(self, chat_setup):
         db = chat_setup["db"]
         user = chat_setup["user"]
-        from backend.api.chat import _get_persona_id
         from unittest.mock import patch
+
+        from backend.api.chat import _get_persona_id
         with patch("backend.api.chat.resolve_persona_id_for_user", return_value=None):
             pid = _get_persona_id(db, user)
             assert pid is None
@@ -398,12 +418,13 @@ class TestChat100PctCoverage:
         conv_res = c.post("/api/chat/conversations", json={"participant_ids": [str(p2.id)]}, headers=h).json()
         conv_id = conv_res["id"]
 
+        persona_id = chat_setup["user"].id
         msg = models.ChatMessage(
             id=uuid.uuid4(),
             room_id=f"dm_{conv_id}",
             sender_id=p2.id,
             content="@me test",
-            mentions_raw="invalid-json-{[[[",
+            mentions_raw=str(persona_id),
         )
         db.add(msg)
         db.commit()
@@ -425,17 +446,49 @@ class TestChat100PctCoverage:
         conv_res = c.post("/api/chat/conversations", json={"participant_ids": [str(p2.id)]}, headers=h).json()
         conv_id = conv_res["id"]
 
+        persona_id = str(chat_setup["user"].id)
+        not_my_id = persona_id + "0"
         msg = models.ChatMessage(
             id=uuid.uuid4(),
             room_id=f"dm_{conv_id}",
             sender_id=p2.id,
             content="hello @someone",
-            mentions_raw=json.dumps([str(uuid.uuid4())]),
+            mentions_raw=json.dumps([not_my_id]),
         )
         db.add(msg)
         db.commit()
 
         resp = c.get("/api/chat/mentions", headers=h)
+        assert resp.status_code == 200
+
+    def test_build_admin_message_with_mentions_raw_invalid(self, chat_setup):
+        c = chat_setup["client"]
+        h = chat_setup["headers"]
+        db = chat_setup["db"]
+        user = chat_setup["user"]
+        sede = chat_setup["sede1"]
+
+        p2 = models.Persona(id=uuid.uuid4(), first_name="Mention3", last_name="User", sede_id=sede.id)
+        db.add(p2)
+        db.commit()
+
+        conv_res = c.post("/api/chat/conversations", json={"participant_ids": [str(p2.id)]}, headers=h).json()
+        conv_id = conv_res["id"]
+
+        c.post(
+            f"/api/chat/conversations/{conv_id}/messages",
+            json={"content": "msg with bad mentions raw"},
+            headers=h,
+        )
+        msg = (
+            db.query(models.ChatMessage)
+            .filter(models.ChatMessage.content == "msg with bad mentions raw")
+            .first()
+        )
+        msg.mentions_raw = "not-valid-json{{{"
+        db.commit()
+
+        resp = c.get("/api/chat/my-messages", headers=h)
         assert resp.status_code == 200
 
     def test_send_direct_message_persona_not_found(self, chat_setup):
@@ -531,3 +584,66 @@ class TestChat100PctCoverage:
             headers={"Authorization": h.get("Authorization", "")},
         )
         assert resp.status_code == 413
+
+    def test_list_direct_messages_not_participant_404(self, chat_setup):
+        c = chat_setup["client"]
+        h = chat_setup["headers"]
+        db = chat_setup["db"]
+        sede = chat_setup["sede1"]
+
+        p_other = models.Persona(id=uuid.uuid4(), first_name="Other", last_name="Participant", sede_id=sede.id)
+        db.add(p_other)
+        db.commit()
+
+        conv_res = c.post("/api/chat/conversations", json={"participant_ids": [str(p_other.id)]}, headers=h).json()
+        conv_id = conv_res["id"]
+
+        from tests.conftest import seed_user_with_role
+        u_third, p_third, _ = seed_user_with_role(
+            db_session=db,
+            role_name="chat_user",
+            email="thirdparty@test.com",
+            password="testpass123",
+            sede_id=sede.id,
+            permisos={"messaging:read": "allow", "messaging:edit": "allow"},
+        )
+
+        resp_l = c.post("/api/v3/auth/login", json={"email": "thirdparty@test.com", "password": "testpass123"})
+        assert resp_l.status_code == 200
+        token = resp_l.json()["access_token"]
+        h3 = {"Authorization": f"Bearer {token}"}
+
+        resp = c.get(f"/api/chat/conversations/{conv_id}/messages", headers=h3)
+        assert resp.status_code == 404
+
+    def test_list_direct_messages_calls_sede_aligned(self, chat_setup):
+        c = chat_setup["client"]
+        h = chat_setup["headers"]
+        db = chat_setup["db"]
+        user = chat_setup["user"]
+        sede = chat_setup["sede1"]
+
+        p2 = models.Persona(id=uuid.uuid4(), first_name="MsgSede", last_name="User", sede_id=sede.id)
+        db.add(p2)
+        db.commit()
+
+        conv_res = c.post("/api/chat/conversations", json={"participant_ids": [str(p2.id)]}, headers=h).json()
+        conv_id = conv_res["id"]
+
+        c.post(f"/api/chat/conversations/{conv_id}/messages", json={"content": "hi"}, headers=h)
+
+        resp = c.get(f"/api/chat/conversations/{conv_id}/messages", headers=h)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) >= 1
+
+    def test_list_my_messages_no_user_id_empty(self, chat_setup):
+        db = chat_setup["db"]
+        from backend.api.chat import list_my_chat_messages
+        from backend.models_auth import Usuario
+        mock_user = Usuario(
+            id=None, sede_id=None, username="test", email="test@test.com",
+            is_active=True, is_email_verified=True,
+        )
+        result = list_my_chat_messages(db=db, current_user=mock_user)
+        assert result == []
