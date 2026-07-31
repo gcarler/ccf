@@ -172,7 +172,7 @@ Aplicar `model_dump()` / `model_validate(...).model_dump()` consistente en:
 
 ## Pre-requisitos antes de mergear
 
-- [ ] No chainear con la migración `20260701_0002_eradicate_runtime_legacy.py` (sigue como `??` untracked; commit dedicado separado)
+- [ ] No chainear con la migración `20260701_0002` (sigue como `??` untracked; commit dedicado separado)
 - [ ] Cada sprint debe pasar `pytest tests/test_evangelism_module_coverage.py` completo
 - [ ] Validar que las correcciones de Sprint 1 NO introduzcan nuevos fallos en TestMultiplication o TestSessions
 - [ ] El fix de Sprint 2 (Pydantic) debe mantener el contrato API estable — preferir serialización correcta que cambiar contrato

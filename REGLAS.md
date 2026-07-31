@@ -127,7 +127,7 @@ Las migraciones cerradas de mayo de 2026 conservan texto SQL del contrato
 retirado porque forman parte de la cadena Alembic desplegada. No se importan,
 ejecutan ni consultan desde runtime.
 
-La migración 20260701_0002_eradicate_runtime_legacy.py elimina de bases
+La migración 20260701_0002 elimina de bases
 rezagadas las funciones y tablas paralelas, normaliza tokens/outcomes antiguos,
 purga UGC sin ownership verificable, normaliza etiquetas/prioridades de proyectos,
 renombra físicamente `personas.baptism_date` y endurece columnas obligatorias.

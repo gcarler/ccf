@@ -24,7 +24,7 @@ Testimonials, Announcements**, Analytics, Projects — está protegido por:
 | Migration | Cubre |
 |---|---|
 | `20260701_0001_cms_content_sede_id` | `cms_media_items.sede_id` + `testimonials.sede_id` + `announcements.sede_id` + `announcements.created_by_persona_id` |
-| `20260701_0002_no_legacy` | Purga de orphans, ownership obligatorio, proyectos estrictos, `baptism_date`, contactos públicos canónicos y retiro de objetos de membresía heredados |
+| `20260701_0002` | Purga de orphans, ownership obligatorio, proyectos estrictos, `baptism_date`, contactos públicos canónicos y retiro de objetos de membresía heredados |
 
 Backfill idempotente y Postgres + SQLite-compatible (los tests del CI usan
 SQLite por lo que la migración detecta el dialect y usa sintaxis portable).
@@ -96,7 +96,7 @@ Gate 6 — python -m py_compile sobre CMS helpers:
 
 Las migraciones cerradas conservan SQL histórico para que Alembic pueda
 reconstruir la base. Ese texto no constituye un contrato runtime. La migración
-20260701_0002_no_legacy elimina funciones/tablas paralelas, normaliza valores
+20260701_0002 elimina funciones/tablas paralelas, normaliza valores
 antiguos, corrige el tracker público y exige contratos no nulos/únicos para UGC,
 proyectos y Persona.
 

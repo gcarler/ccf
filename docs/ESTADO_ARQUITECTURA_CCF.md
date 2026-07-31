@@ -164,7 +164,7 @@ y un flujo autenticado Academy con un administrador y un usuario `LECTOR`.
 
 ### Erradicación de compatibilidad runtime
 
-La migración `20260701_0002_eradicate_runtime_legacy.py` formaliza el
+La migración `20260701_0002` formaliza el
 contrato estricto:
 
 - actor/owner obligatorio en mutaciones protegidas;
