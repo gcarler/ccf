@@ -476,7 +476,7 @@ def test_branching_unexpected_op(client):
 
 
 def test_cycle_deep(client):
-    # Alias deprecated (cycle-deep → check_cycles). Migrado a canonical
+    # Alias obsoleto (cycle-deep → check_cycles). Migrado a canonical
     # /automations/flows/check-cycles en Iter2 2026-07-25.
     payload = {
         "nodes": ["n1", "n2", "n3", "n4", "n5"],
@@ -494,7 +494,7 @@ def test_cycle_deep(client):
 
 
 def test_multiple_cycles(client):
-    # Alias deprecated (multiple-cycles → check_cycles). Migrado a canonical.
+    # Alias obsoleto (multiple-cycles → check_cycles). Migrado a canonical.
     payload = {
         "nodes": ["n1", "n2", "n3", "n4"],
         "edges": [
@@ -510,7 +510,7 @@ def test_multiple_cycles(client):
 
 
 def test_disconnected_subgraph_cycles(client):
-    # Alias deprecated (disconnected-subgraph-cycles → check_cycles). Migrado.
+    # Alias obsoleto (disconnected-subgraph-cycles → check_cycles). Migrado.
     payload = {
         "nodes": ["n1", "n2", "n3", "n4"],
         "edges": [
@@ -531,7 +531,7 @@ def test_validate_complex_dag(client):
 
 
 def test_concurrent_cycle_checks(client):
-    # Alias deprecated (concurrent-cycle-checks → validate_complex_dag). Migrado.
+    # Alias obsoleto (concurrent-cycle-checks → validate_complex_dag). Migrado.
     response = client.post("/api/crm/automations/flows/validate-complex-dag", json={})
     assert response.status_code == 200
     assert response.json()["valid"] is True
