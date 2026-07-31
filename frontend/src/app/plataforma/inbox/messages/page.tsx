@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CheckCheck,
   ChevronLeft,
@@ -13,6 +13,7 @@ import {
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 
 type Persona = { id: string; nombre_completo?: string; first_name?: string; last_name?: string };
@@ -34,29 +35,36 @@ type Chat = {
 
 export default function InboxMessagesPage() {
   const { token } = useAuth();
+  const { addToast } = useToast();
   const [logs, setLogs] = useState<CommunicationLog[]>([]);
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
   const [inputText, setInputText] = useState('');
   const [search, setSearch] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 
+  // Abort in-flight requests on unmount to avoid setState-after-unmount
+  // and stale-response clobbering.
   useEffect(() => {
     if (!token) return;
+    const controller = new AbortController();
     Promise.all([
       apiFetch<CommunicationLog[]>('/messaging/history', {
         token,
         cache: 'no-store',
+        signal: controller.signal,
       }).catch(() => []),
-      apiFetch<Persona[]>('/crm/personas/', { token, cache: 'no-store' }).catch(
+      apiFetch<Persona[]>('/crm/personas/', { token, cache: 'no-store', signal: controller.signal }).catch(
         () => []
       ),
     ]).then(([history, people]) => {
+      if (controller.signal.aborted) return;
       setLogs(Array.isArray(history) ? history : []);
       setPersonas(Array.isArray(people) ? people : []);
     });
+    return () => controller.abort();
   }, [token]);
 
   const personaNames = useMemo(
@@ -69,7 +77,7 @@ export default function InboxMessagesPage() {
       ),
     [personas]
   );
-  
+
   const chats = useMemo<Chat[]>(() => {
     const latest = new Map<string, CommunicationLog>();
     for (const log of logs) {
@@ -87,13 +95,13 @@ export default function InboxMessagesPage() {
         channel: log.channel,
       }));
   }, [logs, personaNames]);
-  
+
   const visibleChats = chats.filter(
     chat =>
       chat.name.toLowerCase().includes(search.toLowerCase()) ||
       chat.lastMessage.toLowerCase().includes(search.toLowerCase())
   );
-  
+
   const visiblePersonas = personas.filter(
     persona =>
         (persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()).toLowerCase().includes(search.toLowerCase())
@@ -127,17 +135,23 @@ export default function InboxMessagesPage() {
 
   const sendMessage = async () => {
     if (!token || !activeChat || !inputText.trim()) return;
-    const created = await apiFetch<CommunicationLog>('/messaging/send', {
-      method: 'POST',
-      token,
-      body: {
-        persona_id: activeChat.id,
-        channel: activeChat.channel || 'internal',
-        content: inputText.trim(),
-      },
-    });
-    setLogs(prev => [...prev, created]);
-    setInputText('');
+    try {
+      const created = await apiFetch<CommunicationLog>('/messaging/send', {
+        method: 'POST',
+        token,
+        body: {
+          persona_id: activeChat.id,
+          channel: activeChat.channel || 'internal',
+          content: inputText.trim(),
+        },
+      });
+      // Guard against backend resolving null/undefined — avoid pushing
+      // a falsy row that would crash render at message.content.
+      if (created) setLogs(prev => [...prev, created]);
+      setInputText('');
+    } catch {
+      addToast('No se pudo enviar el mensaje', 'error');
+    }
   };
 
   return (
@@ -160,8 +174,8 @@ export default function InboxMessagesPage() {
                 }}
                 className={clsx(
                     "flex size-7 items-center justify-center rounded-lg transition-all shadow-sm",
-                    isCreatingNew 
-                        ? "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]" 
+                    isCreatingNew
+                        ? "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]"
                         : "bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))] hover:shadow-[hsl(var(--info)/30%)]"
                 )}
                 title={isCreatingNew ? 'Cancelar' : 'Nueva conversación'}
@@ -182,7 +196,7 @@ export default function InboxMessagesPage() {
             />
             </div>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1 scrollbar-thin">
             <AnimatePresence mode="wait">
                 {isCreatingNew ? (
@@ -309,7 +323,7 @@ export default function InboxMessagesPage() {
                 </p>
                 </div>
             </header>
-            
+
             <div
                 ref={scrollRef}
                 className="flex-1 space-y-4 overflow-y-auto p-4 bg-[hsl(var(--surface-1))]/30 dark:bg-black/5 scrollbar-thin"
@@ -340,7 +354,7 @@ export default function InboxMessagesPage() {
                     ))
                 )}
             </div>
-            
+
             <footer className="border-t border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/5 dark:bg-[#1E1F21] shrink-0">
                 <div className="mx-auto flex w-full items-center gap-2 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]/80 p-1 pl-3 pr-1 dark:border-white/10 dark:bg-white/5 focus-within:ring-2 focus-within:ring-[hsl(var(--primary))]/20 focus-within:border-[hsl(var(--info)/30%)] transition-all shadow-sm">
                 <input
@@ -375,7 +389,7 @@ export default function InboxMessagesPage() {
                     Selecciona un chat o inicia uno nuevo.
                 </p>
             </div>
-            <button 
+            <button
                 onClick={() => setIsCreatingNew(true)}
                 className="mt-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-white text-2xs font-semibold uppercase tracking-wide rounded-lg hover:bg-[hsl(var(--primary))] hover:shadow-md hover:shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all flex items-center gap-2"
             >
