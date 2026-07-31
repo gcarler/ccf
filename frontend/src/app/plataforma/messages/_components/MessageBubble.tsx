@@ -22,6 +22,9 @@ function MentionSpan({ children }: { children: React.ReactNode }) {
 }
 
 function parseContent(content: string): Array<{ type: 'text' | 'mention'; value: string }> {
+    // A-11: unified mention regex with MessageInput's detection logic.
+    // A mention is `@username` where the char before `@` is start-of-string
+    // or whitespace (same word-boundary rule used in the composer).
     const tokens: Array<{ type: 'text' | 'mention'; value: string }> = [];
     const regex = /@\S+/g;
     let lastIndex = 0;
