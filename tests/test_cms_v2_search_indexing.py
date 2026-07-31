@@ -2,50 +2,65 @@
 from __future__ import annotations
 
 import uuid
-from typing import Generator
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from backend.app import app
-from backend.core.database import get_db
-from backend.models import User, Persona, CmsSite, CmsPage, CmsPost, CmsCategory, CmsTag
+from backend.models import User, Persona, Sede, RolPlataforma, CmsSite, CmsPage, CmsPost
 from backend.models_enterprise import SearchIndex, SearchPromotion
 from backend.services.cms_search_indexer import (
     index_cms_content,
     delete_from_search_index,
-    reindex_all_cms_content,
-    index_cms_page,
-    index_cms_post,
 )
 
 
 @pytest.fixture
 def auth_headers(db_session: Session) -> dict[str, str]:
     """Helper fixture to create an admin user and return headers."""
+    role = db_session.query(RolPlataforma).filter(RolPlataforma.nombre == "ADMIN").first()
+    if not role:
+        role = RolPlataforma(
+            id=uuid.uuid4(),
+            nombre="ADMIN",
+            permisos={"*": "allow"},
+        )
+        db_session.add(role)
+        db_session.flush()
+
+    sede = Sede(
+        id=uuid.uuid4(),
+        nombre="Sede Admin",
+        ciudad="Bogota",
+        es_activa=True,
+    )
+    db_session.add(sede)
+    db_session.flush()
+
     persona = Persona(
         id=uuid.uuid4(),
-        nombres="Admin",
-        apellidos="Tester",
+        sede_id=sede.id,
+        first_name="Admin",
+        last_name="Tester",
         email=f"admin-{uuid.uuid4()}@example.com",
     )
     db_session.add(persona)
-    db_session.commit()
+    db_session.flush()
 
     user = User(
-        id=uuid.uuid4(),
-        persona_id=persona.id,
+        id=persona.id,
+        sede_id=sede.id,
+        username=f"admin-{uuid.uuid4().hex[:8]}",
         email=persona.email,
-        hashed_password="hashed_pass_test",
+        password_hash="hashed_pass_test",
+        rol_plataforma_id=role.id,
         is_active=True,
-        is_superuser=True,
     )
     db_session.add(user)
     db_session.commit()
 
     # Access token bypass fixture pattern in tests
-    from backend.core.security import create_access_token
+    from backend.core.permissions import create_access_token
     token = create_access_token(data={"sub": str(user.id)})
     return {"Authorization": f"Bearer {token}"}
 
@@ -58,7 +73,7 @@ def test_site(db_session: Session) -> CmsSite:
         id=uuid.uuid4(),
         site_key=site_key,
         name="Test Search Site",
-        domain=f"{site_key}.example.com",
+        base_path=f"/{site_key}",
     )
     db_session.add(site)
     db_session.commit()
@@ -290,7 +305,7 @@ class TestCmsSearchIndexing:
             boost_score=50,
         )
 
-        item2 = index_cms_content(
+        index_cms_content(
             db=db_session,
             site_key=site_key,
             entity_type="post",
