@@ -431,7 +431,6 @@ def _find_existing_dm(db: Session, user_id1: _uuid.UUID, user_id2: _uuid.UUID):
                 models.Conversation.id == conv_id
             ).first()
     return None
-    return None
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
