@@ -1,21 +1,22 @@
 """Tests exhaustivos y estructurales para backend/services/messaging.py (100% Cobertura)."""
 
-import pytest
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from backend import models
 from backend.services.messaging import (
+    CommunicationOutcome,
     MessagingGateway,
     StubMessagingGateway,
+    _create_log,
     get_messaging_gateway,
     reset_gateway_singleton,
-    _create_log,
-    CommunicationOutcome,
 )
 
 
 class TestMessaging100Pct:
-
     def test_create_log_leader_id_variations(self, db_session):
         p = models.Persona(first_name="Leader", last_name="Test")
         db_session.add(p)
@@ -74,6 +75,7 @@ class TestMessaging100Pct:
 
     def test_messaging_gateway_send_whatsapp_and_sms(self, db_session):
         import asyncio
+
         gw = MessagingGateway()
 
         p_no_phone = models.Persona(first_name="NoPhone", last_name="", email="nophone@test.com")
@@ -89,16 +91,21 @@ class TestMessaging100Pct:
             asyncio.run(gw.send_sms(db_session, str(p_no_phone.id), "Hola", leader_id=None))
 
         # Success paths
-        log_wa = asyncio.run(gw.send_whatsapp(db_session, str(p_valid.id), "Hola WA", leader_id=None, campaign_name="WA Camp"))
+        log_wa = asyncio.run(
+            gw.send_whatsapp(db_session, str(p_valid.id), "Hola WA", leader_id=None, campaign_name="WA Camp")
+        )
         assert log_wa.channel == "WhatsApp"
         assert log_wa.campaign_name == "WA Camp"
 
-        log_sms = asyncio.run(gw.send_sms(db_session, str(p_valid.id), "Hola SMS", leader_id=None, campaign_name="SMS Camp"))
+        log_sms = asyncio.run(
+            gw.send_sms(db_session, str(p_valid.id), "Hola SMS", leader_id=None, campaign_name="SMS Camp")
+        )
         assert log_sms.channel == "SMS"
         assert log_sms.campaign_name == "SMS Camp"
 
     def test_messaging_gateway_send_email_smtp_modes(self, db_session):
         import asyncio
+
         p = models.Persona(first_name="EmailUser", last_name="", email="user@test.com")
         db_session.add(p)
         db_session.commit()
@@ -130,6 +137,7 @@ class TestMessaging100Pct:
 
     def test_stub_messaging_gateway_and_override(self, db_session):
         import asyncio
+
         p_normal = models.Persona(first_name="Normal", last_name="", email="normal@test.com", phone="300123")
         p_override = models.Persona(first_name="Override", last_name="", email="override@test.com", phone="300999")
         db_session.add_all([p_normal, p_override])
@@ -154,7 +162,9 @@ class TestMessaging100Pct:
         assert log_em_stub.outcome == StubMessagingGateway.OUTCOME
 
         # Stub Email with override matching email
-        log_em_override = asyncio.run(stub_gw.send_email(db_session, str(p_override.id), "Override Email", leader_id=None))
+        log_em_override = asyncio.run(
+            stub_gw.send_email(db_session, str(p_override.id), "Override Email", leader_id=None)
+        )
         assert log_em_override.outcome == CommunicationOutcome.PENDING_SMTP_CONFIG.value
 
     def test_get_messaging_gateway_factory(self):

@@ -21,12 +21,8 @@ from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_two_sedes(db_session):
-    admin_a, persona_a, sede_a = seed_admin(
-        db_session, email="msgA@example.com", password="testpass123"
-    )
-    admin_b, persona_b, sede_b = seed_admin(
-        db_session, email="msgB@example.com", password="testpass123"
-    )
+    admin_a, persona_a, sede_a = seed_admin(db_session, email="msgA@example.com", password="testpass123")
+    admin_b, persona_b, sede_b = seed_admin(db_session, email="msgB@example.com", password="testpass123")
     assert sede_a.id != sede_b.id
     return (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b)
 
@@ -67,38 +63,26 @@ def _seed_log_old(db, persona, content: str, channel: str = "email"):
 # ── GET /messaging/history ────────────────────────────────────────────────
 
 
-def test_messaging_history_filters_by_sede_a(
-    client, db_session
-):
+def test_messaging_history_filters_by_sede_a(client, db_session):
     """Axioma 3 — Multi-Tenant: admin de sede_a sólo ve logs de su sede."""
     (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
     persona_a = _persona_in(db_session, sede_a.id, "msg-history-local-a")
     persona_b = _persona_in(db_session, sede_b.id, "msg-history-target-b")
 
     # Logs sembrados en sendas sedes.
-    log_a = _seed_log_old(
-        db_session, persona_a, "Mensaje legitimo de sede A"
-    )
-    log_b = _seed_log_old(
-        db_session, persona_b, "MENSAJE SECRETO SEDE B"
-    )
+    log_a = _seed_log_old(db_session, persona_a, "Mensaje legitimo de sede A")
+    log_b = _seed_log_old(db_session, persona_b, "MENSAJE SECRETO SEDE B")
     db_session.commit()
 
     headers_a = auth_headers(client, email="msgA@example.com")
     resp = client.get("/api/messaging/history?limit=100", headers=headers_a)
-    assert resp.status_code == 200, (
-        f"/api/messaging/history no responde 200: {resp.status_code} {resp.text}"
-    )
+    assert resp.status_code == 200, f"/api/messaging/history no responde 200: {resp.status_code} {resp.text}"
     payload = resp.json()
     returned_ids = {str(item["id"]) for item in payload}
 
     # log_a debe aparecer; log_b NO.
-    assert str(log_a.id) in returned_ids, (
-        "Regresión: log de sede_a NO aparece en el historial de admin A"
-    )
-    assert str(log_b.id) not in returned_ids, (
-        f"FUGA: log de sede_b apareció en historial de admin A: {payload}"
-    )
+    assert str(log_a.id) in returned_ids, "Regresión: log de sede_a NO aparece en el historial de admin A"
+    assert str(log_b.id) not in returned_ids, f"FUGA: log de sede_b apareció en historial de admin A: {payload}"
     # Defense-in-depth: chequear contenido por strings (no sólo IDs).
     body_text = resp.text
     assert "MENSAJE SECRETO SEDE B" not in body_text, (
@@ -106,20 +90,14 @@ def test_messaging_history_filters_by_sede_a(
     )
 
 
-def test_messaging_history_filters_by_sede_b(
-    client, db_session
-):
+def test_messaging_history_filters_by_sede_b(client, db_session):
     """Axioma 3 — simetría: admin de sede_b NO debe ver logs de sede_a."""
     (admin_a, _, sede_a), (_, _, sede_b) = _seed_two_sedes(db_session)
     persona_a = _persona_in(db_session, sede_a.id, "msg-history-b-view-a")
     persona_b = _persona_in(db_session, sede_b.id, "msg-history-b-view-b")
 
-    log_a = _seed_log_old(
-        db_session, persona_a, "MENSAJE SECRETO SEDE A"
-    )
-    log_b = _seed_log_old(
-        db_session, persona_b, "Mensaje legitimo de sede B"
-    )
+    log_a = _seed_log_old(db_session, persona_a, "MENSAJE SECRETO SEDE A")
+    log_b = _seed_log_old(db_session, persona_b, "Mensaje legitimo de sede B")
     db_session.commit()
 
     headers_b = auth_headers(client, email="msgB@example.com")
@@ -128,12 +106,8 @@ def test_messaging_history_filters_by_sede_b(
     body_text = resp.text
     returned_ids = {str(item["id"]) for item in resp.json()}
 
-    assert str(log_b.id) in returned_ids, (
-        "Regresión: log de sede_b NO aparece en el historial de admin B"
-    )
-    assert str(log_a.id) not in returned_ids, (
-        "FUGA: log de sede_a apareció en historial de admin B"
-    )
+    assert str(log_b.id) in returned_ids, "Regresión: log de sede_b NO aparece en el historial de admin B"
+    assert str(log_a.id) not in returned_ids, "FUGA: log de sede_a apareció en historial de admin B"
     assert "MENSAJE SECRETO SEDE A" not in body_text, (
         "FUGA CONFIRMADA: contenido de log de sede_a en respuesta a sede_b"
     )
@@ -155,9 +129,7 @@ def test_messaging_history_supports_limit_param_locally(client, db_session):
     headers_a = auth_headers(client, email="msgA@example.com")
     resp = client.get("/api/messaging/history?limit=3", headers=headers_a)
     assert resp.status_code == 200, resp.text
-    assert len(resp.json()) == 3, (
-        f"limit=3 debe acotar a 3 logs; got {len(resp.json())}"
-    )
+    assert len(resp.json()) == 3, f"limit=3 debe acotar a 3 logs; got {len(resp.json())}"
 
 
 # ── POST /messaging/send ──────────────────────────────────────────────────
@@ -179,8 +151,7 @@ def test_messaging_send_to_local_persona_succeeds(client, db_session):
         },
     )
     assert resp.status_code == 200, (
-        f"Regresión: POST a persona local deberia funcionar "
-        f"(status {resp.status_code}): {resp.text}"
+        f"Regresión: POST a persona local deberia funcionar (status {resp.status_code}): {resp.text}"
     )
     data = resp.json()
     assert data["persona_id"] == str(persona_a.id)
@@ -188,9 +159,7 @@ def test_messaging_send_to_local_persona_succeeds(client, db_session):
 
     # Sanity: el log se persistió
     persisted = (
-        db_session.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.persona_id == persona_a.id)
-        .first()
+        db_session.query(models.CommunicationLog).filter(models.CommunicationLog.persona_id == persona_a.id).first()
     )
     assert persisted is not None
     assert persisted.content == "Mensaje pastoral legitimo de sede A"
@@ -216,21 +185,14 @@ def test_messaging_send_to_cross_sede_persona_returns_404(client, db_session):
         },
     )
     assert resp.status_code == 404, (
-        f"Leak: POST a persona de sede_b debería 404 "
-        f"(status {resp.status_code}): {resp.text}"
+        f"Leak: POST a persona de sede_b debería 404 (status {resp.status_code}): {resp.text}"
     )
 
     # Sanity: NO se persistió ningún log de la fuga.
     leaked = (
-        db_session.query(models.CommunicationLog)
-        .filter(
-            models.CommunicationLog.persona_id == persona_b.id
-        )
-        .first()
+        db_session.query(models.CommunicationLog).filter(models.CommunicationLog.persona_id == persona_b.id).first()
     )
-    assert leaked is None, (
-        "FUGA CONFIRMADA: log cross-sede persistido pese al 404"
-    )
+    assert leaked is None, "FUGA CONFIRMADA: log cross-sede persistido pese al 404"
 
 
 def test_messaging_send_to_invalid_uuid_returns_404(client, db_session):
@@ -247,9 +209,7 @@ def test_messaging_send_to_invalid_uuid_returns_404(client, db_session):
             "content": "should fail",
         },
     )
-    assert resp.status_code == 404, (
-        f"UUID inválido debería 404 (got {resp.status_code}): {resp.text}"
-    )
+    assert resp.status_code == 404, f"UUID inválido debería 404 (got {resp.status_code}): {resp.text}"
 
 
 # ── Combinaciones / edge cases ────────────────────────────────────────────
@@ -292,12 +252,8 @@ def test_two_post_cross_sede_isolated_on_subsequent_get(client, db_session):
     assert resp_write_local.status_code == 200, resp_write_local.text
 
     # 3. GET sólo ve el local; el cross-sede nunca llegó a la base.
-    resp_read = client.get(
-        "/api/messaging/history?limit=100", headers=headers_a
-    )
+    resp_read = client.get("/api/messaging/history?limit=100", headers=headers_a)
     assert resp_read.status_code == 200, resp_read.text
     body = resp_read.text
     assert "ataque cross-sede" not in body, "FUGA cross-sede por write+read"
-    assert "log legitimo en sede A" in body, (
-        "Regresión: el log local legítimo debe aparecer en el historial"
-    )
+    assert "log legitimo en sede A" in body, "Regresión: el log local legítimo debe aparecer en el historial"

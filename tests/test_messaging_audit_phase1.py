@@ -7,6 +7,7 @@ Covers:
   - A-03/A-04: Schema fields (campaign_name, recipient_phone, is_read, external_id)
   - A-06: mark_all_read returns marked_count
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -22,9 +23,7 @@ from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 def test_communication_log_has_deleted_at_column():
     """C-01: CommunicationLog model exposes deleted_at column."""
     cols = {c.name for c in models.CommunicationLog.__table__.columns}
-    assert "deleted_at" in cols, (
-        f"deleted_at missing from CommunicationLog columns: {cols}"
-    )
+    assert "deleted_at" in cols, f"deleted_at missing from CommunicationLog columns: {cols}"
 
 
 def test_deleted_logs_excluded_from_query(client, db_session):
@@ -52,9 +51,7 @@ def test_deleted_logs_excluded_from_query(client, db_session):
     assert resp.status_code == 200, resp.text
     body = resp.text
     assert "Visible message" in body
-    assert "Deleted message" not in body, (
-        "C-02 REGRESSION: soft-deleted log appeared in history"
-    )
+    assert "Deleted message" not in body, "C-02 REGRESSION: soft-deleted log appeared in history"
 
 
 def test_soft_delete_log_via_orm(client, db_session):
@@ -81,9 +78,7 @@ def test_soft_delete_log_via_orm(client, db_session):
     db_session.commit()
 
     resp = client.get("/api/messaging/history?limit=100", headers=headers)
-    assert "Will be soft-deleted" not in resp.text, (
-        "C-02: soft-deleted log still visible after deleted_at set"
-    )
+    assert "Will be soft-deleted" not in resp.text, "C-02: soft-deleted log still visible after deleted_at set"
 
 
 # ── C-03: WebSocket permission check ─────────────────────────────────────
@@ -159,14 +154,11 @@ def test_send_crm_message_cross_sede_persona_rejected(client, db_session):
         },
     )
     assert resp.status_code == 404, (
-        f"C-05 REGRESSION: cross-sede persona_id should be rejected "
-        f"(got {resp.status_code}): {resp.text}"
+        f"C-05 REGRESSION: cross-sede persona_id should be rejected (got {resp.status_code}): {resp.text}"
     )
 
     leaked = (
-        db_session.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.persona_id == persona_b.id)
-        .first()
+        db_session.query(models.CommunicationLog).filter(models.CommunicationLog.persona_id == persona_b.id).first()
     )
     assert leaked is None, "C-05: cross-sede log persisted despite 404"
 
@@ -186,8 +178,7 @@ def test_send_crm_message_same_sede_persona_allowed(client, db_session):
         },
     )
     assert resp.status_code == 200, (
-        f"C-05 REGRESSION: same-sede persona_id should succeed "
-        f"(got {resp.status_code}): {resp.text}"
+        f"C-05 REGRESSION: same-sede persona_id should succeed (got {resp.status_code}): {resp.text}"
     )
 
 
@@ -197,16 +188,16 @@ def test_send_crm_message_same_sede_persona_allowed(client, db_session):
 def test_communication_log_schema_has_extended_fields():
     """A-03: CommunicationLog schema includes new fields."""
     from backend.schemas.notifications import CommunicationLog as CLSchema
+
     fields = set(CLSchema.model_fields.keys())
     for expected in ("campaign_name", "recipient_phone", "is_read", "external_id"):
-        assert expected in fields, (
-            f"A-03: field '{expected}' missing from CommunicationLog schema: {fields}"
-        )
+        assert expected in fields, f"A-03: field '{expected}' missing from CommunicationLog schema: {fields}"
 
 
 def test_communication_log_create_schema():
     """A-03: CommunicationLogCreate accepts the expected fields."""
     from backend.schemas.notifications import CommunicationLogCreate
+
     fields = set(CommunicationLogCreate.model_fields.keys())
     assert "persona_id" in fields
     assert "channel" in fields
@@ -218,6 +209,7 @@ def test_communication_log_create_schema():
 def test_messaging_channel_enum():
     """A-04: MessagingChannel Literal type restricts values."""
     from backend.schemas.notifications import MessagingChannel
+
     # The Literal type is a typing construct, just verify it exists
     assert MessagingChannel is not None
 
@@ -249,17 +241,11 @@ def test_mark_all_read_returns_marked_count(client, db_session):
     db_session.add(read_notif)
     db_session.commit()
 
-    resp = client.post(
-        "/api/messaging/notifications/mark-all-read", headers=headers
-    )
+    resp = client.post("/api/messaging/notifications/mark-all-read", headers=headers)
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    assert "marked_count" in data, (
-        f"A-06: response missing marked_count: {data}"
-    )
-    assert data["marked_count"] == 3, (
-        f"A-06: expected marked_count=3 (3 unread), got {data['marked_count']}"
-    )
+    assert "marked_count" in data, f"A-06: response missing marked_count: {data}"
+    assert data["marked_count"] == 3, f"A-06: expected marked_count=3 (3 unread), got {data['marked_count']}"
 
 
 def test_mark_all_read_returns_zero_when_all_read(client, db_session):
@@ -276,9 +262,7 @@ def test_mark_all_read_returns_zero_when_all_read(client, db_session):
     db_session.add(notif)
     db_session.commit()
 
-    resp = client.post(
-        "/api/messaging/notifications/mark-all-read", headers=headers
-    )
+    resp = client.post("/api/messaging/notifications/mark-all-read", headers=headers)
     assert resp.status_code == 200, resp.text
     assert resp.json()["marked_count"] == 0
 
@@ -289,10 +273,9 @@ def test_mark_all_read_returns_zero_when_all_read(client, db_session):
 def test_auth_notifications_has_user_id_index():
     """A-05: auth_notifications table has ix_auth_notifications_user_id."""
     from backend.models_auth import NotificacionUsuario
+
     index_names = {i.name for i in NotificacionUsuario.__table__.indexes}
-    assert "ix_auth_notifications_user_id" in index_names, (
-        f"A-05: index missing. Found: {index_names}"
-    )
+    assert "ix_auth_notifications_user_id" in index_names, f"A-05: index missing. Found: {index_names}"
 
 
 # ── A-01: Presence endpoint enriches with persona_id ────────────────────
@@ -331,12 +314,8 @@ def test_notifications_supports_offset(client, db_session):
         db_session.add(notif)
     db_session.commit()
 
-    resp_page0 = client.get(
-        "/api/messaging/notifications?limit=2&offset=0", headers=headers
-    )
-    resp_page1 = client.get(
-        "/api/messaging/notifications?limit=2&offset=2", headers=headers
-    )
+    resp_page0 = client.get("/api/messaging/notifications?limit=2&offset=0", headers=headers)
+    resp_page1 = client.get("/api/messaging/notifications?limit=2&offset=2", headers=headers)
     assert resp_page0.status_code == 200, resp_page0.text
     assert resp_page1.status_code == 200, resp_page1.text
     page0_ids = {n["id"] for n in resp_page0.json()}
@@ -364,12 +343,8 @@ def test_history_supports_offset(client, db_session):
         db_session.add(log)
     db_session.commit()
 
-    resp_page0 = client.get(
-        "/api/messaging/history?limit=2&offset=0", headers=headers
-    )
-    resp_page1 = client.get(
-        "/api/messaging/history?limit=2&offset=2", headers=headers
-    )
+    resp_page0 = client.get("/api/messaging/history?limit=2&offset=0", headers=headers)
+    resp_page1 = client.get("/api/messaging/history?limit=2&offset=2", headers=headers)
     assert resp_page0.status_code == 200, resp_page0.text
     assert resp_page1.status_code == 200, resp_page1.text
     page0_ids = {n["id"] for n in resp_page0.json()}
@@ -385,6 +360,7 @@ def test_history_supports_offset(client, db_session):
 def test_valid_room_names_accepted():
     """M-04: Valid room names pass the allowlist."""
     import re
+
     pattern = re.compile(
         r"^(global|project_[0-9a-f-]{36}|dm_[0-9a-f-]{36}|room_[0-9a-f-]{36}|general|staff)$",
         re.IGNORECASE,
@@ -400,6 +376,7 @@ def test_valid_room_names_accepted():
 def test_invalid_room_names_rejected():
     """M-04: Invalid/malicious room names fail the allowlist."""
     import re
+
     pattern = re.compile(
         r"^(global|project_[0-9a-f-]{36}|dm_[0-9a-f-]{36}|room_[0-9a-f-]{36}|general|staff)$",
         re.IGNORECASE,
@@ -417,6 +394,7 @@ def test_invalid_room_names_rejected():
 def test_notification_has_sede_id_column():
     """M-06: auth_notifications table has sede_id column."""
     from backend.models_auth import NotificacionUsuario
+
     cols = {c.name for c in NotificacionUsuario.__table__.columns}
     assert "sede_id" in cols, f"M-06: sede_id missing. Found: {cols}"
 
@@ -424,10 +402,9 @@ def test_notification_has_sede_id_column():
 def test_notification_has_sede_id_index():
     """M-06: auth_notifications table has ix_auth_notifications_sede_id."""
     from backend.models_auth import NotificacionUsuario
+
     index_names = {i.name for i in NotificacionUsuario.__table__.indexes}
-    assert "ix_auth_notifications_sede_id" in index_names, (
-        f"M-06: index missing. Found: {index_names}"
-    )
+    assert "ix_auth_notifications_sede_id" in index_names, f"M-06: index missing. Found: {index_names}"
 
 
 # ── M-08: Frontend type fix ─────────────────────────────────────────────
@@ -436,6 +413,7 @@ def test_notification_has_sede_id_index():
 def test_notification_schema_id_is_uuid_string():
     """M-08: BackendNotification.id schema accepts UUID strings (not number)."""
     from backend.schemas.notifications import Notification as NotifSchema
+
     # Pydantic model should accept a UUID string as id
     n = NotifSchema(
         id=_uuid.uuid4(),
