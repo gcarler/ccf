@@ -96,3 +96,4 @@ frontend/tsconfig.tsbuildinfo
 
 # Runtime feature flags snapshot (regenerated on demand)
 backend/data/feature_flags*.ndjson
+static/chat_attachments/
