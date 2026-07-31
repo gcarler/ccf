@@ -21,6 +21,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from sqlalchemy import text
+from sqlalchemy.orm import lazyload
 
 # ── 1. Project root & DATABASE_URL (must happen before any backend import) ─────
 _HERE = Path(__file__).resolve()
@@ -126,7 +127,12 @@ def _value(obj: Any, key: str) -> Any:
 def _media_lookup(db: Any) -> Any:
     """Return a helper that prefers existing CmsMediaItem URLs."""
     try:
-        rows = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.url.like("%/cms/%")).all()
+        rows = (
+            db.query(models.CmsMediaItem)
+            .options(lazyload("*"))
+            .filter(models.CmsMediaItem.url.like("%/cms/%"))
+            .all()
+        )
         urls = [r.url for r in rows]
     except Exception:
         urls = []
@@ -199,7 +205,12 @@ def _localize_external_images(db: Any, sections: list[dict[str, Any]]) -> list[d
     reference external placeholder images.
     """
     media_by_url_hash: dict[str, models.CmsMediaItem] = {}
-    for m in db.query(models.CmsMediaItem).filter(models.CmsMediaItem.filename.like("%")).all():
+    for m in (
+        db.query(models.CmsMediaItem)
+        .options(lazyload("*"))
+        .filter(models.CmsMediaItem.filename.like("%"))
+        .all()
+    ):
         media_by_url_hash[m.filename] = m
 
     for spec in sections:
@@ -808,7 +819,15 @@ def _load_page_row(db, site_id: Any, slug: str) -> dict[str, Any] | None:
 
 
 def run(site_key: str = "ccf") -> int:
-    db = SessionLocal()
+    # expire_on_commit=False: the seeder reuses ONE long-lived session across
+    # all pages. With the default True, every ``db.commit()`` expires every ORM
+    # instance, so the next attribute mutation (the section upsert loop) fires
+    # a full eager-loaded refresh (joined/selectin per the model, ``lazyload``
+    # does NOT apply to refreshes) whose cascade explodes with the accumulated
+    # identity map — the seeder effectively hung at the welcome page (~30s per
+    # page and climbing). The seeder only reads scalar columns, so keeping
+    # attribute values loaded is safe and makes commits cheap.
+    db = SessionLocal(expire_on_commit=False)
     try:
         print("=" * 60)
         print(" Seed public pages into CMS v2")
@@ -856,7 +875,11 @@ def run(site_key: str = "ccf") -> int:
                 print(f"Updating page: {slug}")
 
             existing_sections = {
-                s.section_key: s for s in db.query(models.CmsSection).filter_by(page_id=_value(page, "id")).all()
+                s.section_key: s
+                for s in db.query(models.CmsSection)
+                .options(lazyload("*"))
+                .filter_by(page_id=_value(page, "id"))
+                .all()
             }
             desired_keys = {s["key"] for s in sections}
 
@@ -903,7 +926,12 @@ def run(site_key: str = "ccf") -> int:
             page_status = _value(page, "status")
 
             if page_published_version_id:
-                current_version = db.query(models.CmsPageVersion).filter_by(id=page_published_version_id).first()
+                current_version = (
+                    db.query(models.CmsPageVersion)
+                    .options(lazyload("*"))
+                    .filter_by(id=page_published_version_id)
+                    .first()
+                )
 
             if (
                 page_status == "published"
@@ -917,6 +945,7 @@ def run(site_key: str = "ccf") -> int:
             # Determine next version number
             max_version = (
                 db.query(models.CmsPageVersion)
+                .options(lazyload("*"))
                 .filter_by(page_id=_value(page, "id"))
                 .order_by(models.CmsPageVersion.version_number.desc())
                 .first()
