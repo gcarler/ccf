@@ -17,7 +17,6 @@ import {
   useSortable,
   verticalListSortingStrategy,
   sortableKeyboardCoordinates,
-  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion, AnimatePresence } from "framer-motion";

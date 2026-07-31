@@ -45,6 +45,7 @@ export const useMeshSocket = (clientId: string, token?: string) => {
         return () => {
             socket.close();
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clientId]);
 
     return { isConnected, lastEvent };

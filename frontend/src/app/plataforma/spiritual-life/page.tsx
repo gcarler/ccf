@@ -41,7 +41,7 @@ export default function SpiritualLifePage() {
     const { token, user } = useAuth();
     const [milestones, setMilestones] = useState<string[]>([]);
     const [academyProgress, setAcademyProgress] = useState<AcademyProgress | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [_loading, setLoading] = useState(true);
 
     const loadSpiritualMilestones = useCallback(async (signal?: AbortSignal) => {
         if (!token || !user?.id) { setLoading(false); return; }

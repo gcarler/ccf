@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -29,6 +30,7 @@ beforeEach(() => {
                 if (this.onload) this.onload();
             }, 0);
         }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
     HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({

@@ -614,6 +614,7 @@ export default function AccessManagementPage() {
         .filter((lvl) => lvl !== 'none');
       return { id, ...meta, levels };
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taxonomy]);
 
   return (

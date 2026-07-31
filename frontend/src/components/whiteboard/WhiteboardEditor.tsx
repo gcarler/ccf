@@ -60,11 +60,9 @@ import {
     renderAnchors,
 } from "@/lib/whiteboard/connectors";
 import {
-    createProcess,
     createDiamond,
     createPill,
     createData,
-    createCircleNode,
     createSubprocess,
     createDatabase,
     createDocument,

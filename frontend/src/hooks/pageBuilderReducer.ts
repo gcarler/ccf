@@ -15,7 +15,7 @@
  * complex transitions (e.g. ``LOAD_SECTIONS``, ``SYNC_PAGE_DRAFTS``).
  */
 
-import type { CmsPage, CmsPageVersion, CmsPublishLog, CmsSection, CmsTheme } from "@/types/cms-v2";
+import type { CmsPage, CmsPageVersion, CmsPublishLog, CmsSection } from "@/types/cms-v2";
 import type { CanvasMode, PreviewDevice, RightTab, Timeframe, HeatmapType, AiTemplate, AiTone } from "./usePageBuilder";
 import { CANVAS_PREVIEW_TOKENS, safeString } from "@/components/cms/builder/utils";
 

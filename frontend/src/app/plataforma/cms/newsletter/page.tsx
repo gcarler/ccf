@@ -859,7 +859,7 @@ export default function CmsNewsletterManagement() {
               <div className="space-y-3">
                 <p className="text-sm text-[hsl(var(--text-primary))]">
                   ¿Estás seguro de que deseas enviar inmediatamente el boletín{" "}
-                  <strong className="text-[hsl(var(--primary))]">"{sendingNewsletter.name}"</strong>?
+                  <strong className="text-[hsl(var(--primary))]">&quot;<span>{sendingNewsletter.name}</span>&quot;</strong>?
                 </p>
                 <div className="p-3 bg-[hsl(var(--surface-1))] rounded-xl border border-[hsl(var(--border))] space-y-1.5 text-xs text-[hsl(var(--text-secondary))]">
                   <div className="flex justify-between">
@@ -916,7 +916,7 @@ export default function CmsNewsletterManagement() {
               </h3>
               <p className="text-sm text-[hsl(var(--text-secondary))]">
                 ¿Estás seguro de que deseas eliminar la campaña{" "}
-                <strong>"{pendingDeleteNewsletter.name}"</strong>? Esta acción no se puede deshacer.
+                <strong>&quot;{pendingDeleteNewsletter.name}&quot;</strong>? Esta acción no se puede deshacer.
               </p>
               <div className="pt-2 flex justify-end gap-3">
                 <button

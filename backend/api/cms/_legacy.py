@@ -40,15 +40,7 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-# NOTE: v1 testimonials and announcements endpoints removed.
-# The frontend was fully migrated to the v2 API.
-# V1 schemas (TestimonialRead, AnnouncementRead, etc.) were deleted.
-
-
 # ── CMS Media ───────────────────────────────────────────
-# Axioma 3 — Multi-Tenant: CmsMediaItem tiene sede_id propio (migration
-# 2026-07-01). Endpoints admin filtran estrictamente por sede. CmsImage
-# upload deriva ``sede_id`` server-side desde el current_user.
 
 
 @router.get("/cms/media", response_model=PaginatedResponse[schemas.CmsMediaRead])
@@ -61,9 +53,6 @@ def list_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Axioma 3 — Multi-Tenant: el listado admin filtra por sede del staff.
-    Staff de sede_a SÓLO ve imágenes de sede_a (incluso si la URL del
-    asset técnicamente sería pública)."""
     base_query = db.query(models.CmsMediaItem)
     base_query = _scope_cms_media_by_user_sede(db, current_user, base_query)
     if not include_archived:
@@ -102,8 +91,6 @@ def create_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Axioma 3 — Multi-Tenant: ``sede_id`` se deriva server-side desde el
-    current_user. Defense-in-depth CRUD lo re-valida pre-add."""
     return crud.create_cms_media_item(
         db,
         url=payload.url,
@@ -128,7 +115,6 @@ def get_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede existence-leak safe."""
     return _get_scoped_cms_media(db, current_user, item_id)
 
 
@@ -139,7 +125,6 @@ def patch_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Axioma 3 — Multi-Tenant: 404 cross-sede antes de mutar."""
     row = _get_scoped_cms_media(db, current_user, item_id)
     return crud.update_cms_media_item(
         db,
@@ -166,12 +151,6 @@ def delete_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Delete media item. If permanent=true, deletes the file AND DB record.
-    Otherwise soft-deletes (archives).
-
-    Path traversal hardening (H-05): delegated to
-    ``backend.services.cms_media_service``.
-    """
     row = _get_scoped_cms_media(db, current_user, item_id)
     try:
         _delete_cms_media(
@@ -187,8 +166,6 @@ def optimize_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Optimize an existing image: re-encode to WebP, resize, compress.
-    Returns updated media item with new URL and file_size."""
     row = _get_scoped_cms_media(db, current_user, item_id)
     try:
         return _optimize_cms_media(db, row, actor_user_id=str(current_user.id))
@@ -206,11 +183,6 @@ async def upload_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Hardened upload pipeline (Axioma 3 + Defense-in-Depth).
-
-    El procesamiento real vive en ``backend.services.cms_media_service``
-    para ser reutilizado por v1 y v2.
-    """
     content = await file.read()
     parsed_tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
     try:
@@ -239,11 +211,6 @@ async def edit_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Edit an existing image asset (non-destructive).
-
-    Saves a new copy of the image with an `_edited` suffix appended to the filename
-    and creates a new CmsMediaItem DB record. The original item remains unchanged.
-    """
     row = _get_scoped_cms_media(db, current_user, item_id)
     content = await file.read()
 
@@ -296,26 +263,13 @@ async def edit_cms_media(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-# ── CMS Metrics ─────────────────────────────────────────
-# Axioma 3 — Multi-Tenant: las métricas admin se acotan por sede. Se
-# cuentan sólo testimonios / announcements / media de la sede del staff
-# para que un pastor de sede_b no vea volúmenes agregados de sede_a.
-
-
 @router.get("/cms/metrics", response_model=schemas.CmsMetrics)
 def get_cms_metrics(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    """Axioma 3 — Multi-Tenant: pre-filtramos métricas por sede del staff.
-    El superadmin canónico sin sede conserva totales globales."""
-
-    # Axioma 3 — Multi-Tenant: pre-filtramos métricas por sede del staff.
-    # Testimonials y announcements viven como CmsPost categorizados.
-    # Las tablas antiguas (testimonials, announcements) fueron eliminadas.
     actor_sede = _actor_sede_or_none(db, current_user)
 
-    # Inline queries para testimonials y announcements (adapters v1 eliminados).
     def _cms_posts_by_category(slug: str) -> list[models.CmsPost]:
         q = db.query(models.CmsPost).join(models.CmsPost.categories).filter(
             models.CmsCategory.slug == slug
@@ -355,15 +309,6 @@ def get_cms_metrics(
     )
 
 
-# ── F-10 (errorescms.md): limpieza de media items huerfanos ─────────
-# Archiva (soft) o borra (hard) media_items activos de la sede del actor
-# que no este referenciado por ninguna seccion de los sites de esa sede.
-# El endpoint NO implementa cleanup a nivel plataforma (superadmin sin
-# sede): el set de referenciados estaria mezclando sedes y podria
-# archivar media que otra sede usa.  Acepta ``dry_run`` para preview y
-# ``permanent`` (con guard de path traversal H-05) para hard-delete fisico.
-
-
 @router.post("/cms/media/cleanup")
 def cleanup_orphan_cms_media_endpoint(
     dry_run: bool = Query(default=False),
@@ -371,26 +316,8 @@ def cleanup_orphan_cms_media_endpoint(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    """Delete orphan media items (active but not referenced by any section).
-
-    Scope (Axioma 3): opera sobre ``CmsMediaItem.sede_id == sede del
-    actor``.  El set de IDs referenciados se construye escaneando los
-    ``props_json`` de todas las secciones activas de los sites de esa
-    sede via ``collect_section_media_ids``.  Un media item activo que no
-    aparezca ahi es candidato a limpieza.
-
-    ``dry_run=true`` retorna el count de candidatos sin mutar.  ``permanent=true``
-    borra los archivos fisicos (con guards de path traversal H-05) y
-    hard-deletea los rows; por defecto soft-archivea (``status=archived``).
-
-    El superadmin sin sede no puede correr el cleanup a nivel plataforma
-    (CRUD retorna 0): forzamos scope por sede.  Si el actor tiene sede,
-    la operacion se ejecuta sobre esa sede.
-    """
     actor_sede = _actor_sede_or_none(db, current_user)
     if actor_sede is None:
-        # Superadmin canonico sin sede: no permitimos cleanup a nivel
-        # plataforma para evitar mezclar referenciados de varias sedes.
         if dry_run:
             return {"purged": 0, "dry_run": True, "reason": "platform-scope disallowed"}
         raise HTTPException(
@@ -398,7 +325,6 @@ def cleanup_orphan_cms_media_endpoint(
             detail="Cleanup requiere scope por sede; el superadmin sin sede no puede limpiar a nivel plataforma",
         )
 
-    # Recolectar todos los sites de la sede y sus secciones activas.
     sites = (
         db.query(models.CmsSite)
         .filter(models.CmsSite.sede_id == actor_sede)
@@ -406,9 +332,6 @@ def cleanup_orphan_cms_media_endpoint(
     )
     referenced_ids: set[str] = set()
     for site in sites:
-        # Secciones activas de TODAS las paginas del site (incluye draft
-        # y published — un media referenciado por una pagina draft no es
-        # huerfano todavia).
         sections = (
             db.query(models.CmsSection)
             .join(models.CmsPage, models.CmsPage.id == models.CmsSection.page_id)
