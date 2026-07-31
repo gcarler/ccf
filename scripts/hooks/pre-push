@@ -296,7 +296,7 @@ print('not_found')
     fi
 
     echo "  [Runtime full] Frontend actual respondiendo..."
-    FRONT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3002 2>/dev/null || echo "000")
+    FRONT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000 2>/dev/null || echo "000")
     if [ "$FRONT_STATUS" = "200" ]; then
         echo -e "  ${GREEN}✓ Frontend actual: HTTP $FRONT_STATUS${NC}"
     else
@@ -362,7 +362,7 @@ fi
 if [ -n "$FRONTEND_FILES" ]; then
     DISK_BUILD=$(cat /root/ccf/frontend/.next/BUILD_ID 2>/dev/null || echo "none")
     # Obtener el buildId que PM2 está sirviendo actualmente
-    SERVING_BUILD=$(curl -s "http://127.0.0.1:3002/login" 2>/dev/null | grep -o '[A-Za-z0-9_-]\{20,\}' | head -1 || echo "unknown")
+    SERVING_BUILD=$(curl -s "http://127.0.0.1:3000/login" 2>/dev/null | grep -o '[A-Za-z0-9_-]\{20,\}' | head -1 || echo "unknown")
 
     if [ "$DISK_BUILD" = "$SERVING_BUILD" ]; then
         echo -e "  [deploy] Frontend: build en disco == build activo ($DISK_BUILD) — sin reinicio necesario"
@@ -370,7 +370,7 @@ if [ -n "$FRONTEND_FILES" ]; then
         echo "  [deploy] Reiniciando frontend (build en disco: $DISK_BUILD)..."
         if pm2 restart ccf-frontend-staging > /dev/null 2>&1; then
             sleep 3
-            FRONT_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3002 2>/dev/null || echo "000")
+            FRONT_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000 2>/dev/null || echo "000")
             echo -e "  ${GREEN}✓ Frontend reiniciado — HTTP $FRONT_HTTP${NC}"
         else
             echo -e "  ${YELLOW}⚠ PM2 no está manejando el frontend; usando ./stopccf + ./startccf${NC}"
