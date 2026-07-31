@@ -231,7 +231,7 @@
      * The platform (.workspace-platform) stays at 13px base (var(--text-base))
      * and is capped at var(--text-xl) = 1.125rem.
      * ────────────────────────────────────────────────────────────────────── */
-    --ccf-font-display:  var(--font-headline, 'Roboto', 'Plus Jakarta Sans', sans-serif);
+    --ccf-font-display:  var(--font-headline, 'Roboto', 'Open Sans', sans-serif);
     --ccf-font-body:     var(--font-body, 'Inter', sans-serif);
 
     /* Public type scale: fluid, editorial. NOT the same as platform tokens. */
