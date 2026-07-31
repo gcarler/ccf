@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Canonical public content blocks — single source re-export.
+"""Canonical public content blocks — lazy single-source re-export.
 
 This module is the historical name for the canonical ``BLOCKS`` payloads used
 by the CMS seeding pipeline. After the seed-script consolidation, the single
@@ -7,6 +7,12 @@ source of truth lives in ``ensure_public_content_blocks.BLOCKS`` (plus its
 ``MERGE_BLOCKS``); this module re-exports that catalog so existing importers
 (``seed_public_cms_v2_sections``, ``ensure_public_cms_pastors``, etc.) keep a
 stable import path.
+
+The re-export is lazy (PEP 562 ``__getattr__``): importing this module does
+NOT import the backend stack. The canonical module (and with it
+``backend.models`` / ``SessionLocal``) is only imported when ``BLOCKS`` is
+actually accessed, so direct imports of this module stay side-effect free
+until the caller really needs the data.
 
 Usage:
     cd /root/ccf && source venv/bin/activate && python scripts/seed_public_content.py
@@ -32,10 +38,14 @@ if str(_PROJECT_ROOT) not in sys.path:
 if str(_PROJECT_ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT / "scripts"))
 
-# ── Contenido de cada bloque (catálogo canónico único) ─────────────────────
-import ensure_public_content_blocks as _canonical  # noqa: E402
+# ── Contenido de cada bloque (catálogo canónico único, carga perezosa) ───
+def __getattr__(name: str):
+    """Lazily resolve ``BLOCKS`` from the canonical catalog (PEP 562)."""
+    if name == "BLOCKS":
+        import ensure_public_content_blocks as _canonical  # noqa: E402
 
-BLOCKS = _canonical.BLOCKS
+        return _canonical.BLOCKS
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def run():
