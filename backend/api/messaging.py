@@ -128,6 +128,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     from sqlalchemy.orm import Session as _Session
 
     from backend.core.database import SessionLocal
+
     _db: _Session = SessionLocal()
     try:
         _user = _db.query(models.User).filter(models.User.id == subject).first()
@@ -164,7 +165,9 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
 @router.get("/messaging/presence/{room}")
 async def get_room_presence(
-    room: str, current_user: models.User = Depends(require_module_access("messaging", "read"))
+    room: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
     """Lista clientes conectados en una room con resolución de identidad.
 
@@ -178,28 +181,24 @@ async def get_room_presence(
     # the frontend — it does NOT correspond to a User/Usuario column.
     # We attempt to resolve it via the Persona table (which is the kernel
     # entity and does have an `id` that matches the client_id).
-    db = next(get_db())
-    try:
-        clients = manager.list_room(room)
-        enriched = []
-        for client_id in clients:
-            persona_id = None
-            try:
-                parsed = _uuid.UUID(str(client_id))
-                persona = db.query(models.Persona).filter(
-                    models.Persona.id == parsed
-                ).first()
-                if persona:
-                    persona_id = str(persona.id)
-            except (ValueError, TypeError):
-                pass
-            enriched.append({
+    clients = manager.list_room(room)
+    enriched = []
+    for client_id in clients:
+        persona_id = None
+        try:
+            parsed = _uuid.UUID(str(client_id))
+            persona = db.query(models.Persona).filter(models.Persona.id == parsed).first()
+            if persona:
+                persona_id = str(persona.id)
+        except (ValueError, TypeError):
+            pass
+        enriched.append(
+            {
                 "client_id": client_id,
                 "persona_id": persona_id,
-            })
-        return {"room": room, "clients": enriched}
-    finally:
-        db.close()
+            }
+        )
+    return {"room": room, "clients": enriched}
 
 
 @router.post("/messaging/notifications")
@@ -216,18 +215,14 @@ async def send_notification(
     user_id = str(getattr(current_user, "id", ""))
     now = time.time()
     window_start = now - _BROADCAST_RATE_WINDOW
-    _broadcast_rate[user_id] = [
-        t for t in _broadcast_rate[user_id] if t > window_start
-    ]
+    _broadcast_rate[user_id] = [t for t in _broadcast_rate[user_id] if t > window_start]
     if len(_broadcast_rate[user_id]) >= _BROADCAST_RATE_LIMIT:
         raise HTTPException(
             status_code=429,
             detail="Rate limit exceeded for broadcast notifications",
         )
     _broadcast_rate[user_id].append(now)
-    await manager.broadcast_event(
-        {"event": payload.event, "body": payload.body}, room=payload.room
-    )
+    await manager.broadcast_event({"event": payload.event, "body": payload.body}, room=payload.room)
     return {"status": "queued"}
 
 
@@ -247,14 +242,10 @@ def get_notifications(
     persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
     if persona_id is None:
         return []
-    return crud.get_user_notifications(
-        db, user_id=persona_id, limit=limit, offset=offset
-    )
+    return crud.get_user_notifications(db, user_id=persona_id, limit=limit, offset=offset)
 
 
-@router.patch(
-    "/messaging/notifications/{notification_id}", response_model=schemas.Notification
-)
+@router.patch("/messaging/notifications/{notification_id}", response_model=schemas.Notification)
 def update_notification(
     notification_id: str,
     db: Session = Depends(get_db),
@@ -272,9 +263,7 @@ def update_notification(
     # podría PATCH notifications ajenas adivinando UUIDs. 404 (no 403,
     # no 200) para evitar existence leaks. Notification.user_id == Persona.id
     # (via Usuario), por eso resolvemos persona_id del current_user.
-    current_persona_id = resolve_persona_id_for_user(
-        db, getattr(current_user, "id", None)
-    )
+    current_persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
     updated = crud.mark_notification_as_read(
         db,
         notification_id=notification_id,
