@@ -233,6 +233,8 @@ Frontend test existente:
 - validación de MIME/extension en uploads
 - helpers de scope `_cms_helpers`
 - bootstrap de contenido público implementado y verificado para `ccf` con `scripts/bootstrap_public_cms_content.py`
+- **Seeding consolidado en un único entry point** — `scripts/seed_cms.py` fue **eliminado** (commit `0a1b3d22`): era un shim de redirección puro sin referencias en el repo. `scripts/seed_public_cms_v2_sections.py` es el **único entry point canónico de seeding CMS v2** (idempotente: crea/actualiza páginas, secciones y versiones publicadas).
+- **Catálogo de bloques público unificado** — `scripts/ensure_public_content_blocks.py` es la única fuente de `BLOCKS` (25 claves); `scripts/seed_public_content.py` quedó como re-export de compatibilidad del catálogo (commit `f2348bd4`).
 - **Auditoría forense 100% cerrada** (ciclo 7, commits `fc80da41`/`4d1ba06a`/`94f97d4a`)
   - Críticos: 6/6, Altos: 11/11, Medios: 14/14, Info: 17/17, Funcionalidades: 10/10
   - Migraciones de fix canonizadas en `canonical_versions/` (`20260723_0001`→`0006`)
@@ -342,7 +344,7 @@ Frontend test existente:
 | `PEND-CMS-BUILDER-001` | Builder de CMS reportado como no funcional desde `/plataforma/cms/builder` | `frontend/src/app/plataforma/cms/builder/page.tsx`, `frontend/src/components/cms/**`, `backend/api/cms_v2.py` |
 | `DONE-BUILDER-CMS-POPUP-001` | ✅ **Hecho 2026-07-16** — el builder expone una acción explícita de creación de pop-up y mantiene `popup_banner` en catálogo y renderer. | `frontend/src/components/cms/builder/BuilderSidebar.tsx`, `frontend/src/components/cms/builder/constants.ts`, `frontend/src/components/public/cms/PublicSectionRenderer.tsx` |
 | `DONE-BRANDING-CMS-001` | ✅ **Hecho 2026-07-16** — branding ahora respeta `canEditCms`, deshabilita edición para roles solo lectura y evita el `PATCH` fallido al guardar logo o nombre. | `frontend/src/app/plataforma/cms/branding/page.tsx`, `frontend/tests/cms-branding-permissions.test.tsx` |
-| `DONE-CMS-PUBLIC-CONTENT-001` | ✅ **Hecho 2026-07-17** — bootstrap público canónico para `ccf` ejecutado y verificado; publica las páginas núcleo, navegación, footer y contratos públicos desde CMS v2. | `docs/PLAN_CONTENIDO_PUBLICO_CMS.md`, `scripts/bootstrap_public_cms_content.py`, `scripts/seed_public_cms_v2_sections.py`, `scripts/seed_public_menus_and_footer.py`, `scripts/ensure_public_cms_pages.py` |
+| `DONE-CMS-PUBLIC-CONTENT-001` | ✅ **Hecho 2026-07-17** — bootstrap público canónico para `ccf` ejecutado y verificado; publica las páginas núcleo, navegación, footer y contratos públicos desde CMS v2. **Nota 2026-07-31:** `seed_cms.py` fue eliminado (commit `0a1b3d22`) y `scripts/seed_public_cms_v2_sections.py` es el único entry point de seeding CMS v2. | `docs/PLAN_CONTENIDO_PUBLICO_CMS.md`, `scripts/bootstrap_public_cms_content.py`, `scripts/seed_public_cms_v2_sections.py`, `scripts/seed_public_menus_and_footer.py`, `scripts/ensure_public_cms_pages.py` |
 
 ---
 
