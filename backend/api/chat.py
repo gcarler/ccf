@@ -22,7 +22,7 @@ import uuid as _uuid
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -90,9 +90,7 @@ def _assert_conversation_sede_aligned(
     if actor_sede is None:
         return  # superadmin sin atribución — alcance global
 
-    other_participants = [
-        cp for cp in conv.participants if str(cp.user_id) != str(current_user.id)
-    ]
+    other_participants = [cp for cp in conv.participants if str(cp.user_id) != str(current_user.id)]
     if not other_participants:
         return  # self-DM
 
@@ -101,11 +99,7 @@ def _assert_conversation_sede_aligned(
     if not other_ids:
         return
     # Batch lookup: 1 query para todos los otros participantes.
-    other_sedes = (
-        db.query(models.Persona.id, models.Persona.sede_id)
-        .filter(models.Persona.id.in_(other_ids))
-        .all()
-    )
+    other_sedes = db.query(models.Persona.id, models.Persona.sede_id).filter(models.Persona.id.in_(other_ids)).all()
     for _pid, sede_id in other_sedes:
         if sede_id is None:
             continue  # orphan — permitido mismo que create_conversation
@@ -145,11 +139,7 @@ def _assert_sender_sede_matches_actor(
     actor_sede = get_user_sede_id(db, current_user.id)
     if actor_sede is None:
         return  # superadmin sin atribución
-    sender_sede = (
-        db.query(models.Persona.sede_id)
-        .filter(models.Persona.id == msg.sender_id)
-        .scalar()
-    )
+    sender_sede = db.query(models.Persona.sede_id).filter(models.Persona.id == msg.sender_id).scalar()
     if sender_sede is None:
         return  # orphan — permitido mismo que create_conversation
     if str(sender_sede) != str(actor_sede):
@@ -280,7 +270,7 @@ def _assert_actor_is_active_participant(
         # La participation check no aplica; el sender check basta.
         return
 
-    suffix = msg.room_id[len("dm_"):]
+    suffix = msg.room_id[len("dm_") :]
     try:
         conv_uuid = _uuid.UUID(suffix)
     except (TypeError, ValueError):
@@ -373,9 +363,7 @@ def _serialize_conversation(
     participant_persona_ids = [cp.user_id for cp in conv.participants]
     user_map: dict = {}
     if participant_persona_ids:
-        personas = db.query(models.Persona).filter(
-            models.Persona.id.in_(participant_persona_ids)
-        ).all()
+        personas = db.query(models.Persona).filter(models.Persona.id.in_(participant_persona_ids)).all()
         for p in personas:
             user_map[p.id] = p
 
@@ -427,9 +415,7 @@ def _find_existing_dm(db: Session, user_id1: _uuid.UUID, user_id2: _uuid.UUID):
             .count()
         )
         if total == 2:
-            return db.query(models.Conversation).filter(
-                models.Conversation.id == conv_id
-            ).first()
+            return db.query(models.Conversation).filter(models.Conversation.id == conv_id).first()
     return None
 
 
@@ -475,7 +461,7 @@ def search_chat_users(
             "id": str(persona.id),
             "username": persona.nombre_completo or usuario.username or "",
             "email": persona.email or usuario.email or "",
-            "avatar_url": getattr(persona, 'photo_url', None),
+            "avatar_url": getattr(persona, "photo_url", None),
         }
         for persona, usuario in users
     ]
@@ -521,9 +507,7 @@ def create_conversation(
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found for current user")
 
-    payload_personas = db.query(models.Persona).filter(
-        models.Persona.id.in_(payload.participant_ids)
-    ).all()
+    payload_personas = db.query(models.Persona).filter(models.Persona.id.in_(payload.participant_ids)).all()
 
     # Cross-sede guard — existence-leak safe: 404 (no 403) para no
     # filtrar al atacante la naturaleza del rechazo cuando ``foreign``
@@ -532,10 +516,7 @@ def create_conversation(
     # un 403 vs 404 diferenciaría "existe cross-sede" de "no existe".
     actor_sede = get_user_sede_id(db, current_user.id)
     if actor_sede is not None:
-        foreign = [
-            p for p in payload_personas
-            if p.sede_id is not None and str(p.sede_id) != str(actor_sede)
-        ]
+        foreign = [p for p in payload_personas if p.sede_id is not None and str(p.sede_id) != str(actor_sede)]
         if foreign:
             raise HTTPException(
                 status_code=404,
@@ -632,9 +613,7 @@ def list_direct_messages(
             sender_name=_persona_display_name(persona_map.get(r.sender_id)),
             content=r.content,
             created_at=r.created_at,
-            is_read=(r.sender_id == current_user.id or (
-                last_read is not None and r.created_at <= last_read
-            )),
+            is_read=(r.sender_id == current_user.id or (last_read is not None and r.created_at <= last_read)),
         )
         for r in rows
     ]
@@ -688,7 +667,10 @@ def list_my_chat_messages(
     personas = db.query(models.Persona).filter(models.Persona.id.in_(persona_ids)).all() if persona_ids else []
     persona_map = {p.id: p for p in personas}
 
-    return [_build_admin_message(current_user, msg, is_read=True, conv_map=conv_map, persona_map=persona_map) for msg in msgs]
+    return [
+        _build_admin_message(current_user, msg, is_read=True, conv_map=conv_map, persona_map=persona_map)
+        for msg in msgs
+    ]
 
 
 @router.get(
@@ -882,9 +864,7 @@ def send_direct_message(
             "is_read": False,
         },
     }
-    background_tasks.add_task(
-        manager.broadcast_event, ws_payload, room=f"dm_{conv_id}"
-    )
+    background_tasks.add_task(manager.broadcast_event, ws_payload, room=f"dm_{conv_id}")
     return schemas.DirectMessageItem(
         id=msg.id,
         sender_id=current_user.id,
@@ -988,21 +968,35 @@ def delete_chat_message_endpoint(
     db.commit()
     return {"ok": True}
 
+
 @router.post("/chat/upload-attachment")
 async def upload_chat_attachment(
     file: UploadFile = File(...),
-    current_user: models.Usuario = Depends(crud.get_current_user) if hasattr(crud, "get_current_user") else Depends(require_module_access("messaging", "edit")),
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("messaging", "edit")),
 ):
-    """Upload a file attachment for chat messages."""
+    """Upload a file attachment for chat messages.
+
+    Defense-in-depth:
+      - Auth: ``require_module_access("messaging", "edit")`` (sin fallback hasattr).
+      - Multi-tenant: path aislado por sede ``static/chat_attachments/{sede_id}/``;
+        el ``sede_id`` se resuelve del actor. Superadmin sin sede usa ``_global``.
+      - Validación de content-type contra allowlist MÁS verificación de magic
+        bytes para imágenes/PDF (defensa contra content-type spoof).
+      - Extensión saneada: sólo ``[A-Za-z0-9.]``, fallback ``.bin``.
+      - Path-traversal guard: el final path debe empezar con el uploads root.
+    """
     import os
-    import shutil
+    import re as _re
     import uuid as _uuid
-    
+
     # Validate file type
     ALLOWED_TYPES = {
-        "image/jpeg": "image", "image/png": "image", "image/gif": "image",
-        "image/webp": "image", "image/svg+xml": "image",
+        "image/jpeg": "image",
+        "image/png": "image",
+        "image/gif": "image",
+        "image/webp": "image",
+        "image/svg+xml": "image",
         "application/pdf": "pdf",
         "application/msword": "document",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "document",
@@ -1010,34 +1004,70 @@ async def upload_chat_attachment(
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "document",
         "text/plain": "document",
         "text/csv": "document",
-        "video/mp4": "video", "video/webm": "video",
-        "audio/mpeg": "audio", "audio/ogg": "audio", "audio/wav": "audio",
+        "video/mp4": "video",
+        "video/webm": "video",
+        "audio/mpeg": "audio",
+        "audio/ogg": "audio",
+        "audio/wav": "audio",
     }
-    
+    # Magic-byte signatures para los content-types más spoofeables. Defensa
+    # contra un actor que declara image/jpeg pero sube binario malicioso.
+    MAGIC_BYTES = {
+        "image/jpeg": [(b"\xff\xd8\xff",)],
+        "image/png": [(b"\x89PNG\r\n\x1a\n",)],
+        "image/gif": [(b"GIF87a",), (b"GIF89a",)],
+        "application/pdf": [(b"%PDF-",)],
+    }
+
     content_type = file.content_type or "application/octet-stream"
     att_type = ALLOWED_TYPES.get(content_type, None)
     if not att_type:
         raise HTTPException(status_code=422, detail=f"Tipo de archivo no permitido: {content_type}")
-    
+
     # Check file size (max 25MB)
     MAX_SIZE = 25 * 1024 * 1024
     contents = await file.read()
     if len(contents) > MAX_SIZE:
         raise HTTPException(status_code=413, detail="El archivo supera el límite de 25 MB")
-    
-    # Save to static directory
-    upload_dir = os.path.join(os.path.dirname(__file__), "..", "..", "static", "chat_attachments")
+
+    # Magic-byte verification (sólo para tipos spoofeables; skip si no hay sig).
+    if content_type in MAGIC_BYTES:
+        sigs = MAGIC_BYTES[content_type]
+        if not any(contents.startswith(sig) for sig_tuple in sigs for sig in sig_tuple):
+            raise HTTPException(
+                status_code=422,
+                detail="El contenido del archivo no coincide con el tipo declarado",
+            )
+
+    # Aislar por sede: el path incluye el sede_id del actor. Superadmin
+    # sin atribución (sede_id is None) bucketa en ``_global``.
+    actor_sede = get_user_sede_id(db, current_user.id)
+    sede_bucket = str(actor_sede) if actor_sede is not None else "_global"
+
+    uploads_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "chat_attachments"))
+    upload_dir = os.path.normpath(os.path.join(uploads_root, sede_bucket))
     os.makedirs(upload_dir, exist_ok=True)
-    
-    ext = os.path.splitext(file.filename or "")[1] or ".bin"
+
+    # Sanear extensión: sólo [A-Za-z0-9.] hasta 10 chars, fallback .bin.
+    raw_ext = os.path.splitext(file.filename or "")[1]
+    ext = ("." + _re.sub(r"[^A-Za-z0-9]", "", raw_ext.lstrip("."))[:9]) if raw_ext else ".bin"
+    if not ext or ext == ".":
+        ext = ".bin"
+
     filename = f"{_uuid.uuid4()}{ext}"
-    filepath = os.path.join(upload_dir, filename)
-    
+    filepath = os.path.normpath(os.path.join(upload_dir, filename))
+
+    # Path-traversal guard: el filepath final DEBE estar bajo uploads_root.
+    # Cierra cualquier crafted filename/ext o sede_bucket malicioso que se
+    # colaría si get_user_sede_id devolviera algo raro en el futuro.
+    if not filepath.startswith(uploads_root + os.sep) and filepath != uploads_root:
+        raise HTTPException(status_code=400, detail="Invalid destination path")
+
     with open(filepath, "wb") as f:
         f.write(contents)
-    
-    url = f"/static/chat_attachments/{filename}"
-    
+
+    url = f"/static/chat_attachments/{sede_bucket}/{filename}"
+
     return {
         "url": url,
         "type": att_type,
