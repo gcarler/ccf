@@ -16,12 +16,16 @@ interface UseChatThreadOptions {
     token: string | null;
     activeConv: ConversationRead | null;
     onMessage?: (conversationId: string, message: DirectMessageItem) => void;
+    // A-09: surface load errors to the caller so it can toast; previously
+    // these were swallowed by empty `.catch(() => {})` and the user saw a
+    // blank/spinning thread with no feedback.
+    onError?: (context: 'load' | 'load_older' | 'mark_read') => void;
 }
 
 const INITIAL_LIMIT = 100;
 const OLDER_LIMIT = 50;
 
-export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOptions) {
+export function useChatThread({ token, activeConv, onMessage, onError }: UseChatThreadOptions) {
     const [messages, setMessages] = useState<DirectMessageItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
@@ -31,6 +35,7 @@ export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOpt
     const messagesRef = useRef<DirectMessageItem[]>([]);
     const activeConvIdRef = useRef<string | null>(null);
     const onMessageRef = useRef(onMessage);
+    const onErrorRef = useRef(onError);
 
     const activeConvId = activeConv?.id ?? null;
 
@@ -46,6 +51,10 @@ export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOpt
     useEffect(() => {
         onMessageRef.current = onMessage;
     }, [onMessage]);
+
+    useEffect(() => {
+        onErrorRef.current = onError;
+    }, [onError]);
 
     // Load messages when conversation changes
     useEffect(() => {
@@ -65,7 +74,9 @@ export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOpt
                 }
                 setMessages(data.reverse());
             })
-            .catch(() => {})
+            .catch(() => {
+                if (!controller.signal.aborted) onErrorRef.current?.('load');
+            })
             .finally(() => {
                 if (!controller.signal.aborted) setLoading(false);
             });
@@ -73,7 +84,9 @@ export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOpt
             method: 'POST',
             token,
             signal: controller.signal,
-        }).catch(() => {});
+        }).catch(() => {
+            if (!controller.signal.aborted) onErrorRef.current?.('mark_read');
+        });
 
         return () => controller.abort();
     }, [activeConvId, token]);
@@ -101,7 +114,7 @@ export function useChatThread({ token, activeConv, onMessage }: UseChatThreadOpt
                 });
             }
         } catch {
-            // silent
+            onErrorRef.current?.('load_older');
         } finally {
             setLoading(false);
         }
