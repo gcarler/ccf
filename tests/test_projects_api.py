@@ -403,21 +403,21 @@ class TestTasks:
         assert resp.status_code == 200
         assert resp.json()["priority"] == "urgent"
 
-    def test_create_task_normalizes_legacy_priority(self, client, db_session):
-        """Legacy priority 'normal' is normalized to 'medium' on create."""
+    def test_create_task_normalizes_old_priority(self, client, db_session):
+        """Old priority 'normal' is normalized to 'medium' on create."""
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
         headers = auth_headers(client)
         resp = client.post(
             f"/api/projects/{proj.id}/tasks",
-            json={"title": "Legacy priority", "status": "todo", "priority": "normal"},
+            json={"title": "Old priority", "status": "todo", "priority": "normal"},
             headers=headers,
         )
         assert resp.status_code == 201
         assert resp.json()["priority"] == "medium"
 
-    def test_update_task_normalizes_legacy_status(self, client, db_session):
-        """Legacy status values 'done' and 'blocked' are normalized on update."""
+    def test_update_task_normalizes_old_status(self, client, db_session):
+        """Old status values 'done' and 'blocked' are normalized on update."""
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
         task = create_task_factory(db_session, proj.id, status="todo")

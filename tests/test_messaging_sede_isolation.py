@@ -45,13 +45,13 @@ def _persona_in(db, sede_id, email_suffix):
     return p
 
 
-def _seed_log_legacy(db, persona, content: str, channel: str = "email"):
+def _seed_log_old(db, persona, content: str, channel: str = "email"):
     """Sembrado directo vía SQL (bypass de API) para crear el target cross-sede.
 
     CommunicationLog no tiene ``sede_id`` propio; su ``persona_id`` es la
     única ancla para el scope check. Creamos el row sin pasar por la API
     endurecida para no contaminar el test (queremos probar APENAS el
-    hardening del router, no del crud.create_communication_log legacy).
+    hardening del router, no del crud.create_communication_log antiguo).
     """
     log = models.CommunicationLog(
         persona_id=persona.id,
@@ -76,10 +76,10 @@ def test_messaging_history_filters_by_sede_a(
     persona_b = _persona_in(db_session, sede_b.id, "msg-history-target-b")
 
     # Logs sembrados en sendas sedes.
-    log_a = _seed_log_legacy(
+    log_a = _seed_log_old(
         db_session, persona_a, "Mensaje legitimo de sede A"
     )
-    log_b = _seed_log_legacy(
+    log_b = _seed_log_old(
         db_session, persona_b, "MENSAJE SECRETO SEDE B"
     )
     db_session.commit()
@@ -114,10 +114,10 @@ def test_messaging_history_filters_by_sede_b(
     persona_a = _persona_in(db_session, sede_a.id, "msg-history-b-view-a")
     persona_b = _persona_in(db_session, sede_b.id, "msg-history-b-view-b")
 
-    log_a = _seed_log_legacy(
+    log_a = _seed_log_old(
         db_session, persona_a, "MENSAJE SECRETO SEDE A"
     )
-    log_b = _seed_log_legacy(
+    log_b = _seed_log_old(
         db_session, persona_b, "Mensaje legitimo de sede B"
     )
     db_session.commit()
@@ -144,7 +144,7 @@ def test_messaging_history_supports_limit_param_locally(client, db_session):
     (_, _, sede_a), _ = _seed_two_sedes(db_session)
     persona_a = _persona_in(db_session, sede_a.id, "msg-history-limit-a")
     for i in range(5):
-        _seed_log_legacy(
+        _seed_log_old(
             db_session,
             persona_a,
             f"msg-{i}",

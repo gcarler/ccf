@@ -183,7 +183,7 @@ def resolve_mentions(
     Args:
         db: SQLAlchemy session.
         content: comment text that may contain @mentions.
-        payload_mentions: explicit list of UUIDs sent by the client (legacy
+        payload_mentions: explicit list of UUIDs sent by the client (old
             or complementary channel). May contain strings or UUIDs.
         author_id: persona UUID of the comment author. Used to exclude
             self-mentions.

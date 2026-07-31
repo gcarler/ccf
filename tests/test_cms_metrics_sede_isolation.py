@@ -16,7 +16,7 @@ identificados en el audit:
 Post-fix: ambos endpoints pre-filtran UGC via los helpers
 ``_scope_cms_*_by_user_sede`` importados desde
 ``backend.api._cms_helpers``. Staff con sede ve sólo counts de su
-sede. Superadmin (sin sede) sigue viendo globales (compat legacy).
+sede. Superadmin (sin sede) sigue viendo globales (compat antigua).
 
 Site-faro content (CmsPage / CmsSection) sigue siendo
 global por diseño: es site público, no UGC.

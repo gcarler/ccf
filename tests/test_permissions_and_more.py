@@ -71,13 +71,13 @@ class TestGetDefaultRoles:
         assert isinstance(roles, list)
         assert len(roles) > 0
 
-    def test_no_legacy_permission_aliases_in_defaults(self):
+    def test_no_old_permission_aliases_in_defaults(self):
         from backend.core.permissions import get_default_roles
 
-        legacy = {"finances:", "agenda:"}
+        old_aliases = {"finances:", "agenda:"}
         for role in get_default_roles():
             for perm in role["permissions"]:
-                assert not any(alias in perm for alias in legacy)
+                assert not any(alias in perm for alias in old_aliases)
 
 
 class TestPermissionTaxonomy:
@@ -111,7 +111,7 @@ class TestPermissionTaxonomy:
 
 
 class TestKernelRbacAliases:
-    def test_legacy_kernel_aliases_are_normalized(self, db_session):
+    def test_old_kernel_aliases_are_normalized(self, db_session):
         from backend.core import kernel_rbac
 
         with patch(
@@ -192,7 +192,7 @@ class TestCreateRefreshToken:
         assert len(token) > 0
 
     # NOTE: ``test_create_refresh_token_int_id`` was retired earlier when
-    # ``auth_users.id`` migrated from ``Integer`` to ``UUID``. The legacy
+    # ``auth_users.id`` migrated from ``Integer`` to ``UUID``. The old
     # Integer path no longer exists in ``create_refresh_token``; the test
     # was deleted to avoid asserting against a contract that no longer
     # holds. The UUID-only happy path is covered by

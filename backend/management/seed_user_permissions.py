@@ -26,7 +26,7 @@ def build_roles_config() -> dict[str, dict[str, str]]:
     """Retorna la matriz canónica de roles -> módulo -> nivel.
 
     Esta función usa únicamente ids de módulo válidos según
-    ``MODULE_PERMISSION_MAP``. Alias legacy como ``finances`` o ``agenda``
+    ``MODULE_PERMISSION_MAP``. Alias obsoletos como ``finances`` o ``agenda``
     no deben aparecer aquí.
     """
     roles_config = {

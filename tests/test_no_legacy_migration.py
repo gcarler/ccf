@@ -26,7 +26,7 @@ def _load_migration():
     return module
 
 
-def test_runtime_legacy_migration_cleans_and_hardens_sqlite():
+def test_runtime_old_migration_cleans_and_hardens_sqlite():
     engine = sa.create_engine("sqlite://")
     metadata = sa.MetaData()
     sa.Table(

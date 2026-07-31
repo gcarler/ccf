@@ -1701,7 +1701,7 @@ def test_crud_create_crm_task_blocks_cross_sede_when_actor_in_sede(db_session):
     Esto cierra el vector donde un script interno / worker async / seed
     llama a `crud.create_crm_task` directamente y bypasea el helper API.
 
-    Política: OR-based. Si el actor NO tiene sede (superadmin/legacy) no
+    Política: OR-based. Si el actor NO tiene sede (superadmin/antiguo) no
     se aplica check. Como aquí sí tiene sede, el check dispara.
     """
     from fastapi import HTTPException
@@ -1998,9 +1998,9 @@ def test_crud_create_crm_task_orphan_rejected_for_editor(db_session):
     404. Esto es consistente con la política de la API (`_get_scoped_task`
     docstring dice "Tarea sin ninguna FK (huérfana): sólo visible a
     superadmin sin sede"). Por simetría, la creación de orphans también
-    se restringe a superadmins/legacy.
+    se restringe a superadmins/antiguo.
 
-    Si el caller NO provee actor_user_id (legacy path), la creación de
+    Si el caller NO provee actor_user_id (old path), la creación de
     orphans se permite para back-compat con scripts y bulk imports."""
     from fastapi import HTTPException
 
@@ -2030,13 +2030,13 @@ def test_crud_create_crm_task_orphan_rejected_for_editor(db_session):
 
 def test_create_prayer_request_no_user_sede_returns_400(client, db_session, monkeypatch):
     """M3 — Axioma 3: create_prayer_request rechaza 400 cuando el editor
-    no tiene sede asignada (superadmin legacy / token v2 residual) en vez
+    no tiene sede asignada (superadmin antiguo / token v2 residual) en vez
     de dejar el PrayerRequest con sede_id=NULL (invisible en listados).
 
     NOTA sobre estrategia:
         auth_users.sede_id es NOT NULL en DB, por lo que un user Auth v3
         válido siempre tendrá sede asignada. Esta línea defensiva (que
-        existe para tokens legacy v2 o futuras migraciones semi-completas)
+        existe para tokens antiguos v2 o futuras migraciones semi-completas)
         sólo se puede disparar reproduciblemente monkeypatcheando
         `backend.api.crm.pastoral.get_user_sede_id` a retornar None.
 
@@ -2064,7 +2064,7 @@ def test_create_prayer_request_no_user_sede_returns_400(client, db_session, monk
         "/api/crm/prayer-requests",
         headers=headers,
         json={
-            "requester_name": "Superadmin Legacy",
+            "requester_name": "Superadmin Old",
             "request_text": "peticion de prueba (debe fallar)",
             "category": "General",
             "source": "crm",
@@ -2086,7 +2086,7 @@ def test_create_prayer_request_no_user_sede_returns_400(client, db_session, monk
     db_session.commit()
     leaks = (
         db_session.query(models.PrayerRequest)
-        .filter(models.PrayerRequest.requester_name == "Superadmin Legacy")
+        .filter(models.PrayerRequest.requester_name == "Superadmin Old")
         .count()
     )
     assert leaks == 0, (

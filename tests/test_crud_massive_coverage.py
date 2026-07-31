@@ -268,7 +268,7 @@ class TestCMSCrudMassive:
     def test_cms_crud(self, db_session, full):
         from backend.crud import cms
         db = db_session
-        # Legacy page_contents / content_publications removed — CMS v2 CRUD
+        # Old page_contents / content_publications removed — CMS v2 CRUD
         # (list_cms_sites, get_cms_site_by_key) exercise the same code paths.
         _call(cms.list_cms_sites, db)
         _call(cms.get_cms_site_by_key, db, "faro")

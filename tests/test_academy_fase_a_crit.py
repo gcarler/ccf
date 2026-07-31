@@ -410,8 +410,8 @@ def test_acad_tkt_014_create_assessment_admin_blocks_lesson_from_other_course(
 
 @pytest.mark.parametrize(
     "extra_field",
-    ["hacked_field", "is_legacy_admin", "force_publish", "__proto__"],
-    ids=["hacked_field", "is_legacy_admin", "force_publish", "dunder_proto"],
+    ["hacked_field", "is_old_admin", "force_publish", "__proto__"],
+    ids=["hacked_field", "is_old_admin", "force_publish", "dunder_proto"],
 )
 def test_acad_tkt_015_extra_forbid_assessment_submit(client, db_session: Session, extra_field):
     """AssessmentAttemptSubmit rechaza cualquier campo extra → 422.
@@ -442,8 +442,8 @@ def test_acad_tkt_015_extra_forbid_assessment_submit(client, db_session: Session
 
 @pytest.mark.parametrize(
     "extra_field",
-    ["hacked_field", "is_legacy_admin", "force_publish", "__proto__"],
-    ids=["hacked_field", "is_legacy_admin", "force_publish", "dunder_proto"],
+    ["hacked_field", "is_old_admin", "force_publish", "__proto__"],
+    ids=["hacked_field", "is_old_admin", "force_publish", "dunder_proto"],
 )
 def test_acad_tkt_015_extra_forbid_enrollment_create(
     client, db_session: Session, extra_field
@@ -486,8 +486,8 @@ def test_acad_tkt_015_extra_forbid_enrollment_create(
 
 @pytest.mark.parametrize(
     "extra_field",
-    ["hacked_field", "is_legacy_admin", "force_publish", "__proto__"],
-    ids=["hacked_field", "is_legacy_admin", "force_publish", "dunder_proto"],
+    ["hacked_field", "is_old_admin", "force_publish", "__proto__"],
+    ids=["hacked_field", "is_old_admin", "force_publish", "dunder_proto"],
 )
 def test_acad_tkt_015_extra_forbid_forum_thread_create(
     client, db_session: Session, extra_field

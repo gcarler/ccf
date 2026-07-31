@@ -780,7 +780,7 @@ class CrmAutomationFlow(Base):
     Axioma 3 — Aislamiento por Sede: ``sede_id`` atribuye el flujo a un tenant.
     Es ``nullable=True`` para no romper rows pre-migración (backfill pendiente);
     el contrato del API exige ``sede_id is not None`` al crear flujos nuevos y
-    filtra por sede del actor en toda lectura/escritura. Un flujo legacy con
+    filtra por sede del actor en toda lectura/escritura. Un flujo heredado con
     ``sede_id IS NULL`` sólo es legible/modificable por un actor sin sede
     (super administrador de plataforma).
     """

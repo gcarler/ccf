@@ -73,7 +73,7 @@ fi
 # 2. PRE-DEPLOY: revisión actual.
 # Permitimos cualquier revisión que sea ancestor de 20260710_0003 dentro del
 # canonical chain (alembic upgrade will catch up). Solo rechazamos bases
-# ajenas al chain (ej. legacy alias, otro entorno). Si `--skip-pre-check`
+# ajenas al chain (ej. alias antiguo, otro entorno). Si `--skip-pre-check`
 # está activo, el operador declara que conoce el estado y asume el riesgo.
 echo "[2/6] Pre-deploy: revisión Alembic actual…"
 CURRENT_REV="$(${ALEMBIC} current 2>/dev/null | grep -oE '[0-9a-z_]+' | head -n1 || echo unknown)"

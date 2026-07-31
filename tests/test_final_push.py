@@ -215,7 +215,7 @@ class TestCMSFinalPush:
     def test_crud_every_function(self, db_session, full):
         from backend.crud import cms
         db = db_session
-        # Legacy page_contents functions removed — CMS v2 uses CmsPage CRUD.
+        # Old page_contents functions removed — CMS v2 uses CmsPage CRUD.
         # Sites / themes / menus / pages / sections covered below.
         # Media
         _call(cms.list_cms_media_items, db)

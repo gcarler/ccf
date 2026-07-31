@@ -29,9 +29,9 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BACKLOG = REPO_ROOT / "docs" / "ACADEMY_BACKLOG.md"
-PLAN_LEGACY = REPO_ROOT / "docs" / "PLAN_ACADEMY_CALIDAD.md"
-ESTADO_LEGACY = REPO_ROOT / "docs" / "ESTADO_ACADEMY.md"
-QA_LEGACY = REPO_ROOT / "docs" / "ACADEMY_QA_CHECKLIST.md"
+PLAN_OLD = REPO_ROOT / "docs" / "PLAN_ACADEMY_CALIDAD.md"
+ESTADO_OLD = REPO_ROOT / "docs" / "ESTADO_ACADEMY.md"
+QA_OLD = REPO_ROOT / "docs" / "ACADEMY_QA_CHECKLIST.md"
 
 # ── Regex canónicas ──────────────────────────────────────────────────
 _RE_TKT_HEADER = re.compile(
@@ -44,9 +44,9 @@ _RE_FILES = re.compile(r"\*\*files:\*\*\s*(.+?)\n")
 _RE_GATE = re.compile(r"\*\*gate:\*\*\s*`([^`]+)`")
 
 DEPRECATION_BANNERS = {
-    PLAN_LEGACY: "DEPRECADO",
-    ESTADO_LEGACY: "DEPRECADO",
-    QA_LEGACY: "DEPRECADO",
+    PLAN_OLD: "DEPRECADO",
+    ESTADO_OLD: "DEPRECADO",
+    QA_OLD: "DEPRECADO",
 }
 
 
@@ -203,56 +203,56 @@ def test_ticket_severity_enum_valid(tickets):
     assert not invalid, f"Severidades inválidas: {invalid}"
 
 
-# ── A.3. Cierre documental de los 3 docs legacy ────────────────────
+# ── A.3. Cierre documental de los 3 docs antiguos ────────────────────
 
 
 @pytest.mark.parametrize(
-    "legacy_path,expected_token",
+    "old_path,expected_token",
     [
-        (PLAN_LEGACY, "DEPRECADO"),
-        (ESTADO_LEGACY, "DEPRECADO"),
-        (QA_LEGACY, "DEPRECADO"),
+        (PLAN_OLD, "DEPRECADO"),
+        (ESTADO_OLD, "DEPRECADO"),
+        (QA_OLD, "DEPRECADO"),
     ],
     ids=["PLAN_ACADEMY_CALIDAD", "ESTADO_ACADEMY", "ACADEMY_QA_CHECKLIST"],
 )
-def test_legacy_doc_has_deprecation_banner(legacy_path: Path, expected_token: str):
-    """Los 3 docs legacy (PLAN/ESTADO/QA) deben tener banner DEPRECADO explícito."""
-    if not legacy_path.exists():
-        pytest.skip(f"Doc legacy no presente: {legacy_path}")
-    text = _read(legacy_path)
+def test_old_doc_has_deprecation_banner(old_path: Path, expected_token: str):
+    """Los 3 docs antiguos (PLAN/ESTADO/QA) deben tener banner DEPRECADO explícito."""
+    if not old_path.exists():
+        pytest.skip(f"Doc antiguo no presente: {old_path}")
+    text = _read(old_path)
     assert expected_token in text, (
-        f"❌ {legacy_path.name} NO contiene banner de deprecación {expected_token!r}.\n"
+        f"❌ {old_path.name} NO contiene banner de deprecación {expected_token!r}.\n"
         f"Acción: agregar banner que redirija a docs/ACADEMY_BACKLOG.md."
     )
 
 
 @pytest.mark.parametrize(
-    "legacy_path",
-    [PLAN_LEGACY, ESTADO_LEGACY, QA_LEGACY],
+    "old_path",
+    [PLAN_OLD, ESTADO_OLD, QA_OLD],
     ids=["PLAN_ACADEMY_CALIDAD", "ESTADO_ACADEMY", "ACADEMY_QA_CHECKLIST"],
 )
-def test_legacy_doc_redirects_to_backlog(legacy_path: Path):
-    """Los 3 docs legacy deben hacer referencia explícita al ACADEMY_BACKLOG.md."""
-    if not legacy_path.exists():
-        pytest.skip(f"Doc legacy no presente: {legacy_path}")
-    text = _read(legacy_path)
+def test_old_doc_redirects_to_backlog(old_path: Path):
+    """Los 3 docs antiguos deben hacer referencia explícita al ACADEMY_BACKLOG.md."""
+    if not old_path.exists():
+        pytest.skip(f"Doc antiguo no presente: {old_path}")
+    text = _read(old_path)
     assert "ACADEMY_BACKLOG.md" in text, (
-        f"❌ {legacy_path.name} no redirige a docs/ACADEMY_BACKLOG.md"
+        f"❌ {old_path.name} no redirige a docs/ACADEMY_BACKLOG.md"
     )
 
 
-# ── A.4. No hay IDs legacy (ACAD-HIGH-001, ACAD-CRIT-001, ACAD-H01, ...) sueltos ──
+# ── A.4. No hay IDs antiguos (ACAD-HIGH-001, ACAD-CRIT-001, ACAD-H01, ...) sueltos ──
 
 
-def test_no_legacy_acad_ids_in_active_areas(backlog_text: str):
-    """Solo el §2 (Histórico) puede tener IDs legacy; §3+ debe usar ACAD-TKT-NNN."""
+def test_no_old_acad_ids_in_active_areas(backlog_text: str):
+    """Solo el §2 (Histórico) puede tener IDs antiguos; §3+ debe usar ACAD-TKT-NNN."""
     sections = backlog_text.split("\n## ")
     active_sections = [s for s in sections if not s.startswith("2. Capa HISTÓRICA")]
-    legacy_pattern = re.compile(r"`ACAD-(CRIT|HIGH|MED|LOW|MF|T|C|M|H|L)[-_]\d+`")
+    old_pattern = re.compile(r"`ACAD-(CRIT|HIGH|MED|LOW|MF|T|C|M|H|L)[-_]\d+`")
     leaks = {}
     for idx, section in enumerate(active_sections):
         # Permitimos MENCIONES explícitas en campos `source:` (es histórico).
-        hits = legacy_pattern.findall(section)
+        hits = old_pattern.findall(section)
         if hits:
             leaks[f"section_after_§{idx}"] = hits
     # Cualquier leak debe estar en un campo `source:` o nota explícita.
@@ -261,9 +261,9 @@ def test_no_legacy_acad_ids_in_active_areas(backlog_text: str):
         # filtro conservador: solo aceptamos si la línea dice explícitamente "source:"
         "**source:**" in section
         for section in active_sections
-        for hits in [legacy_pattern.findall(section)]
+        for hits in [old_pattern.findall(section)]
         if hits
-    ), f"IDs legacy detectados en secciones activas: {leaks}"
+    ), f"IDs antiguos detectados en secciones activas: {leaks}"
 
 
 # ===========================================================================

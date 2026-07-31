@@ -53,20 +53,20 @@ class TestListSectionTypes:
             [
                 ("hero", "Hero banner", True),
                 ("cta_banner", "CTA banner", True),
-                ("legacy", "Old type", False),
+                ("old", "Old type", False),
             ],
         )
 
         resp = c.get("/api/cms/v2/section-types", headers=h)
         assert resp.status_code == 200
         names = {row["name"] for row in resp.json()}
-        assert names == {"hero", "cta_banner", "legacy"}
+        assert names == {"hero", "cta_banner", "old"}
 
     def test_list_filters_inactive_by_default_param(self, db_session, admin_client):
         c, h = admin_client
         _seed_types(
             db_session,
-            [("hero", "Hero banner", True), ("legacy", "Old", False)],
+            [("hero", "Hero banner", True), ("old", "Old", False)],
         )
 
         resp = c.get("/api/cms/v2/section-types?only_active=true", headers=h)
@@ -317,7 +317,7 @@ class TestAuthOnWrites:
             json={"email": "editor@example.com", "password": "testpass123"},
         )
         if resp_h.status_code != 200:
-            # If auth wiring fails (e.g. legacy branch), POST still returns
+            # If auth wiring fails (e.g. old branch), POST still returns
             # 403 because the cms write paths require both cms:read AND
             # CMS_PUBLISHER_ROLES. Either outcome means access denied.
             h = {}

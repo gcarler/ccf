@@ -201,7 +201,7 @@ class TestCMSEveryFunction:
     def test_every_function(self, full):
         from backend.crud import cms
         db = full["db"]; aid = str(full["admin"].id)
-        # Legacy page_contents / content_publications removed — CMS v2 uses
+        # Old page_contents / content_publications removed — CMS v2 uses
         # CmsPage CRUD (list_cms_pages, get_cms_page, create_cms_page, etc.)
         _c(cms.list_cms_sites, db)
         _c(cms.get_cms_site_by_key, db, "faro")

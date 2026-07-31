@@ -13,7 +13,7 @@ Cubre dos gaps identificados en code review de Fase 3:
 
 Patrón: dos ``Sede`` con admins distintos; asserts:
   * El CRUD rechaza el cross-sede WRITE con 404 pre-add.
-  * El CRUD preserva back-compat para callers legacy (sin actor).
+  * El CRUD preserva back-compat para callers old (sin actor).
   * El CRUD respeta el superadmin bypass (actor sin sede).
   * El API rechaza el PATCH cross-user con 404.
   * El API permite el PATCH al dueño de la notificación.

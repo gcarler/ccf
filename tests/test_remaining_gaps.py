@@ -552,7 +552,7 @@ class TestCMSDeep:
     def test_cms_crud_all(self, db_session, full):
         from backend.crud import cms
         db = db_session
-        # Legacy page_contents / content_publications removed — CMS v2 CRUD
+        # Old page_contents / content_publications removed — CMS v2 CRUD
         # (list_cms_sites, get_cms_site_by_key) exercise the same code paths.
         # media
         _call(cms.list_cms_media_items, db)

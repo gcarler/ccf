@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Legacy test disabled")
+pytestmark = pytest.mark.skip(reason="Old test disabled")
 
 from backend import crud as crud_cms
 from backend import schemas

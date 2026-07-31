@@ -347,7 +347,7 @@ class TestSharedPureHelpers:
 
 # ═══════════════════════════════════════════════════════════════════
 # R1 — Riesgo residual audit: StatusAsistenciaCanonico con
-# field_validator absorbe variantes legacy sin 422.
+# field_validator absorbe variantes antiguas sin 422.
 # ═══════════════════════════════════════════════════════════════════
 
 class TestStatusAsistenciaCanonicoSchema:
@@ -360,8 +360,8 @@ class TestStatusAsistenciaCanonicoSchema:
         assert StatusAsistenciaCanonico.EXCUSED.value == "excused"
         assert StatusAsistenciaCanonico.FIRST_TIME.value == "first_time"
 
-    def test_asistencia_grupo_create_absorbe_legacy_variants(self):
-        """Clientes legacy enviando 'ASISTIO', 'Presente', 'primera_vez', etc.
+    def test_asistencia_grupo_create_absorbe_old_variants(self):
+        """Clientes antiguos enviando 'ASISTIO', 'Presente', 'primera_vez', etc.
         no rompen con 422; el field_validator los normaliza al enum."""
         from backend.schemas.evangelism import AsistenciaGrupoCreate, StatusAsistenciaCanonico
         variants = [
@@ -394,10 +394,10 @@ class TestStatusAsistenciaCanonicoSchema:
         )
         assert schema.status == StatusAsistenciaCanonico.PRESENT
 
-    def test_submit_attendance_endpoint_absorbe_legacy_status_string(
+    def test_submit_attendance_endpoint_absorbe_old_status_string(
         self, full, db_session
     ):
-        """POST /sessions/{id}/attendance con status legacy string
+        """POST /sessions/{id}/attendance con status antiguo string
         'ASISTIO'/'primera_vez' (en español) se procesa correctamente
         gracias al field_validator del schema."""
         sesion = full["sesiones"][1]
@@ -407,11 +407,11 @@ class TestStatusAsistenciaCanonicoSchema:
             json=[
                 {
                     "persona_id": str(full["personas"][5].id),
-                    "status": "ASISTIO",  # variante legacy
+                    "status": "ASISTIO",  # variante antigua
                 },
                 {
                     "persona_id": str(full["personas"][6].id),
-                    "status": "primera_vez",  # variante legacy en español
+                    "status": "primera_vez",  # variante antigua en español
                 },
             ],
             headers=full["h"],

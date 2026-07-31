@@ -18,14 +18,14 @@ Cierre 2026-07-19:
    - Sin import de ``useRouter`` (la navegación vive en WorkspaceLayout)
    - Sin import de ``ArrowLeft`` (back button viene de WorkspaceLayout.onBack)
    - Gradientes ``absolute inset-0`` (relativos al contenedor, no fixed al viewport)
-2. enroll/[id]/page.tsx (único consumidor de AcademyDetailShell legacy):
+2. enroll/[id]/page.tsx (único consumidor de AcademyDetailShell antiguo):
    - Importa ``WorkspaceLayout`` como shell
    - Usa ``AcademyDetailContainer`` como contenedor temático interno
    - Pasa ``breadcrumbs`` al WorkspaceLayout para preservar el contexto de navegación
 
 **Lo que NO cierra:**
 - Otros consumidores de ``AcademyDetailShell`` (que ya no existen: el grep reveló solo 1 import).
-- El nav-back de AcademyDetailShell legacy — ahora responsabilidad de WorkspaceLayout.onBack.
+- El nav-back de AcademyDetailShell antiguo — ahora responsabilidad de WorkspaceLayout.onBack.
 """
 
 from __future__ import annotations
@@ -140,7 +140,7 @@ def test_acad_tkt_042_enroll_uses_workspace_layout() -> None:
     """TKT-042 — ``enroll/[id]/page.tsx`` envuelve su contenido con ``WorkspaceLayout``.
 
     WorkspaceLayout es el único shell de navegación de la plataforma. Si esta página
-    usara cualquier otro shell (AcademyDetailShell legacy, layout propio), generaría
+    usara cualquier otro shell (AcademyDetailShell antiguo, layout propio), generaría
     un microclima visual distinto al resto del módulo Academy.
     """
     text = _read("app/plataforma/academy/enroll/[id]/page.tsx")

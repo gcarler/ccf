@@ -273,7 +273,7 @@ class TestCMSMedia:
         assert result is True
 
 
-# Legacy page_contents / content_publications functions were removed during
+# Old page_contents / content_publications functions were removed during
 # the CMS v2 migration. CmsPage, CmsSection and CmsPublishLog are the
 # canonical replacements. The test classes below exercise the v2 CRUD
 # equivalents (list_cms_publish_logs, list_cms_pages, create_cms_page).
