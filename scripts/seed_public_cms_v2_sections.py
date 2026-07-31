@@ -7,6 +7,7 @@ Usage:
 The script is idempotent: it updates existing sections by ``section_key`` and only
 publishes a new ``CmsPageVersion`` when the effective snapshot actually changes.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -14,7 +15,6 @@ import json
 import os
 import re
 import sys
-import uuid
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -126,11 +126,7 @@ def _value(obj: Any, key: str) -> Any:
 def _media_lookup(db: Any) -> Any:
     """Return a helper that prefers existing CmsMediaItem URLs."""
     try:
-        rows = (
-            db.query(models.CmsMediaItem)
-            .filter(models.CmsMediaItem.url.like("%/cms/%"))
-            .all()
-        )
+        rows = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.url.like("%/cms/%")).all()
         urls = [r.url for r in rows]
     except Exception:
         urls = []
@@ -247,19 +243,42 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
             "alt": "Equipo pastoral de CCF",
         },
         "cards": [
-            {"title": "Librería", "desc": "Recursos para profundizar.", "href": "/cursos", "img": "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80", "alt": "Libros"},
-            {"title": "Horarios", "desc": "Reuniones presenciales y online.", "href": "/eventos", "img": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80", "alt": "Reunión"},
-            {"title": "Sedes", "desc": "Encuéntranos en tu ciudad.", "href": "/sedes", "img": "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80", "alt": "Sede"},
+            {
+                "title": "Librería",
+                "desc": "Recursos para profundizar.",
+                "href": "/cursos",
+                "img": "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80",
+                "alt": "Libros",
+            },
+            {
+                "title": "Horarios",
+                "desc": "Reuniones presenciales y online.",
+                "href": "/eventos",
+                "img": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80",
+                "alt": "Reunión",
+            },
+            {
+                "title": "Sedes",
+                "desc": "Encuéntranos en tu ciudad.",
+                "href": "/sedes",
+                "img": "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80",
+                "alt": "Sede",
+            },
         ],
     }
     home_feed.setdefault("activities_eyebrow", "Actualidad")
     home_feed.setdefault("activities_title", "Actividades Recientes")
     home_feed.setdefault("activities_view_all", "Ver calendario →")
-    home_feed.setdefault("activities_empty", "Próximamente encontrarás aquí nuestras actividades. Mientras tanto, síguenos en redes sociales.")
+    home_feed.setdefault(
+        "activities_empty",
+        "Próximamente encontrarás aquí nuestras actividades. Mientras tanto, síguenos en redes sociales.",
+    )
     home_feed.setdefault("scroll_indicator", "Descubrir")
     home_feed.setdefault("newsletter_eyebrow", "Boletín semanal")
     home_feed.setdefault("newsletter_title", "¿Quieres recibir nuestras novedades?")
-    home_feed.setdefault("newsletter_description", "Meditaciones semanales, eventos exclusivos y más.\nDirecto a tu correo.")
+    home_feed.setdefault(
+        "newsletter_description", "Meditaciones semanales, eventos exclusivos y más.\nDirecto a tu correo."
+    )
     home_feed.setdefault("newsletter_placeholder", "Tu correo electrónico")
     home_feed.setdefault("newsletter_submit", "Suscribirme")
     home_feed.setdefault("newsletter_success_title", "¡Gracias por suscribirte!")
@@ -297,11 +316,31 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "valores_title": "Valores que nos Guían",
         "valores": [
             {"num": "01", "key": "palabra", "title": "Palabra", "desc": "La Escritura es nuestra brújula."},
-            {"num": "02", "key": "amor", "title": "Amor Radical", "desc": "Un compromiso inquebrantable de servir y acoger a todos."},
+            {
+                "num": "02",
+                "key": "amor",
+                "title": "Amor Radical",
+                "desc": "Un compromiso inquebrantable de servir y acoger a todos.",
+            },
             {"num": "03", "key": "comunidad", "title": "Comunidad", "desc": "Creemos en la vida en familia."},
-            {"num": "04", "key": "integridad", "title": "Integridad", "desc": "Vivir con coherencia entre lo que creemos y lo que hacemos."},
-            {"num": "05", "key": "mision", "title": "Misión", "desc": "Somos enviados a alcanzar a los que aún no conocen el amor de Cristo."},
-            {"num": "06", "key": "excelencia", "title": "Excelencia", "desc": "Damos lo mejor de nosotros en todo lo que hacemos."},
+            {
+                "num": "04",
+                "key": "integridad",
+                "title": "Integridad",
+                "desc": "Vivir con coherencia entre lo que creemos y lo que hacemos.",
+            },
+            {
+                "num": "05",
+                "key": "mision",
+                "title": "Misión",
+                "desc": "Somos enviados a alcanzar a los que aún no conocen el amor de Cristo.",
+            },
+            {
+                "num": "06",
+                "key": "excelencia",
+                "title": "Excelencia",
+                "desc": "Damos lo mejor de nosotros en todo lo que hacemos.",
+            },
         ],
         "quote_text": "La luz que encontramos en CCF no es para guardarla — es para guiar a otros que aún caminan en la oscuridad.",
         "quote_author": "Pastor Histar Ariza Herrera",
@@ -417,12 +456,21 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
     discover_feed_cms = _get_block("ccf_discover_feed", CMS_BLOCKS) or {}
     discover_feed = {**discover_feed_cms, **discover_feed_public}
     discover_feed.setdefault("intro_title", "Un Encuentro Personal")
-    discover_feed.setdefault("intro_paragraph_1", "En CCF, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: <strong>Ven y ve.</strong>")
-    discover_feed.setdefault("intro_paragraph_2", "Descubre un espacio donde las preguntas son bienvenidas y la gracia es el lenguaje principal. Jesús ofrece descanso para el alma y una dirección clara para el futuro.")
+    discover_feed.setdefault(
+        "intro_paragraph_1",
+        "En CCF, creemos que cada historia es única. No importa dónde hayas estado o qué hayas hecho, la invitación es la misma: <strong>Ven y ve.</strong>",
+    )
+    discover_feed.setdefault(
+        "intro_paragraph_2",
+        "Descubre un espacio donde las preguntas son bienvenidas y la gracia es el lenguaje principal. Jesús ofrece descanso para el alma y una dirección clara para el futuro.",
+    )
     discover_feed.setdefault("testimonials_title", "Historias que iluminan")
     discover_feed.setdefault("testimonials_empty_title", "Próximamente compartiremos historias de transformación.")
     discover_feed.setdefault("contact_title", "Hablemos de Tu Caminar")
-    discover_feed.setdefault("contact_description", "¿Tienes dudas? ¿Quieres orar por algo específico? Nuestro equipo está aquí para acompañarte sin juicios.")
+    discover_feed.setdefault(
+        "contact_description",
+        "¿Tienes dudas? ¿Quieres orar por algo específico? Nuestro equipo está aquí para acompañarte sin juicios.",
+    )
     discover_feed.setdefault("name_label", "Nombre completo")
     discover_feed.setdefault("name_placeholder", "Tu nombre")
     discover_feed.setdefault("phone_label", "WhatsApp")
@@ -435,16 +483,22 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
     discover_feed.setdefault("success_description", "Hemos recibido tu mensaje. Te contactaremos pronto.")
     discover_feed.setdefault("error_message", "Hubo un error. Intenta de nuevo o escríbenos directamente.")
     discover_feed.setdefault("connection_error", "Ocurrió un error inesperado de conexión.")
-    discover_feed.setdefault("benefits", [
-        {"icon": "Heart", "title": "Gracia sin condenas", "desc": "Eres bienvenido tal como eres."},
-        {"icon": "Star", "title": "Propósito real", "desc": "Descubre para qué fuiste creado."},
-        {"icon": "Shield", "title": "Comunidad que cuida", "desc": "No estarás solo en este camino."},
-        {"icon": "ArrowRight", "title": "Primer paso simple", "desc": "Escríbenos y conectamos."},
-    ])
-    discover_feed.setdefault("contact_info", [
-        {"icon": "Clock", "text": "Respuesta en menos de 24 horas"},
-        {"icon": "Mail", "text": "info@ccfministerio.com"},
-    ])
+    discover_feed.setdefault(
+        "benefits",
+        [
+            {"icon": "Heart", "title": "Gracia sin condenas", "desc": "Eres bienvenido tal como eres."},
+            {"icon": "Star", "title": "Propósito real", "desc": "Descubre para qué fuiste creado."},
+            {"icon": "Shield", "title": "Comunidad que cuida", "desc": "No estarás solo en este camino."},
+            {"icon": "ArrowRight", "title": "Primer paso simple", "desc": "Escríbenos y conectamos."},
+        ],
+    )
+    discover_feed.setdefault(
+        "contact_info",
+        [
+            {"icon": "Clock", "text": "Respuesta en menos de 24 horas"},
+            {"icon": "Mail", "text": "info@ccfministerio.com"},
+        ],
+    )
 
     # ── COURSES ─────────────────────────────────────────────────────────────
     courses_hero = _get_block("ccf_courses_hero") or {
@@ -457,7 +511,10 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
     courses_merge = _get_block("ccf_courses_feed", CMS_MERGE) or {}
     courses_feed = {**courses_base, **courses_merge}
     courses_feed.setdefault("cta_title", "Únete a la Academia")
-    courses_feed.setdefault("cta_description", "Recibe actualizaciones sobre nuevos cursos, lanzamientos de libros y eventos exclusivos de formación directamente en tu correo.")
+    courses_feed.setdefault(
+        "cta_description",
+        "Recibe actualizaciones sobre nuevos cursos, lanzamientos de libros y eventos exclusivos de formación directamente en tu correo.",
+    )
     courses_feed.setdefault("cta_placeholder", "Tu correo electrónico")
     courses_feed.setdefault("cta_submit", "Suscribirme")
     courses_feed.setdefault("newsletter_success_toast", "¡Te has suscrito con éxito a nuestra academia!")
@@ -471,18 +528,38 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "title": "Nuestras Sedes",
         "search_placeholder": "Buscar ciudad o dirección...",
     }
-    locations_hero.setdefault("map_embed_url", "https://www.google.com/maps/d/embed?mid=1VDNpplw_9z1tcEhx25wEFRR5gQmnHgM&ehbc=2E312F")
+    locations_hero.setdefault(
+        "map_embed_url", "https://www.google.com/maps/d/embed?mid=1VDNpplw_9z1tcEhx25wEFRR5gQmnHgM&ehbc=2E312F"
+    )
     locations_hero.setdefault("main_badge", "Principal")
     locations_hero.setdefault("directions_cta", "Cómo llegar")
     locations_hero.setdefault("empty_locations", "No hay sedes configuradas para mostrar.")
     locations_hero.setdefault("empty_search", "No se encontraron sedes con ese criterio.")
     locations_feed = _get_block("ccf_locations_feed") or [
-        {"id": 1, "name": "Sede Central", "address": "Av. Esperanza 124, Centro Financiero", "phone": "+57 320 000 0000", "schedule": "Domingos 9 AM y 11 AM", "midweek": "Lunes 7 PM", "isMain": True, "services": ["Domingos 9 AM", "Domingos 11 AM", "Lunes 7 PM"]},
-        {"id": 2, "name": "Campus Norte", "address": "Calle 170 #54-12, Sector Universitario", "phone": "+57 310 111 2222", "schedule": "Domingos 10 AM", "midweek": "Sábados 6 PM", "isMain": False, "services": ["Domingos 10 AM", "Sábados 6 PM"]},
+        {
+            "id": 1,
+            "name": "Sede Central",
+            "address": "Av. Esperanza 124, Centro Financiero",
+            "phone": "+57 320 000 0000",
+            "schedule": "Domingos 9 AM y 11 AM",
+            "midweek": "Lunes 7 PM",
+            "isMain": True,
+            "services": ["Domingos 9 AM", "Domingos 11 AM", "Lunes 7 PM"],
+        },
+        {
+            "id": 2,
+            "name": "Campus Norte",
+            "address": "Calle 170 #54-12, Sector Universitario",
+            "phone": "+57 310 111 2222",
+            "schedule": "Domingos 10 AM",
+            "midweek": "Sábados 6 PM",
+            "isMain": False,
+            "services": ["Domingos 10 AM", "Sábados 6 PM"],
+        },
     ]
 
     # ── TESTIMONIALS ────────────────────────────────────────────────────────
-    testimonials_hero = _get_block("ccf_testimonios_hero") or {
+    testimonials_hero = _get_block("ccf_testimonials_hero") or {
         "eyebrow": "Impacto Real",
         "title_lead": "Historias de",
         "title_accent": "Transformación",
@@ -516,8 +593,20 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "primary_cta": {"href": "/cursos", "label": "Discipulado Básico"},
         "secondary_cta": {"href": "/conocer-a-jesus", "label": "Una nueva vida con Cristo"},
         "highlights": [
-            {"title": "Discipulado Básico", "description": "Empieza por la ruta de fundamentos para crecer con orden y acompañamiento.", "href": "/cursos", "cta": "Ver academia", "icon": "book"},
-            {"title": "Una nueva vida con Cristo", "description": "Conoce el mensaje central del evangelio en una ruta pública y clara.", "href": "/conocer-a-jesus", "cta": "Abrir ruta", "icon": "heart"},
+            {
+                "title": "Discipulado Básico",
+                "description": "Empieza por la ruta de fundamentos para crecer con orden y acompañamiento.",
+                "href": "/cursos",
+                "cta": "Ver academia",
+                "icon": "book",
+            },
+            {
+                "title": "Una nueva vida con Cristo",
+                "description": "Conoce el mensaje central del evangelio en una ruta pública y clara.",
+                "href": "/conocer-a-jesus",
+                "cta": "Abrir ruta",
+                "icon": "heart",
+            },
         ],
     }
 
@@ -681,32 +770,40 @@ def _snapshot(page: Any, sections: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _load_site_row(db, site_key: str) -> dict[str, Any] | None:
-    row = db.execute(
-        text(
-            """
+    row = (
+        db.execute(
+            text(
+                """
             SELECT id, site_key, name, base_path, is_active
             FROM cms_sites
             WHERE site_key = :site_key
             LIMIT 1
             """
-        ),
-        {"site_key": site_key},
-    ).mappings().first()
+            ),
+            {"site_key": site_key},
+        )
+        .mappings()
+        .first()
+    )
     return dict(row) if row is not None else None
 
 
 def _load_page_row(db, site_id: Any, slug: str) -> dict[str, Any] | None:
-    row = db.execute(
-        text(
-            """
+    row = (
+        db.execute(
+            text(
+                """
             SELECT id, site_id, slug, title, status, seo_json, published_version_id, locale
             FROM cms_pages
             WHERE site_id = :site_id AND slug = :slug
             LIMIT 1
             """
-        ),
-        {"site_id": str(site_id), "slug": slug},
-    ).mappings().first()
+            ),
+            {"site_id": str(site_id), "slug": slug},
+        )
+        .mappings()
+        .first()
+    )
     return dict(row) if row is not None else None
 
 
@@ -759,8 +856,7 @@ def run(site_key: str = "ccf") -> int:
                 print(f"Updating page: {slug}")
 
             existing_sections = {
-                s.section_key: s
-                for s in db.query(models.CmsSection).filter_by(page_id=_value(page, "id")).all()
+                s.section_key: s for s in db.query(models.CmsSection).filter_by(page_id=_value(page, "id")).all()
             }
             desired_keys = {s["key"] for s in sections}
 
@@ -807,11 +903,7 @@ def run(site_key: str = "ccf") -> int:
             page_status = _value(page, "status")
 
             if page_published_version_id:
-                current_version = (
-                    db.query(models.CmsPageVersion)
-                    .filter_by(id=page_published_version_id)
-                    .first()
-                )
+                current_version = db.query(models.CmsPageVersion).filter_by(id=page_published_version_id).first()
 
             if (
                 page_status == "published"
