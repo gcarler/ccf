@@ -28,11 +28,11 @@ def _is_serializable(value: Any) -> bool:
     return False
 
 
-def _to_jsonable(value: Any) -> Any:
+def _to_jsonable(value: Any, seen: set[int] | None = None) -> Any:
     """Recursively convert Pydantic models (and containers of them) to JSON-safe types.
 
     Pydantic v2 models expose ``model_dump()``; Pydantic v1 exposes ``dict()``.
-    Either way, the original instance is not JSON-serializable directly \u2014
+    Either way, the original instance is not JSON-serializable directly —
     ``json.dumps(model, default=str)`` falls back to ``str(model)`` which
     produces a debug string like ``id=UUID('...') name='Alex'...``. Round-
     tripping that through ``json.loads`` yields a list of strings, which
@@ -46,37 +46,42 @@ def _to_jsonable(value: Any) -> Any:
     """
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
-    if hasattr(value, "model_dump"):
-        return _to_jsonable(value.model_dump())
-    if hasattr(value, "dict") and not isinstance(value, type):
-        # ``.dict()`` was Pydantic v1's API; kept for backwards compat
-        # with any leftover v1 models. Skip ``type`` because every class
-        # has a ``.dict`` attribute via ``__class__``.
-        return _to_jsonable(value.dict())
-    if hasattr(value, "_sa_instance_state"):
-        # SQLAlchemy model — extract column values, skip internal SA keys.
-        return _to_jsonable({
-            k: v for k, v in value.__dict__.items()
-            if not k.startswith("_")
-        })
-    if isinstance(value, (list, tuple)):
-        return [_to_jsonable(item) for item in value]
-    if isinstance(value, dict):
-        return {str(k): _to_jsonable(v) for k, v in value.items()}
-    # Pydantic v2 ``RootModel`` / ``Generic`` and other exotic bases \u2014
-    # fall back to str repr so we don't silently drop the cached entry
-    # (matches the prior behavior of ``json.dumps(..., default=str)``).
-    return str(value)
+
+    if seen is None:
+        seen = set()
+
+    val_id = id(value)
+    if val_id in seen:
+        return None
+
+    seen.add(val_id)
+    try:
+        if hasattr(value, "model_dump"):
+            return _to_jsonable(value.model_dump(), seen)
+        if hasattr(value, "dict") and not isinstance(value, type):
+            # ``.dict()`` was Pydantic v1's API; kept for backwards compat
+            # with any leftover v1 models. Skip ``type`` because every class
+            # has a ``.dict`` attribute via ``__class__``.
+            return _to_jsonable(value.dict(), seen)
+        if hasattr(value, "_sa_instance_state"):
+            # SQLAlchemy model — extract column values, skip internal SA keys.
+            return _to_jsonable({k: v for k, v in value.__dict__.items() if not k.startswith("_")}, seen)
+        if isinstance(value, (list, tuple)):
+            return [_to_jsonable(item, seen) for item in value]
+        if isinstance(value, dict):
+            return {str(k): _to_jsonable(v, seen) for k, v in value.items()}
+        # Pydantic v2 ``RootModel`` / ``Generic`` and other exotic bases —
+        # fall back to str repr so we don't silently drop the cached entry
+        # (matches the prior behavior of ``json.dumps(..., default=str)``).
+        return str(value)
+    finally:
+        seen.remove(val_id)
 
 
 def _build_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
     """Build a deterministic cache key, skipping non-serializable args."""
-    serializable_args = tuple(
-        arg for arg in args if _is_serializable(arg)
-    )
-    serializable_kwargs = {
-        k: v for k, v in kwargs.items() if _is_serializable(v)
-    }
+    serializable_args = tuple(arg for arg in args if _is_serializable(arg))
+    serializable_kwargs = {k: v for k, v in kwargs.items() if _is_serializable(v)}
     payload = json.dumps(
         {"args": serializable_args, "kwargs": serializable_kwargs},
         sort_keys=True,

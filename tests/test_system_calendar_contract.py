@@ -13,7 +13,7 @@ def test_system_calendar_uses_frontend_canonical_crm_types():
 
 def test_system_calendar_uses_canonical_platform_hrefs():
     source = SYSTEM_API_PATH.read_text()
-    assert '/plataforma/projects/' in source
-    assert '/plataforma/evangelism/strategies/' in source
-    assert '/plataforma/proyectos/' not in source
-    assert '/plataforma/evangelism/estrategias/' not in source
+    assert "/plataforma/projects/" in source
+    assert "/plataforma/evangelism/strategies/" in source
+    assert "/plataforma/proyectos/" not in source
+    assert "/plataforma/evangelism/estrategias/" not in source

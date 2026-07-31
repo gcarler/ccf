@@ -32,7 +32,7 @@ export default function TestimoniesWall() {
 
     const tabs = ['Todos', 'Sanidad', 'Familia', 'Finanzas', 'Salvación', 'Milagro'];
 
-    const filteredTestimonials = testimonials.filter(t => 
+    const filteredTestimonials = testimonials.filter(t =>
         activeTab === 'Todos' || t.emotion === activeTab
     );
 
@@ -48,7 +48,7 @@ export default function TestimoniesWall() {
                     <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tighter">Testimonios</h1>
                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium mt-1">Lo que Dios ha hecho, lo volverá a hacer.</p>
                 </div>
-                
+
                 <Link href="/community/testimonies/publish" className="h-8 px-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-primary/30 hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95 flex items-center gap-3">
                     <Plus size={20} strokeWidth={2.5} />
                     Publicar Milagro
@@ -56,7 +56,7 @@ export default function TestimoniesWall() {
             </header>
 
             {/* Featured Hero Section - Refined */}
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="relative flex flex-col justify-end overflow-hidden rounded-lg min-h-[360px] shadow-2xl group border border-[hsl(var(--border))]"
@@ -65,7 +65,7 @@ export default function TestimoniesWall() {
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--bg-primary))] via-[hsl(var(--bg-primary)/0.4)] to-transparent"></div>
                 <div className="relative p-3 md:p-4">
-                    <motion.span 
+                    <motion.span
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.2 }}
@@ -73,7 +73,7 @@ export default function TestimoniesWall() {
                     >
                         Historias de Fe
                     </motion.span>
-                    <motion.h2 
+                    <motion.h2
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.3 }}
@@ -99,9 +99,9 @@ export default function TestimoniesWall() {
                         >
                             {tab}
                             {activeTab === tab && (
-                                <motion.div 
+                                <motion.div
                                     layoutId="testimony-tab"
-                                    className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[hsl(var(--primary))] shadow-[0_0_12px_hsl(var(--primary)/0.5)]" 
+                                    className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[hsl(var(--primary))] shadow-[0_0_12px_hsl(var(--primary)/0.5)]"
                                 />
                             )}
                         </button>
@@ -118,11 +118,11 @@ export default function TestimoniesWall() {
                             </div>
                         ) : filteredTestimonials.length > 0 ? (
                             filteredTestimonials.map((testimony, idx) => (
-                                <motion.article 
+                                <motion.article
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.05 }}
-                                    key={testimony.id} 
+                                    key={testimony.id}
                                     className="surface-card p-4 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] hover:shadow-xl transition-all flex flex-col gap-4"
                                 >
                                     <div className="flex justify-between items-start">
@@ -145,14 +145,14 @@ export default function TestimoniesWall() {
                                             </span>
                                         )}
                                     </div>
-                                    
+
                                     <div className="relative flex-1">
                                         <div className="absolute -top-4 -left-2 text-xl text-[hsl(var(--primary)/0.05)] font-serif select-none">&ldquo;</div>
                                         <p className="text-sm leading-relaxed text-[hsl(var(--text-secondary))] font-medium italic relative z-10 pl-6 border-l-2 border-[hsl(var(--primary)/0.2)]">
                                             {testimony.content}
                                         </p>
                                     </div>
-                                    
+
                                     <div className="flex items-center justify-between pt-6 border-t border-[hsl(var(--border))] mt-auto">
                                         <div className="flex gap-4">
                                             <button className="flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors group/btn">

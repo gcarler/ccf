@@ -1,6 +1,7 @@
 """
 Coverage for automation_engine, knowledge_base, email, conversation_memory.
 """
+
 from unittest.mock import patch
 
 from backend.services.automation_engine import AutomationEngine
@@ -21,7 +22,7 @@ class TestAutomationEngineCoverage:
 
     def test_start_stop(self):
         engine = AutomationEngine()
-        with patch.object(engine, '_run_loop', return_value=None):
+        with patch.object(engine, "_run_loop", return_value=None):
             engine.start()
             assert engine._thread is not None
             engine.stop()
@@ -29,7 +30,7 @@ class TestAutomationEngineCoverage:
 
     def test_double_start(self):
         engine = AutomationEngine()
-        with patch.object(engine, '_run_loop', return_value=None):
+        with patch.object(engine, "_run_loop", return_value=None):
             engine.start()
             engine.start()
             assert engine._thread is not None
@@ -37,7 +38,7 @@ class TestAutomationEngineCoverage:
 
     def test_double_stop(self):
         engine = AutomationEngine()
-        with patch.object(engine, '_run_loop', return_value=None):
+        with patch.object(engine, "_run_loop", return_value=None):
             engine.start()
             engine.stop()
             engine.stop()
@@ -66,6 +67,7 @@ class TestEmailCoverage:
     @patch("backend.services.email.smtplib.SMTP")
     def test_send_email_with_mocked_smtp(self, mock_smtp):
         from backend.core.config import get_settings
+
         with patch.object(get_settings(), "smtp_host", "smtp.test.com"):
             with patch.object(get_settings(), "smtp_port", 587):
                 with patch.object(get_settings(), "smtp_user", "user"):

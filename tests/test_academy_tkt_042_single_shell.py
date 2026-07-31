@@ -122,7 +122,7 @@ def test_acad_tkt_042_academy_detail_container_has_testid_hook() -> None:
     code = _code_only(_read("components/academy/AcademyDetailShell.tsx"))
     assert 'data-testid="academy-detail-container"' in code, (
         "TKT-042 regresión: el contenedor root no emite data-testid. "
-        "Agregar ``<div data-testid=\"academy-detail-container\" ...>`` para smoke tests."
+        'Agregar ``<div data-testid="academy-detail-container" ...>`` para smoke tests.'
     )
     # Y debe ser un div relativo (no fixed al viewport)
     assert "data-variant" in code, (

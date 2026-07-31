@@ -3,13 +3,13 @@
 import React from 'react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
-import { 
-    Bell, 
-    Calendar, 
+import {
+    Bell,
+    Calendar,
     Heart,
     HeartHandshake,
-    MessageSquare, 
-    Users, 
+    MessageSquare,
+    Users,
     Megaphone,
     Search,
     Star
@@ -55,4 +55,3 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
         </ModuleErrorBoundary>
     );
 }
-

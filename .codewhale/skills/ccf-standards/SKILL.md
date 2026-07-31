@@ -2,7 +2,7 @@
 
 name: ccf-standards
 description: |
-  Load the CCF platform development standards for this session. 
+  Load the CCF platform development standards for this session.
   Use this skill when working on ANY CCF codebase file (backend, frontend, database, or API).
   This skill enforces the 3 Axioms, 8 database rules, and 5 backend/frontend standards
   that prevent the most common mistakes made by AI agents and human developers.

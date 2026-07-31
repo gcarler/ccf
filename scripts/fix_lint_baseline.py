@@ -7,6 +7,7 @@
 Multi-line imports are SKIPPED (logged) — handle separately with a block-aware
 script to avoid regex-induced syntax breakage.
 """
+
 from __future__ import annotations
 
 import json
@@ -17,6 +18,7 @@ ENTITIES = {"'": "&apos;", '"': "&quot;", ">": "&gt;", "}": "&#125;"}
 LINT_JSON = Path("/tmp/lint.json")
 NAME_RE = re.compile(r"'([^']+)' is defined but never used")
 ML_IMPORT_OPEN = re.compile(r"\bimport\b[^{]*\{")
+
 
 def safe_remove_single_line(line: str, name: str) -> tuple[str, bool]:
     stripped = line.strip()
@@ -89,7 +91,8 @@ def main() -> int:
         modified = False
         for msg in sorted(errs, key=lambda m: (m["line"], m.get("column", 0)), reverse=True):
             rule = msg.get("ruleId")
-            ln = msg["line"]; col = msg.get("column", 1)
+            ln = msg["line"]
+            col = msg.get("column", 1)
             try:
                 if rule == "@typescript-eslint/no-unused-vars":
                     mm = NAME_RE.search(msg.get("message", "")) or re.search(r"'([^']+)'", msg.get("message", ""))
@@ -130,7 +133,7 @@ def main() -> int:
                     line_text = lines[ln - 1]
                     idx = col - 1
                     if 0 <= idx < len(line_text) and line_text[idx] == char:
-                        lines[ln - 1] = line_text[:idx] + entity + line_text[idx + 1:]
+                        lines[ln - 1] = line_text[:idx] + entity + line_text[idx + 1 :]
                         text = "\n".join(lines)
                         modified = True
             except Exception:
@@ -143,11 +146,12 @@ def main() -> int:
         print(f"  - {f}")
     print()
     print(f"Skipped {len(skipped_ml)} multi-line import bindings")
-    for f, l, n in skipped_ml:
-        print(f"  - {f}:{l}  name={n}")
+    for f, line_no, n in skipped_ml:
+        print(f"  - {f}:{line_no}  name={n}")
     print()
     print("Files needing multi-line cleanup:")
     import collections
+
     files_ml = collections.Counter(f for f, _, _ in skipped_ml)
     for f, c in files_ml.most_common():
         print(f"  {c:3d} {f}")

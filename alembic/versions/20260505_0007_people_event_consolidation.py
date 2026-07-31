@@ -33,9 +33,7 @@ def upgrade() -> None:
             sa.Column("name", sa.String(length=100), nullable=False, unique=True),
             sa.Column("description", sa.Text(), nullable=True),
             sa.Column("category", sa.String(length=50), nullable=True),
-            sa.Column(
-                "is_active", sa.Boolean(), nullable=False, server_default=sa.true()
-            ),
+            sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),
             sa.Column(
                 "created_at",
                 sa.DateTime(),
@@ -44,15 +42,9 @@ def upgrade() -> None:
             ),
         )
         op.create_index("ix_positions_name", "positions", ["name"], unique=False)
-        op.create_index(
-            "ix_positions_category", "positions", ["category"], unique=False
-        )
-        op.create_index(
-            "ix_positions_is_active", "positions", ["is_active"], unique=False
-        )
-        op.create_index(
-            "ix_positions_created_at", "positions", ["created_at"], unique=False
-        )
+        op.create_index("ix_positions_category", "positions", ["category"], unique=False)
+        op.create_index("ix_positions_is_active", "positions", ["is_active"], unique=False)
+        op.create_index("ix_positions_created_at", "positions", ["created_at"], unique=False)
 
     if not _has_table(inspector, "member_positions"):
         op.create_table(
@@ -62,9 +54,7 @@ def upgrade() -> None:
             sa.Column("position_id", sa.Integer(), nullable=False),
             sa.Column("start_date", sa.DateTime(), nullable=True),
             sa.Column("end_date", sa.DateTime(), nullable=True),
-            sa.Column(
-                "is_active", sa.Boolean(), nullable=False, server_default=sa.true()
-            ),
+            sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),
             sa.Column("notes", sa.Text(), nullable=True),
             sa.Column(
                 "created_at",
@@ -73,9 +63,7 @@ def upgrade() -> None:
                 server_default=sa.text("CURRENT_TIMESTAMP"),
             ),
             sa.ForeignKeyConstraint(["member_id"], ["members.id"], ondelete="CASCADE"),
-            sa.ForeignKeyConstraint(
-                ["position_id"], ["positions.id"], ondelete="CASCADE"
-            ),
+            sa.ForeignKeyConstraint(["position_id"], ["positions.id"], ondelete="CASCADE"),
             sa.UniqueConstraint(
                 "member_id",
                 "position_id",
@@ -154,16 +142,10 @@ def upgrade() -> None:
                 nullable=False,
                 server_default=sa.text("CURRENT_TIMESTAMP"),
             ),
-            sa.Column(
-                "attended", sa.Boolean(), nullable=False, server_default=sa.true()
-            ),
-            sa.ForeignKeyConstraint(
-                ["event_id"], ["crm_events.id"], ondelete="CASCADE"
-            ),
+            sa.Column("attended", sa.Boolean(), nullable=False, server_default=sa.true()),
+            sa.ForeignKeyConstraint(["event_id"], ["crm_events.id"], ondelete="CASCADE"),
             sa.ForeignKeyConstraint(["member_id"], ["members.id"], ondelete="CASCADE"),
-            sa.UniqueConstraint(
-                "event_id", "session_date", "member_id", name="uq_event_attendance"
-            ),
+            sa.UniqueConstraint("event_id", "session_date", "member_id", name="uq_event_attendance"),
         )
         op.create_index(
             "ix_event_attendances_event_id",
@@ -183,18 +165,14 @@ def upgrade() -> None:
             ["member_id"],
             unique=False,
         )
-        op.create_index(
-            "ix_event_attendances_status", "event_attendances", ["status"], unique=False
-        )
+        op.create_index("ix_event_attendances_status", "event_attendances", ["status"], unique=False)
         op.create_index(
             "ix_event_attendances_role_at_event",
             "event_attendances",
             ["role_at_event"],
             unique=False,
         )
-        op.create_index(
-            "ix_event_attendances_source", "event_attendances", ["source"], unique=False
-        )
+        op.create_index("ix_event_attendances_source", "event_attendances", ["source"], unique=False)
         op.create_index(
             "ix_event_attendances_check_in_at",
             "event_attendances",
@@ -256,12 +234,8 @@ def upgrade() -> None:
                 server_default=sa.text("CURRENT_TIMESTAMP"),
             ),
             sa.ForeignKeyConstraint(["member_id"], ["members.id"], ondelete="CASCADE"),
-            sa.ForeignKeyConstraint(
-                ["assigned_pastor_id"], ["members.id"], ondelete="SET NULL"
-            ),
-            sa.ForeignKeyConstraint(
-                ["assigned_leader_id"], ["members.id"], ondelete="SET NULL"
-            ),
+            sa.ForeignKeyConstraint(["assigned_pastor_id"], ["members.id"], ondelete="SET NULL"),
+            sa.ForeignKeyConstraint(["assigned_leader_id"], ["members.id"], ondelete="SET NULL"),
         )
         op.create_index(
             "ix_consolidation_cases_member_id",
@@ -357,15 +331,9 @@ def upgrade() -> None:
                 nullable=False,
                 server_default=sa.text("CURRENT_TIMESTAMP"),
             ),
-            sa.ForeignKeyConstraint(
-                ["case_id"], ["consolidation_cases.id"], ondelete="CASCADE"
-            ),
-            sa.ForeignKeyConstraint(
-                ["assigned_by_member_id"], ["members.id"], ondelete="CASCADE"
-            ),
-            sa.ForeignKeyConstraint(
-                ["assigned_to_member_id"], ["members.id"], ondelete="CASCADE"
-            ),
+            sa.ForeignKeyConstraint(["case_id"], ["consolidation_cases.id"], ondelete="CASCADE"),
+            sa.ForeignKeyConstraint(["assigned_by_member_id"], ["members.id"], ondelete="CASCADE"),
+            sa.ForeignKeyConstraint(["assigned_to_member_id"], ["members.id"], ondelete="CASCADE"),
         )
         op.create_index(
             "ix_consolidation_assignments_case_id",
@@ -438,12 +406,8 @@ def upgrade() -> None:
                 nullable=False,
                 server_default=sa.text("CURRENT_TIMESTAMP"),
             ),
-            sa.ForeignKeyConstraint(
-                ["case_id"], ["consolidation_cases.id"], ondelete="CASCADE"
-            ),
-            sa.ForeignKeyConstraint(
-                ["performed_by_member_id"], ["members.id"], ondelete="CASCADE"
-            ),
+            sa.ForeignKeyConstraint(["case_id"], ["consolidation_cases.id"], ondelete="CASCADE"),
+            sa.ForeignKeyConstraint(["performed_by_member_id"], ["members.id"], ondelete="CASCADE"),
         )
         op.create_index(
             "ix_consolidation_interactions_case_id",
@@ -504,12 +468,8 @@ def upgrade() -> None:
                 nullable=False,
                 server_default=sa.text("CURRENT_TIMESTAMP"),
             ),
-            sa.ForeignKeyConstraint(
-                ["case_id"], ["consolidation_cases.id"], ondelete="CASCADE"
-            ),
-            sa.ForeignKeyConstraint(
-                ["assignment_id"], ["consolidation_assignments.id"], ondelete="SET NULL"
-            ),
+            sa.ForeignKeyConstraint(["case_id"], ["consolidation_cases.id"], ondelete="CASCADE"),
+            sa.ForeignKeyConstraint(["assignment_id"], ["consolidation_assignments.id"], ondelete="SET NULL"),
         )
         op.create_index(
             "ix_consolidation_follow_up_tasks_case_id",
@@ -643,12 +603,8 @@ def downgrade() -> None:
         op.drop_table("consolidation_assignments")
 
     if _has_table(inspector, "consolidation_cases"):
-        op.drop_index(
-            "ix_consolidation_cases_updated_at", table_name="consolidation_cases"
-        )
-        op.drop_index(
-            "ix_consolidation_cases_created_at", table_name="consolidation_cases"
-        )
+        op.drop_index("ix_consolidation_cases_updated_at", table_name="consolidation_cases")
+        op.drop_index("ix_consolidation_cases_created_at", table_name="consolidation_cases")
         op.drop_index(
             "ix_consolidation_cases_assigned_leader_id",
             table_name="consolidation_cases",
@@ -657,38 +613,24 @@ def downgrade() -> None:
             "ix_consolidation_cases_assigned_pastor_id",
             table_name="consolidation_cases",
         )
-        op.drop_index(
-            "ix_consolidation_cases_next_contact_at", table_name="consolidation_cases"
-        )
-        op.drop_index(
-            "ix_consolidation_cases_last_contact_at", table_name="consolidation_cases"
-        )
+        op.drop_index("ix_consolidation_cases_next_contact_at", table_name="consolidation_cases")
+        op.drop_index("ix_consolidation_cases_last_contact_at", table_name="consolidation_cases")
         op.drop_index("ix_consolidation_cases_source", table_name="consolidation_cases")
         op.drop_index("ix_consolidation_cases_status", table_name="consolidation_cases")
         op.drop_index("ix_consolidation_cases_stage", table_name="consolidation_cases")
-        op.drop_index(
-            "ix_consolidation_cases_member_id", table_name="consolidation_cases"
-        )
+        op.drop_index("ix_consolidation_cases_member_id", table_name="consolidation_cases")
         op.drop_table("consolidation_cases")
 
     if _has_table(inspector, "event_attendances"):
         op.drop_index("ix_event_attendances_attended", table_name="event_attendances")
         op.drop_index("ix_event_attendances_scanned_at", table_name="event_attendances")
-        op.drop_index(
-            "ix_event_attendances_check_out_at", table_name="event_attendances"
-        )
-        op.drop_index(
-            "ix_event_attendances_check_in_at", table_name="event_attendances"
-        )
+        op.drop_index("ix_event_attendances_check_out_at", table_name="event_attendances")
+        op.drop_index("ix_event_attendances_check_in_at", table_name="event_attendances")
         op.drop_index("ix_event_attendances_source", table_name="event_attendances")
-        op.drop_index(
-            "ix_event_attendances_role_at_event", table_name="event_attendances"
-        )
+        op.drop_index("ix_event_attendances_role_at_event", table_name="event_attendances")
         op.drop_index("ix_event_attendances_status", table_name="event_attendances")
         op.drop_index("ix_event_attendances_member_id", table_name="event_attendances")
-        op.drop_index(
-            "ix_event_attendances_session_date", table_name="event_attendances"
-        )
+        op.drop_index("ix_event_attendances_session_date", table_name="event_attendances")
         op.drop_index("ix_event_attendances_event_id", table_name="event_attendances")
         op.drop_table("event_attendances")
 

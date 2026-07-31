@@ -2,6 +2,7 @@
 Comprehensive tests for evangelism_shared.py — target 90%+.
 Covers session helpers, attendance normalization, visible resolvers, triggers.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -40,7 +41,9 @@ def _make_strategy(db, sede_id):
     db.add(cat)
     db.flush()
     s = EstrategiaEvangelismo(
-        id=uuid.uuid4(), nombre="Estrategia Shared", sede_id=sede_id,
+        id=uuid.uuid4(),
+        nombre="Estrategia Shared",
+        sede_id=sede_id,
         categoria_id=cat.id,
         fecha_inicio=datetime.now(timezone.utc),
         fecha_fin=datetime.now(timezone.utc) + timedelta(days=90),
@@ -52,9 +55,13 @@ def _make_strategy(db, sede_id):
 
 def _make_grupo(db, strategy_id, sede_id, lider_id=None):
     g = GrupoEvangelismo(
-        id=uuid.uuid4(), nombre=f"G_{uuid.uuid4().hex[:6]}",
-        estrategia_id=strategy_id, sede_id=sede_id,
-        lider_persona_id=lider_id, activo=True, capacidad=20,
+        id=uuid.uuid4(),
+        nombre=f"G_{uuid.uuid4().hex[:6]}",
+        estrategia_id=strategy_id,
+        sede_id=sede_id,
+        lider_persona_id=lider_id,
+        activo=True,
+        capacidad=20,
     )
     db.add(g)
     db.flush()
@@ -63,9 +70,11 @@ def _make_grupo(db, strategy_id, sede_id, lider_id=None):
 
 def _make_session(db, grupo_id, estado="REALIZADA"):
     s = SesionGrupo(
-        id=uuid.uuid4(), grupo_id=grupo_id,
+        id=uuid.uuid4(),
+        grupo_id=grupo_id,
         fecha_sesion=datetime.now(timezone.utc).date(),
-        estado=estado, estado_habilitacion="HABILITADO",
+        estado=estado,
+        estado_habilitacion="HABILITADO",
     )
     db.add(s)
     db.flush()
@@ -130,6 +139,7 @@ class TestSessionHelpers:
     def test_session_read_value_with_attr(self):
         class FakeSession:
             __dict__ = {"estado_habilitacion": "HABILITADO", "id": "x"}
+
         assert session_read_value(FakeSession(), "estado_habilitacion") == "HABILITADO"
         assert session_read_value(FakeSession(), "missing", "default") == "default"
 
@@ -139,11 +149,13 @@ class TestSessionHelpers:
     def test_session_estado_habilitacion_with_value(self):
         class FakeSession:
             __dict__ = {"estado_habilitacion": "CERRADO"}
+
         assert session_estado_habilitacion(FakeSession()) == "CERRADO"
 
     def test_session_estado_habilitacion_default(self):
         class FakeSession:
             __dict__ = {}
+
         assert session_estado_habilitacion(FakeSession()) == "HABILITADO"
 
 
@@ -250,6 +262,7 @@ class TestCanManageGrupo:
 
     def test_non_leader_cannot_manage(self, full):
         from backend.models_crm import Persona
+
         strategy = _make_strategy(full["db"], full["sede"].id)
         other = Persona(id=uuid.uuid4(), first_name="Other", last_name="User", sede_id=full["sede"].id)
         full["db"].add(other)

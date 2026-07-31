@@ -1,4 +1,5 @@
 """Cover last 3 lines in evangelism_reports.py — ParticipanteGrupo setup."""
+
 from __future__ import annotations
 
 import uuid
@@ -26,6 +27,7 @@ class TestFinalCoverage:
         """Lines 112 + 439-443: pct calc with ParticipanteGrupo records."""
         c, h, s = full["c"], full["h"], full["s"]
         from datetime import datetime, timezone
+
         now = datetime.now(timezone.utc)
 
         p = models.Persona(id=uuid.uuid4(), first_name="Final", last_name="Test", sede_id=s.id)
@@ -33,33 +35,45 @@ class TestFinalCoverage:
         db_session.flush()
 
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre="Final Group", sede_id=s.id, lider_persona_id=p.id,
+            id=uuid.uuid4(),
+            nombre="Final Group",
+            sede_id=s.id,
+            lider_persona_id=p.id,
         )
         db_session.add(g)
         db_session.flush()
 
         # Create strategy + link grupo
-        strat = c.post("/api/evangelism/strategies",
-            json={"name": f"SF-{uuid.uuid4().hex[:6]}"}, headers=h).json()
+        strat = c.post("/api/evangelism/strategies", json={"name": f"SF-{uuid.uuid4().hex[:6]}"}, headers=h).json()
         sid = uuid.UUID(strat["id"])
         g.estrategia_id = sid
         db_session.flush()
 
         # ParticipanteGrupo (rol_base is required!)
         pg = models.ParticipanteGrupo(
-            id=uuid.uuid4(), grupo_id=g.id, persona_id=p.id, rol_base="miembro", activo=True,
+            id=uuid.uuid4(),
+            grupo_id=g.id,
+            persona_id=p.id,
+            rol_base="miembro",
+            activo=True,
         )
         db_session.add(pg)
         db_session.flush()
 
         # Session + attendance
         ses = models.SesionGrupo(
-            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA",
+            id=uuid.uuid4(),
+            grupo_id=g.id,
+            fecha_sesion=now,
+            estado="REALIZADA",
         )
         db_session.add(ses)
         db_session.flush()
         att = models.Asistencia(
-            id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO",
+            id=uuid.uuid4(),
+            sesion_id=ses.id,
+            persona_id=p.id,
+            estado="ASISTIO",
         )
         db_session.add(att)
         db_session.commit()

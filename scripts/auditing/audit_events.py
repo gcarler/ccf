@@ -5,9 +5,7 @@ f = open("backend/api/crm.py", encoding="utf-8").read()
 # 1. Inventory all event/group routes
 routes = re.findall(r'@router\.(get|post|put|patch|delete)\("(/[^"]+)"', f)
 event_routes = [
-    (m, r)
-    for m, r in routes
-    if any(k in r.lower() for k in ["event", "group", "session", "visitor", "scanner"])
+    (m, r) for m, r in routes if any(k in r.lower() for k in ["event", "group", "session", "visitor", "scanner"])
 ]
 print("=== EVENT API ROUTES ===")
 for m, r in event_routes:
@@ -30,10 +28,7 @@ print("SesionGrupo in models.py:", "class SesionGrupo" in models_f)
 print("Asistencia in models.py:", "class Asistencia" in models_f)
 print(
     "day_of_week in GrupoEvangelismo:",
-    "day_of_week"
-    in models_f[
-        models_f.find("class GrupoEvangelismo") : models_f.find("class GrupoEvangelismo") + 500
-    ],
+    "day_of_week" in models_f[models_f.find("class GrupoEvangelismo") : models_f.find("class GrupoEvangelismo") + 500],
 )
 
 # Check for crm.py issues

@@ -1,6 +1,7 @@
 """
 Extended tests for chat.py — edge cases and internal helpers.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -48,6 +49,7 @@ class TestPersonaDisplayName:
 class TestGetPersonaId:
     def test_with_admin_user(self, full, db_session):
         from backend.models_auth import Usuario
+
         user = db_session.query(Usuario).first()
         pid = _get_persona_id(db_session, user)
         assert pid is not None
@@ -55,6 +57,7 @@ class TestGetPersonaId:
     def test_without_persona(self, full, db_session):
         """User without linked persona returns None."""
         from backend.models_auth import Usuario
+
         user = db_session.query(Usuario).first()
         # Unlink persona
         old_id = user.id
@@ -65,6 +68,7 @@ class TestGetPersonaId:
 class TestGetPersona:
     def test_with_admin(self, full, db_session):
         from backend.models_auth import Usuario
+
         user = db_session.query(Usuario).first()
         persona = _get_persona(db_session, user)
         assert persona is not None
@@ -82,13 +86,15 @@ class TestChatEdge:
         assert _ok(full["c"].get("/api/chat/users/search?q=admin", headers=full["h"]).status_code)
 
     def test_conversation_not_found(self, full):
-        assert full["c"].get(f"/api/chat/conversations/{uuid.uuid4()}/messages",
-            headers=full["h"]).status_code == 404
+        assert full["c"].get(f"/api/chat/conversations/{uuid.uuid4()}/messages", headers=full["h"]).status_code == 404
 
     def test_send_message_no_conv(self, full):
-        assert full["c"].post(f"/api/chat/conversations/{uuid.uuid4()}/messages",
-            json={"content": "Hi"}, headers=full["h"]).status_code == 404
+        assert (
+            full["c"]
+            .post(f"/api/chat/conversations/{uuid.uuid4()}/messages", json={"content": "Hi"}, headers=full["h"])
+            .status_code
+            == 404
+        )
 
     def test_mark_read_no_conv(self, full):
-        assert full["c"].post(f"/api/chat/conversations/{uuid.uuid4()}/read",
-            headers=full["h"]).status_code == 404
+        assert full["c"].post(f"/api/chat/conversations/{uuid.uuid4()}/read", headers=full["h"]).status_code == 404

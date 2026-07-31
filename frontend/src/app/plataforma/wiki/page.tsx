@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    BookOpen, Search, Plus, FileText, 
+import {
+    BookOpen, Search, Plus, FileText,
     ChevronRight,
     Zap, Bookmark, Clock, AlertCircle
 } from 'lucide-react';
@@ -119,19 +119,19 @@ export default function WikiHomePage() {
                         BASE DE CONOCIMIENTO
                     </h2>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                     <div className="relative">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
                             placeholder="Buscar en la wiki..."
                             className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-64 transition-all"
                         />
                     </div>
-                    <button 
+                    <button
                         onClick={() => setIsQuickAddOpen(prev => !prev)}
                         className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary)/0.85)] active:scale-95 transition-all flex items-center gap-2"
                     >
@@ -150,14 +150,14 @@ export default function WikiHomePage() {
                         exit={{ height: 0, opacity: 0 }}
                         className="bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] border-b-2 border-[hsl(var(--info)/0.3)] dark:border-[hsl(var(--info)/0.3)] overflow-hidden shrink-0"
                     >
-                        <form 
+                        <form
                             onSubmit={handleCreateDoc}
                             className="px-3 py-1.5 flex items-center gap-4"
                         >
                             <div className="size-8 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center shrink-0">
                                 <Zap size={16} />
                             </div>
-                            <input 
+                            <input
                                 autoFocus
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
@@ -176,7 +176,7 @@ export default function WikiHomePage() {
                         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
                             DOCUMENTOS RECIENTES
                         </p>
-                        
+
                         {loading ? (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 {[1, 2, 3].map(i => (
@@ -199,7 +199,7 @@ export default function WikiHomePage() {
                                         className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full"
                                     >
                                         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]" />
-                                        
+
                                         <div className="flex-1 space-y-4">
                                             <div className="flex items-start justify-between">
                                                 <div className="size-10 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">
@@ -209,7 +209,7 @@ export default function WikiHomePage() {
                                                     <Bookmark size={14} />
                                                 </button>
                                             </div>
-                                            
+
                                             <div>
                                                 <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-2">
                                                     {doc.title}
@@ -225,7 +225,7 @@ export default function WikiHomePage() {
                                                 <Clock size={12} />
                                                 <span>{new Date(doc.updated_at).toLocaleDateString()}</span>
                                             </div>
-                                            <Link 
+                                            <Link
                                                 href={`/plataforma/wiki/docs/${doc.page_key}`}
                                                 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all"
                                             >

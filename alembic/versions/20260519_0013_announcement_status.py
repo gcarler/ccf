@@ -18,16 +18,11 @@ depends_on = None
 
 
 def _has_column(inspector: sa.Inspector, table_name: str, column_name: str) -> bool:
-    return any(
-        column.get("name") == column_name
-        for column in inspector.get_columns(table_name)
-    )
+    return any(column.get("name") == column_name for column in inspector.get_columns(table_name))
 
 
 def _has_index(inspector: sa.Inspector, table_name: str, index_name: str) -> bool:
-    return any(
-        index.get("name") == index_name for index in inspector.get_indexes(table_name)
-    )
+    return any(index.get("name") == index_name for index in inspector.get_indexes(table_name))
 
 
 def upgrade() -> None:

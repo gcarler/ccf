@@ -16,6 +16,7 @@ Posture mirrors `tests/test_crm_crud_personas.py`: SQLite in-memory via the
     branch that copies role_ids[0] → target_role_id).
   * `get_total_donations_amount` aggregates only live (non-deleted) rows.
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -29,6 +30,7 @@ from backend.crud.crm_ import events as crud_events
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 
+
 def _seed_sede(db: Session, name: str = "Sede QC-18.C") -> models.Sede:
     sede = models.Sede(id=_uuid.uuid4(), nombre=name, ciudad="QC18 City", es_activa=True)
     db.add(sede)
@@ -38,7 +40,11 @@ def _seed_sede(db: Session, name: str = "Sede QC-18.C") -> models.Sede:
 
 def _seed_persona(db: Session, sede_id: _uuid.UUID, first: str = "P") -> models.Persona:
     p = models.Persona(
-        id=_uuid.uuid4(), first_name=first, last_name="T", sede_id=sede_id, estado_vital="ACTIVO",
+        id=_uuid.uuid4(),
+        first_name=first,
+        last_name="T",
+        sede_id=sede_id,
+        estado_vital="ACTIVO",
         email=f"{first.lower()}{_uuid.uuid4().hex[:6]}@example.com",
     )
     db.add(p)
@@ -47,9 +53,14 @@ def _seed_persona(db: Session, sede_id: _uuid.UUID, first: str = "P") -> models.
 
 
 def _seed_event(
-    db: Session, *, sede_id: _uuid.UUID, name: str = "Evento", deleted_at=None,
+    db: Session,
+    *,
+    sede_id: _uuid.UUID,
+    name: str = "Evento",
+    deleted_at=None,
 ) -> models.CrmEvent:
     import datetime as dt
+
     e = models.CrmEvent(
         id=_uuid.uuid4(),
         sede_id=sede_id,
@@ -65,10 +76,15 @@ def _seed_event(
 
 
 def _seed_attendance(
-    db: Session, *, event: models.CrmEvent, persona: models.Persona, deleted_at=None,
+    db: Session,
+    *,
+    event: models.CrmEvent,
+    persona: models.Persona,
+    deleted_at=None,
     session_date=None,
 ) -> models.EventAttendance:
     import datetime as dt
+
     a = models.EventAttendance(
         id=_uuid.uuid4(),
         event_id=event.id,
@@ -83,8 +99,13 @@ def _seed_attendance(
 
 
 def _seed_donation(
-    db: Session, *, sede_id: _uuid.UUID, persona: Optional[models.Persona] = None,
-    amount: float = 100.0, donation_type: str = "DIEZMO", deleted_at=None,
+    db: Session,
+    *,
+    sede_id: _uuid.UUID,
+    persona: Optional[models.Persona] = None,
+    amount: float = 100.0,
+    donation_type: str = "DIEZMO",
+    deleted_at=None,
 ) -> models.Donation:
     d = models.Donation(
         id=_uuid.uuid4(),
@@ -216,7 +237,11 @@ def test_update_crm_event_returns_none_for_missing(db_session):
 
 def test_update_crm_event_updates_provided_fields_only(db_session):
     sede = _seed_sede(db_session)
-    e = _seed_event(db_session, sede_id=sede.id, name="Orig", )
+    e = _seed_event(
+        db_session,
+        sede_id=sede.id,
+        name="Orig",
+    )
     _commit(db_session)
     out = crud_events.update_crm_event(db_session, e.id, schemas.CrmEventUpdate(name="Renombrado"))
     assert out.name == "Renombrado"
@@ -248,12 +273,16 @@ def test_get_event_attendance_excludes_soft_deleted(db_session):
     (the cross-Tenant dedup invariant would otherwise block our seed).
     """
     import datetime as dt
+
     sede = _seed_sede(db_session)
     e = _seed_event(db_session, sede_id=sede.id)
     p = _seed_persona(db_session, sede_id=sede.id)
     a_live = _seed_attendance(db_session, event=e, persona=p, session_date=dt.date(2026, 7, 1))
     a_dead = _seed_attendance(
-        db_session, event=e, persona=p, deleted_at=crud_events._utcnow(),
+        db_session,
+        event=e,
+        persona=p,
+        deleted_at=crud_events._utcnow(),
         session_date=dt.date(2026, 7, 8),
     )
     _commit(db_session)
@@ -270,13 +299,19 @@ def test_create_event_attendance_persists_fields(db_session):
     _commit(db_session)
 
     payload = schemas.EventAttendanceCreate(
-        event_id=e.id, persona_id=p.id, session_date="2026-07-01",
-        attended=True, status="CONFIRMADO",
+        event_id=e.id,
+        persona_id=p.id,
+        session_date="2026-07-01",
+        attended=True,
+        status="CONFIRMADO",
         # role_at_event + source are NON-Optional str on EventAttendanceCreate,
         # so we provide explicit values (DB column allows anythingvable str).
         role_at_event="attendee",
         source="MANUAL",
-        check_in_at=None, check_out_at=None, notes=None, scanned_at=None,
+        check_in_at=None,
+        check_out_at=None,
+        notes=None,
+        scanned_at=None,
     )
     row = crud_events.create_event_attendance(db_session, payload)
     assert row.id is not None
@@ -359,7 +394,11 @@ def test_create_donation_persists_fields(db_session):
     p = _seed_persona(db_session, sede_id=sede.id)
     _commit(db_session)
     payload = schemas.DonationCreate(
-        persona_id=p.id, amount=500.0, donation_type="OFRENDA", fund_id=None, donor_name=p.first_name,
+        persona_id=p.id,
+        amount=500.0,
+        donation_type="OFRENDA",
+        fund_id=None,
+        donor_name=p.first_name,
     )
     row = crud_donations.create_donation(db_session, payload)
     assert row.id is not None

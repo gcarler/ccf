@@ -90,15 +90,11 @@ def seed_exams():
         )
         crud.create_question_option(
             db,
-            schemas.QuestionOptionCreate(
-                question_id=q2.id, option_text="Verdadero", is_correct=False
-            ),
+            schemas.QuestionOptionCreate(question_id=q2.id, option_text="Verdadero", is_correct=False),
         )
         crud.create_question_option(
             db,
-            schemas.QuestionOptionCreate(
-                question_id=q2.id, option_text="Falso", is_correct=True
-            ),
+            schemas.QuestionOptionCreate(question_id=q2.id, option_text="Falso", is_correct=True),
         )
 
         print("Exams and questions seeded successfully!")

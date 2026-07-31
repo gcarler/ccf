@@ -30,24 +30,15 @@ def seed_assessments():
     db = SessionLocal()
     try:
         # Find the quiz lesson for Disc-1
-        lesson = (
-            db.query(Lesson)
-            .join(Course)
-            .filter(Course.code == "DISC-1", Lesson.content_type == "quiz")
-            .first()
-        )
+        lesson = db.query(Lesson).join(Course).filter(Course.code == "DISC-1", Lesson.content_type == "quiz").first()
 
         if not lesson:
-            print(
-                "❌ Quiz lesson for DISC-1 not found. Run seed_academy_full.py first."
-            )
+            print("❌ Quiz lesson for DISC-1 not found. Run seed_academy_full.py first.")
             return
 
         # 1. Create Assessment for this lesson
         # Check if already exists
-        existing = (
-            db.query(Assessment).filter(Assessment.lesson_id == lesson.id).first()
-        )
+        existing = db.query(Assessment).filter(Assessment.lesson_id == lesson.id).first()
         if existing:
             print("ℹ️ Assessment already exists. Skipping.")
             return
@@ -71,11 +62,7 @@ def seed_assessments():
         db.flush()
 
         # Options for Q1
-        db.add(
-            AssessmentOption(
-                question_id=q1.id, option_text="Nuestras buenas obras", is_correct=False
-            )
-        )
+        db.add(AssessmentOption(question_id=q1.id, option_text="Nuestras buenas obras", is_correct=False))
         db.add(
             AssessmentOption(
                 question_id=q1.id,

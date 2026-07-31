@@ -21,17 +21,13 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=schemas.PersonaResponse)
-def public_register_event(
-    payload: schemas.PublicRegistrationCreate, db: Session = Depends(get_db)
-) -> Any:
+def public_register_event(payload: schemas.PublicRegistrationCreate, db: Session = Depends(get_db)) -> Any:
     """
     Registra a una persona desde un QR publico y vincula su asistencia a un evento.
     Si la persona ya existe (por email o telefono), se usa ese perfil.
     Si no existe, se crea un nuevo Persona con spiritual_status = 'Nuevo'.
     """
-    event = (
-        db.query(models.CrmEvent).filter(models.CrmEvent.id == payload.event_id).first()
-    )
+    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == payload.event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Evento no encontrado.")
 
@@ -60,16 +56,10 @@ def public_register_event(
         db.add(persona)
         db.commit()
         db.refresh(persona)
-        logger.info(
-            f"Nuevo visitante creado desde QR: {persona.first_name} {persona.last_name}"
-        )
+        logger.info(f"Nuevo visitante creado desde QR: {persona.first_name} {persona.last_name}")
 
     # 3. Registrar asistencia al evento si no esta registrada aun
-    session_date = (
-        event.event_date.date()
-        if event.event_date
-        else datetime.now(datetime.UTC).date()
-    )
+    session_date = event.event_date.date() if event.event_date else datetime.now(datetime.UTC).date()
     existing_attendance = (
         db.query(models.EventAttendance)
         .filter(
@@ -89,23 +79,22 @@ def public_register_event(
         )
         db.add(attendance)
         db.commit()
-        logger.info(
-            f"Asistencia registrada para {persona.first_name} al evento {event.name} (ID {event.id})"
-        )
+        logger.info(f"Asistencia registrada para {persona.first_name} al evento {event.name} (ID {event.id})")
 
     return persona
 
 
 class PublicCursoResponse(BaseModel):
     """Respuesta pública de curso — campos alineados con el frontend CourseItem."""
-    id: str          # slug, usado como URL key
+
+    id: str  # slug, usado como URL key
     title: str
     desc: Optional[str] = None
     excerpt: Optional[str] = None
     tag: Optional[str] = None
     modality: Optional[str] = None
     cta: Optional[str] = "Inscribirme"
-    lessons: Optional[int] = None   # duration_hours interpretado como semanas
+    lessons: Optional[int] = None  # duration_hours interpretado como semanas
     imageUrl: Optional[str] = None
     syllabus: Optional[list] = None
     instructor: Optional[str] = None
@@ -133,16 +122,11 @@ def _curso_to_public(curso: Course, lesson_count: int = 0) -> PublicCursoRespons
 def public_list_courses(db: Session = Depends(get_db)):
     """Lista de cursos publicados para la landing page /cursos."""
     cursos = (
-        db.query(Course)
-        .filter(Course.is_published.is_(True), Course.deleted_at.is_(None))
-        .order_by(Course.id)
-        .all()
+        db.query(Course).filter(Course.is_published.is_(True), Course.deleted_at.is_(None)).order_by(Course.id).all()
     )
     result = []
     for c in cursos:
-        lecciones = db.query(Lesson).filter(
-            Lesson.course_id == c.id, Lesson.deleted_at.is_(None)
-        ).count()
+        lecciones = db.query(Lesson).filter(Lesson.course_id == c.id, Lesson.deleted_at.is_(None)).count()
         result.append(_curso_to_public(c, lecciones))
     return result
 
@@ -161,14 +145,13 @@ def public_get_course(course_slug: str, db: Session = Depends(get_db)):
     )
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
-    lecciones = db.query(Lesson).filter(
-        Lesson.course_id == curso.id, Lesson.deleted_at.is_(None)
-    ).count()
+    lecciones = db.query(Lesson).filter(Lesson.course_id == curso.id, Lesson.deleted_at.is_(None)).count()
     return _curso_to_public(curso, lecciones)
 
 
 class PublicEnrollCreate(BaseModel):
     """Datos para inscripcion publica a un curso."""
+
     full_name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -198,18 +181,23 @@ def public_course_enroll(
     email = (payload.email or "").strip().lower()
     phone = (payload.phone or "").strip()
 
-    result = tracker.record_contact(db, ContactRecord(
-        email=email or None,
-        phone=phone or None,
-        first_name=(payload.full_name or "").strip().split(" ", 1)[0] or "Visitante",
-        last_name=(payload.full_name or "").strip().split(" ", 1)[1] if payload.full_name and " " in (payload.full_name or "").strip() else "",
-        source="academy-enrollment",
-        landing_page=payload.landing_page,
-        campaign=payload.campaign,
-        spiritual_status="Nuevo",
-        church_role="Visitante",
-        extra_notes=[f"Interesado en curso: {curso.title}"],
-    ))
+    result = tracker.record_contact(
+        db,
+        ContactRecord(
+            email=email or None,
+            phone=phone or None,
+            first_name=(payload.full_name or "").strip().split(" ", 1)[0] or "Visitante",
+            last_name=(payload.full_name or "").strip().split(" ", 1)[1]
+            if payload.full_name and " " in (payload.full_name or "").strip()
+            else "",
+            source="academy-enrollment",
+            landing_page=payload.landing_page,
+            campaign=payload.campaign,
+            spiritual_status="Nuevo",
+            church_role="Visitante",
+            extra_notes=[f"Interesado en curso: {curso.title}"],
+        ),
+    )
     persona = result.persona
     db.commit()
 
@@ -233,15 +221,20 @@ class PublicContactCreate(BaseModel):
 @router.post("/contact", response_model=dict)
 def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
     """Recibe un contacto desde un formulario publico."""
-    result = tracker.record_contact(db, ContactRecord(
-        first_name=payload.full_name.strip().split(" ", 1)[0] if payload.full_name else "Anonimo",
-        last_name=payload.full_name.strip().split(" ", 1)[1] if payload.full_name and " " in payload.full_name.strip() else "",
-        phone=payload.phone,
-        source=payload.source or "conocer-a-jesus",
-        notes=payload.notes,
-        spiritual_status="Nuevo",
-        church_role="Visitante",
-    ))
+    result = tracker.record_contact(
+        db,
+        ContactRecord(
+            first_name=payload.full_name.strip().split(" ", 1)[0] if payload.full_name else "Anonimo",
+            last_name=payload.full_name.strip().split(" ", 1)[1]
+            if payload.full_name and " " in payload.full_name.strip()
+            else "",
+            phone=payload.phone,
+            source=payload.source or "conocer-a-jesus",
+            notes=payload.notes,
+            spiritual_status="Nuevo",
+            church_role="Visitante",
+        ),
+    )
 
     if payload.notes and payload.notes.strip():
         prayer = models.PrayerRequest(
@@ -266,6 +259,7 @@ def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
 
 class WishlistCreate(BaseModel):
     """Interes en un libro/recurso de la libreria."""
+
     title: str
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -279,14 +273,17 @@ def public_wishlist(payload: WishlistCreate, db: Session = Depends(get_db)):
     email = (payload.email or "").strip().lower()
     phone = (payload.phone or "").strip()
 
-    result = tracker.record_contact(db, ContactRecord(
-        email=email or None,
-        phone=phone or None,
-        first_name=payload.full_name,
-        source="books-web",
-        landing_page=payload.landing_page,
-        extra_notes=[f"Libro: {payload.title}"],
-    ))
+    result = tracker.record_contact(
+        db,
+        ContactRecord(
+            email=email or None,
+            phone=phone or None,
+            first_name=payload.full_name,
+            source="books-web",
+            landing_page=payload.landing_page,
+            extra_notes=[f"Libro: {payload.title}"],
+        ),
+    )
 
     db.commit()
 

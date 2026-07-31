@@ -1,8 +1,8 @@
 # Plan maestro — Administración y permisos granulares de Personas
 
-> **Inicio:** 2026-07-18  
+> **Inicio:** 2026-07-18
 > **Alcance:** `/api/admin`, Auth v3, roles de plataforma, asignaciones por
-> módulo, administración de personas y sus pantallas de plataforma.  
+> módulo, administración de personas y sus pantallas de plataforma.
 > **Estado:** certificado internamente el 2026-07-18; cada cierre conserva
 > regresión automatizada y evidencia de dos sedes.
 

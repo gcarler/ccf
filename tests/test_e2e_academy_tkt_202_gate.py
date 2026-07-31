@@ -27,6 +27,7 @@ Operation:
 No-ops when the env vars are missing: this keeps the suite compatible
 with platform machines that don't have a Postgres + FastAPI backend.
 """
+
 from __future__ import annotations
 
 import os
@@ -49,20 +50,14 @@ def test_tkt_202_playwright_academy_multi_role_gate() -> None:
     exactamente cuando Playwright retorna exit code != 0.
     """
     if os.environ.get("E2E_GATE_RUN") != "1":
-        pytest.skip(
-            "Gate opt-in: ejecuta con E2E_GATE_RUN=1 "
-            "(ver docstring del módulo para el comando completo)."
-        )
+        pytest.skip("Gate opt-in: ejecuta con E2E_GATE_RUN=1 (ver docstring del módulo para el comando completo).")
 
     frontend_dir = REPO_ROOT / "frontend"
     spec_path = frontend_dir / "tests" / "e2e" / "academy" / "multi-role-flow.spec.ts"
     wrapper_path = frontend_dir / "scripts" / "run-managed-playwright.mjs"
 
     if not spec_path.exists():
-        pytest.fail(
-            f"Playwright multi-role spec no encontrado en {spec_path}. "
-            "Fixture del TKT-202 incompleta."
-        )
+        pytest.fail(f"Playwright multi-role spec no encontrado en {spec_path}. Fixture del TKT-202 incompleta.")
     if not wrapper_path.exists():
         pytest.fail(
             f"Wrapper {wrapper_path} no encontrado — el gate depende de "
@@ -71,10 +66,7 @@ def test_tkt_202_playwright_academy_multi_role_gate() -> None:
 
     node_binary = shutil.which("node") or shutil.which("nodejs")
     if not node_binary:
-        pytest.fail(
-            "`node` no disponible en PATH — el gate necesita Node >=18 "
-            "para invocar el wrapper Playwright."
-        )
+        pytest.fail("`node` no disponible en PATH — el gate necesita Node >=18 para invocar el wrapper Playwright.")
 
     cmd = [node_binary, str(wrapper_path), "--academy-roles", SPEC_RELATIVE]
     print(f"[tkt-202-gate] Ejecutando: {' '.join(cmd)} (cwd={frontend_dir})")

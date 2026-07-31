@@ -21,27 +21,19 @@ def upgrade() -> None:
     connection = op.get_bind()
     parallel_rows = connection.execute(sa.text("SELECT COUNT(*) FROM crm_tasks")).scalar_one()
     if parallel_rows:
-        raise RuntimeError(
-            f"Cannot remove parallel crm_tasks table: it contains {parallel_rows} row(s)"
-        )
+        raise RuntimeError(f"Cannot remove parallel crm_tasks table: it contains {parallel_rows} row(s)")
 
     op.drop_table("crm_tasks")
     op.alter_column("crm_tareas", "caso_id", existing_type=postgresql.UUID(), nullable=True)
-    op.alter_column(
-        "crm_tareas", "asignado_a_id", existing_type=postgresql.UUID(), nullable=True
-    )
+    op.alter_column("crm_tareas", "asignado_a_id", existing_type=postgresql.UUID(), nullable=True)
     op.alter_column(
         "crm_tareas",
         "fecha_vencimiento",
         existing_type=sa.DateTime(timezone=True),
         nullable=True,
     )
-    op.add_column(
-        "crm_tareas", sa.Column("persona_id", postgresql.UUID(as_uuid=True), nullable=True)
-    )
-    op.add_column(
-        "crm_tareas", sa.Column("categoria", sa.String(length=100), nullable=True)
-    )
+    op.add_column("crm_tareas", sa.Column("persona_id", postgresql.UUID(as_uuid=True), nullable=True))
+    op.add_column("crm_tareas", sa.Column("categoria", sa.String(length=100), nullable=True))
     op.add_column(
         "crm_tareas",
         sa.Column(
@@ -61,10 +53,7 @@ def upgrade() -> None:
         ),
     )
     connection.execute(
-        sa.text(
-            "UPDATE crm_tareas SET estado = CASE "
-            "WHEN completada IS TRUE THEN 'completed' ELSE 'pending' END"
-        )
+        sa.text("UPDATE crm_tareas SET estado = CASE WHEN completada IS TRUE THEN 'completed' ELSE 'pending' END")
     )
     op.drop_index("ix_crm_tareas_completada", table_name="crm_tareas")
     op.drop_column("crm_tareas", "completada")
@@ -86,20 +75,12 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     connection = op.get_bind()
-    general_tasks = connection.execute(
-        sa.text("SELECT COUNT(*) FROM crm_tareas WHERE caso_id IS NULL")
-    ).scalar_one()
+    general_tasks = connection.execute(sa.text("SELECT COUNT(*) FROM crm_tareas WHERE caso_id IS NULL")).scalar_one()
     if general_tasks:
-        raise RuntimeError(
-            f"Cannot split crm_tareas: {general_tasks} general task(s) would be lost"
-        )
+        raise RuntimeError(f"Cannot split crm_tareas: {general_tasks} general task(s) would be lost")
 
-    op.add_column(
-        "crm_tareas", sa.Column("completada", sa.Boolean(), nullable=True)
-    )
-    connection.execute(
-        sa.text("UPDATE crm_tareas SET completada = (estado = 'completed')")
-    )
+    op.add_column("crm_tareas", sa.Column("completada", sa.Boolean(), nullable=True))
+    connection.execute(sa.text("UPDATE crm_tareas SET completada = (estado = 'completed')"))
     op.create_index("ix_crm_tareas_completada", "crm_tareas", ["completada"])
     op.drop_index("ix_crm_tareas_created_at", table_name="crm_tareas")
     op.drop_index("ix_crm_tareas_estado", table_name="crm_tareas")
@@ -116,9 +97,7 @@ def downgrade() -> None:
         existing_type=sa.DateTime(timezone=True),
         nullable=False,
     )
-    op.alter_column(
-        "crm_tareas", "asignado_a_id", existing_type=postgresql.UUID(), nullable=False
-    )
+    op.alter_column("crm_tareas", "asignado_a_id", existing_type=postgresql.UUID(), nullable=False)
     op.alter_column("crm_tareas", "caso_id", existing_type=postgresql.UUID(), nullable=False)
 
     op.create_table(

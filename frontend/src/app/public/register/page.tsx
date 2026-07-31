@@ -16,7 +16,7 @@ function RegisterForm() {
         phone: '',
         accept_contact: true
     });
-    
+
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -66,7 +66,7 @@ function RegisterForm() {
                     Falta el código del evento (event_id)
                 </div>
             )}
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
                     <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-2">Nombres *</label>

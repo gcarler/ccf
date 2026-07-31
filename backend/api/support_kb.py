@@ -44,9 +44,7 @@ def list_kb_articles(
     db: Session = Depends(get_db),
 ):
     """Lista artículos de la base de conocimiento."""
-    query = db.query(models.AgentKnowledgeBase).filter(
-        models.AgentKnowledgeBase.is_active.is_(True)
-    )
+    query = db.query(models.AgentKnowledgeBase).filter(models.AgentKnowledgeBase.is_active.is_(True))
     if category:
         query = query.filter(models.AgentKnowledgeBase.category == category)
     if popular:

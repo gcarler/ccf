@@ -30,11 +30,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 
-_PREAMBLE = (
-    "import sys\n"
-    "sys.path.insert(0, 'scripts')\n"
-    "import seed_public_content as sp\n"
-)
+_PREAMBLE = "import sys\nsys.path.insert(0, 'scripts')\nimport seed_public_content as sp\n"
 
 
 def _run_fresh(code: str) -> str:
@@ -55,9 +51,7 @@ def _run_fresh(code: str) -> str:
             timeout=120,
         )
     except subprocess.CalledProcessError as exc:
-        raise AssertionError(
-            f"subprocess failed (exit {exc.returncode}):\n{exc.stderr}"
-        ) from exc
+        raise AssertionError(f"subprocess failed (exit {exc.returncode}):\n{exc.stderr}") from exc
     return proc.stdout.strip()
 
 

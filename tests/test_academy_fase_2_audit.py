@@ -79,22 +79,16 @@ def test_tkt_023_to_028_audit_log(endpoint_name, expected_event_type, expected_p
     # 1. La función llama AcademyActivityLog con event_type correcto.
     expected_call = f'event_type="{expected_event_type}"'
     assert expected_call in source, (
-        f"{endpoint_name} debe llamar AcademyActivityLog con {expected_call}, "
-        f"pero el source no lo contiene"
+        f"{endpoint_name} debe llamar AcademyActivityLog con {expected_call}, pero el source no lo contiene"
     )
 
     # 2. ``payload_json={{...}}`` está presente.
-    assert "payload_json=" in source, (
-        f"{endpoint_name} debe incluir ``payload_json={{...}}`` en AcademyActivityLog"
-    )
+    assert "payload_json=" in source, f"{endpoint_name} debe incluir ``payload_json={{...}}`` en AcademyActivityLog"
 
     # 3. Cada key esperada aparece en el source (búsqueda simple, robusta a
     #    cualquier anidación de dict/lista).
     for key in expected_payload_keys:
-        assert f'"{key}"' in source, (
-            f"{endpoint_name} payload_json debe incluir '{key}', "
-            f"source no lo contiene"
-        )
+        assert f'"{key}"' in source, f"{endpoint_name} payload_json debe incluir '{key}', source no lo contiene"
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -121,12 +115,8 @@ def test_tkt_090_create_forum_thread_global_requires_edit_permission():
     )
 
     # 3. Verifica explícitamente los permisos ``academy:edit`` y ``academy:manage``.
-    assert "academy:edit" in source, (
-        "create_forum_thread debe verificar permiso academy:edit"
-    )
-    assert "academy:manage" in source, (
-        "create_forum_thread debe verificar permiso academy:manage"
-    )
+    assert "academy:edit" in source, "create_forum_thread debe verificar permiso academy:edit"
+    assert "academy:manage" in source, "create_forum_thread debe verificar permiso academy:manage"
 
     # 4. Raise HTTPException con status_code 403.
     assert "status_code=403" in source or "status.HTTP_403" in source, (
@@ -154,26 +144,20 @@ def test_tkt_091_resolve_forum_thread_endpoint_exists():
     # 1. Existe el decorator ``@router.patch`` con el path correcto en el módulo.
     pattern = r'@router\.patch\(\s*[\'"][^\'"]*/forum/threads/\{thread_id\}/resolve[\'"]'
     assert re.search(pattern, module_source), (
-        "Debe existir @router.patch('/forum/threads/{thread_id}/resolve') "
-        "decorando la función resolve_forum_thread"
+        "Debe existir @router.patch('/forum/threads/{thread_id}/resolve') decorando la función resolve_forum_thread"
     )
 
     # 2. La función ``resolve_forum_thread`` toggle ``is_resolved`` explícitamente.
     func_source = inspect.getsource(resolve_forum_thread)
-    assert "is_resolved" in func_source, (
-        "resolve_forum_thread debe referenciar is_resolved"
-    )
+    assert "is_resolved" in func_source, "resolve_forum_thread debe referenciar is_resolved"
     assert re.search(r"is_resolved\s*=\s*not\s+bool\(", func_source), (
-        "resolve_forum_thread debe alternar is_resolved con ``not bool(...)`` "
-        "(patrón toggle explícito)"
+        "resolve_forum_thread debe alternar is_resolved con ``not bool(...)`` (patrón toggle explícito)"
     )
 
     # 3. Solo Editor/Manager pueden invocarlo (verificación de permisos via require_module_access).
     sig = inspect.signature(resolve_forum_thread)
     params = sig.parameters
-    assert "current_user" in params, (
-        "resolve_forum_thread debe recibir current_user como parámetro"
-    )
+    assert "current_user" in params, "resolve_forum_thread debe recibir current_user como parámetro"
     # Verificamos que el source usa el alias ``current_user: AcademyEditor``
     # o ``current_user: AcademyManager``. ``AcademyEditor = Annotated[User, Depends(require_module_access("academy","edit"))]``
     # se declara a nivel módulo, así que ``get_type_hints`` no preserva la info del alias.

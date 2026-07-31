@@ -27,9 +27,7 @@ def seed_roles():
             # Check if exists
             existing = db.query(Role).filter(Role.name == role_data["name"]).first()
             if not existing:
-                new_role = Role(
-                    name=role_data["name"], permissions=role_data["permissions"]
-                )
+                new_role = Role(name=role_data["name"], permissions=role_data["permissions"])
                 db.add(new_role)
                 print(f"[OK] Rol creado: {role_data['name']}")
             else:

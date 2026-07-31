@@ -23,9 +23,7 @@ def upgrade() -> None:
     columns = {column["name"] for column in inspector.get_columns("crm_events")}
 
     if "target_role_ids" not in columns:
-        op.add_column(
-            "crm_events", sa.Column("target_role_ids", sa.JSON(), nullable=True)
-        )
+        op.add_column("crm_events", sa.Column("target_role_ids", sa.JSON(), nullable=True))
 
 
 def downgrade() -> None:

@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { 
-    SortableContext, 
-    verticalListSortingStrategy 
+import {
+    SortableContext,
+    verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { UserPlus, MoreHorizontal } from 'lucide-react';
 import clsx from 'clsx';
@@ -23,9 +23,9 @@ const containerVariants = {
 
 const itemVariants = {
     hidden: { opacity: 0, y: 15, scale: 0.98 },
-    show: { 
-        opacity: 1, 
-        y: 0, 
+    show: {
+        opacity: 1,
+        y: 0,
         scale: 1,
         transition: {
             type: "spring",
@@ -70,7 +70,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                         </span>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-all">
                     {allowEditing && (
                         <button
@@ -88,14 +88,14 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
             </div>
 
             {/* Drop Zone & List Container */}
-            <div 
+            <div
                 ref={setNodeRef}
                 className={clsx(
                     "flex-1 flex flex-col p-3 rounded-md transition-all duration-300",
                     isOver ? "bg-white/40 dark:bg-white/5 backdrop-blur-md ring-2 ring-[hsl(var(--primary))]/20" : "bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]"
                 )}
             >
-                <motion.div 
+                <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
@@ -108,8 +108,8 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                     >
                         <AnimatePresence mode='popLayout'>
                             {leads.map((lead) => (
-                                <motion.div 
-                                    key={lead.id} 
+                                <motion.div
+                                    key={lead.id}
                                     variants={itemVariants}
                                     layout
                                 >
@@ -127,8 +127,8 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                     {leads.length === 0 && (
                         <div className={clsx(
                             "flex flex-col items-center justify-center gap-3 py-1.5 px-4 rounded-lg border-2 border-dashed transition-all duration-500",
-                            isOver 
-                                ? "border-[hsl(var(--info)/100%)]/50 bg-[hsl(var(--info))]/5 scale-[0.98]" 
+                            isOver
+                                ? "border-[hsl(var(--info)/100%)]/50 bg-[hsl(var(--info))]/5 scale-[0.98]"
                                 : "border-[hsl(var(--border))] dark:border-white/5"
                         )}>
                             <div className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-sm border border-[hsl(var(--border))] dark:border-white/5">
@@ -139,7 +139,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                                     {isOver ? '¡Suelta para asignar!' : `Sin ${stage.label.toLowerCase()}`}
                                 </p>
                                 {allowEditing && !isOver && (
-                                    <button 
+                                    <button
                                         onClick={onNewLead}
                                         className="mt-3 text-2xs font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] underline"
                                     >

@@ -9,6 +9,7 @@ Uso:
     pref = create_donation_preference(amount=50.0, title="Diezmo", email="donante@ejemplo.com")
     # pref["init_point"] -> URL de checkout
 """
+
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
@@ -28,6 +29,7 @@ settings = get_settings()
 @dataclass
 class PaymentPreference:
     """Datos para crear una preferencia de pago en MercadoPago."""
+
     amount: float
     title: str
     email: Optional[str] = None
@@ -41,6 +43,7 @@ class PaymentPreference:
 @dataclass
 class PaymentResult:
     """Resultado de un pago procesado."""
+
     payment_id: int
     status: str
     status_detail: str
@@ -53,15 +56,9 @@ class PaymentResult:
 def _get_sdk():
     """Retorna instancia del SDK de MercadoPago."""
     if mercadopago is None:
-        raise RuntimeError(
-            "El paquete 'mercadopago' no está instalado. "
-            "Instálalo con: pip install mercadopago"
-        )
+        raise RuntimeError("El paquete 'mercadopago' no está instalado. Instálalo con: pip install mercadopago")
     if not settings.mercadopago_access_token:
-        raise RuntimeError(
-            "MERCADOPAGO_ACCESS_TOKEN no configurado. "
-            "Agrega la variable en el archivo .env"
-        )
+        raise RuntimeError("MERCADOPAGO_ACCESS_TOKEN no configurado. Agrega la variable en el archivo .env")
     return mercadopago.SDK(settings.mercadopago_access_token)
 
 
@@ -139,9 +136,7 @@ def get_payment_status(payment_id: int) -> PaymentResult:
     try:
         result = sdk.payment().get(payment_id)
         payment = result.get("response", {})
-        logger.info(
-            "Pago MP consultado: id=%s status=%s", payment_id, payment.get("status")
-        )
+        logger.info("Pago MP consultado: id=%s status=%s", payment_id, payment.get("status"))
         return PaymentResult(
             payment_id=payment.get("id", payment_id),
             status=payment.get("status", "unknown"),

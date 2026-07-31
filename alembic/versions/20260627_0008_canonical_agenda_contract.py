@@ -20,9 +20,7 @@ def upgrade() -> None:
     connection = op.get_bind()
     count = connection.execute(sa.text("SELECT COUNT(*) FROM agenda_events")).scalar_one()
     if count:
-        raise RuntimeError(
-            f"Cannot remove parallel Agenda table agenda_events: it contains {count} rows"
-        )
+        raise RuntimeError(f"Cannot remove parallel Agenda table agenda_events: it contains {count} rows")
 
     op.add_column(
         "agenda_recursos",

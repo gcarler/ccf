@@ -36,8 +36,12 @@ def upgrade() -> None:
     # This is a safety net — RLS can be activated per-table as needed.
 
     rls_tables = [
-        "members", "enrollments", "lesson_progress",
-        "notifications", "user_badges", "user_reminders",
+        "members",
+        "enrollments",
+        "lesson_progress",
+        "notifications",
+        "user_badges",
+        "user_reminders",
         "user_ui_preferences",
     ]
 
@@ -54,17 +58,11 @@ def upgrade() -> None:
                 op.execute(f"ALTER TABLE {table_name} ENABLE ROW LEVEL SECURITY")
                 # Permissive default policy — allows all access until restrictive policy added
                 policy_exists = conn.execute(
-                    sa.text(
-                        "SELECT count(*) FROM pg_policies "
-                        "WHERE tablename = :table_name AND schemaname = 'public'"
-                    ),
+                    sa.text("SELECT count(*) FROM pg_policies WHERE tablename = :table_name AND schemaname = 'public'"),
                     {"table_name": table_name},
                 ).scalar()
                 if policy_exists == 0:
-                    op.execute(
-                        f"CREATE POLICY rls_permissive ON {table_name} "
-                        f"FOR ALL USING (true) WITH CHECK (true)"
-                    )
+                    op.execute(f"CREATE POLICY rls_permissive ON {table_name} FOR ALL USING (true) WITH CHECK (true)")
 
     # ─────────────────────────────────────────────
     # 2. ADDITIONAL COVERING INDEXES for hot queries
@@ -218,8 +216,12 @@ def downgrade() -> None:
 
     # Drop RLS policies and disable RLS
     rls_tables = [
-        "members", "enrollments", "lesson_progress",
-        "notifications", "user_badges", "user_reminders",
+        "members",
+        "enrollments",
+        "lesson_progress",
+        "notifications",
+        "user_badges",
+        "user_reminders",
         "user_ui_preferences",
     ]
     for table_name in rls_tables:

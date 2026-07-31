@@ -65,4 +65,3 @@ export function VideoHeroSection({ section }: { section: CmsSection<"video_hero"
 }
 
 // ─── Rich Text ─────────────────────────────────────────────────────────────────
-

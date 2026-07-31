@@ -11,6 +11,7 @@ Revision ID: 20260627_0007_cms_site_base_path
 Revises: 20260627_0006_crm_contract
 Create Date: 2026-06-27
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa

@@ -31,10 +31,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def _col_type(table: str, col: str) -> str:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT data_type FROM information_schema.columns "
-        "WHERE table_name=:t AND column_name=:c"
-    ), {"t": table, "c": col})
+    r = conn.execute(
+        sa.text("SELECT data_type FROM information_schema.columns WHERE table_name=:t AND column_name=:c"),
+        {"t": table, "c": col},
+    )
     row = r.fetchone()
     return row[0] if row else ""
 
@@ -88,17 +88,13 @@ def upgrade() -> None:
         current_type = _col_type(table, col)
         if current_type in ("timestamp with time zone", ""):
             continue
-        conn.execute(sa.text(
-            f"ALTER TABLE {table} ALTER COLUMN {col} TYPE TIMESTAMPTZ "
-            f"USING {col} AT TIME ZONE 'UTC'"
-        ))
+        conn.execute(sa.text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE TIMESTAMPTZ USING {col} AT TIME ZONE 'UTC'"))
 
     if donations_need_change:
         conn.execute(sa.text(_MV_FINANCE_SUMMARY))
-        conn.execute(sa.text(
-            "CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_finance_summary "
-            "ON mv_finance_summary (refreshed_at)"
-        ))
+        conn.execute(
+            sa.text("CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_finance_summary ON mv_finance_summary (refreshed_at)")
+        )
 
 
 def downgrade() -> None:
@@ -107,7 +103,4 @@ def downgrade() -> None:
         current_type = _col_type(table, col)
         if current_type != "timestamp with time zone":
             continue
-        conn.execute(sa.text(
-            f"ALTER TABLE {table} ALTER COLUMN {col} TYPE TIMESTAMP "
-            f"USING {col} AT TIME ZONE 'UTC'"
-        ))
+        conn.execute(sa.text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE TIMESTAMP USING {col} AT TIME ZONE 'UTC'"))

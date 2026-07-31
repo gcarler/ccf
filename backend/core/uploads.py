@@ -48,17 +48,13 @@ def sanitize_filename(filename: str) -> str:
     return FILENAME_PATTERN.sub("_", name)
 
 
-def ensure_allowed_extension(
-    filename: str, allowed: Iterable[str] = ALLOWED_EXTENSIONS
-) -> None:
+def ensure_allowed_extension(filename: str, allowed: Iterable[str] = ALLOWED_EXTENSIONS) -> None:
     ext = Path(filename).suffix.lower().lstrip(".")
     if ext not in allowed:
         raise ValueError(f"File extension '{ext}' is not permitted")
 
 
-def validate_mime_extension_alignment(
-    filename: str, content_type: Optional[str]
-) -> None:
+def validate_mime_extension_alignment(filename: str, content_type: Optional[str]) -> None:
     """Valida que el ``content_type`` declarado por el cliente sea coherente
     con la extensión del archivo. Previene el vector donde un binario
     malicioso es renombrado con extensión benigna y un ``Content-Type``
@@ -85,13 +81,10 @@ def validate_mime_extension_alignment(
     expected = _EXTENSION_CATEGORY_PREFIXES[category]
     ct = (content_type or "").lower().split(";", 1)[0].strip()
     if not ct:
-        raise ValueError(
-            "Content-Type requerido para validar coherencia con la extension"
-        )
+        raise ValueError("Content-Type requerido para validar coherencia con la extension")
     if not any(ct.startswith(prefix) for prefix in expected):
         raise ValueError(
-            f"Content-Type '{content_type}' no coincide con la extension "
-            f"'.{ext}' (categoria esperada: {category})"
+            f"Content-Type '{content_type}' no coincide con la extension '.{ext}' (categoria esperada: {category})"
         )
 
 

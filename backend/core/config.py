@@ -19,12 +19,8 @@ class Settings(BaseSettings):
     )
     secret_key: str = Field(default="change-me")
     encryption_key: str | None = Field(default=None)
-    access_token_expire_minutes: int = Field(
-        default=15
-    )  # 15 min sessions; refresh via HttpOnly cookies
-    refresh_token_expire_days: int = Field(
-        default=180
-    )  # 180 days refresh window (Gmail-like)
+    access_token_expire_minutes: int = Field(default=15)  # 15 min sessions; refresh via HttpOnly cookies
+    refresh_token_expire_days: int = Field(default=180)  # 180 days refresh window (Gmail-like)
     access_token_cookie_name: str = Field(default="mesh_access")
     refresh_token_cookie_name: str = Field(default="mesh_refresh")
     access_token_cookie_secure: bool = Field(default=False)
@@ -83,27 +79,17 @@ class Settings(BaseSettings):
     mercadopago_access_token: str = Field(default="")
     mercadopago_public_key: str = Field(default="")
 
-    google_redirect_uri: str = Field(
-        default="http://localhost:8000/api/v3/auth/google/callback"
-    )
+    google_redirect_uri: str = Field(default="http://localhost:8000/api/v3/auth/google/callback")
 
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @model_validator(mode="after")
     def validate_security_defaults(self) -> "Settings":
         env = (self.environment or "local").strip().lower()
         insecure_secrets = {"", "change-me", "replace-me", "ci-test-only-key"}
 
-        if (
-            env in {"production", "prod", "staging"}
-            and self.secret_key in insecure_secrets
-        ):
-            raise ValueError(
-                "SECRET_KEY must be set to a strong value outside local/test"
-                " environments"
-            )
+        if env in {"production", "prod", "staging"} and self.secret_key in insecure_secrets:
+            raise ValueError("SECRET_KEY must be set to a strong value outside local/test environments")
 
         if env in {"production", "prod", "staging"} and not self.encryption_key:
             raise ValueError("ENCRYPTION_KEY must be set in production environments")
@@ -112,25 +98,22 @@ class Settings(BaseSettings):
         # blocked above; this covers custom env names like "qa", "pre-prod", etc.)
         if env not in {"local", "test", "testing", "ci"} and not self.encryption_key:
             import logging as _logging
+
             _logging.getLogger(__name__).warning(
                 "ENCRYPTION_KEY is not set - encryption will fall back to SECRET_KEY. "
                 "Set ENCRYPTION_KEY for proper key separation."
             )
 
         # Warn if SMTP is unconfigured in non-local environments
-        if env not in {"local", "test", "testing", "ci"} and (
-            not self.smtp_host or self.smtp_host == "localhost"
-        ):
+        if env not in {"local", "test", "testing", "ci"} and (not self.smtp_host or self.smtp_host == "localhost"):
             import logging as _logging
+
             _logging.getLogger(__name__).warning(
                 "SMTP is not configured - email verification and password reset "
                 "emails will not be delivered. Configure SMTP_HOST / SMTP_USER / SMTP_PASSWORD."
             )
 
-        if (
-            env in {"production", "prod", "staging"}
-            and not self.access_token_cookie_secure
-        ):
+        if env in {"production", "prod", "staging"} and not self.access_token_cookie_secure:
             self.access_token_cookie_secure = True
 
         if env not in {"local", "test", "testing", "ci"} and self.database_url.startswith("sqlite"):

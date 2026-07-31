@@ -25,9 +25,11 @@ Revision ID: 20260710_0003
 Revises: 20260710_0002
 Create Date: 2026-07-10 12:00:00.000000
 """
+
 from typing import Optional, Tuple, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # NOTE: we use the SQLAlchemy *core* types (``sa.JSON``, ``sa.UUID(...)``)
@@ -45,16 +47,11 @@ def _col_exists(table: str, col: str) -> bool:
     bind = op.get_bind()
     dialect = bind.dialect.name if bind is not None else ""
     if dialect == "sqlite":
-        rows = bind.execute(
-            sa.text(f"PRAGMA table_info({table})")
-        ).fetchall()
+        rows = bind.execute(sa.text(f"PRAGMA table_info({table})")).fetchall()
         return any(row[1] == col for row in rows)
     return bool(
         bind.execute(
-            sa.text(
-                "SELECT count(*) FROM information_schema.columns "
-                "WHERE table_name = :t AND column_name = :c"
-            ),
+            sa.text("SELECT count(*) FROM information_schema.columns WHERE table_name = :t AND column_name = :c"),
             {"t": table, "c": col},
         ).scalar()
     )
@@ -180,7 +177,7 @@ def upgrade() -> None:
     if not _col_exists("crm_casos", "payload_web"):
         op.add_column(
             "crm_casos",
-            sa.Column("payload_web", JSON, nullable=True),
+            sa.Column("payload_web", sa.JSON(), nullable=True),
         )
 
     # FK + datetime + boolean — drag & drop fields from canonical_versions/
@@ -208,9 +205,7 @@ def upgrade() -> None:
     if not _col_exists("crm_casos", "sla_vencimiento_contacto"):
         op.add_column(
             "crm_casos",
-            sa.Column(
-                "sla_vencimiento_contacto", sa.DateTime(timezone=True), nullable=True
-            ),
+            sa.Column("sla_vencimiento_contacto", sa.DateTime(timezone=True), nullable=True),
         )
     if not _col_exists("crm_casos", "deleted_at"):
         op.add_column(

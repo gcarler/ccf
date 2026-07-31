@@ -5,6 +5,7 @@ Revises: 0461885be9c9
 Create Date: 2026-07-30 03:20:08.828072
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -12,8 +13,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '20260730_0003_drop_legacy_announcements_table'
-down_revision: Union[str, None] = '0461885be9c9'
+revision: str = "20260730_0003_drop_legacy_announcements_table"
+down_revision: Union[str, None] = "0461885be9c9"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

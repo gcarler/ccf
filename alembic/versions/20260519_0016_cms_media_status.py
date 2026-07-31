@@ -18,10 +18,7 @@ depends_on = None
 
 
 def _has_column(inspector: sa.Inspector, table_name: str, column_name: str) -> bool:
-    return any(
-        column.get("name") == column_name
-        for column in inspector.get_columns(table_name)
-    )
+    return any(column.get("name") == column_name for column in inspector.get_columns(table_name))
 
 
 def upgrade() -> None:

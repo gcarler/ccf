@@ -25,6 +25,7 @@ from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 # HELPERS
 # ──────────────────────────────────────────────
 
+
 def _create_role(db: Session, nombre: str, permisos: dict) -> RolPlataforma:
     role = RolPlataforma(nombre=nombre, permisos=permisos)
     db.add(role)
@@ -36,6 +37,7 @@ def _create_role(db: Session, nombre: str, permisos: dict) -> RolPlataforma:
 # ──────────────────────────────────────────────
 # TESTS: Permission taxonomy & expansion
 # ──────────────────────────────────────────────
+
 
 class TestPermissionTaxonomy:
     def test_get_permissions_taxonomy(self, client: TestClient, db_session: Session):
@@ -83,6 +85,7 @@ class TestPermissionTaxonomy:
 # ──────────────────────────────────────────────
 # TESTS: Role permission assignment
 # ──────────────────────────────────────────────
+
 
 class TestRolePermissionAssignment:
     def test_update_role_permissions(self, client: TestClient, db_session: Session):
@@ -137,6 +140,7 @@ class TestRolePermissionAssignment:
 # ──────────────────────────────────────────────
 # TESTS: User override permissions
 # ──────────────────────────────────────────────
+
 
 class TestUserPermissionOverrides:
     def test_set_user_permissions(self, client: TestClient, db_session: Session):
@@ -261,6 +265,7 @@ class TestUserPermissionOverrides:
 # TESTS: Effective permission resolution
 # ──────────────────────────────────────────────
 
+
 class TestEffectivePermissionResolution:
     def test_override_extends_base_role(self, client: TestClient, db_session: Session):
         admin_user, _, _ = seed_admin(db_session, email="admin_resolve@ccf.test", password="test123")
@@ -309,6 +314,7 @@ class TestEffectivePermissionResolution:
 # TESTS: Sede isolation
 # ──────────────────────────────────────────────
 
+
 class TestSedeIsolation:
     def test_admin_cannot_set_permissions_for_foreign_sede_user(self, client: TestClient, db_session: Session):
         admin_user, _, admin_sede = seed_admin(db_session, email="admin_sede_a@ccf.test", password="test123")
@@ -326,10 +332,13 @@ class TestSedeIsolation:
         headers = auth_headers(client, email=admin_user.email, password="test123")
 
         # GET should be 404 due to sede isolation
-        assert client.get(
-            f"/api/admin/users/{foreign_user.id}/permissions",
-            headers=headers,
-        ).status_code == 404
+        assert (
+            client.get(
+                f"/api/admin/users/{foreign_user.id}/permissions",
+                headers=headers,
+            ).status_code
+            == 404
+        )
 
         # PUT should also be 404
         resp = client.put(
@@ -343,6 +352,7 @@ class TestSedeIsolation:
 # ──────────────────────────────────────────────
 # TESTS: Direct helper coverage
 # ──────────────────────────────────────────────
+
 
 def test_get_user_effective_permissions_with_override(db_session: Session):
     user, _, _ = seed_user_with_role(

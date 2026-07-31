@@ -4,6 +4,7 @@ Documents are keyed by ``page_key`` (e.g. ``wiki_intro``) and scoped by
 the user's sede for multi-tenant isolation. Every PATCH snapshots the
 previous version for history.
 """
+
 from __future__ import annotations
 
 import re
@@ -57,6 +58,7 @@ def _resolve_sede(db: Session, current_user) -> UUID | None:
 def _resolve_persona(db: Session, current_user) -> UUID | None:
     """Resolve the user's persona ID for author tracking."""
     from backend.crud.crm import resolve_persona_id_for_user
+
     return resolve_persona_id_for_user(db, current_user.id)
 
 
@@ -203,8 +205,7 @@ def patch_wiki_page(
         raise HTTPException(status_code=404, detail="wiki page not found")
     persona_id = _resolve_persona(db, current_user)
     return crud_wiki.update_wiki_page(
-        db, row, title=data.title, content=data.content,
-        category=data.category, tags=data.tags, author_id=persona_id
+        db, row, title=data.title, content=data.content, category=data.category, tags=data.tags, author_id=persona_id
     )
 
 

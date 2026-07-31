@@ -131,8 +131,7 @@ def migrate(
             print(f"    Original preserved: {src.name}")
 
     if dry_run:
-        print(f"\n── Dry-run summary: {len(images)} images found, "
-              f"{converted} would be converted, {skipped} skipped ──")
+        print(f"\n── Dry-run summary: {len(images)} images found, {converted} would be converted, {skipped} skipped ──")
     else:
         savings = total_original - total_optimized
         pct = (savings / max(total_original, 1)) * 100

@@ -8,6 +8,7 @@ Revision ID: 20260524_0029
 Revises: 20260524_0028
 Create Date: 2026-05-24
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -36,9 +37,7 @@ def upgrade() -> None:
     )
     op.add_column(
         "communication_logs",
-        sa.Column(
-            "leader_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=True, index=True
-        ),
+        sa.Column("leader_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=True, index=True),
     )
     op.add_column(
         "communication_logs",
@@ -92,9 +91,7 @@ def upgrade() -> None:
     )
     op.add_column(
         "donations",
-        sa.Column(
-            "member_id", sa.Integer(), sa.ForeignKey("members.id"), nullable=True, index=True
-        ),
+        sa.Column("member_id", sa.Integer(), sa.ForeignKey("members.id"), nullable=True, index=True),
     )
     op.add_column(
         "donations",

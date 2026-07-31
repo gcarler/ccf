@@ -30,12 +30,8 @@ from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 
 def _seed_two_sedes(db_session):
-    admin_a, persona_a, sede_a = seed_admin(
-        db_session, email="cmsFase5A@example.com", password="testpass123"
-    )
-    admin_b, persona_b, sede_b = seed_admin(
-        db_session, email="cmsFase5B@example.com", password="testpass123"
-    )
+    admin_a, persona_a, sede_a = seed_admin(db_session, email="cmsFase5A@example.com", password="testpass123")
+    admin_b, persona_b, sede_b = seed_admin(db_session, email="cmsFase5B@example.com", password="testpass123")
     assert sede_a.id != sede_b.id
     return (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b)
 
@@ -106,8 +102,7 @@ def test_cms_pastoral_profile_update_blocks_cross_sede_idor(client, db_session):
         },
     )
     assert resp.status_code == 404, (
-        f"LEAK IDOR: admin A editó pastor de sede_b → "
-        f"status {resp.status_code}; body={resp.text}"
+        f"LEAK IDOR: admin A editó pastor de sede_b → status {resp.status_code}; body={resp.text}"
     )
     assert "BIO INYECTADA" not in resp.text
 
@@ -129,8 +124,7 @@ def test_cms_pastoral_profile_update_allows_local_pastor(client, db_session):
         json={"bio_short": "Pastor local actualizado"},
     )
     assert resp.status_code == 200, (
-        f"Regresión: admin A no pudo editar pastor local "
-        f"(status {resp.status_code}): {resp.text}"
+        f"Regresión: admin A no pudo editar pastor local (status {resp.status_code}): {resp.text}"
     )
     db_session.refresh(pastor_a)
     assert pastor_a.bio_short == "Pastor local actualizado"
@@ -152,15 +146,14 @@ def test_cms_pastoral_team_list_filters_by_user_sede(client, db_session):
     assert str(pastor_b1.id) not in ids
 
 
-def test_cms_pastoral_team_list_allows_both_for_superadmin(
-    client, db_session, monkeypatch
-):
+def test_cms_pastoral_team_list_allows_both_for_superadmin(client, db_session, monkeypatch):
     (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
     pastor_a = _pastor_in(db_session, sede_a.id, "superadmin-list-a")
     pastor_b = _pastor_in(db_session, sede_b.id, "superadmin-list-b")
     db_session.commit()
 
     from backend.api._cms_helpers import _shared as _cms_shared_module
+
     monkeypatch.setattr(
         _cms_shared_module,
         "_actor_sede_or_none",
@@ -288,8 +281,11 @@ def test_public_testimonials_feed_remains_global(client, db_session):
     db_session.add(site)
     db_session.flush()
     cat = models.CmsCategory(
-        id=_uuid.uuid4(), site_id=site.id, slug="testimonials",
-        name="Testimonials", is_active=True,
+        id=_uuid.uuid4(),
+        site_id=site.id,
+        slug="testimonials",
+        name="Testimonials",
+        is_active=True,
     )
     db_session.add(cat)
     db_session.commit()
@@ -316,8 +312,11 @@ def test_public_announcements_feed_remains_global(client, db_session):
     db_session.add(site)
     db_session.flush()
     cat = models.CmsCategory(
-        id=_uuid.uuid4(), site_id=site.id, slug="announcements",
-        name="Announcements", is_active=True,
+        id=_uuid.uuid4(),
+        site_id=site.id,
+        slug="announcements",
+        name="Announcements",
+        is_active=True,
     )
     db_session.add(cat)
     db_session.commit()

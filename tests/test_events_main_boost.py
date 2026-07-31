@@ -4,6 +4,7 @@ Targets: update_event, delete_event, get_event_detail, update_event_audience,
 global analytics (all periods), dashboard stats, event analytics,
 CSV export, role CRUD with cascade, persona attendance history.
 """
+
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
@@ -34,7 +35,8 @@ def full(client, db_session):
     personas = []
     for i in range(10):
         p = models.Persona(
-            first_name=f"U{i}", last_name=f"T{i}",
+            first_name=f"U{i}",
+            last_name=f"T{i}",
             email=f"u{i}_{uuid.uuid4().hex[:6]}@t.com",
             phone=f"+5730011122{i:02d}",
             spiritual_status=["Miembro", "Visitante", "Nuevo", "Activo"][i % 4],
@@ -66,11 +68,14 @@ def full(client, db_session):
 
     for i, ev in enumerate(events):
         for p in personas[:4]:
-            db_session.add(models.EventAttendance(
-                event_id=ev.id, persona_id=p.id,
-                session_date=ev.event_date.date() if ev.event_date else date.today(),
-                attended=i % 2 == 0,
-            ))
+            db_session.add(
+                models.EventAttendance(
+                    event_id=ev.id,
+                    persona_id=p.id,
+                    session_date=ev.event_date.date() if ev.event_date else date.today(),
+                    attended=i % 2 == 0,
+                )
+            )
     db_session.commit()
 
     pipe = PipelineCRM(sede_id=sede.id, nombre="D", tipo=TipoPipelineEnum.NUEVOS_VISITANTES)
@@ -84,7 +89,9 @@ def full(client, db_session):
     db_session.add(cat)
     db_session.flush()
     strategy = EstrategiaEvangelismo(
-        nombre="E", sede_id=sede.id, frecuencia="semanal",
+        nombre="E",
+        sede_id=sede.id,
+        frecuencia="semanal",
         categoria_id=cat.id,
         fecha_inicio=datetime.now(timezone.utc) - timedelta(days=90),
         fecha_fin=datetime.now(timezone.utc) + timedelta(days=90),
@@ -95,9 +102,13 @@ def full(client, db_session):
     groups = []
     for i in range(3):
         g = GrupoEvangelismo(
-            nombre=f"G{i}", ubicacion=f"U{i}", sede_id=sede.id,
-            lider_persona_id=personas[i].id, codigo=f"G{uuid.uuid4().hex[:6]}",
-            capacidad=20, estrategia_id=strategy.id,
+            nombre=f"G{i}",
+            ubicacion=f"U{i}",
+            sede_id=sede.id,
+            lider_persona_id=personas[i].id,
+            codigo=f"G{uuid.uuid4().hex[:6]}",
+            capacidad=20,
+            estrategia_id=strategy.id,
         )
         db_session.add(g)
         groups.append(g)
@@ -114,7 +125,8 @@ def full(client, db_session):
     for g in groups:
         for j in range(3):
             s = SesionGrupo(
-                grupo_id=g.id, tema_estudio=f"S{j}",
+                grupo_id=g.id,
+                tema_estudio=f"S{j}",
                 fecha_sesion=datetime.now(timezone.utc) - timedelta(days=30 - j * 7),
             )
             db_session.add(s)
@@ -124,9 +136,7 @@ def full(client, db_session):
         db_session.refresh(s)
 
     for s in sessions:
-        for pg in db_session.query(ParticipanteGrupo).filter(
-            ParticipanteGrupo.grupo_id == s.grupo_id
-        ).limit(2).all():
+        for pg in db_session.query(ParticipanteGrupo).filter(ParticipanteGrupo.grupo_id == s.grupo_id).limit(2).all():
             db_session.add(Asistencia(sesion_id=s.id, persona_id=pg.persona_id, estado="ASISTIO"))
     db_session.commit()
 
@@ -135,9 +145,16 @@ def full(client, db_session):
 
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
-        "c": client, "h": headers, "sede": sede, "personas": personas,
-        "events": events, "groups": groups, "sessions": sessions,
-        "admin": admin, "admin_persona": admin_persona, "strategy": strategy,
+        "c": client,
+        "h": headers,
+        "sede": sede,
+        "personas": personas,
+        "events": events,
+        "groups": groups,
+        "sessions": sessions,
+        "admin": admin,
+        "admin_persona": admin_persona,
+        "strategy": strategy,
     }
 
 
@@ -145,25 +162,38 @@ class TestEventsMainBoost:
     def test_update_event_all_fields(self, full):
         c, h, events = full["c"], full["h"], full["events"]
         ev = events[0]
-        resp = c.put(f"/api/evangelism/events/{ev.id}", json={
-            "name": "Updated",
-            "description": "Updated desc",
-            "location": "New Location",
-            "event_type": "ONE_TIME",
-            "target_audience": "ALL",
-            "status": "ACTIVE",
-            "cancellation_reason": None,
-            "start_time": "10:00",
-            "end_time": "12:00",
-            "day_of_week": 3,
-            "month_day": "15",
-            "fixed_date": datetime.now(timezone.utc).isoformat(),
-        }, headers=h)
+        resp = c.put(
+            f"/api/evangelism/events/{ev.id}",
+            json={
+                "name": "Updated",
+                "description": "Updated desc",
+                "location": "New Location",
+                "event_type": "ONE_TIME",
+                "target_audience": "ALL",
+                "status": "ACTIVE",
+                "cancellation_reason": None,
+                "start_time": "10:00",
+                "end_time": "12:00",
+                "day_of_week": 3,
+                "month_day": "15",
+                "fixed_date": datetime.now(timezone.utc).isoformat(),
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code), resp.text
 
     def test_update_event_partial_fields(self, full):
         c, h, events = full["c"], full["h"], full["events"]
-        for field in ["name", "description", "location", "status", "start_time", "end_time", "day_of_week", "month_day"]:
+        for field in [
+            "name",
+            "description",
+            "location",
+            "status",
+            "start_time",
+            "end_time",
+            "day_of_week",
+            "month_day",
+        ]:
             c.put(f"/api/evangelism/events/{events[1].id}", json={field: "X"}, headers=h)
 
     def test_update_event_not_found(self, full):
@@ -190,12 +220,16 @@ class TestEventsMainBoost:
     def test_get_event_detail_past_event(self, full):
         c, h = full["c"], full["h"]
         from backend import models
+
         ev = models.CrmEvent(
-            name="Past", event_date=datetime.now(timezone.utc) - timedelta(days=30),
-            sede_id=full["sede"].id, status="SCHEDULED",
+            name="Past",
+            event_date=datetime.now(timezone.utc) - timedelta(days=30),
+            sede_id=full["sede"].id,
+            status="SCHEDULED",
         )
         full["c"]._db_session = None
         from tests.conftest import TestingSessionLocal
+
         db = TestingSessionLocal()
         db.add(ev)
         db.commit()
@@ -207,9 +241,13 @@ class TestEventsMainBoost:
 
     def test_update_event_audience(self, full):
         c, h, events = full["c"], full["h"], full["events"]
-        resp = c.put(f"/api/evangelism/events/{events[0].id}/audience", json={
-            "target_audience": "ALL",
-        }, headers=h)
+        resp = c.put(
+            f"/api/evangelism/events/{events[0].id}/audience",
+            json={
+                "target_audience": "ALL",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_update_event_audience_not_found(self, full):
@@ -277,11 +315,15 @@ class TestEventsMainBoost:
 
     def test_create_role(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/evangelism/roles", json={
-            "name": f"Role_{uuid.uuid4().hex[:6]}",
-            "color": "#FF0000",
-            "is_leadership": False,
-        }, headers=h)
+        resp = c.post(
+            "/api/evangelism/roles",
+            json={
+                "name": f"Role_{uuid.uuid4().hex[:6]}",
+                "color": "#FF0000",
+                "is_leadership": False,
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_create_role_duplicate(self, full):
@@ -292,15 +334,27 @@ class TestEventsMainBoost:
 
     def test_update_role(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/evangelism/roles", json={
-            "name": f"Upd_{uuid.uuid4().hex[:6]}", "color": "#000", "is_leadership": False,
-        }, headers=h)
+        resp = c.post(
+            "/api/evangelism/roles",
+            json={
+                "name": f"Upd_{uuid.uuid4().hex[:6]}",
+                "color": "#000",
+                "is_leadership": False,
+            },
+            headers=h,
+        )
         if resp.status_code in (200, 201):
             rid = resp.json().get("id")
             if rid:
-                resp2 = c.put(f"/api/evangelism/roles/{rid}", json={
-                    "name": "Updated", "color": "#00FF00", "is_leadership": True,
-                }, headers=h)
+                resp2 = c.put(
+                    f"/api/evangelism/roles/{rid}",
+                    json={
+                        "name": "Updated",
+                        "color": "#00FF00",
+                        "is_leadership": True,
+                    },
+                    headers=h,
+                )
                 assert _ok(resp2.status_code)
 
     def test_update_role_not_found(self, full):
@@ -318,8 +372,16 @@ class TestEventsMainBoost:
 
     def test_delete_role(self, full):
         c, h = full["c"], full["h"]
-        r1 = c.post("/api/evangelism/roles", json={"name": f"Del_{uuid.uuid4().hex[:6]}", "color": "#000", "is_leadership": False}, headers=h)
-        r2 = c.post("/api/evangelism/roles", json={"name": f"Fb_{uuid.uuid4().hex[:6]}", "color": "#111", "is_leadership": False}, headers=h)
+        r1 = c.post(
+            "/api/evangelism/roles",
+            json={"name": f"Del_{uuid.uuid4().hex[:6]}", "color": "#000", "is_leadership": False},
+            headers=h,
+        )
+        r2 = c.post(
+            "/api/evangelism/roles",
+            json={"name": f"Fb_{uuid.uuid4().hex[:6]}", "color": "#111", "is_leadership": False},
+            headers=h,
+        )
         if r1.status_code in (200, 201) and r2.status_code in (200, 201):
             rid = r1.json().get("id")
             fid = r2.json().get("id")
@@ -329,7 +391,11 @@ class TestEventsMainBoost:
 
     def test_delete_role_same_fallback(self, full):
         c, h = full["c"], full["h"]
-        r = c.post("/api/evangelism/roles", json={"name": f"Same_{uuid.uuid4().hex[:6]}", "color": "#000", "is_leadership": False}, headers=h)
+        r = c.post(
+            "/api/evangelism/roles",
+            json={"name": f"Same_{uuid.uuid4().hex[:6]}", "color": "#000", "is_leadership": False},
+            headers=h,
+        )
         if r.status_code in (200, 201):
             rid = r.json().get("id")
             if rid:
@@ -355,9 +421,13 @@ class TestEventsMainBoost:
 
     def test_create_event(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/evangelism/events/", json={
-            "name": f"New_{uuid.uuid4().hex[:6]}",
-            "event_date": datetime.now(timezone.utc).isoformat(),
-            "location": "Test",
-        }, headers=h)
+        resp = c.post(
+            "/api/evangelism/events/",
+            json={
+                "name": f"New_{uuid.uuid4().hex[:6]}",
+                "event_date": datetime.now(timezone.utc).isoformat(),
+                "location": "Test",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)

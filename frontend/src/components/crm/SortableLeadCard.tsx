@@ -3,10 +3,10 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { 
-    ChevronRight, 
-    Phone, 
-    MessageCircle, 
+import {
+    ChevronRight,
+    Phone,
+    MessageCircle,
     Clock
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -94,7 +94,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                             stroke="currentColor"
                             strokeWidth="2.5"
                             strokeDasharray={circumference}
-                            style={{ 
+                            style={{
                                 strokeDashoffset: offset,
                                 transition: 'stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)'
                             }}
@@ -114,7 +114,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                         <div className="absolute -top-1 -right-1 size-3 rounded-full bg-[hsl(var(--warning))] border-2 border-white dark:border-[hsl(var(--border))] z-20 animate-bounce" />
                     )}
                 </div>
-                
+
                 <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex items-center justify-between gap-2">
                         <h4 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-sm leading-tight truncate group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors">
@@ -131,14 +131,14 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
 
             {/* Quick Actions (Hover Reveal) */}
             <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
-                <button 
+                <button
                     onClick={(e) => { e.stopPropagation(); window.open(`tel:${lead.phone}`); }}
                     className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-white transition-all shadow-sm"
                     aria-label="Llamar"
                 >
                     <Phone size={12} />
                 </button>
-                <button 
+                <button
                     onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`); }}
                     className="size-7 rounded-lg bg-success-soft dark:bg-[hsl(var(--success))]/10 text-success-text dark:text-[hsl(var(--success))] flex items-center justify-center hover:bg-[hsl(var(--success))] hover:text-white transition-all shadow-sm"
                     aria-label="WhatsApp"

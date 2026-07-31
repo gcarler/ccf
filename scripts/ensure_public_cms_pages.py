@@ -29,8 +29,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from sqlalchemy import func  # noqa: E402
-from sqlalchemy import text  # noqa: E402
+from sqlalchemy import (
+    func,  # noqa: E402
+    text,  # noqa: E402
+)
 
 from backend import models  # noqa: E402
 from backend.core.database import SessionLocal  # noqa: E402
@@ -51,34 +53,42 @@ PUBLIC_PAGES = {
 
 
 def _load_site_id(db, site_key: str):
-    row = db.execute(
-        text(
-            """
+    row = (
+        db.execute(
+            text(
+                """
             SELECT id
             FROM cms_sites
             WHERE site_key = :site_key
             LIMIT 1
             """
-        ),
-        {"site_key": site_key},
-    ).mappings().first()
+            ),
+            {"site_key": site_key},
+        )
+        .mappings()
+        .first()
+    )
     if row is None:
         raise RuntimeError(f"CMS site {site_key!r} not found")
     return row["id"]
 
 
 def _load_page_row(db, site_id, slug: str):
-    row = db.execute(
-        text(
-            """
+    row = (
+        db.execute(
+            text(
+                """
             SELECT id, site_id, slug, title, status, seo_json, published_version_id
             FROM cms_pages
             WHERE site_id = :site_id AND slug = :slug
             LIMIT 1
             """
-        ),
-        {"site_id": str(site_id), "slug": slug},
-    ).mappings().first()
+            ),
+            {"site_id": str(site_id), "slug": slug},
+        )
+        .mappings()
+        .first()
+    )
     return dict(row) if row is not None else None
 
 
@@ -144,9 +154,7 @@ def ensure_page(db, site_id, slug: str, title: str) -> tuple[bool, bool]:
         needs_publish = True
     else:
         current_version = (
-            db.query(models.CmsPageVersion)
-            .filter(models.CmsPageVersion.id == page_published_version_id)
-            .first()
+            db.query(models.CmsPageVersion).filter(models.CmsPageVersion.id == page_published_version_id).first()
         )
         if not current_version or not current_version.snapshot_json:
             needs_publish = True

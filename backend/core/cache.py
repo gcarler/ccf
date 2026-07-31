@@ -83,6 +83,8 @@ class MemoryRedis:
 
 
 def _create_redis_client():
+    if settings.environment.lower() in {"test", "testing", "ci"}:
+        return MemoryRedis()
     try:
         client = redis.Redis.from_url(settings.redis_url, decode_responses=True)
         client.ping()

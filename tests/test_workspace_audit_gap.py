@@ -1,6 +1,7 @@
 """
 Direct unit tests for backend.api.workspace_shared._audit.
 """
+
 from __future__ import annotations
 
 from backend.api.workspace_shared import _audit as audit

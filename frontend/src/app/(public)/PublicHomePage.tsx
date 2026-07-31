@@ -172,7 +172,7 @@ export default function PublicHomePage() {
     const hasHero = homeSlides.length > 0 || heroTitleLead || heroTitleAccent || heroTitleTail || heroDescription;
 
     return (
-        
+
             <main>
             {/* ─── HERO ─────────────────────────────────────────────── */}
             {hasHero && (

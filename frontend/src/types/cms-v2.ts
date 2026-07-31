@@ -450,8 +450,3 @@ export interface CmsPostCommentsPaginated {
   limit: number;
   pending_count: number;
 }
-
-
-
-
-

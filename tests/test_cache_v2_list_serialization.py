@@ -80,9 +80,7 @@ class TestToJsonable:
         # cached values started with "id=UUID(" which JSON-serializes
         # as a quoted Python-style debug string.
         for item in out:
-            assert not str(item["id"]).startswith("id="), (
-                f"UUID leaked as str(model) debug repr: {item!r}"
-            )
+            assert not str(item["id"]).startswith("id="), f"UUID leaked as str(model) debug repr: {item!r}"
 
     def test_nested_dict_with_model_values(self):
         from backend.core.cache_v2 import _to_jsonable
@@ -140,6 +138,35 @@ class TestToJsonable:
         out = _to_jsonable(_Exotic())
         assert out == "EXOTIC_REPR"
 
+    def test_circular_reference_break(self):
+        from backend.core.cache_v2 import _to_jsonable
+
+        a = {}
+        b = {"parent": a}
+        a["child"] = b
+
+        out = _to_jsonable(a)
+        assert out is not None
+        assert out["child"]["parent"] is None
+
+    def test_circular_sqlalchemy_model(self):
+        from backend.core.cache_v2 import _to_jsonable
+
+        class MockSA:
+            def __init__(self, name):
+                self.name = name
+                self._sa_instance_state = True
+
+        site = MockSA("site")
+        page = MockSA("page")
+        site.__dict__["pages"] = [page]
+        page.__dict__["site"] = site
+
+        out = _to_jsonable(site)
+        assert out["name"] == "site"
+        assert out["pages"][0]["name"] == "page"
+        assert out["pages"][0]["site"] is None
+
 
 # End-to-end cache_v2 decorator behavior
 #
@@ -195,8 +222,7 @@ class TestCachedPublicListOfModels:
         assert isinstance(parsed_back, list)
         for item in parsed_back:
             assert isinstance(item, dict), (
-                f"Cache stored list element as {type(item).__name__}; "
-                f"this is the original 500 root cause regressing"
+                f"Cache stored list element as {type(item).__name__}; this is the original 500 root cause regressing"
             )
             assert "id" in item
             assert "name" in item

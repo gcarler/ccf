@@ -5,6 +5,7 @@ Endpoints:
   - POST /api/evangelism/multiplication/split   — divide un grupo en dos
   - GET  /api/evangelism/multiplication/history — historial de multiplicaciones
 """
+
 from __future__ import annotations
 
 import logging
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 # ── Pydantic schemas ─────────────────────────────────────────────────────────
+
 
 class SplitRequest(BaseModel):
     grupo_id: UUID
@@ -94,6 +96,7 @@ class MultiplicationCheckItem(BaseModel):
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 def _count_personas(db: Session, grupo_id: UUID) -> int:
     return (
         db.query(models.ParticipanteGrupo)
@@ -126,6 +129,7 @@ def _serialize_grupo(grupo: models.GrupoEvangelismo, db: Session) -> dict:
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
 
+
 @router.get("/multiplication/check", response_model=List[MultiplicationCheckItem])
 def check_multiplication(
     umbral: int = Query(15, description="Umbral de personas para sugerir división"),
@@ -145,11 +149,7 @@ def check_multiplication(
     for grupo in grupos:
         total = _count_personas(db, grupo.id)
         excede = total > umbral
-        lider_nombre = (
-            f"{grupo.lider.first_name} {grupo.lider.last_name}"
-            if grupo.lider
-            else "Sin líder"
-        )
+        lider_nombre = f"{grupo.lider.first_name} {grupo.lider.last_name}" if grupo.lider else "Sin líder"
 
         if excede:
             mitad = total // 2
@@ -160,14 +160,16 @@ def check_multiplication(
         else:
             sugerencia = "Aún no alcanza el umbral mínimo para división."
 
-        resultados.append({
-            "grupo_id": grupo.id,
-            "grupo_nombre": grupo.nombre,
-            "lider_nombre": lider_nombre,
-            "total_personas": total,
-            "excede_umbral": excede,
-            "sugerencia": sugerencia,
-        })
+        resultados.append(
+            {
+                "grupo_id": grupo.id,
+                "grupo_nombre": grupo.nombre,
+                "lider_nombre": lider_nombre,
+                "total_personas": total,
+                "excede_umbral": excede,
+                "sugerencia": sugerencia,
+            }
+        )
 
     return resultados
 
@@ -196,17 +198,13 @@ def split_group(
         raise HTTPException(status_code=404, detail="Grupo original no encontrado.")
 
     if not grupo_original.activo:
-        raise HTTPException(
-            status_code=400, detail="No se puede dividir un grupo inactivo."
-        )
+        raise HTTPException(status_code=400, detail="No se puede dividir un grupo inactivo.")
 
     # ── Validar nuevo líder ──
     try:
         nuevo_lider_uuid = _uuid.UUID(payload.nuevo_lider_id)
     except (ValueError, AttributeError):
-        raise HTTPException(
-            status_code=400, detail="nuevo_lider_id debe ser un UUID válido."
-        )
+        raise HTTPException(status_code=400, detail="nuevo_lider_id debe ser un UUID válido.")
 
     persona_q = db.query(models.Persona).filter(models.Persona.id == nuevo_lider_uuid)
     if user_sede is not None:
@@ -315,19 +313,17 @@ def multiplication_history(
 
     resultados: list[dict] = []
     for grupo in hijos:
-        resultados.append({
-            "grupo_id": grupo.id,
-            "grupo_nombre": grupo.nombre,
-            "parent_group_id": grupo.parent_group_id,
-            "parent_group_nombre": grupo.parent_group.nombre if grupo.parent_group else None,
-            "notes_historial": grupo.notes_historial,
-            "created_at": grupo.created_at.isoformat() if grupo.created_at else None,
-            "personas_actuales": _count_personas(db, grupo.id),
-            "lider_nombre": (
-                f"{grupo.lider.first_name} {grupo.lider.last_name}"
-                if grupo.lider
-                else None
-            ),
-        })
+        resultados.append(
+            {
+                "grupo_id": grupo.id,
+                "grupo_nombre": grupo.nombre,
+                "parent_group_id": grupo.parent_group_id,
+                "parent_group_nombre": grupo.parent_group.nombre if grupo.parent_group else None,
+                "notes_historial": grupo.notes_historial,
+                "created_at": grupo.created_at.isoformat() if grupo.created_at else None,
+                "personas_actuales": _count_personas(db, grupo.id),
+                "lider_nombre": (f"{grupo.lider.first_name} {grupo.lider.last_name}" if grupo.lider else None),
+            }
+        )
 
     return resultados

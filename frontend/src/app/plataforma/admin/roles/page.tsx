@@ -170,7 +170,7 @@ export default function RolesPage() {
 
     return (
         <AdminShell breadcrumbs={[{ label: 'Administración', href: '/plataforma/admin' }, { label: 'Roles', href: '/plataforma/admin/roles' }]}>
-            <AdminHero 
+            <AdminHero
                 title="Gestión de Roles"
                 description="Configura los permisos granulares (RBAC) para el sistema"
                 primaryAction={{
@@ -189,7 +189,7 @@ export default function RolesPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {roles.map(role => (
-                            <div 
+                            <div
                                 key={role.id}
                                 onClick={() => openEditDrawer(role)}
                                 className="bg-[hsl(var(--bg-primary))] rounded-lg p-3 border border-[hsl(var(--border))] shadow-xl shadow-black/10/20 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group"
@@ -243,7 +243,7 @@ export default function RolesPage() {
                 <div className="space-y-3 p-1">
                     <div className="space-y-2">
                         <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2">Nombre del Rol</label>
-                        <input 
+                        <input
                             type="text"
                             value={editingRole.name || ''}
                             onChange={e => setEditingRole({...editingRole, name: e.target.value})}
@@ -267,8 +267,8 @@ export default function RolesPage() {
                                         {perms.map(p => {
                                             const isActive = editingRole.permissions?.includes(p);
                                             return (
-                                                <div 
-                                                    key={p} 
+                                                <div
+                                                    key={p}
                                                     onClick={() => togglePermission(p)}
                                                     className={`flex items-start gap-4 p-4 rounded-md cursor-pointer border transition-all ${isActive ? 'bg-info-soft border-[hsl(var(--info)/25%)]' : 'bg-[hsl(var(--bg-primary))] border-[hsl(var(--border))] hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))]'}`}
                                                 >

@@ -19,6 +19,7 @@ Status mapping:
 The migration is idempotent: posts whose ``id`` already exists in
 ``cms_posts`` are skipped.
 """
+
 import uuid
 from typing import Sequence, Union
 
@@ -62,17 +63,13 @@ def upgrade() -> None:
     cms_post_categories = metadata.tables["cms_post_categories"]
 
     # Cache existing post IDs to avoid duplicates.
-    existing_post_ids = {
-        str(row[0]) for row in bind.execute(sa.select(cms_posts.c.id))
-    }
+    existing_post_ids = {str(row[0]) for row in bind.execute(sa.select(cms_posts.c.id))}
 
     site_cache: dict[str, uuid.UUID] = {}
     category_cache: dict[uuid.UUID, uuid.UUID] = {}
 
     # Order by sede_id so we can reuse site/category lookups.
-    rows = bind.execute(
-        sa.select(announcements).order_by(announcements.c.sede_id)
-    ).fetchall()
+    rows = bind.execute(sa.select(announcements).order_by(announcements.c.sede_id)).fetchall()
 
     for row in rows:
         announcement_id = uuid.UUID(str(row.id))

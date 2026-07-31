@@ -1,6 +1,7 @@
 """Massive tests for evangelism_analytics helpers + pastoral helpers + more API endpoints.
 
 Strategy: Test pure functions directly (highest coverage per line), then hit API endpoints."""
+
 import uuid
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
@@ -26,15 +27,18 @@ def client_auth(client, db_session, admin_data):
 # EVANGELISM ANALYTICS — Pure helper functions (0% → high)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestNormalizeRol:
     def test_basic(self):
         from backend.api.evangelism_analytics import _normalize_rol
+
         assert _normalize_rol("Líder") == "lider"
         assert _normalize_rol("PASTOR") == "pastor"
         assert _normalize_rol("Anfitrión") == "anfitrion"
 
     def test_accents(self):
         from backend.api.evangelism_analytics import _normalize_rol
+
         assert _normalize_rol("Asistente") == "asistente"
         assert _normalize_rol("Visitante") == "visitante"
         assert _normalize_rol("Anfitrión") == "anfitrion"
@@ -43,35 +47,41 @@ class TestNormalizeRol:
 class TestRolToFunnelStage:
     def test_lider(self):
         from backend.api.evangelism_analytics import _rol_to_funnel_stage
+
         assert _rol_to_funnel_stage("Líder") == "lider"
         assert _rol_to_funnel_stage("Pastor") == "lider"
         assert _rol_to_funnel_stage("Director") == "lider"
 
     def test_colider(self):
         from backend.api.evangelism_analytics import _rol_to_funnel_stage
+
         assert _rol_to_funnel_stage("Colíder") == "colider"
         assert _rol_to_funnel_stage("Co-Líder") == "colider"
         assert _rol_to_funnel_stage("Asistente del Líder") == "colider"
 
     def test_anfitrion(self):
         from backend.api.evangelism_analytics import _rol_to_funnel_stage
+
         assert _rol_to_funnel_stage("Anfitrión") == "anfitrion"
         assert _rol_to_funnel_stage("Anfitrión del grupo") == "anfitrion"
 
     def test_asistente(self):
         from backend.api.evangelism_analytics import _rol_to_funnel_stage
+
         assert _rol_to_funnel_stage("Asistente") == "asistente"
         assert _rol_to_funnel_stage("Colaborador") == "asistente"
         assert _rol_to_funnel_stage("Apoyo") == "asistente"
 
     def test_visitante(self):
         from backend.api.evangelism_analytics import _rol_to_funnel_stage
+
         assert _rol_to_funnel_stage("Visitante") == "visitante"
         assert _rol_to_funnel_stage("Invitado") == "visitante"
         assert _rol_to_funnel_stage("Nuevo") == "visitante"
 
     def test_personalizado(self):
         from backend.api.evangelism_analytics import _rol_to_funnel_stage
+
         assert _rol_to_funnel_stage("Musicólogo") == "personalizado"
         assert _rol_to_funnel_stage("") == "personalizado"
 
@@ -79,6 +89,7 @@ class TestRolToFunnelStage:
 class TestParsePeriod:
     def test_valid(self):
         from backend.api.evangelism_analytics import _parse_period
+
         assert _parse_period("7d") == 7
         assert _parse_period("30d") == 30
         assert _parse_period("90d") == 90
@@ -87,6 +98,7 @@ class TestParsePeriod:
 
     def test_invalid(self):
         from backend.api.evangelism_analytics import _parse_period
+
         assert _parse_period("invalid") == 30
         assert _parse_period("") == 30
 
@@ -94,12 +106,14 @@ class TestParsePeriod:
 class TestDateRange:
     def test_date_range(self):
         from backend.api.evangelism_analytics import _date_range
+
         start, end = _date_range(30)
         assert (end - start).days == 30
         assert end > start
 
     def test_prev_range(self):
         from backend.api.evangelism_analytics import _prev_range
+
         start, end = _prev_range(30)
         assert (end - start).days == 30
         now = datetime.now(timezone.utc)
@@ -109,11 +123,13 @@ class TestDateRange:
 class TestDelta:
     def test_delta_normal(self):
         from backend.api.evangelism_analytics import _delta
+
         assert _delta(150, 100) == 50.0
         assert _delta(80, 100) == -20.0
 
     def test_delta_zero_prev(self):
         from backend.api.evangelism_analytics import _delta
+
         assert _delta(10, 0) == 100.0
         assert _delta(0, 0) == 0.0
 
@@ -159,9 +175,11 @@ class TestEvangelismAnalyticsEndpoints:
 # PASTORAL — Helper functions
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestPastoralHelpers:
     def test_get_user_role(self):
         from backend.api.crm.pastoral import _get_user_role
+
         user = MagicMock()
         user.role = "admin"
         user.rol_plataforma = None
@@ -169,6 +187,7 @@ class TestPastoralHelpers:
 
     def test_get_user_role_from_plataforma(self):
         from backend.api.crm.pastoral import _get_user_role
+
         user = MagicMock()
         user.role = ""
         user.rol_plataforma = MagicMock()
@@ -177,12 +196,14 @@ class TestPastoralHelpers:
 
     def test_payload_key(self):
         from backend.api.crm.pastoral import _payload_key
+
         key = _payload_key("stage")
         assert "stage" in key
 
     def test_stage_to_estado(self):
         from backend.api.crm.pastoral import _stage_to_estado
         from backend.models_crm_pipeline import EstadoCasoEnum
+
         assert _stage_to_estado("consolidated") == EstadoCasoEnum.RESUELTO_EXITO
         assert _stage_to_estado("lost") == EstadoCasoEnum.CERRADO_PERDIDO
         assert _stage_to_estado("call") == EstadoCasoEnum.ESPERANDO_RESPUESTA
@@ -193,6 +214,7 @@ class TestPastoralHelpers:
 
     def test_update_case_field_on_crm(self):
         from backend.api.crm.pastoral import _update_case_field
+
         case = MagicMock(spec=["payload_web", "__class__"])
         case.__class__ = MagicMock()
         case.payload_web = {}
@@ -203,6 +225,7 @@ class TestPastoralHelpers:
         from fastapi import HTTPException
 
         from backend.api.crm.pastoral import _get_case_or_404
+
         with pytest.raises(HTTPException) as exc_info:
             _get_case_or_404(db_session, str(uuid.uuid4()), None)
         assert exc_info.value.status_code == 404
@@ -249,9 +272,11 @@ class TestPastoralEndpoints:
 # CRM SHARED — Helper functions
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCRMShared:
     def test_persona_full_name(self):
         from backend.api.crm._shared import _persona_full_name
+
         persona = MagicMock()
         persona.nombre_completo = "Juan Pérez"
         persona.first_name = "Juan"
@@ -261,6 +286,7 @@ class TestCRMShared:
 
     def test_persona_full_name_empty(self):
         from backend.api.crm._shared import _persona_full_name
+
         persona = MagicMock()
         persona.nombre_completo = ""
         persona.first_name = ""
@@ -270,11 +296,13 @@ class TestCRMShared:
 
     def test_utc_now(self):
         from backend.api.crm._shared import utc_now
+
         result = utc_now()
         assert result.tzinfo == timezone.utc
 
     def test_serialize_task(self):
         from backend.api.crm._shared import _serialize_task
+
         task = MagicMock()
         task.id = uuid.uuid4()
         task.titulo = "Test"
@@ -294,6 +322,7 @@ class TestCRMShared:
 # ═══════════════════════════════════════════════════════════════════════════════
 # MORE CRM ENDPOINTS (complementing test_api_massive.py)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCRMPersonasMore:
     def test_list_personas(self, client_auth):
@@ -331,6 +360,7 @@ class TestCRMPersonasMore:
 # MORE EVANGELISM ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEvangelismMore:
     def test_list_asistencias(self, client_auth):
         client, headers, _ = client_auth
@@ -346,6 +376,7 @@ class TestEvangelismMore:
 # ═══════════════════════════════════════════════════════════════════════════════
 # CMS V2 ENDPOINTS (more specific paths)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCMSV2More:
     def test_list_custom_types(self, client_auth):
@@ -418,6 +449,7 @@ class TestCMSV2More:
 # WORKSPACE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestWorkspaceMore:
     def test_config(self, client_auth):
         client, headers, _ = client_auth
@@ -464,13 +496,16 @@ class TestWorkspaceMore:
 # PUBLIC CONTACT TRACKING (public_contact_tracking.py)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestPublicContactTracking:
     def test_tracker_singleton(self):
         from backend.services.public_contact_tracking import tracker
+
         assert tracker is not None
 
     def test_contact_record(self):
         from backend.services.public_contact_tracking import ContactRecord
+
         rec = ContactRecord(
             email="test@test.com",
             phone="+123",
@@ -488,9 +523,11 @@ class TestPublicContactTracking:
 # EMAIL SERVICE (email.py)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEmailService:
     def test_import(self):
         from backend.services import email
+
         assert email is not None
 
 
@@ -498,9 +535,11 @@ class TestEmailService:
 # TASK NOTIFICATIONS (task_notifications.py)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestTaskNotifications:
     def test_import(self):
         from backend.services import task_notifications
+
         assert task_notifications is not None
 
 
@@ -508,9 +547,11 @@ class TestTaskNotifications:
 # AGENTS ORCHESTRATOR (agents/orchestrator.py)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestOrchestrator:
     def test_import(self):
         from backend.agents import orchestrator
+
         assert orchestrator is not None
 
 
@@ -518,23 +559,28 @@ class TestOrchestrator:
 # ANALYTICS (analytics/*)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestAnalyticsMore:
     def test_event_sink(self):
         from backend.analytics import event_sink
+
         assert event_sink is not None
 
     def test_proactive_ia(self):
         from backend.analytics import proactive_ia
+
         assert proactive_ia is not None
 
     def test_queries(self):
         from backend.analytics import queries
+
         assert queries is not None
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MORE AUTH TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAuthMore:
     def test_check_email(self, client):
@@ -551,10 +597,14 @@ class TestAuthMore:
 
     def test_change_password(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/v3/auth/change-password", json={
-            "old_password": "testpass123",
-            "new_password": "newpass123",
-        }, headers=headers)
+        resp = client.post(
+            "/api/v3/auth/change-password",
+            json={
+                "old_password": "testpass123",
+                "new_password": "newpass123",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 400, 401, 422)
 
 
@@ -562,14 +612,28 @@ class TestAuthMore:
 # SCHEMAS COVERAGE (import every schema module)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestAllSchemas:
     def test_import_all_schema_modules(self):
         modules = [
-            "crm", "crm_pipeline", "crm_resources", "crm_automation",
-            "academy", "evangelism", "projects",
-            "auth_v3", "cms", "cms_v2_sections", "governance",
-            "dashboard", "agents", "chat", "notifications",
-            "identity", "_common", "agenda",
+            "crm",
+            "crm_pipeline",
+            "crm_resources",
+            "crm_automation",
+            "academy",
+            "evangelism",
+            "projects",
+            "auth_v3",
+            "cms",
+            "cms_v2_sections",
+            "governance",
+            "dashboard",
+            "agents",
+            "chat",
+            "notifications",
+            "identity",
+            "_common",
+            "agenda",
         ]
         for mod in modules:
             m = __import__(f"backend.schemas.{mod}", fromlist=[mod])

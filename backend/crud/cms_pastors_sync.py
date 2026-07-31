@@ -76,11 +76,7 @@ def _find_persona_by_name(db: Session, full_name: str) -> models.Persona | None:
         return None
     query_tokens = query_slug.split("-")
 
-    candidates = (
-        db.query(models.Persona)
-        .filter(models.Persona.estado_vital != "FALLECIDO")
-        .all()
-    )
+    candidates = db.query(models.Persona).filter(models.Persona.estado_vital != "FALLECIDO").all()
 
     # Tier 1: Exact slug match.
     for p in candidates:
@@ -133,11 +129,7 @@ def get_cms_pastors_section(db: Session) -> models.CmsSection | None:
     site = db.query(models.CmsSite).filter(models.CmsSite.site_key == SITE_KEY).first()
     if not site:
         return None
-    page = (
-        db.query(models.CmsPage)
-        .filter(models.CmsPage.site_id == site.id, models.CmsPage.slug == PAGE_SLUG)
-        .first()
-    )
+    page = db.query(models.CmsPage).filter(models.CmsPage.site_id == site.id, models.CmsPage.slug == PAGE_SLUG).first()
     if not page:
         return None
     return (
@@ -205,7 +197,9 @@ def sync_pastoral_profiles_from_cms_section(db: Session) -> dict[str, int]:
     return {"matched": matched, "created": created, "total": len(pastors)}
 
 
-def build_pastors_section_props(db: Session, *, sede_id: _uuid.UUID | None = None) -> dict[str, list[dict[str, object]]]:
+def build_pastors_section_props(
+    db: Session, *, sede_id: _uuid.UUID | None = None
+) -> dict[str, list[dict[str, object]]]:
     """Build the ``pastors`` section payload from live pastoral Persona records.
 
     Only personas with ``is_pastoral_leader == True`` are included, ordered by
@@ -286,18 +280,10 @@ def _resolve_section_sede_id(db: Session, section: models.CmsSection) -> _uuid.U
     (no sede); callers must treat ``None`` as "no pastors to publish"
     rather than "all pastors" to avoid a cross-sede leak.
     """
-    page = (
-        db.query(models.CmsPage)
-        .filter(models.CmsPage.id == section.page_id)
-        .first()
-    )
+    page = db.query(models.CmsPage).filter(models.CmsPage.id == section.page_id).first()
     if page is None:
         return None
-    site = (
-        db.query(models.CmsSite)
-        .filter(models.CmsSite.id == page.site_id)
-        .first()
-    )
+    site = db.query(models.CmsSite).filter(models.CmsSite.id == page.site_id).first()
     if site is None:
         return None
     return site.sede_id

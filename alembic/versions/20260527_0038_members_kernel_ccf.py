@@ -29,8 +29,10 @@ def upgrade() -> None:
         op.add_column(
             "members",
             sa.Column(
-                "sede_id", sa.Integer(),
-                sa.ForeignKey("sedes.id"), nullable=True,
+                "sede_id",
+                sa.Integer(),
+                sa.ForeignKey("sedes.id"),
+                nullable=True,
             ),
         )
         op.create_index("ix_members_sede", "members", ["sede_id"])
@@ -70,7 +72,8 @@ def upgrade() -> None:
             "historial_ministerial",
             sa.Column("id", sa.Integer(), primary_key=True),
             sa.Column(
-                "miembro_id", sa.Integer(),
+                "miembro_id",
+                sa.Integer(),
                 sa.ForeignKey("members.id", ondelete="CASCADE"),
                 nullable=False,
             ),
@@ -78,7 +81,8 @@ def upgrade() -> None:
             sa.Column("valor_anterior", sa.String(100), nullable=True),
             sa.Column("valor_nuevo", sa.String(100), nullable=False),
             sa.Column(
-                "fecha_cambio", sa.DateTime(),
+                "fecha_cambio",
+                sa.DateTime(),
                 server_default=sa.func.now(),
             ),
             sa.Column("dias_transcurridos", sa.Integer(), nullable=True),
@@ -125,27 +129,22 @@ def _create_trigger():
 
 def _column_exists(table, column):
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM information_schema.columns "
-        "WHERE table_name=:t AND column_name=:c"
-    ), {"t": table, "c": column})
+    r = conn.execute(
+        sa.text("SELECT count(*) FROM information_schema.columns WHERE table_name=:t AND column_name=:c"),
+        {"t": table, "c": column},
+    )
     return r.scalar() > 0
 
 
 def _index_exists(name):
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM pg_indexes WHERE indexname=:n"
-    ), {"n": name})
+    r = conn.execute(sa.text("SELECT count(*) FROM pg_indexes WHERE indexname=:n"), {"n": name})
     return r.scalar() > 0
 
 
 def _table_exists(name):
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM information_schema.tables "
-        "WHERE table_name=:n"
-    ), {"n": name})
+    r = conn.execute(sa.text("SELECT count(*) FROM information_schema.tables WHERE table_name=:n"), {"n": name})
     return r.scalar() > 0
 
 
@@ -153,10 +152,13 @@ def downgrade() -> None:
     op.execute("DROP TRIGGER IF EXISTS trg_track_ministry ON members")
     op.execute("DROP FUNCTION IF EXISTS fn_track_member_ministry_changes()")
     op.drop_table("historial_ministerial")
-    for idx in ["ix_members_estado_vital", "ix_members_ministerio",
-                 "ix_members_fecha_registro", "ix_members_rol_iglesia",
-                 "ix_members_sede"]:
+    for idx in [
+        "ix_members_estado_vital",
+        "ix_members_ministerio",
+        "ix_members_fecha_registro",
+        "ix_members_rol_iglesia",
+        "ix_members_sede",
+    ]:
         op.drop_index(idx, table_name="members")
-    for col in ["longitud", "latitud", "fecha_bautismo",
-                 "permiso_plataforma", "ministerio", "estado_vital", "sede_id"]:
+    for col in ["longitud", "latitud", "fecha_bautismo", "permiso_plataforma", "ministerio", "estado_vital", "sede_id"]:
         op.drop_column("members", col)

@@ -3,6 +3,7 @@
 Targets: prayer requests, automations, roles, settings, volunteer CRUD,
 persona relations, groups, and resource endpoints.
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -39,9 +40,14 @@ def _seed_user_with_crm(db_session, permisos, email="crm@test.com"):
     persona.sede_id = sede.id
 
     user = Usuario(
-        id=persona.id, sede_id=sede.id, username=email.split("@")[0], email=email,
-        password_hash=get_password_hash("testpass123"), rol_plataforma_id=role.id,
-        is_active=True, is_email_verified=True,
+        id=persona.id,
+        sede_id=sede.id,
+        username=email.split("@")[0],
+        email=email,
+        password_hash=get_password_hash("testpass123"),
+        rol_plataforma_id=role.id,
+        is_active=True,
+        is_email_verified=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -58,8 +64,12 @@ def test_prayer_request_crud(db_session):
     user, persona, sede = seed_admin(db_session)
     req_id = _uuid.uuid4()
     pr = PrayerRequest(
-        id=req_id, requester_name="Juan", request_text="Oracion por salud",
-        category="Salud", is_public=False, status="pending",
+        id=req_id,
+        requester_name="Juan",
+        request_text="Oracion por salud",
+        category="Salud",
+        is_public=False,
+        status="pending",
     )
     db_session.add(pr)
     db_session.commit()
@@ -113,8 +123,11 @@ def test_counseling_ticket_crud(db_session):
 
     user, persona, sede = seed_admin(db_session)
     ticket = CounselingTicket(
-        id=_uuid.uuid4(), persona_id=persona.id, subject="Crisis familiar",
-        notes=" notas privadas", status="open",
+        id=_uuid.uuid4(),
+        persona_id=persona.id,
+        subject="Crisis familiar",
+        notes=" notas privadas",
+        status="open",
     )
     db_session.add(ticket)
     db_session.commit()
@@ -141,8 +154,10 @@ def test_crm_automation_crud(db_session):
 
     user, persona, sede = seed_admin(db_session)
     payload = CrmAutomationCreate(
-        name="Test Automation", trigger_event="task_completed",
-        action_type="send_message", is_active=True,
+        name="Test Automation",
+        trigger_event="task_completed",
+        action_type="send_message",
+        is_active=True,
     )
     obj = crud_ext.create_crm_automation(db_session, payload, sede_id=str(sede.id))
     assert obj.name == "Test Automation"
@@ -178,8 +193,10 @@ def test_persona_crud_operations(db_session):
     p = crud.create_persona(
         db_session,
         schemas.PersonaCreate(
-            first_name="Maria", last_name="Garcia",
-            email="maria@test.com", church_role="Miembro",
+            first_name="Maria",
+            last_name="Garcia",
+            email="maria@test.com",
+            church_role="Miembro",
         ),
     )
     assert p.first_name == "Maria"
@@ -202,7 +219,9 @@ def test_position_crud(db_session):
     from backend.crud.crm_ import extended as crud_ext
 
     user, persona, sede = seed_admin(db_session)
-    pos = crud_ext.create_position(db_session, crud_ext.PositionCreate(name="Director Musical", description="Lider musical"))
+    pos = crud_ext.create_position(
+        db_session, crud_ext.PositionCreate(name="Director Musical", description="Lider musical")
+    )
     assert pos.name == "Director Musical"
 
     pos.description = "Lider musical y coro"
@@ -241,7 +260,8 @@ def test_group_session_crud(db_session):
 
     user, persona, sede = seed_admin(db_session)
     grupo = create_grupo(
-        db_session, GrupoEvangelismoCreate(name="Grupo Joven"),
+        db_session,
+        GrupoEvangelismoCreate(name="Grupo Joven"),
         sede_id=str(sede.id),
     )
     assert grupo.name == "Grupo Joven"
@@ -326,7 +346,14 @@ def test_volunteers_endpoint_crud(client, db_session):
     # Create
     resp = client.post(
         "/api/crm/volunteers",
-        json={"name": "Servidor Test", "persona_id": str(persona.id), "role_name": "Servidor", "team_name": "Alabanza", "shift_start": "2026-07-17T10:00:00", "shift_end": "2026-07-17T12:00:00"},
+        json={
+            "name": "Servidor Test",
+            "persona_id": str(persona.id),
+            "role_name": "Servidor",
+            "team_name": "Alabanza",
+            "shift_start": "2026-07-17T10:00:00",
+            "shift_end": "2026-07-17T12:00:00",
+        },
         headers=headers,
     )
     assert resp.status_code in (200, 201), resp.text
@@ -567,7 +594,13 @@ def test_resource_plantillas_crud(client, db_session):
 
     resp = client.post(
         "/api/crm/resources/plantillas",
-        json={"titulo": "Test Template", "canal": "EMAIL", "contenido_texto": "Hola", "contenido_html": "<p>Hola</p>", "categoria_id": str(_uuid.uuid4())},
+        json={
+            "titulo": "Test Template",
+            "canal": "EMAIL",
+            "contenido_texto": "Hola",
+            "contenido_html": "<p>Hola</p>",
+            "categoria_id": str(_uuid.uuid4()),
+        },
         headers=headers,
     )
     assert resp.status_code in (200, 201), resp.text

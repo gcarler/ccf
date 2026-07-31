@@ -44,11 +44,16 @@ router = APIRouter()
 # Helpers
 # ──────────────────────────────────────────────────────────────────────
 
+
 def _get_group_or_404(db: Session, grupo_id: UUID) -> models.GrupoEvangelismo:
-    grupo = db.query(models.GrupoEvangelismo).filter(
-        models.GrupoEvangelismo.id == grupo_id,
-        models.GrupoEvangelismo.deleted_at.is_(None),
-    ).first()
+    grupo = (
+        db.query(models.GrupoEvangelismo)
+        .filter(
+            models.GrupoEvangelismo.id == grupo_id,
+            models.GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     return grupo
@@ -57,24 +62,25 @@ def _get_group_or_404(db: Session, grupo_id: UUID) -> models.GrupoEvangelismo:
 def _get_leader_name(db: Session, grupo: models.GrupoEvangelismo) -> str:
     if grupo.lider_persona_id is None:
         return "Sin líder asignado"
-    persona = db.query(models.Persona).filter(
-        models.Persona.id == grupo.lider_persona_id
-    ).first()
+    persona = db.query(models.Persona).filter(models.Persona.id == grupo.lider_persona_id).first()
     if persona:
         return f"{persona.first_name} {persona.last_name}".strip()
     return "Líder (no encontrado)"
 
 
 def _count_participants(db: Session, grupo_id: UUID) -> int:
-    return db.query(func.count(models.ParticipanteGrupo.id)).filter(
-        models.ParticipanteGrupo.grupo_id == grupo_id,
-        models.ParticipanteGrupo.activo,
-    ).scalar() or 0
+    return (
+        db.query(func.count(models.ParticipanteGrupo.id))
+        .filter(
+            models.ParticipanteGrupo.grupo_id == grupo_id,
+            models.ParticipanteGrupo.activo,
+        )
+        .scalar()
+        or 0
+    )
 
 
-def _build_session_rows(
-    db: Session, grupo_id: UUID
-) -> list[dict]:
+def _build_session_rows(db: Session, grupo_id: UUID) -> list[dict]:
     """Return one dict per session with attendance stats."""
     sessions = (
         db.query(models.SesionGrupo)
@@ -113,26 +119,25 @@ def _build_session_rows(
         else:
             pct = 0.0
 
-        rows.append({
-            "fecha": sesion.fecha_sesion.strftime("%d/%m/%Y") if sesion.fecha_sesion else "—",
-            "tema": session_read_value(sesion, "tema_estudio")
-            or session_read_value(sesion, "topic")
-            or "Sin tema",
-            "estado": session_read_value(sesion, "estado")
-            or session_read_value(sesion, "status")
-            or "—",
-            "asistentes": asistentes,
-            "ausentes": ausentes,
-            "excusas": excusas,
-            "total_participantes": total_participants,
-            "pct_asistencia": pct,
-        })
+        rows.append(
+            {
+                "fecha": sesion.fecha_sesion.strftime("%d/%m/%Y") if sesion.fecha_sesion else "—",
+                "tema": session_read_value(sesion, "tema_estudio") or session_read_value(sesion, "topic") or "Sin tema",
+                "estado": session_read_value(sesion, "estado") or session_read_value(sesion, "status") or "—",
+                "asistentes": asistentes,
+                "ausentes": ausentes,
+                "excusas": excusas,
+                "total_participantes": total_participants,
+                "pct_asistencia": pct,
+            }
+        )
     return rows
 
 
 # ──────────────────────────────────────────────────────────────────────
 # PDF Report (reportlab)
 # ──────────────────────────────────────────────────────────────────────
+
 
 def _generate_attendance_pdf(
     grupo: models.GrupoEvangelismo,
@@ -183,30 +188,36 @@ def _generate_attendance_pdf(
             ["Fecha", "Tema", "Estado", "Asist.", "Aus.", "Exc.", "% Asist."],
         ]
         for r in rows:
-            table_data.append([
-                r["fecha"],
-                r["tema"],
-                r["estado"],
-                str(r["asistentes"]),
-                str(r["ausentes"]),
-                str(r["excusas"]),
-                f"{r['pct_asistencia']}%",
-            ])
+            table_data.append(
+                [
+                    r["fecha"],
+                    r["tema"],
+                    r["estado"],
+                    str(r["asistentes"]),
+                    str(r["ausentes"]),
+                    str(r["excusas"]),
+                    f"{r['pct_asistencia']}%",
+                ]
+            )
 
         col_widths = [2.2 * cm, 5.5 * cm, 2.0 * cm, 1.3 * cm, 1.3 * cm, 1.3 * cm, 2.0 * cm]
         table = Table(table_data, colWidths=col_widths, repeatRows=1)
-        table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2c3e50")),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-            ("FONTSIZE", (0, 0), (-1, -1), 8),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#ecf0f1")]),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ]))
+        table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2c3e50")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#ecf0f1")]),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ]
+            )
+        )
         story.append(table)
     else:
         story.append(Paragraph("<i>No hay sesiones registradas para este grupo.</i>", normal_style))
@@ -252,6 +263,7 @@ async def attendance_pdf(
 # ──────────────────────────────────────────────────────────────────────
 # Excel Report (openpyxl)
 # ──────────────────────────────────────────────────────────────────────
+
 
 def _generate_attendance_excel(
     grupo: models.GrupoEvangelismo,
@@ -363,6 +375,7 @@ async def attendance_excel(
 # Strategy Summary
 # ──────────────────────────────────────────────────────────────────────
 
+
 @router.get("/reports/strategy/{strategy_id}/summary")
 def strategy_summary(
     strategy_id: UUID,
@@ -437,21 +450,22 @@ def strategy_summary(
         avg_pct = 0.0
         if total_sesiones and total_participantes > 0:
             pcts = [
-                present / total_participantes * 100
-                for present in present_by_group_session.get(grupo.id, {}).values()
+                present / total_participantes * 100 for present in present_by_group_session.get(grupo.id, {}).values()
             ]
             avg_pct = round(sum(pcts) / len(pcts), 1)
 
-        grupos_resumen.append({
-            "grupo_id": grupo.id,
-            "nombre": grupo.nombre,
-            "codigo": grupo.codigo,
-            "lider": leader_name,
-            "participantes": total_participantes,
-            "total_sesiones": total_sesiones,
-            "sesiones_realizadas": sesiones_realizadas,
-            "promedio_asistencia_pct": avg_pct,
-        })
+        grupos_resumen.append(
+            {
+                "grupo_id": grupo.id,
+                "nombre": grupo.nombre,
+                "codigo": grupo.codigo,
+                "lider": leader_name,
+                "participantes": total_participantes,
+                "total_sesiones": total_sesiones,
+                "sesiones_realizadas": sesiones_realizadas,
+                "promedio_asistencia_pct": avg_pct,
+            }
+        )
 
     return {
         "estrategia_id": estrategia.id,

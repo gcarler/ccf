@@ -16,7 +16,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -42,9 +41,7 @@ def main() -> int:
     model_tables = set(Base.metadata.tables)
 
     missing_tables = sorted(model_tables - db_tables)
-    extra_tables = sorted(
-        table for table in (db_tables - model_tables) if table not in IGNORED_EXTRA_TABLES
-    )
+    extra_tables = sorted(table for table in (db_tables - model_tables) if table not in IGNORED_EXTRA_TABLES)
     table_diffs: dict[str, dict[str, list[str]]] = {}
     for table_name in sorted(model_tables & db_tables):
         model_columns = _column_names(Base.metadata.tables[table_name])
@@ -57,9 +54,7 @@ def main() -> int:
                 "extra_columns": extra_columns,
             }
 
-    blocking_table_diffs = {
-        table_name: diff for table_name, diff in table_diffs.items() if diff["missing_columns"]
-    }
+    blocking_table_diffs = {table_name: diff for table_name, diff in table_diffs.items() if diff["missing_columns"]}
 
     payload = {
         "database_url_driver": engine.url.drivername,

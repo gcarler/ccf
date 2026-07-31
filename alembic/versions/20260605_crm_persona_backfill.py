@@ -175,12 +175,7 @@ def downgrade() -> None:
             ("consolidation_tasks", "fk_consolidation_tasks_assignee_id"),
             ("counseling_tickets", "fk_counseling_tickets_pastor_id"),
         ):
-            bind.execute(
-                sa.text(
-                    f"ALTER TABLE IF EXISTS {table} "
-                    f"DROP CONSTRAINT IF EXISTS {constraint}"
-                )
-            )
+            bind.execute(sa.text(f"ALTER TABLE IF EXISTS {table} DROP CONSTRAINT IF EXISTS {constraint}"))
 
     for table, column in (
         ("communication_logs", "leader_id"),

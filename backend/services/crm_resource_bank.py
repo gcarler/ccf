@@ -4,6 +4,7 @@ Este módulo mantiene un catálogo *estático* de plantillas orientadas a iglesi
 No inserta nada en la base de datos hasta que un usuario elige "Usar plantilla";
 asi cada sede puede personalizar sus propias copias sin forzar datos globales.
 """
+
 from __future__ import annotations
 
 import re
@@ -122,7 +123,6 @@ Que el Señor te bendiga,
         contenido_texto="""Hola {{nombre}}, esperamos que hayas sido bendecido en tu visita. ¿Tienes alguna pregunta sobre nuestra iglesia o alguna petición de oración? Estamos para servirte.""",
         variables_requeridas=["nombre"],
     ),
-
     # ── Acompañamiento y Cuidado ─────────────────────────────────────────────
     SystemTemplate(
         categoria="Acompañamiento y Cuidado",
@@ -170,7 +170,6 @@ Equipo pastoral — {{sede}}""",
         html_template_type="pastoral_close",
         variables_requeridas=["nombre", "sede"],
     ),
-
     # ── Fechas Especiales ──────────────────────────────────────────────────
     SystemTemplate(
         categoria="Fechas Especiales",
@@ -228,7 +227,6 @@ Tus pastores""",
         contenido_texto="""Hola {{nombre}}, en este día especial queremos honrarte y agradecer a Dios por tu vida. Que el Señor te siga llenando de sabiduría y amor. ¡Feliz día!""",
         variables_requeridas=["nombre"],
     ),
-
     # ── Recordatorios y Avisos ─────────────────────────────────────────────
     SystemTemplate(
         categoria="Recordatorios y Avisos",
@@ -290,7 +288,6 @@ Más información: {{link}}
         html_template_type="event_invitation",
         variables_requeridas=["nombre", "evento", "fecha", "hora", "lugar", "link"],
     ),
-
     # ── Respuestas Rápidas (FAQ) ─────────────────────────────────────────────
     SystemTemplate(
         categoria="Respuestas Rápidas (FAQ)",
@@ -320,7 +317,6 @@ Más información: {{link}}
         contenido_texto="""Hola {{nombre}}, puedes realizar tu ofrenda a través de {{metodo}}. Si necesitas más detalles, escríbenos. ¡Dios bendiga tu generosidad!""",
         variables_requeridas=["nombre", "metodo"],
     ),
-
     # ── Redes Sociales ───────────────────────────────────────────────────────
     SystemTemplate(
         categoria="Redes Sociales",
@@ -343,7 +339,6 @@ Más información: {{link}}
         contenido_texto="""Hola {{nombre}}, lamentamos escuchar eso. Queremos atenderte con empatía. Por favor, escríbenos por interno con tus datos para que nuestro equipo pastoral se comunique contigo.""",
         variables_requeridas=["nombre"],
     ),
-
     # ── Biblioteca de Contenidos ─────────────────────────────────────────────
     SystemTemplate(
         categoria="Biblioteca de Contenidos",
@@ -374,7 +369,6 @@ Esperamos verte pronto,
         contenido_texto="""Hola {{nombre}}, soy {{pastor}} de {{sede}}. Quería saludarte y saber cómo estás. ¿Hay algo por lo que podamos orar? ¿Tienes alguna duda sobre la iglesia?""",
         variables_requeridas=["nombre", "pastor", "sede"],
     ),
-
     # ── Automatización y Etiquetas ──────────────────────────────────────────
     SystemTemplate(
         categoria="Automatización y Etiquetas",
@@ -401,6 +395,7 @@ Esperamos verte pronto,
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def get_system_categories() -> List[Dict]:
     """Devuelve las categorías del sistema en formato serializable."""

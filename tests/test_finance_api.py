@@ -6,9 +6,7 @@ from tests.conftest import seed_admin as _seed_admin
 
 
 def _seed_sede(db_session):
-    sede = models.Sede(
-        id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True
-    )
+    sede = models.Sede(id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.commit()
     db_session.refresh(sede)
@@ -136,9 +134,7 @@ def test_finance_admin_funds_crud(client, db_session):
     assert resp3.json()["name"] == "Fondo Test Actualizado"
 
     # Delete (soft)
-    resp4 = client.delete(
-        f"/api/finance/admin/funds/{fund_id}", headers=headers
-    )
+    resp4 = client.delete(f"/api/finance/admin/funds/{fund_id}", headers=headers)
     assert resp4.status_code == 204
 
 

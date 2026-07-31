@@ -7,6 +7,7 @@ Usage:
 
 Exit code 0 = all gates pass.
 """
+
 import subprocess
 import sys
 
@@ -24,25 +25,44 @@ def run(label: str, cmd: list[str]) -> bool:
         for line in result.stderr.splitlines()[-5:]:
             print(f"  ! {line}")
         return False
-    print(f"  ✅ passed")
+    print("  ✅ passed")
     return True
 
 
 def main():
     gates = [
-        ("🔍 Health endpoint", [
-            "curl", "-sf", "http://127.0.0.1:8000/healthz"]),
-        ("🧪 Auth login smoke", [
-            "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
-            "-X", "POST", "http://127.0.0.1:8000/api/v3/auth/login",
-            "-H", "Content-Type: application/json",
-            "-d", '{"email":"admin@example.com","password":"testpass123"}']),
+        ("🔍 Health endpoint", ["curl", "-sf", "http://127.0.0.1:8000/healthz"]),
+        (
+            "🧪 Auth login smoke",
+            [
+                "curl",
+                "-s",
+                "-o",
+                "/dev/null",
+                "-w",
+                "%{http_code}",
+                "-X",
+                "POST",
+                "http://127.0.0.1:8000/api/v3/auth/login",
+                "-H",
+                "Content-Type: application/json",
+                "-d",
+                '{"email":"admin@example.com","password":"testpass123"}',
+            ],
+        ),
     ]
 
     if "--backend-deep" in sys.argv:
-        gates.append(("📊 Auth module search", [
-            VENV_PYTHON, "-c",
-            '"from backend.app import app; print(f\"Auth routes: {sum(1 for r in app.routes if \\\"auth\\\" in str(r.path))}\")"']))
+        gates.append(
+            (
+                "📊 Auth module search",
+                [
+                    VENV_PYTHON,
+                    "-c",
+                    '"from backend.app import app; print(f"Auth routes: {sum(1 for r in app.routes if \\"auth\\" in str(r.path))}")"',
+                ],
+            )
+        )
 
     all_ok = True
     for label, cmd in gates:

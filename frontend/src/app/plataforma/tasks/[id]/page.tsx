@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { 
-    LayoutDashboard, 
-    CheckCircle2, 
-    Calendar, 
-    MessageSquare, 
+import {
+    LayoutDashboard,
+    CheckCircle2,
+    Calendar,
+    MessageSquare,
     MoreVertical,
     Play,
     Pause,
@@ -25,7 +25,7 @@ export default function TaskDetailPage() {
     const params = useParams();
     const id = params?.id as string;
     const { token } = useAuth();
-    
+
     const [task, setTask] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -138,7 +138,7 @@ export default function TaskDetailPage() {
                                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Seguimiento de Tiempo</p>
                                     <div className="flex items-center justify-between">
                                         <span className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white font-mono">00:45:12</span>
-                                        <button 
+                                        <button
                                             onClick={() => setIsTimerRunning(!isTimerRunning)}
                                             className={clsx(
                                                 'size-10 rounded-full flex items-center justify-center transition-all',

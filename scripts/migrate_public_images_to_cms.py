@@ -55,11 +55,7 @@ CONTENT_IMAGES: dict[str, str] = {
 
 def _find_admin_user(db) -> models.Usuario:
     """Return the canonical admin user used for CMS seeds/migrations."""
-    user = (
-        db.query(models.Usuario)
-        .filter(models.Usuario.email == "gscarlosernesto@gmail.com")
-        .first()
-    )
+    user = db.query(models.Usuario).filter(models.Usuario.email == "gscarlosernesto@gmail.com").first()
     if user is None:
         # Fallback to the first active user with a sede.
         user = (

@@ -133,10 +133,10 @@ describe("SEO Meta Blocks", () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe("PublicSectionRenderer Section Types", () => {
-  it("should support all 30 section types", () => {
+  it("should support all 34 section types", () => {
     const sectionTypes = SECTION_TYPES.filter((type) => !type.startsWith("civic_"));
 
-    expect(sectionTypes.length).toBe(30);
+    expect(sectionTypes.length).toBe(34);
     sectionTypes.forEach((type) => {
       expect(type).toBeTruthy();
     });

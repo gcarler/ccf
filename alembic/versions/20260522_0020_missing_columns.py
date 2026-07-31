@@ -53,28 +53,20 @@ def upgrade() -> None:
         cols = [c["name"] for c in inspector.get_columns("cms_media_items")]
         if "filename" not in cols:
             with op.batch_alter_table("cms_media_items", schema=None) as batch_op:
-                batch_op.add_column(
-                    sa.Column("filename", sa.String(255), nullable=True)
-                )
+                batch_op.add_column(sa.Column("filename", sa.String(255), nullable=True))
         if "mime_type" not in cols:
             with op.batch_alter_table("cms_media_items", schema=None) as batch_op:
-                batch_op.add_column(
-                    sa.Column("mime_type", sa.String(120), nullable=True)
-                )
+                batch_op.add_column(sa.Column("mime_type", sa.String(120), nullable=True))
         if "file_size" not in cols:
             with op.batch_alter_table("cms_media_items", schema=None) as batch_op:
-                batch_op.add_column(
-                    sa.Column("file_size", sa.Integer, server_default="0")
-                )
+                batch_op.add_column(sa.Column("file_size", sa.Integer, server_default="0"))
 
     # cms_sections.section_type
     if "cms_sections" in inspector.get_table_names():
         cols = [c["name"] for c in inspector.get_columns("cms_sections")]
         if "section_type" not in cols:
             with op.batch_alter_table("cms_sections", schema=None) as batch_op:
-                batch_op.add_column(
-                    sa.Column("section_type", sa.String(50), nullable=True)
-                )
+                batch_op.add_column(sa.Column("section_type", sa.String(50), nullable=True))
 
 
 def downgrade() -> None:

@@ -113,9 +113,7 @@ def test_reconciliation_create_and_list(client, db_session):
     headers = _admin_client(client, db_session)
 
     # Create bank account with the admin's sede to avoid sede-filter mismatch
-    admin_user = db_session.query(models.Usuario).filter(
-        models.Usuario.email == "admin@example.com"
-    ).first()
+    admin_user = db_session.query(models.Usuario).filter(models.Usuario.email == "admin@example.com").first()
     admin_sede_id = admin_user.sede_id if admin_user else None
 
     acct = _create_bank_account(client, headers, db_session, sede_id=admin_sede_id)
@@ -222,9 +220,7 @@ def test_create_accounting_entry_list_with_status(client, db_session):
         headers=headers,
     )
 
-    resp = client.get(
-        "/api/finance-suite/accounting-entries?status=draft", headers=headers
-    )
+    resp = client.get("/api/finance-suite/accounting-entries?status=draft", headers=headers)
     assert resp.status_code == 200
     assert len(resp.json()) >= 1
 
@@ -253,9 +249,7 @@ def test_generate_financial_statement(client, db_session):
         headers=headers,
     )
     entry_id = resp.json()["id"]
-    client.patch(
-        f"/api/finance-suite/accounting-entries/{entry_id}/post", headers=headers
-    )
+    client.patch(f"/api/finance-suite/accounting-entries/{entry_id}/post", headers=headers)
 
     # Generate financial statement
     resp2 = client.post(
@@ -273,9 +267,7 @@ def test_generate_financial_statement(client, db_session):
     assert data["data_json"]["entries_count"] >= 1
 
     # List
-    resp3 = client.get(
-        "/api/finance-suite/financial-statements", headers=headers
-    )
+    resp3 = client.get("/api/finance-suite/financial-statements", headers=headers)
     assert resp3.status_code == 200
     assert any(s["id"] == data["id"] for s in resp3.json())
 
@@ -316,16 +308,12 @@ def test_tax_config_crud(client, db_session):
     )
 
     # List all
-    resp2 = client.get(
-        "/api/finance-suite/tax-configurations", headers=headers
-    )
+    resp2 = client.get("/api/finance-suite/tax-configurations", headers=headers)
     assert resp2.status_code == 200
     assert any(t["id"] == tax_id for t in resp2.json())
 
     # List by country_code (L380-386)
-    resp3 = client.get(
-        "/api/finance-suite/tax-configurations?country_code=CO", headers=headers
-    )
+    resp3 = client.get("/api/finance-suite/tax-configurations?country_code=CO", headers=headers)
     assert resp3.status_code == 200
     assert all(t["country_code"] == "CO" for t in resp3.json())
 
@@ -501,9 +489,7 @@ def test_expense_report_approve_reimburse_flow(client, db_session):
     report_id = resp.json()["id"]
 
     # Submit
-    resp2 = client.post(
-        f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers
-    )
+    resp2 = client.post(f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers)
     assert resp2.status_code == 200
 
     # Approve - need a DIFFERENT user (segregation of duties)
@@ -536,9 +522,7 @@ def test_expense_report_submit_not_found(client, db_session):
     """Submit non-existent report -> 404."""
     headers = _admin_client(client, db_session)
     fake_id = str(_uuid.uuid4())
-    resp = client.post(
-        f"/api/finance-suite/expense-reports/{fake_id}/submit", headers=headers
-    )
+    resp = client.post(f"/api/finance-suite/expense-reports/{fake_id}/submit", headers=headers)
     assert resp.status_code == 404
 
 
@@ -562,14 +546,10 @@ def test_expense_report_submit_wrong_status(client, db_session):
         headers=headers,
     )
     report_id = resp.json()["id"]
-    client.post(
-        f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers
-    )
+    client.post(f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers)
 
     # Try to submit again
-    resp2 = client.post(
-        f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers
-    )
+    resp2 = client.post(f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers)
     assert resp2.status_code == 400
 
 
@@ -584,9 +564,7 @@ def test_expense_report_approve_not_found(client, db_session):
     headers = _auth_headers(client, email="approver2@test.com")
 
     fake_id = str(_uuid.uuid4())
-    resp = client.post(
-        f"/api/finance-suite/expense-reports/{fake_id}/approve", headers=headers
-    )
+    resp = client.post(f"/api/finance-suite/expense-reports/{fake_id}/approve", headers=headers)
     assert resp.status_code == 404
 
 
@@ -610,14 +588,10 @@ def test_expense_report_approve_self_forbidden(client, db_session):
         headers=headers,
     )
     report_id = resp.json()["id"]
-    client.post(
-        f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers
-    )
+    client.post(f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers)
 
     # Try to approve own report -> 403
-    resp2 = client.post(
-        f"/api/finance-suite/expense-reports/{report_id}/approve", headers=headers
-    )
+    resp2 = client.post(f"/api/finance-suite/expense-reports/{report_id}/approve", headers=headers)
     assert resp2.status_code == 403
 
 
@@ -647,14 +621,10 @@ def test_expense_report_reject_flow(client, db_session):
         headers=headers,
     )
     report_id = resp.json()["id"]
-    client.post(
-        f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers
-    )
+    client.post(f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers)
 
     # Reject
-    resp2 = client.post(
-        f"/api/finance-suite/expense-reports/{report_id}/reject", headers=headers
-    )
+    resp2 = client.post(f"/api/finance-suite/expense-reports/{report_id}/reject", headers=headers)
     assert resp2.status_code == 200
     assert resp2.json()["status"] == "rejected"
 
@@ -714,9 +684,7 @@ def test_expense_report_reimburse_with_params(client, db_session):
         headers=headers,
     )
     report_id = resp.json()["id"]
-    client.post(
-        f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers
-    )
+    client.post(f"/api/finance-suite/expense-reports/{report_id}/submit", headers=headers)
 
     # Approve as different user
     other, _, _ = _seed_user_with_role(
@@ -774,9 +742,7 @@ def test_document_update(client, db_session):
     assert resp2.json()["title"] == "Updated title"
 
     # List by document_type
-    resp3 = client.get(
-        "/api/finance-suite/documents?document_type=contract", headers=headers
-    )
+    resp3 = client.get("/api/finance-suite/documents?document_type=contract", headers=headers)
     assert resp3.status_code == 200
     assert any(d["id"] == doc_id for d in resp3.json())
 
@@ -785,9 +751,7 @@ def test_document_delete_not_found(client, db_session):
     """Delete non-existent document -> 404."""
     headers = _admin_client(client, db_session)
     fake_id = str(_uuid.uuid4())
-    resp = client.delete(
-        f"/api/finance-suite/documents/{fake_id}", headers=headers
-    )
+    resp = client.delete(f"/api/finance-suite/documents/{fake_id}", headers=headers)
     assert resp.status_code == 404
 
 
@@ -799,9 +763,7 @@ def test_document_delete_cross_sede_forbidden(client, db_session):
     headers = _auth_headers(client)
 
     # Create a document in a DIFFERENT sede
-    other_sede = models.Sede(
-        id=_uuid.uuid4(), nombre="Otra Sede", ciudad="Cali", es_activa=True
-    )
+    other_sede = models.Sede(id=_uuid.uuid4(), nombre="Otra Sede", ciudad="Cali", es_activa=True)
     db_session.add(other_sede)
     db_session.flush()
 
@@ -818,9 +780,7 @@ def test_document_delete_cross_sede_forbidden(client, db_session):
     db_session.add(doc)
     db_session.commit()
 
-    resp = client.delete(
-        f"/api/finance-suite/documents/{doc.id}", headers=headers
-    )
+    resp = client.delete(f"/api/finance-suite/documents/{doc.id}", headers=headers)
     assert resp.status_code == 403, f"cross-sede delete: {resp.status_code} {resp.text}"
 
 
@@ -845,9 +805,7 @@ def test_document_list_by_type(client, db_session):
     doc_id = resp_doc.json()["id"]
 
     # List by type
-    resp2 = client.get(
-        "/api/finance-suite/documents?document_type=contract", headers=headers
-    )
+    resp2 = client.get("/api/finance-suite/documents?document_type=contract", headers=headers)
     assert resp2.status_code == 200
     assert any(d["id"] == doc_id for d in resp2.json())
 
@@ -895,8 +853,7 @@ def test_expense_receipt_upload_and_ocr(client, db_session):
 
     # Update OCR (L722-733) - pass params as query string
     resp3 = client.patch(
-        f"/api/finance-suite/expense-receipts/{receipt_id}/ocr"
-        f"?ocr_text=Total%3A+%2410%2C000&ocr_confidence=0.95",
+        f"/api/finance-suite/expense-receipts/{receipt_id}/ocr?ocr_text=Total%3A+%2410%2C000&ocr_confidence=0.95",
         headers=headers,
     )
     assert resp3.status_code == 200, f"ocr update: {resp3.status_code} {resp3.text}"
@@ -924,9 +881,7 @@ def test_sign_request_get_not_found(client, db_session):
     """Get non-existent sign request -> 404 (L899-903)."""
     headers = _admin_client(client, db_session)
     fake_id = str(_uuid.uuid4())
-    resp = client.get(
-        f"/api/finance-suite/sign-requests/{fake_id}", headers=headers
-    )
+    resp = client.get(f"/api/finance-suite/sign-requests/{fake_id}", headers=headers)
     assert resp.status_code == 404
 
 
@@ -934,9 +889,7 @@ def test_sign_request_send_not_found(client, db_session):
     """Send non-existent sign request -> 404 (L746-748)."""
     headers = _admin_client(client, db_session)
     fake_id = str(_uuid.uuid4())
-    resp = client.post(
-        f"/api/finance-suite/sign-requests/{fake_id}/send", headers=headers
-    )
+    resp = client.post(f"/api/finance-suite/sign-requests/{fake_id}/send", headers=headers)
     assert resp.status_code == 404
 
 
@@ -954,14 +907,10 @@ def test_sign_request_send_already_sent(client, db_session):
         headers=headers,
     )
     req_id = resp.json()["id"]
-    client.post(
-        f"/api/finance-suite/sign-requests/{req_id}/send", headers=headers
-    )
+    client.post(f"/api/finance-suite/sign-requests/{req_id}/send", headers=headers)
 
     # Send again -> 400
-    resp2 = client.post(
-        f"/api/finance-suite/sign-requests/{req_id}/send", headers=headers
-    )
+    resp2 = client.post(f"/api/finance-suite/sign-requests/{req_id}/send", headers=headers)
     assert resp2.status_code == 400
 
 
@@ -982,9 +931,7 @@ def test_sign_request_decline(client, db_session):
     signer_id = resp.json()["signers"][0]["id"]
 
     # Send
-    client.post(
-        f"/api/finance-suite/sign-requests/{req_id}/send", headers=headers
-    )
+    client.post(f"/api/finance-suite/sign-requests/{req_id}/send", headers=headers)
 
     # Decline
     resp2 = client.post(
@@ -1010,9 +957,7 @@ def test_sign_request_list_with_status(client, db_session):
         headers=headers,
     )
 
-    resp = client.get(
-        "/api/finance-suite/sign-requests?status=draft", headers=headers
-    )
+    resp = client.get("/api/finance-suite/sign-requests?status=draft", headers=headers)
     assert resp.status_code == 200
     assert len(resp.json()) >= 1
 
@@ -1023,9 +968,7 @@ def test_list_bank_transactions_with_filters(client, db_session):
 
     headers = _admin_client(client, db_session)
 
-    admin_user = db_session.query(models.Usuario).filter(
-        models.Usuario.email == "admin@example.com"
-    ).first()
+    admin_user = db_session.query(models.Usuario).filter(models.Usuario.email == "admin@example.com").first()
     admin_sede_id = admin_user.sede_id if admin_user else None
 
     acct = _create_bank_account(client, headers, db_session, sede_id=admin_sede_id)
@@ -1061,16 +1004,12 @@ def test_list_sales_orders_with_status(client, db_session):
         json={
             "customer_name": "Status test",
             "order_date": "2026-03-01",
-            "items": [
-                {"description": "Item", "quantity": "1", "unit_price": "10000"}
-            ],
+            "items": [{"description": "Item", "quantity": "1", "unit_price": "10000"}],
         },
         headers=headers,
     )
 
-    resp = client.get(
-        "/api/finance-suite/sales-orders?status=draft", headers=headers
-    )
+    resp = client.get("/api/finance-suite/sales-orders?status=draft", headers=headers)
     assert resp.status_code == 200
 
 

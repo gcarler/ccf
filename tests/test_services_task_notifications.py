@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-import pytest
 from unittest.mock import MagicMock, patch
 
 from backend import models
@@ -10,6 +9,7 @@ from backend.services.task_notifications import (
     notify_task_assigned,
 )
 
+
 class DummyPersona:
     def __init__(self, id_val, nombre_completo=None, full_name=None, email=None):
         self.id = id_val
@@ -17,8 +17,11 @@ class DummyPersona:
         self.full_name = full_name
         self.email = email
 
+
 class DummyTask:
-    def __init__(self, id_val, assignee_id, project_id=1, title="Test Task", priority="High", due_date=None, description="Desc"):
+    def __init__(
+        self, id_val, assignee_id, project_id=1, title="Test Task", priority="High", due_date=None, description="Desc"
+    ):
         self.id = id_val
         self.assignee_id = assignee_id
         self.project_id = project_id
@@ -27,15 +30,17 @@ class DummyTask:
         self.due_date = due_date
         self.description = description
 
+
 class DummyProject:
     def __init__(self, id_val, title="Test Project"):
         self.id = id_val
         self.title = title
 
+
 def test_display_name_helper():
     # 1. persona is None
     assert _display_name(None) == "Usuario"
-    
+
     # 2. persona with nombre_completo
     p1 = DummyPersona(1, nombre_completo="Juan Perez")
     assert _display_name(p1) == "Juan Perez"
@@ -48,6 +53,7 @@ def test_display_name_helper():
     p3 = DummyPersona(3)
     assert _display_name(p3) == "Usuario"
 
+
 def test_format_due_date_helper():
     # 1. None
     assert _format_due_date(None) is None
@@ -59,6 +65,7 @@ def test_format_due_date_helper():
     # 3. string or other type
     assert _format_due_date("2026-07-29") == "2026-07-29"
 
+
 def test_notify_task_assigned_no_assignee():
     db = MagicMock()
     # Task without assignee_id
@@ -69,6 +76,7 @@ def test_notify_task_assigned_no_assignee():
     task_with_assignee = DummyTask(id_val=101, assignee_id=uuid.uuid4())
     db.query.return_value.filter.return_value.first.return_value = None
     assert notify_task_assigned(db, task=task_with_assignee) is False
+
 
 def test_notify_task_assigned_no_email():
     db = MagicMock()
@@ -103,6 +111,7 @@ def test_notify_task_assigned_no_email():
     assert res is True
     db.commit.assert_called_once()
     assert db.add.call_count == 2  # ActivityLog + CommunicationLog
+
 
 @patch("backend.services.task_notifications.render_task_assignment_email")
 @patch("backend.services.task_notifications.email_svc.send_email")
@@ -145,6 +154,7 @@ def test_notify_task_assigned_email_sent_new_notif(mock_send_email, mock_render_
     # Staged: ProjectActivityLog, CommunicationLog, NotificacionUsuario
     assert db.add.call_count == 3
 
+
 @patch("backend.services.task_notifications.render_task_assignment_email")
 @patch("backend.services.task_notifications.email_svc.send_email")
 def test_notify_task_assigned_email_sent_existing_notif(mock_send_email, mock_render_email):
@@ -185,6 +195,7 @@ def test_notify_task_assigned_email_sent_existing_notif(mock_send_email, mock_re
     # Staged: ProjectActivityLog, CommunicationLog (No new NotificacionUsuario added)
     assert db.add.call_count == 2
 
+
 @patch("backend.services.task_notifications.render_task_assignment_email")
 @patch("backend.services.task_notifications.email_svc.send_email")
 def test_notify_task_assigned_email_failed(mock_send_email, mock_render_email):
@@ -214,6 +225,7 @@ def test_notify_task_assigned_email_failed(mock_send_email, mock_render_email):
     db.commit.assert_called_once()
     # Staged: ProjectActivityLog, CommunicationLog (NO NotificacionUsuario because email failed)
     assert db.add.call_count == 2
+
 
 def test_notify_task_assigned_exception_rollback():
     db = MagicMock()

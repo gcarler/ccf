@@ -37,6 +37,7 @@ router = APIRouter()
 static_router = APIRouter()
 dynamic_router = APIRouter()
 
+
 def _session_read_options(db: Session):
     return session_read_only_options(db)
 
@@ -53,10 +54,14 @@ def list_groups_sessions(
     current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
-    query = db.query(SesionGrupo).options(
-        _session_read_options(db),
-        joinedload(models.SesionGrupo.grupo),
-    ).join(models.GrupoEvangelismo)
+    query = (
+        db.query(SesionGrupo)
+        .options(
+            _session_read_options(db),
+            joinedload(models.SesionGrupo.grupo),
+        )
+        .join(models.GrupoEvangelismo)
+    )
     if season_id:
         query = query.filter(models.SesionGrupo.season_id == season_id)
     if grupo_id:
@@ -92,9 +97,7 @@ def list_groups_sessions(
     if season_ids:
         season_map = {
             row.id: row.name
-            for row in db.query(models.CampaignSeason)
-            .filter(models.CampaignSeason.id.in_(season_ids))
-            .all()
+            for row in db.query(models.CampaignSeason).filter(models.CampaignSeason.id.in_(season_ids)).all()
         }
 
     return [
@@ -122,8 +125,8 @@ def list_my_pending_groups_sessions(
     if _is_crm_admin_or_pastor(current_user):
         sede_id = require_user_sede_id(db, current_user)
         house_ids = [
-            row[0] for row in
-            db.query(models.GrupoEvangelismo.id)
+            row[0]
+            for row in db.query(models.GrupoEvangelismo.id)
             .filter(
                 models.GrupoEvangelismo.sede_id == sede_id,
                 models.GrupoEvangelismo.deleted_at.is_(None),
@@ -140,7 +143,7 @@ def list_my_pending_groups_sessions(
             .filter(
                 models.GrupoEvangelismo.deleted_at.is_(None),
                 (models.GrupoEvangelismo.lider_persona_id == persona.id)
-                | (models.GrupoEvangelismo.asistente_persona_id == persona.id)
+                | (models.GrupoEvangelismo.asistente_persona_id == persona.id),
             )
             .all()
         ]
@@ -191,9 +194,7 @@ def list_my_pending_groups_sessions(
         if season_ids:
             season_map = {
                 row.id: row.name
-                for row in db.query(models.CampaignSeason)
-                .filter(models.CampaignSeason.id.in_(season_ids))
-                .all()
+                for row in db.query(models.CampaignSeason).filter(models.CampaignSeason.id.in_(season_ids)).all()
             }
     else:
         att_counts = {}
@@ -280,22 +281,30 @@ def create_groups_session(
     # Gather houses
     houses_to_process = []
     if batch_mode:
-        houses = db.query(GrupoEvangelismo).filter(
-            models.GrupoEvangelismo.activo.is_(True),
-            models.GrupoEvangelismo.sede_id == user_sede,
-            models.GrupoEvangelismo.deleted_at.is_(None),
-        ).all()
+        houses = (
+            db.query(GrupoEvangelismo)
+            .filter(
+                models.GrupoEvangelismo.activo.is_(True),
+                models.GrupoEvangelismo.sede_id == user_sede,
+                models.GrupoEvangelismo.deleted_at.is_(None),
+            )
+            .all()
+        )
         houses_to_process = [h.id for h in houses]
     else:
         try:
             parsed_uuid = UUID(str(grupo_id))
         except ValueError:
             raise HTTPException(status_code=400, detail="Identificador de grupo inválido")
-        house = db.query(GrupoEvangelismo).filter(
-            models.GrupoEvangelismo.id == parsed_uuid,
-            models.GrupoEvangelismo.sede_id == user_sede,
-            models.GrupoEvangelismo.deleted_at.is_(None),
-        ).first()
+        house = (
+            db.query(GrupoEvangelismo)
+            .filter(
+                models.GrupoEvangelismo.id == parsed_uuid,
+                models.GrupoEvangelismo.sede_id == user_sede,
+                models.GrupoEvangelismo.deleted_at.is_(None),
+            )
+            .first()
+        )
         if not house:
             raise HTTPException(status_code=404, detail="Grupo no encontrado")
         houses_to_process = [house.id]
@@ -305,6 +314,7 @@ def create_groups_session(
     created_sessions = []
     for h_id in houses_to_process:
         from sqlalchemy import func
+
         existing = (
             db.query(SesionGrupo)
             .options(_session_read_options(db))
@@ -365,13 +375,18 @@ def list_sessions(
     """List sessions, optionally filtered by strategy or house."""
 
     user_sede = require_user_sede_id(db, current_user)
-    q = db.query(SesionGrupo).options(_session_read_options(db)).join(
-        models.GrupoEvangelismo,
-        models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id,
-    ).filter(
-        models.GrupoEvangelismo.sede_id == user_sede,
-        models.GrupoEvangelismo.deleted_at.is_(None),
-        models.SesionGrupo.deleted_at.is_(None),
+    q = (
+        db.query(SesionGrupo)
+        .options(_session_read_options(db))
+        .join(
+            models.GrupoEvangelismo,
+            models.GrupoEvangelismo.id == models.SesionGrupo.grupo_id,
+        )
+        .filter(
+            models.GrupoEvangelismo.sede_id == user_sede,
+            models.GrupoEvangelismo.deleted_at.is_(None),
+            models.SesionGrupo.deleted_at.is_(None),
+        )
     )
     if strategy_id:
         q = q.filter(GrupoEvangelismo.estrategia_id == strategy_id)
@@ -486,10 +501,14 @@ def get_session_detail(
     if not session:
         raise HTTPException(status_code=404, detail="Sesión no encontrada")
 
-    attendance_rows = db.query(Asistencia).filter(
-        models.Asistencia.sesion_id == session_id,
-        models.Asistencia.deleted_at.is_(None),
-    ).all()
+    attendance_rows = (
+        db.query(Asistencia)
+        .filter(
+            models.Asistencia.sesion_id == session_id,
+            models.Asistencia.deleted_at.is_(None),
+        )
+        .all()
+    )
 
     # Build persona name lookup for this session's grupo
     persona_map: dict[str, str] = {}
@@ -608,6 +627,7 @@ def delete_session(
 
     # Soft-delete: marcar como cancelada en lugar de borrar
     from backend.models_evangelism import EstadoSesionEnum
+
     db_session.status = EstadoSesionEnum.CANCELADA.value
     db_session.deleted_at = utc_now()
     db.commit()
@@ -675,11 +695,15 @@ def habilitar_todas_sesiones(
     """Admin: habilita todas las sesiones de una estrategia de un golpe."""
     from backend.models_evangelism import GrupoEvangelismo, HabilitacionSesionEnum
 
-    grupos = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.estrategia_id == strategy_id,
-        GrupoEvangelismo.sede_id == require_user_sede_id(db, current_user),
-        GrupoEvangelismo.deleted_at.is_(None),
-    ).all()
+    grupos = (
+        db.query(GrupoEvangelismo)
+        .filter(
+            GrupoEvangelismo.estrategia_id == strategy_id,
+            GrupoEvangelismo.sede_id == require_user_sede_id(db, current_user),
+            GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .all()
+    )
     grupo_ids = [g.id for g in grupos]
     if not grupo_ids:
         raise HTTPException(status_code=404, detail="Estrategia sin grupos")
@@ -689,14 +713,21 @@ def habilitar_todas_sesiones(
     if not sessions_grupo_has_estado_habilitacion(db):
         return {"strategy_id": strategy_id, "sesiones_habilitadas": 0}
 
-    updated = db.query(SesionGrupo).filter(
-        SesionGrupo.grupo_id.in_(grupo_ids),
-        SesionGrupo.deleted_at.is_(None),
-    ).update({
-        "estado_habilitacion": HabilitacionSesionEnum.HABILITADO.value,
-        "habilitado_por": persona.id if persona else None,
-        "habilitado_en": utc_now(),
-    }, synchronize_session=False)
+    updated = (
+        db.query(SesionGrupo)
+        .filter(
+            SesionGrupo.grupo_id.in_(grupo_ids),
+            SesionGrupo.deleted_at.is_(None),
+        )
+        .update(
+            {
+                "estado_habilitacion": HabilitacionSesionEnum.HABILITADO.value,
+                "habilitado_por": persona.id if persona else None,
+                "habilitado_en": utc_now(),
+            },
+            synchronize_session=False,
+        )
+    )
     db.commit()
 
     return {"strategy_id": strategy_id, "sesiones_habilitadas": updated}
@@ -711,11 +742,15 @@ def deshabilitar_todas_sesiones(
     """Admin: bloquea todas las sesiones de una estrategia."""
     from backend.models_evangelism import GrupoEvangelismo, HabilitacionSesionEnum
 
-    grupos = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.estrategia_id == strategy_id,
-        GrupoEvangelismo.sede_id == require_user_sede_id(db, current_user),
-        GrupoEvangelismo.deleted_at.is_(None),
-    ).all()
+    grupos = (
+        db.query(GrupoEvangelismo)
+        .filter(
+            GrupoEvangelismo.estrategia_id == strategy_id,
+            GrupoEvangelismo.sede_id == require_user_sede_id(db, current_user),
+            GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .all()
+    )
     grupo_ids = [g.id for g in grupos]
     if not grupo_ids:
         raise HTTPException(status_code=404, detail="Estrategia sin grupos")
@@ -723,12 +758,19 @@ def deshabilitar_todas_sesiones(
     if not sessions_grupo_has_estado_habilitacion(db):
         return {"strategy_id": strategy_id, "sesiones_deshabilitadas": 0}
 
-    updated = db.query(SesionGrupo).filter(
-        SesionGrupo.grupo_id.in_(grupo_ids),
-        SesionGrupo.deleted_at.is_(None),
-    ).update({
-        "estado_habilitacion": HabilitacionSesionEnum.DESHABILITADO.value,
-    }, synchronize_session=False)
+    updated = (
+        db.query(SesionGrupo)
+        .filter(
+            SesionGrupo.grupo_id.in_(grupo_ids),
+            SesionGrupo.deleted_at.is_(None),
+        )
+        .update(
+            {
+                "estado_habilitacion": HabilitacionSesionEnum.DESHABILITADO.value,
+            },
+            synchronize_session=False,
+        )
+    )
     db.commit()
 
     return {"strategy_id": strategy_id, "sesiones_deshabilitadas": updated}

@@ -35,8 +35,8 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash
 from backend.models import *  # noqa: F401
-from backend.models_crm import Persona  # explicit for safety alongside wildcard
 from backend.models_auth import RolPlataforma as _RolPlataforma
+from backend.models_crm import Persona  # explicit for safety alongside wildcard
 from backend.models_identity import User
 from backend.models_projects import (
     Project,
@@ -59,23 +59,28 @@ NC = "\033[0m"
 PASS = 0
 FAIL = 0
 
+
 def ok(msg):
     global PASS
     PASS += 1
     print(f"  {GREEN}✓{NC} {msg}")
+
 
 def fail(msg):
     global FAIL
     FAIL += 1
     print(f"  {RED}✗{NC} {msg}")
 
+
 def info(msg):
     print(f"  {BLUE}ℹ{NC} {msg}")
 
+
 def section(msg):
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {msg}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
+
 
 # ──────────────────────────────────────────────────────────────
 section("1. LIMPIEZA DE DATOS DE PRUEBA ANTERIORES")
@@ -152,7 +157,7 @@ for ud in users_data:
             email=ud["email"],
             password_hash=get_password_hash("prueba123"),
             is_active=True,
-            sede_id=getattr(admin_user, 'sede_id', None) if admin_user else None,
+            sede_id=getattr(admin_user, "sede_id", None) if admin_user else None,
         )
         role_obj = db.query(_RolPlataforma).filter(_RolPlataforma.nombre == ud["role_name"]).first()
         if role_obj:
@@ -177,7 +182,7 @@ project = Project(
     description="Proyecto de calidad para probar el módulo completo de proyectos. Incluye tareas, documentos y comentarios entre 3 usuarios.",
     status="active",
     owner_id=admin_user.id,
-    sede_id=getattr(admin_user, 'sede_id', None),
+    sede_id=getattr(admin_user, "sede_id", None),
     color="#3b82f6",
     icon="palette",
 )
@@ -206,12 +211,14 @@ db.commit()
 ok("4 fases kanban creadas (Por Hacer, En Curso, Revisión, Completado)")
 
 # Log de actividad (using persona_id, not user_id)
-db.add(ProjectActivityLog(
-    project_id=project.id,
-    persona_id=admin_user.id,
-    action_type="project_created",
-    description=f"Proyecto creado por {admin_user.username}",
-))
+db.add(
+    ProjectActivityLog(
+        project_id=project.id,
+        persona_id=admin_user.id,
+        action_type="project_created",
+        description=f"Proyecto creado por {admin_user.username}",
+    )
+)
 db.commit()
 
 # ──────────────────────────────────────────────────────────────
@@ -293,12 +300,14 @@ for td in tasks_data:
     ok(f"Tarea '{task.title}' → asignada a {assignee.username} (id={task.id})")
     created_tasks.append(task)
 
-    db.add(ProjectActivityLog(
-        project_id=project.id,
-        persona_id=admin_user.id,
-        action_type="task_created",
-        description=f"Tarea creada: {task.title} → {assignee.username}",
-    ))
+    db.add(
+        ProjectActivityLog(
+            project_id=project.id,
+            persona_id=admin_user.id,
+            action_type="task_created",
+            description=f"Tarea creada: {task.title} → {assignee.username}",
+        )
+    )
 db.commit()
 
 # ──────────────────────────────────────────────────────────────
@@ -306,9 +315,17 @@ section("5. CREACIÓN DE MILESTONES (HITOS)")
 # ──────────────────────────────────────────────────────────────
 
 milestones_data = [
-    ("Propuesta aprobada", "La propuesta creativa debe ser aprobada por el liderazgo.", now + datetime.timedelta(days=5)),
+    (
+        "Propuesta aprobada",
+        "La propuesta creativa debe ser aprobada por el liderazgo.",
+        now + datetime.timedelta(days=5),
+    ),
     ("Diseño finalizado", "El logo y materiales visuales deben estar listos.", now + datetime.timedelta(days=10)),
-    ("Presentación completada", "La presentación al equipo pastoral debe estar lista.", now + datetime.timedelta(days=14)),
+    (
+        "Presentación completada",
+        "La presentación al equipo pastoral debe estar lista.",
+        now + datetime.timedelta(days=14),
+    ),
 ]
 
 for title, desc, target in milestones_data:
@@ -358,12 +375,14 @@ db.add(wiki)
 db.commit()
 ok(f"Documento wiki creado: '{wiki.title}' (id={wiki.id})")
 
-db.add(ProjectActivityLog(
-    project_id=project.id,
-    persona_id=admin_user.id,
-    action_type="wiki_updated",
-    description="Documento wiki creado: Guía del Proyecto",
-))
+db.add(
+    ProjectActivityLog(
+        project_id=project.id,
+        persona_id=admin_user.id,
+        action_type="wiki_updated",
+        description="Documento wiki creado: Guía del Proyecto",
+    )
+)
 db.commit()
 
 # ──────────────────────────────────────────────────────────────
@@ -422,12 +441,14 @@ for cd in comments_data:
 
     ok(f"Comentario de {author.username}{task_title}: '{cd['content'][:60]}...'")
 
-    db.add(ProjectActivityLog(
-        project_id=project.id,
-        persona_id=cd["author_id"],
-        action_type="comment_added",
-        description=f"{author.username} comentó{task_title}",
-    ))
+    db.add(
+        ProjectActivityLog(
+            project_id=project.id,
+            persona_id=cd["author_id"],
+            action_type="comment_added",
+            description=f"{author.username} comentó{task_title}",
+        )
+    )
 db.commit()
 
 # ──────────────────────────────────────────────────────────────
@@ -454,7 +475,9 @@ doc_count = db.query(ProjectDocument).filter(ProjectDocument.project_id == proje
 ok(f"Documentos wiki: {doc_count}") if doc_count == 1 else fail(f"Documentos wiki: {doc_count} (esperado 1)")
 
 activity_count = db.query(ProjectActivityLog).filter(ProjectActivityLog.project_id == project.id).count()
-ok(f"Logs de actividad: {activity_count}") if activity_count >= 7 else fail(f"Logs de actividad: {activity_count} (esperado >= 7)")
+ok(f"Logs de actividad: {activity_count}") if activity_count >= 7 else fail(
+    f"Logs de actividad: {activity_count} (esperado >= 7)"
+)
 
 # Verificar asignaciones
 for task in created_tasks:
@@ -466,10 +489,14 @@ for task in created_tasks:
 
 # Verificar comentarios por usuario
 for u in [u1, u2, u3, admin_user]:
-    count = db.query(ProjectComment).filter(
-        ProjectComment.project_id == project.id,
-        ProjectComment.author_id == u.id,
-    ).count()
+    count = (
+        db.query(ProjectComment)
+        .filter(
+            ProjectComment.project_id == project.id,
+            ProjectComment.author_id == u.id,
+        )
+        .count()
+    )
     ok(f"  {u.username}: {count} comentario(s)")
 
 # ──────────────────────────────────────────────────────────────
@@ -479,10 +506,14 @@ section("9. PRUEBA DE API (ENDPOINTS)")
 import httpx
 
 # Login como GESTOR de prueba (endpoint v3) — credenciales conocidas del script
-login_resp = httpx.post("http://127.0.0.1:8000/api/v3/auth/login", json={
-    "email": "prueba3@ccf.test",
-    "password": "prueba123",
-}, follow_redirects=False)
+login_resp = httpx.post(
+    "http://127.0.0.1:8000/api/v3/auth/login",
+    json={
+        "email": "prueba3@ccf.test",
+        "password": "prueba123",
+    },
+    follow_redirects=False,
+)
 
 if login_resp.status_code == 200:
     token = login_resp.json().get("access_token", "")
@@ -553,10 +584,14 @@ if login_resp.status_code == 200:
         fail(f"POST /projects/{id}/comments → HTTP {resp.status_code}: {resp.text[:100]}")
 
     # Login como usuario_prueba_2 (docente, tiene acceso a projects) y verificar que ve el proyecto
-    login_u2 = httpx.post("http://127.0.0.1:8000/api/v3/auth/login", json={
-        "email": "prueba2@ccf.test",
-        "password": "prueba123",
-    }, follow_redirects=False)
+    login_u2 = httpx.post(
+        "http://127.0.0.1:8000/api/v3/auth/login",
+        json={
+            "email": "prueba2@ccf.test",
+            "password": "prueba123",
+        },
+        follow_redirects=False,
+    )
     if login_u2.status_code == 200:
         token_u2 = login_u2.json().get("access_token", "")
         headers_u2 = {"Authorization": f"Bearer {token_u2}"}
@@ -584,10 +619,14 @@ if login_resp.status_code == 200:
         fail(f"Login usuario_prueba_2 → HTTP {login_u2.status_code}")
 
     # Verificar que usuario_prueba_1 (miembro sin permiso projects) NO tiene acceso a projects (expected: 403)
-    login_u1b = httpx.post("http://127.0.0.1:8000/api/v3/auth/login", json={
-        "email": "prueba1@ccf.test",
-        "password": "prueba123",
-    }, follow_redirects=False)
+    login_u1b = httpx.post(
+        "http://127.0.0.1:8000/api/v3/auth/login",
+        json={
+            "email": "prueba1@ccf.test",
+            "password": "prueba123",
+        },
+        follow_redirects=False,
+    )
     if login_u1b.status_code == 200:
         token_u1b = login_u1b.json().get("access_token", "")
         headers_u1b = {"Authorization": f"Bearer {token_u1b}"}

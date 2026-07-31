@@ -2,4 +2,3 @@
 
 DEFAULT_SITE_KEY = "ccf"
 DEFAULT_LANGUAGE = "es"
-

@@ -130,9 +130,7 @@ def upgrade() -> None:
             sa.Column("text_response", sa.Text(), nullable=True),
             sa.Column("is_correct", sa.Boolean(), nullable=True),
             sa.Column("points_awarded", sa.Numeric(5, 2), server_default="0", nullable=True),
-            sa.ForeignKeyConstraint(
-                ["attempt_id"], ["academy_assessment_attempts.id"], ondelete="CASCADE"
-            ),
+            sa.ForeignKeyConstraint(["attempt_id"], ["academy_assessment_attempts.id"], ondelete="CASCADE"),
             sa.ForeignKeyConstraint(["question_id"], ["academy_assessment_questions.id"]),
             sa.ForeignKeyConstraint(["selected_option_id"], ["academy_assessment_options.id"]),
             sa.PrimaryKeyConstraint("id"),
@@ -159,9 +157,7 @@ def upgrade() -> None:
         op.create_index("ix_academy_resources_lesson_id", "academy_resources", ["lesson_id"])
 
     inspector = sa.inspect(op.get_bind())
-    activity_fks = {
-        fk["name"]: fk for fk in inspector.get_foreign_keys("academy_activity_logs")
-    }
+    activity_fks = {fk["name"]: fk for fk in inspector.get_foreign_keys("academy_activity_logs")}
     old_fk = activity_fks.get("academy_activity_logs_course_id_fkey")
     if old_fk and old_fk.get("referred_table") == "courses":
         op.drop_constraint(
@@ -182,9 +178,7 @@ def downgrade() -> None:
     inspector = sa.inspect(op.get_bind())
     fk_names = {fk["name"] for fk in inspector.get_foreign_keys("academy_activity_logs")}
     if "fk_academy_activity_logs_course_id" in fk_names:
-        op.drop_constraint(
-            "fk_academy_activity_logs_course_id", "academy_activity_logs", type_="foreignkey"
-        )
+        op.drop_constraint("fk_academy_activity_logs_course_id", "academy_activity_logs", type_="foreignkey")
         if _has_table("courses"):
             op.create_foreign_key(
                 "academy_activity_logs_course_id_fkey",

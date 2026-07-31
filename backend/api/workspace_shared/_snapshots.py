@@ -35,15 +35,9 @@ def _snapshot_hash(snapshot: Dict[str, Any]) -> str:
     return hashlib.sha256(_json_canonical(snapshot).encode("utf-8")).hexdigest()
 
 
-def _find_snapshot_history_item(
-    rows: list[Dict[str, Any]], snapshot_id: str
-) -> Dict[str, Any] | None:
+def _find_snapshot_history_item(rows: list[Dict[str, Any]], snapshot_id: str) -> Dict[str, Any] | None:
     return next(
-        (
-            row
-            for row in reversed(rows)
-            if str(row.get("snapshot_id", "")) == snapshot_id
-        ),
+        (row for row in reversed(rows) if str(row.get("snapshot_id", "")) == snapshot_id),
         None,
     )
 
@@ -90,27 +84,13 @@ def _resolve_compliance_policy(
     environment: str | None = None,
 ) -> Dict[str, Any]:
     source = policy if isinstance(policy, dict) else DEFAULT_COMPLIANCE_POLICY
-    env_name = (
-        (environment or source.get("active_environment") or "production")
-        .strip()
-        .lower()
-    )
-    envs = (
-        source.get("environments")
-        if isinstance(source.get("environments"), dict)
-        else {}
-    )
+    env_name = (environment or source.get("active_environment") or "production").strip().lower()
+    envs = source.get("environments") if isinstance(source.get("environments"), dict) else {}
     env_policy = envs.get(env_name) if isinstance(envs.get(env_name), dict) else {}
     if not env_policy and env_name != "production":
-        env_policy = (
-            envs.get("production") if isinstance(envs.get("production"), dict) else {}
-        )
+        env_policy = envs.get("production") if isinstance(envs.get("production"), dict) else {}
 
-    suppressions_raw = (
-        source.get("suppressions")
-        if isinstance(source.get("suppressions"), list)
-        else []
-    )
+    suppressions_raw = source.get("suppressions") if isinstance(source.get("suppressions"), list) else []
     suppressions = []
     now_ts = datetime.now(tz=timezone.utc).timestamp()
     for item in suppressions_raw:
@@ -124,11 +104,7 @@ def _resolve_compliance_policy(
     critical_flags = source.get("critical_feature_flags")
     critical_flag_set = {
         str(flag).strip()
-        for flag in (
-            critical_flags
-            if isinstance(critical_flags, list)
-            else sorted(CRITICAL_FEATURE_FLAGS)
-        )
+        for flag in (critical_flags if isinstance(critical_flags, list) else sorted(CRITICAL_FEATURE_FLAGS))
         if str(flag).strip()
     }
     if not critical_flag_set:
@@ -137,26 +113,16 @@ def _resolve_compliance_policy(
     return {
         "environment": env_name,
         "incident_spike_delta": max(1, int(env_policy.get("incident_spike_delta", 5))),
-        "mtta_regression_pct": max(
-            0.01, float(env_policy.get("mtta_regression_pct", 0.25))
-        ),
-        "mttr_regression_pct": max(
-            0.01, float(env_policy.get("mttr_regression_pct", 0.25))
-        ),
-        "critical_feature_change_count_high": max(
-            1, int(env_policy.get("critical_feature_change_count_high", 2))
-        ),
-        "critical_feature_disabled_force": bool(
-            env_policy.get("critical_feature_disabled_force", True)
-        ),
+        "mtta_regression_pct": max(0.01, float(env_policy.get("mtta_regression_pct", 0.25))),
+        "mttr_regression_pct": max(0.01, float(env_policy.get("mttr_regression_pct", 0.25))),
+        "critical_feature_change_count_high": max(1, int(env_policy.get("critical_feature_change_count_high", 2))),
+        "critical_feature_disabled_force": bool(env_policy.get("critical_feature_disabled_force", True)),
         "critical_feature_flags": sorted(critical_flag_set),
         "suppressions": suppressions,
     }
 
 
-def _is_drift_signal_suppressed(
-    signal_type: str, signal_value: str, suppressions: list[Dict[str, Any]]
-) -> bool:
+def _is_drift_signal_suppressed(signal_type: str, signal_value: str, suppressions: list[Dict[str, Any]]) -> bool:
     normalized_type = signal_type.strip().lower()
     normalized_value = signal_value.strip().lower()
     for item in suppressions:
@@ -222,71 +188,41 @@ def _assess_config_drift(
     policy: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     effective_policy = _resolve_compliance_policy(policy)
-    critical_flag_set = set(
-        effective_policy.get("critical_feature_flags", sorted(CRITICAL_FEATURE_FLAGS))
-    )
+    critical_flag_set = set(effective_policy.get("critical_feature_flags", sorted(CRITICAL_FEATURE_FLAGS)))
     suppressions = effective_policy.get("suppressions", [])
 
-    critical_changes = [
-        item
-        for item in feature_changes
-        if str(item.get("feature") or "") in critical_flag_set
-    ]
-    critical_disabled = [
-        item
-        for item in critical_changes
-        if item.get("before") is True and item.get("after") is False
-    ]
+    critical_changes = [item for item in feature_changes if str(item.get("feature") or "") in critical_flag_set]
+    critical_disabled = [item for item in critical_changes if item.get("before") is True and item.get("after") is False]
 
     reasons: list[str] = []
     metric_alerts: list[str] = []
 
     base_incidents = base_metrics.get("incident_count")
     target_incidents = target_metrics.get("incident_count")
-    if isinstance(base_incidents, (int, float)) and isinstance(
-        target_incidents, (int, float)
-    ):
-        if target_incidents - base_incidents >= int(
-            effective_policy.get("incident_spike_delta", 5)
-        ):
+    if isinstance(base_incidents, (int, float)) and isinstance(target_incidents, (int, float)):
+        if target_incidents - base_incidents >= int(effective_policy.get("incident_spike_delta", 5)):
             metric_alerts.append("incident_count_spike")
             reasons.append("Incidentes aumentaron significativamente entre snapshots")
 
     base_mtta = base_metrics.get("mtta_minutes")
     target_mtta = target_metrics.get("mtta_minutes")
-    if (
-        isinstance(base_mtta, (int, float))
-        and isinstance(target_mtta, (int, float))
-        and base_mtta > 0
-    ):
-        if ((target_mtta - base_mtta) / base_mtta) >= float(
-            effective_policy.get("mtta_regression_pct", 0.25)
-        ):
+    if isinstance(base_mtta, (int, float)) and isinstance(target_mtta, (int, float)) and base_mtta > 0:
+        if ((target_mtta - base_mtta) / base_mtta) >= float(effective_policy.get("mtta_regression_pct", 0.25)):
             metric_alerts.append("mtta_regression")
             reasons.append("MTTA empeoro mas del 25%")
 
     base_mttr = base_metrics.get("mttr_minutes")
     target_mttr = target_metrics.get("mttr_minutes")
-    if (
-        isinstance(base_mttr, (int, float))
-        and isinstance(target_mttr, (int, float))
-        and base_mttr > 0
-    ):
-        if ((target_mttr - base_mttr) / base_mttr) >= float(
-            effective_policy.get("mttr_regression_pct", 0.25)
-        ):
+    if isinstance(base_mttr, (int, float)) and isinstance(target_mttr, (int, float)) and base_mttr > 0:
+        if ((target_mttr - base_mttr) / base_mttr) >= float(effective_policy.get("mttr_regression_pct", 0.25)):
             metric_alerts.append("mttr_regression")
             reasons.append("MTTR empeoro mas del 25%")
 
     severity = "low"
-    if critical_disabled and bool(
-        effective_policy.get("critical_feature_disabled_force", True)
-    ):
+    if critical_disabled and bool(effective_policy.get("critical_feature_disabled_force", True)):
         severity = "critical"
         reasons.append("Se desactivaron flags criticos")
-    elif len(critical_changes) >= int(
-        effective_policy.get("critical_feature_change_count_high", 2)
-    ):
+    elif len(critical_changes) >= int(effective_policy.get("critical_feature_change_count_high", 2)):
         severity = "high"
         reasons.append("Multiples flags criticos cambiaron en el periodo")
     elif len(critical_changes) == 1:
@@ -317,54 +253,32 @@ def _assess_config_drift(
 
     mitigations: list[str] = []
     if critical_disabled:
-        mitigations.append(
-            "Revisar y restaurar flags criticos desactivados sin aprobacion formal"
-        )
-        mitigations.append(
-            "Aplicar control de cambios con doble aprobacion para flags criticos"
-        )
+        mitigations.append("Revisar y restaurar flags criticos desactivados sin aprobacion formal")
+        mitigations.append("Aplicar control de cambios con doble aprobacion para flags criticos")
     if "incident_count_spike" in metric_alerts:
-        mitigations.append(
-            "Escanear incidentes inmediatamente y confirmar acciones de contencion"
-        )
+        mitigations.append("Escanear incidentes inmediatamente y confirmar acciones de contencion")
     if "mtta_regression" in metric_alerts:
-        mitigations.append(
-            "Reducir MTTA: asignar on-call dedicado y alerta temprana de incidentes"
-        )
+        mitigations.append("Reducir MTTA: asignar on-call dedicado y alerta temprana de incidentes")
     if "mttr_regression" in metric_alerts:
-        mitigations.append(
-            "Reducir MTTR: playbook de remediacion y ownership por dominio"
-        )
+        mitigations.append("Reducir MTTR: playbook de remediacion y ownership por dominio")
     if len(feature_changes) >= 3:
-        mitigations.append(
-            "Separar cambios de flags en lotes pequenos para reducir riesgo acumulado"
-        )
+        mitigations.append("Separar cambios de flags en lotes pequenos para reducir riesgo acumulado")
     if not mitigations and feature_changes:
         mitigations.append("Registrar RFC de cambio y monitorear impacto por 24h")
 
     suppressed_feature_changes = [
         item
         for item in feature_changes
-        if _is_drift_signal_suppressed(
-            "feature", str(item.get("feature") or ""), suppressions
-        )
+        if _is_drift_signal_suppressed("feature", str(item.get("feature") or ""), suppressions)
     ]
-    active_feature_changes = [
-        item for item in feature_changes if item not in suppressed_feature_changes
-    ]
+    active_feature_changes = [item for item in feature_changes if item not in suppressed_feature_changes]
 
     suppressed_metric_alerts = [
-        item
-        for item in metric_alerts
-        if _is_drift_signal_suppressed("metric_alert", item, suppressions)
+        item for item in metric_alerts if _is_drift_signal_suppressed("metric_alert", item, suppressions)
     ]
-    active_metric_alerts = [
-        item for item in metric_alerts if item not in suppressed_metric_alerts
-    ]
+    active_metric_alerts = [item for item in metric_alerts if item not in suppressed_metric_alerts]
 
-    suppressed_severity = _is_drift_signal_suppressed(
-        "severity", severity, suppressions
-    )
+    suppressed_severity = _is_drift_signal_suppressed("severity", severity, suppressions)
 
     effective_has_drift = bool(active_feature_changes or active_metric_alerts)
     effective_severity = severity
@@ -384,9 +298,7 @@ def _assess_config_drift(
         "mitigations": mitigations,
         "critical_feature_changes": critical_changes,
         "critical_disabled": critical_disabled,
-        "non_critical_feature_changes": [
-            item for item in feature_changes if item not in critical_changes
-        ],
+        "non_critical_feature_changes": [item for item in feature_changes if item not in critical_changes],
         "metric_alerts": metric_alerts,
         "suppressions_active": suppressions,
         "suppressed": {
@@ -411,22 +323,16 @@ def _resolve_compare_pair(
         first = _find_snapshot_history_item(rows, from_snapshot_id)
         second = _find_snapshot_history_item(rows, to_snapshot_id)
         if not first or not second:
-            raise HTTPException(
-                status_code=404, detail="One or both snapshots were not found"
-            )
+            raise HTTPException(status_code=404, detail="One or both snapshots were not found")
         return first, second
 
     if len(rows) < 2:
-        raise HTTPException(
-            status_code=422, detail="Need at least two snapshots in history"
-        )
+        raise HTTPException(status_code=422, detail="Need at least two snapshots in history")
     ordered = sorted(rows, key=lambda item: str(item.get("recorded_at") or ""))
     return ordered[-2], ordered[-1]
 
 
-def _cleanup_snapshot_history(
-    rows: list[Dict[str, Any]], retain_days: int = 90
-) -> Dict[str, int]:
+def _cleanup_snapshot_history(rows: list[Dict[str, Any]], retain_days: int = 90) -> Dict[str, int]:
     safe_days = max(1, min(retain_days, 3650))
     boundary = datetime.now(tz=timezone.utc).timestamp() - (safe_days * 86400)
 
@@ -453,9 +359,7 @@ def _maybe_emit_snapshot_drift_alert(
 
     previous_snapshot = previous_entry.get("snapshot")
     current_snapshot = current_entry.get("snapshot")
-    if not isinstance(previous_snapshot, dict) or not isinstance(
-        current_snapshot, dict
-    ):
+    if not isinstance(previous_snapshot, dict) or not isinstance(current_snapshot, dict):
         return None
 
     current_policy = (current_snapshot.get("config") or {}).get("compliance_policy")
@@ -483,9 +387,7 @@ def _maybe_emit_snapshot_drift_alert(
                 "to_snapshot_id": current_entry.get("snapshot_id"),
                 "reasons": drift.get("reasons", []),
                 "critical_disabled": len(drift.get("critical_disabled", []) or []),
-                "critical_feature_changes": len(
-                    drift.get("critical_feature_changes", []) or []
-                ),
+                "critical_feature_changes": len(drift.get("critical_feature_changes", []) or []),
                 "suppressed": drift.get("suppressed", {}),
             }
         )
@@ -500,16 +402,12 @@ def _maybe_emit_snapshot_drift_alert(
         "reasons": drift.get("reasons", []),
         "mitigations": drift.get("mitigations", []),
         "critical_disabled": len(drift.get("critical_disabled", []) or []),
-        "critical_feature_changes": len(
-            drift.get("critical_feature_changes", []) or []
-        ),
+        "critical_feature_changes": len(drift.get("critical_feature_changes", []) or []),
         "suppressed": drift.get("suppressed", {}),
     }
 
 
-def _weekly_snapshot_summary(
-    rows: list[Dict[str, Any]], weeks: int = 8
-) -> list[Dict[str, Any]]:
+def _weekly_snapshot_summary(rows: list[Dict[str, Any]], weeks: int = 8) -> list[Dict[str, Any]]:
     safe_weeks = max(1, min(weeks, 104))
     now = datetime.now(tz=timezone.utc)
 
@@ -560,21 +458,14 @@ def _weekly_snapshot_summary(
     return [buckets[key] for key in sorted(buckets.keys())]
 
 
-def _normalize_compliance_policy_update(
-    payload: Dict[str, Any], current_policy: Dict[str, Any]
-) -> Dict[str, Any]:
+def _normalize_compliance_policy_update(payload: Dict[str, Any], current_policy: Dict[str, Any]) -> Dict[str, Any]:
     if not isinstance(payload, dict):
         raise HTTPException(status_code=422, detail="Policy payload must be an object")
 
     next_policy = {
-        "active_environment": str(
-            current_policy.get("active_environment") or "production"
-        ),
+        "active_environment": str(current_policy.get("active_environment") or "production"),
         "environments": dict(current_policy.get("environments") or {}),
-        "critical_feature_flags": list(
-            current_policy.get("critical_feature_flags")
-            or sorted(CRITICAL_FEATURE_FLAGS)
-        ),
+        "critical_feature_flags": list(current_policy.get("critical_feature_flags") or sorted(CRITICAL_FEATURE_FLAGS)),
         "suppressions": list(current_policy.get("suppressions") or []),
     }
 
@@ -590,29 +481,21 @@ def _normalize_compliance_policy_update(
     if "critical_feature_flags" in payload:
         flags = payload.get("critical_feature_flags")
         if not isinstance(flags, list):
-            raise HTTPException(
-                status_code=422, detail="critical_feature_flags must be a list"
-            )
+            raise HTTPException(status_code=422, detail="critical_feature_flags must be a list")
         cleaned = [str(item).strip() for item in flags if str(item).strip()]
         next_policy["critical_feature_flags"] = sorted(set(cleaned))
 
     if "environments" in payload:
         env_updates = payload.get("environments")
         if not isinstance(env_updates, dict):
-            raise HTTPException(
-                status_code=422, detail="environments must be an object"
-            )
+            raise HTTPException(status_code=422, detail="environments must be an object")
         merged_envs: Dict[str, Any] = dict(next_policy.get("environments") or {})
         for env_name, env_values in env_updates.items():
             name = str(env_name).strip().lower()
             if name not in {"development", "staging", "production"}:
-                raise HTTPException(
-                    status_code=422, detail=f"Invalid environment key: {name}"
-                )
+                raise HTTPException(status_code=422, detail=f"Invalid environment key: {name}")
             if not isinstance(env_values, dict):
-                raise HTTPException(
-                    status_code=422, detail=f"Environment '{name}' must be an object"
-                )
+                raise HTTPException(status_code=422, detail=f"Environment '{name}' must be an object")
             base_env = dict(merged_envs.get(name) or {})
             merged = {**base_env, **env_values}
             merged_envs[name] = {
@@ -664,13 +547,9 @@ def _normalize_compliance_policy_update(
     return next_policy
 
 
-def _normalize_suppression_payload(
-    payload: Dict[str, Any], actor_id: str
-) -> Dict[str, Any]:
+def _normalize_suppression_payload(payload: Dict[str, Any], actor_id: str) -> Dict[str, Any]:
     if not isinstance(payload, dict):
-        raise HTTPException(
-            status_code=422, detail="Suppression payload must be an object"
-        )
+        raise HTTPException(status_code=422, detail="Suppression payload must be an object")
 
     kind = str(payload.get("kind") or "").strip().lower()
     value = str(payload.get("value") or "").strip().lower()
@@ -678,26 +557,18 @@ def _normalize_suppression_payload(
     expires_in_hours_raw = payload.get("expires_in_hours", 24)
 
     if kind not in {"all", "severity", "feature", "metric_alert"}:
-        raise HTTPException(
-            status_code=422, detail="kind must be all|severity|feature|metric_alert"
-        )
+        raise HTTPException(status_code=422, detail="kind must be all|severity|feature|metric_alert")
     if kind != "all" and not value:
-        raise HTTPException(
-            status_code=422, detail="value is required for this suppression kind"
-        )
+        raise HTTPException(status_code=422, detail="value is required for this suppression kind")
 
     try:
         expires_in_hours = max(1, min(int(expires_in_hours_raw), 24 * 30))
     except (TypeError, ValueError):
-        raise HTTPException(
-            status_code=422, detail="expires_in_hours must be an integer"
-        )
+        raise HTTPException(status_code=422, detail="expires_in_hours must be an integer")
 
     now = datetime.now(tz=timezone.utc)
     expires_at = (now + timedelta(hours=expires_in_hours)).isoformat()
-    suppression_id = hashlib.md5(
-        f"{kind}:{value}:{now.isoformat()}:{actor_id}".encode("utf-8")
-    ).hexdigest()[:12]
+    suppression_id = hashlib.md5(f"{kind}:{value}:{now.isoformat()}:{actor_id}".encode("utf-8")).hexdigest()[:12]
 
     return {
         "id": suppression_id,
@@ -721,12 +592,8 @@ def _build_compliance_snapshot(
     action_threshold: int = 20,
 ) -> Dict[str, Any]:
     config = _load_workspace_config()
-    policy = _resolve_compliance_policy(
-        config.get("compliance_policy"), environment=environment
-    )
-    audit_rows = _enrich_audit_rows(
-        _read_audit_events(limit=max(1, min(audit_limit, 1000)))
-    )
+    policy = _resolve_compliance_policy(config.get("compliance_policy"), environment=environment)
+    audit_rows = _enrich_audit_rows(_read_audit_events(limit=max(1, min(audit_limit, 1000))))
     incidents = _load_incidents()
     incidents = incidents[-max(1, min(incident_limit, 1000)) :]
 
@@ -737,21 +604,13 @@ def _build_compliance_snapshot(
         action_threshold=action_threshold,
     )
 
-    weekly_start, weekly_end, weekly_prev_start, weekly_prev_end, _ = _period_bounds(
-        "weekly"
-    )
-    monthly_start, monthly_end, monthly_prev_start, monthly_prev_end, _ = (
-        _period_bounds("monthly")
-    )
+    weekly_start, weekly_end, weekly_prev_start, weekly_prev_end, _ = _period_bounds("weekly")
+    monthly_start, monthly_end, monthly_prev_start, monthly_prev_end, _ = _period_bounds("monthly")
 
     weekly_current = _period_incident_stats(incidents, weekly_start, weekly_end)
-    weekly_previous = _period_incident_stats(
-        incidents, weekly_prev_start, weekly_prev_end
-    )
+    weekly_previous = _period_incident_stats(incidents, weekly_prev_start, weekly_prev_end)
     monthly_current = _period_incident_stats(incidents, monthly_start, monthly_end)
-    monthly_previous = _period_incident_stats(
-        incidents, monthly_prev_start, monthly_prev_end
-    )
+    monthly_previous = _period_incident_stats(incidents, monthly_prev_start, monthly_prev_end)
 
     snapshot = {
         "schema_version": COMPLIANCE_SNAPSHOT_SCHEMA_VERSION,
@@ -794,9 +653,7 @@ def _build_compliance_snapshot(
                             weekly_current.get("created"),
                             weekly_previous.get("created"),
                         ),
-                        "closed_pct": _pct_delta(
-                            weekly_current.get("closed"), weekly_previous.get("closed")
-                        ),
+                        "closed_pct": _pct_delta(weekly_current.get("closed"), weekly_previous.get("closed")),
                         "mtta_pct": _pct_delta(
                             weekly_current.get("mtta_minutes"),
                             weekly_previous.get("mtta_minutes"),

@@ -10,6 +10,7 @@ Revises: 20260723_0003
 Create Date: 2026-07-23 20:45:00.000000
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op

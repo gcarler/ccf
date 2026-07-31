@@ -88,9 +88,7 @@ def _fetch_dashboard_metrics_cached(
     """
     courses_query = db.query(models.Course).filter(models.Course.deleted_at.is_(None))
     if sede_id_str != "_global_":
-        courses_query = courses_query.filter(
-            or_(models.Course.sede_id == sede_id_str, models.Course.sede_id.is_(None))
-        )
+        courses_query = courses_query.filter(or_(models.Course.sede_id == sede_id_str, models.Course.sede_id.is_(None)))
     course_ids = [str(row.id) for row in courses_query.with_entities(models.Course.id).all()]
     total_courses = len(course_ids)
 
@@ -129,11 +127,7 @@ def _fetch_dashboard_metrics_cached(
         else 0
     )
 
-    completion_rate = (
-        round((completed_enrollments / total_enrollments) * 100, 2)
-        if total_enrollments
-        else 0
-    )
+    completion_rate = round((completed_enrollments / total_enrollments) * 100, 2) if total_enrollments else 0
 
     # ----- Trends mensuales (últimos 12 meses) -----
     enrollment_trends: list[dict[str, Any]] = []
@@ -154,9 +148,7 @@ def _fetch_dashboard_metrics_cached(
             .all()
         )
         for month_value, count_value in monthly_rows:
-            enrollment_trends.append(
-                {"label": month_value.strftime("%Y-%m"), "value": int(count_value or 0)}
-            )
+            enrollment_trends.append({"label": month_value.strftime("%Y-%m"), "value": int(count_value or 0)})
 
     # ----- Top 5 cursos con más matrículas -----
     top_courses: list[dict[str, Any]] = []
@@ -250,11 +242,7 @@ def _lesson_to_dict(lesson: models.Lesson) -> dict[str, Any]:
     """
 
     data = _to_dict(lesson)
-    data["resources"] = [
-        _to_dict(r)
-        for r in (lesson.resources or [])
-        if getattr(r, "deleted_at", None) is None
-    ]
+    data["resources"] = [_to_dict(r) for r in (lesson.resources or []) if getattr(r, "deleted_at", None) is None]
     return data
 
 

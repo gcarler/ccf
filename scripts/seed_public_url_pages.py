@@ -5,6 +5,7 @@ These pages power the dynamic ``[...slug]`` route (PublicSectionRenderer)
 with standard section types, while the dedicated page components continue to
 consume the English-slug pages with their richer section keys.
 """
+
 from __future__ import annotations
 
 import json
@@ -116,7 +117,14 @@ def _normalize_props(section_type: str, props: Any) -> dict[str, Any]:
             "intro": intro,
             "sections": sections,
         }
-    if section_type in ("rich_text", "team", "events_calendar", "course_grid", "locations_list", "testimonials_masonry"):
+    if section_type in (
+        "rich_text",
+        "team",
+        "events_calendar",
+        "course_grid",
+        "locations_list",
+        "testimonials_masonry",
+    ):
         # Most renderer components accept these common keys.
         return data if isinstance(data, dict) else {}
     return data if isinstance(data, dict) else {}
@@ -159,20 +167,12 @@ def main() -> int:
         published = 0
 
         for es_slug, (en_slug, title) in SPANISH_PAGES.items():
-            en_page = (
-                db.query(models.CmsPage)
-                .filter_by(site_id=site.id, slug=en_slug)
-                .first()
-            )
+            en_page = db.query(models.CmsPage).filter_by(site_id=site.id, slug=en_slug).first()
             if en_page is None:
                 print(f"Skip {es_slug}: English page {en_slug} not found")
                 continue
 
-            es_page = (
-                db.query(models.CmsPage)
-                .filter_by(site_id=site.id, slug=es_slug)
-                .first()
-            )
+            es_page = db.query(models.CmsPage).filter_by(site_id=site.id, slug=es_slug).first()
             if es_page is None:
                 es_page = models.CmsPage(
                     site_id=site.id,
@@ -192,10 +192,7 @@ def main() -> int:
 
             # Collect source sections from the English page.
             en_sections = (
-                db.query(models.CmsSection)
-                .filter_by(page_id=en_page.id)
-                .order_by(models.CmsSection.sort_order)
-                .all()
+                db.query(models.CmsSection).filter_by(page_id=en_page.id).order_by(models.CmsSection.sort_order).all()
             )
 
             new_sections: list[dict[str, Any]] = []

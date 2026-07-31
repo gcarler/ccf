@@ -31,7 +31,7 @@ async function _refreshSession(): Promise<string | null> {
     try {
       const nativeFetch: typeof fetch =
         (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
-      
+
       const res = await nativeFetch(apiUrl("/v3/auth/refresh"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },

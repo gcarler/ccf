@@ -99,8 +99,5 @@ def get_module_dashboard(
 def list_modules(_current_user=Depends(require_active_user)):
     """Listar módulos disponibles para dashboard."""
     return {
-        "modules": [
-            {"key": k, "label": v[2], "endpoint": f"/api/dashboard/{k}"}
-            for k, v in MODULE_REGISTRY.items()
-        ]
+        "modules": [{"key": k, "label": v[2], "endpoint": f"/api/dashboard/{k}"} for k, v in MODULE_REGISTRY.items()]
     }

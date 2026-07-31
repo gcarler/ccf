@@ -34,6 +34,7 @@ Revision ID: 20260725_0002
 Revises: 20260725_0001
 Create Date: 2026-07-25 01:00:00.000000
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa

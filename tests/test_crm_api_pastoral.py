@@ -24,9 +24,12 @@ def full(client, db_session):
 
 @pytest.fixture
 def caso(full, db_session):
-    from backend.models_crm_pipeline import TipoPipelineEnum, PrioridadCasoEnum, EstadoCasoEnum, CanalOrigenEnum
+    from backend.models_crm_pipeline import CanalOrigenEnum, EstadoCasoEnum, PrioridadCasoEnum, TipoPipelineEnum
+
     pipe = models.PipelineCRM(
-        id=uuid.uuid4(), sede_id=full["s"].id, nombre="PastTest",
+        id=uuid.uuid4(),
+        sede_id=full["s"].id,
+        nombre="PastTest",
         tipo=TipoPipelineEnum.CONSEJERIA,
     )
     etapa = models.EtapaPipeline(id=uuid.uuid4(), pipeline_id=pipe.id, nombre="E1", orden=1)
@@ -34,10 +37,15 @@ def caso(full, db_session):
     db_session.add_all([pipe, etapa, p])
     db_session.commit()
     caso = models.CasoCRM(
-        id=uuid.uuid4(), persona_id=p.id, sede_id=full["s"].id,
-        pipeline_id=pipe.id, etapa_actual_id=etapa.id,
-        titulo_caso="Test Case", prioridad=PrioridadCasoEnum.MEDIA,
-        estado=EstadoCasoEnum.ABIERTO, origen_canal=CanalOrigenEnum.WEB_FORM,
+        id=uuid.uuid4(),
+        persona_id=p.id,
+        sede_id=full["s"].id,
+        pipeline_id=pipe.id,
+        etapa_actual_id=etapa.id,
+        titulo_caso="Test Case",
+        prioridad=PrioridadCasoEnum.MEDIA,
+        estado=EstadoCasoEnum.ABIERTO,
+        origen_canal=CanalOrigenEnum.WEB_FORM,
     )
     db_session.add(caso)
     db_session.commit()
@@ -66,7 +74,10 @@ class TestCasos:
         assert _ok(resp.status_code)
 
     def test_patch_not_found(self, full):
-        assert full["c"].patch(f"/api/crm/casos/{uuid.uuid4()}", json={"notes": "Nope"}, headers=full["h"]).status_code == 404
+        assert (
+            full["c"].patch(f"/api/crm/casos/{uuid.uuid4()}", json={"notes": "Nope"}, headers=full["h"]).status_code
+            == 404
+        )
 
     def test_audit(self, full, caso):
         resp = full["c"].get(f"/api/crm/casos/{caso.id}/audit", headers=full["h"])
@@ -81,9 +92,9 @@ class TestCasos:
         assert _ok(resp.status_code)
 
     def test_create_call(self, full, caso):
-        resp = full["c"].post(f"/api/crm/casos/{caso.id}/calls",
-            json={"outcome": "contacted", "notes": "Test call"},
-            headers=full["h"])
+        resp = full["c"].post(
+            f"/api/crm/casos/{caso.id}/calls", json={"outcome": "contacted", "notes": "Test call"}, headers=full["h"]
+        )
         assert resp.status_code in (200, 201), resp.text
 
 
@@ -96,15 +107,24 @@ class TestCasoInteractions:
         assert full["c"].get(f"/api/crm/casos/{uuid.uuid4()}/interactions", headers=full["h"]).status_code == 404
 
     def test_create(self, full, caso):
-        resp = full["c"].post(f"/api/crm/casos/{caso.id}/interactions",
+        resp = full["c"].post(
+            f"/api/crm/casos/{caso.id}/interactions",
             json={"interaction_type": "llamada", "notes": "Interaction test"},
-            headers=full["h"])
+            headers=full["h"],
+        )
         assert resp.status_code in (200, 201), resp.text
 
     def test_create_not_found(self, full):
-        assert full["c"].post(f"/api/crm/casos/{uuid.uuid4()}/interactions",
-            json={"interaction_type": "llamada", "notes": "Nope"},
-            headers=full["h"]).status_code == 404
+        assert (
+            full["c"]
+            .post(
+                f"/api/crm/casos/{uuid.uuid4()}/interactions",
+                json={"interaction_type": "llamada", "notes": "Nope"},
+                headers=full["h"],
+            )
+            .status_code
+            == 404
+        )
 
 
 class TestCasoTasks:
@@ -116,29 +136,40 @@ class TestCasoTasks:
         assert full["c"].get(f"/api/crm/casos/{uuid.uuid4()}/tasks", headers=full["h"]).status_code == 404
 
     def test_create(self, full, caso):
-        resp = full["c"].post(f"/api/crm/casos/{caso.id}/tasks",
-            json={"title": "Caso Task", "status": "pending"},
-            headers=full["h"])
+        resp = full["c"].post(
+            f"/api/crm/casos/{caso.id}/tasks", json={"title": "Caso Task", "status": "pending"}, headers=full["h"]
+        )
         assert resp.status_code in (200, 201)
 
     def test_update(self, full, db_session):
-        from backend.models_crm_pipeline import TipoPipelineEnum, PrioridadCasoEnum, EstadoCasoEnum, CanalOrigenEnum
-        pipe = models.PipelineCRM(id=uuid.uuid4(), sede_id=full["s"].id, nombre="TaskUpd", tipo=TipoPipelineEnum.CONSEJERIA)
+        from backend.models_crm_pipeline import CanalOrigenEnum, EstadoCasoEnum, PrioridadCasoEnum, TipoPipelineEnum
+
+        pipe = models.PipelineCRM(
+            id=uuid.uuid4(), sede_id=full["s"].id, nombre="TaskUpd", tipo=TipoPipelineEnum.CONSEJERIA
+        )
         etapa = models.EtapaPipeline(id=uuid.uuid4(), pipeline_id=pipe.id, nombre="E1", orden=1)
         p = models.Persona(id=uuid.uuid4(), first_name="T", last_name="U", sede_id=full["s"].id)
         db_session.add_all([pipe, etapa, p])
         db_session.commit()
-        caso = models.CasoCRM(id=uuid.uuid4(), persona_id=p.id, sede_id=full["s"].id,
-            pipeline_id=pipe.id, etapa_actual_id=etapa.id, titulo_caso="T",
-            prioridad=PrioridadCasoEnum.MEDIA, estado=EstadoCasoEnum.ABIERTO, origen_canal=CanalOrigenEnum.WEB_FORM)
+        caso = models.CasoCRM(
+            id=uuid.uuid4(),
+            persona_id=p.id,
+            sede_id=full["s"].id,
+            pipeline_id=pipe.id,
+            etapa_actual_id=etapa.id,
+            titulo_caso="T",
+            prioridad=PrioridadCasoEnum.MEDIA,
+            estado=EstadoCasoEnum.ABIERTO,
+            origen_canal=CanalOrigenEnum.WEB_FORM,
+        )
         db_session.add(caso)
         db_session.commit()
-        r = full["c"].post(f"/api/crm/casos/{caso.id}/tasks",
-            json={"title": "UpdateMe", "status": "pending"}, headers=full["h"])
+        r = full["c"].post(
+            f"/api/crm/casos/{caso.id}/tasks", json={"title": "UpdateMe", "status": "pending"}, headers=full["h"]
+        )
         assert r.status_code in (200, 201), r.text
         tid = r.json()["id"]
-        resp = full["c"].patch(f"/api/crm/casos/{caso.id}/tasks/{tid}",
-            json={"status": "completed"}, headers=full["h"])
+        resp = full["c"].patch(f"/api/crm/casos/{caso.id}/tasks/{tid}", json={"status": "completed"}, headers=full["h"])
         assert _ok(resp.status_code)
 
 
@@ -150,14 +181,11 @@ class TestTasks:
         assert _ok(full["c"].get("/api/crm/tasks/mine", headers=full["h"]).status_code)
 
     def test_create(self, full):
-        resp = full["c"].post("/api/crm/tasks/",
-            json={"title": "New Task", "status": "pending"},
-            headers=full["h"])
+        resp = full["c"].post("/api/crm/tasks/", json={"title": "New Task", "status": "pending"}, headers=full["h"])
         assert resp.status_code in (200, 201), resp.text
 
     def test_get(self, full):
-        r = full["c"].post("/api/crm/tasks/",
-            json={"title": "GetTask", "status": "pending"}, headers=full["h"])
+        r = full["c"].post("/api/crm/tasks/", json={"title": "GetTask", "status": "pending"}, headers=full["h"])
         assert r.status_code in (200, 201), r.text
         tid = r.json()["id"]
         resp = full["c"].get(f"/api/crm/tasks/{tid}", headers=full["h"])
@@ -167,17 +195,14 @@ class TestTasks:
         assert full["c"].get(f"/api/crm/tasks/{uuid.uuid4()}", headers=full["h"]).status_code == 404
 
     def test_update(self, full):
-        r = full["c"].post("/api/crm/tasks/",
-            json={"title": "UpdTask", "status": "pending"}, headers=full["h"])
+        r = full["c"].post("/api/crm/tasks/", json={"title": "UpdTask", "status": "pending"}, headers=full["h"])
         assert r.status_code in (200, 201), r.text
         tid = r.json()["id"]
-        resp = full["c"].patch(f"/api/crm/tasks/{tid}",
-            json={"title": "Updated"}, headers=full["h"])
+        resp = full["c"].patch(f"/api/crm/tasks/{tid}", json={"title": "Updated"}, headers=full["h"])
         assert _ok(resp.status_code)
 
     def test_delete(self, full):
-        r = full["c"].post("/api/crm/tasks/",
-            json={"title": "DelTask", "status": "pending"}, headers=full["h"])
+        r = full["c"].post("/api/crm/tasks/", json={"title": "DelTask", "status": "pending"}, headers=full["h"])
         assert r.status_code in (200, 201), r.text
         tid = r.json()["id"]
         resp = full["c"].delete(f"/api/crm/tasks/{tid}", headers=full["h"])
@@ -210,8 +235,7 @@ class TestRoles:
         r = full["c"].post("/api/crm/roles", json={"name": "UpdRole", "color": "blue"}, headers=full["h"])
         assert r.status_code in (200, 201), r.text
         rid = r.json()["id"]
-        resp = full["c"].put(f"/api/crm/roles/{rid}",
-            json={"name": "UpdatedRole", "color": "blue"}, headers=full["h"])
+        resp = full["c"].put(f"/api/crm/roles/{rid}", json={"name": "UpdatedRole", "color": "blue"}, headers=full["h"])
         assert _ok(resp.status_code)
 
     def test_delete(self, full):
@@ -260,14 +284,18 @@ class TestVolunteers:
         p = models.Persona(id=uuid.uuid4(), first_name="V", last_name="T", sede_id=full["s"].id)
         db_session.add(p)
         db_session.commit()
-        resp = full["c"].post("/api/crm/volunteers",
+        resp = full["c"].post(
+            "/api/crm/volunteers",
             json={
-                "name": "Vol Test", "role_name": "Usher",
-                "persona_id": str(p.id), "team_name": "Greeting",
+                "name": "Vol Test",
+                "role_name": "Usher",
+                "persona_id": str(p.id),
+                "team_name": "Greeting",
                 "shift_start": "2026-07-01T08:00:00Z",
                 "shift_end": "2026-07-01T12:00:00Z",
             },
-            headers=full["h"])
+            headers=full["h"],
+        )
         assert resp.status_code in (200, 201), resp.text
 
 

@@ -5,6 +5,7 @@ section types available to all sites when building pages. This module
 holds the CRUD endpoints and the runtime guard ``get_allowed_section_types``
 consulted by ``create_section`` and ``patch_section``.
 """
+
 from __future__ import annotations
 
 import logging

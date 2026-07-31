@@ -1,4 +1,5 @@
 """Tests for support and tables API modules (UUID PK compliant)."""
+
 import uuid
 
 from backend import models
@@ -7,9 +8,7 @@ from tests.conftest import seed_admin as _seed_admin
 
 
 def _seed_sede(db_session):
-    sede = models.Sede(
-        id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True
-    )
+    sede = models.Sede(id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.commit()
     db_session.refresh(sede)

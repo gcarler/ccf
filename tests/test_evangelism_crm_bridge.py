@@ -1,26 +1,25 @@
 """Tests for evangelism_crm_bridge.py — crm case creation from evangelism."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from backend import models
-from backend.models_evangelism import Sede, Asistencia, GrupoEvangelismo, SesionGrupo
-from backend.models_crm_pipeline import (
-    PipelineCRM,
-    EtapaPipeline,
-    TipoPipelineEnum,
-    CasoCRM,
-)
 from backend.models_crm import Persona
+from backend.models_crm_pipeline import (
+    EtapaPipeline,
+    PipelineCRM,
+    TipoPipelineEnum,
+)
+from backend.models_evangelism import Asistencia, GrupoEvangelismo, Sede, SesionGrupo
 from backend.services.evangelism_crm_bridge import (
-    _stringify_uuid_payload,
     _build_transient_caso,
     _insert_caso_nuevo_visitante,
-    _obtener_o_crear_pipeline_nuevos_visitantes,
     _obtener_o_crear_etapa_nuevo_contacto,
+    _obtener_o_crear_pipeline_nuevos_visitantes,
+    _stringify_uuid_payload,
     crear_caso_desde_asistencia,
     crear_caso_nuevo_visitante,
 )
@@ -46,6 +45,7 @@ def persona(db_session, sede):
 
 # ── Unit: _stringify_uuid_payload ─────────────────────────────────────────────
 
+
 class TestStringifyUUIDPayload:
     def test_converts_uuids(self):
         uid = uuid.uuid4()
@@ -63,19 +63,26 @@ class TestStringifyUUIDPayload:
 
 # ── Unit: _build_transient_caso ───────────────────────────────────────────────
 
+
 class TestBuildTransientCaso:
     def test_builds_caso(self, db_session, sede, persona):
         """Build a transient CasoCRM object (not persisted yet)."""
         pipeline = PipelineCRM(
-            id=uuid.uuid4(), sede_id=sede.id, nombre="Test Pipeline",
-            tipo=TipoPipelineEnum.NUEVOS_VISITANTES, activo=True,
+            id=uuid.uuid4(),
+            sede_id=sede.id,
+            nombre="Test Pipeline",
+            tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+            activo=True,
         )
         db_session.add(pipeline)
         db_session.flush()
 
         etapa = EtapaPipeline(
-            id=uuid.uuid4(), pipeline_id=pipeline.id, nombre="Nuevo",
-            orden=1, requiere_accion=True,
+            id=uuid.uuid4(),
+            pipeline_id=pipeline.id,
+            nombre="Nuevo",
+            orden=1,
+            requiere_accion=True,
         )
         db_session.add(etapa)
         db_session.flush()
@@ -103,6 +110,7 @@ class TestBuildTransientCaso:
 
 # ── Integration: pipeline lifecycle ────────────────────────────────────────────
 
+
 class TestPipelineLifecycle:
     def test_obtener_o_crear_pipeline_new(self, db_session, sede):
         pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)
@@ -112,8 +120,11 @@ class TestPipelineLifecycle:
 
     def test_obtener_o_crear_pipeline_existing(self, db_session, sede):
         existing = PipelineCRM(
-            id=uuid.uuid4(), sede_id=sede.id, nombre="Nuevos Visitantes",
-            tipo=TipoPipelineEnum.NUEVOS_VISITANTES, activo=True,
+            id=uuid.uuid4(),
+            sede_id=sede.id,
+            nombre="Nuevos Visitantes",
+            tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+            activo=True,
         )
         db_session.add(existing)
         db_session.commit()
@@ -141,6 +152,7 @@ class TestEtapaLifecycle:
 
 # ── Integration: insert caso ──────────────────────────────────────────────────
 
+
 class TestInsertCaso:
     def test_insert_caso_sqlite_path(self, db_session, sede, persona):
         pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)
@@ -167,6 +179,7 @@ class TestInsertCaso:
 
 # ── Integration: crear_caso from attendance ────────────────────────────────────
 
+
 class TestCrearCasoDesdeAsistencia:
     def test_skip_if_not_first_time(self, db_session, sede, persona):
         g = GrupoEvangelismo(id=uuid.uuid4(), nombre="G", sede_id=sede.id, lider_persona_id=persona.id)
@@ -187,8 +200,9 @@ class TestCrearCasoDesdeAsistencia:
         ses = SesionGrupo(id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=datetime.now(timezone.utc), estado="REALIZADA")
         db_session.add(ses)
         db_session.flush()
-        att = Asistencia(id=uuid.uuid4(), sesion_id=ses.id, persona_id=persona.id,
-                        estado="first_time", es_primera_vez=True)
+        att = Asistencia(
+            id=uuid.uuid4(), sesion_id=ses.id, persona_id=persona.id, estado="first_time", es_primera_vez=True
+        )
 
         result = crear_caso_desde_asistencia(db_session, att, persona, g, ses, sede.id)
         assert result is not None

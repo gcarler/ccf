@@ -1,6 +1,7 @@
 """
 Tests for workspace_config.py — get and update config.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -25,5 +26,8 @@ class TestWorkspaceConfig:
         assert _ok(full["c"].get("/api/workspace/config", headers=full["h"]).status_code)
 
     def test_patch(self, full):
-        assert _ok(full["c"].patch("/api/workspace/config",
-            json={"features_enabled": {"test": True}}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"]
+            .patch("/api/workspace/config", json={"features_enabled": {"test": True}}, headers=full["h"])
+            .status_code
+        )

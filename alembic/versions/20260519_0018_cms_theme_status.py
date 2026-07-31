@@ -18,10 +18,7 @@ depends_on = None
 
 
 def _has_column(inspector: sa.Inspector, table_name: str, column_name: str) -> bool:
-    return any(
-        column.get("name") == column_name
-        for column in inspector.get_columns(table_name)
-    )
+    return any(column.get("name") == column_name for column in inspector.get_columns(table_name))
 
 
 def upgrade() -> None:
@@ -43,9 +40,7 @@ def upgrade() -> None:
             )
             batch_op.create_index("ix_cms_themes_status", ["status"])
 
-    op.execute(
-        "UPDATE cms_themes SET status = 'active' WHERE status IS NULL OR status = ''"
-    )
+    op.execute("UPDATE cms_themes SET status = 'active' WHERE status IS NULL OR status = ''")
 
 
 def downgrade() -> None:

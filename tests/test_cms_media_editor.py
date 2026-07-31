@@ -16,12 +16,8 @@ from tests.conftest import auth_headers, seed_admin
 
 
 def _seed_two_sedes(db_session):
-    admin_a, persona_a, sede_a = seed_admin(
-        db_session, email="editorA@example.com", password="testpass123"
-    )
-    admin_b, persona_b, sede_b = seed_admin(
-        db_session, email="editorB@example.com", password="testpass123"
-    )
+    admin_a, persona_a, sede_a = seed_admin(db_session, email="editorA@example.com", password="testpass123")
+    admin_b, persona_b, sede_b = seed_admin(db_session, email="editorB@example.com", password="testpass123")
     assert sede_a.id != sede_b.id
     return (admin_a, persona_a, sede_a), (admin_b, persona_b, sede_b)
 

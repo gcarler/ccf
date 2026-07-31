@@ -5,6 +5,7 @@ Revises: 20260524_0022_prod_hardening
 Create Date: 2026-05-24 02:58:14.876638
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -12,8 +13,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = 'b3d39dd6263e'
-down_revision: Union[str, None] = '20260524_0022_prod_hardening'
+revision: str = "b3d39dd6263e"
+down_revision: Union[str, None] = "20260524_0022_prod_hardening"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

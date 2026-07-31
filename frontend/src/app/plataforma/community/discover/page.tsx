@@ -39,8 +39,8 @@ export default function DiscoverPage() {
 
     const filteredGroups = useMemo(() => {
         const term = searchTerm.toLowerCase();
-        return groups.filter(g => 
-            g.name.toLowerCase().includes(term) || 
+        return groups.filter(g =>
+            g.name.toLowerCase().includes(term) ||
             (g.zone && g.zone.toLowerCase().includes(term)) ||
             (g.leader_name && g.leader_name.toLowerCase().includes(term))
         );
@@ -106,4 +106,3 @@ export default function DiscoverPage() {
         </div>
     );
 }
-

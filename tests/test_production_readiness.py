@@ -82,8 +82,7 @@ def test_next_static_asset_check_reports_missing_assets(monkeypatch):
         lambda url, timeout=8: (
             200,
             "OK",
-            '<link rel="stylesheet" href="/_next/static/css/a.css">'
-            '<script src="/_next/static/chunks/app.js"></script>',
+            '<link rel="stylesheet" href="/_next/static/css/a.css"><script src="/_next/static/chunks/app.js"></script>',
         ),
     )
 

@@ -92,8 +92,8 @@ export default function PrayerWall() {
             {/* Header Section Cinematic */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative">
                 <div className="absolute -top-20 -left-20 size-10 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
-                
-                <motion.div 
+
+                <motion.div
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
                     className="relative z-10 space-y-2"
@@ -105,8 +105,8 @@ export default function PrayerWall() {
                     <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">Muro de <span className="italic text-primary">Oración</span></h1>
                     <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm font-medium max-w-lg">Comparte tus cargas y apóyanos en intercesión. Tu fe activa el movimiento de Dios.</p>
                 </motion.div>
-                
-                <motion.div 
+
+                <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     whileHover={{ scale: 1.05 }}
@@ -134,9 +134,9 @@ export default function PrayerWall() {
                         >
                             {tab}
                             {activeTab === tab && (
-                                <motion.div 
+                                <motion.div
                                     layoutId="prayer-tab-cinematic"
-                                    className="absolute bottom-[-1px] left-0 right-0 h-1 bg-primary rounded-t-full shadow-[0_0_20px_hsla(var(--primary),0.6)]" 
+                                    className="absolute bottom-[-1px] left-0 right-0 h-1 bg-primary rounded-t-full shadow-[0_0_20px_hsla(var(--primary),0.6)]"
                                 />
                             )}
                         </button>
@@ -152,7 +152,7 @@ export default function PrayerWall() {
                         <p className="text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-2xs animate-pulse">Abriendo conexión espiritual...</p>
                     </div>
                 ) : requests.length === 0 ? (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="flex flex-col items-center justify-center py-1.5 text-center space-y-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 rounded-lg border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10"
@@ -169,21 +169,21 @@ export default function PrayerWall() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <AnimatePresence mode="popLayout">
                             {requests.map((request, idx) => (
-                                <motion.div 
+                                <motion.div
                                     layout
                                     initial={{ opacity: 0, y: 30, scale: 0.9 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ 
+                                    transition={{
                                         delay: idx * 0.08,
                                         duration: 0.6,
                                         ease: [0.23, 1, 0.32, 1]
                                     }}
-                                    key={request.id} 
+                                    key={request.id}
                                     className="ethereal-aura group p-3 stacked-glass-prayer rounded-lg shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col gap-4 relative overflow-hidden"
                                 >
                                     <div className="absolute top-0 left-0 w-full h-1 shimmer-prayer opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    
+
                                     <div className="flex justify-between items-start relative z-10">
                                         <div className="flex items-center gap-3">
                                             <div className="size-7 rounded-lg bg-gradient-to-tr from-[hsl(var(--surface-2))] to-white dark:from-white/10 dark:to-white/5 flex items-center justify-center text-primary border border-white dark:border-white/10 shadow-lg transform group-hover:rotate-6 transition-transform duration-500">
@@ -201,13 +201,13 @@ export default function PrayerWall() {
                                             {request.category}
                                         </span>
                                     </div>
-                                    
+
                                     <div className="flex-1 relative z-10 px-2">
                                         <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-base leading-relaxed font-medium line-clamp-5 italic">
                                             &ldquo;{request.request}&rdquo;
                                         </p>
                                     </div>
-                                    
+
                                     <div className="flex items-center justify-between pt-8 border-t border-[hsl(var(--border))] dark:border-white/5 relative z-10">
                                         <div className="flex items-center gap-3 text-primary/60 group-hover:text-primary transition-colors duration-500">
                                             <div className="size-2.5 rounded-full bg-current animate-pulse shadow-[0_0_12px_currentColor]"></div>
@@ -226,7 +226,7 @@ export default function PrayerWall() {
             </div>
 
             {/* Footer Cinematic Insight */}
-            <motion.footer 
+            <motion.footer
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 className="pt-20 text-center relative"
@@ -237,4 +237,3 @@ export default function PrayerWall() {
         </div>
     );
 }
-

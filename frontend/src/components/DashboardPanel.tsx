@@ -5,11 +5,11 @@ import EmbeddedDashboard from './EmbeddedDashboard';
 
 /**
  * DashboardPanel — A ready-to-use dashboard panel for any module page.
- * 
+ *
  * Usage:
  *   import DashboardPanel from '@/components/DashboardPanel';
  *   <DashboardPanel module="crm" title="CRM" refreshInterval={30} />
- * 
+ *
  * It auto-sizes and fits into any flex/grid container.
  */
 interface DashboardPanelProps {

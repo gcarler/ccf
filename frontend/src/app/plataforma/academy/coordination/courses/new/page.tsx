@@ -6,12 +6,12 @@ import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
 import { apiFetch } from '@/lib/http';
-import { 
-    GraduationCap, 
-    Save, 
-    Plus, 
-    FileText, 
-    ShieldCheck, 
+import {
+    GraduationCap,
+    Save,
+    Plus,
+    FileText,
+    ShieldCheck,
     ArrowLeft,
     Clock,
 } from 'lucide-react';
@@ -22,7 +22,7 @@ import { motion } from 'framer-motion';
 export default function NewCoursePage() {
     const router = useRouter();
     const { token, isAuthenticated } = useAuth();
-    
+
     const [formData, setFormData] = useState({
         code: '',
         title: '',
@@ -33,14 +33,14 @@ export default function NewCoursePage() {
         is_published: true,
         is_self_paced: true
     });
-    
+
     const [loading, setLoading] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('grid');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!token) return;
-        
+
         try {
             setLoading(true);
             await apiFetch('/academy/admin/courses', {
@@ -69,7 +69,7 @@ export default function NewCoursePage() {
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden relative">
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-[500px] h-48 bg-[hsl(var(--info))]/5 rounded-full blur-[100px] pointer-events-none" />
-            
+
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap, href: '/plataforma/academy' },
@@ -130,7 +130,7 @@ export default function NewCoursePage() {
                 )}
 
                 {viewType === 'grid' && (
-                <motion.div 
+                <motion.div
                     variants={containerVariants} initial="hidden" animate="show"
  className="w-full space-y-3"
                 >
@@ -155,7 +155,7 @@ export default function NewCoursePage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-3">
                                     <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4">Código Identificador</label>
-                                    <input 
+                                    <input
                                         required type="text" placeholder="Ej: CCF-01" value={formData.code}
                                         onChange={(e) => setFormData({...formData, code: e.target.value})}
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
@@ -163,7 +163,7 @@ export default function NewCoursePage() {
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4">Nombre Público</label>
-                                    <input 
+                                    <input
                                         required type="text" placeholder="Ej: Fundamentos de la Fe" value={formData.title}
                                         onChange={(e) => setFormData({...formData, title: e.target.value})}
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
@@ -171,7 +171,7 @@ export default function NewCoursePage() {
                                 </div>
                                 <div className="md:col-span-2 space-y-3">
                                     <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4">Narrativa del Curso</label>
-                                    <textarea 
+                                    <textarea
                                         rows={4} placeholder="Describe el impacto y los objetivos de este programa..." value={formData.description}
                                         onChange={(e) => setFormData({...formData, description: e.target.value})}
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-md px-4 py-2 text-sm font-medium outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all resize-none leading-relaxed"
@@ -192,7 +192,7 @@ export default function NewCoursePage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <div className="space-y-3">
                                     <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4">Modalidad Académica</label>
-                                    <select 
+                                    <select
                                         value={formData.modality}
                                         onChange={(e) => setFormData({...formData, modality: e.target.value})}
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none appearance-none cursor-pointer focus:border-[hsl(var(--info)/100%)]/50 transition-all"
@@ -203,7 +203,7 @@ export default function NewCoursePage() {
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4">Esfuerzo Estimado (Hrs)</label>
-                                    <input 
+                                    <input
                                         type="number" value={formData.duration_hours}
                                         onChange={(e) => setFormData({...formData, duration_hours: parseInt(e.target.value)})}
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 transition-all"
@@ -211,7 +211,7 @@ export default function NewCoursePage() {
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4">Título a Otorgar</label>
-                                    <input 
+                                    <input
                                         type="text" placeholder="Ej: Diplomado" value={formData.certificate_type}
                                         onChange={(e) => setFormData({...formData, certificate_type: e.target.value})}
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 transition-all"
@@ -225,7 +225,7 @@ export default function NewCoursePage() {
                                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-none">Publicar ahora</p>
                                         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hacer visible en el catálogo global</p>
                                     </div>
-                                    <input 
+                                    <input
                                         type="checkbox" checked={formData.is_published}
                                         onChange={(e) => setFormData({...formData, is_published: e.target.checked})}
                                         className="size-8 rounded-md accent-blue-600 transition-transform active:scale-90"
@@ -236,7 +236,7 @@ export default function NewCoursePage() {
                                         <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-none">Autogestionado</p>
                                         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin restricciones de fecha o cohorte</p>
                                     </div>
-                                    <input 
+                                    <input
                                         type="checkbox" checked={formData.is_self_paced}
                                         onChange={(e) => setFormData({...formData, is_self_paced: e.target.checked})}
                                         className="size-8 rounded-md accent-sky-600 transition-transform active:scale-90"
@@ -246,13 +246,13 @@ export default function NewCoursePage() {
                         </motion.div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6">
-                            <button 
+                            <button
                                 type="button" onClick={() => router.back()}
                                 className="w-full sm:w-auto px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all"
                             >
                                 Descartar Cambios
                             </button>
-                            <button 
+                            <button
                                 type="submit" disabled={loading}
                                 className="w-full sm:w-auto px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md font-black text-xs uppercase tracking-wide shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 disabled:cursor-wait group"
                             >
@@ -267,4 +267,3 @@ export default function NewCoursePage() {
         </div>
     );
 }
-

@@ -54,12 +54,12 @@ print("=" * 60)
 
 # Find duplicates by email
 email_groups = defaultdict(list)
-for agent in db.query(Agent).filter(Agent.email != None).all():
+for agent in db.query(Agent).filter(Agent.email.isnot(None)).all():
     email_groups[agent.email.lower()].append(agent)
 
 # Find duplicates by phone
 phone_groups = defaultdict(list)
-for agent in db.query(Agent).filter(Agent.phone != None).all():
+for agent in db.query(Agent).filter(Agent.phone.isnot(None)).all():
     phone_groups[agent.phone].append(agent)
 
 duplicates = []
@@ -79,7 +79,7 @@ if not duplicates:
 print(f"\nFound {len(duplicates)} duplicate group(s):\n")
 
 for i, (field, value, agents) in enumerate(duplicates):
-    print(f"  Group {i+1} (by {field}: '{value}'):")
+    print(f"  Group {i + 1} (by {field}: '{value}'):")
     for a in agents:
         roles = db.query(AgentRole).filter(AgentRole.agent_id == a.id).count()
         activities = db.query(AgentActivity).filter(AgentActivity.agent_id == a.id).count()
@@ -96,44 +96,60 @@ if auto_merge:
         primary = agents[0]
         for duplicate in agents[1:]:
             print(f"  Merging Agent #{duplicate.id} → Agent #{primary.id}")
-            
+
             # Move activities
-            db.query(AgentActivity).filter(AgentActivity.agent_id == duplicate.id).update({AgentActivity.agent_id: primary.id})
-            
+            db.query(AgentActivity).filter(AgentActivity.agent_id == duplicate.id).update(
+                {AgentActivity.agent_id: primary.id}
+            )
+
             # Move roles (avoid duplicates)
             for role in db.query(AgentRole).filter(AgentRole.agent_id == duplicate.id).all():
-                existing = db.query(AgentRole).filter(
-                    AgentRole.agent_id == primary.id,
-                    AgentRole.role_type == role.role_type,
-                    AgentRole.role_value == role.role_value,
-                ).first()
+                existing = (
+                    db.query(AgentRole)
+                    .filter(
+                        AgentRole.agent_id == primary.id,
+                        AgentRole.role_type == role.role_type,
+                        AgentRole.role_value == role.role_value,
+                    )
+                    .first()
+                )
                 if not existing:
                     role.agent_id = primary.id
-            
+
             # Move auth (avoid duplicates)
             for auth in db.query(AgentAuth).filter(AgentAuth.agent_id == duplicate.id).all():
-                existing = db.query(AgentAuth).filter(
-                    AgentAuth.agent_id == primary.id,
-                    AgentAuth.username == auth.username,
-                ).first()
+                existing = (
+                    db.query(AgentAuth)
+                    .filter(
+                        AgentAuth.agent_id == primary.id,
+                        AgentAuth.username == auth.username,
+                    )
+                    .first()
+                )
                 if not existing:
                     auth.agent_id = primary.id
-            
+
             # Move contacts
-            db.query(AgentContact).filter(AgentContact.agent_id == duplicate.id).update({AgentContact.agent_id: primary.id})
-            
+            db.query(AgentContact).filter(AgentContact.agent_id == duplicate.id).update(
+                {AgentContact.agent_id: primary.id}
+            )
+
             # Move journey
-            db.query(AgentJourney).filter(AgentJourney.agent_id == duplicate.id).update({AgentJourney.agent_id: primary.id})
-            
+            db.query(AgentJourney).filter(AgentJourney.agent_id == duplicate.id).update(
+                {AgentJourney.agent_id: primary.id}
+            )
+
             # Move permissions
-            db.query(AgentPermission).filter(AgentPermission.agent_id == duplicate.id).update({AgentPermission.agent_id: primary.id})
-            
+            db.query(AgentPermission).filter(AgentPermission.agent_id == duplicate.id).update(
+                {AgentPermission.agent_id: primary.id}
+            )
+
             # Delete duplicate
             db.delete(duplicate)
             merged += 1
-        
+
         db.commit()
-    
+
     print(f"\n✓ Merged {merged} duplicate agents.")
 else:
     print("Run with --auto-merge to automatically merge duplicates.")

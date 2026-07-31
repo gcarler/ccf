@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
+import {
     FileText,
     Download,
     Clock,
@@ -115,9 +115,9 @@ export default function SubmissionsPage() {
                                         )}
                                     </div>
 
-                                    <a 
-                                        href={`${apiUrl('')}${sub.file_url}`} 
-                                        target="_blank" 
+                                    <a
+                                        href={`${apiUrl('')}${sub.file_url}`}
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 px-3 py-3 bg-[hsl(var(--success))]/10 text-success-text dark:text-[hsl(var(--success))] rounded-md text-xs font-bold hover:bg-[hsl(var(--success))]/20 transition-colors border border-[hsl(var(--success)/100%)]/20"
                                     >
@@ -130,8 +130,8 @@ export default function SubmissionsPage() {
                                         <div className="space-y-4 animate-in zoom-in-95 duration-200">
                                             <div>
                                                 <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Nota (0-100)</label>
-                                                <input 
-                                                    type="number" 
+                                                <input
+                                                    type="number"
                                                     value={grade}
                                                     onChange={(e) => setGrade(Number(e.target.value))}
                                                     className="w-full px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none font-bold text-[hsl(var(--text-primary))] dark:text-white transition-all shadow-sm"
@@ -139,7 +139,7 @@ export default function SubmissionsPage() {
                                             </div>
                                             <div>
                                                 <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2 block">Retroalimentación</label>
-                                                <textarea 
+                                                <textarea
                                                     value={feedback}
                                                     onChange={(e) => setFeedback(e.target.value)}
                                                     placeholder="Buen trabajo..."
@@ -147,13 +147,13 @@ export default function SubmissionsPage() {
                                                 />
                                             </div>
                                             <div className="flex gap-2 pt-2">
-                                                <button 
+                                                <button
                                                     onClick={() => handleGrade(sub.id)}
                                                     className="flex-1 py-3 bg-primary text-white rounded-md text-xs font-bold uppercase tracking-wide hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95"
                                                 >
                                                     Guardar
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={() => setGradingId(null)}
                                                     className="px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] rounded-md text-xs font-bold hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all active:scale-95 shadow-sm"
                                                 >
@@ -172,7 +172,7 @@ export default function SubmissionsPage() {
                                                     {sub.teacher_feedback && (
                                                         <p className="text-xs text-[hsl(var(--text-secondary))] font-medium italic px-2 bg-white/50 dark:bg-white/5 p-3 rounded-md border border-[hsl(var(--border))] dark:border-white/5 w-full">&ldquo;{sub.teacher_feedback}&rdquo;</p>
                                                     )}
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             setGradingId(sub.id);
                                                             setGrade(sub.grade || 0);
@@ -189,7 +189,7 @@ export default function SubmissionsPage() {
                                                         <AlertCircle size={32} />
                                                     </div>
                                                     <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Pendiente de Revisión</p>
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             setGradingId(sub.id);
                                                             setGrade(0);
@@ -220,4 +220,3 @@ export default function SubmissionsPage() {
         </div>
     );
 }
-

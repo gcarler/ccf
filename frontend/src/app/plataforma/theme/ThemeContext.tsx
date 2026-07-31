@@ -67,14 +67,14 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         } else {
             root.classList.remove('dark');
         }
-        
+
         localStorage.setItem('theme-mode', theme);
     }, [theme, isMounted]);
 
     // ── Step 3: Apply CSS custom properties ─────────────────────────
     useEffect(() => {
         if (!isMounted) return;
-        
+
         const vars = themeTokens[theme];
         Object.entries(vars).forEach(([key, value]) => {
             document.documentElement.style.setProperty(key, value);
@@ -96,4 +96,3 @@ export const useTheme = () => {
     if (!context) throw new Error('useTheme must be used within ThemeProvider');
     return context;
 };
-

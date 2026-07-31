@@ -11,6 +11,7 @@ Revision ID: 20260527_0037_evangelism_new_schema
 Revises: 20260527_0036_member_tags_origen
 Create Date: 2026-05-27
 """
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
@@ -89,7 +90,12 @@ def upgrade():
     op.create_table(
         "estrategia_roles_personalizados",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("estrategia_id", sa.String(50), sa.ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "estrategia_id",
+            sa.String(50),
+            sa.ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("nombre_rol", sa.String(100), nullable=False),
         sa.Column("descripcion", sa.String(255), nullable=True),
     )
@@ -98,7 +104,12 @@ def upgrade():
     op.create_table(
         "grupos_evangelismo",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("estrategia_id", sa.String(50), sa.ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "estrategia_id",
+            sa.String(50),
+            sa.ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("sede_id", sa.Integer(), sa.ForeignKey("sedes.id"), nullable=False),
         sa.Column("nombre", sa.String(150), nullable=False),
         sa.Column("ubicacion", sa.String(255), nullable=True),
@@ -127,8 +138,15 @@ def upgrade():
         sa.Column("permiso_plataforma", sa.String(50), nullable=True),
         sa.Column("datos_extra", postgresql.JSONB(), nullable=True),
         sa.Column("tags_sistema", postgresql.ARRAY(sa.String()), nullable=True),
-        sa.Column("origen_estrategia_id", sa.String(50), sa.ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True),
-        sa.Column("origen_grupo_id", sa.Integer(), sa.ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "origen_estrategia_id",
+            sa.String(50),
+            sa.ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "origen_grupo_id", sa.Integer(), sa.ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True
+        ),
         sa.Column("origen_fecha", sa.DateTime(), nullable=True),
         sa.Column("created_at", sa.DateTime(), server_default=sa.text("NOW()")),
         sa.Column("updated_at", sa.DateTime(), server_default=sa.text("NOW()")),
@@ -145,7 +163,12 @@ def upgrade():
         sa.Column("registro_id", sa.String(100), nullable=False),
         sa.Column("accion", sa.String(20), nullable=False),
         sa.Column("detalles_cambio", postgresql.JSONB(), nullable=True),
-        sa.Column("usuario_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "usuario_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("personas.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("fecha_accion", sa.DateTime(), server_default=sa.text("NOW()")),
     )
 
@@ -154,9 +177,19 @@ def upgrade():
         "grupo_participantes",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("grupo_id", sa.Integer(), sa.ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "persona_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("personas.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("rol_base", sa.String(20), nullable=False),
-        sa.Column("rol_personalizado_id", sa.Integer(), sa.ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "rol_personalizado_id",
+            sa.Integer(),
+            sa.ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("fecha_ingreso", sa.DateTime(), server_default=sa.text("NOW()")),
         sa.Column("activo", sa.Boolean(), server_default="true"),
     )
@@ -179,9 +212,16 @@ def upgrade():
         "asistencias",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("sesion_id", sa.Integer(), sa.ForeignKey("sesiones_grupo.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "persona_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("personas.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("estado", sa.String(20), nullable=False),
-        sa.Column("motivo_excusa_id", sa.Integer(), sa.ForeignKey("motivos_excusa.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "motivo_excusa_id", sa.Integer(), sa.ForeignKey("motivos_excusa.id", ondelete="SET NULL"), nullable=True
+        ),
         sa.Column("detalle_excusa", sa.String(255), nullable=True),
         sa.Column("es_primera_vez", sa.Boolean(), server_default="false"),
         sa.Column("requiere_seguimiento", sa.Boolean(), server_default="false"),
@@ -192,7 +232,12 @@ def upgrade():
         "registros_seguimiento",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("asistencia_id", sa.Integer(), sa.ForeignKey("asistencias.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("responsable_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "responsable_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("personas.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("fecha_seguimiento", sa.DateTime(), server_default=sa.text("NOW()"), nullable=False),
         sa.Column("tipo", sa.String(30), nullable=False),
         sa.Column("observaciones", sa.Text(), nullable=True),
@@ -203,7 +248,12 @@ def upgrade():
     op.create_table(
         "historial_embudo",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("persona_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("personas.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "persona_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("personas.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("rol_anterior", sa.String(100), nullable=True),
         sa.Column("rol_nuevo", sa.String(100), nullable=False),
         sa.Column("fecha_cambio", sa.DateTime(), server_default=sa.text("NOW()")),
@@ -224,14 +274,18 @@ def upgrade():
 
     op.create_foreign_key(
         "fk_members_origen_estrategia",
-        "members", "estrategias_evangelismo",
-        ["origen_estrategia_id"], ["id"],
+        "members",
+        "estrategias_evangelismo",
+        ["origen_estrategia_id"],
+        ["id"],
         ondelete="SET NULL",
     )
     op.create_foreign_key(
         "fk_members_origen_grupo",
-        "members", "grupos_evangelismo",
-        ["origen_grupo_id"], ["id"],
+        "members",
+        "grupos_evangelismo",
+        ["origen_grupo_id"],
+        ["id"],
         ondelete="SET NULL",
     )
     op.create_index("ix_members_origen_estrategia_id", "members", ["origen_estrategia_id"])
@@ -264,7 +318,9 @@ def downgrade():
     op.drop_constraint("fk_members_origen_grupo", "members", type_="foreignkey")
     op.drop_index("ix_members_origen_estrategia_id", table_name="members")
     op.drop_index("ix_members_origen_grupo_id", table_name="members")
-    op.alter_column("members", "origen_estrategia_id", type_=sa.Integer(), existing_type=sa.String(50), existing_nullable=True)
+    op.alter_column(
+        "members", "origen_estrategia_id", type_=sa.Integer(), existing_type=sa.String(50), existing_nullable=True
+    )
 
     op.execute("DROP TABLE IF EXISTS historial_embudo CASCADE")
     op.execute("DROP TABLE IF EXISTS registros_seguimiento CASCADE")

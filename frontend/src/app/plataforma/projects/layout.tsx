@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export default async function ProjectsLayout({ children }: { children: React.ReactNode }) {
     let initialProjects: ProjectRecord[] = [];
     const cookieStore = await cookies();
-    
+
     if (cookieStore.has('mesh_access')) {
         try {
             const data = await serverApiFetch<ProjectRecord[]>('/projects');

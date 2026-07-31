@@ -18,6 +18,7 @@ Posture mirrors `tests/test_crm_crud_personas.py`: SQLite in-memory via
     from the caller-provided schema) — QC-08 regression guard.
   * `create_community_card` position auto-increment.
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -34,6 +35,7 @@ from backend.schemas.operational import CommunityBoardCardUpdate
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 
+
 def _seed_sede(db: Session, name: str = "Sede QC-18.F") -> models.Sede:
     sede = models.Sede(id=_uuid.uuid4(), nombre=name, ciudad="QC18 City", es_activa=True)
     db.add(sede)
@@ -43,7 +45,11 @@ def _seed_sede(db: Session, name: str = "Sede QC-18.F") -> models.Sede:
 
 def _seed_persona(db: Session, sede_id: _uuid.UUID, first: str = "P") -> models.Persona:
     p = models.Persona(
-        id=_uuid.uuid4(), first_name=first, last_name="T", sede_id=sede_id, estado_vital="ACTIVO",
+        id=_uuid.uuid4(),
+        first_name=first,
+        last_name="T",
+        sede_id=sede_id,
+        estado_vital="ACTIVO",
         email=f"{first.lower()}{_uuid.uuid4().hex[:6]}@example.com",
     )
     db.add(p)
@@ -59,8 +65,13 @@ def _commit(db: Session) -> None:
 
 
 def _seed_counseling_ticket(
-    db: Session, *, persona: models.Persona, pastor: Optional[models.Persona] = None,
-    subject: str = "S", notes_encrypted: Optional[str] = None, deleted_at=None,
+    db: Session,
+    *,
+    persona: models.Persona,
+    pastor: Optional[models.Persona] = None,
+    subject: str = "S",
+    notes_encrypted: Optional[str] = None,
+    deleted_at=None,
 ) -> models.CounselingTicket:
     t = models.CounselingTicket(
         id=_uuid.uuid4(),
@@ -152,8 +163,12 @@ def test_create_counseling_ticket_encrypts_notes_and_sets_sentiment_fields(db_se
     _commit(db_session)
 
     payload = schemas.CounselingTicketCreate(
-        persona_id=p.id, subject="S", notes="这是一些 notes about crisis", status="ABIERTO",
-        pastor_id=None, priority_level=None,
+        persona_id=p.id,
+        subject="S",
+        notes="这是一些 notes about crisis",
+        status="ABIERTO",
+        pastor_id=None,
+        priority_level=None,
     )
     row = crud_counseling.create_counseling_ticket(db_session, payload)
     assert row.id is not None
@@ -169,7 +184,10 @@ def test_create_counseling_ticket_encrypts_notes_and_sets_sentiment_fields(db_se
 
 
 def test_update_counseling_ticket_returns_none_for_missing(db_session):
-    assert crud_counseling.update_counseling_ticket(db_session, _uuid.uuid4(), schemas.CounselingTicketUpdate(subject="x")) is None
+    assert (
+        crud_counseling.update_counseling_ticket(db_session, _uuid.uuid4(), schemas.CounselingTicketUpdate(subject="x"))
+        is None
+    )
 
 
 def test_update_counseling_ticket_re_encrypts_notes_on_change(db_session):
@@ -178,7 +196,9 @@ def test_update_counseling_ticket_re_encrypts_notes_on_change(db_session):
     t = _seed_counseling_ticket(db_session, persona=p, notes_encrypted=encrypt_data("old"))
     _commit(db_session)
 
-    out = crud_counseling.update_counseling_ticket(db_session, t.id, schemas.CounselingTicketUpdate(notes="updated plaintext"))
+    out = crud_counseling.update_counseling_ticket(
+        db_session, t.id, schemas.CounselingTicketUpdate(notes="updated plaintext")
+    )
     assert out.notes == "updated plaintext"  # decrypted on return
     db_session.expire_all()
     persisted = db_session.query(models.CounselingTicket).filter_by(id=t.id).first()
@@ -204,12 +224,22 @@ def test_delete_counseling_ticket_returns_false_for_missing(db_session):
 
 
 def _seed_prayer_request(
-    db: Session, *, sede_id: _uuid.UUID, requester_name: str = "R", request_text: str = "txt",
-    status: str = "PENDIENTE", deleted_at=None,
+    db: Session,
+    *,
+    sede_id: _uuid.UUID,
+    requester_name: str = "R",
+    request_text: str = "txt",
+    status: str = "PENDIENTE",
+    deleted_at=None,
 ) -> models.PrayerRequest:
     req = models.PrayerRequest(
-        id=_uuid.uuid4(), sede_id=sede_id, requester_name=requester_name,
-        request_text=request_text, status=status, is_public=True, source="WEB",
+        id=_uuid.uuid4(),
+        sede_id=sede_id,
+        requester_name=requester_name,
+        request_text=request_text,
+        status=status,
+        is_public=True,
+        source="WEB",
     )
     if deleted_at is not None:
         req.deleted_at = deleted_at
@@ -252,7 +282,12 @@ def test_create_prayer_request_persists_fields(db_session):
     sede = _seed_sede(db_session)
     _commit(db_session)
     payload = schemas.PrayerRequestCreate(
-        requester_name="X", request_text="please", category="SALUD", is_public=True, source="WEB", status="PENDIENTE",
+        requester_name="X",
+        request_text="please",
+        category="SALUD",
+        is_public=True,
+        source="WEB",
+        status="PENDIENTE",
     )
     row = crud_prayer.create_prayer_request(db_session, payload)
     assert row.id is not None
@@ -271,7 +306,9 @@ def test_create_prayer_request_rolls_back_on_integrity_error(db_session):
     # a duplicate insert... here we'll just verify create works with the audit pattern.
     sede = _seed_sede(db_session)
     _commit(db_session)
-    row = crud_prayer.create_prayer_request(db_session, schemas.PrayerRequestCreate(requester_name="ok", request_text="t"))
+    row = crud_prayer.create_prayer_request(
+        db_session, schemas.PrayerRequestCreate(requester_name="ok", request_text="t")
+    )
     assert row.id is not None
 
 
@@ -312,12 +349,20 @@ def test_delete_prayer_request_returns_false_for_missing(db_session):
 
 
 def _seed_community_card(
-    db: Session, *, sede_id: Optional[_uuid.UUID] = None, column_id: str = "col-1",
-    title: str = "Card", position: int = 1, deleted_at=None,
+    db: Session,
+    *,
+    sede_id: Optional[_uuid.UUID] = None,
+    column_id: str = "col-1",
+    title: str = "Card",
+    position: int = 1,
+    deleted_at=None,
 ) -> models.CommunityBoardCard:
     card = models.CommunityBoardCard(
-        id=_uuid.uuid4(), sede_id=sede_id or _seed_sede(db).id, column_id=column_id,
-        title=title, position=position,
+        id=_uuid.uuid4(),
+        sede_id=sede_id or _seed_sede(db).id,
+        column_id=column_id,
+        title=title,
+        position=position,
     )
     if deleted_at is not None:
         card.deleted_at = deleted_at
@@ -380,7 +425,9 @@ def test_create_community_card_position_one_on_empty_board(db_session):
     sede = _seed_sede(db_session)
     _commit(db_session)
     row = crud_community.create_community_card(
-        db_session, schemas.CommunityBoardCardCreate(title="First"), actor_sede=sede.id,
+        db_session,
+        schemas.CommunityBoardCardCreate(title="First"),
+        actor_sede=sede.id,
     )
     assert row.position == 1
 

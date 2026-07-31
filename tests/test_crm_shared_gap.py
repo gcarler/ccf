@@ -1,6 +1,7 @@
 """
 Direct unit tests for backend.api.crm._shared — the shared CRM utilities.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -75,6 +76,3 @@ class TestGetScopedPersona:
     def test_get_scoped_persona_nonexistent_raises(self, db_session):
         with pytest.raises(Exception):
             shared._get_scoped_persona(db_session, None, str(uuid.uuid4()))
-
-
-

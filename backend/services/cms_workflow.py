@@ -5,6 +5,7 @@ Encapsulates all page status transitions, schedule auto-flip, version
 snapshotting and rollback into a single service.  Endpoints call the
 service instead of inlining CRUD calls + implicit status mutations.
 """
+
 from __future__ import annotations
 
 import logging
@@ -24,13 +25,15 @@ logger = logging.getLogger(__name__)
 
 # ── Valid actions map ─────────────────────────────────────────────────────────
 
-VALID_ACTIONS = frozenset({
-    "submit_review",
-    "approve",
-    "publish",
-    "archive",
-    "revert_draft",
-})
+VALID_ACTIONS = frozenset(
+    {
+        "submit_review",
+        "approve",
+        "publish",
+        "archive",
+        "revert_draft",
+    }
+)
 
 PUBLISHER_ACTIONS = frozenset({"approve", "publish", "archive"})
 
@@ -99,9 +102,7 @@ class PageWorkflowService:
         """
         if publish_at is not None and page.status in NON_TERMINAL_STATUSES:
             page.status = "scheduled"
-            page.updated_by_persona_id = (
-                crud.cms.resolve_persona_uuid_for_user(self.db, user_id)
-            )
+            page.updated_by_persona_id = crud.cms.resolve_persona_uuid_for_user(self.db, user_id)
             self.db.commit()
             self.db.refresh(page)
         return page

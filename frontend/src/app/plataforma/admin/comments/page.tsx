@@ -77,7 +77,7 @@ export default function CommentModeration() {
 
     const filteredComments = comments.filter(c => {
         const matchesFilter = activeFilter === 'Todos' || c.type.includes(activeFilter);
-        const matchesSearch = c.text.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        const matchesSearch = c.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
                              c.author.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesFilter && matchesSearch;
     });
@@ -128,7 +128,7 @@ export default function CommentModeration() {
                 }
             `}</style>
 
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Moderación de Comunidad', icon: MessageSquare }]}
                 viewType={viewType} setViewType={setViewType} availableViews={COMMENT_VIEWS}
                 rightActions={
@@ -141,7 +141,7 @@ export default function CommentModeration() {
 
             <div className="flex px-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0 overflow-x-auto no-scrollbar">
                 {['Todos', 'Foro', 'Prédicas', 'Cursos'].map((f) => (
-                    <button 
+                    <button
                         key={f} onClick={() => setActiveFilter(f)}
                         className={clsx(
                             "px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all relative border-b-2 shrink-0",
@@ -156,11 +156,11 @@ export default function CommentModeration() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative pb-4">
  <div className="w-full space-y-3 relative z-10">
-                    
+
                     {/* Header Cinematic */}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-4">
                         <div className="space-y-4">
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                                 className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                             >
@@ -172,7 +172,7 @@ export default function CommentModeration() {
                         </div>
                         <div className="relative group w-full md:w-72">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))] transition-colors" size={18} />
-                            <input 
+                            <input
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
                                 className="w-full pl-12 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all shadow-sm"
@@ -247,12 +247,12 @@ export default function CommentModeration() {
                                 <UniversalWikiView moduleName="Moderación" storageKey="wiki_admin_comments" />
                             </motion.div>
                         ) : filteredComments.length > 0 ? (
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                                 className="grid grid-cols-1 gap-3"
                             >
                                 {filteredComments.map((comment, i) => (
-                                    <motion.div 
+                                    <motion.div
                                         key={comment.id}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
@@ -291,7 +291,7 @@ export default function CommentModeration() {
                                             <button className="px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-2xs font-semibold uppercase tracking-wide rounded-lg hover:bg-[hsl(var(--surface-3))] transition-all active:scale-95">
                                                 Responder
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleDelete(comment.id)}
                                                 className="size-7 bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] rounded-lg border border-[hsl(var(--destructive)/0.15)] flex items-center justify-center hover:bg-[hsl(var(--destructive))] hover:text-white transition-all duration-500 shadow-sm hover:shadow-[hsl(var(--destructive))/0.2] active:scale-90"
                                             >
@@ -318,4 +318,3 @@ export default function CommentModeration() {
         </div>
     );
 }
-

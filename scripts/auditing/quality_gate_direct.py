@@ -44,6 +44,7 @@ logger = logging.getLogger("QualityGate")
 def run_pytest(test_files: list[str]) -> bool:
     """Ejecuta pytest directamente importando el módulo."""
     import pytest
+
     logger.info(f"Ejecutando pytest con: {test_files}")
     args = ["-q", "-o", "addopts=", "--tb=short"] + test_files
     rc = pytest.main(args)
@@ -59,6 +60,7 @@ def check_db_indices():
     from sqlalchemy import text
 
     from backend.core.database import SessionLocal
+
     logger.info("--- VERIFICANDO ÍNDICES DE BASE DE DATOS ---")
     db = SessionLocal()
     expected_index_groups = {
@@ -69,7 +71,9 @@ def check_db_indices():
             "ix_crm_tareas_estado",
         },
         "user_reminders_user": {
-            "ix_user_reminders_user_id", "idx_auth_reminders_user", "idx_user_reminders_user_id",
+            "ix_user_reminders_user_id",
+            "idx_auth_reminders_user",
+            "idx_user_reminders_user_id",
         },
     }
     all_passed = True
@@ -77,10 +81,7 @@ def check_db_indices():
         dialect_name = db.bind.dialect.name
         if dialect_name == "postgresql":
             rows = db.execute(
-                text(
-                    "SELECT indexname FROM pg_indexes "
-                    "WHERE schemaname NOT IN ('pg_catalog', 'information_schema')"
-                )
+                text("SELECT indexname FROM pg_indexes WHERE schemaname NOT IN ('pg_catalog', 'information_schema')")
             )
         else:
             rows = db.execute(text("SELECT name FROM sqlite_master WHERE type='index'"))
@@ -90,7 +91,9 @@ def check_db_indices():
             if found:
                 logger.info(f"✅ Índice lógico {logical_name} verificado vía {', '.join(found)}.")
             else:
-                logger.warning(f"⚠️ Índice lógico {logical_name} NO ENCONTRADO. Esperado uno de: {', '.join(sorted(allowed_names))}")
+                logger.warning(
+                    f"⚠️ Índice lógico {logical_name} NO ENCONTRADO. Esperado uno de: {', '.join(sorted(allowed_names))}"
+                )
                 all_passed = False
     finally:
         db.close()
@@ -120,6 +123,7 @@ def check_automation_engine():
     logger.info("--- VERIFICANDO MOTOR DE AUTOMATIZACIÓN ---")
     try:
         import py_compile
+
         py_compile.compile(str(ROOT / "backend/services/automation_engine.py"), doraise=True)
         logger.info("✅ Automation Engine compila correctamente.")
         return True

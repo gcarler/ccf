@@ -5,15 +5,17 @@ File Versions, Redirects, Broken Link Check.
 
 All endpoints require authentication. Role-based access where noted.
 """
+
 from __future__ import annotations
 
 import fnmatch
 import re
+import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
-from sqlalchemy import desc, func, or_
+from sqlalchemy import String, cast, desc, func, or_
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
@@ -37,8 +39,6 @@ from backend.models_enterprise import (
 )
 from backend.models_identity import User
 from backend.services.cms_search_indexer import reindex_all_cms_content
-from sqlalchemy import String, cast
-import uuid
 
 router = APIRouter(prefix="/cms/v2", tags=["Enterprise CMS"])
 require_cms_read = require_permission("cms:read")
@@ -46,6 +46,7 @@ require_cms_manage = require_permission("cms:manage")
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
+
 
 def _log_audit(
     db: Session,
@@ -108,10 +109,14 @@ def _notify(
 
 
 def _fire_webhooks(db: Session, site_key: str, event: str, payload: dict):
-    hooks = db.query(Webhook).filter(
-        Webhook.site_key == site_key,
-        Webhook.is_active == True,
-    ).all()
+    hooks = (
+        db.query(Webhook)
+        .filter(
+            Webhook.site_key == site_key,
+            Webhook.is_active == True,
+        )
+        .all()
+    )
     for hook in hooks:
         if event in (hook.events or []) or "*" in (hook.events or []):
             delivery = WebhookDelivery(
@@ -128,6 +133,7 @@ def _fire_webhooks(db: Session, site_key: str, event: str, payload: dict):
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. AUDIT TRAIL
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class AuditLogResponse(BaseModel):
     id: str
@@ -172,10 +178,16 @@ def list_audit_logs(
     logs = q.order_by(desc(AuditLog.created_at)).offset(offset).limit(limit).all()
     return [
         AuditLogResponse(
-            id=str(log.id), actor_email=log.actor_email, actor_role=log.actor_role,
-            action=log.action, entity_type=log.entity_type, entity_id=log.entity_id,
-            entity_slug=log.entity_slug, changes_json=log.changes_json,
-            ip_address=log.ip_address, severity=log.severity,
+            id=str(log.id),
+            actor_email=log.actor_email,
+            actor_role=log.actor_role,
+            action=log.action,
+            entity_type=log.entity_type,
+            entity_id=log.entity_id,
+            entity_slug=log.entity_slug,
+            changes_json=log.changes_json,
+            ip_address=log.ip_address,
+            severity=log.severity,
             created_at=log.created_at.isoformat() if log.created_at else "",
         )
         for log in logs
@@ -185,6 +197,7 @@ def list_audit_logs(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 2. CONTENT PERMISSIONS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class ContentPermCreate(BaseModel):
     site_key: str
@@ -204,16 +217,25 @@ def create_content_permission(
     user: User = Depends(require_cms_manage),
 ):
     perm = ContentPermission(
-        site_key=body.site_key, entity_type=body.entity_type,
-        entity_id=body.entity_id, permission_type=body.permission_type,
-        grant_type=body.grant_type, grant_target=body.grant_target,
+        site_key=body.site_key,
+        entity_type=body.entity_type,
+        entity_id=body.entity_id,
+        permission_type=body.permission_type,
+        grant_type=body.grant_type,
+        grant_target=body.grant_target,
         is_denied=body.is_denied,
         created_by_persona_id=getattr(user, "persona_id", None),
     )
     db.add(perm)
-    _log_audit(db, user, "permission.create", "content_permission",
-               str(perm.id), site_key=body.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "permission.create",
+        "content_permission",
+        str(perm.id),
+        site_key=body.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"id": str(perm.id), "status": "created"}
 
@@ -237,9 +259,13 @@ def list_content_permissions(
     perms = q.order_by(desc(ContentPermission.created_at)).all()
     return [
         {
-            "id": str(p.id), "entity_type": p.entity_type, "entity_id": p.entity_id,
-            "permission_type": p.permission_type, "grant_type": p.grant_type,
-            "grant_target": p.grant_target, "is_denied": p.is_denied,
+            "id": str(p.id),
+            "entity_type": p.entity_type,
+            "entity_id": p.entity_id,
+            "permission_type": p.permission_type,
+            "grant_type": p.grant_type,
+            "grant_target": p.grant_target,
+            "is_denied": p.is_denied,
         }
         for p in perms
     ]
@@ -256,8 +282,14 @@ def delete_content_permission(
     if not perm:
         raise HTTPException(404, "Permission not found")
     perm.deleted_at = datetime.now(timezone.utc)
-    _log_audit(db, user, "permission.delete", "content_permission", perm_id,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "permission.delete",
+        "content_permission",
+        perm_id,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"status": "deleted"}
 
@@ -265,6 +297,7 @@ def delete_content_permission(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 3. NOTIFICATIONS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/notifications")
 def list_notifications(
@@ -281,17 +314,25 @@ def list_notifications(
     if unread_only:
         q = q.filter(CmsNotification.is_read == False)
     notifs = q.order_by(desc(CmsNotification.created_at)).offset(offset).limit(limit).all()
-    total_unread = db.query(func.count(CmsNotification.id)).filter(
-        CmsNotification.recipient_persona_id == persona_id,
-        CmsNotification.is_read == False,
-    ).scalar()
+    total_unread = (
+        db.query(func.count(CmsNotification.id))
+        .filter(
+            CmsNotification.recipient_persona_id == persona_id,
+            CmsNotification.is_read == False,
+        )
+        .scalar()
+    )
     return {
         "items": [
             {
-                "id": str(n.id), "type": n.notification_type,
-                "title": n.title, "body": n.body,
-                "entity_type": n.entity_type, "entity_slug": n.entity_slug,
-                "is_read": n.is_read, "action_url": n.action_url,
+                "id": str(n.id),
+                "type": n.notification_type,
+                "title": n.title,
+                "body": n.body,
+                "entity_type": n.entity_type,
+                "entity_slug": n.entity_slug,
+                "is_read": n.is_read,
+                "action_url": n.action_url,
                 "created_at": n.created_at.isoformat() if n.created_at else "",
             }
             for n in notifs
@@ -323,10 +364,14 @@ def mark_all_notifications_read(
     persona_id = getattr(user, "persona_id", None)
     if not persona_id:
         return {"count": 0}
-    count = db.query(CmsNotification).filter(
-        CmsNotification.recipient_persona_id == persona_id,
-        CmsNotification.is_read == False,
-    ).update({"is_read": True, "read_at": datetime.now(timezone.utc)})
+    count = (
+        db.query(CmsNotification)
+        .filter(
+            CmsNotification.recipient_persona_id == persona_id,
+            CmsNotification.is_read == False,
+        )
+        .update({"is_read": True, "read_at": datetime.now(timezone.utc)})
+    )
     db.commit()
     return {"count": count}
 
@@ -334,6 +379,7 @@ def mark_all_notifications_read(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 4. WEBHOOKS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class WebhookCreate(BaseModel):
     site_key: str
@@ -351,14 +397,23 @@ def create_webhook(
     user: User = Depends(require_cms_manage),
 ):
     hook = Webhook(
-        site_key=body.site_key, name=body.name, url=body.url,
-        secret=body.secret, events=body.events,
+        site_key=body.site_key,
+        name=body.name,
+        url=body.url,
+        secret=body.secret,
+        events=body.events,
         created_by_persona_id=getattr(user, "persona_id", None),
     )
     db.add(hook)
-    _log_audit(db, user, "webhook.create", "webhook", str(hook.id),
-               site_key=body.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "webhook.create",
+        "webhook",
+        str(hook.id),
+        site_key=body.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"id": str(hook.id), "status": "created"}
 
@@ -369,14 +424,22 @@ def list_webhooks(
     db: Session = Depends(get_db),
     user: User = Depends(require_cms_read),
 ):
-    hooks = db.query(Webhook).filter(
-        Webhook.site_key == site_key,
-        Webhook.deleted_at.is_(None),
-    ).order_by(desc(Webhook.created_at)).all()
+    hooks = (
+        db.query(Webhook)
+        .filter(
+            Webhook.site_key == site_key,
+            Webhook.deleted_at.is_(None),
+        )
+        .order_by(desc(Webhook.created_at))
+        .all()
+    )
     return [
         {
-            "id": str(h.id), "name": h.name, "url": h.url,
-            "events": h.events, "is_active": h.is_active,
+            "id": str(h.id),
+            "name": h.name,
+            "url": h.url,
+            "events": h.events,
+            "is_active": h.is_active,
             "last_triggered_at": h.last_triggered_at.isoformat() if h.last_triggered_at else None,
             "failure_count": h.failure_count,
         }
@@ -415,9 +478,15 @@ def update_webhook(
     if body.is_active is not None:
         hook.is_active = body.is_active
         changes["is_active"] = body.is_active
-    _log_audit(db, user, "webhook.update", "webhook", hook_id,
-               changes=changes,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "webhook.update",
+        "webhook",
+        hook_id,
+        changes=changes,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"status": "updated"}
 
@@ -434,8 +503,9 @@ def delete_webhook(
         raise HTTPException(404, "Webhook not found")
     hook.deleted_at = datetime.now(timezone.utc)
     hook.is_active = False
-    _log_audit(db, user, "webhook.delete", "webhook", hook_id,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db, user, "webhook.delete", "webhook", hook_id, ip_address=request.client.host if request.client else None
+    )
     db.commit()
     return {"status": "deleted"}
 
@@ -447,14 +517,20 @@ def list_webhook_deliveries(
     db: Session = Depends(get_db),
     user: User = Depends(require_cms_read),
 ):
-    deliveries = db.query(WebhookDelivery).filter(
-        WebhookDelivery.webhook_id == hook_id
-    ).order_by(desc(WebhookDelivery.created_at)).limit(limit).all()
+    deliveries = (
+        db.query(WebhookDelivery)
+        .filter(WebhookDelivery.webhook_id == hook_id)
+        .order_by(desc(WebhookDelivery.created_at))
+        .limit(limit)
+        .all()
+    )
     return [
         {
-            "id": str(d.id), "event": d.event,
+            "id": str(d.id),
+            "event": d.event,
             "response_status": d.response_status,
-            "success": d.success, "duration_ms": d.duration_ms,
+            "success": d.success,
+            "duration_ms": d.duration_ms,
             "created_at": d.created_at.isoformat() if d.created_at else "",
         }
         for d in deliveries
@@ -464,6 +540,7 @@ def list_webhook_deliveries(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 5. CUSTOM POST TYPES
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class CustomTypeCreate(BaseModel):
     site_key: str
@@ -482,22 +559,36 @@ def create_custom_type(
     db: Session = Depends(get_db),
     user: User = Depends(require_cms_manage),
 ):
-    existing = db.query(CmsCustomType).filter(
-        CmsCustomType.site_key == body.site_key,
-        CmsCustomType.type_key == body.type_key,
-    ).first()
+    existing = (
+        db.query(CmsCustomType)
+        .filter(
+            CmsCustomType.site_key == body.site_key,
+            CmsCustomType.type_key == body.type_key,
+        )
+        .first()
+    )
     if existing:
         raise HTTPException(409, "Custom type already exists")
     ct = CmsCustomType(
-        site_key=body.site_key, type_key=body.type_key,
-        label=body.label, label_plural=body.label_plural,
-        icon=body.icon, supports=body.supports,
+        site_key=body.site_key,
+        type_key=body.type_key,
+        label=body.label,
+        label_plural=body.label_plural,
+        icon=body.icon,
+        supports=body.supports,
         fields_schema=body.fields_schema,
     )
     db.add(ct)
-    _log_audit(db, user, "custom_type.create", "custom_type", str(ct.id),
-               entity_slug=body.type_key, site_key=body.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "custom_type.create",
+        "custom_type",
+        str(ct.id),
+        entity_slug=body.type_key,
+        site_key=body.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"id": str(ct.id), "status": "created"}
 
@@ -508,15 +599,22 @@ def list_custom_types(
     db: Session = Depends(get_db),
     user: User = Depends(require_cms_read),
 ):
-    types = db.query(CmsCustomType).filter(
-        CmsCustomType.site_key == site_key,
-        CmsCustomType.is_active == True,
-    ).all()
+    types = (
+        db.query(CmsCustomType)
+        .filter(
+            CmsCustomType.site_key == site_key,
+            CmsCustomType.is_active == True,
+        )
+        .all()
+    )
     return [
         {
-            "id": str(t.id), "type_key": t.type_key,
-            "label": t.label, "label_plural": t.label_plural,
-            "icon": t.icon, "supports": t.supports,
+            "id": str(t.id),
+            "type_key": t.type_key,
+            "label": t.label,
+            "label_plural": t.label_plural,
+            "icon": t.icon,
+            "supports": t.supports,
             "fields_schema": t.fields_schema,
         }
         for t in types
@@ -548,27 +646,41 @@ def create_custom_entry(
     user: User = Depends(require_cms_manage),
 ):
     entry = CmsCustomEntry(
-        site_key=body.site_key, type_key=body.type_key,
-        slug=body.slug, title=body.title,
-        content_html=body.content_html, excerpt=body.excerpt,
-        fields_json=body.fields_json, status=body.status,
+        site_key=body.site_key,
+        type_key=body.type_key,
+        slug=body.slug,
+        title=body.title,
+        content_html=body.content_html,
+        excerpt=body.excerpt,
+        fields_json=body.fields_json,
+        status=body.status,
         featured_image_url=body.featured_image_url,
         owner_persona_id=body.owner_persona_id,
-        review_date=body.review_date, expiry_date=body.expiry_date,
-        parent_id=body.parent_id, seo_json=body.seo_json,
+        review_date=body.review_date,
+        expiry_date=body.expiry_date,
+        parent_id=body.parent_id,
+        seo_json=body.seo_json,
         author_persona_id=getattr(user, "persona_id", None),
     )
     db.add(entry)
     db.flush()
     ver = CmsCustomEntryVersion(
-        entry_id=entry.id, version_number=1,
+        entry_id=entry.id,
+        version_number=1,
         snapshot_json={"title": body.title, "content_html": body.content_html},
         created_by_persona_id=getattr(user, "persona_id", None),
     )
     db.add(ver)
-    _log_audit(db, user, "custom_entry.create", "custom_entry",
-               str(entry.id), entity_slug=body.slug, site_key=body.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "custom_entry.create",
+        "custom_entry",
+        str(entry.id),
+        entity_slug=body.slug,
+        site_key=body.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"id": str(entry.id), "status": "created"}
 
@@ -600,11 +712,16 @@ def list_custom_entries(
     entries = q.order_by(CmsCustomEntry.sort_order, desc(CmsCustomEntry.created_at)).offset(offset).limit(limit).all()
     return [
         {
-            "id": str(e.id), "type_key": e.type_key, "slug": e.slug,
-            "title": e.title, "excerpt": e.excerpt, "status": e.status,
+            "id": str(e.id),
+            "type_key": e.type_key,
+            "slug": e.slug,
+            "title": e.title,
+            "excerpt": e.excerpt,
+            "status": e.status,
             "featured_image_url": e.featured_image_url,
             "parent_id": str(e.parent_id) if e.parent_id else None,
-            "version": e.version, "view_count": e.view_count,
+            "version": e.version,
+            "view_count": e.view_count,
             "review_date": e.review_date.isoformat() if e.review_date else None,
             "expiry_date": e.expiry_date.isoformat() if e.expiry_date else None,
             "created_at": e.created_at.isoformat() if e.created_at else "",
@@ -623,13 +740,19 @@ def get_custom_entry(
     if not entry:
         raise HTTPException(404, "Entry not found")
     return {
-        "id": str(entry.id), "type_key": entry.type_key, "slug": entry.slug,
-        "title": entry.title, "content_html": entry.content_html,
-        "excerpt": entry.excerpt, "fields_json": entry.fields_json,
-        "status": entry.status, "featured_image_url": entry.featured_image_url,
+        "id": str(entry.id),
+        "type_key": entry.type_key,
+        "slug": entry.slug,
+        "title": entry.title,
+        "content_html": entry.content_html,
+        "excerpt": entry.excerpt,
+        "fields_json": entry.fields_json,
+        "status": entry.status,
+        "featured_image_url": entry.featured_image_url,
         "owner_persona_id": entry.owner_persona_id,
         "parent_id": str(entry.parent_id) if entry.parent_id else None,
-        "version": entry.version, "view_count": entry.view_count,
+        "version": entry.version,
+        "view_count": entry.view_count,
         "review_date": entry.review_date.isoformat() if entry.review_date else None,
         "expiry_date": entry.expiry_date.isoformat() if entry.expiry_date else None,
         "seo_json": entry.seo_json,
@@ -667,14 +790,23 @@ def update_custom_entry(
         entry.fields_json = fields_json
     entry.version += 1
     ver = CmsCustomEntryVersion(
-        entry_id=entry.id, version_number=entry.version,
+        entry_id=entry.id,
+        version_number=entry.version,
         snapshot_json={"title": entry.title, "content_html": entry.content_html, "fields": entry.fields_json},
         created_by_persona_id=getattr(user, "persona_id", None),
     )
     db.add(ver)
-    _log_audit(db, user, "custom_entry.update", "custom_entry", entry_id,
-               entity_slug=entry.slug, changes=changes, site_key=entry.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "custom_entry.update",
+        "custom_entry",
+        entry_id,
+        entity_slug=entry.slug,
+        changes=changes,
+        site_key=entry.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"status": "updated", "version": entry.version}
 
@@ -691,9 +823,16 @@ def delete_custom_entry(
         raise HTTPException(404, "Entry not found")
     entry.deleted_at = datetime.now(timezone.utc)
     entry.status = "archived"
-    _log_audit(db, user, "custom_entry.delete", "custom_entry", entry_id,
-               entity_slug=entry.slug, site_key=entry.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "custom_entry.delete",
+        "custom_entry",
+        entry_id,
+        entity_slug=entry.slug,
+        site_key=entry.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"status": "archived"}
 
@@ -704,12 +843,16 @@ def list_entry_versions(
     db: Session = Depends(get_db),
     user: User = Depends(require_cms_read),
 ):
-    versions = db.query(CmsCustomEntryVersion).filter(
-        CmsCustomEntryVersion.entry_id == entry_id
-    ).order_by(desc(CmsCustomEntryVersion.version_number)).all()
+    versions = (
+        db.query(CmsCustomEntryVersion)
+        .filter(CmsCustomEntryVersion.entry_id == entry_id)
+        .order_by(desc(CmsCustomEntryVersion.version_number))
+        .all()
+    )
     return [
         {
-            "id": str(v.id), "version_number": v.version_number,
+            "id": str(v.id),
+            "version_number": v.version_number,
             "notes": v.notes,
             "created_at": v.created_at.isoformat() if v.created_at else "",
         }
@@ -736,16 +879,24 @@ def rollback_entry_version(
         entry.content_html = snapshot["content_html"]
     entry.version += 1
     new_ver = CmsCustomEntryVersion(
-        entry_id=entry.id, version_number=entry.version,
+        entry_id=entry.id,
+        version_number=entry.version,
         snapshot_json=snapshot,
         notes=f"Rollback to version {version.version_number}",
         created_by_persona_id=getattr(user, "persona_id", None),
     )
     db.add(new_ver)
-    _log_audit(db, user, "custom_entry.rollback", "custom_entry", entry_id,
-               entity_slug=entry.slug, changes={"rollback_to": version.version_number},
-               site_key=entry.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "custom_entry.rollback",
+        "custom_entry",
+        entry_id,
+        entity_slug=entry.slug,
+        changes={"rollback_to": version.version_number},
+        site_key=entry.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"status": "rolled_back", "new_version": entry.version}
 
@@ -753,6 +904,7 @@ def rollback_entry_version(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 6. GLOSSARY
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class GlossaryTermCreate(BaseModel):
     site_key: str
@@ -771,14 +923,25 @@ def create_glossary_term(
     user: User = Depends(require_cms_manage),
 ):
     t = CmsGlossaryTerm(
-        site_key=body.site_key, term=body.term, definition=body.definition,
-        aliases=body.aliases, category=body.category, language=body.language,
+        site_key=body.site_key,
+        term=body.term,
+        definition=body.definition,
+        aliases=body.aliases,
+        category=body.category,
+        language=body.language,
         created_by_persona_id=getattr(user, "persona_id", None),
     )
     db.add(t)
-    _log_audit(db, user, "glossary.create", "glossary_term", str(t.id),
-               entity_slug=body.term, site_key=body.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "glossary.create",
+        "glossary_term",
+        str(t.id),
+        entity_slug=body.term,
+        site_key=body.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"id": str(t.id), "status": "created"}
 
@@ -796,17 +959,23 @@ def list_glossary_terms(
         CmsGlossaryTerm.is_published == True,
     )
     if search:
-        q = q.filter(or_(
-            CmsGlossaryTerm.term.ilike(f"%{search}%"),
-            CmsGlossaryTerm.definition.ilike(f"%{search}%"),
-        ))
+        q = q.filter(
+            or_(
+                CmsGlossaryTerm.term.ilike(f"%{search}%"),
+                CmsGlossaryTerm.definition.ilike(f"%{search}%"),
+            )
+        )
     if category:
         q = q.filter(CmsGlossaryTerm.category == category)
     terms = q.order_by(CmsGlossaryTerm.term).all()
     return [
         {
-            "id": str(t.id), "term": t.term, "definition": t.definition,
-            "aliases": t.aliases, "category": t.category, "language": t.language,
+            "id": str(t.id),
+            "term": t.term,
+            "definition": t.definition,
+            "aliases": t.aliases,
+            "category": t.category,
+            "language": t.language,
         }
         for t in terms
     ]
@@ -815,6 +984,7 @@ def list_glossary_terms(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 7. SEARCH
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class SearchRequest(BaseModel):
     site_key: str = "ccf"
@@ -847,14 +1017,14 @@ def execute_search(db: Session, body: SearchRequest) -> dict:
 
     if body.date_from:
         try:
-            dt_from = datetime.fromisoformat(str(body.date_from).replace('Z', '+00:00'))
+            dt_from = datetime.fromisoformat(str(body.date_from).replace("Z", "+00:00"))
             q = q.filter(SearchIndex.created_at >= dt_from)
         except ValueError:
             pass
 
     if body.date_to:
         try:
-            dt_to = datetime.fromisoformat(str(body.date_to).replace('Z', '+00:00'))
+            dt_to = datetime.fromisoformat(str(body.date_to).replace("Z", "+00:00"))
             q = q.filter(SearchIndex.created_at <= dt_to)
         except ValueError:
             pass
@@ -874,23 +1044,29 @@ def execute_search(db: Session, body: SearchRequest) -> dict:
 
     if query_str:
         if dialect_name == "postgresql":
-            tsquery = func.websearch_to_tsquery('spanish', query_str)
-            tsvector = func.to_tsvector('spanish', func.coalesce(SearchIndex.title, '') + ' ' + func.coalesce(SearchIndex.body_text, ''))
-            q = q.filter(or_(
-                tsvector.op('@@')(tsquery),
-                SearchIndex.title.ilike(f"%{query_str}%"),
-                SearchIndex.body_text.ilike(f"%{query_str}%"),
-                SearchIndex.category.ilike(f"%{query_str}%"),
-                SearchIndex.entity_slug.ilike(f"%{query_str}%"),
-            ))
+            tsquery = func.websearch_to_tsquery("spanish", query_str)
+            tsvector = func.to_tsvector(
+                "spanish", func.coalesce(SearchIndex.title, "") + " " + func.coalesce(SearchIndex.body_text, "")
+            )
+            q = q.filter(
+                or_(
+                    tsvector.op("@@")(tsquery),
+                    SearchIndex.title.ilike(f"%{query_str}%"),
+                    SearchIndex.body_text.ilike(f"%{query_str}%"),
+                    SearchIndex.category.ilike(f"%{query_str}%"),
+                    SearchIndex.entity_slug.ilike(f"%{query_str}%"),
+                )
+            )
         else:
             search_pattern = f"%{query_str}%"
-            q = q.filter(or_(
-                SearchIndex.title.ilike(search_pattern),
-                SearchIndex.body_text.ilike(search_pattern),
-                SearchIndex.category.ilike(search_pattern),
-                SearchIndex.entity_slug.ilike(search_pattern),
-            ))
+            q = q.filter(
+                or_(
+                    SearchIndex.title.ilike(search_pattern),
+                    SearchIndex.body_text.ilike(search_pattern),
+                    SearchIndex.category.ilike(search_pattern),
+                    SearchIndex.entity_slug.ilike(search_pattern),
+                )
+            )
 
     candidates = q.all()
 
@@ -919,11 +1095,16 @@ def execute_search(db: Session, body: SearchRequest) -> dict:
 
     promoted_items: list[dict] = []
     if query_str:
-        promoted = db.query(SearchPromotion).filter(
-            SearchPromotion.site_key == body.site_key,
-            SearchPromotion.query_text.ilike(f"%{query_str}%"),
-            SearchPromotion.is_active == True,
-        ).order_by(desc(SearchPromotion.boost_score)).all()
+        promoted = (
+            db.query(SearchPromotion)
+            .filter(
+                SearchPromotion.site_key == body.site_key,
+                SearchPromotion.query_text.ilike(f"%{query_str}%"),
+                SearchPromotion.is_active == True,
+            )
+            .order_by(desc(SearchPromotion.boost_score))
+            .all()
+        )
 
         promoted_items = [
             {
@@ -1062,16 +1243,25 @@ def create_search_promotion(
     user: User = Depends(require_cms_manage),
 ):
     promo = SearchPromotion(
-        site_key=body.site_key, query_text=body.query_text,
-        entity_type=body.entity_type, entity_id=body.entity_id,
-        entity_slug=body.entity_slug, title=body.title,
+        site_key=body.site_key,
+        query_text=body.query_text,
+        entity_type=body.entity_type,
+        entity_id=body.entity_id,
+        entity_slug=body.entity_slug,
+        title=body.title,
         boost_score=body.boost_score,
         created_by_persona_id=getattr(user, "persona_id", None),
     )
     db.add(promo)
-    _log_audit(db, user, "search.promotion.create", "search_promotion",
-               str(promo.id), site_key=body.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "search.promotion.create",
+        "search_promotion",
+        str(promo.id),
+        site_key=body.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"id": str(promo.id), "status": "created"}
 
@@ -1079,6 +1269,7 @@ def create_search_promotion(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 8. SESSION MANAGEMENT
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @router.get("/sessions")
 def list_user_sessions(
@@ -1088,14 +1279,22 @@ def list_user_sessions(
     persona_id = getattr(user, "persona_id", None)
     if not persona_id:
         return []
-    sessions = db.query(UserSession).filter(
-        UserSession.persona_id == persona_id,
-        UserSession.is_active == True,
-    ).order_by(desc(UserSession.last_activity_at)).all()
+    sessions = (
+        db.query(UserSession)
+        .filter(
+            UserSession.persona_id == persona_id,
+            UserSession.is_active == True,
+        )
+        .order_by(desc(UserSession.last_activity_at))
+        .all()
+    )
     return [
         {
-            "id": str(s.id), "browser": s.browser, "os": s.os,
-            "is_mobile": s.is_mobile, "ip_address": s.ip_address,
+            "id": str(s.id),
+            "browser": s.browser,
+            "os": s.os,
+            "is_mobile": s.is_mobile,
+            "ip_address": s.ip_address,
             "last_activity_at": s.last_activity_at.isoformat() if s.last_activity_at else "",
             "created_at": s.created_at.isoformat() if s.created_at else "",
         }
@@ -1129,10 +1328,14 @@ def revoke_all_sessions(
     persona_id = getattr(user, "persona_id", None)
     if not persona_id:
         return {"count": 0}
-    count = db.query(UserSession).filter(
-        UserSession.persona_id == persona_id,
-        UserSession.is_active == True,
-    ).update({"is_active": False, "revoked_at": datetime.now(timezone.utc)})
+    count = (
+        db.query(UserSession)
+        .filter(
+            UserSession.persona_id == persona_id,
+            UserSession.is_active == True,
+        )
+        .update({"is_active": False, "revoked_at": datetime.now(timezone.utc)})
+    )
     db.commit()
     return {"count": count}
 
@@ -1140,6 +1343,7 @@ def revoke_all_sessions(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 9. MEDIA FOLDERS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class MediaFolderCreate(BaseModel):
     site_key: str
@@ -1161,14 +1365,24 @@ def create_media_folder(
         if parent:
             path = f"{parent.path}{body.slug}/"
     folder = MediaFolder(
-        site_key=body.site_key, name=body.name, slug=body.slug,
-        parent_id=body.parent_id, path=path,
+        site_key=body.site_key,
+        name=body.name,
+        slug=body.slug,
+        parent_id=body.parent_id,
+        path=path,
         created_by_persona_id=getattr(user, "persona_id", None),
     )
     db.add(folder)
-    _log_audit(db, user, "media_folder.create", "media_folder", str(folder.id),
-               entity_slug=body.slug, site_key=body.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "media_folder.create",
+        "media_folder",
+        str(folder.id),
+        entity_slug=body.slug,
+        site_key=body.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"id": str(folder.id), "path": path, "status": "created"}
 
@@ -1187,8 +1401,13 @@ def list_media_folders(
         q = q.filter(MediaFolder.parent_id.is_(None))
     folders = q.order_by(MediaFolder.sort_order, MediaFolder.name).all()
     return [
-        {"id": str(f.id), "name": f.name, "slug": f.slug, "path": f.path,
-         "parent_id": str(f.parent_id) if f.parent_id else None}
+        {
+            "id": str(f.id),
+            "name": f.name,
+            "slug": f.slug,
+            "path": f.path,
+            "parent_id": str(f.parent_id) if f.parent_id else None,
+        }
         for f in folders
     ]
 
@@ -1196,6 +1415,7 @@ def list_media_folders(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 10. REDIRECTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class RedirectCreate(BaseModel):
     site_key: str
@@ -1229,15 +1449,24 @@ def create_redirect(
             raise HTTPException(422, f"Invalid regex pattern: {exc}") from exc
 
     redir = CmsRedirect(
-        site_key=body.site_key, from_path=body.from_path,
-        to_path=body.to_path, status_code=body.status_code,
-        match_type=mt, priority=int(body.priority),
+        site_key=body.site_key,
+        from_path=body.from_path,
+        to_path=body.to_path,
+        status_code=body.status_code,
+        match_type=mt,
+        priority=int(body.priority),
         created_by_persona_id=getattr(user, "persona_id", None),
     )
     db.add(redir)
-    _log_audit(db, user, "redirect.create", "redirect", str(redir.id),
-               site_key=body.site_key,
-               ip_address=request.client.host if request.client else None)
+    _log_audit(
+        db,
+        user,
+        "redirect.create",
+        "redirect",
+        str(redir.id),
+        site_key=body.site_key,
+        ip_address=request.client.host if request.client else None,
+    )
     db.commit()
     return {"id": str(redir.id), "status": "created"}
 
@@ -1248,14 +1477,25 @@ def list_redirects(
     db: Session = Depends(get_db),
     user: User = Depends(require_cms_read),
 ):
-    redirs = db.query(CmsRedirect).filter(
-        CmsRedirect.site_key == site_key,
-        CmsRedirect.is_active == True,
-    ).order_by(CmsRedirect.from_path).all()
+    redirs = (
+        db.query(CmsRedirect)
+        .filter(
+            CmsRedirect.site_key == site_key,
+            CmsRedirect.is_active == True,
+        )
+        .order_by(CmsRedirect.from_path)
+        .all()
+    )
     return [
-        {"id": str(r.id), "from_path": r.from_path, "to_path": r.to_path,
-         "status_code": r.status_code, "hit_count": r.hit_count,
-         "match_type": r.match_type, "priority": r.priority}
+        {
+            "id": str(r.id),
+            "from_path": r.from_path,
+            "to_path": r.to_path,
+            "status_code": r.status_code,
+            "hit_count": r.hit_count,
+            "match_type": r.match_type,
+            "priority": r.priority,
+        }
         for r in redirs
     ]
 
@@ -1384,6 +1624,7 @@ def resolve_redirect_endpoint(
 # 11. BROKEN LINK CHECK
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.get("/broken-links")
 def list_broken_links(
     site_key: str,
@@ -1401,9 +1642,12 @@ def list_broken_links(
     links = q.order_by(desc(BrokenLinkCheck.checked_at)).limit(limit).all()
     return [
         {
-            "id": str(link.id), "source_url": link.source_url,
-            "target_url": link.target_url, "status_code": link.status_code,
-            "error_message": link.error_message, "is_broken": link.is_broken,
+            "id": str(link.id),
+            "source_url": link.source_url,
+            "target_url": link.target_url,
+            "status_code": link.status_code,
+            "error_message": link.error_message,
+            "is_broken": link.is_broken,
             "resolved_at": link.resolved_at.isoformat() if link.resolved_at else None,
             "checked_at": link.checked_at.isoformat() if link.checked_at else "",
         }

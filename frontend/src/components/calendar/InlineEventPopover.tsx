@@ -49,32 +49,32 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                 {children}
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content 
-                    side="right" 
-                    align="start" 
+                <Popover.Content
+                    side="right"
+                    align="start"
                     sideOffset={8}
                     collisionPadding={16}
                     className="z-[100] w-[340px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg shadow-2xl shadow-black/10 dark:shadow-black/40 border border-[hsl(var(--border))] dark:border-white/10 p-3 font-display flex flex-col gap-4 animate-in fade-in zoom-in-95 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex flex-col gap-1">
-                        <input 
+                        <input
                             autoFocus
-                            type="text" 
-                            placeholder="Añade un título..." 
+                            type="text"
+                            placeholder="Añade un título..."
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                             className="w-full text-base font-medium bg-transparent border-none outline-none placeholder:text-[hsl(var(--text-secondary))] text-[hsl(var(--text-primary))] dark:text-white mb-2"
                         />
                         <div className="flex gap-2 text-xs font-semibold uppercase tracking-wide">
-                            <button 
+                            <button
                                 onClick={() => setType('event')}
                                 className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'event' ? 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 border-transparent'}`}
                             >
                                 Evento
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setType('task')}
                                 className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'task' ? 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 border-transparent'}`}
                             >
@@ -98,12 +98,12 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                             <div className="size-8 rounded-full bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center shrink-0">
                                 <Users size={14} className="text-[hsl(var(--text-secondary))]" />
                             </div>
-                            <input 
-                                type="text" 
-                                placeholder="Añadir invitados" 
+                            <input
+                                type="text"
+                                placeholder="Añadir invitados"
                                 value={location}
                                 onChange={(e) => setLocation(e.target.value)}
-                                className="text-sm bg-transparent outline-none w-full placeholder:text-[hsl(var(--text-secondary))]" 
+                                className="text-sm bg-transparent outline-none w-full placeholder:text-[hsl(var(--text-secondary))]"
                             />
                         </div>
 
@@ -111,25 +111,25 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                             <div className="size-8 rounded-full bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center shrink-0 mt-1">
                                 <AlignLeft size={14} className="text-[hsl(var(--text-secondary))]" />
                             </div>
-                            <textarea 
-                                rows={2} 
-                                placeholder="Añadir descripción..." 
+                            <textarea
+                                rows={2}
+                                placeholder="Añadir descripción..."
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                className="text-sm bg-transparent outline-none w-full placeholder:text-[hsl(var(--text-secondary))] py-2 resize-none scrollbar-thin" 
+                                className="text-sm bg-transparent outline-none w-full placeholder:text-[hsl(var(--text-secondary))] py-2 resize-none scrollbar-thin"
                             />
                         </div>
                     </div>
 
                     <div className="flex items-center justify-end gap-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/10">
-                        <button 
+                        <button
                             onClick={() => onOpenChange(false)}
                             className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-md transition-colors disabled:opacity-50"
                             disabled={isSaving}
                         >
                             Cerrar
                         </button>
-                        <button 
+                        <button
                             onClick={handleSave}
                             disabled={!title.trim() || isSaving}
                             className="flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white shadow-md shadow-[hsl(var(--info)/20%)] rounded-md transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"

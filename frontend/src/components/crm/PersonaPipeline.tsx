@@ -31,7 +31,7 @@ function SortablePersonaCard({ persona, onClick }: PersonaCardProps) {
                     <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{persona.group}</p>
                 </div>
             </div>
-            
+
             <div className="mt-4 pt-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="size-5 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">

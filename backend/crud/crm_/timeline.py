@@ -1,4 +1,5 @@
 """Persona timeline construction."""
+
 import datetime as dt
 
 from sqlalchemy.orm import Session
@@ -50,7 +51,11 @@ def get_persona_timeline(db: Session, persona_id: str):
                 }
             )
 
-    ministries = db.query(models.PersonaMinistryAssignment).filter(models.PersonaMinistryAssignment.persona_id == persona_id).all()
+    ministries = (
+        db.query(models.PersonaMinistryAssignment)
+        .filter(models.PersonaMinistryAssignment.persona_id == persona_id)
+        .all()
+    )
     for mm in ministries:
         timeline.append(
             {
@@ -89,19 +94,22 @@ def get_persona_timeline(db: Session, persona_id: str):
             }
         )
 
-    milestones = db.query(models.SpiritualMilestone).filter(
-        models.SpiritualMilestone.persona_id == persona.id,
-        models.SpiritualMilestone.deleted_at.is_(None)
-    ).all()
+    milestones = (
+        db.query(models.SpiritualMilestone)
+        .filter(models.SpiritualMilestone.persona_id == persona.id, models.SpiritualMilestone.deleted_at.is_(None))
+        .all()
+    )
     for m in milestones:
-        timeline.append({
-            "type": "spiritual_milestone",
-            "title": f"Hito Espiritual: {m.type}",
-            "description": m.notes or f"Hito registrado: {m.type}",
-            "date": m.created_at.isoformat() if m.created_at else m.event_date.isoformat(),
-            "icon": "Milestone",
-            "color": "bg-indigo-500",
-        })
+        timeline.append(
+            {
+                "type": "spiritual_milestone",
+                "title": f"Hito Espiritual: {m.type}",
+                "description": m.notes or f"Hito registrado: {m.type}",
+                "date": m.created_at.isoformat() if m.created_at else m.event_date.isoformat(),
+                "icon": "Milestone",
+                "color": "bg-indigo-500",
+            }
+        )
 
     for item in timeline:
         item["created_at"] = item["date"]

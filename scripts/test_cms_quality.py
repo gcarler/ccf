@@ -229,10 +229,9 @@ def main() -> int:
     # Reuse the existing production build when available to avoid rebuilding
     # twice in the managed runner. If .next is missing, the managed runner will
     # build once before starting the server.
-    has_frontend_build = (
-        (PROJECT_ROOT / "frontend" / ".next" / "BUILD_ID").is_file()
-        or (PROJECT_ROOT / "frontend" / ".next" / "build-manifest.json").is_file()
-    )
+    has_frontend_build = (PROJECT_ROOT / "frontend" / ".next" / "BUILD_ID").is_file() or (
+        PROJECT_ROOT / "frontend" / ".next" / "build-manifest.json"
+    ).is_file()
     reuse_args = ["--reuse-build"] if has_frontend_build else []
 
     with managed_backend_server():

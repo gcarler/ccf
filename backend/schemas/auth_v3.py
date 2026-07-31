@@ -14,6 +14,7 @@ from backend.schemas._common import orm_config
 
 # ── Roles ─────────────────────────────────────────────────────────────────
 
+
 class RolPlataformaBase(BaseModel):
     nombre: str
     permisos: dict[str, Any] = Field(default_factory=dict)
@@ -35,6 +36,7 @@ class RolPlataformaRead(RolPlataformaBase):
 
 # ── Niveles / Gamificación ───────────────────────────────────────────────
 
+
 class NivelGamificadoBase(BaseModel):
     title: str
     min_xp: int
@@ -51,6 +53,7 @@ class NivelGamificadoRead(NivelGamificadoBase):
 
 
 # ── Usuarios ─────────────────────────────────────────────────────────────
+
 
 class UsuarioBase(BaseModel):
     sede_id: str
@@ -104,6 +107,7 @@ class UsuarioSelfUpdate(BaseModel):
 
 # ── Roles Modulares ──────────────────────────────────────────────────────
 
+
 class UsuarioRolModuloBase(BaseModel):
     modulo: str
     rol_id: uuid.UUID
@@ -121,6 +125,7 @@ class UsuarioRolModuloRead(UsuarioRolModuloBase):
 
 
 # ── Tokens / Sesiones ────────────────────────────────────────────────────
+
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -145,6 +150,7 @@ class TokenSesionRead(BaseModel):
 
 
 # ── Seguridad ────────────────────────────────────────────────────────────
+
 
 class LogSeguridadRead(BaseModel):
     id: uuid.UUID
@@ -172,6 +178,7 @@ class ResetPasswordRequest(BaseModel):
 
 
 # ── Notificaciones / Recordatorios ───────────────────────────────────────
+
 
 class NotificacionRead(BaseModel):
     id: uuid.UUID
@@ -201,6 +208,7 @@ class RecordatorioRead(RecordatorioCreate):
 
 # ── Preferencias UI ──────────────────────────────────────────────────────
 
+
 class PreferenciaUIUpdate(BaseModel):
     settings: dict[str, Any]
 
@@ -214,6 +222,7 @@ class PreferenciaUIRead(BaseModel):
 
 
 # ── Medallas ─────────────────────────────────────────────────────────────
+
 
 class MedallaCreate(BaseModel):
     name: str
@@ -237,6 +246,7 @@ class MedallaUsuarioRead(BaseModel):
 
 # ── MFA ──────────────────────────────────────────────────────────────────
 
+
 class MfaSetupResponse(BaseModel):
     secret: str
     qr_code_url: str
@@ -251,6 +261,7 @@ class MfaRecoveryResponse(BaseModel):
 
 
 # ── Estadísticas ─────────────────────────────────────────────────────────
+
 
 class AuthStatsSummary(BaseModel):
     total_users: int

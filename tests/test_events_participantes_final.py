@@ -1,4 +1,5 @@
 """Cover remaining lines in events_participantes.py — role metrics, absentees, validation."""
+
 from __future__ import annotations
 
 import uuid
@@ -25,9 +26,11 @@ def full(client, db_session):
 
 def _create_event(db_session, sede):
     evt = models.CrmEvent(
-        id=uuid.uuid4(), name="Test Event",
+        id=uuid.uuid4(),
+        name="Test Event",
         event_date=datetime(2026, 8, 15, 10, 0, 0, tzinfo=timezone.utc),
-        sede_id=sede.id, location="Test",
+        sede_id=sede.id,
+        location="Test",
     )
     db_session.add(evt)
     db_session.flush()
@@ -40,19 +43,22 @@ class TestAttendanceReportEdge:
         c, h, s = full["c"], full["h"], full["s"]
         evt = _create_event(db_session, s)
 
-        p1 = models.Persona(id=uuid.uuid4(), first_name="Pres", last_name="A",
-                           sede_id=s.id)
-        p2 = models.Persona(id=uuid.uuid4(), first_name="Abs", last_name="B",
-                           sede_id=s.id)
+        p1 = models.Persona(id=uuid.uuid4(), first_name="Pres", last_name="A", sede_id=s.id)
+        p2 = models.Persona(id=uuid.uuid4(), first_name="Abs", last_name="B", sede_id=s.id)
         db_session.add_all([p1, p2])
         db_session.flush()
 
         for p, attended in [(p1, True), (p2, False)]:
-            db_session.add(models.EventAttendance(
-                id=uuid.uuid4(), event_id=evt.id, persona_id=p.id,
-                session_date=date(2026, 8, 15), attended=attended,
-                status="present" if attended else "absent",
-            ))
+            db_session.add(
+                models.EventAttendance(
+                    id=uuid.uuid4(),
+                    event_id=evt.id,
+                    persona_id=p.id,
+                    session_date=date(2026, 8, 15),
+                    attended=attended,
+                    status="present" if attended else "absent",
+                )
+            )
         db_session.commit()
 
         resp = c.get(f"/api/evangelism/events/{evt.id}/attendance", headers=h)
@@ -72,28 +78,38 @@ class TestSessionDetailMetrics:
 
         # Create RoleDefinition records
         leadership_role = models.RoleDefinition(
-            id=uuid.uuid4(), name="Liderazgo", is_leadership=True,
+            id=uuid.uuid4(),
+            name="Liderazgo",
+            is_leadership=True,
         )
         member_role = models.RoleDefinition(
-            id=uuid.uuid4(), name="Miembro", is_leadership=False,
+            id=uuid.uuid4(),
+            name="Miembro",
+            is_leadership=False,
         )
         db_session.add_all([leadership_role, member_role])
         db_session.flush()
 
         # Create personas with matching church_roles
-        p_leader = models.Persona(id=uuid.uuid4(), first_name="Lead", last_name="R",
-                                  sede_id=s.id, church_role="Liderazgo")
-        p_member = models.Persona(id=uuid.uuid4(), first_name="Mem", last_name="R",
-                                  sede_id=s.id, church_role="Miembro")
+        p_leader = models.Persona(
+            id=uuid.uuid4(), first_name="Lead", last_name="R", sede_id=s.id, church_role="Liderazgo"
+        )
+        p_member = models.Persona(id=uuid.uuid4(), first_name="Mem", last_name="R", sede_id=s.id, church_role="Miembro")
         db_session.add_all([p_leader, p_member])
         db_session.flush()
 
         # Create attendance records
         for p in [p_leader, p_member]:
-            db_session.add(models.EventAttendance(
-                id=uuid.uuid4(), event_id=evt.id, persona_id=p.id,
-                session_date=date(2026, 8, 15), attended=True, status="present",
-            ))
+            db_session.add(
+                models.EventAttendance(
+                    id=uuid.uuid4(),
+                    event_id=evt.id,
+                    persona_id=p.id,
+                    session_date=date(2026, 8, 15),
+                    attended=True,
+                    status="present",
+                )
+            )
         db_session.commit()
 
         resp = c.get(f"/api/evangelism/events/{evt.id}/sessions/2026-08-15", headers=h)
@@ -107,14 +123,19 @@ class TestSessionDetailMetrics:
         c, h, s = full["c"], full["h"], full["s"]
         evt = _create_event(db_session, s)
 
-        p = models.Persona(id=uuid.uuid4(), first_name="Other", last_name="Rol",
-                          sede_id=s.id, church_role="RareRole")
+        p = models.Persona(id=uuid.uuid4(), first_name="Other", last_name="Rol", sede_id=s.id, church_role="RareRole")
         db_session.add(p)
         db_session.flush()
-        db_session.add(models.EventAttendance(
-            id=uuid.uuid4(), event_id=evt.id, persona_id=p.id,
-            session_date=date(2026, 8, 15), attended=True, status="present",
-        ))
+        db_session.add(
+            models.EventAttendance(
+                id=uuid.uuid4(),
+                event_id=evt.id,
+                persona_id=p.id,
+                session_date=date(2026, 8, 15),
+                attended=True,
+                status="present",
+            )
+        )
         db_session.commit()
 
         resp = c.get(f"/api/evangelism/events/{evt.id}/sessions/2026-08-15", headers=h)
@@ -126,19 +147,20 @@ class TestSessionDetailMetrics:
 class TestBulkAttendanceValidation:
     def test_bulk_missing_event_id_400(self, full):
         """Line 113: missing event_id -> 400."""
-        resp = full["c"].post("/api/evangelism/attendance/bulk",
-            json={"persona_ids": [], "session_date": "2026-08-15"},
-            headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/attendance/bulk", json={"persona_ids": [], "session_date": "2026-08-15"}, headers=full["h"]
+        )
         assert resp.status_code == 400
 
     def test_bulk_non_list_persona_ids_400(self, full, db_session):
         """Line 115: non-list persona_ids -> 400."""
         c, h, s = full["c"], full["h"], full["s"]
         evt = _create_event(db_session, s)
-        resp = c.post("/api/evangelism/attendance/bulk",
-            json={"event_id": str(evt.id), "persona_ids": "not-a-list",
-                  "session_date": "2026-08-15"},
-            headers=h)
+        resp = c.post(
+            "/api/evangelism/attendance/bulk",
+            json={"event_id": str(evt.id), "persona_ids": "not-a-list", "session_date": "2026-08-15"},
+            headers=h,
+        )
         # require_event_access passes but persona_ids validation fails
         assert resp.status_code == 400
 
@@ -146,12 +168,14 @@ class TestBulkAttendanceValidation:
         """Lines 130, 137-138: invalid persona IDs in list."""
         c, h, s = full["c"], full["h"], full["s"]
         evt = _create_event(db_session, s)
-        resp = c.post("/api/evangelism/attendance/bulk",
+        resp = c.post(
+            "/api/evangelism/attendance/bulk",
             json={
                 "event_id": str(evt.id),
                 "persona_ids": ["not-a-uuid", "also-invalid"],
                 "session_date": "2026-08-15",
             },
-            headers=h)
+            headers=h,
+        )
         # require_evangelism_edit may return 403 for admin
         assert resp.status_code in (200, 201, 403), f"invalid ids: {resp.status_code} {resp.text[:200]}"

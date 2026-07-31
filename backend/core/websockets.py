@@ -19,9 +19,7 @@ class ConnectionManager:
         if user_id not in self.active_connections:
             self.active_connections[user_id] = []
         self.active_connections[user_id].append(websocket)
-        log.info(
-            f"User {user_id} connected to WebSocket. Total: {len(self.active_connections[user_id])}"
-        )
+        log.info(f"User {user_id} connected to WebSocket. Total: {len(self.active_connections[user_id])}")
 
     def disconnect(self, websocket: WebSocket, user_id: str):
         if user_id in self.active_connections:

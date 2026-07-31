@@ -6,6 +6,7 @@ Create Date: 2026-05-25
 
 Task: CMS Phase 3 - Reusable/Global Blocks
 """
+
 import sqlalchemy as sa
 
 from alembic import op

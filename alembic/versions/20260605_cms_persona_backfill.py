@@ -172,12 +172,7 @@ def downgrade() -> None:
     bind = op.get_bind()
     if bind.dialect.name == "postgresql":
         for table, target_col, _source_col in reversed(CMS_BACKFILLS):
-            bind.execute(
-                sa.text(
-                    f"ALTER TABLE IF EXISTS {table} "
-                    f"DROP CONSTRAINT IF EXISTS fk_{table}_{target_col}"
-                )
-            )
+            bind.execute(sa.text(f"ALTER TABLE IF EXISTS {table} DROP CONSTRAINT IF EXISTS fk_{table}_{target_col}"))
 
     for table, target_col, _source_col in reversed(CMS_BACKFILLS):
         if _has_col(table, target_col):

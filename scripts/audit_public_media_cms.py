@@ -39,9 +39,7 @@ SCAN_ROOTS = [
     ROOT / "scripts",
 ]
 
-LOCAL_IMAGE_REF_RE = re.compile(
-    r"/(?:images|pastores)/[^\"'`\s)]+\.(?:avif|jpe?g|png|svg|webp)"
-)
+LOCAL_IMAGE_REF_RE = re.compile(r"/(?:images|pastores)/[^\"'`\s)]+\.(?:avif|jpe?g|png|svg|webp)")
 
 
 def local_images_in_public() -> set[str]:
@@ -71,7 +69,7 @@ def local_image_references_in_code() -> set[str]:
                 start = match.start()
                 # Require the match to be preceded by start-of-text, quote, or whitespace.
                 # This avoids matching "images/pastores/..." inside migration script strings.
-                if start > 0 and text[start - 1] not in {'"', "'", '`', ' ', '\n', '\t'}:
+                if start > 0 and text[start - 1] not in {'"', "'", "`", " ", "\n", "\t"}:
                     continue
                 refs.add(match.group())
     return refs

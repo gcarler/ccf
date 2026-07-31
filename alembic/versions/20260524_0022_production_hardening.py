@@ -34,12 +34,7 @@ def upgrade() -> None:
         for idx in inspector.get_indexes(table):
             existing_indexes.add(idx["name"])
 
-    existing_extensions = {
-        row[0]
-        for row in conn.execute(
-            sa.text("SELECT extname FROM pg_extension")
-        ).fetchall()
-    }
+    existing_extensions = {row[0] for row in conn.execute(sa.text("SELECT extname FROM pg_extension")).fetchall()}
 
     # ─────────────────────────────────────────────
     # 1. EXTENSIONS
@@ -98,10 +93,7 @@ def upgrade() -> None:
 
     # CRM: Donations status filter (partial - only completed)
     if "ix_donations_completed" not in existing_indexes:
-        op.execute(
-            "CREATE INDEX ix_donations_completed ON donations (id, amount) "
-            "WHERE status = 'completed'"
-        )
+        op.execute("CREATE INDEX ix_donations_completed ON donations (id, amount) WHERE status = 'completed'")
 
     # Projects: Tasks by project + status + due_date (dashboard + task lists)
     if "ix_project_tasks_project_status" not in existing_indexes:
@@ -144,22 +136,16 @@ def upgrade() -> None:
 
     # CMS: Published pages (partial index for public access)
     if "ix_cms_pages_published" not in existing_indexes:
-        op.execute(
-            "CREATE INDEX ix_cms_pages_published ON cms_pages (site_id, slug) "
-            "WHERE status = 'published'"
-        )
+        op.execute("CREATE INDEX ix_cms_pages_published ON cms_pages (site_id, slug) WHERE status = 'published'")
 
     # Users: Active users by role (admin dashboard)
     if "ix_users_role_active" not in existing_indexes:
-        op.execute(
-            "CREATE INDEX ix_users_role_active ON users (role, id) WHERE is_active = true"
-        )
+        op.execute("CREATE INDEX ix_users_role_active ON users (role, id) WHERE is_active = true")
 
     # Consolidation: Active cases by status
     if "ix_consolidation_cases_active" not in existing_indexes:
         op.execute(
-            "CREATE INDEX ix_consolidation_cases_active ON consolidation_cases (id, created_at) "
-            "WHERE status = 'active'"
+            "CREATE INDEX ix_consolidation_cases_active ON consolidation_cases (id, created_at) WHERE status = 'active'"
         )
 
     # Communication logs: By member (timeline queries)
@@ -185,15 +171,13 @@ def upgrade() -> None:
     # Members QR lookup (already has unique on qr_token, add covering for full member fetch)
     if "ix_members_qr_covering" not in existing_indexes:
         op.execute(
-            "CREATE INDEX ix_members_qr_covering ON members (qr_token) "
-            "INCLUDE (first_name, last_name, email, id)"
+            "CREATE INDEX ix_members_qr_covering ON members (qr_token) INCLUDE (first_name, last_name, email, id)"
         )
 
     # Refresh tokens: token lookup covering (auth hot path)
     if "ix_refresh_tokens_covering" not in existing_indexes:
         op.execute(
-            "CREATE INDEX ix_refresh_tokens_covering ON refresh_tokens (token) "
-            "INCLUDE (user_id, revoked, expires_at)"
+            "CREATE INDEX ix_refresh_tokens_covering ON refresh_tokens (token) INCLUDE (user_id, revoked, expires_at)"
         )
 
     # ─────────────────────────────────────────────

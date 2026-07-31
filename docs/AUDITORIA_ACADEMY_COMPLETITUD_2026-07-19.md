@@ -1,6 +1,6 @@
 # Auditoría de completitud y consistencia — Academy
 
-> **Fecha:** 2026-07-19  
+> **Fecha:** 2026-07-19
 > **Dictamen:** Academy **no está al 100%**. Requiere ejecutar y ampliar su
 > plan de calidad antes de poder certificarse.
 

@@ -25,6 +25,7 @@ No-op when the JSON report is missing:
     Keeps the suite compatible with machines that don't have
     Playwright + Chrome installed.
 """
+
 from __future__ import annotations
 
 import json
@@ -82,10 +83,7 @@ def test_tkt_204_accessibility_wcag_aa_violations_count_is_zero() -> None:
     if page_slug not in ACCEPTED_PAGES:
         # Defensive: if a future spec writes an unfamiliar slug, surface
         # it loudly instead of silently passing.
-        pytest.fail(
-            f"Reporte a11y tiene slug inesperado '{page_slug}'. "
-            f"Esperado: {sorted(ACCEPTED_PAGES)}"
-        )
+        pytest.fail(f"Reporte a11y tiene slug inesperado '{page_slug}'. Esperado: {sorted(ACCEPTED_PAGES)}")
 
     summary_lines = [
         f"[tkt-204-gate] Página auditada: {page_slug}",
@@ -98,8 +96,7 @@ def test_tkt_204_accessibility_wcag_aa_violations_count_is_zero() -> None:
 
     if serious_or_critical:
         bullets = "\n".join(
-            f"  - [{v['impact']}] {v['id']}: {v['help']} ({v['nodes']} nodes)"
-            for v in serious_or_critical
+            f"  - [{v['impact']}] {v['id']}: {v['help']} ({v['nodes']} nodes)" for v in serious_or_critical
         )
         pytest.fail(
             f"WCAG 2.1 AA violations en Academy — {len(serious_or_critical)} "

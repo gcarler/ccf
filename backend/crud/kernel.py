@@ -306,21 +306,21 @@ def get_persona_effective_permissions(db: Session, persona_id: str) -> dict:
 
 def persona_has_permission(db: Session, persona_id: str, module: str, action: str) -> bool:
     permissions = get_persona_effective_permissions(db, persona_id)
-    return (
-        f"{module}:{action}" in permissions
-        or f"{module}:manage" in permissions
-        or "*" in permissions
-    )
+    return f"{module}:{action}" in permissions or f"{module}:manage" in permissions or "*" in permissions
 
 
 def set_primary_ministry(db: Session, persona_id: str, ministry: str) -> bool:
     from backend.models_kernel import PersonaMinistry
 
     pid = uuid.UUID(str(persona_id))
-    row = db.query(PersonaMinistry).filter(
-        PersonaMinistry.persona_id == pid,
-        PersonaMinistry.ministry == ministry,
-    ).first()
+    row = (
+        db.query(PersonaMinistry)
+        .filter(
+            PersonaMinistry.persona_id == pid,
+            PersonaMinistry.ministry == ministry,
+        )
+        .first()
+    )
     if not row:
         return False
     db.query(PersonaMinistry).filter(

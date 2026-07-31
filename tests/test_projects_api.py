@@ -47,6 +47,7 @@ def _assert_uuid(value: str) -> _uuid.UUID:
 def _assert_datetime(value: str):
     """Assert *value* looks like an ISO-8601 datetime string."""
     from datetime import datetime
+
     assert isinstance(value, str), f"Expected string datetime, got {type(value)}"
     datetime.fromisoformat(value.replace("Z", "+00:00"))
 
@@ -57,7 +58,6 @@ def _assert_datetime(value: str):
 
 
 class TestProjectsCRUD:
-
     def test_list_projects_empty(self, client, db_session):
         """GET /api/projects without data returns empty list."""
         seed_admin(db_session)
@@ -139,7 +139,9 @@ class TestProjectsCRUD:
         assert len(body["tasks"]) >= 1
         assert len(body["milestones"]) >= 1
         first_task = next(task for task in body["tasks"] if task["id"] == str(data["tasks"][0].id))
-        assert any(item["id"] == str(attachment.id) and item["filename"] == "detalle.pdf" for item in first_task["attachments"])
+        assert any(
+            item["id"] == str(attachment.id) and item["filename"] == "detalle.pdf" for item in first_task["attachments"]
+        )
 
     def test_get_project_not_found(self, client, db_session):
         """GET /api/projects/{nonexistent} returns 404."""
@@ -154,7 +156,9 @@ class TestProjectsCRUD:
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
         headers = auth_headers(client)
-        resp = client.patch(f"/api/projects/{proj.id}", json={"title": "Actualizado", "status": "active"}, headers=headers)
+        resp = client.patch(
+            f"/api/projects/{proj.id}", json={"title": "Actualizado", "status": "active"}, headers=headers
+        )
         assert resp.status_code == 200
         body = resp.json()
         assert body["title"] == "Actualizado"
@@ -230,7 +234,6 @@ class TestProjectsCRUD:
 
 
 class TestPhases:
-
     def test_list_default_phases(self, client, db_session):
         """GET /projects/{id}/phases returns the 4 default phases."""
         _, _, sede = seed_admin(db_session)
@@ -281,7 +284,6 @@ class TestPhases:
 
 
 class TestTasks:
-
     def test_create_task(self, client, db_session):
         """POST /projects/{id}/tasks creates a task."""
         _, _, sede = seed_admin(db_session)
@@ -467,7 +469,9 @@ class TestTasks:
         proj = create_project_factory(db_session)
         persona_id = str(_uuid.uuid4())
         # Create the persona so the FK resolves
-        db_session.add(Persona(id=_uuid.UUID(persona_id), first_name="Assign", last_name="Test", email="assignee@test.com"))
+        db_session.add(
+            Persona(id=_uuid.UUID(persona_id), first_name="Assign", last_name="Test", email="assignee@test.com")
+        )
         db_session.flush()
         headers = auth_headers(client)
         resp = client.post(
@@ -485,7 +489,6 @@ class TestTasks:
 
 
 class TestSubtasks:
-
     def test_create_subtask(self, client, db_session):
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
@@ -556,7 +559,6 @@ class TestSubtasks:
 
 
 class TestMilestones:
-
     def test_list_milestones(self, client, db_session):
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
@@ -631,7 +633,6 @@ class TestMilestones:
 
 
 class TestComments:
-
     def test_list_comments_empty(self, client, db_session):
         _, _, sede = seed_admin(db_session)
         headers = auth_headers(client)
@@ -647,7 +648,9 @@ class TestComments:
         # Create 5 comments with staggered timestamps so ordering is deterministic
         for i in range(5):
             create_comment_factory(
-                db_session, proj.id, persona.id,
+                db_session,
+                proj.id,
+                persona.id,
                 content=f"Comentario paginado {i}",
             )
 
@@ -777,7 +780,6 @@ class TestComments:
 
 
 class TestInbox:
-
     def test_list_inbox_empty(self, client, db_session):
         _, _, sede = seed_admin(db_session)
         headers = auth_headers(client)
@@ -808,7 +810,6 @@ class TestInbox:
     def test_inbox_excludes_comments_from_soft_deleted_project(self, client, db_session):
         """Comentarios de proyectos soft-deleted NO deben llegar al feed."""
         from datetime import datetime, timezone
-
 
         user, persona, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
@@ -850,6 +851,7 @@ class TestInbox:
         assert resp.status_code == 404
         # Confirmamos que no se persiste el estado de \u00edtem inventado
         from backend.models_projects import ProjectInboxState
+
         rows = db_session.query(ProjectInboxState).filter(ProjectInboxState.item_id == "not-a-real-item").all()
         assert rows == []
 
@@ -880,7 +882,6 @@ class TestInbox:
 
 
 class TestPortfolioWorkload:
-
     def test_portfolio_summary(self, client, db_session):
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
@@ -920,7 +921,9 @@ class TestPortfolioWorkload:
 
         for i in range(25):
             create_activity_log_factory(
-                db_session, proj.id, "task_created",
+                db_session,
+                proj.id,
+                "task_created",
                 persona_id=persona.id,
                 description=f"Default limit test {i}",
             )
@@ -947,7 +950,9 @@ class TestPortfolioWorkload:
 
         for i in range(5):
             create_activity_log_factory(
-                db_session, proj.id, "task_created",
+                db_session,
+                proj.id,
+                "task_created",
                 persona_id=persona.id,
                 description=f"Actividad paginada {i}",
             )
@@ -999,7 +1004,6 @@ class TestPortfolioWorkload:
 
 
 class TestWikiWhiteboard:
-
     def test_get_wiki_nonexistent(self, client, db_session):
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
@@ -1075,7 +1079,6 @@ class TestWikiWhiteboard:
 
 
 class TestSupplies:
-
     def test_list_supplies_empty(self, client, db_session):
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
@@ -1137,7 +1140,6 @@ class TestSupplies:
 
 
 class TestAttachments:
-
     def test_upload_attachment_exceeds_max_size(self, client, db_session):
         """POST with file > 10 MB returns 400."""
         from backend.core.uploads import MAX_UPLOAD_SIZE
@@ -1177,10 +1179,14 @@ class TestAttachments:
         assert any(a["file_url"] for a in attachments)
         assert any(a["file_size"] > 0 for a in attachments)
         # Verify persistence in DB
-        db_attachment = db_session.query(ProjectAttachment).filter(
-            ProjectAttachment.task_id == task.id,
-            ProjectAttachment.filename == "reporte.pdf",
-        ).first()
+        db_attachment = (
+            db_session.query(ProjectAttachment)
+            .filter(
+                ProjectAttachment.task_id == task.id,
+                ProjectAttachment.filename == "reporte.pdf",
+            )
+            .first()
+        )
         assert db_attachment is not None
 
     def test_delete_attachment(self, client, db_session):
@@ -1209,7 +1215,6 @@ class TestAttachments:
 
 
 class TestMessages:
-
     def test_list_messages_empty(self, client, db_session):
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)
@@ -1297,9 +1302,13 @@ class TestCrossSedeSecurity:
         )
         assert resp.status_code == 404
         # Verify no attachment was created
-        db_attachment = db_session.query(ProjectAttachment).filter(
-            ProjectAttachment.task_id == task.id,
-        ).first()
+        db_attachment = (
+            db_session.query(ProjectAttachment)
+            .filter(
+                ProjectAttachment.task_id == task.id,
+            )
+            .first()
+        )
         assert db_attachment is None
 
     def test_cross_sede_delete_attachment_returns_404(self, client, db_session):
@@ -1349,15 +1358,16 @@ class TestCrossSedeSecurity:
         db_session.refresh(ms)
         assert ms.deleted_at is None
 
-    @pytest.mark.parametrize("method,expected_status", [
-        ("get", 404),
-        ("post", 404),
-        ("patch", 404),
-        ("delete", 404),
-    ])
-    def test_cross_sede_supply_operations_return_404(
-        self, client, db_session, method, expected_status
-    ):
+    @pytest.mark.parametrize(
+        "method,expected_status",
+        [
+            ("get", 404),
+            ("post", 404),
+            ("patch", 404),
+            ("delete", 404),
+        ],
+    )
+    def test_cross_sede_supply_operations_return_404(self, client, db_session, method, expected_status):
         """GET/POST/PATCH/DELETE supplies in another sede return 404."""
         from tests.conftest import seed_user_with_role
 
@@ -1395,10 +1405,15 @@ class TestCrossSedeSecurity:
         # Verify no mutation occurred
         if method == "post":
             from backend.models_projects import TaskSupply
-            count = db_session.query(TaskSupply).filter(
-                TaskSupply.task_id == task.id,
-                TaskSupply.item_name == "Cable",
-            ).count()
+
+            count = (
+                db_session.query(TaskSupply)
+                .filter(
+                    TaskSupply.task_id == task.id,
+                    TaskSupply.item_name == "Cable",
+                )
+                .count()
+            )
             assert count == 0
         elif method == "patch":
             db_session.refresh(supply)
@@ -1413,7 +1428,6 @@ class TestCrossSedeSecurity:
 
 
 class TestUUIDEdgeCases:
-
     def test_get_project_by_nonexistent_uuid(self, client, db_session):
         """UUID format is respected; nonexistent returns 404."""
         _, _, sede = seed_admin(db_session)
@@ -1446,11 +1460,13 @@ class TestUUIDEdgeCases:
         _assert_uuid(owner_id)
         # Ensure it's not NaN (what Number() yields for UUID)
         import math
+
         assert not (isinstance(owner_id, float) and math.isnan(owner_id))
 
     def test_staff_only_endpoints(self, client, db_session):
         """DELETE project requires staff/admin."""
         from tests.conftest import seed_user_with_role
+
         user, _, _ = seed_user_with_role(db_session, role_name="persona", email="user@test.com")
         _, _, sede = seed_admin(db_session)
         proj = create_project_factory(db_session)

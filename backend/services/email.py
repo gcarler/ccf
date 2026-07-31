@@ -43,12 +43,7 @@ def resolve_brand_colors(db=None, sede_id=None) -> Dict[str, str]:
     try:
         from backend.models_cms import CmsTheme
 
-        theme = (
-            db.query(CmsTheme)
-            .filter(CmsTheme.is_active.is_(True))
-            .order_by(CmsTheme.version.desc())
-            .first()
-        )
+        theme = db.query(CmsTheme).filter(CmsTheme.is_active.is_(True)).order_by(CmsTheme.version.desc()).first()
         if theme and theme.tokens_json:
             tokens = theme.tokens_json
             if "--site-primary-color" in tokens:
@@ -96,16 +91,15 @@ def send_email(to: str, subject: str, html: str, text: str = "") -> bool:
         if not override or to.strip().lower() != override.strip().lower():
             log.info(
                 "[STUB EMAIL] Bloqueado por stub_comms — se habría enviado a %s (subject: %s)",
-                to, subject,
+                to,
+                subject,
             )
             return True  # True porque no es un error, es comportamiento esperado
         log.info("[STUB EMAIL] TEST_EMAIL_OVERRIDE coincide — enviando real a %s", to)
     # ────────────────────────────────────────────────────────────────
 
     if not settings.smtp_host or settings.smtp_host == "localhost":
-        log.warning(
-            "SMTP not configured; email skipped (subject: %s)", subject
-        )
+        log.warning("SMTP not configured; email skipped (subject: %s)", subject)
         return False
 
     msg = _build_message(to, subject, html, text)
@@ -192,7 +186,9 @@ def _brand_wrap(html_body: str, brand: Optional[Dict[str, str]] = None) -> str:
 
     logo_html = ""
     if logo_url:
-        logo_html = f'<img src="{escape(logo_url)}" alt="{escape(church)}" style="max-height:48px;margin-bottom:16px;" />'
+        logo_html = (
+            f'<img src="{escape(logo_url)}" alt="{escape(church)}" style="max-height:48px;margin-bottom:16px;" />'
+        )
 
     header = f"""\
 <table width="100%" cellpadding="0" cellspacing="0" style="background:{dark};padding:48px 40px 40px 40px;position:relative;">
@@ -205,8 +201,8 @@ def _brand_wrap(html_body: str, brand: Optional[Dict[str, str]] = None) -> str:
     </tr>
   </table>
   {logo_html}
-  <h1 style="font-size:52px;font-weight:900;letter-spacing:-2px;line-height:0.88;color:#ffffff;margin:0 0 6px 0;">{escape(church.split()[0] if church else 'CCF')}</h1>
-  <p style="font-size:18px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:{blue};margin:16px 0 0 0;line-height:1.4;">{'<br/>'.join(church.split()[1:]) if len(church.split()) > 1 else 'Ministerio'}</p>
+  <h1 style="font-size:52px;font-weight:900;letter-spacing:-2px;line-height:0.88;color:#ffffff;margin:0 0 6px 0;">{escape(church.split()[0] if church else "CCF")}</h1>
+  <p style="font-size:18px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:{blue};margin:16px 0 0 0;line-height:1.4;">{"<br/>".join(church.split()[1:]) if len(church.split()) > 1 else "Ministerio"}</p>
   <div style="width:64px;height:4px;background:#ffffff;border-radius:4px;margin-top:24px;"></div>
 </table>"""
 
@@ -303,9 +299,7 @@ def render_verify_email(code: str, frontend_url: str | None = None) -> tuple[str
     return subject, _brand_wrap(body)
 
 
-def render_reset_password(
-    token: str, frontend_url: str | None = None
-) -> tuple[str, str]:
+def render_reset_password(token: str, frontend_url: str | None = None) -> tuple[str, str]:
     """Renderiza el email de restablecimiento de contraseña con diseño corporativo."""
     base = (frontend_url or settings.frontend_url).rstrip("/")
     reset_link = f"{base}/reset-password?token={token}"
@@ -374,13 +368,23 @@ def render_task_assignment_email(
         "low": "Baja",
     }
     priority_text = priority_map.get(priority_label, priority_label.capitalize())
-    due_html = f"<p style=\"margin:0 0 8px 0;\"><strong>Fecha límite:</strong> {escape(due_date)}</p>" if due_date else ""
-    project_html = f"<p style=\"margin:0 0 8px 0;\"><strong>Proyecto:</strong> {escape(project_title)}</p>" if project_title else ""
-    assigned_by_html = f"<p style=\"margin:0 0 8px 0;\"><strong>Asignada por:</strong> {escape(assigned_by_name)}</p>" if assigned_by_name else ""
-    assignee_html = f"<p style=\"margin:0 0 8px 0;\"><strong>Responsable:</strong> {escape(assignee_name)}</p>" if assignee_name else ""
+    due_html = f'<p style="margin:0 0 8px 0;"><strong>Fecha límite:</strong> {escape(due_date)}</p>' if due_date else ""
+    project_html = (
+        f'<p style="margin:0 0 8px 0;"><strong>Proyecto:</strong> {escape(project_title)}</p>' if project_title else ""
+    )
+    assigned_by_html = (
+        f'<p style="margin:0 0 8px 0;"><strong>Asignada por:</strong> {escape(assigned_by_name)}</p>'
+        if assigned_by_name
+        else ""
+    )
+    assignee_html = (
+        f'<p style="margin:0 0 8px 0;"><strong>Responsable:</strong> {escape(assignee_name)}</p>'
+        if assignee_name
+        else ""
+    )
     description_html = (
-        f"<div style=\"margin-top:20px;padding:16px 18px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;\">"
-        f"<p style=\"margin:0;font-size:14px;line-height:1.7;color:#374151;white-space:pre-line;\">{description.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')}</p>"
+        f'<div style="margin-top:20px;padding:16px 18px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;">'
+        f'<p style="margin:0;font-size:14px;line-height:1.7;color:#374151;white-space:pre-line;">{description.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")}</p>'
         "</div>"
         if description
         else ""

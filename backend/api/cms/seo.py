@@ -1,5 +1,5 @@
-"""SEO endpoints: audit, snapshots, public sitemap and robots (Fase 4 refactor).
-"""
+"""SEO endpoints: audit, snapshots, public sitemap and robots (Fase 4 refactor)."""
+
 from __future__ import annotations
 
 import logging
@@ -16,7 +16,6 @@ from backend.api._cms_helpers import (
 )
 from backend.api.cms_v2._shared import (
     CMS_EDITOR_ROLES,
-    PUBLIC_CMS_RATE_LIMIT,
     _assert_role,
     _get_public_site_or_404,
     _get_scoped_site_or_404,
@@ -59,7 +58,8 @@ def seo_audit(
         sections_rows = (
             db.query(models.CmsSection)
             .filter(models.CmsSection.page_id.in_(page_ids))
-            .order_by(models.CmsSection.sort_order.asc()).all()
+            .order_by(models.CmsSection.sort_order.asc())
+            .all()
         )
         sections_by_page = group_sections_by_page(sections_rows)
     media_ids = collect_section_media_ids(section for rows in sections_by_page.values() for section in rows)
@@ -86,7 +86,9 @@ def list_seo_snapshots_endpoint(
     rows, total = crud.list_seo_snapshots(db, site_id=site.id, limit=limit, offset=skip)
     return PaginatedResponse[schemas.CmsSeoSnapshotRead](
         items=[schemas.CmsSeoSnapshotRead.model_validate(r) for r in rows],
-        total=total, skip=skip, limit=limit,
+        total=total,
+        skip=skip,
+        limit=limit,
     )
 
 
@@ -98,9 +100,12 @@ def list_seo_snapshots_endpoint(
 def public_sitemap(site_key: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
     pages = (
-        db.query(models.CmsPage).options(lazyload("*"))
+        db.query(models.CmsPage)
+        .options(lazyload("*"))
         .filter(models.CmsPage.site_id == site.id, models.CmsPage.status == "published")
-        .order_by(models.CmsPage.updated_at.desc()).limit(500).all()
+        .order_by(models.CmsPage.updated_at.desc())
+        .limit(500)
+        .all()
     )
     settings = get_settings()
     base_url = settings.frontend_url.rstrip("/")

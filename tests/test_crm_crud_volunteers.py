@@ -4,6 +4,7 @@
 `test_crm_extended_coverage.py` and `test_crm_projects_final.py`, but it lacked a
 dedicated test file. This module covers all public functions directly.
 """
+
 from __future__ import annotations
 
 import datetime as dt

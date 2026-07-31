@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ccf_backup_rotate.sh — Secondary backup rotation with integrity checks
-# 
+#
 # This script provides defense-in-depth by maintaining a second copy
 # of backups in a separate directory from the primary backup location.
 # It can be extended for remote/off-server replication.

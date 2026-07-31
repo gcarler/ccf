@@ -29,19 +29,11 @@ def get_user_sede_id(db: Session, user_or_id: Any) -> str | None:
     user_uuid = _as_uuid(user_id)
 
     if user_uuid:
-        auth_sede = (
-            db.query(Usuario.sede_id)
-            .filter(Usuario.id == user_uuid)
-            .scalar()
-        )
+        auth_sede = db.query(Usuario.sede_id).filter(Usuario.id == user_uuid).scalar()
         if auth_sede:
             return str(auth_sede)
 
-        persona_sede = (
-            db.query(Persona.sede_id)
-            .filter(Persona.id == user_uuid)
-            .scalar()
-        )
+        persona_sede = db.query(Persona.sede_id).filter(Persona.id == user_uuid).scalar()
         if persona_sede:
             return str(persona_sede)
 

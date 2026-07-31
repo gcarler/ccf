@@ -9,8 +9,8 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Suggestion, { type SuggestionProps, type SuggestionKeyDownProps } from '@tiptap/suggestion';
 import tippy, { type Instance as TippyInstance } from 'tippy.js';
-import { 
-    Bold, Italic, Heading1, Heading2, 
+import {
+    Bold, Italic, Heading1, Heading2,
     List, CheckSquare, Quote, Undo, Redo,
     Cloud, Loader2, Minus
 } from 'lucide-react';

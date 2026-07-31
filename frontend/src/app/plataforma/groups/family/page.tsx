@@ -1,13 +1,13 @@
 "use client";
 
 import React from 'react';
-import { 
-    Users, 
-    Heart, 
-    Home, 
-    UserPlus, 
-    MoreVertical, 
-    Shield, 
+import {
+    Users,
+    Heart,
+    Home,
+    UserPlus,
+    MoreVertical,
+    Shield,
     Baby,
     Smile,
     MessageCircle,
@@ -41,7 +41,7 @@ export default function FamilyNucleusPage() {
                         <div className="absolute -top-5 -right-10 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000 text-[hsl(var(--destructive))]">
                             <Home size={300} />
                         </div>
-                        
+
                         <div className="relative z-10 space-y-3">
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-8 bg-gradient-to-br from-[hsl(var(--destructive))] to-[hsl(var(--primary))] rounded-md flex items-center justify-center text-white text-lg font-bold shadow-xl">
@@ -153,4 +153,3 @@ export default function FamilyNucleusPage() {
         </div>
     );
 }
-

@@ -2,6 +2,7 @@
 Tests para el flujo de autenticación v3 (UUID-based).
 Cubre: login, refresh, /me, check-email, rate limiting.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -26,7 +27,7 @@ def _create_v3_user(db_session: Session, email: str = "test@ccf.com", password: 
     )
     db_session.add(persona)
     db_session.flush()
-    
+
     # Crear rol
     role = db_session.query(RolPlataforma).filter(RolPlataforma.nombre == "LECTOR").first()
     if not role:
@@ -37,7 +38,7 @@ def _create_v3_user(db_session: Session, email: str = "test@ccf.com", password: 
         )
         db_session.add(role)
         db_session.flush()
-    
+
     # Crear usuario v3
     user = Usuario(
         id=persona.id,
@@ -60,7 +61,7 @@ class TestAuthV3Flow:
     def test_v3_login_success(self, client: TestClient, db_session: Session):
         """Login exitoso con email + password."""
         _create_v3_user(db_session, email="alfa@ccf.com", password="SecurePass99!")
-        
+
         response = client.post(
             "/api/v3/auth/login",
             json={"email": "alfa@ccf.com", "password": "SecurePass99!"},
@@ -75,7 +76,7 @@ class TestAuthV3Flow:
     def test_v3_login_wrong_password(self, client: TestClient, db_session: Session):
         """Login con contraseña incorrecta debe fallar."""
         _create_v3_user(db_session, email="beta@ccf.com", password="SecurePass99!")
-        
+
         response = client.post(
             "/api/v3/auth/login",
             json={"email": "beta@ccf.com", "password": "wrongpassword"},
@@ -93,7 +94,7 @@ class TestAuthV3Flow:
     def test_v3_check_email(self, client: TestClient, db_session: Session):
         """Check-email debe retornar si existe y si tiene password."""
         _create_v3_user(db_session, email="checkme@ccf.com", password="SecurePass99!")
-        
+
         response = client.get(
             "/api/v3/auth/check-email",
             params={"email": "checkme@ccf.com"},
@@ -117,13 +118,13 @@ class TestAuthV3Flow:
     def test_v3_me_authenticated(self, client: TestClient, db_session: Session):
         """GET /me con token válido."""
         user = _create_v3_user(db_session, email="meuser@ccf.com", password="SecurePass99!")
-        
+
         login_resp = client.post(
             "/api/v3/auth/login",
             json={"email": "meuser@ccf.com", "password": "SecurePass99!"},
         )
         token = login_resp.json()["access_token"]
-        
+
         response = client.get(
             "/api/v3/auth/me",
             headers={"Authorization": f"Bearer {token}"},
@@ -143,7 +144,7 @@ class TestAuthV3Flow:
     def test_v3_refresh_token(self, client: TestClient, db_session: Session):
         """Refresh token debe rotar y devolver nuevo access_token."""
         _create_v3_user(db_session, email="refresh@ccf.com", password="SecurePass99!")
-        
+
         login_resp = client.post(
             "/api/v3/auth/login",
             json={"email": "refresh@ccf.com", "password": "SecurePass99!"},
@@ -151,16 +152,17 @@ class TestAuthV3Flow:
         tokens = login_resp.json()
         original_access = tokens["access_token"]
         original_refresh = tokens.get("refresh_token")
-        
+
         # Si el refresh token no viene en body, buscarlo en cookies
         if not original_refresh:
             cookies = login_resp.cookies
             from backend.core.config import get_settings
+
             settings = get_settings()
             original_refresh = cookies.get(settings.refresh_token_cookie_name)
-        
+
         assert original_refresh, "Debe haber un refresh token"
-        
+
         refresh_resp = client.post(
             "/api/v3/auth/refresh",
             json={"refresh_token": original_refresh},
@@ -181,7 +183,7 @@ class TestAuthV3Flow:
     def test_v3_login_gmail_check(self, client: TestClient, db_session: Session):
         """Check-email para @gmail debe indicar is_gmail=True."""
         _create_v3_user(db_session, email="gmailuser@gmail.com", password="SecurePass99!")
-        
+
         response = client.get(
             "/api/v3/auth/check-email",
             params={"email": "gmailuser@gmail.com"},

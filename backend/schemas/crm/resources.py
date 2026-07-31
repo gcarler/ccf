@@ -1,4 +1,5 @@
 """Schemas para la Biblioteca de Recursos CRM."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -9,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from backend.schemas._common import AwareDateTime
 
 # ── CategoriaRecurso ──────────────────────────────────────────────────────────
+
 
 class CategoriaRecursoCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -47,6 +49,7 @@ class CategoriaRecursoOut(BaseModel):
 
 # ── RecursoAdjunto ────────────────────────────────────────────────────────────
 
+
 class RecursoAdjuntoOut(BaseModel):
     id: UUID
     sede_id: UUID
@@ -74,6 +77,7 @@ class RecursoAdjuntoOut(BaseModel):
 
 
 # ── PlantillaMensaje ──────────────────────────────────────────────────────────
+
 
 class PlantillaMensajeCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -145,6 +149,7 @@ class PlantillaMensajeOut(BaseModel):
 
 # ── Envío / Bitácora ──────────────────────────────────────────────────────────
 
+
 class EnviarPlantillaPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -189,6 +194,7 @@ class BitacoraEnvioOut(BaseModel):
 
 # ── Campañas ──────────────────────────────────────────────────────────────────
 
+
 class CampaignFromPlantillaPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -210,6 +216,7 @@ class CampaignResultOut(BaseModel):
 
 
 # ── Banco de recursos del sistema ─────────────────────────────────────────────
+
 
 class ApplySystemTemplatePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")

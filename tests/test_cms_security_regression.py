@@ -10,6 +10,7 @@ seguridad del CMS:
 3. Manejo de concurrencia en creación (409 vs 500 bajo unique-key races).
 4. IDOR cross-sede en CMS v2 (sites, sections, menu items).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -289,16 +290,10 @@ class TestPatchSectionSecurity:
             headers=headers,
             json={
                 "type": "button",
-                "props_json": {
-                    "buttons": [
-                        {"label": "Click", "href": "/", "variant": "malicious", "size": "md"}
-                    ]
-                },
+                "props_json": {"buttons": [{"label": "Click", "href": "/", "variant": "malicious", "size": "md"}]},
             },
         )
-        assert resp.status_code == 422, (
-            f"Expected 422 for invalid props schema, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 422, f"Expected 422 for invalid props schema, got {resp.status_code}: {resp.text}"
 
 
 class TestCmsV2IdorCrossSede:
@@ -336,9 +331,7 @@ class TestCmsV2IdorCrossSede:
 
     def test_cross_sede_patch_section_returns_404(self, client, db_session):
         sede_a, sede_b = self._seed_two_pastors(db_session)
-        site_b, page_b, section_b = self._seed_site_page_section(
-            db_session, sede_b, "cross-section"
-        )
+        site_b, page_b, section_b = self._seed_site_page_section(db_session, sede_b, "cross-section")
         original_props = section_b.props_json
 
         headers_a = auth_headers(client, email=self.PASTOR_A_EMAIL)
@@ -347,26 +340,20 @@ class TestCmsV2IdorCrossSede:
             headers=headers_a,
             json={"props_json": {"title": "hacked"}},
         )
-        assert resp.status_code == 404, (
-            f"IDOR PATCH section cross-sede debe 404, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 404, f"IDOR PATCH section cross-sede debe 404, got {resp.status_code}: {resp.text}"
         db_session.refresh(section_b)
         assert section_b.props_json == original_props, "FUGA: props mutados cross-sede pese al 404"
 
     def test_cross_sede_delete_section_returns_404(self, client, db_session):
         sede_a, sede_b = self._seed_two_pastors(db_session)
-        site_b, page_b, section_b = self._seed_site_page_section(
-            db_session, sede_b, "cross-delete-section"
-        )
+        site_b, page_b, section_b = self._seed_site_page_section(db_session, sede_b, "cross-delete-section")
 
         headers_a = auth_headers(client, email=self.PASTOR_A_EMAIL)
         resp = client.delete(
             f"/api/cms/v2/sites/{site_b.site_key}/pages/{page_b.slug}/sections/{section_b.id}",
             headers=headers_a,
         )
-        assert resp.status_code == 404, (
-            f"IDor DELETE section cross-sede debe 404, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 404, f"IDor DELETE section cross-sede debe 404, got {resp.status_code}: {resp.text}"
         db_session.refresh(section_b)
         assert section_b.status != "archived", "FUGA: section archivada cross-sede pese al 404"
 
@@ -381,9 +368,7 @@ class TestCmsV2IdorCrossSede:
             headers=headers_a,
             json={"label": "hacked"},
         )
-        assert resp.status_code == 404, (
-            f"IDOR PATCH menu item cross-sede debe 404, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 404, f"IDOR PATCH menu item cross-sede debe 404, got {resp.status_code}: {resp.text}"
         db_session.refresh(item_b)
         assert item_b.label == original_label, "FUGA: menu item mutado cross-sede pese al 404"
 
@@ -478,12 +463,30 @@ class TestSectionPropsStructuralValidation:
     @pytest.mark.parametrize(
         "section_type",
         [
-            "hero", "video_hero", "rich_text", "rich_text_columns", "cards",
-            "cta_banner", "gallery", "faq", "embed", "testimonials", "stats",
-            "team", "countdown", "pricing", "image_text", "timeline",
-            "icon_grid", "newsletter", "civic_hero_search",
-            "civic_convocatoria_cards", "civic_quick_links",
-            "civic_file_downloads", "civic_data_table", "civic_alert_banner",
+            "hero",
+            "video_hero",
+            "rich_text",
+            "rich_text_columns",
+            "cards",
+            "cta_banner",
+            "gallery",
+            "faq",
+            "embed",
+            "testimonials",
+            "stats",
+            "team",
+            "countdown",
+            "pricing",
+            "image_text",
+            "timeline",
+            "icon_grid",
+            "newsletter",
+            "civic_hero_search",
+            "civic_convocatoria_cards",
+            "civic_quick_links",
+            "civic_file_downloads",
+            "civic_data_table",
+            "civic_alert_banner",
         ],
     )
     def test_returns_validated_dict_with_expected_keys(self, section_type):
@@ -638,9 +641,7 @@ class TestF06CategoryParentCrossSite:
             headers=self._headers(client, self.PASTOR_A_EMAIL),
             json={"slug": "child", "name": "Child", "parent_id": str(parent_b.id)},
         )
-        assert resp.status_code == 422, (
-            f"create con parent cross-site debe 422, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 422, f"create con parent cross-site debe 422, got {resp.status_code}: {resp.text}"
 
     def test_create_with_same_site_parent_returns_201(self, client, db_session):
         sede_a, _ = self._seed_two_pastors_and_sites(db_session)
@@ -651,9 +652,7 @@ class TestF06CategoryParentCrossSite:
             headers=self._headers(client, self.PASTOR_A_EMAIL),
             json={"slug": "child", "name": "Child", "parent_id": str(parent_a.id)},
         )
-        assert resp.status_code == 201, (
-            f"create con parent mismo site debe 201, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 201, f"create con parent mismo site debe 201, got {resp.status_code}: {resp.text}"
         assert resp.json()["parent_id"] == str(parent_a.id)
 
     def test_patch_with_cross_site_parent_returns_422(self, client, db_session):
@@ -673,9 +672,7 @@ class TestF06CategoryParentCrossSite:
             headers=self._headers(client, self.PASTOR_A_EMAIL),
             json={"parent_id": str(parent_b.id)},
         )
-        assert resp.status_code == 422, (
-            f"patch con parent cross-site debe 422, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 422, f"patch con parent cross-site debe 422, got {resp.status_code}: {resp.text}"
 
     def test_patch_with_none_parent_clears_parent(self, client, db_session):
         sede_a, _ = self._seed_two_pastors_and_sites(db_session)
@@ -692,9 +689,7 @@ class TestF06CategoryParentCrossSite:
             headers=self._headers(client, self.PASTOR_A_EMAIL),
             json={"parent_id": None},
         )
-        assert resp.status_code == 200, (
-            f"patch con parent=None debe 200, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 200, f"patch con parent=None debe 200, got {resp.status_code}: {resp.text}"
         assert resp.json()["parent_id"] is None
 
     def test_create_with_nonexistent_parent_returns_422(self, client, db_session):
@@ -706,9 +701,7 @@ class TestF06CategoryParentCrossSite:
             headers=self._headers(client, self.PASTOR_A_EMAIL),
             json={"slug": "child", "name": "Child", "parent_id": str(uuid.uuid4())},
         )
-        assert resp.status_code == 422, (
-            f"create con parent inexistente debe 422, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 422, f"create con parent inexistente debe 422, got {resp.status_code}: {resp.text}"
 
     # ── tests CRUD directo (defense-in-depth sin pasar por API) ─────────
 
@@ -721,24 +714,34 @@ class TestF06CategoryParentCrossSite:
         db_session.add_all([sede_a, sede_b])
         db_session.flush()
         site_a = models.CmsSite(
-            id=uuid.uuid4(), site_key="site-f06-crud-crt-a", name="A", base_path="/a",
-            is_active=True, sede_id=sede_a.id,
+            id=uuid.uuid4(),
+            site_key="site-f06-crud-crt-a",
+            name="A",
+            base_path="/a",
+            is_active=True,
+            sede_id=sede_a.id,
         )
         site_b = models.CmsSite(
-            id=uuid.uuid4(), site_key="site-f06-crud-crt-b", name="B", base_path="/b",
-            is_active=True, sede_id=sede_b.id,
+            id=uuid.uuid4(),
+            site_key="site-f06-crud-crt-b",
+            name="B",
+            base_path="/b",
+            is_active=True,
+            sede_id=sede_b.id,
         )
         db_session.add_all([site_a, site_b])
         db_session.flush()
         parent_b = models.CmsCategory(
-            id=uuid.uuid4(), site_id=site_b.id, slug="parent", name="Parent", is_active=True,
+            id=uuid.uuid4(),
+            site_id=site_b.id,
+            slug="parent",
+            name="Parent",
+            is_active=True,
         )
         db_session.add(parent_b)
         db_session.commit()
 
-        payload = schemas.CmsCategoryCreate(
-            slug="child-crud", name="Child CRUD", parent_id=parent_b.id
-        )
+        payload = schemas.CmsCategoryCreate(slug="child-crud", name="Child CRUD", parent_id=parent_b.id)
         with pytest.raises(ValueError, match="same site"):
             crud.create_cms_category(db_session, site_a.id, payload)
 
@@ -750,24 +753,38 @@ class TestF06CategoryParentCrossSite:
         db_session.add_all([sede_a, sede_b])
         db_session.flush()
         site_a = models.CmsSite(
-            id=uuid.uuid4(), site_key="site-f06-crud-upd-a", name="A", base_path="/a",
-            is_active=True, sede_id=sede_a.id,
+            id=uuid.uuid4(),
+            site_key="site-f06-crud-upd-a",
+            name="A",
+            base_path="/a",
+            is_active=True,
+            sede_id=sede_a.id,
         )
         site_b = models.CmsSite(
-            id=uuid.uuid4(), site_key="site-f06-crud-upd-b", name="B", base_path="/b",
-            is_active=True, sede_id=sede_b.id,
+            id=uuid.uuid4(),
+            site_key="site-f06-crud-upd-b",
+            name="B",
+            base_path="/b",
+            is_active=True,
+            sede_id=sede_b.id,
         )
         db_session.add_all([site_a, site_b])
         db_session.flush()
         parent_a = models.CmsCategory(
-            id=uuid.uuid4(), site_id=site_a.id, slug="parent-a", name="ParentA", is_active=True,
+            id=uuid.uuid4(),
+            site_id=site_a.id,
+            slug="parent-a",
+            name="ParentA",
+            is_active=True,
         )
         parent_b = models.CmsCategory(
-            id=uuid.uuid4(), site_id=site_b.id, slug="parent-b", name="ParentB", is_active=True,
+            id=uuid.uuid4(),
+            site_id=site_b.id,
+            slug="parent-b",
+            name="ParentB",
+            is_active=True,
         )
-        row = models.CmsCategory(
-            id=uuid.uuid4(), site_id=site_a.id, slug="child-upd", name="Child Upd", is_active=True
-        )
+        row = models.CmsCategory(id=uuid.uuid4(), site_id=site_a.id, slug="child-upd", name="Child Upd", is_active=True)
         db_session.add_all([parent_a, parent_b, row])
         db_session.commit()
 
@@ -780,4 +797,3 @@ class TestF06CategoryParentCrossSite:
         payload_ok = schemas.CmsCategoryUpdate(parent_id=parent_a.id)
         updated = crud.update_cms_category(db_session, row, payload_ok)
         assert updated.parent_id == parent_a.id
-

@@ -7,6 +7,7 @@ to persona UUIDs, and filters them by scope (sede) and self-mention.
 The resolved UUIDs can then be stored in the ``mentions`` JSON column and
 passed to ``notify_mention`` for in-app notifications.
 """
+
 from __future__ import annotations
 
 import logging
@@ -146,9 +147,7 @@ def extract_mentions(content: str) -> tuple[Set[str], Set[str], Set[str]]:
                 break
         if words:
             fullname_tokens.add(" ".join(words))
-    masked_content = _mask_ranges(
-        content, [(m.start(), m.end()) for m in fullname_matches]
-    )
+    masked_content = _mask_ranges(content, [(m.start(), m.end()) for m in fullname_matches])
 
     # Extract plain-text usernames/emails from the masked content.
     username_tokens: Set[str] = set()
@@ -244,9 +243,7 @@ def resolve_mentions(
         # indexed column, then we finish matching in Python.
         first_words = {t.split()[0].lower() for t in normalized_tokens if t.split()}
         if first_words:
-            q = q.filter(
-                func.lower(models.Persona.first_name).in_(list(first_words))
-            )
+            q = q.filter(func.lower(models.Persona.first_name).in_(list(first_words)))
         personas = q.all()
 
         matched_ids: Set[uuid.UUID] = set()

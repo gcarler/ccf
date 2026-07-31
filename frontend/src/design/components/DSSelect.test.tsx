@@ -84,11 +84,11 @@ describe('DSSelect', () => {
 
     it('renders disabled option', () => {
         render(
-            <DSSelect 
+            <DSSelect
                 options={[
                     { value: 'opt1', label: 'Option 1' },
                     { value: 'opt2', label: 'Option 2', disabled: true },
-                ]} 
+                ]}
             />
         );
         const options = screen.getAllByRole('option');

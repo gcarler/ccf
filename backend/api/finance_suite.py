@@ -1,6 +1,7 @@
 """
 Finance Suite API — Contabilidad, Facturación, Gastos, Documentos, Firma
 """
+
 from __future__ import annotations
 
 import logging
@@ -45,6 +46,7 @@ def _finance_sede_scope(db: Session, user: models.User) -> str | None:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. CONTABILIDAD — Bank Accounts
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @router.post("/bank-accounts", response_model=schemas.BankAccountOut, status_code=201)
 def create_bank_account(
@@ -96,6 +98,7 @@ def update_bank_account(
 # 1. CONTABILIDAD — Bank Transactions
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/bank-transactions", response_model=schemas.BankTransactionOut, status_code=201)
 def create_bank_transaction(
     payload: schemas.BankTransactionCreate,
@@ -146,6 +149,7 @@ def list_bank_transactions(
 # 1. CONTABILIDAD — Reconciliation
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/reconciliations", response_model=schemas.BankReconciliationOut, status_code=201)
 def create_reconciliation(
     payload: schemas.BankReconciliationCreate,
@@ -182,6 +186,7 @@ def list_reconciliations(
 # 1. CONTABILIDAD — Chart of Accounts
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/chart-of-accounts", response_model=schemas.ChartOfAccountOut, status_code=201)
 def create_chart_account(
     payload: schemas.ChartOfAccountCreate,
@@ -211,6 +216,7 @@ def list_chart_accounts(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. CONTABILIDAD — Accounting Entries
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @router.post("/accounting-entries", response_model=schemas.AccountingEntryOut, status_code=201)
 def create_accounting_entry(
@@ -248,13 +254,15 @@ def create_accounting_entry(
     db.flush()
 
     for line in payload.lines:
-        db.add(models.AccountingEntryLine(
-            entry_id=entry.id,
-            account_id=line.account_id,
-            debit=line.debit,
-            credit=line.credit,
-            description=line.description,
-        ))
+        db.add(
+            models.AccountingEntryLine(
+                entry_id=entry.id,
+                account_id=line.account_id,
+                debit=line.debit,
+                credit=line.credit,
+                description=line.description,
+            )
+        )
 
     db.commit()
     db.refresh(entry)
@@ -300,6 +308,7 @@ def post_accounting_entry(
 # 1. CONTABILIDAD — Financial Statements
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/financial-statements", response_model=schemas.FinancialStatementOut, status_code=201)
 def generate_financial_statement(
     payload: schemas.FinancialStatementCreate,
@@ -307,13 +316,10 @@ def generate_financial_statement(
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
     sede_id = _finance_sede_scope(db, current_user)
-    entries_q = (
-        db.query(models.AccountingEntry)
-        .filter(
-            models.AccountingEntry.entry_date >= payload.period_start,
-            models.AccountingEntry.entry_date <= payload.period_end,
-            models.AccountingEntry.status == "posted",
-        )
+    entries_q = db.query(models.AccountingEntry).filter(
+        models.AccountingEntry.entry_date >= payload.period_start,
+        models.AccountingEntry.entry_date <= payload.period_end,
+        models.AccountingEntry.status == "posted",
     )
     if sede_id:
         entries_q = entries_q.filter(models.AccountingEntry.sede_id == sede_id)
@@ -322,12 +328,14 @@ def generate_financial_statement(
     data: Dict[str, Any] = {"entries_count": len(entries), "lines": []}
     for entry in entries:
         for line in entry.lines:
-            data["lines"].append({
-                "date": entry.entry_date.isoformat(),
-                "account_id": str(line.account_id),
-                "debit": float(line.debit),
-                "credit": float(line.credit),
-            })
+            data["lines"].append(
+                {
+                    "date": entry.entry_date.isoformat(),
+                    "account_id": str(line.account_id),
+                    "debit": float(line.debit),
+                    "credit": float(line.credit),
+                }
+            )
 
     stmt = models.FinancialStatement(
         **payload.model_dump(),
@@ -356,6 +364,7 @@ def list_financial_statements(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. CONTABILIDAD — Tax Configuration
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @router.post("/tax-configurations", response_model=schemas.TaxConfigurationOut, status_code=201)
 def create_tax_config(
@@ -390,6 +399,7 @@ def list_tax_configurations(
 # 2. FACTURACIÓN — Sales Orders
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/sales-orders", response_model=schemas.SalesOrderOut, status_code=201)
 def create_sales_order(
     payload: schemas.SalesOrderCreate,
@@ -417,13 +427,15 @@ def create_sales_order(
     db.flush()
 
     for item in payload.items:
-        db.add(models.SalesOrderItem(
-            sales_order_id=order.id,
-            description=item.description,
-            quantity=item.quantity,
-            unit_price=item.unit_price,
-            total_price=item.quantity * item.unit_price,
-        ))
+        db.add(
+            models.SalesOrderItem(
+                sales_order_id=order.id,
+                description=item.description,
+                quantity=item.quantity,
+                unit_price=item.unit_price,
+                total_price=item.quantity * item.unit_price,
+            )
+        )
 
     db.commit()
     db.refresh(order)
@@ -451,6 +463,7 @@ def list_sales_orders(
 # 2. FACTURACIÓN — Invoices
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/invoices", response_model=schemas.InvoiceOut, status_code=201)
 def create_invoice(
     payload: schemas.InvoiceCreate,
@@ -464,16 +477,24 @@ def create_invoice(
     user_sede_id = getattr(current_user, "sede_id", None) or _finance_sede_scope(db, current_user)
     tax_config = None
     if user_sede_id:
-        tax_config = db.query(models.TaxConfiguration).filter(
-            models.TaxConfiguration.sede_id == user_sede_id,
-            models.TaxConfiguration.is_active == True,
-        ).first()
+        tax_config = (
+            db.query(models.TaxConfiguration)
+            .filter(
+                models.TaxConfiguration.sede_id == user_sede_id,
+                models.TaxConfiguration.is_active == True,
+            )
+            .first()
+        )
     sede_country = tax_config.country_code if tax_config else "CO"
     if not tax_config:
-        tax_config = db.query(models.TaxConfiguration).filter(
-            models.TaxConfiguration.country_code == sede_country,
-            models.TaxConfiguration.is_active == True,
-        ).first()
+        tax_config = (
+            db.query(models.TaxConfiguration)
+            .filter(
+                models.TaxConfiguration.country_code == sede_country,
+                models.TaxConfiguration.is_active == True,
+            )
+            .first()
+        )
     tax_rate = tax_config.tax_rate if tax_config else 0
     tax_amount = subtotal * (tax_rate / 100) if tax_rate else 0
     total = subtotal + tax_amount
@@ -498,13 +519,15 @@ def create_invoice(
     db.flush()
 
     for item in payload.items:
-        db.add(models.InvoiceItem(
-            invoice_id=invoice.id,
-            description=item.description,
-            quantity=item.quantity,
-            unit_price=item.unit_price,
-            total_price=item.quantity * item.unit_price,
-        ))
+        db.add(
+            models.InvoiceItem(
+                invoice_id=invoice.id,
+                description=item.description,
+                quantity=item.quantity,
+                unit_price=item.unit_price,
+                total_price=item.quantity * item.unit_price,
+            )
+        )
 
     db.commit()
     db.refresh(invoice)
@@ -551,9 +574,7 @@ def record_invoice_payment(
     db.add(payment)
 
     total_paid = (
-        db.query(func.sum(models.InvoicePayment.amount))
-        .filter(models.InvoicePayment.invoice_id == invoice.id)
-        .scalar()
+        db.query(func.sum(models.InvoicePayment.amount)).filter(models.InvoicePayment.invoice_id == invoice.id).scalar()
         or 0
     )
     total_paid += float(payload.amount)
@@ -593,6 +614,7 @@ def send_electronic_invoice(
 # 3. GASTOS — Expense Reports
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/expense-reports", response_model=schemas.ExpenseReportOut, status_code=201)
 def create_expense_report(
     payload: schemas.ExpenseReportCreate,
@@ -617,16 +639,18 @@ def create_expense_report(
     db.flush()
 
     for item in payload.items:
-        db.add(models.ExpenseItem(
-            expense_report_id=report.id,
-            expense_date=item.expense_date,
-            category=item.category,
-            description=item.description,
-            amount=item.amount,
-            currency=item.currency,
-            vendor=item.vendor,
-            is_reimbursable=item.is_reimbursable,
-        ))
+        db.add(
+            models.ExpenseItem(
+                expense_report_id=report.id,
+                expense_date=item.expense_date,
+                category=item.category,
+                description=item.description,
+                amount=item.amount,
+                currency=item.currency,
+                vendor=item.vendor,
+                is_reimbursable=item.is_reimbursable,
+            )
+        )
 
     db.commit()
     db.refresh(report)
@@ -737,6 +761,7 @@ def reimburse_expense_report(
 # 3. GASTOS — Receipts
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/expense-receipts", response_model=schemas.ExpenseReceiptOut, status_code=201)
 def upload_expense_receipt(
     payload: schemas.ExpenseReceiptCreate,
@@ -778,6 +803,7 @@ def update_receipt_ocr(
 # ═══════════════════════════════════════════════════════════════════════════════
 # 4. DOCUMENTOS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @router.post("/documents", response_model=schemas.DocumentOut, status_code=201)
 def create_document(
@@ -829,9 +855,7 @@ def list_documents(
     if tag_id:
         q = q.join(models.DocumentTagLink).filter(models.DocumentTagLink.tag_id == tag_id)
     if search:
-        q = q.filter(
-            models.Document.title.ilike(f"%{search}%") | models.Document.description.ilike(f"%{search}%")
-        )
+        q = q.filter(models.Document.title.ilike(f"%{search}%") | models.Document.description.ilike(f"%{search}%"))
     return q.offset(skip).limit(limit).all()
 
 
@@ -907,6 +931,7 @@ def list_document_tags(
 # 5. FIRMA DIGITAL
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @router.post("/sign-requests", response_model=schemas.SignRequestOut, status_code=201)
 def create_sign_request(
     payload: schemas.SignRequestCreate,
@@ -928,14 +953,16 @@ def create_sign_request(
     db.flush()
 
     for signer in payload.signers:
-        db.add(models.SignSigner(
-            sign_request_id=req.id,
-            persona_id=signer.persona_id,
-            email=signer.email,
-            full_name=signer.full_name,
-            role=signer.role,
-            signing_order=signer.signing_order,
-        ))
+        db.add(
+            models.SignSigner(
+                sign_request_id=req.id,
+                persona_id=signer.persona_id,
+                email=signer.email,
+                full_name=signer.full_name,
+                role=signer.role,
+                signing_order=signer.signing_order,
+            )
+        )
 
     db.commit()
     db.refresh(req)
@@ -1001,10 +1028,14 @@ def sign_document(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
-    signer = db.query(models.SignSigner).filter(
-        models.SignSigner.id == signer_id,
-        models.SignSigner.sign_request_id == request_id,
-    ).first()
+    signer = (
+        db.query(models.SignSigner)
+        .filter(
+            models.SignSigner.id == signer_id,
+            models.SignSigner.sign_request_id == request_id,
+        )
+        .first()
+    )
     if not signer:
         raise HTTPException(status_code=404, detail="Signer not found")
     if signer.status != "sent":

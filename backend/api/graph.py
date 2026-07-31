@@ -69,10 +69,7 @@ def _enforce_graph_rbac(current_user, user_sede) -> None:
     )
     raise HTTPException(
         status_code=403,
-        detail=(
-            "Vista global denegada: el usuario no tiene sede asignada "
-            "y no es administrador de plataforma."
-        ),
+        detail=("Vista global denegada: el usuario no tiene sede asignada y no es administrador de plataforma."),
     )
 
 
@@ -85,7 +82,7 @@ def graph_snapshot(
     current_user: models.User = Depends(get_current_user),
 ):
     """Return a lightweight knowledge graph view combining academy, CRM and assets data.
-    
+
     Axioma 3: filtra por sede_id del usuario autenticado.
     """
     user_sede = get_user_sede_id(db, current_user.id)
@@ -116,9 +113,7 @@ def graph_snapshot(
         "returned_nodes": len(paginated_nodes),
     }
     snapshot["meta"]["requested_by"] = (
-        str(getattr(current_user, "id", None) or getattr(current_user, "user_id", None))
-        if current_user
-        else None
+        str(getattr(current_user, "id", None) or getattr(current_user, "user_id", None)) if current_user else None
     )
     return snapshot
 
@@ -144,9 +139,7 @@ def graph_connections(
     outgoing = [edge for edge in edges if edge.get("from") == node_id][:safe_limit]
     incoming = [edge for edge in edges if edge.get("to") == node_id][:safe_limit]
 
-    related_ids = {edge.get("to") for edge in outgoing} | {
-        edge.get("from") for edge in incoming
-    }
+    related_ids = {edge.get("to") for edge in outgoing} | {edge.get("from") for edge in incoming}
     related_nodes = [item for item in nodes if item.get("id") in related_ids]
 
     return {
@@ -156,10 +149,7 @@ def graph_connections(
         "related_nodes": related_nodes,
         "meta": {
             "requested_by": (
-                str(
-                    getattr(current_user, "id", None)
-                    or getattr(current_user, "user_id", None)
-                )
+                str(getattr(current_user, "id", None) or getattr(current_user, "user_id", None))
                 if current_user
                 else None
             ),

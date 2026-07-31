@@ -1,4 +1,5 @@
 """Table Schema and View persistence API."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -25,8 +26,10 @@ def _resolve_persona(db: Session, user) -> models.Persona | None:
 
 # ── Models ──────────────────────────────────────────────────────────────────────
 
+
 class TableSchema(BaseModel):
     """Represents a configurable table schema."""
+
     id: str
     name: str
     columns: List[Dict[str, Any]]
@@ -36,6 +39,7 @@ class TableSchema(BaseModel):
 
 
 # ── Endpoints ───────────────────────────────────────────────────────────────────
+
 
 @router.get("/schemas", response_model=List[Dict[str, Any]])
 def list_table_schemas(
@@ -101,10 +105,14 @@ def update_table_schema(
     persona = _resolve_persona(db, current_user)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
-    view = db.query(models.SavedView).filter(
-        models.SavedView.id == view_id,
-        models.SavedView.persona_id == persona.id,
-    ).first()
+    view = (
+        db.query(models.SavedView)
+        .filter(
+            models.SavedView.id == view_id,
+            models.SavedView.persona_id == persona.id,
+        )
+        .first()
+    )
     if not view:
         raise HTTPException(status_code=404, detail="View not found")
 
@@ -132,10 +140,14 @@ def delete_table_schema(
     persona = _resolve_persona(db, current_user)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
-    view = db.query(models.SavedView).filter(
-        models.SavedView.id == view_id,
-        models.SavedView.persona_id == persona.id,
-    ).first()
+    view = (
+        db.query(models.SavedView)
+        .filter(
+            models.SavedView.id == view_id,
+            models.SavedView.persona_id == persona.id,
+        )
+        .first()
+    )
     if not view:
         raise HTTPException(status_code=404, detail="View not found")
     view.deleted_at = _utcnow()

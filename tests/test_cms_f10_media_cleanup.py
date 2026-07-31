@@ -28,6 +28,7 @@ Tests:
   11) API DELETE permanent archiva+borra huérfanos (no referenciados)
   12) API cross-sede: actor no puede limpiar media de otra sede
 """
+
 from __future__ import annotations
 
 import os
@@ -48,9 +49,7 @@ from tests.conftest import auth_headers, seed_admin
 
 
 def _seed(db_session, email="cmsF10@example.com"):
-    admin, persona, sede = seed_admin(
-        db_session, email=email, password="testpass123"
-    )
+    admin, persona, sede = seed_admin(db_session, email=email, password="testpass123")
     return admin, persona, sede
 
 
@@ -150,16 +149,16 @@ class TestF10CleanupOrphanCmsMedia:
         )
         assert count == 1
         # Ningún media debe estar archived
-        active = db_session.query(models.CmsMediaItem).filter(
-            models.CmsMediaItem.status != "archived"
-        ).count()
+        active = db_session.query(models.CmsMediaItem).filter(models.CmsMediaItem.status != "archived").count()
         assert active == 2
 
     def test_soft_archives_orphans_referenced_preserved(self, db_session):
         admin, persona, sede = _seed(db_session, email="cmsF10soft@example.com")
         _seed_site(db_session, sede_id=sede.id)
         ref_media = _seed_media(db_session, sede_id=sede.id, created_by_persona_id=persona.id)
-        orphan_media = _seed_media(db_session, sede_id=sede.id, created_by_persona_id=persona.id, url="/uploads/cms/orphan.jpg")
+        orphan_media = _seed_media(
+            db_session, sede_id=sede.id, created_by_persona_id=persona.id, url="/uploads/cms/orphan.jpg"
+        )
 
         purged = cleanup_orphan_cms_media(
             db_session,
@@ -180,7 +179,9 @@ class TestF10CleanupOrphanCmsMedia:
         admin, persona, sede = _seed(db_session, email="cmsF10perm@example.com")
         _seed_site(db_session, sede_id=sede.id)
         ref_media = _seed_media(db_session, sede_id=sede.id, created_by_persona_id=persona.id)
-        orphan_media = _seed_media(db_session, sede_id=sede.id, created_by_persona_id=persona.id, url="/uploads/cms/orphan.jpg")
+        orphan_media = _seed_media(
+            db_session, sede_id=sede.id, created_by_persona_id=persona.id, url="/uploads/cms/orphan.jpg"
+        )
 
         # Crea el archivo físico fake dentro del tmp uploads root.
         uploads_root = tmp_path / "uploads"
@@ -189,10 +190,12 @@ class TestF10CleanupOrphanCmsMedia:
         orphan_path.parent.mkdir(parents=True)
         orphan_path.write_bytes(b"FAKE")
 
-        with patch("backend.crud.cms.os.path.exists", side_effect=lambda p: p == str(orphan_path)), \
-             patch("backend.crud.cms.os.path.isfile", side_effect=lambda p: p == str(orphan_path)), \
-             patch("backend.crud.cms.os.remove") as mock_remove, \
-             patch("backend.crud.cms.os.path.normpath", wraps=os.path.normpath) as mock_normpath:
+        with (
+            patch("backend.crud.cms.os.path.exists", side_effect=lambda p: p == str(orphan_path)),
+            patch("backend.crud.cms.os.path.isfile", side_effect=lambda p: p == str(orphan_path)),
+            patch("backend.crud.cms.os.remove") as mock_remove,
+            patch("backend.crud.cms.os.path.normpath", wraps=os.path.normpath) as mock_normpath,
+        ):
             # Forzamos el path base a tmp_path.patchando la constante?
             # Simpler: el CRUD hard-codea /root/ccf/uploads; para el test
             # simplemente validamos que el startswith check funciona.
@@ -207,9 +210,7 @@ class TestF10CleanupOrphanCmsMedia:
         # así que el row se hard-deletea (file already-absent branch).
         assert purged == 1
         # El row del huérfano debe estar borrado
-        deleted = db_session.query(models.CmsMediaItem).filter(
-            models.CmsMediaItem.id == orphan_media.id
-        ).first()
+        deleted = db_session.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == orphan_media.id).first()
         assert deleted is None
 
     def test_path_traversal_url_is_archived_not_exit_uploads(self, db_session):
@@ -272,7 +273,9 @@ class TestF10CleanupOrphanCmsMedia:
         admin, persona, sede = _seed(db_session, email="cmsF10arch@example.com")
         _seed_site(db_session, sede_id=sede.id)
         archived = _seed_media(
-            db_session, sede_id=sede.id, created_by_persona_id=persona.id,
+            db_session,
+            sede_id=sede.id,
+            created_by_persona_id=persona.id,
             status="archived",
         )
 
@@ -298,18 +301,18 @@ class TestF10CrossSedeDefenseInDepth:
         """Si un actor pasa un ``sede_id`` ajeno pero su propia sede es distinta,
         el CRUD debe retornar 0 sin mutar nada (defense-in-depth)."""
         admin_a, persona_a, sede_a = _seed(db_session, email="cmsF10a@x.com")
-        admin_b, persona_b, sede_b = seed_admin(
-            db_session, email="cmsF10b@x.com", password="testpass123"
-        )
+        admin_b, persona_b, sede_b = seed_admin(db_session, email="cmsF10b@x.com", password="testpass123")
         _seed_site(db_session, sede_id=sede_a.id)
         # Media de sede_b (lo que admin_a intentaría limpiar)
         target_media = _seed_media(
-            db_session, sede_id=sede_b.id, created_by_persona_id=persona_b.id,
+            db_session,
+            sede_id=sede_b.id,
+            created_by_persona_id=persona_b.id,
         )
 
         purged = cleanup_orphan_cms_media(
             db_session,
-            sede_id=sede_b.id,             # admin_a intenta limpiar sede_b
+            sede_id=sede_b.id,  # admin_a intenta limpiar sede_b
             referenced_media_ids=set(),
             actor_user_id=str(admin_a.id),  # admin_a es de sede_a
         )
@@ -357,7 +360,10 @@ class TestF10ScheduledVariant:
 
     def test_scheduled_none_sede_returns_zero(self, db_session):
         count = cleanup_orphan_cms_media_scheduled(
-            db_session, sede_id=None, referenced_media_ids=set(), dry_run=True,
+            db_session,
+            sede_id=None,
+            referenced_media_ids=set(),
+            dry_run=True,
         )
         assert count == 0
 
@@ -400,7 +406,9 @@ class TestF10SchedulerIntegration:
         page = _seed_page(db_session, site_id=site.id)
         ref = _seed_media(db_session, sede_id=sede.id, created_by_persona_id=persona.id)
         _seed_section(db_session, page_id=page.id, media_id=ref.id)
-        orphan = _seed_media(db_session, sede_id=sede.id, created_by_persona_id=persona.id, url="/uploads/cms/orph2.jpg")
+        orphan = _seed_media(
+            db_session, sede_id=sede.id, created_by_persona_id=persona.id, url="/uploads/cms/orph2.jpg"
+        )
 
         counts = _run_scheduling_pass(db_session, dry_run=False)
         assert counts["orphan_media_archived"] == 1

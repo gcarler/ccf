@@ -177,9 +177,7 @@ class TestEdgeCases:
     def test_fallecido_persona_excluded(self, db_session):
         from backend.crud.cms_pastors_sync import _find_persona_by_name
 
-        _make_persona(
-            db_session, "Maria", "Martinez", estado_vital="FALLECIDO"
-        )
+        _make_persona(db_session, "Maria", "Martinez", estado_vital="FALLECIDO")
         result = _find_persona_by_name(db_session, "Maria Martinez")
         assert result is None
 
@@ -235,18 +233,12 @@ class TestFixScriptIsomorphism:
 
         from backend.crud.cms_pastors_sync import _find_persona_by_name
 
-        target = _make_persona(
-            db_session, "Camilo", "Pájaro", is_pastoral_leader=True
-        )
+        target = _make_persona(db_session, "Camilo", "Pájaro", is_pastoral_leader=True)
         # Other leader that would win the wrong-pick if anchor were absent
-        _make_persona(
-            db_session, "Camilo", "Soto", is_pastoral_leader=True
-        )
+        _make_persona(db_session, "Camilo", "Soto", is_pastoral_leader=True)
 
         from_sync = _find_persona_by_name(db_session, "Camilo Pájaro")
-        from_script = find_pastoral_persona_by_slug(
-            db_session, "camilo-pajaro"
-        )
+        from_script = find_pastoral_persona_by_slug(db_session, "camilo-pajaro")
         assert from_sync is not None and from_script is not None
         assert from_sync.id == from_script.id == target.id
 
@@ -264,17 +256,11 @@ class TestFixScriptIsomorphism:
         from backend.crud.cms_pastors_sync import _find_persona_by_name
 
         # A non-leader with the exact name (sync would pick it; script must not)
-        _make_persona(
-            db_session, "Camilo", "Pájaro", is_pastoral_leader=False
-        )
-        leader = _make_persona(
-            db_session, "Camilo", "Pájaro", is_pastoral_leader=True
-        )
+        _make_persona(db_session, "Camilo", "Pájaro", is_pastoral_leader=False)
+        leader = _make_persona(db_session, "Camilo", "Pájaro", is_pastoral_leader=True)
 
         from_sync = _find_persona_by_name(db_session, "Camilo Pájaro")
-        from_script = find_pastoral_persona_by_slug(
-            db_session, "camilo-pajaro"
-        )
+        from_script = find_pastoral_persona_by_slug(db_session, "camilo-pajaro")
         # Sync is non-deterministic on ties (returns the first it sees);
         # the canonical assertion is that the SCRIPT returns the leader.
         assert from_script is not None
@@ -295,12 +281,8 @@ class TestPastorsSectionSedeScope:
 
         sede_a = uuid.uuid4()
         sede_b = uuid.uuid4()
-        _make_persona(
-            db_session, "Pastor", "A", sede_id=sede_a, is_pastoral_leader=True
-        )
-        _make_persona(
-            db_session, "Pastor", "B", sede_id=sede_b, is_pastoral_leader=True
-        )
+        _make_persona(db_session, "Pastor", "A", sede_id=sede_a, is_pastoral_leader=True)
+        _make_persona(db_session, "Pastor", "B", sede_id=sede_b, is_pastoral_leader=True)
 
         result = build_pastors_section_props(db_session, sede_id=sede_a)
         pastors = result["pastors"]
@@ -327,15 +309,10 @@ class TestPastorsSectionSedeScope:
         from backend.crud.cms_pastors_sync import build_pastors_section_props
 
         sede = uuid.uuid4()
-        _make_persona(
-            db_session, "Leader", "X", sede_id=sede, is_pastoral_leader=True
-        )
-        _make_persona(
-            db_session, "Member", "Y", sede_id=sede, is_pastoral_leader=False
-        )
+        _make_persona(db_session, "Leader", "X", sede_id=sede, is_pastoral_leader=True)
+        _make_persona(db_session, "Member", "Y", sede_id=sede, is_pastoral_leader=False)
 
         result = build_pastors_section_props(db_session, sede_id=sede)
         pastors = result["pastors"]
         assert len(pastors) == 1
         assert pastors[0]["name"] == "Leader X"
-

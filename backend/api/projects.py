@@ -63,7 +63,9 @@ def _author_name(persona) -> str:
     return getattr(persona, "nombre_completo", None) or getattr(persona, "full_name", None) or "Usuario"
 
 
-def _project_comment_to_schema(comment: models.ProjectComment, author: models.Persona | None = None) -> schemas.ProjectCommentItem:
+def _project_comment_to_schema(
+    comment: models.ProjectComment, author: models.Persona | None = None
+) -> schemas.ProjectCommentItem:
     return schemas.ProjectCommentItem(
         id=comment.id,
         project_id=str(comment.project_id) if comment.project_id is not None else None,
@@ -257,7 +259,9 @@ def _ensure_milestone_in_project(db: Session, project_id: str, milestone_id: str
     return milestone
 
 
-def _ensure_attachment_in_task(db: Session, project_id: str, task_id: str, attachment_id: str) -> models.ProjectAttachment:
+def _ensure_attachment_in_task(
+    db: Session, project_id: str, task_id: str, attachment_id: str
+) -> models.ProjectAttachment:
     _ensure_task_in_project(db, project_id, task_id)
     attachment = (
         db.query(models.ProjectAttachment)
@@ -452,6 +456,7 @@ def require_project_access(min_level: str = "read"):
     This implements the product decision that in the Projects module
     access is driven by task/project assignment, not only by platform role.
     """
+
     async def _check(
         request: Request,
         current_user: models.User = Depends(get_current_active_user),
@@ -569,11 +574,7 @@ def _assert_assignee_in_sede(
     if user_sede is None:
         return
     persona_uuid = _to_uuid(assignee_id)
-    persona = (
-        db.query(models.Persona)
-        .filter(models.Persona.id == persona_uuid)
-        .first()
-    )
+    persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Assignee not found")
     if persona.sede_id is not None and str(persona.sede_id) != str(user_sede):
@@ -581,9 +582,7 @@ def _assert_assignee_in_sede(
         raise HTTPException(status_code=404, detail="Assignee not found")
 
 
-def _assert_status_in_project_phases(
-    db: Session, project_id: Any, status_value: Any
-) -> None:
+def _assert_status_in_project_phases(db: Session, project_id: Any, status_value: Any) -> None:
     """Reject a task ``status`` that does not match any active ``ProjectPhase.slug``.
 
     Contract (test_projects_kanban_move.py RED suite, Sprint 1/2):
@@ -636,10 +635,7 @@ def _assert_status_in_project_phases(
     pretty = ", ".join(sorted(valid_slugs))
     raise HTTPException(
         status_code=400,
-        detail=(
-            f"status '{candidate}' is not a valid phase. "
-            f"Active phases for this {source}: [{pretty}]"
-        ),
+        detail=(f"status '{candidate}' is not a valid phase. Active phases for this {source}: [{pretty}]"),
     )
 
 
@@ -659,9 +655,7 @@ def _validate_whiteboard_json(elements_json: str) -> None:
 # Canonical 4-phase set used when a project has no active Phase rows
 # configured (most often in tests that bypass ``create_default_phases``).
 # This is intentionally a tight allow-list, not a free-string fallback.
-_CANONICAL_PHASE_SLUGS: frozenset[str] = frozenset(
-    {"todo", "in_progress", "review", "completed"}
-)
+_CANONICAL_PHASE_SLUGS: frozenset[str] = frozenset({"todo", "in_progress", "review", "completed"})
 
 # Compat enum values that may still exist in client payloads or old DB rows.
 # These are normalized to canonical values on read/write to avoid 422 errors
@@ -850,9 +844,7 @@ def set_project_phases(
     # Race-condition fix: lock the parent project row while we validate
     # task counts and apply the phase rewrite, so concurrent inserts
     # under a status about to be removed cannot create orphan tasks.
-    db.query(models.Project).filter(
-        models.Project.id == _to_uuid(project_id)
-    ).with_for_update().first()
+    db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).with_for_update().first()
 
     # Check no phase with tasks is being deleted
     existing = {p.slug for p in crud.get_project_phases(db, project_id)}
@@ -909,9 +901,7 @@ def list_all_comments(
     elif user_sede:
         # No project filter → join with Project and keep only those in
         # the actor's sede. Also exclude comments on soft-deleted projects.
-        q = q.join(
-            models.Project, models.Project.id == models.ProjectComment.project_id
-        ).filter(
+        q = q.join(models.Project, models.Project.id == models.ProjectComment.project_id).filter(
             models.Project.sede_id == user_sede,
             models.Project.deleted_at.is_(None),
         )
@@ -963,9 +953,7 @@ def create_project_task(
     # subsequent MAX(order_index) + INSERT is serialized across concurrent
     # task creations. On PostgreSQL this is a real SELECT ... FOR UPDATE;
     # on SQLite it is a no-op (the test suite runs serialized transactions).
-    project = db.query(models.Project).filter(
-        models.Project.id == _to_uuid(project_id)
-    ).with_for_update().first()
+    project = db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).with_for_update().first()
     payload = task.model_dump()
     _normalize_task_payload(payload)
     _assert_status_in_project_phases(db, project_id, payload.get("status"))
@@ -1080,39 +1068,31 @@ def workload_summary(
     overdue_count = func.coalesce(
         func.sum(
             cast(
-                models.ProjectTask.status.in_(open_statuses)
-                & (models.ProjectTask.due_date < now_expr),
+                models.ProjectTask.status.in_(open_statuses) & (models.ProjectTask.due_date < now_expr),
                 Integer,
             )
         ),
         0,
     ).label("overdue_tasks")
 
-    q = (
-        db.query(
-            models.ProjectTask.assignee_id,
-            open_count,
-            in_review_count,
-            overdue_count,
-        )
-        .filter(
-            models.ProjectTask.status.in_(open_statuses),
-            models.ProjectTask.assignee_id.isnot(None),
-            models.ProjectTask.deleted_at.is_(None),
-        )
+    q = db.query(
+        models.ProjectTask.assignee_id,
+        open_count,
+        in_review_count,
+        overdue_count,
+    ).filter(
+        models.ProjectTask.status.in_(open_statuses),
+        models.ProjectTask.assignee_id.isnot(None),
+        models.ProjectTask.deleted_at.is_(None),
     )
     if user_sede:
         # Single JOIN when scope is set; supplies ``Project.sede_id`` to the
         # WHERE. Without this the workload feed would leak cross-sede rows.
-        q = q.join(
-            models.Project, models.Project.id == models.ProjectTask.project_id
-        ).filter(models.Project.sede_id == user_sede)
+        q = q.join(models.Project, models.Project.id == models.ProjectTask.project_id).filter(
+            models.Project.sede_id == user_sede
+        )
 
-    rows = (
-        q.group_by(models.ProjectTask.assignee_id)
-        .order_by(open_count.desc())
-        .all()
-    )
+    rows = q.group_by(models.ProjectTask.assignee_id).order_by(open_count.desc()).all()
     return [
         schemas.ProjectWorkloadSummaryRow(
             assignee_id=str(row.assignee_id) if row.assignee_id else None,
@@ -1154,9 +1134,7 @@ def list_activities(
     elif user_sede:
         # Join con Project para que ``Project.sede_id`` sea usable en el filtro.
         # Exclude activity logs from soft-deleted projects.
-        q = q.join(
-            models.Project, models.Project.id == models.ProjectActivityLog.project_id
-        ).filter(
+        q = q.join(models.Project, models.Project.id == models.ProjectActivityLog.project_id).filter(
             models.Project.sede_id == user_sede,
             models.Project.deleted_at.is_(None),
         )
@@ -1166,11 +1144,7 @@ def list_activities(
     project_ids = {log.project_id for log in logs if log.project_id}
     projects_map: dict = {}
     if project_ids:
-        rows = (
-            db.query(models.Project.id, models.Project.title)
-            .filter(models.Project.id.in_(project_ids))
-            .all()
-        )
+        rows = db.query(models.Project.id, models.Project.title).filter(models.Project.id.in_(project_ids)).all()
         projects_map = {pid: title for pid, title in rows}
 
     result = []
@@ -1240,7 +1214,11 @@ def update_task(
     task.updated_at = _utcnow()
     db.commit()
     db.refresh(task)
-    if "assignee_id" in update_data and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None)) and task.assignee_id:
+    if (
+        "assignee_id" in update_data
+        and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None))
+        and task.assignee_id
+    ):
         notify_task_assigned(
             db,
             task=task,
@@ -1339,11 +1317,7 @@ def list_inbox(
         )
         if user_sede:
             q_unread = q_unread.filter(models.Project.sede_id == user_sede)
-        unread_comments = (
-            q_unread.order_by(models.ProjectComment.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+        unread_comments = q_unread.order_by(models.ProjectComment.created_at.desc()).limit(limit).all()
 
     # ── Batch-fetch authors + inbox states (N+1 fix) ──
     comment_author_ids = {c.author_id for c, _ in unread_comments if c.author_id}
@@ -1358,10 +1332,12 @@ def list_inbox(
     if comment_item_ids and persona_id:
         inbox_states_map = {
             s.item_id: s.is_read
-            for s in db.query(models.ProjectInboxState).filter(
+            for s in db.query(models.ProjectInboxState)
+            .filter(
                 models.ProjectInboxState.persona_id == persona_id,
                 models.ProjectInboxState.item_id.in_(comment_item_ids),
-            ).all()
+            )
+            .all()
         }
 
     for comment, project in unread_comments:
@@ -1405,11 +1381,7 @@ def list_inbox(
         )
         if user_sede:
             q_tasks = q_tasks.filter(models.Project.sede_id == user_sede)
-        assigned_tasks = (
-            q_tasks.order_by(models.ProjectTask.updated_at.desc())
-            .limit(limit)
-            .all()
-        )
+        assigned_tasks = q_tasks.order_by(models.ProjectTask.updated_at.desc()).limit(limit).all()
 
     # ── Batch-fetch inbox states for task items (N+1 fix) ──
     task_item_ids = {f"task-{t.id}" for t, _ in assigned_tasks}
@@ -1417,18 +1389,18 @@ def list_inbox(
     if task_item_ids and persona_id:
         task_inbox_states_map = {
             s.item_id: s.is_read
-            for s in db.query(models.ProjectInboxState).filter(
+            for s in db.query(models.ProjectInboxState)
+            .filter(
                 models.ProjectInboxState.persona_id == persona_id,
                 models.ProjectInboxState.item_id.in_(task_item_ids),
-            ).all()
+            )
+            .all()
         }
 
     for task, project in assigned_tasks:
         item_id = f"task-{task.id}"
         is_read = task_inbox_states_map.get(item_id, False)
-        project_owner_name = (
-            _author_name(project.owner) if project and getattr(project, "owner", None) else "Equipo"
-        )
+        project_owner_name = _author_name(project.owner) if project and getattr(project, "owner", None) else "Equipo"
         inbox_items.append(
             schemas.ProjectInboxItem(
                 id=item_id,
@@ -1783,7 +1755,11 @@ def update_project_task(
         )
     db.commit()
     db.refresh(task)
-    if "assignee_id" in update_data and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None)) and task.assignee_id:
+    if (
+        "assignee_id" in update_data
+        and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None))
+        and task.assignee_id
+    ):
         notify_task_assigned(
             db,
             task=task,
@@ -1915,9 +1891,7 @@ def create_subtask(
     # Race-condition fix: lock the parent project row before reading the
     # MAX(order_index) so concurrent subtask creations do not share the
     # same order_index slot.
-    db.query(models.Project).filter(
-        models.Project.id == _to_uuid(project_id)
-    ).with_for_update().first()
+    db.query(models.Project).filter(models.Project.id == _to_uuid(project_id)).with_for_update().first()
     payload = subtask.model_dump()
     _normalize_task_payload(payload)
     _assert_status_in_project_phases(db, project_id, payload.get("status"))
@@ -1985,7 +1959,11 @@ def update_subtask(
     _normalize_task_enums(subtask)
     db.commit()
     db.refresh(subtask)
-    if "assignee_id" in update_data and _assignment_changed(previous_assignee_id, getattr(subtask, "assignee_id", None)) and subtask.assignee_id:
+    if (
+        "assignee_id" in update_data
+        and _assignment_changed(previous_assignee_id, getattr(subtask, "assignee_id", None))
+        and subtask.assignee_id
+    ):
         notify_task_assigned(
             db,
             task=subtask,
@@ -2059,7 +2037,9 @@ def create_comment(
     db.commit()
     db.refresh(comment)
     _notify_comment_mentions(db, comment, project_id, task_id, user_sede)
-    persona = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first() if comment.author_id else None
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == comment.author_id).first() if comment.author_id else None
+    )
     return _project_comment_to_schema(comment, persona)
 
 
@@ -2100,7 +2080,9 @@ def create_project_comment(
     db.commit()
     db.refresh(comment)
     _notify_comment_mentions(db, comment, project_id, payload.task_id, user_sede)
-    persona = db.query(models.Persona).filter(models.Persona.id == comment.author_id).first() if comment.author_id else None
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == comment.author_id).first() if comment.author_id else None
+    )
     return _project_comment_to_schema(comment, persona)
 
 
@@ -2504,7 +2486,8 @@ def create_project_milestone(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     milestone = _projects_create_milestone(
-        db, _to_uuid(project_id),
+        db,
+        _to_uuid(project_id),
         title=payload.title,
         description=payload.description,
         target_date=payload.target_date,

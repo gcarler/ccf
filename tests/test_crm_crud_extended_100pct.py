@@ -1,39 +1,48 @@
 """
 Comprehensive unit tests for backend/crud/crm_/extended.py to drive coverage to 100%.
 """
-import uuid
-import pytest
-from datetime import datetime, date, timezone
 
-from backend import models, schemas
+import uuid
+from datetime import date
+
+import pytest
+
+from backend import models
 from backend.crud.crm_ import extended as extended_crud
 from backend.crud.crm_.extended import (
-    PositionCreate, PositionUpdate,
-    PersonaPositionCreate, PersonaPositionUpdate,
-    EventAssignmentCreate, EventAssignmentUpdate,
-    MinistryCreate, MinistryUpdate,
-    PersonaMinistryAssignmentCreate, PersonaMinistryAssignmentUpdate,
-    CrmAutomationCreate, CrmAutomationUpdate,
-    CrmAutomationEdgeCreate, CrmAutomationEdgeUpdate,
-    RoleDefinitionCreate, RoleDefinitionUpdate,
+    ChatMessageCreate,
+    CrmAutomationCreate,
+    CrmAutomationEdgeCreate,
+    CrmAutomationEdgeUpdate,
+    CrmAutomationUpdate,
+    EventAssignmentCreate,
+    EventAssignmentUpdate,
+    FundCreate,
+    FundUpdate,
+    MinistryCreate,
+    MinistryUpdate,
+    PersonaMinistryAssignmentCreate,
+    PersonaMinistryAssignmentUpdate,
+    PersonaPositionCreate,
+    PersonaPositionUpdate,
     PersonaRoleLinkCreate,
-    FundCreate, FundUpdate,
-    VolunteerSkillCreate, VolunteerSkillUpdate,
-    ChatMessageCreate
+    PositionCreate,
+    PositionUpdate,
+    RoleDefinitionCreate,
+    RoleDefinitionUpdate,
+    VolunteerSkillCreate,
+    VolunteerSkillUpdate,
 )
+
 
 @pytest.fixture
 def sample_sede(db_session):
-    sede = models.Sede(
-        id=uuid.uuid4(),
-        nombre=f"Sede Ext {uuid.uuid4().hex[:6]}",
-        ciudad="Bogota",
-        es_activa=True
-    )
+    sede = models.Sede(id=uuid.uuid4(), nombre=f"Sede Ext {uuid.uuid4().hex[:6]}", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.commit()
     db_session.refresh(sede)
     return sede
+
 
 @pytest.fixture
 def sample_persona(db_session, sample_sede):
@@ -42,7 +51,7 @@ def sample_persona(db_session, sample_sede):
         first_name="ExtTest",
         last_name="User",
         email=f"ext_{uuid.uuid4().hex[:6]}@example.com",
-        sede_id=sample_sede.id
+        sede_id=sample_sede.id,
     )
     db_session.add(persona)
     db_session.commit()
@@ -61,7 +70,9 @@ def test_extended_positions(db_session, sample_persona):
     assert pos_up.name == "Senior Leader"
 
     # PersonaPosition
-    pp = extended_crud.create_persona_position(db_session, PersonaPositionCreate(persona_id=str(sample_persona.id), position_id=str(pos.id)))
+    pp = extended_crud.create_persona_position(
+        db_session, PersonaPositionCreate(persona_id=str(sample_persona.id), position_id=str(pos.id))
+    )
     assert pp is not None
     assert extended_crud.get_persona_position(db_session, pp.id) is not None
     assert len(extended_crud.get_persona_positions(db_session, persona_id=str(sample_persona.id))) >= 1
@@ -82,12 +93,16 @@ def test_extended_ministries(db_session, sample_persona):
     minis_up = extended_crud.update_ministry(db_session, minis.id, MinistryUpdate(name="Worship"))
     assert minis_up.name == "Worship"
 
-    pma = extended_crud.create_persona_ministry_assignment(db_session, PersonaMinistryAssignmentCreate(persona_id=str(sample_persona.id), ministry_id=str(minis.id)))
+    pma = extended_crud.create_persona_ministry_assignment(
+        db_session, PersonaMinistryAssignmentCreate(persona_id=str(sample_persona.id), ministry_id=str(minis.id))
+    )
     assert pma is not None
     assert extended_crud.get_persona_ministry_assignment(db_session, pma.id) is not None
     assert len(extended_crud.get_persona_ministry_assignments(db_session, persona_id=str(sample_persona.id))) >= 1
 
-    pma_up = extended_crud.update_persona_ministry_assignment(db_session, pma.id, PersonaMinistryAssignmentUpdate(role="Lider"))
+    pma_up = extended_crud.update_persona_ministry_assignment(
+        db_session, pma.id, PersonaMinistryAssignmentUpdate(role="Lider")
+    )
     assert pma_up.role == "Lider"
 
     extended_crud.delete_persona_ministry_assignment(db_session, pma.id)
@@ -100,7 +115,12 @@ def test_extended_event_assignments(db_session, sample_persona, sample_sede):
     db_session.add(event)
     db_session.commit()
 
-    ea = extended_crud.create_event_assignment(db_session, EventAssignmentCreate(event_id=str(event.id), persona_id=str(sample_persona.id), session_date=date.today(), role="Staff"))
+    ea = extended_crud.create_event_assignment(
+        db_session,
+        EventAssignmentCreate(
+            event_id=str(event.id), persona_id=str(sample_persona.id), session_date=date.today(), role="Staff"
+        ),
+    )
     assert ea is not None
     assert extended_crud.get_event_assignment(db_session, ea.id) is not None
     assert len(extended_crud.get_event_assignments(db_session, event_id=event.id)) >= 1
@@ -112,7 +132,10 @@ def test_extended_event_assignments(db_session, sample_persona, sample_sede):
 
 
 def test_extended_automations(db_session, sample_sede):
-    auto = extended_crud.create_crm_automation(db_session, CrmAutomationCreate(name="Bienvenida Auto", trigger_event="persona_created", action_type="send_email"))
+    auto = extended_crud.create_crm_automation(
+        db_session,
+        CrmAutomationCreate(name="Bienvenida Auto", trigger_event="persona_created", action_type="send_email"),
+    )
     assert auto is not None
     assert extended_crud.get_crm_automation(db_session, auto.id) is not None
     assert len(extended_crud.get_crm_automations(db_session)) >= 1
@@ -122,12 +145,19 @@ def test_extended_automations(db_session, sample_sede):
 
     s1 = uuid.uuid4()
     t1 = uuid.uuid4()
-    edge = extended_crud.create_crm_automation_edge(db_session, CrmAutomationEdgeCreate(automation_id=auto.id, source_id=s1, target_id=t1, source_node_id=s1, target_node_id=t1))
+    edge = extended_crud.create_crm_automation_edge(
+        db_session,
+        CrmAutomationEdgeCreate(
+            automation_id=auto.id, source_id=s1, target_id=t1, source_node_id=s1, target_node_id=t1
+        ),
+    )
     assert edge is not None
     assert extended_crud.get_crm_automation_edge(db_session, edge.id) is not None
     assert len(extended_crud.get_crm_automation_edges(db_session, source_id=None)) >= 1
 
-    edge_up = extended_crud.update_crm_automation_edge(db_session, edge.id, CrmAutomationEdgeUpdate(condition_value="yes"))
+    edge_up = extended_crud.update_crm_automation_edge(
+        db_session, edge.id, CrmAutomationEdgeUpdate(condition_value="yes")
+    )
     assert edge_up.condition_value == "yes"
 
     extended_crud.delete_crm_automation_edge(db_session, edge.id)
@@ -143,7 +173,9 @@ def test_extended_roles(db_session, sample_persona):
     role_up = extended_crud.update_role_definition(db_session, role_def.id, RoleDefinitionUpdate(name="Super Admin"))
     assert role_up.name == "Super Admin"
 
-    link = extended_crud.create_persona_role_link(db_session, PersonaRoleLinkCreate(persona_id=str(sample_persona.id), role_id=str(role_def.id)))
+    link = extended_crud.create_persona_role_link(
+        db_session, PersonaRoleLinkCreate(persona_id=str(sample_persona.id), role_id=str(role_def.id))
+    )
     assert link is not None
     assert len(extended_crud.get_persona_role_links(db_session, persona_id=sample_persona.id)) >= 1
 
@@ -185,10 +217,14 @@ def test_extended_funds_skills_chat(db_session, sample_persona, sample_sede):
     assert extended_crud.get_chat_message(db_session, msg.id) is not None
     assert len(extended_crud.get_chat_messages(db_session)) >= 1
 
-    dm1 = extended_crud.create_direct_message(db_session, conversation_id=conv.id, sender_id=sample_persona.id, content="DM test")
+    dm1 = extended_crud.create_direct_message(
+        db_session, conversation_id=conv.id, sender_id=sample_persona.id, content="DM test"
+    )
     assert dm1 is not None
 
-    dm2 = extended_crud.create_direct_message_by_persona(db_session, conversation_id=conv.id, sender_id=sample_persona.id, content="DM persona test")
+    dm2 = extended_crud.create_direct_message_by_persona(
+        db_session, conversation_id=conv.id, sender_id=sample_persona.id, content="DM persona test"
+    )
     assert dm2 is not None
 
     conv_msgs = extended_crud.get_conversation_messages(db_session, conversation_id=conv.id)

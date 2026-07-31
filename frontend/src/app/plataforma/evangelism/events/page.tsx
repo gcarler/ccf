@@ -848,8 +848,8 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  (() => {
  const attendanceStat = getEventAttendanceStat(ev);
  return (
-  <div 
-  key={ev.id} 
+  <div
+  key={ev.id}
   tabIndex={0}
   role="link"
   onClick={() => router.push(`/plataforma/evangelism/events/${ev.id}`)}
@@ -938,7 +938,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  <Calendar size={16} />
  </div>
  <div className="flex-1 min-w-0">
-  <p 
+  <p
   tabIndex={0}
   role="link"
   onClick={() => router.push(`/plataforma/evangelism/events/${ev.id}`)}
@@ -1559,7 +1559,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  >
  <div className="flex flex-col items-center justify-center space-y-3 py-1.5">
  <div className="p-4 bg-[hsl(var(--bg-primary))] rounded-md shadow-xl border border-[hsl(var(--border-primary))] flex items-center justify-center">
- <QRCodeSVG 
+ <QRCodeSVG
  id="event-qr-code"
  value={typeof window !== 'undefined' ? `${window.location.origin}/public/register?event_id=${selectedEvent?.id}` : ''}
  size={256}
@@ -1628,10 +1628,10 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
  </div>
  <div className="space-y-1.5">
  <label htmlFor="edit-event-status" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estado</label>
- <select 
+ <select
  id="edit-event-status"
- value={editingEvent.status || 'SCHEDULED'} 
- onChange={e => setEditingEvent({...editingEvent, status: e.target.value})} 
+ value={editingEvent.status || 'SCHEDULED'}
+ onChange={e => setEditingEvent({...editingEvent, status: e.target.value})}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
  >
  <option value="SCHEDULED">Programado</option>

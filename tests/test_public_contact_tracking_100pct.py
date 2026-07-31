@@ -1,12 +1,11 @@
 """Tests exhaustivos y estructurales para backend/services/public_contact_tracking.py (100% Cobertura)."""
 
 import pytest
-import uuid
+
 from backend import models
-from backend.models_crm_pipeline import TipoPipelineEnum, CanalOrigenEnum, EstadoCasoEnum
+from backend.models_crm_pipeline import CanalOrigenEnum, TipoPipelineEnum
 from backend.services.public_contact_tracking import (
     ContactRecord,
-    ContactResult,
     PublicContactTracker,
     _normalize,
     tracker,
@@ -14,7 +13,6 @@ from backend.services.public_contact_tracking import (
 
 
 class TestPublicContactTracking100Pct:
-
     def test_normalize_helper(self):
         assert _normalize(None) is None
         assert _normalize("") is None

@@ -1,4 +1,5 @@
 """Tests for evangelism_grupos/grupos_main.py — working endpoints."""
+
 from __future__ import annotations
 
 import uuid
@@ -23,14 +24,21 @@ def full(client, db_session):
 class TestGrupos:
     def test_list(self, full):
         assert _ok(full["c"].get("/api/evangelism/grupos", headers=full["h"]).status_code)
+
     def test_list_filtered(self, full):
         assert _ok(full["c"].get("/api/evangelism/grupos?skip=0&limit=10", headers=full["h"]).status_code)
+
     def test_list_mine(self, full):
         assert _ok(full["c"].get("/api/evangelism/grupos/mine", headers=full["h"]).status_code)
+
     def test_get_not_found(self, full):
         assert full["c"].get(f"/api/evangelism/grupos/{uuid.uuid4()}", headers=full["h"]).status_code == 404
+
     def test_assignment_summary(self, full):
         assert _ok(full["c"].get("/api/evangelism/grupos/assignment-summary", headers=full["h"]).status_code)
+
     def test_asistencias_not_found(self, full):
-        assert full["c"].get(f"/api/evangelism/grupos/{uuid.uuid4()}/asistencias",
-            headers=full["h"]).status_code in (200, 404)
+        assert full["c"].get(f"/api/evangelism/grupos/{uuid.uuid4()}/asistencias", headers=full["h"]).status_code in (
+            200,
+            404,
+        )

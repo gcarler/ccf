@@ -9,6 +9,7 @@ with the pastoral profiles automatically.
 Usage:
     cd /root/ccf && source venv/bin/activate && python scripts/sync_cms_pastors_to_personas.py
 """
+
 from __future__ import annotations
 
 import sys

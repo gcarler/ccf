@@ -117,9 +117,7 @@ def get_ministerial_funds(
         # FIN-H15: Reserva = 10% del total histórico (política financiera CCF)
         "reserva": round(float(total_all_time) * 0.10),
         "total_historico": round(total_all_time),
-        "por_tipo": [
-            {"tipo": r[0] or "Ofrenda", "total": round(r[1])} for r in by_type
-        ],
+        "por_tipo": [{"tipo": r[0] or "Ofrenda", "total": round(r[1])} for r in by_type],
     }
 
 
@@ -354,14 +352,9 @@ def get_mission_impact(
     )
 
     total_cat = sum(r[1] for r in by_category) or 1
-    distribucion = [
-        {"label": r[0] or "Ofrenda", "pct": round(r[1] / total_cat * 100), "desc": ""}
-        for r in by_category
-    ]
+    distribucion = [{"label": r[0] or "Ofrenda", "pct": round(r[1] / total_cat * 100), "desc": ""} for r in by_category]
     if not distribucion:
-        distribucion = [
-            {"label": "Ofrendas Generales", "pct": 100, "desc": "Donaciones recibidas."}
-        ]
+        distribucion = [{"label": "Ofrendas Generales", "pct": 100, "desc": "Donaciones recibidas."}]
 
     result = {
         "total_miembros": total_personas,

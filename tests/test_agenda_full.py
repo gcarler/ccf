@@ -1,11 +1,13 @@
 """Tests completos del módulo Agenda — cubre endpoints sin cobertura,
 validadores de schemas, aislamiento por sede, RBAC HTTP y soft-delete."""
+
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from tests.conftest import auth_headers, seed_admin
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
+
 
 def _event_payload(title="Test Event", start=None, end=None, location="Sala A"):
     start = start or datetime(2026, 7, 1, 10, 0, tzinfo=timezone.utc)
@@ -62,6 +64,7 @@ def _create_resource(client, headers, name="Auditorio"):
 
 # ── 1. Endpoint by-date-range ──────────────────────────────────────────────
 
+
 class TestEventsByDateRange:
     def test_returns_events_in_range(self, client, db_session):
         admin, _, _ = seed_admin(db_session)
@@ -85,8 +88,7 @@ class TestEventsByDateRange:
         headers = auth_headers(client, email=admin.email)
 
         outside_start = datetime(2026, 8, 1, 10, 0, tzinfo=timezone.utc)
-        _create_event(client, headers, "Fuera de rango",
-                      start=outside_start, end=outside_start + timedelta(hours=1))
+        _create_event(client, headers, "Fuera de rango", start=outside_start, end=outside_start + timedelta(hours=1))
 
         query_start = datetime(2026, 7, 1, 0, 0, tzinfo=timezone.utc)
         query_end = datetime(2026, 7, 2, 0, 0, tzinfo=timezone.utc)
@@ -113,6 +115,7 @@ class TestEventsByDateRange:
 
 
 # ── 2. CRUD Resources ──────────────────────────────────────────────────────
+
 
 class TestResourcesCRUD:
     def test_update_resource(self, client, db_session):
@@ -162,6 +165,7 @@ class TestResourcesCRUD:
 
 
 # ── 3. CRUD Participants ───────────────────────────────────────────────────
+
 
 class TestParticipantsCRUD:
     def test_list_participants(self, client, db_session):
@@ -232,6 +236,7 @@ class TestParticipantsCRUD:
 
 
 # ── 4. CRUD Reservations ───────────────────────────────────────────────────
+
 
 class TestReservationsCRUD:
     def test_list_reservations(self, client, db_session):
@@ -343,6 +348,7 @@ class TestReservationsCRUD:
 
 # ── 5. Schema validation ──────────────────────────────────────────────────
 
+
 class TestSchemaValidation:
     def test_event_end_before_start_rejected(self, client, db_session):
         admin, _, _ = seed_admin(db_session)
@@ -388,6 +394,7 @@ class TestSchemaValidation:
 
 
 # ── 6. Soft-delete forense ────────────────────────────────────────────────
+
 
 class TestSoftDeleteForense:
     def test_archived_event_not_in_list(self, client, db_session):
@@ -441,6 +448,7 @@ class TestSoftDeleteForense:
 
 # ── 7. RBAC HTTP-level ────────────────────────────────────────────────────
 
+
 class TestRBACAgenda:
     def test_unauthenticated_returns_401(self, client, db_session):
         resp = client.get("/api/agenda/events")
@@ -455,6 +463,7 @@ class TestRBACAgenda:
 
 
 # ── 8. Dashboard (BUG fix validation) ────────────────────────────────────
+
 
 class TestAgendaDashboard:
     def test_dashboard_returns_cards(self, client, db_session):
@@ -474,6 +483,7 @@ class TestAgendaDashboard:
 
 
 # ── 9. 404 edge cases (cobertura 100%) ───────────────────────────────────
+
 
 class TestNotFoundEdgeCases:
     def test_update_nonexistent_event_returns_404(self, client, db_session):

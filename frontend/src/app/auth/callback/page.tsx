@@ -28,7 +28,7 @@ function AuthCallbackContent() {
             }
 
             setStatus('Autenticación exitosa. Redirigiendo...');
-            
+
             // Clean URL params after extracting token
             if (typeof window !== 'undefined') {
                 window.history.replaceState({}, document.title, '/auth/callback');
@@ -37,7 +37,7 @@ function AuthCallbackContent() {
             await login(token, refresh ?? undefined);
             router.push('/plataforma/messages');
         }
-        
+
         handleAuth();
     }, [login, router, searchParams]); // login/router/searchParams are stable
 

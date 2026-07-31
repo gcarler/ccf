@@ -71,6 +71,7 @@ WHAT IS NOT IN SCOPE
   page reads from the v2 ``CmsSection``, so the old table is dead weight
   post-fix and can be addressed in a separate cleanup task.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -111,22 +112,21 @@ import functools
 import re
 import unicodedata
 
-
 # Slug → .jpg filename on disk. Add or remove entries here; keep them sorted.
 # NOTE: 'alba-arias' is intentionally absent because no manual .jpg was
 # uploaded — the fix scope is exactly the 9 photos staff already placed on
 # disk. Add 'alba' to this list once staff uploads an alba-arias.jpg.
 # Placeholders so tests can enumerate the empty map without syntax surprise.
 FIX_MAP: list[tuple[str, str]] = [
-    ("alex-y-elvia",      "alex-y-elvia.jpg"),
-    ("camilo-pajaro",     "camilo-pajaro.jpg"),
+    ("alex-y-elvia", "alex-y-elvia.jpg"),
+    ("camilo-pajaro", "camilo-pajaro.jpg"),
     ("fernando-y-monica", "fernando-y-monica.jpg"),
-    ("histar-ariza",      "histar-ariza.jpg"),
+    ("histar-ariza", "histar-ariza.jpg"),
     ("luis-ricardo-meza", "luis-ricardo-meza.jpg"),
-    ("martina-herrera",   "martina-herrera.jpg"),
-    ("nehemias-morales",  "nehemias-morales.jpg"),
-    ("yair-macea",        "yair-macea.jpg"),
-    ("yanedith-wilches",  "yanedith-wilches.jpg"),
+    ("martina-herrera", "martina-herrera.jpg"),
+    ("nehemias-morales", "nehemias-morales.jpg"),
+    ("yair-macea", "yair-macea.jpg"),
+    ("yanedith-wilches", "yanedith-wilches.jpg"),
 ]
 
 
@@ -243,11 +243,7 @@ def find_canonical_admin(db):
     user without a sede is fine (superadmin path bypasses scope check) but
     for consistency we prefer the canonical seed admin email first.
     """
-    user = (
-        db.query(models.Usuario)
-        .filter(models.Usuario.email == CANONICAL_ADMIN_EMAIL)
-        .first()
-    )
+    user = db.query(models.Usuario).filter(models.Usuario.email == CANONICAL_ADMIN_EMAIL).first()
     if user is not None:
         return user
     return (
@@ -305,19 +301,12 @@ def fix_one_pastor(db, slug: str, jpg_filename: str, admin, dry_run: bool):
 
     persona = find_pastoral_persona_by_slug(db, slug)
     if persona is None:
-        print(
-            f"  [skip]   {slug}: no pastoral Persona whose nombre_completo "
-            f"matches slug tokens for '{slug}'"
-        )
+        print(f"  [skip]   {slug}: no pastoral Persona whose nombre_completo matches slug tokens for '{slug}'")
         return ("skip", None)
 
     current_url = (persona.photo_url or "").strip()
     if current_url:
-        existing_media = (
-            db.query(models.CmsMediaItem)
-            .filter(models.CmsMediaItem.url == current_url)
-            .first()
-        )
+        existing_media = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.url == current_url).first()
         # Idempotency: if persona already points at a CmsMediaItem we
         # tagged with "fix" on a previous run, treat as already-done and
         # do NOT allocate another random-UUID .webp on disk.
@@ -341,9 +330,7 @@ def fix_one_pastor(db, slug: str, jpg_filename: str, admin, dry_run: bool):
 
     # Now we are committed to writing. Allocate the new optimized .webp.
     content = file_path.read_bytes()
-    storage_path = storage_service.save_file(
-        content, jpg_filename, subfolder=UPLOAD_SUBDIR
-    )
+    storage_path = storage_service.save_file(content, jpg_filename, subfolder=UPLOAD_SUBDIR)
     # ``storage_service.save_file`` returns ``/static/{subfolder}/{name}`` \u2014
     # the path WITHIN the static mount. The app mounts StaticFiles at
     # ``/api/static`` (see backend/app.py: ``app.mount("/api/static", ...)``),
@@ -353,18 +340,14 @@ def fix_one_pastor(db, slug: str, jpg_filename: str, admin, dry_run: bool):
     # the live endpoint would 500 on the wrong URL. Strip the leading
     # ``/static/`` so the public URL is canonical.
     if storage_path.startswith("/static/"):
-        relative = storage_path[len("/static/"):]
+        relative = storage_path[len("/static/") :]
     else:
         relative = storage_path.lstrip("/")
     new_public_url = f"/api/static/{relative}"
 
     # CmsMediaItem.url is unique per row. storage_service generates random
     # UUIDs so collisions are statistically zero, but guard anyway.
-    existing = (
-        db.query(models.CmsMediaItem)
-        .filter(models.CmsMediaItem.url == new_public_url)
-        .first()
-    )
+    existing = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.url == new_public_url).first()
     if existing is None:
         crud.create_cms_media_item(
             db,
@@ -383,10 +366,7 @@ def fix_one_pastor(db, slug: str, jpg_filename: str, admin, dry_run: bool):
         print(f"  [media~] {slug}: reused existing CmsMediaItem {existing.id}")
 
     persona.photo_url = new_public_url
-    print(
-        f"  [pers ] {slug}: persona={persona.id} ({persona.nombre_completo!r}) "
-        f"photo_url updated"
-    )
+    print(f"  [pers ] {slug}: persona={persona.id} ({persona.nombre_completo!r}) photo_url updated")
     return ("changed", new_public_url)
 
 
@@ -475,9 +455,7 @@ def main() -> int:
                 if only_slugs and slug not in only_slugs:
                     print(f"  [-- ]   {slug}: skipped by --only")
                     continue
-                mode, new_url = fix_one_pastor(
-                    db, slug, jpg_filename, admin, dry_run
-                )
+                mode, new_url = fix_one_pastor(db, slug, jpg_filename, admin, dry_run)
                 if mode == "changed" and new_url:
                     affected.append((slug, new_url))
                 elif mode == "dry":
@@ -486,10 +464,7 @@ def main() -> int:
             print()
             print("─── Publish ───")
             if dry_run:
-                print(
-                    f"[DRY_RUN] would publish {dry_count} fix(es); "
-                    f"no filesystem or DB writes performed."
-                )
+                print(f"[DRY_RUN] would publish {dry_count} fix(es); no filesystem or DB writes performed.")
                 db.rollback()
                 return 0
 

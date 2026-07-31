@@ -84,8 +84,8 @@ export default function StudentCurriculum() {
                 )}
                 <div className="px-4 pb-8 space-y-4">
                         {filtered.map((enrollment) => (
-                            <article 
-                                key={enrollment.id} 
+                            <article
+                                key={enrollment.id}
                                 onClick={() => router.push(`/plataforma/academy/course/${enrollment.course.id}`)}
                                 className="bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/10 flex items-center gap-4 group cursor-pointer hover:shadow-lg transition-all"
                             >

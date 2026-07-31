@@ -1,8 +1,9 @@
 """Comprehensive tests for evangelism_rankings.py — all 3 endpoints + 3 sort modes."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -33,17 +34,16 @@ class TestRankingsGroups:
         db_session.add(p)
         db_session.flush()
 
-        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="Top Group",
-                                     sede_id=s.id, lider_persona_id=p.id, activo=True)
+        g = models.GrupoEvangelismo(
+            id=uuid.uuid4(), nombre="Top Group", sede_id=s.id, lider_persona_id=p.id, activo=True
+        )
         db_session.add(g)
         db_session.flush()
 
-        ses = models.SesionGrupo(id=uuid.uuid4(), grupo_id=g.id,
-                                 fecha_sesion=now, estado="REALIZADA")
+        ses = models.SesionGrupo(id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA")
         db_session.add(ses)
         db_session.flush()
-        db_session.add(models.Asistencia(id=uuid.uuid4(), sesion_id=ses.id,
-                        persona_id=p.id, estado="ASISTIO"))
+        db_session.add(models.Asistencia(id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO"))
         db_session.commit()
 
         resp = c.get("/api/evangelism/rankings/groups?by=attendance", headers=h)
@@ -60,14 +60,22 @@ class TestRankingsGroups:
         db_session.add(p)
         db_session.flush()
 
-        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="Growth Group",
-                                     sede_id=s.id, lider_persona_id=p.id, activo=True)
+        g = models.GrupoEvangelismo(
+            id=uuid.uuid4(), nombre="Growth Group", sede_id=s.id, lider_persona_id=p.id, activo=True
+        )
         db_session.add(g)
         db_session.flush()
 
-        db_session.add(models.ParticipanteGrupo(id=uuid.uuid4(), grupo_id=g.id,
-                        persona_id=p.id, rol_base="miembro", activo=True,
-                        fecha_ingreso=now - timedelta(days=15)))
+        db_session.add(
+            models.ParticipanteGrupo(
+                id=uuid.uuid4(),
+                grupo_id=g.id,
+                persona_id=p.id,
+                rol_base="miembro",
+                activo=True,
+                fecha_ingreso=now - timedelta(days=15),
+            )
+        )
         db_session.commit()
 
         resp = c.get("/api/evangelism/rankings/groups?by=growth", headers=h)
@@ -84,14 +92,22 @@ class TestRankingsGroups:
         db_session.add(p)
         db_session.flush()
 
-        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="Visitor Group",
-                                     sede_id=s.id, lider_persona_id=p.id, activo=True)
+        g = models.GrupoEvangelismo(
+            id=uuid.uuid4(), nombre="Visitor Group", sede_id=s.id, lider_persona_id=p.id, activo=True
+        )
         db_session.add(g)
         db_session.flush()
 
-        db_session.add(models.ParticipanteGrupo(id=uuid.uuid4(), grupo_id=g.id,
-                        persona_id=p.id, rol_base="visitante", activo=True,
-                        fecha_ingreso=now - timedelta(days=3)))
+        db_session.add(
+            models.ParticipanteGrupo(
+                id=uuid.uuid4(),
+                grupo_id=g.id,
+                persona_id=p.id,
+                rol_base="visitante",
+                activo=True,
+                fecha_ingreso=now - timedelta(days=3),
+            )
+        )
         db_session.commit()
 
         resp = c.get("/api/evangelism/rankings/groups?by=visitors", headers=h)
@@ -101,8 +117,7 @@ class TestRankingsGroups:
 
     def test_empty_groups(self, full):
         """No data returns empty list."""
-        resp = full["c"].get("/api/evangelism/rankings/groups?by=attendance",
-                             headers=full["h"])
+        resp = full["c"].get("/api/evangelism/rankings/groups?by=attendance", headers=full["h"])
         assert _ok(resp.status_code)
         assert resp.json() == []
 
@@ -117,17 +132,16 @@ class TestRankingsMonthly:
         db_session.add(p)
         db_session.flush()
 
-        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="Monthly Group",
-                                     sede_id=s.id, lider_persona_id=p.id, activo=True)
+        g = models.GrupoEvangelismo(
+            id=uuid.uuid4(), nombre="Monthly Group", sede_id=s.id, lider_persona_id=p.id, activo=True
+        )
         db_session.add(g)
         db_session.flush()
 
-        ses = models.SesionGrupo(id=uuid.uuid4(), grupo_id=g.id,
-                                 fecha_sesion=now, estado="REALIZADA")
+        ses = models.SesionGrupo(id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA")
         db_session.add(ses)
         db_session.flush()
-        db_session.add(models.Asistencia(id=uuid.uuid4(), sesion_id=ses.id,
-                        persona_id=p.id, estado="ASISTIO"))
+        db_session.add(models.Asistencia(id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO"))
         db_session.commit()
 
         resp = c.get("/api/evangelism/rankings/monthly-comparison", headers=h)
@@ -143,24 +157,23 @@ class TestRankingsLeaders:
         c, h, s = full["c"], full["h"], full["s"]
         now = datetime.now(timezone.utc)
 
-        p = models.Persona(id=uuid.uuid4(), first_name="Lead", last_name="Test",
-                          sede_id=s.id)
+        p = models.Persona(id=uuid.uuid4(), first_name="Lead", last_name="Test", sede_id=s.id)
         db_session.add(p)
         db_session.flush()
 
-        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="Leader Group",
-                                     sede_id=s.id, lider_persona_id=p.id, activo=True)
+        g = models.GrupoEvangelismo(
+            id=uuid.uuid4(), nombre="Leader Group", sede_id=s.id, lider_persona_id=p.id, activo=True
+        )
         db_session.add(g)
         db_session.flush()
 
-        ses = models.SesionGrupo(id=uuid.uuid4(), grupo_id=g.id,
-                                 fecha_sesion=now, estado="REALIZADA")
+        ses = models.SesionGrupo(id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA")
         db_session.add(ses)
         db_session.flush()
-        db_session.add(models.Asistencia(id=uuid.uuid4(), sesion_id=ses.id,
-                        persona_id=p.id, estado="ASISTIO"))
-        db_session.add(models.ParticipanteGrupo(id=uuid.uuid4(), grupo_id=g.id,
-                        persona_id=p.id, rol_base="miembro", activo=True))
+        db_session.add(models.Asistencia(id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO"))
+        db_session.add(
+            models.ParticipanteGrupo(id=uuid.uuid4(), grupo_id=g.id, persona_id=p.id, rol_base="miembro", activo=True)
+        )
         db_session.commit()
 
         resp = c.get("/api/evangelism/rankings/leaders", headers=h)

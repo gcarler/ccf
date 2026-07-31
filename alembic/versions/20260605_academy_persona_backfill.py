@@ -171,12 +171,7 @@ def _pg_add_unique_if_clean(table: str, columns: tuple[str, str], constraint_nam
         return
     if _duplicate_count(table, columns[0], columns[1]) > 0:
         return
-    bind.execute(
-        sa.text(
-            f"ALTER TABLE {table} ADD CONSTRAINT {constraint_name} "
-            f"UNIQUE ({columns[0]}, {columns[1]})"
-        )
-    )
+    bind.execute(sa.text(f"ALTER TABLE {table} ADD CONSTRAINT {constraint_name} UNIQUE ({columns[0]}, {columns[1]})"))
 
 
 def _backfill(table: str, target_col: str, source_col: str = "user_id") -> None:
@@ -248,12 +243,7 @@ def downgrade() -> None:
             ("lesson_progress", "fk_lesson_progress_persona_id"),
             ("enrollments", "fk_enrollments_persona_id"),
         ):
-            bind.execute(
-                sa.text(
-                    f"ALTER TABLE IF EXISTS {table} "
-                    f"DROP CONSTRAINT IF EXISTS {constraint}"
-                )
-            )
+            bind.execute(sa.text(f"ALTER TABLE IF EXISTS {table} DROP CONSTRAINT IF EXISTS {constraint}"))
 
     for table, column in (
         ("formal_actas", "closed_by_persona_id"),

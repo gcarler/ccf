@@ -122,13 +122,13 @@ export default function AccountSettingsPage() {
     return (
         <WorkspaceLayout sidebarTitle="Cuenta" sidebarSections={sidebarSections}>
             <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: SITE_NAME, icon: Layout }, { label: 'Ajustes de Cuenta', icon: SettingsIcon }]}
                 viewType={viewType}
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 rightActions={
-                    <button 
+                    <button
                         onClick={handleSave} disabled={isSaving}
                         className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all disabled:opacity-50"
                     >
@@ -188,8 +188,8 @@ export default function AccountSettingsPage() {
                             key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                             className={clsx(
                                 "w-full flex items-center gap-4 px-3 py-1.5 rounded-lg font-semibold transition-all group relative overflow-hidden",
-                                activeTab === tab.id 
-                                    ? "bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--primary))] dark:text-white shadow-[var(--shadow-premium)] border border-[hsl(var(--border))] dark:border-white/10" 
+                                activeTab === tab.id
+                                    ? "bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--primary))] dark:text-white shadow-[var(--shadow-premium)] border border-[hsl(var(--border))] dark:border-white/10"
                                     : "text-[hsl(var(--text-secondary))] hover:bg-white/50 dark:hover:bg-white/5"
                             )}
                         >
@@ -209,11 +209,11 @@ export default function AccountSettingsPage() {
                 {/* Content Area 3.0 */}
                 <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] relative">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--primary)/0.03)_0%,_transparent_50%)] pointer-events-none" />
-                    
+
  <div className="w-full relative z-10">
                         <AnimatePresence mode="wait">
                             {activeTab === 'profile' && (
-                                <motion.div 
+                                <motion.div
                                     key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                                     className="space-y-3"
                                 >
@@ -287,7 +287,7 @@ export default function AccountSettingsPage() {
                             )}
 
                             {activeTab === 'security' && (
-                                <motion.div 
+                                <motion.div
                                     key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                                     className="space-y-3"
                                 >
@@ -359,7 +359,7 @@ export default function AccountSettingsPage() {
                             )}
 
                             {activeTab === 'appearance' && (
-                                <motion.div 
+                                <motion.div
                                     key="appearance" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                                     className="space-y-3"
                                 >
@@ -417,8 +417,8 @@ function ThemeCard({ label, icon: Icon, active }: any) {
     return (
         <div className={clsx(
             "p-4 rounded-lg border-2 cursor-pointer transition-all flex flex-col items-center gap-3 group relative overflow-hidden",
-            active 
-                ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] shadow-2xl shadow-[hsl(var(--primary))/0.1] scale-[1.02]" 
+            active
+                ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] shadow-2xl shadow-[hsl(var(--primary))/0.1] scale-[1.02]"
                 : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--info)/25%)] hover:scale-[1.02]"
         )}>
             {active && <div className="absolute top-4 right-4 size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_rgba(59,130,246,0.8)]" />}

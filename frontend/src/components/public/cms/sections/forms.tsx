@@ -64,4 +64,3 @@ export function PrayerFormSection({ section }: { section: CmsSection<"prayer_for
 }
 
 // ─── Course Grid (config-only shell; data comes from academy API) ──────────────
-

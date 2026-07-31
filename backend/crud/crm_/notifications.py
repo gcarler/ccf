@@ -6,6 +6,7 @@ retorna el count de filas afectadas (A-06).
 
 Axioma 3: cada usuario ve y modifica SÓLO sus propias notifications.
 """
+
 import uuid
 from typing import List
 
@@ -87,9 +88,13 @@ def mark_all_notifications_read(db: Session, user_id: uuid.UUID | str) -> int:
     notification_user_id = resolve_persona_id_for_user(db, user_id)
     if notification_user_id is None:
         return 0
-    result = db.query(models.Notification).filter(
-        models.Notification.user_id == notification_user_id,
-        models.Notification.is_read.is_(False),
-    ).update({models.Notification.is_read: True})
+    result = (
+        db.query(models.Notification)
+        .filter(
+            models.Notification.user_id == notification_user_id,
+            models.Notification.is_read.is_(False),
+        )
+        .update({models.Notification.is_read: True})
+    )
     db.commit()
     return result

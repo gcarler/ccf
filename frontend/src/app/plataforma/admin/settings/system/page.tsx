@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Settings, 
-    Shield, 
-    Zap, 
-    Database, 
-    Server, 
-    Activity, 
-    Cpu, 
-    Globe, 
-    Lock, 
-    Smartphone, 
-    Mail, 
+import {
+    Settings,
+    Shield,
+    Zap,
+    Database,
+    Server,
+    Activity,
+    Cpu,
+    Globe,
+    Lock,
+    Smartphone,
+    Mail,
     Layers,
     ChevronRight,
     CheckCircle2,
@@ -848,7 +848,7 @@ export default function SystemSettings() {
                 placeholder="Describe la acción tomada..."
                 submitLabel="Guardar nota"
             />
-        <WorkspaceLayout 
+        <WorkspaceLayout
             sidebarTitle="Ajustes del Sistema"
             parentTitle="Panel de Control"
             depth={2}
@@ -867,15 +867,15 @@ export default function SystemSettings() {
                 description="Control de bajo nivel del ecosistema MESH. Modifica el comportamiento global de la plataforma, gestiona feature flags y monitoriza el rendimiento del núcleo."
                 tags={['v2.1.5', 'High Availability', 'MESH Core']}
                 watchers={['Tech Lead', 'Root Admin']}
-                primaryAction={{ 
-                    label: actionLoading === 'worker' ? 'Reiniciando...' : 'Reiniciar Worker', 
-                    icon: actionLoading === 'worker' ? Loader2 : RefreshCw, 
-                    onClick: () => handleCriticalAction('worker', 'Reinicio de Worker') 
+                primaryAction={{
+                    label: actionLoading === 'worker' ? 'Reiniciando...' : 'Reiniciar Worker',
+                    icon: actionLoading === 'worker' ? Loader2 : RefreshCw,
+                    onClick: () => handleCriticalAction('worker', 'Reinicio de Worker')
                 }}
-                secondaryAction={{ 
-                    label: 'Respaldar DB', 
-                    icon: Database, 
-                    onClick: () => handleCriticalAction('backup', 'Backup de Base de Datos') 
+                secondaryAction={{
+                    label: 'Respaldar DB',
+                    icon: Database,
+                    onClick: () => handleCriticalAction('backup', 'Backup de Base de Datos')
                 }}
             />
 
@@ -898,24 +898,24 @@ export default function SystemSettings() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <FeatureToggle 
-                                    label="Academia & LMS" desc="Habilita el reproductor de cursos y certificados." 
-                                    active={config?.features_enabled?.lms} onToggle={() => toggleFeature('lms')} 
+                                <FeatureToggle
+                                    label="Academia & LMS" desc="Habilita el reproductor de cursos y certificados."
+                                    active={config?.features_enabled?.lms} onToggle={() => toggleFeature('lms')}
                                     loading={actionLoading === 'flag-lms'}
                                 />
-                                <FeatureToggle 
+                                <FeatureToggle
                                     label="CRM Pastoral" desc="Control de personas, casas y consolidación."
-                                    active={config?.features_enabled?.crm} onToggle={() => toggleFeature('crm')} 
+                                    active={config?.features_enabled?.crm} onToggle={() => toggleFeature('crm')}
                                     loading={actionLoading === 'flag-crm'}
                                 />
-                                <FeatureToggle 
-                                    label="Optimus Brain AI" desc="Algoritmos de análisis proactivo y sugerencias." 
-                                    active={config?.features_enabled?.ia} onToggle={() => toggleFeature('ia')} 
+                                <FeatureToggle
+                                    label="Optimus Brain AI" desc="Algoritmos de análisis proactivo y sugerencias."
+                                    active={config?.features_enabled?.ia} onToggle={() => toggleFeature('ia')}
                                     loading={actionLoading === 'flag-ia'}
                                 />
-                                <FeatureToggle 
-                                    label="Treasury & Pagos" desc="Gestión de donaciones y pasarelas bancarias." 
-                                    active={config?.features_enabled?.donations} onToggle={() => toggleFeature('donations')} 
+                                <FeatureToggle
+                                    label="Treasury & Pagos" desc="Gestión de donaciones y pasarelas bancarias."
+                                    active={config?.features_enabled?.donations} onToggle={() => toggleFeature('donations')}
                                     loading={actionLoading === 'flag-donations'}
                                 />
                                 <FeatureToggle

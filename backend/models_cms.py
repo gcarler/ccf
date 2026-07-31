@@ -120,9 +120,7 @@ class CmsMenu(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    __table_args__ = (
-        UniqueConstraint("site_id", "menu_key", name="uq_cms_menu_site_key"),
-    )
+    __table_args__ = (UniqueConstraint("site_id", "menu_key", name="uq_cms_menu_site_key"),)
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     site = relationship("CmsSite", back_populates="menus", lazy="joined")
@@ -212,14 +210,14 @@ class CmsPage(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    __table_args__ = (
-        UniqueConstraint("site_id", "slug", name="uq_cms_page_site_slug"),
-    )
+    __table_args__ = (UniqueConstraint("site_id", "slug", name="uq_cms_page_site_slug"),)
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     site = relationship("CmsSite", back_populates="pages", lazy="joined")
     sections = relationship("CmsSection", back_populates="page", lazy="selectin")
-    versions = relationship("CmsPageVersion", back_populates="page", lazy="selectin", foreign_keys="CmsPageVersion.page_id")
+    versions = relationship(
+        "CmsPageVersion", back_populates="page", lazy="selectin", foreign_keys="CmsPageVersion.page_id"
+    )
     views = relationship("CmsPageView", back_populates="page", lazy="selectin")
     publish_logs = relationship("CmsPublishLog", back_populates="page", lazy="selectin")
     created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
@@ -236,9 +234,7 @@ class CmsPageVersion(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     page_id = Column(
         UUID(as_uuid=True),
-        ForeignKey(
-            "cms_pages.id", ondelete="CASCADE", name="fk_cms_page_versions_page_id"
-        ),
+        ForeignKey("cms_pages.id", ondelete="CASCADE", name="fk_cms_page_versions_page_id"),
         nullable=False,
         index=True,
     )
@@ -248,11 +244,7 @@ class CmsPageVersion(Base):
     created_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
-    __table_args__ = (
-        UniqueConstraint(
-            "page_id", "version_number", name="uq_cms_page_version_number"
-        ),
-    )
+    __table_args__ = (UniqueConstraint("page_id", "version_number", name="uq_cms_page_version_number"),)
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     page = relationship(
@@ -349,6 +341,7 @@ class CmsPageView(Base):
 
 class SavedView(Base):
     """Saved table views with schema, filters, grouping, and conditional format."""
+
     __tablename__ = "saved_views"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -369,6 +362,7 @@ class SavedView(Base):
 
 
 # ── Posts & Taxonomías (Blog/Noticias) ─────────────────────────────────────
+
 
 class CmsCategory(Base):
     __tablename__ = "cms_categories"
@@ -392,9 +386,7 @@ class CmsCategory(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    __table_args__ = (
-        UniqueConstraint("site_id", "slug", name="uq_cms_category_site_slug"),
-    )
+    __table_args__ = (UniqueConstraint("site_id", "slug", name="uq_cms_category_site_slug"),)
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     site = relationship("CmsSite", back_populates="categories", lazy="joined")
@@ -432,9 +424,7 @@ class CmsTag(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    __table_args__ = (
-        UniqueConstraint("site_id", "slug", name="uq_cms_tag_site_slug"),
-    )
+    __table_args__ = (UniqueConstraint("site_id", "slug", name="uq_cms_tag_site_slug"),)
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     site = relationship("CmsSite", back_populates="tags", lazy="joined")
@@ -475,9 +465,7 @@ class CmsPost(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
-    __table_args__ = (
-        UniqueConstraint("site_id", "slug", name="uq_cms_post_site_slug"),
-    )
+    __table_args__ = (UniqueConstraint("site_id", "slug", name="uq_cms_post_site_slug"),)
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     site = relationship("CmsSite", back_populates="posts", lazy="joined")
@@ -568,7 +556,6 @@ class CmsPostComment(Base):
     replies = relationship("CmsPostComment", back_populates="parent", cascade="all, delete-orphan", lazy="selectin")
 
 
-
 class CmsSeoSnapshot(Base):
     """Daily SEO score snapshot per ``CmsSite`` (CCF global model).
 
@@ -612,7 +599,9 @@ class CmsSeoSnapshot(Base):
         # models_shared, ya reexportado en L2) usado por el resto del modulo.
         # La lambda inline no se congenlaba bajo monkeypatch de tests que
         # freezean ``_utcnow``.
-        DateTime(timezone=True), nullable=False, default=_utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
     )
     average_score = Column(Integer, nullable=False, default=0)
     total_pages = Column(Integer, nullable=False, default=0)
@@ -620,9 +609,7 @@ class CmsSeoSnapshot(Base):
     critical_issues = Column(Integer, nullable=False, default=0)
     by_severity_json = Column(JSON, default=dict)
 
-    __table_args__ = (
-        UniqueConstraint("site_id", "captured_date", name="uq_cms_seo_snapshot_site_date"),
-    )
+    __table_args__ = (UniqueConstraint("site_id", "captured_date", name="uq_cms_seo_snapshot_site_date"),)
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     site = relationship("CmsSite", back_populates="seo_snapshots", lazy="joined")
@@ -682,7 +669,9 @@ class CmsForm(Base):
 
     # Relationships
     site = relationship("CmsSite", back_populates="forms", lazy="joined")
-    submissions = relationship("CmsFormSubmission", back_populates="form", lazy="selectin", cascade="all, delete-orphan")
+    submissions = relationship(
+        "CmsFormSubmission", back_populates="form", lazy="selectin", cascade="all, delete-orphan"
+    )
 
 
 class CmsFormSubmission(Base):
@@ -728,9 +717,7 @@ class CmsNewsletter(Base):
 
 class CmsSubscriber(Base):
     __tablename__ = "cms_subscribers"
-    __table_args__ = (
-        UniqueConstraint("site_id", "email", name="uq_cms_subscribers_site_email"),
-    )
+    __table_args__ = (UniqueConstraint("site_id", "email", name="uq_cms_subscribers_site_email"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     site_id = Column(
@@ -814,4 +801,3 @@ class CmsAbTestEvent(Base):
 
     # Relationships
     test = relationship("CmsAbTest", back_populates="events", lazy="joined")
-

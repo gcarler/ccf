@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { 
-    ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
+import {
+    ChevronLeft, ChevronRight, Calendar as CalendarIcon,
     Plus, Sparkles, Maximize2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -49,7 +49,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
     const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
     const [dragOverDay, setDragOverDay] = useState<Date | null>(null);
     const dragOverCounts = React.useRef<Record<string, number>>({});
-    
+
     // Calendar logic
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
@@ -76,7 +76,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm">
-            
+
             {/* ─── Control Header ─── */}
             <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -123,12 +123,12 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                 <div className="flex-1 grid grid-cols-7 gap-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg p-1 overflow-hidden border border-[hsl(var(--border))] dark:border-white/5">
                     {days.map((day, idx) => {
                         if (!day) return <div key={`empty-${idx}`} className="bg-white/40 dark:bg-black/20" />;
-                        
+
                         const dayEvents = getEventsForDay(day);
                         const isToday = day.toDateString() === new Date().toDateString();
 
                         return (
-                            <motion.div 
+                            <motion.div
                                 key={day.toISOString()}
                                 initial={{ opacity: 0, scale: 0.98 }}
                                 animate={{ opacity: 1, scale: 1 }}

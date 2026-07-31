@@ -17,6 +17,7 @@ para no correr 429 en la 100+ test suite. Estos tests validan:
   3) Endpoints publicos conservan su propio rate_limiter override
   4) Multiplicidad: cada endpoint del router hered un dep
 """
+
 from __future__ import annotations
 
 from backend.api import cms_v2
@@ -45,8 +46,7 @@ class TestF05RouterRateLimiter:
                 continue
             # El closure de rate_limiter se llama ``dependency``
             assert inner.__name__ == "dependency", (
-                f"router dependency should be rate_limiter's inner "
-                f"`dependency` closure, got {inner.__name__!r}"
+                f"router dependency should be rate_limiter's inner `dependency` closure, got {inner.__name__!r}"
             )
 
     def test_public_cms_rate_limit_constant_exists(self):
@@ -83,14 +83,10 @@ class TestF05PublicEndpointOverrides:
         deps = getattr(r, "dependant", None)
         assert deps is not None
         # ``dependant.dependencies`` contiene las Depends aplicadas a la ruta
-        names = [
-            (getattr(d, "name", "") or "")
-            for d in (deps.dependencies or [])
-        ]
+        names = [(getattr(d, "name", "") or "") for d in (deps.dependencies or [])]
         # La funcion anidada de rate_limiter se llama ``dependency``
         assert any("dependency" in n for n in names) or any(
-            (getattr(d.call, "__name__", "") == "dependency")
-            for d in (deps.dependencies or [])
+            (getattr(d.call, "__name__", "") == "dependency") for d in (deps.dependencies or [])
         ), "sitemap.xml debe tener su propio rate_limiter override"
 
     def test_robots_txt_has_own_rate_limiter(self):
@@ -100,10 +96,7 @@ class TestF05PublicEndpointOverrides:
         assert r is not None
         deps = getattr(r, "dependant", None)
         assert deps is not None
-        has_rate_limiter = any(
-            (getattr(d.call, "__name__", "") == "dependency")
-            for d in (deps.dependencies or [])
-        )
+        has_rate_limiter = any((getattr(d.call, "__name__", "") == "dependency") for d in (deps.dependencies or []))
         assert has_rate_limiter
 
     def test_public_sites_public_has_own_rate_limiter(self):
@@ -121,10 +114,7 @@ class TestF05PublicEndpointOverrides:
         assert r is not None, "GET /public/sites/{site_key}/theme debe existir"
         deps = getattr(r, "dependant", None)
         assert deps is not None
-        has_rate_limiter = any(
-            (getattr(d.call, "__name__", "") == "dependency")
-            for d in (deps.dependencies or [])
-        )
+        has_rate_limiter = any((getattr(d.call, "__name__", "") == "dependency") for d in (deps.dependencies or []))
         assert has_rate_limiter
 
 

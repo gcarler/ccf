@@ -37,11 +37,7 @@ def seed_missing_data():
             print("Admin user not found.")
 
         # 2. Seed Academy Content Blocks
-        academy_hero = (
-            db.query(models.PageContent)
-            .filter(models.PageContent.page_key == "academy_hero")
-            .first()
-        )
+        academy_hero = db.query(models.PageContent).filter(models.PageContent.page_key == "academy_hero").first()
         if not academy_hero:
             print("Creating academy_hero content...")
             academy_hero = models.PageContent(
@@ -52,23 +48,15 @@ def seed_missing_data():
             db.add(academy_hero)
 
         academy_welcome = (
-            db.query(models.PageContent)
-            .filter(models.PageContent.page_key == "academy_welcome_sub")
-            .first()
+            db.query(models.PageContent).filter(models.PageContent.page_key == "academy_welcome_sub").first()
         )
         if not academy_welcome:
             print("Creating academy_welcome_sub content...")
-            academy_welcome = models.PageContent(
-                page_key="academy_welcome_sub", title="Tu Ruta de Discipulado"
-            )
+            academy_welcome = models.PageContent(page_key="academy_welcome_sub", title="Tu Ruta de Discipulado")
             db.add(academy_welcome)
 
         # 3. Seed Support Categories if they don't exist as content (already in support/page.tsx defaults, but good to have in DB)
-        support_page = (
-            db.query(models.PageContent)
-            .filter(models.PageContent.page_key == "support_page")
-            .first()
-        )
+        support_page = db.query(models.PageContent).filter(models.PageContent.page_key == "support_page").first()
         if not support_page:
             print("Creating support_page content...")
             support_page = models.PageContent(

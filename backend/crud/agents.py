@@ -33,9 +33,9 @@ def list_agent_tasks(db: Session, status: str | None = None):
 
 
 def update_agent_task(db: Session, task_id: UUID, payload: schemas.AgentTaskUpdate):
-    row = db.query(models.AgentTask).filter(
-        models.AgentTask.id == task_id, models.AgentTask.deleted_at.is_(None)
-    ).first()
+    row = (
+        db.query(models.AgentTask).filter(models.AgentTask.id == task_id, models.AgentTask.deleted_at.is_(None)).first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -87,9 +87,9 @@ def acknowledge_insight(db: Session, insight_id: UUID):
 
 
 def delete_agent_task(db: Session, task_id: UUID) -> bool:
-    row = db.query(models.AgentTask).filter(
-        models.AgentTask.id == task_id, models.AgentTask.deleted_at.is_(None)
-    ).first()
+    row = (
+        db.query(models.AgentTask).filter(models.AgentTask.id == task_id, models.AgentTask.deleted_at.is_(None)).first()
+    )
     if not row:
         return False
     row.deleted_at = _utcnow()

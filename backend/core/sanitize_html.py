@@ -8,6 +8,7 @@ prevent javascript: pseudo-protocol attacks.
 Intended use: sanitise user-provided HTML stored in ``CmsSection.props_json``
 before it reaches the public site rendered via ``dangerouslySetInnerHTML``.
 """
+
 from __future__ import annotations
 
 import re
@@ -107,7 +108,7 @@ class _Sanitiser(HTMLParser):
             if normalised is None:
                 continue
             # Escape quotes to avoid attribute injection.
-            safe_value = normalised.replace("\"", "&quot;").replace("'", "&#x27;")
+            safe_value = normalised.replace('"', "&quot;").replace("'", "&#x27;")
             attr_parts.append(f'{attr_name}="{safe_value}"')
         space = " " + " ".join(attr_parts) if attr_parts else ""
         self.parts.append(f"<{tag}{space}>")

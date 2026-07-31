@@ -52,9 +52,7 @@ def _actor_sede_or_none(db: Session, current_user: models.User) -> Optional[str]
     return get_user_sede_id(db, user_id)
 
 
-def _scope_cms_media_by_user_sede(
-    db: Session, current_user: models.User, query
-):
+def _scope_cms_media_by_user_sede(db: Session, current_user: models.User, query):
     """Filtra un query de ``models.CmsMediaItem`` por ``sede_id == user_sede``.
 
     CmsMediaItem exige ``sede_id`` propio desde la migración 2026-07-01 y
@@ -66,9 +64,7 @@ def _scope_cms_media_by_user_sede(
     return query
 
 
-def _scope_cms_pastoral_team_by_user_sede(
-    db: Session, current_user: models.User, query
-):
+def _scope_cms_pastoral_team_by_user_sede(db: Session, current_user: models.User, query):
     """Filtra un query de pastoral-leaders por ``Persona.sede_id ==
     user_sede``. Si el actor canónico no tiene sede (superadmin), retorna el
     query sin modificar y conserva el alcance administrativo global.
@@ -79,15 +75,11 @@ def _scope_cms_pastoral_team_by_user_sede(
     """
     user_sede = _actor_sede_or_none(db, current_user)
     if user_sede:
-        query = query.filter(
-            (models.Persona.sede_id == user_sede) | (models.Persona.sede_id.is_(None))
-        )
+        query = query.filter((models.Persona.sede_id == user_sede) | (models.Persona.sede_id.is_(None)))
     return query
 
 
-def _get_scoped_cms_media(
-    db: Session, current_user: models.User, media_id
-) -> models.CmsMediaItem:
+def _get_scoped_cms_media(db: Session, current_user: models.User, media_id) -> models.CmsMediaItem:
     """Devuelve el CmsMediaItem o raise ``HTTPException(404)``.
 
     Existence-leak safe (mismo patrón que Testimonial / Announcement).
@@ -214,10 +206,7 @@ def _scan_section_media_refs(section: models.CmsSection) -> Tuple[List[str], boo
                     parsed = _uuid_or_none(item)
                     if parsed:
                         media_ids.append(parsed)
-    has_inline_alt = any(
-        isinstance(props.get(key), str) and (props.get(key) or "").strip()
-        for key in ALT_KEYS
-    )
+    has_inline_alt = any(isinstance(props.get(key), str) and (props.get(key) or "").strip() for key in ALT_KEYS)
     return media_ids, has_inline_alt
 
 
@@ -275,10 +264,7 @@ def _check_title_length(page: models.CmsPage) -> Optional[schemas.SeoFinding]:
         return schemas.SeoFinding(
             code="title_length_out_of_range",
             severity="warning",
-            message=(
-                f"Título con longitud fuera de rango "
-                f"({length} caracteres; recomendado {TITLE_MIN}–{TITLE_MAX})."
-            ),
+            message=(f"Título con longitud fuera de rango ({length} caracteres; recomendado {TITLE_MIN}–{TITLE_MAX})."),
             impact_points=TITLE_LEN_WEIGHT,
             hint="Ajustar el título de la página",
             field_ref="title",
@@ -295,10 +281,7 @@ def _check_indexability(page: models.CmsPage) -> Optional[schemas.SeoFinding]:
         return schemas.SeoFinding(
             code="noindex_on_published",
             severity="error",
-            message=(
-                "La página está publicada pero marcada con noindex — "
-                "no aparecerá en Google."
-            ),
+            message=("La página está publicada pero marcada con noindex — no aparecerá en Google."),
             impact_points=INDEXABILITY_WEIGHT,
             hint="Revisar robots_meta en la configuración de la página",
             field_ref="seo_json.robots_meta",
@@ -307,10 +290,7 @@ def _check_indexability(page: models.CmsPage) -> Optional[schemas.SeoFinding]:
         return schemas.SeoFinding(
             code="nofollow_on_published",
             severity="warning",
-            message=(
-                "La página publicada usa 'nofollow' — Google no seguirá "
-                "los enlaces salientes."
-            ),
+            message=("La página publicada usa 'nofollow' — Google no seguirá los enlaces salientes."),
             impact_points=5,
             hint="Considerar quitar 'nofollow' si quiere enlazar externamente",
             field_ref="seo_json.robots_meta",
@@ -361,8 +341,7 @@ def _check_content_health(
                     code="thin_content_text",
                     severity="warning",
                     message=(
-                        f"El contenido de texto tiene solo {words} palabras "
-                        f"(recomendado ≥ {RICH_TEXT_MIN_WORDS})."
+                        f"El contenido de texto tiene solo {words} palabras (recomendado ≥ {RICH_TEXT_MIN_WORDS})."
                     ),
                     impact_points=5,
                     hint="Expandir el contenido textual para mejorar ranking",
@@ -511,9 +490,7 @@ def group_sections_by_page(
     return grouped
 
 
-def build_media_alt_lookup(
-    db: Session, media_ids: Iterable[str]
-) -> Dict[str, Optional[str]]:
+def build_media_alt_lookup(db: Session, media_ids: Iterable[str]) -> Dict[str, Optional[str]]:
     """Devuelve un dict {media_id: alt_text_or_None} para los IDs provistos."""
     valid_ids = {str(mid) for mid in media_ids if _uuid_or_none(mid)}
     if not valid_ids:

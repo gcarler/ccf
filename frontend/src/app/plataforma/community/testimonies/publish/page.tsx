@@ -64,8 +64,8 @@ export default function PublishTestimony() {
         <div className="p-4 lg:p-4 space-y-3 max-w-3xl mx-auto animate-in fade-in duration-700">
             {/* Header Section */}
             <header className="flex items-center gap-4">
-                <button 
-                    onClick={() => router.back()} 
+                <button
+                    onClick={() => router.back()}
                     className="size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.3)] transition-all active:scale-90"
                 >
                     <ArrowLeft size={20} />

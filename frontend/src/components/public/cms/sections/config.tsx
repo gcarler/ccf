@@ -36,4 +36,3 @@ export function MobileMenuConfigSection({ section }: { section: CmsSection<"mobi
     </section>
   );
 }
-

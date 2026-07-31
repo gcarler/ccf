@@ -40,6 +40,7 @@ static_router = APIRouter()
 dynamic_router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 def _session_read_options(db: Session):
     return session_read_only_options(db)
 
@@ -201,7 +202,7 @@ def list_my_grupos(
             models.GrupoEvangelismo.deleted_at.is_(None),
             models.GrupoEvangelismo.sede_id == user_sede,
             (models.GrupoEvangelismo.lider_persona_id == persona.id)
-            | (models.GrupoEvangelismo.asistente_persona_id == persona.id)
+            | (models.GrupoEvangelismo.asistente_persona_id == persona.id),
         )
         .order_by(models.GrupoEvangelismo.nombre.asc())
         .all()
@@ -227,9 +228,7 @@ def get_groups_assignment_summary(
     houses = q.all()
 
     # Count total persons for the sede (single aggregate query)
-    personas_total = db.query(func.count(models.Persona.id)).filter(
-        models.Persona.sede_id == user_sede
-    ).scalar() or 0
+    personas_total = db.query(func.count(models.Persona.id)).filter(models.Persona.sede_id == user_sede).scalar() or 0
 
     # Collect assigned persona IDs from group participants
     assigned_persona_ids = {
@@ -264,12 +263,9 @@ def get_groups_assignment_summary(
         models.Persona.sede_id == user_sede,
     )
     if assigned_persona_ids:
-        unassigned_q = unassigned_q.filter(
-            models.Persona.id.notin_(list(assigned_persona_ids))
-        )
+        unassigned_q = unassigned_q.filter(models.Persona.id.notin_(list(assigned_persona_ids)))
     unassigned_personas = [
-        {"id": p.id, "name": p.nombre_completo, "church_role": p.church_role}
-        for p in unassigned_q.limit(100).all()
+        {"id": p.id, "name": p.nombre_completo, "church_role": p.church_role} for p in unassigned_q.limit(100).all()
     ]
 
     return {
@@ -383,10 +379,14 @@ def get_grupo(
         from sqlalchemy import func as sqlfunc
 
         session_ids = [session.id for session in sessions]
-        attendance_rows = db.query(Asistencia).filter(
-            models.Asistencia.sesion_id.in_(session_ids),
-            models.Asistencia.deleted_at.is_(None),
-        ).all()
+        attendance_rows = (
+            db.query(Asistencia)
+            .filter(
+                models.Asistencia.sesion_id.in_(session_ids),
+                models.Asistencia.deleted_at.is_(None),
+            )
+            .all()
+        )
         for row in attendance_rows:
             attendance_by_session[row.sesion_id].append(row)
             if not row.attended and row.persona_id:
@@ -690,11 +690,15 @@ def delete_grupo(
 ):
     """Desactiva un grupo de evangelismo (soft-delete)."""
     user_sede = require_user_sede_id(db, current_user)
-    house = db.query(GrupoEvangelismo).filter(
-        GrupoEvangelismo.id == grupo_id,
-        GrupoEvangelismo.sede_id == user_sede,
-        GrupoEvangelismo.deleted_at.is_(None),
-    ).first()
+    house = (
+        db.query(GrupoEvangelismo)
+        .filter(
+            GrupoEvangelismo.id == grupo_id,
+            GrupoEvangelismo.sede_id == user_sede,
+            GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not house:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
     house.activo = False
@@ -715,10 +719,7 @@ def list_campaign_seasons(
     user_sede = require_user_sede_id(db, current_user)
     seasons = (
         db.query(models.CampaignSeason)
-        .filter(
-            (models.CampaignSeason.sede_id == user_sede)
-            | (models.CampaignSeason.sede_id.is_(None))
-        )
+        .filter((models.CampaignSeason.sede_id == user_sede) | (models.CampaignSeason.sede_id.is_(None)))
         .order_by(models.CampaignSeason.start_date.desc())
         .all()
     )
@@ -808,16 +809,20 @@ def get_groups_analytics(
     from sqlalchemy import func
 
     user_sede = require_user_sede_id(db, current_user)
-    query = db.query(
-        models.SesionGrupo.grupo_id,
-        models.SesionGrupo.season_id,
-        func.count(models.Asistencia.id).label("total_attendance"),
-        func.count(models.SesionGrupo.id.distinct()).label("total_sessions"),
-    ).join(
-        models.Asistencia,
-        models.Asistencia.sesion_id == models.SesionGrupo.id,
-        isouter=True,
-    ).join(models.GrupoEvangelismo)
+    query = (
+        db.query(
+            models.SesionGrupo.grupo_id,
+            models.SesionGrupo.season_id,
+            func.count(models.Asistencia.id).label("total_attendance"),
+            func.count(models.SesionGrupo.id.distinct()).label("total_sessions"),
+        )
+        .join(
+            models.Asistencia,
+            models.Asistencia.sesion_id == models.SesionGrupo.id,
+            isouter=True,
+        )
+        .join(models.GrupoEvangelismo)
+    )
     if season_id:
         query = query.filter(models.SesionGrupo.season_id == season_id)
     query = query.filter(
@@ -869,8 +874,7 @@ def get_macro_despliegue(
             db.query(models.CampaignSeason)
             .filter(
                 models.CampaignSeason.status == "Activa",
-                (models.CampaignSeason.sede_id == user_sede)
-                | (models.CampaignSeason.sede_id.is_(None)),
+                (models.CampaignSeason.sede_id == user_sede) | (models.CampaignSeason.sede_id.is_(None)),
             )
             .order_by(models.CampaignSeason.id.desc())
             .first()
@@ -897,10 +901,7 @@ def get_macro_despliegue(
 
     # 3. Get all sessions for the season
     sessions = (
-        db.query(SesionGrupo)
-        .options(_session_read_options(db))
-        .filter(models.SesionGrupo.season_id == season_id)
-        .all()
+        db.query(SesionGrupo).options(_session_read_options(db)).filter(models.SesionGrupo.season_id == season_id).all()
     )
 
     # Group sessions by house
@@ -977,7 +978,7 @@ class GroupVisitorCreate(BaseModel):
 
 
 class GroupVisitorResponse(BaseModel):
-    status: str           # "created" | "duplicate"
+    status: str  # "created" | "duplicate"
     persona_id: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -1016,10 +1017,14 @@ def register_groups_visitor(
     current_user: models.User = Depends(require_evangelism_edit),
 ):
     """Register a new guest from a Group session report as a Persona + CRM lead."""
-    grupo = db.query(GrupoEvangelismo).filter(
-        models.GrupoEvangelismo.id == visitor.grupo_id,
-        models.GrupoEvangelismo.deleted_at.is_(None),
-    ).first()
+    grupo = (
+        db.query(GrupoEvangelismo)
+        .filter(
+            models.GrupoEvangelismo.id == visitor.grupo_id,
+            models.GrupoEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo no encontrado")
 
@@ -1051,10 +1056,14 @@ def register_groups_visitor(
     existing = None
     lookup_phone = visitor.phone or visitor.whatsapp
     if lookup_phone:
-        existing = db.query(models.Persona).filter(
-            models.Persona.telefono == lookup_phone,
-            models.Persona.sede_id == grupo.sede_id,
-        ).first()
+        existing = (
+            db.query(models.Persona)
+            .filter(
+                models.Persona.telefono == lookup_phone,
+                models.Persona.sede_id == grupo.sede_id,
+            )
+            .first()
+        )
 
     if existing:
         _ensure_group_visitor_link(db, visitor.grupo_id, existing.id)
@@ -1091,10 +1100,13 @@ def register_groups_visitor(
     db.commit()
 
     from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
+
     crm_case = None
     try:
         crm_case = crear_caso_nuevo_visitante(  # hace el db.commit() final
-            db, new_persona, grupo.sede_id,
+            db,
+            new_persona,
+            grupo.sede_id,
             origen_grupo_id=grupo.id,
             origen_estrategia_id=grupo.estrategia_id,
             origen_sesion_id=visitor.session_id,

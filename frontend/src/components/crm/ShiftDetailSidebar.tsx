@@ -1,15 +1,15 @@
 "use client";
 
 import React from 'react';
-import { 
-    X as CloseIcon, 
-    Calendar, 
-    Music, 
-    Baby, 
-    Coffee, 
-    Zap, 
-    Shield, 
-    Camera, 
+import {
+    X as CloseIcon,
+    Calendar,
+    Music,
+    Baby,
+    Coffee,
+    Zap,
+    Shield,
+    Camera,
     Heart,
     CheckCircle2,
     MapPin,
@@ -55,10 +55,10 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
                 <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
                     <Icon size={180} />
                 </div>
-                
+
                 <div className="flex justify-between items-start mb-3 relative z-10">
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="p-2.5 bg-white/20 hover:bg-white/30 rounded-lg text-white backdrop-blur-md transition-all active:scale-95 border border-white/10"
                         aria-label="Cerrar"
                     >
@@ -72,7 +72,7 @@ export default function ShiftDetailSidebar({ shift, onClose }: ShiftDetailSideba
                 </div>
 
                 <div className="flex items-center gap-4 relative z-10">
-                    <motion.div 
+                    <motion.div
                         whileHover={{ scale: 1.05 }}
                         className="size-10 rounded-lg bg-white/20 flex items-center justify-center backdrop-blur-xl border-4 border-white/20 shadow-2xl"
                     >

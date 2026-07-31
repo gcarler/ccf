@@ -154,7 +154,7 @@ Este documento documenta los hallazgos y presenta un **plan de transformación e
 class UnifiedMessage(Base):
     """Mensaje unificado que reemplaza CommunicationLog + ChatMessage."""
     __tablename__ = "unified_messages"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sender_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), index=True)
     recipient_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
@@ -162,22 +162,22 @@ class UnifiedMessage(Base):
     channel = Column(SAEnum("internal","whatsapp","sms","email","push"), index=True)
     content = Column(Text, nullable=False)
     content_type = Column(String(20), default="text")  # text, image, file, audio, video, location, contact
-    
+
     # Metadata
     reply_to_id = Column(UUID(as_uuid=True), ForeignKey("unified_messages.id"), nullable=True)
     thread_id = Column(UUID(as_uuid=True), ForeignKey("unified_messages.id"), nullable=True, index=True)
     campaign_name = Column(String(120), nullable=True)
     external_id = Column(String(120), nullable=True, index=True)
-    
+
     # State
     status = Column(SAEnum("draft","queued","sent","delivered","read","failed"), default="draft", index=True)
     outcome = Column(String(50), default="sent")
     is_pinned = Column(Boolean, default=False)
     is_starred = Column(Boolean, default=False)
-    
+
     # Multi-tenant
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
-    
+
     # Soft delete
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
@@ -190,13 +190,13 @@ class UnifiedMessage(Base):
 class MessageStatus(Base):
     """Tracking de entrega/lectura por destinatario."""
     __tablename__ = "message_statuses"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     message_id = Column(UUID(as_uuid=True), ForeignKey("unified_messages.id"), index=True)
     recipient_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), index=True)
     status = Column(SAEnum("sent","delivered","read","failed"), index=True)
     timestamp = Column(DateTime(timezone=True), default=_utcnow)
-    
+
     __table_args__ = (UniqueConstraint("message_id", "recipient_id"),)
 ```
 
@@ -230,7 +230,7 @@ class MessageStatus(Base):
 class UserPresence(Base):
     """Estado de presencia de cada usuario."""
     __tablename__ = "user_presences"
-    
+
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), primary_key=True)
     status = Column(SAEnum("online","away","busy","dnd","offline"), default="offline")
     status_text = Column(String(100), nullable=True)  # "En reunión de equipo", "Orando"
@@ -261,7 +261,7 @@ class UserPresence(Base):
 class AiSuggestion(Base):
     """Sugerencias de respuesta AI para staff pastoral."""
     __tablename__ = "ai_suggestions"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     message_id = Column(UUID(as_uuid=True), ForeignKey("unified_messages.id"), index=True)
     suggested_response = Column(Text, nullable=False)
@@ -276,7 +276,7 @@ class AiSuggestion(Base):
 class MessageSentiment(Base):
     """Análisis de sentimiento de mensajes."""
     __tablename__ = "message_sentiments"
-    
+
     message_id = Column(UUID(as_uuid=True), ForeignKey("unified_messages.id"), primary_key=True)
     sentiment = Column(SAEnum("positive","neutral","negative","urgent","crisis"), index=True)
     score = Column(Float, nullable=False)  # -1.0 to 1.0
@@ -290,7 +290,7 @@ class MessageSentiment(Base):
 class FollowUpRule(Base):
     """Reglas de seguimiento automático."""
     __tablename__ = "follow_up_rules"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), index=True)
     name = Column(String(100), nullable=False)
@@ -307,11 +307,11 @@ class FollowUpRule(Base):
 class CongregationMetric(Base):
     """Métricas agregadas de congregación por sede."""
     __tablename__ = "congregation_metrics"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), index=True)
-    metric_type = Column(String(50), nullable=False, index=True)  
-    # "engagement_score", "attendance_trend", "giving_pattern", 
+    metric_type = Column(String(50), nullable=False, index=True)
+    # "engagement_score", "attendance_trend", "giving_pattern",
     # "volunteer_retention", "new_member_conversion", "spiritual_growth_index"
     metric_value = Column(Float, nullable=False)
     period_start = Column(DateTime(timezone=True), nullable=False)
@@ -340,7 +340,7 @@ class CongregationMetric(Base):
 class WhatsAppTemplate(Base):
     """Templates de WhatsApp aprobados por Meta."""
     __tablename__ = "whatsapp_templates"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), index=True)
     template_name = Column(String(100), nullable=False)
@@ -360,7 +360,7 @@ class WhatsAppTemplate(Base):
 class MessagingWorkflow(Base):
     """Workflows de mensajería automatizada."""
     __tablename__ = "messaging_workflows"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), index=True)
     name = Column(String(100), nullable=False)
@@ -387,7 +387,7 @@ class MessagingWorkflow(Base):
 class MessageSLA(Base):
     """SLAs de respuesta por tipo de mensaje."""
     __tablename__ = "message_slas"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), index=True)
     name = Column(String(100), nullable=False)
@@ -420,7 +420,7 @@ class MessageSLA(Base):
 class PrayerRequest(Base):
     """Solicitudes de oración de la congregación."""
     __tablename__ = "prayer_requests"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), index=True)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), index=True)
@@ -438,7 +438,7 @@ class PrayerRequest(Base):
 class PrayerComment(Base):
     """Comentarios/oraciones en solicitudes."""
     __tablename__ = "prayer_comments"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     prayer_request_id = Column(UUID(as_uuid=True), ForeignKey("prayer_requests.id"), index=True)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), index=True)
@@ -452,7 +452,7 @@ class PrayerComment(Base):
 class ServiceSession(Base):
     """Sesión de servicio en vivo."""
     __tablename__ = "service_sessions"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), index=True)
     title = Column(String(200), nullable=False)
@@ -464,7 +464,7 @@ class ServiceSession(Base):
 class ServicePoll(Base):
     """Encuestas durante el servicio."""
     __tablename__ = "service_polls"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     session_id = Column(UUID(as_uuid=True), ForeignKey("service_sessions.id"), index=True)
     question = Column(String(500), nullable=False)
@@ -475,13 +475,13 @@ class ServicePoll(Base):
 class ServicePollResponse(Base):
     """Respuestas a encuestas del servicio."""
     __tablename__ = "service_poll_responses"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     poll_id = Column(UUID(as_uuid=True), ForeignKey("service_polls.id"), index=True)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), index=True)
     option_index = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
-    
+
     __table_args__ = (UniqueConstraint("poll_id", "persona_id"),)
 ```
 

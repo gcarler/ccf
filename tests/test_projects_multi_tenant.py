@@ -13,6 +13,7 @@ Validates that the Projects module is leak-proof at three layers:
 
 All cross-sede assertions must use 404 (existence-leak safe). 403 is FORBIDDEN.
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -58,9 +59,7 @@ class TestMultiTenantAPIScope:
         proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
         hdr_b = auth_headers(client, email="adminB@test.com")
         resp = client.get(f"/api/projects/{proj_in_a.id}", headers=hdr_b)
-        assert resp.status_code == 404, (
-            f"Cross-sede GET must be 404 (leak-proof), got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 404, f"Cross-sede GET must be 404 (leak-proof), got {resp.status_code}: {resp.text}"
 
     def test_patch_project_cross_sede_returns_404(self, client, db_session):
         s_a, _ = _seed_paired_sedes(db_session)
@@ -71,9 +70,7 @@ class TestMultiTenantAPIScope:
             json={"title": "Hacked from B"},
             headers=hdr_b,
         )
-        assert resp.status_code == 404, (
-            f"Cross-sede PATCH must be 404, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 404, f"Cross-sede PATCH must be 404, got {resp.status_code}: {resp.text}"
 
     def test_delete_project_cross_sede_returns_404(self, client, db_session):
         s_a, _ = _seed_paired_sedes(db_session)
@@ -240,9 +237,7 @@ class TestMultiTenantCRUDDefenseInDepth:
         s_a, s_b = _seed_paired_sedes(db_session)
         proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
         found = crud.get_project(db_session, proj_in_a.id, sede_id=s_b.id)
-        assert found is None, (
-            f"Crud layer leaked cross-sede project: {found!r}"
-        )
+        assert found is None, f"Crud layer leaked cross-sede project: {found!r}"
 
 
 # ── C: notify_task_assigned atomicity ────────────────────────────────────
@@ -251,9 +246,7 @@ class TestMultiTenantCRUDDefenseInDepth:
 class TestNotifyTaskAssignedAtomicity:
     """The notification side-effect must be one transaction."""
 
-    def test_send_email_failure_does_not_persist_notification(
-        self, client, db_session, monkeypatch
-    ):
+    def test_send_email_failure_does_not_persist_notification(self, client, db_session, monkeypatch):
         """RED: when send_email returns False, NO NotificacionUsuario row."""
         from backend.services import email as email_service
         from backend.services.task_notifications import notify_task_assigned
@@ -263,9 +256,7 @@ class TestNotifyTaskAssignedAtomicity:
         task = create_task_factory(db_session, proj.id, assignee_id=None)
 
         # Assign a target persona with an email
-        target = db_session.query(_models.Persona).filter(
-            _models.Persona.id == _uuid.uuid4()
-        ).first()
+        target = db_session.query(_models.Persona).filter(_models.Persona.id == _uuid.uuid4()).first()
         if target is None:
             target = _models.Persona(
                 id=_uuid.uuid4(),
@@ -315,25 +306,15 @@ class TestNotifyTaskAssignedAtomicity:
         delta_comm = post_comm - pre_comm
 
         # At most one notification per call
-        assert delta_notif in (0, 1), (
-            f"More than one NotificacionUsuario in a single assign call: delta={delta_notif}"
-        )
+        assert delta_notif in (0, 1), f"More than one NotificacionUsuario in a single assign call: delta={delta_notif}"
         # Audit row must reflect the email failure
-        assert delta_comm >= 1, (
-            "send_email failed but no CommunicationLog audit row was written"
-        )
+        assert delta_comm >= 1, "send_email failed but no CommunicationLog audit row was written"
         newest_cl = (
-            db_session.query(_CL)
-            .filter(_CL.campaign_name == "Asignación de tarea")
-            .order_by(_CL.id.desc())
-            .first()
+            db_session.query(_CL).filter(_CL.campaign_name == "Asignación de tarea").order_by(_CL.id.desc()).first()
         )
-        assert newest_cl is not None, (
-            "CommunicationLog with campaign='Asignación de tarea' not found"
-        )
+        assert newest_cl is not None, "CommunicationLog with campaign='Asignación de tarea' not found"
         assert newest_cl.outcome == "email_failed", (
-            f"Audit outcome must be 'email_failed' (send_email was forced to fail), "
-            f"got {newest_cl.outcome!r}"
+            f"Audit outcome must be 'email_failed' (send_email was forced to fail), got {newest_cl.outcome!r}"
         )
         # The pivotal contract: if send_email failed, NO NotificacionUsuario
         # row should remain. Any notification row in the email_failed path

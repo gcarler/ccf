@@ -3,6 +3,7 @@
 Prevents regressions where new functions are added to crud modules
 but not exported in __init__.py, causing AttributeError at runtime.
 """
+
 import importlib
 import inspect
 
@@ -29,8 +30,7 @@ def test_cms_crud_exports():
 
     missing = [name for name in _get_crud_functions("backend.crud.cms") if not hasattr(crud, name)]
     assert not missing, (
-        f"Functions in crud.cms not exported in crud.__init__: {missing}. "
-        "Add them to backend/crud/__init__.py."
+        f"Functions in crud.cms not exported in crud.__init__: {missing}. Add them to backend/crud/__init__.py."
     )
 
 
@@ -40,6 +40,5 @@ def test_crm_crud_exports():
 
     missing = [name for name in _get_crud_functions("backend.crud.crm") if not hasattr(crud, name)]
     assert not missing, (
-        f"Functions in crud.crm not exported in crud.__init__: {missing}. "
-        "Add them to backend/crud/__init__.py."
+        f"Functions in crud.crm not exported in crud.__init__: {missing}. Add them to backend/crud/__init__.py."
     )

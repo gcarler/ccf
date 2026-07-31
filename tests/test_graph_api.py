@@ -6,9 +6,7 @@ from tests.conftest import seed_admin as _seed_admin
 
 
 def _seed_sede(db_session):
-    sede = models.Sede(
-        id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True
-    )
+    sede = models.Sede(id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.commit()
     db_session.refresh(sede)
@@ -65,15 +63,11 @@ def test_graph_connections(client, db_session):
     resp = client.get("/api/graph/snapshot?limit=10", headers=headers)
     assert resp.status_code == 200
     nodes = resp.json()["nodes"]
-    assert all(n["type"] != "asset" for n in nodes), (
-        "asset-type nodes must be omitted when AssetItem is not registered"
-    )
+    assert all(n["type"] != "asset" for n in nodes), "asset-type nodes must be omitted when AssetItem is not registered"
 
     if nodes:
         node_id = nodes[0]["id"]
-        resp2 = client.get(
-            f"/api/graph/connections/{node_id}", headers=headers
-        )
+        resp2 = client.get(f"/api/graph/connections/{node_id}", headers=headers)
         assert resp2.status_code == 200
         data = resp2.json()
         assert "node" in data
@@ -106,9 +100,7 @@ def test_graph_sede_none_non_admin_raises_403(client, db_session):
 
     from tests.conftest import seed_user_with_role
 
-    seed_user_with_role(
-        db_session, role_name="Miembro", email="member@example.com"
-    )
+    seed_user_with_role(db_session, role_name="Miembro", email="member@example.com")
     headers = _auth_headers(client, email="member@example.com")
 
     with patch("backend.api.graph.get_user_sede_id", return_value=None):
@@ -205,9 +197,7 @@ def test_graph_sede_none_subset_types_still_global(client, db_session):
     headers = _auth_headers(client)
 
     with patch("backend.api.graph.get_user_sede_id", return_value=None):
-        resp = client.get(
-            "/api/graph/snapshot?types=course&limit=20", headers=headers
-        )
+        resp = client.get("/api/graph/snapshot?types=course&limit=20", headers=headers)
 
     assert resp.status_code == 200
     data = resp.json()

@@ -316,9 +316,11 @@ def del_adjunto(
 ):
     from backend.models_crm import RecursoAdjunto
 
-    obj = db.query(RecursoAdjunto).filter_by(
-        id=_coerce_uuid_or_404(adjunto_id, "Adjunto no encontrado"), activo=True
-    ).first()
+    obj = (
+        db.query(RecursoAdjunto)
+        .filter_by(id=_coerce_uuid_or_404(adjunto_id, "Adjunto no encontrado"), activo=True)
+        .first()
+    )
     if not obj:
         raise HTTPException(404, "Adjunto no encontrado")
     sede_id = get_user_sede_id(db, str(user.id))
@@ -365,6 +367,7 @@ async def enviar_plantilla(
         elif is_blocks_json(contenido_html_raw):
             # Blocks JSON del editor visual
             import json
+
             try:
                 blocks = json.loads(contenido_html_raw)
             except (json.JSONDecodeError, TypeError):
@@ -496,6 +499,7 @@ async def send_plantilla_campaign(
                 html_content = render_email(template_type, merged_vars, brand)
             elif is_blocks_json(contenido_html_raw):
                 import json
+
                 try:
                     blocks = json.loads(contenido_html_raw)
                 except (json.JSONDecodeError, TypeError):
@@ -836,7 +840,9 @@ async def trigger_automations(
     user=Depends(require_module_access("crm", "edit")),
     gateway: MessagingGateway = Depends(get_messaging_gateway),
 ):
-    automations = get_crm_automations(db, only_active=True, trigger_event=payload.trigger_event, sede_id=get_user_sede_id(db, str(user.id)))
+    automations = get_crm_automations(
+        db, only_active=True, trigger_event=payload.trigger_event, sede_id=get_user_sede_id(db, str(user.id))
+    )
     if not automations:
         return []
 

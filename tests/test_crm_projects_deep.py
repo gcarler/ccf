@@ -5,6 +5,7 @@ create_grupo, update_grupo, get_persona_timeline, get_families.
 projects.py: create_project, phases, comments, tasks, wiki, whiteboard,
 milestones, supplies, attachments, activities, inbox.
 """
+
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
@@ -25,11 +26,16 @@ def _call(fn, *a, **kw):
 def _create_baptism_persona(db_session, full):
     from backend.crud.crm import create_persona
     from backend.schemas import PersonaCreate
-    p = create_persona(db_session, PersonaCreate(
-        first_name="Baptized", last_name="Person",
-        email=f"bap_{uuid.uuid4().hex[:6]}@t.com",
-        baptism_date=datetime.now(timezone.utc).date(),
-    ))
+
+    p = create_persona(
+        db_session,
+        PersonaCreate(
+            first_name="Baptized",
+            last_name="Person",
+            email=f"bap_{uuid.uuid4().hex[:6]}@t.com",
+            baptism_date=datetime.now(timezone.utc).date(),
+        ),
+    )
     assert p.id is not None
 
 
@@ -49,13 +55,15 @@ def full(client, db_session):
     personas = []
     for i in range(15):
         p = models.Persona(
-            first_name=f"U{i}", last_name=f"T{i}",
+            first_name=f"U{i}",
+            last_name=f"T{i}",
             email=f"u{i}_{uuid.uuid4().hex[:6]}@t.com",
             phone=f"+5730011122{i:02d}",
             spiritual_status=["Miembro", "Visitante", "Nuevo", "Activo"][i % 4],
             church_role=["Miembro", "Líder", "Pastor", "Voluntario"][i % 4],
             estado_vital=["ACTIVO", "ACTIVO", "INACTIVO", "ACTIVO"][i % 4],
-            sede_id=sede.id, sex=["M", "F"][i % 2],
+            sede_id=sede.id,
+            sex=["M", "F"][i % 2],
         )
         db_session.add(p)
         personas.append(p)
@@ -172,14 +180,16 @@ def full(client, db_session):
         db_session.refresh(s)
 
     for s in sessions_list:
-        for pg in db_session.query(ParticipanteGrupo).filter(
-            ParticipanteGrupo.grupo_id == s.grupo_id
-        ).limit(3).all():
+        for pg in db_session.query(ParticipanteGrupo).filter(ParticipanteGrupo.grupo_id == s.grupo_id).limit(3).all():
             db_session.add(Asistencia(sesion_id=s.id, persona_id=pg.persona_id, estado="ASISTIO"))
     db_session.commit()
 
     for i in range(6):
-        db_session.add(models.TareaCRM(title=f"Task_{i}", persona_id=personas[i].id, status=["pending", "completed", "in_progress"][i % 3]))
+        db_session.add(
+            models.TareaCRM(
+                title=f"Task_{i}", persona_id=personas[i].id, status=["pending", "completed", "in_progress"][i % 3]
+            )
+        )
         db_session.add(models.CounselingTicket(persona_id=personas[i].id, subject=f"CT_{i}", status="open"))
         db_session.add(models.PrayerRequest(requester_name=personas[i].first_name, request_text="P", sede_id=sede.id))
         db_session.add(models.CommunicationLog(persona_id=personas[i].id, channel="email", content=f"Msg_{i}"))
@@ -196,9 +206,16 @@ def full(client, db_session):
 
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
-        "c": client, "h": headers, "sede": sede, "admin": admin,
-        "personas": personas, "families": families, "projects": projects,
-        "groups": groups, "sessions": sessions_list, "strategy": strategy,
+        "c": client,
+        "h": headers,
+        "sede": sede,
+        "admin": admin,
+        "personas": personas,
+        "families": families,
+        "projects": projects,
+        "groups": groups,
+        "sessions": sessions_list,
+        "strategy": strategy,
     }
 
 
@@ -206,30 +223,47 @@ class TestCRMDeep:
     def test_create_persona_new(self, db_session, full):
         from backend.crud.crm import create_persona
         from backend.schemas import PersonaCreate
-        p = create_persona(db_session, PersonaCreate(
-            first_name="Brand", last_name="New",
-            email=f"brand_{uuid.uuid4().hex[:6]}@t.com",
-            phone="+573008888888",
-        ))
+
+        p = create_persona(
+            db_session,
+            PersonaCreate(
+                first_name="Brand",
+                last_name="New",
+                email=f"brand_{uuid.uuid4().hex[:6]}@t.com",
+                phone="+573008888888",
+            ),
+        )
         assert p.id is not None
 
     def test_create_persona_existing_phone(self, db_session, full):
         from backend.crud.crm import create_persona
         from backend.schemas import PersonaCreate
+
         phone = full["personas"][0].phone
-        p = create_persona(db_session, PersonaCreate(
-            first_name="Dup", last_name="Phone", phone=phone,
-        ))
+        p = create_persona(
+            db_session,
+            PersonaCreate(
+                first_name="Dup",
+                last_name="Phone",
+                phone=phone,
+            ),
+        )
         assert str(p.id) == str(full["personas"][0].id)
 
     def test_create_persona_existing_id_number(self, db_session, full):
         from backend.crud.crm import create_persona
         from backend.schemas import PersonaCreate
+
         full["personas"][0].id_number = "12345"
         db_session.commit()
-        p = create_persona(db_session, PersonaCreate(
-            first_name="Dup", last_name="ID", id_number="12345",
-        ))
+        p = create_persona(
+            db_session,
+            PersonaCreate(
+                first_name="Dup",
+                last_name="ID",
+                id_number="12345",
+            ),
+        )
         assert str(p.id) == str(full["personas"][0].id)
 
     def test_create_persona_with_baptism_date(self, db_session, full):
@@ -238,24 +272,32 @@ class TestCRMDeep:
     def test_update_persona_fields(self, db_session, full):
         from backend.crud.crm import update_persona
         from backend.schemas import PersonaUpdate
+
         pid = str(full["personas"][0].id)
-        result = update_persona(db_session, pid, PersonaUpdate(
-            first_name="Updated", last_name="Name",
-            email=f"upd_{uuid.uuid4().hex[:6]}@t.com",
-            phone="+573007777777",
-            church_role="Líder",
-            estado_vital="ACTIVO",
-        ))
+        result = update_persona(
+            db_session,
+            pid,
+            PersonaUpdate(
+                first_name="Updated",
+                last_name="Name",
+                email=f"upd_{uuid.uuid4().hex[:6]}@t.com",
+                phone="+573007777777",
+                church_role="Líder",
+                estado_vital="ACTIVO",
+            ),
+        )
         assert result is not None
 
     def test_delete_persona(self, db_session, full):
         from backend.crud.crm import delete_persona
+
         pid = str(full["personas"][14].id)
         result = delete_persona(db_session, pid)
         assert result is not None
 
     def test_persona_timeline_deep(self, db_session, full):
         from backend.crud.crm import get_persona_timeline
+
         pid = str(full["personas"][0].id)
         timeline = get_persona_timeline(db_session, pid)
         assert isinstance(timeline, list)
@@ -268,6 +310,7 @@ class TestCRMDeep:
             get_family_personas,
             update_family,
         )
+
         families = get_families(db_session)
         assert isinstance(families, list)
         fid = str(full["families"][0].id)
@@ -281,6 +324,7 @@ class TestCRMDeep:
 
     def test_crm_events_deep(self, db_session, full):
         from backend.crud.crm import get_crm_events
+
         sid = str(full["sede"].id)
         events = _call(get_crm_events, db_session, sede_id=sid)
         assert events is not None
@@ -289,6 +333,7 @@ class TestCRMDeep:
         from backend.crud.crm import (
             get_counseling_tickets,
         )
+
         tickets = get_counseling_tickets(db_session)
         assert isinstance(tickets, list)
         get_counseling_tickets(db_session, status="open")
@@ -299,12 +344,14 @@ class TestCRMDeep:
         from backend.crud.crm import (
             get_prayer_requests,
         )
+
         reqs = get_prayer_requests(db_session)
         assert isinstance(reqs, list)
         get_prayer_requests(db_session, status="pending")
 
     def test_grupos_deep(self, db_session, full):
         from backend.crud.crm import get_grupo, get_grupos
+
         groups = get_grupos(db_session)
         assert isinstance(groups, list)
         gc = get_grupo(db_session, str(full["groups"][0].id))
@@ -314,6 +361,7 @@ class TestCRMDeep:
         from backend.crud.crm import (
             get_volunteer_shifts,
         )
+
         shifts = get_volunteer_shifts(db_session)
         assert isinstance(shifts, list)
 
@@ -321,12 +369,14 @@ class TestCRMDeep:
         from backend.crud.crm import (
             get_communication_logs,
         )
+
         logs = get_communication_logs(db_session)
         assert isinstance(logs, list)
         get_communication_logs(db_session, limit=3)
 
     def test_donations_deep(self, db_session, full):
         from backend.crud.crm import get_donations, get_total_donations_amount
+
         donations = get_donations(db_session)
         assert isinstance(donations, list)
         amount = get_total_donations_amount(db_session)
@@ -336,6 +386,7 @@ class TestCRMDeep:
         from backend.crud.crm import (
             get_community_cards,
         )
+
         cards = get_community_cards(db_session)
         assert isinstance(cards, list)
 
@@ -343,27 +394,26 @@ class TestCRMDeep:
         from backend.crud.crm import (
             get_support_tickets,
         )
+
         tickets = get_support_tickets(db_session)
         assert isinstance(tickets, list)
 
     def test_consolidation_deep(self, db_session, full):
         from backend import models
 
-        cases = (
-            db_session.query(models.CasoCRM)
-            .filter(models.CasoCRM.persona_id == full["personas"][0].id)
-            .all()
-        )
+        cases = db_session.query(models.CasoCRM).filter(models.CasoCRM.persona_id == full["personas"][0].id).all()
         assert isinstance(cases, list)
 
     def test_notifications_deep(self, db_session, full):
         from backend.crud.crm import get_user_notifications
+
         pid = str(full["personas"][0].id)
         notifs = get_user_notifications(db_session, pid)
         assert isinstance(notifs, list)
 
     def test_talents_deep(self, db_session, full):
         from backend.crud.crm import get_talents
+
         talents = get_talents(db_session)
         assert isinstance(talents, list)
         get_talents(db_session, search="U")
@@ -372,9 +422,15 @@ class TestCRMDeep:
 class TestProjectsDeep:
     def test_create_project_deep(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/projects", json={
-            "title": f"Deep_{uuid.uuid4().hex[:6]}", "description": "Deep test", "status": "active",
-        }, headers=h)
+        resp = c.post(
+            "/api/projects",
+            json={
+                "title": f"Deep_{uuid.uuid4().hex[:6]}",
+                "description": "Deep test",
+                "status": "active",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_get_project_deep(self, full):
@@ -386,10 +442,14 @@ class TestProjectsDeep:
         c, h, projects = full["c"], full["h"], full["projects"]
         pid = str(projects[0].id)
         c.get(f"/api/projects/{pid}/phases", headers=h)
-        c.put(f"/api/projects/{pid}/phases", json=[
-            {"name": "P1", "slug": "p1", "color": "#000", "order_index": 0},
-            {"name": "P2", "slug": "p2", "color": "#FFF", "order_index": 1},
-        ], headers=h)
+        c.put(
+            f"/api/projects/{pid}/phases",
+            json=[
+                {"name": "P1", "slug": "p1", "color": "#000", "order_index": 0},
+                {"name": "P2", "slug": "p2", "color": "#FFF", "order_index": 1},
+            ],
+            headers=h,
+        )
 
     def test_project_comments_deep(self, full):
         c, h, projects = full["c"], full["h"], full["projects"]
@@ -408,9 +468,14 @@ class TestProjectsDeep:
         pid = str(projects[0].id)
         c.get(f"/api/projects/{pid}/tasks", headers=h)
         c.get(f"/api/projects/{pid}/tasks?status=pending", headers=h)
-        resp = c.post(f"/api/projects/{pid}/tasks", json={
-            "title": f"Task_{uuid.uuid4().hex[:6]}", "description": "D",
-        }, headers=h)
+        resp = c.post(
+            f"/api/projects/{pid}/tasks",
+            json={
+                "title": f"Task_{uuid.uuid4().hex[:6]}",
+                "description": "D",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             tid = resp.json().get("id")
@@ -422,9 +487,14 @@ class TestProjectsDeep:
         c, h, projects = full["c"], full["h"], full["projects"]
         pid = str(projects[0].id)
         c.get(f"/api/projects/{pid}/milestones", headers=h)
-        resp = c.post(f"/api/projects/{pid}/milestones", json={
-            "title": f"MS_{uuid.uuid4().hex[:6]}", "target_date": (date.today() + timedelta(days=60)).isoformat(),
-        }, headers=h)
+        resp = c.post(
+            f"/api/projects/{pid}/milestones",
+            json={
+                "title": f"MS_{uuid.uuid4().hex[:6]}",
+                "target_date": (date.today() + timedelta(days=60)).isoformat(),
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             mid = resp.json().get("id")
@@ -462,9 +532,14 @@ class TestProjectsDeep:
             tid = tasks.json()[0].get("id")
             if tid:
                 c.get(f"/api/projects/tasks/{tid}/attachments", headers=h)
-                c.post(f"/api/projects/tasks/{tid}/attachments", json={
-                    "file_url": "http://test.com/file.pdf", "filename": "file.pdf",
-                }, headers=h)
+                c.post(
+                    f"/api/projects/tasks/{tid}/attachments",
+                    json={
+                        "file_url": "http://test.com/file.pdf",
+                        "filename": "file.pdf",
+                    },
+                    headers=h,
+                )
 
     def test_project_activities_deep(self, full):
         c, h, projects = full["c"], full["h"], full["projects"]
@@ -490,9 +565,14 @@ class TestProjectsDeep:
 
     def test_create_and_delete_project(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/projects", json={
-            "title": f"Del_{uuid.uuid4().hex[:6]}", "description": "To delete",
-        }, headers=h)
+        resp = c.post(
+            "/api/projects",
+            json={
+                "title": f"Del_{uuid.uuid4().hex[:6]}",
+                "description": "To delete",
+            },
+            headers=h,
+        )
         if resp.status_code == 201:
             pid = resp.json().get("id")
             if pid:

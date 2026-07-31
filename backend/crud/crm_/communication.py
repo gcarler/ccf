@@ -1,4 +1,5 @@
 """Communication log CRUD."""
+
 import uuid
 from typing import Optional
 
@@ -49,14 +50,11 @@ def _crud_scope_re_check_communication_log_create(
 
     if persona_id is None:
         _logger.warning(
-            "Axioma 3 scope violation: create_communication_log sin persona_id "
-            "(actor_sede=%s actor_user_id=%s)",
+            "Axioma 3 scope violation: create_communication_log sin persona_id (actor_sede=%s actor_user_id=%s)",
             user_sede,
             actor_user_id,
         )
-        raise _HTTPException(
-            status_code=404, detail="CommunicationLog creation blocked"
-        )
+        raise _HTTPException(status_code=404, detail="CommunicationLog creation blocked")
 
     target_sede = _resolve_anchor_sede(db, "persona_id", persona_id)
     if target_sede is None or target_sede != user_sede:
@@ -69,9 +67,7 @@ def _crud_scope_re_check_communication_log_create(
             target_sede,
         )
         # Mensaje genérico para no leakear info de la violation.
-        raise _HTTPException(
-            status_code=404, detail="CommunicationLog creation blocked"
-        )
+        raise _HTTPException(status_code=404, detail="CommunicationLog creation blocked")
 
 
 def create_communication_log(
@@ -106,12 +102,9 @@ def create_communication_log(
     # Cierra el TOCTOU gap donde un caller no-API (worker, script, seed)
     # podría crear un log con persona cross-sede. Si el actor está en
     # sede_a e intenta loguear persona de sede_b → 404 pre-add.
-    _crud_scope_re_check_communication_log_create(
-        db, actor_user_id, data.get("persona_id")
-    )
+    _crud_scope_re_check_communication_log_create(db, actor_user_id, data.get("persona_id"))
 
-    row = models.CommunicationLog(**{k: v for k, v in data.items()
-                                     if hasattr(models.CommunicationLog, k)})
+    row = models.CommunicationLog(**{k: v for k, v in data.items() if hasattr(models.CommunicationLog, k)})
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -140,9 +133,7 @@ def get_communication_logs(
     (API) deben pasar explícitamente su ``user_sede`` recibido desde JWT vía
     ``get_user_sede_id``.
     """
-    query = db.query(models.CommunicationLog).filter(
-        models.CommunicationLog.deleted_at.is_(None)
-    )
+    query = db.query(models.CommunicationLog).filter(models.CommunicationLog.deleted_at.is_(None))
     if sede_id is not None:
         sede_uuid = sede_id if isinstance(sede_id, uuid.UUID) else _coerce_sede_uuid(sede_id)
         if sede_uuid is not None:
@@ -166,19 +157,27 @@ def _coerce_sede_uuid(value) -> "uuid.UUID | None":
 
 
 def get_communication_log(db: Session, log_id: str) -> Optional[models.CommunicationLog]:
-    return db.query(models.CommunicationLog).filter(
-        models.CommunicationLog.id == log_id,
-        models.CommunicationLog.deleted_at.is_(None),
-    ).first()
+    return (
+        db.query(models.CommunicationLog)
+        .filter(
+            models.CommunicationLog.id == log_id,
+            models.CommunicationLog.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 def update_communication_log(
     db: Session, log_id: str, payload: CommunicationLogUpdate
 ) -> Optional[models.CommunicationLog]:
-    row = db.query(models.CommunicationLog).filter(
-        models.CommunicationLog.id == log_id,
-        models.CommunicationLog.deleted_at.is_(None),
-    ).first()
+    row = (
+        db.query(models.CommunicationLog)
+        .filter(
+            models.CommunicationLog.id == log_id,
+            models.CommunicationLog.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
@@ -189,10 +188,14 @@ def update_communication_log(
 
 
 def delete_communication_log(db: Session, log_id: str) -> bool:
-    row = db.query(models.CommunicationLog).filter(
-        models.CommunicationLog.id == log_id,
-        models.CommunicationLog.deleted_at.is_(None),
-    ).first()
+    row = (
+        db.query(models.CommunicationLog)
+        .filter(
+            models.CommunicationLog.id == log_id,
+            models.CommunicationLog.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not row:
         return False
     row.deleted_at = _utcnow()

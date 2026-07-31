@@ -24,9 +24,6 @@ from backend.models import Course, Lesson, User
 def seed_complete_academy():
     db = SessionLocal()
     try:
-        # Asegurar que el usuario admin existe para asociar cosas si es necesario
-        admin = db.query(User).filter(User.username == "admin").first()
-
         # Limpiar cursos previos para evitar duplicados
         db.query(Lesson).delete()
         db.query(Course).delete()

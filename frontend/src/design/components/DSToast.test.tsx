@@ -33,7 +33,7 @@ describe('DSToast', () => {
   it('calls onClose when close button is clicked', () => {
     const handleClose = vi.fn();
     render(<DSToast type="success" message="Message" onClose={handleClose} />);
-    
+
     fireEvent.click(screen.getByLabelText('Cerrar'));
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
@@ -46,13 +46,13 @@ describe('DSToast', () => {
   it('renders action button when provided', () => {
     const handleAction = vi.fn();
     render(
-      <DSToast 
-        type="success" 
-        message="Message" 
+      <DSToast
+        type="success"
+        message="Message"
         action={{ label: 'Undo', onClick: handleAction }}
       />
     );
-    
+
     expect(screen.getByText('Undo')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Undo'));
     expect(handleAction).toHaveBeenCalledTimes(1);
@@ -110,22 +110,22 @@ describe('toast function', () => {
   it('subscribes to toast changes', () => {
     const subscriber = vi.fn();
     const unsubscribe = toast.subscribe(subscriber);
-    
+
     toast.success('Message');
     expect(subscriber).toHaveBeenCalled();
-    
+
     unsubscribe();
   });
 
   it('auto-dismisses after duration', async () => {
     vi.useFakeTimers();
-    
+
     toast.success('Message', 1000);
     expect(toast.getToasts()).toHaveLength(1);
-    
+
     vi.advanceTimersByTime(1000);
     expect(toast.getToasts()).toHaveLength(0);
-    
+
     vi.useRealTimers();
   });
 });

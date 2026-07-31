@@ -17,6 +17,7 @@ you change `_resolve_project_root`, mirror the change in those inline
 blocks (or migrate them to a sibling `scripts/_scripts_walkup.py` shim
 that exec's this file).
 """
+
 from __future__ import annotations
 
 import os

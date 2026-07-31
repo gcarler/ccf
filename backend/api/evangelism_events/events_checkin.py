@@ -51,9 +51,13 @@ def fast_checkin_visitor(
         db.commit()
         db.refresh(role)
 
-    attendance_lookup = db.query(models.EventAttendance).join(models.Persona).filter(
-        models.EventAttendance.event_id == event_id,
-        models.EventAttendance.session_date == session_day,
+    attendance_lookup = (
+        db.query(models.EventAttendance)
+        .join(models.Persona)
+        .filter(
+            models.EventAttendance.event_id == event_id,
+            models.EventAttendance.session_date == session_day,
+        )
     )
     identifiers = []
     if visitor.email:

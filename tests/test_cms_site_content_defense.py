@@ -8,6 +8,7 @@ These entities don't have ``sede_id`` own — they scope via ``site_id`` →
 
 Mirrors the pattern of ``test_cms_sede_isolation.py`` for UGC content.
 """
+
 import uuid
 
 import pytest
@@ -50,9 +51,7 @@ def _seed_two_sedes(db):
     db.flush()
 
     # Reuse the same rol_plataforma as admin_a if it exists, else create one
-    rol = db.query(models.RolPlataforma).filter(
-        models.RolPlataforma.nombre == "admin"
-    ).first()
+    rol = db.query(models.RolPlataforma).filter(models.RolPlataforma.nombre == "admin").first()
     if rol is None:
         rol = models.RolPlataforma(nombre="admin")
         db.add(rol)
@@ -135,9 +134,7 @@ def _seed_post_in_site(db, site_id, persona_id, slug="test-post"):
 
 def _get_persona_in_sede(db, sede_id):
     """Find or create a Persona in a given sede. Returns the persona."""
-    persona = db.query(models.Persona).filter(
-        models.Persona.sede_id == sede_id
-    ).first()
+    persona = db.query(models.Persona).filter(models.Persona.sede_id == sede_id).first()
     if persona is None:
         persona = models.Persona(
             id=uuid.uuid4(),
@@ -170,7 +167,9 @@ class TestCategoryDefenseInDepth:
         # admin_b (sede_b) tries to create a category in site_a (sede_a)
         with pytest.raises(HTTPException) as exc_info:
             crud.create_cms_category(
-                db_session, site_a.id, payload,
+                db_session,
+                site_a.id,
+                payload,
                 actor_user_id=str(user_b.id),
             )
         assert exc_info.value.status_code == 404
@@ -184,7 +183,9 @@ class TestCategoryDefenseInDepth:
             name="Same Sede",
         )
         row = crud.create_cms_category(
-            db_session, site_b.id, payload,
+            db_session,
+            site_b.id,
+            payload,
             actor_user_id=str(user_b.id),
         )
         assert row is not None
@@ -210,7 +211,9 @@ class TestCategoryDefenseInDepth:
 
         payload = schemas.CmsCategoryUpdate(name="Updated Category")
         row = crud.update_cms_category(
-            db_session, cat_b, payload,
+            db_session,
+            cat_b,
+            payload,
             actor_user_id=str(user_b.id),
         )
         assert row is not None
@@ -224,7 +227,9 @@ class TestCategoryDefenseInDepth:
         payload = schemas.CmsCategoryUpdate(name="Hacked")
         with pytest.raises(HTTPException) as exc_info:
             crud.update_cms_category(
-                db_session, cat_a, payload,
+                db_session,
+                cat_a,
+                payload,
                 actor_user_id=str(user_b.id),
             )
         assert exc_info.value.status_code == 404
@@ -235,7 +240,8 @@ class TestCategoryDefenseInDepth:
         cat_b = _seed_category_in_site(db_session, site_b.id, "cat-b")
 
         crud.delete_cms_category(
-            db_session, cat_b,
+            db_session,
+            cat_b,
             actor_user_id=str(user_b.id),
         )
         # Soft delete — verify is_active is False
@@ -250,7 +256,8 @@ class TestCategoryDefenseInDepth:
 
         with pytest.raises(HTTPException) as exc_info:
             crud.delete_cms_category(
-                db_session, cat_a,
+                db_session,
+                cat_a,
                 actor_user_id=str(user_b.id),
             )
         assert exc_info.value.status_code == 404
@@ -269,7 +276,9 @@ class TestTagDefenseInDepth:
         payload = schemas.CmsTagCreate(slug="cross-tag", name="Cross")
         with pytest.raises(HTTPException) as exc_info:
             crud.create_cms_tag(
-                db_session, site_a.id, payload,
+                db_session,
+                site_a.id,
+                payload,
                 actor_user_id=str(user_b.id),
             )
         assert exc_info.value.status_code == 404
@@ -280,7 +289,9 @@ class TestTagDefenseInDepth:
 
         payload = schemas.CmsTagCreate(slug="same-sede-tag", name="Same Sede Tag")
         row = crud.create_cms_tag(
-            db_session, site_b.id, payload,
+            db_session,
+            site_b.id,
+            payload,
             actor_user_id=str(user_b.id),
         )
         assert row is not None
@@ -293,7 +304,9 @@ class TestTagDefenseInDepth:
 
         payload = schemas.CmsTagUpdate(name="Updated Tag")
         row = crud.update_cms_tag(
-            db_session, tag_b, payload,
+            db_session,
+            tag_b,
+            payload,
             actor_user_id=str(user_b.id),
         )
         assert row is not None
@@ -307,7 +320,9 @@ class TestTagDefenseInDepth:
         payload = schemas.CmsTagUpdate(name="Hacked")
         with pytest.raises(HTTPException) as exc_info:
             crud.update_cms_tag(
-                db_session, tag_a, payload,
+                db_session,
+                tag_a,
+                payload,
                 actor_user_id=str(user_b.id),
             )
         assert exc_info.value.status_code == 404
@@ -318,7 +333,8 @@ class TestTagDefenseInDepth:
         tag_b = _seed_tag_in_site(db_session, site_b.id, "tag-b")
 
         crud.delete_cms_tag(
-            db_session, tag_b,
+            db_session,
+            tag_b,
             actor_user_id=str(user_b.id),
         )
         # Delete should succeed — verify the tag is gone (or soft-deleted)
@@ -333,7 +349,8 @@ class TestTagDefenseInDepth:
 
         with pytest.raises(HTTPException) as exc_info:
             crud.delete_cms_tag(
-                db_session, tag_a,
+                db_session,
+                tag_a,
                 actor_user_id=str(user_b.id),
             )
         assert exc_info.value.status_code == 404
@@ -357,7 +374,10 @@ class TestPostDefenseInDepth:
         )
         with pytest.raises(HTTPException) as exc_info:
             crud.create_cms_post(
-                db_session, site_a.id, payload, persona_a.id,
+                db_session,
+                site_a.id,
+                payload,
+                persona_a.id,
                 actor_user_id=str(user_b.id),
             )
         assert exc_info.value.status_code == 404
@@ -373,7 +393,10 @@ class TestPostDefenseInDepth:
             status="draft",
         )
         row = crud.create_cms_post(
-            db_session, site_b.id, payload, persona_b.id,
+            db_session,
+            site_b.id,
+            payload,
+            persona_b.id,
             actor_user_id=str(user_b.id),
         )
         assert row is not None
@@ -387,7 +410,10 @@ class TestPostDefenseInDepth:
 
         payload = schemas.CmsPostUpdate(title="Updated Post Title")
         row = crud.update_cms_post(
-            db_session, post_b, payload, persona_b.id,
+            db_session,
+            post_b,
+            payload,
+            persona_b.id,
             actor_user_id=str(user_b.id),
         )
         assert row is not None
@@ -402,7 +428,10 @@ class TestPostDefenseInDepth:
         payload = schemas.CmsPostUpdate(title="Hacked Title")
         with pytest.raises(HTTPException) as exc_info:
             crud.update_cms_post(
-                db_session, post_a, payload, persona_a.id,
+                db_session,
+                post_a,
+                payload,
+                persona_a.id,
                 actor_user_id=str(user_b.id),
             )
         assert exc_info.value.status_code == 404
@@ -414,7 +443,8 @@ class TestPostDefenseInDepth:
         post_b = _seed_post_in_site(db_session, site_b.id, persona_b.id, "post-b")
 
         crud.delete_cms_post(
-            db_session, post_b,
+            db_session,
+            post_b,
             actor_user_id=str(user_b.id),
         )
         # Delete should succeed — verify the post is gone (or soft-deleted)
@@ -430,7 +460,8 @@ class TestPostDefenseInDepth:
 
         with pytest.raises(HTTPException) as exc_info:
             crud.delete_cms_post(
-                db_session, post_a,
+                db_session,
+                post_a,
                 actor_user_id=str(user_b.id),
             )
         assert exc_info.value.status_code == 404
@@ -470,7 +501,9 @@ class TestSuperadminBypass:
             name="Superadmin Cat",
         )
         row = crud.create_cms_category(
-            db_session, site_a.id, payload,
+            db_session,
+            site_a.id,
+            payload,
             actor_user_id=str(user_b.id),
         )
         assert row is not None
@@ -488,7 +521,9 @@ class TestSuperadminBypass:
 
         payload = schemas.CmsTagCreate(slug="superadmin-tag", name="Superadmin Tag")
         row = crud.create_cms_tag(
-            db_session, site_a.id, payload,
+            db_session,
+            site_a.id,
+            payload,
             actor_user_id=str(user_b.id),
         )
         assert row is not None
@@ -511,7 +546,10 @@ class TestSuperadminBypass:
             status="draft",
         )
         row = crud.create_cms_post(
-            db_session, site_a.id, payload, persona_a.id,
+            db_session,
+            site_a.id,
+            payload,
+            persona_a.id,
             actor_user_id=str(user_b.id),
         )
         assert row is not None

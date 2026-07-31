@@ -128,8 +128,8 @@ import { DSCard } from '@/design';
 ```tsx
 import { DSInput } from '@/design';
 
-<DSInput 
-  label="Email" 
+<DSInput
+  label="Email"
   placeholder="correo@ejemplo.com"
   error="Email requerido"
 />

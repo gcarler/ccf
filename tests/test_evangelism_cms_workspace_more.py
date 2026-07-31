@@ -1,4 +1,5 @@
 """Massive tests for evangelism modules + cms_v2 + remaining gaps."""
+
 import uuid
 
 import pytest
@@ -21,6 +22,7 @@ def client_auth(client, db_session, admin_data):
 # ═══════════════════════════════════════════════════════════════════════════════
 # EVANGELISM MAIN (evangelism.py) — 479 stmts, 382 missed
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestEvangelismMainFull:
     def test_list_estrategias(self, client_auth):
@@ -68,6 +70,7 @@ class TestEvangelismMainFull:
 # EVANGELISM GRUPOS — all submodules
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEvangelismGrupos:
     def test_list_grupos(self, client_auth):
         client, headers, _ = client_auth
@@ -76,11 +79,15 @@ class TestEvangelismGrupos:
 
     def test_create_grupo(self, client_auth):
         client, headers, (_, persona, sede) = client_auth
-        resp = client.post("/api/evangelism/grupos", json={
-            "nombre": f"Grupo {uuid.uuid4().hex[:6]}",
-            "sede_id": str(sede.id),
-            "lider_persona_id": str(persona.id),
-        }, headers=headers)
+        resp = client.post(
+            "/api/evangelism/grupos",
+            json={
+                "nombre": f"Grupo {uuid.uuid4().hex[:6]}",
+                "sede_id": str(sede.id),
+                "lider_persona_id": str(persona.id),
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_list_sesiones(self, client_auth):
@@ -98,6 +105,7 @@ class TestEvangelismGrupos:
 # EVANGELISM EVENTS — all submodules
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEvangelismEvents:
     def test_list_events(self, client_auth):
         client, headers, _ = client_auth
@@ -114,15 +122,18 @@ class TestEvangelismEvents:
 # EVANGELISM ANALYTICS — helper functions (pure logic)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEvangelismAnalyticsHelpers:
     def test_normalize_rol(self):
         from backend.api.evangelism_analytics import _normalize_rol
+
         assert _normalize_rol("Líder") == "lider"
         assert _normalize_rol("PASTOR") == "pastor"
         assert _normalize_rol("Anfitrión") == "anfitrion"
 
     def test_rol_to_funnel_stage(self):
         from backend.api.evangelism_analytics import _rol_to_funnel_stage
+
         assert _rol_to_funnel_stage("Líder") == "lider"
         assert _rol_to_funnel_stage("Colíder") == "colider"
         assert _rol_to_funnel_stage("Anfitrión") == "anfitrion"
@@ -132,6 +143,7 @@ class TestEvangelismAnalyticsHelpers:
 
     def test_parse_period(self):
         from backend.api.evangelism_analytics import _parse_period
+
         assert _parse_period("7d") == 7
         assert _parse_period("30d") == 30
         assert _parse_period("90d") == 90
@@ -141,6 +153,7 @@ class TestEvangelismAnalyticsHelpers:
 
     def test_delta(self):
         from backend.api.evangelism_analytics import _delta
+
         assert _delta(150, 100) == 50.0
         assert _delta(80, 100) == -20.0
         assert _delta(10, 0) == 100.0
@@ -148,11 +161,13 @@ class TestEvangelismAnalyticsHelpers:
 
     def test_date_range(self):
         from backend.api.evangelism_analytics import _date_range
+
         start, end = _date_range(30)
         assert (end - start).days == 30
 
     def test_prev_range(self):
         from backend.api.evangelism_analytics import _prev_range
+
         start, end = _prev_range(30)
         assert (end - start).days == 30
 
@@ -161,19 +176,23 @@ class TestEvangelismAnalyticsHelpers:
 # EVANGELISM SHARED — helpers
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEvangelismShared:
     def test_import(self):
         from backend.api import evangelism_shared
+
         assert evangelism_shared is not None
 
     def test_constants(self):
         from backend.api.evangelism_shared import ATTENDED_STATES
+
         assert isinstance(ATTENDED_STATES, (list, set, tuple))
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CMS V2 — more endpoint coverage
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCMSV2Full:
     def test_list_sites(self, client_auth):
@@ -253,50 +272,71 @@ class TestCMSV2Full:
 
     def test_create_site(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/cms/v2/sites", json={
-            "site_key": f"site_{uuid.uuid4().hex[:6]}",
-            "name": "Test Site",
-            "base_path": "/test",
-        }, headers=headers)
+        resp = client.post(
+            "/api/cms/v2/sites",
+            json={
+                "site_key": f"site_{uuid.uuid4().hex[:6]}",
+                "name": "Test Site",
+                "base_path": "/test",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_create_custom_type(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/cms/v2/custom-types", json={
-            "name": f"Type {uuid.uuid4().hex[:6]}",
-            "schema": {"fields": []},
-        }, headers=headers)
+        resp = client.post(
+            "/api/cms/v2/custom-types",
+            json={
+                "name": f"Type {uuid.uuid4().hex[:6]}",
+                "schema": {"fields": []},
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_create_glossary_term(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/cms/v2/glossary", json={
-            "term": f"Term {uuid.uuid4().hex[:6]}",
-            "definition": "A test term",
-        }, headers=headers)
+        resp = client.post(
+            "/api/cms/v2/glossary",
+            json={
+                "term": f"Term {uuid.uuid4().hex[:6]}",
+                "definition": "A test term",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_create_redirect(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/cms/v2/redirects", json={
-            "from_path": f"/old_{uuid.uuid4().hex[:6]}",
-            "to_path": "/new",
-        }, headers=headers)
+        resp = client.post(
+            "/api/cms/v2/redirects",
+            json={
+                "from_path": f"/old_{uuid.uuid4().hex[:6]}",
+                "to_path": "/new",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_create_webhook(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/cms/v2/webhooks", json={
-            "name": f"Hook {uuid.uuid4().hex[:6]}",
-            "url": "https://example.com/hook",
-            "events": ["page.published"],
-        }, headers=headers)
+        resp = client.post(
+            "/api/cms/v2/webhooks",
+            json={
+                "name": f"Hook {uuid.uuid4().hex[:6]}",
+                "url": "https://example.com/hook",
+                "events": ["page.published"],
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # WORKSPACE FLAGS — more coverage
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestWorkspaceFlagsFull:
     def test_flags(self, client_auth):
@@ -354,6 +394,7 @@ class TestWorkspaceFlagsFull:
 # CRM RESOURCES — more coverage
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCRMResourcesFull:
     def test_list_resources(self, client_auth):
         client, headers, _ = client_auth
@@ -364,6 +405,7 @@ class TestCRMResourcesFull:
 # ═══════════════════════════════════════════════════════════════════════════════
 # KERNEL ENDPOINTS — more coverage
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestKernelFull:
     def test_list_ministries(self, client_auth):
@@ -381,6 +423,7 @@ class TestKernelFull:
 # DONATIONS ENDPOINTS — more coverage
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDonationsFull:
     def test_list(self, client_auth):
         client, headers, _ = client_auth
@@ -391,6 +434,7 @@ class TestDonationsFull:
 # ═══════════════════════════════════════════════════════════════════════════════
 # MESSAGING ENDPOINTS — more coverage
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestMessagingFull:
     def test_list(self, client_auth):
@@ -403,6 +447,7 @@ class TestMessagingFull:
 # CHAT ENDPOINTS — more coverage
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestChatFull:
     def test_conversations(self, client_auth):
         client, headers, _ = client_auth
@@ -414,6 +459,7 @@ class TestChatFull:
 # SPIRITUAL LIFE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestSpiritualLifeFull:
     def test_milestones(self, client_auth):
         client, headers, _ = client_auth
@@ -424,6 +470,7 @@ class TestSpiritualLifeFull:
 # ═══════════════════════════════════════════════════════════════════════════════
 # PUBLIC ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestPublicFull:
     def test_courses(self, client):
@@ -439,6 +486,7 @@ class TestPublicFull:
 # YOUTUBE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestYoutubeFull:
     def test_videos(self, client_auth):
         client, headers, _ = client_auth
@@ -449,6 +497,7 @@ class TestYoutubeFull:
 # ═══════════════════════════════════════════════════════════════════════════════
 # FINANCE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestFinanceFull:
     def test_list(self, client_auth):

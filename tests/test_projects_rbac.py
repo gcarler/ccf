@@ -58,26 +58,17 @@ def _ensure_role_with_default_perms(db_session, role_name_canonical: str) -> str
 
     canonical = normalize_role(role_name_canonical)
     target = next(
-        (
-            role_def
-            for role_def in DEFAULT_ROLES
-            if normalize_role(role_def["name"]) == canonical
-        ),
+        (role_def for role_def in DEFAULT_ROLES if normalize_role(role_def["name"]) == canonical),
         None,
     )
     if target is None:
         raise ValueError(
-            f"Role '{role_name_canonical}' not in DEFAULT_ROLES (known: "
-            f"{[r['name'] for r in DEFAULT_ROLES]})"
+            f"Role '{role_name_canonical}' not in DEFAULT_ROLES (known: {[r['name'] for r in DEFAULT_ROLES]})"
         )
 
     perm_dict = {p: "allow" for p in target["permissions"]}
 
-    existing = (
-        db_session.query(RolPlataforma)
-        .filter(RolPlataforma.nombre == target["name"])
-        .first()
-    )
+    existing = db_session.query(RolPlataforma).filter(RolPlataforma.nombre == target["name"]).first()
     if existing is None:
         existing = RolPlataforma(
             id=_uuid.uuid4(),
@@ -169,8 +160,7 @@ _READ_ENDPOINTS_MIEMBRO_403_PROJECT_SCOPED = [
 # (method, path, json_payload or None)
 _EDIT_ENDPOINTS = [
     ("POST", "/api/projects", {"title": "Test", "description": "desc"}),
-    ("POST", f"/api/projects/{FAKE}/tasks",
-     {"title": "T", "status": "todo", "priority": "medium"}),
+    ("POST", f"/api/projects/{FAKE}/tasks", {"title": "T", "status": "todo", "priority": "medium"}),
     ("PUT", f"/api/projects/{FAKE}/phases", []),
     ("POST", f"/api/projects/{FAKE}/wiki", {"title": "W", "content": "c"}),
     ("POST", f"/api/projects/{FAKE}/whiteboard", {"elements_json": "[]"}),
@@ -205,8 +195,7 @@ _EDIT_ENDPOINTS_MIEMBRO_403 = [
 # Endpoints protected by require_project_access with a project/task ID:
 # Axioma 3 requires 404 for non-existent or out-of-scope resources.
 _EDIT_ENDPOINTS_MIEMBRO_404 = [
-    ("POST", f"/api/projects/{FAKE}/tasks",
-     {"title": "T", "status": "todo", "priority": "medium"}),
+    ("POST", f"/api/projects/{FAKE}/tasks", {"title": "T", "status": "todo", "priority": "medium"}),
     ("POST", f"/api/projects/{FAKE}/wiki", {"title": "W", "content": "c"}),
     ("POST", f"/api/projects/{FAKE}/whiteboard", {"elements_json": "[]"}),
     ("DELETE", f"/api/projects/{FAKE}/whiteboard", None),
@@ -304,8 +293,7 @@ class TestEditorReadEdit:
     def test_editor_read_passess_rbac(self, client, role_headers, method, path):
         resp = _issue(client, method, path, None, role_headers["editor"])
         assert resp.status_code != status.HTTP_403_FORBIDDEN, (
-            f"Editor (projects:edit incluye read por jerarquía) bloqueado en "
-            f"{method} {path}: {resp.text}"
+            f"Editor (projects:edit incluye read por jerarquía) bloqueado en {method} {path}: {resp.text}"
         )
 
     def test_editor_write_some_endpoints_pass(self, client, role_headers):
@@ -319,9 +307,7 @@ class TestEditorReadEdit:
         ]
         for method, path, payload in editorial_set:
             resp = _issue(client, method, path, payload, role_headers["editor"])
-            assert resp.status_code != status.HTTP_403_FORBIDDEN, (
-                f"Editor bloqueado en {method} {path}: {resp.text}"
-            )
+            assert resp.status_code != status.HTTP_403_FORBIDDEN, f"Editor bloqueado en {method} {path}: {resp.text}"
 
 
 # ── Tests — Miembro baseline (PEND-RBAC-001) ──────────────────────────────
@@ -342,31 +328,26 @@ class TestMiembroBaseline:
     def test_miembro_read_returns_403(self, client, role_headers, method, path):
         resp = _issue(client, method, path, None, role_headers["miembro"])
         assert resp.status_code == status.HTTP_403_FORBIDDEN, (
-            f"Miembro NO bloqueado por RBAC en {method} {path} — "
-            f"regresión de baseline PEND-RBAC-001: {resp.text}"
+            f"Miembro NO bloqueado por RBAC en {method} {path} — regresión de baseline PEND-RBAC-001: {resp.text}"
         )
 
     @pytest.mark.parametrize("method, path", _READ_ENDPOINTS_MIEMBRO_404)
     def test_miembro_read_returns_404(self, client, role_headers, method, path):
         resp = _issue(client, method, path, None, role_headers["miembro"])
         assert resp.status_code == status.HTTP_404_NOT_FOUND, (
-            f"Miembro debería recibir 404 (Axioma 3) en {method} {path} — "
-            f"recibió {resp.status_code}: {resp.text}"
+            f"Miembro debería recibir 404 (Axioma 3) en {method} {path} — recibió {resp.status_code}: {resp.text}"
         )
 
     @pytest.mark.parametrize("method, path, payload", _EDIT_ENDPOINTS_MIEMBRO_403)
     def test_miembro_write_returns_403(self, client, role_headers, method, path, payload):
         resp = _issue(client, method, path, payload, role_headers["miembro"])
-        assert resp.status_code == status.HTTP_403_FORBIDDEN, (
-            f"Miembro NO bloqueado en {method} {path}: {resp.text}"
-        )
+        assert resp.status_code == status.HTTP_403_FORBIDDEN, f"Miembro NO bloqueado en {method} {path}: {resp.text}"
 
     @pytest.mark.parametrize("method, path, payload", _EDIT_ENDPOINTS_MIEMBRO_404)
     def test_miembro_write_returns_404(self, client, role_headers, method, path, payload):
         resp = _issue(client, method, path, payload, role_headers["miembro"])
         assert resp.status_code == status.HTTP_404_NOT_FOUND, (
-            f"Miembro debería recibir 404 (Axioma 3) en {method} {path} — "
-            f"recibió {resp.status_code}: {resp.text}"
+            f"Miembro debería recibir 404 (Axioma 3) en {method} {path} — recibió {resp.status_code}: {resp.text}"
         )
 
 
@@ -388,9 +369,7 @@ class TestPermissionHierarchy:
         tiene ``projects:manage`` directamente, sin necesidad de jerarquía.
         Si en el futuro se cambia la decoración, este test debe
         actualizarse."""
-        resp = client.put(
-            f"/api/projects/{FAKE}/phases", json=[], headers=role_headers["gestor"]
-        )
+        resp = client.put(f"/api/projects/{FAKE}/phases", json=[], headers=role_headers["gestor"])
         assert resp.status_code != status.HTTP_403_FORBIDDEN
 
     def test_delete_project_requires_academy_manage_per_policy(self, client, role_headers):
@@ -404,9 +383,7 @@ class TestPermissionHierarchy:
         documentada aquí como baseline. Si en el futuro se decide alinear
         DELETE con el resto de la matriz (a ``projects:edit`` o
         ``projects:manage``), este test debe actualizarse."""
-        resp = client.delete(
-            f"/api/projects/{FAKE}", headers=role_headers["editor"]
-        )
+        resp = client.delete(f"/api/projects/{FAKE}", headers=role_headers["editor"])
         assert resp.status_code == status.HTTP_403_FORBIDDEN, (
             f"Asimetría DELETE/projects rota: editor recibió "
             f"{resp.status_code}, se esperaba 403 (academy:manage). "

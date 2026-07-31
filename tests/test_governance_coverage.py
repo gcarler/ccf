@@ -125,7 +125,16 @@ def test_audit_logs_response_shape(client, db_session):
     data = resp.json()
     assert len(data) >= 1
     entry = data[0]
-    expected_keys = {"id", "actor_persona_id", "action", "resource_type", "resource_id", "severity", "metadata", "created_at"}
+    expected_keys = {
+        "id",
+        "actor_persona_id",
+        "action",
+        "resource_type",
+        "resource_id",
+        "severity",
+        "metadata",
+        "created_at",
+    }
     assert expected_keys.issubset(entry.keys()), f"Missing keys: {expected_keys - set(entry.keys())}"
 
 

@@ -3,19 +3,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { 
-    Award, 
-    BookOpen, 
-    CheckCircle2, 
-    Clock, 
-    Download, 
-    Edit3, 
-    GraduationCap, 
-    Heart, 
-    ShieldCheck, 
-    Sparkles, 
-    Star, 
-    TrendingUp, 
+import {
+    Award,
+    BookOpen,
+    CheckCircle2,
+    Clock,
+    Download,
+    Edit3,
+    GraduationCap,
+    Heart,
+    ShieldCheck,
+    Sparkles,
+    Star,
+    TrendingUp,
     Zap,
     MapPin,
     Calendar,
@@ -117,13 +117,13 @@ export default function StudentProfilePage() {
 
             <main className="flex-1 overflow-y-auto scrollbar-thin p-4 lg:p-4 relative">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] to-[hsl(var(--info)/5%)] via-transparent to-transparent pointer-events-none" />
-                
+
                 {error && (
                     <div className="mb-3 text-[hsl(var(--danger))] text-sm font-semibold bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/100%)]/20 rounded-lg px-4 py-1.5 relative z-10">
                         {error}
                     </div>
                 )}
-                
+
                 {viewType === 'list' && (
                     <div className="relative z-10 mx-auto max-w-5xl space-y-2">
                         {activeCourses.map((enrollment) => (
@@ -171,12 +171,12 @@ export default function StudentProfilePage() {
 
                 {viewType === 'grid' && (
  <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-3 relative z-10">
-                    
+
                     {/* Left Column: Identity Card */}
                     <aside className="lg:col-span-4 space-y-3">
                         <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 shadow-xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-[hsl(var(--info))]/10 rounded-full blur-3xl group-hover:bg-[hsl(var(--info))]/20 transition-all duration-1000" />
-                            
+
                             <div className="relative z-10 flex flex-col items-center text-center space-y-3">
                                 <div className="relative">
                                     <div className="size-10 rounded-md bg-gradient-to-tr from-[hsl(var(--info))] to-[hsl(var(--info))] p-1 shadow-2xl">
@@ -243,7 +243,7 @@ export default function StudentProfilePage() {
                                             )}>
                                                 <badge.icon size={28} fill={badge.locked ? "none" : "rgba(255,255,255,0.5)"} className={clsx(badge.locked ? "text-[hsl(var(--text-secondary))]" : "text-white")} />
                                                 {badge.locked && <div className="absolute inset-0 flex items-center justify-center"><Clock size={16} className="text-[hsl(var(--text-secondary))]" /></div>}
-                                                
+
                                                 {/* Tooltip on hover */}
                                                 <div className="absolute -top-5 scale-0 group-hover:scale-100 transition-transform bg-[hsl(var(--bg-muted))] text-white font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap z-50">
                                                     {badge.title}
@@ -396,4 +396,3 @@ function ProgressPill({ label, value, tone }: { label: string; value: number; to
         </div>
     );
 }
-

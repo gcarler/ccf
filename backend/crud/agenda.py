@@ -147,9 +147,7 @@ def create_participant(db: Session, data: dict) -> models.ParticipanteEvento:
     return row
 
 
-def update_participant(
-    db: Session, row: models.ParticipanteEvento, data: dict
-) -> models.ParticipanteEvento:
+def update_participant(db: Session, row: models.ParticipanteEvento, data: dict) -> models.ParticipanteEvento:
     for key, value in data.items():
         setattr(row, key, value)
     db.commit()
@@ -193,9 +191,7 @@ def create_reservation(db: Session, data: dict) -> models.ReservaRecurso:
     return row
 
 
-def update_reservation(
-    db: Session, row: models.ReservaRecurso, data: dict
-) -> models.ReservaRecurso:
+def update_reservation(db: Session, row: models.ReservaRecurso, data: dict) -> models.ReservaRecurso:
     for key, value in data.items():
         setattr(row, key, value)
     db.commit()
@@ -215,14 +211,11 @@ def check_reservation_conflict(
     ends_at: datetime,
     exclude_reservation_id: UUID | None = None,
 ) -> models.ReservaRecurso | None:
-    query = (
-        db.query(models.ReservaRecurso)
-        .filter(
-            models.ReservaRecurso.recurso_id == resource_id,
-            models.ReservaRecurso.bloqueo_inicio < ends_at,
-            models.ReservaRecurso.bloqueo_fin > starts_at,
-            models.ReservaRecurso.deleted_at.is_(None),
-        )
+    query = db.query(models.ReservaRecurso).filter(
+        models.ReservaRecurso.recurso_id == resource_id,
+        models.ReservaRecurso.bloqueo_inicio < ends_at,
+        models.ReservaRecurso.bloqueo_fin > starts_at,
+        models.ReservaRecurso.deleted_at.is_(None),
     )
     if exclude_reservation_id is not None:
         query = query.filter(models.ReservaRecurso.id != exclude_reservation_id)

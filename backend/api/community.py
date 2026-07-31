@@ -89,11 +89,7 @@ def list_community_grupos(db: Session = Depends(get_db)):
     sensibles de las personas. El serializador de respuesta está
     deliberadamente restringido a 4 campos por grupo.
     """
-    grupos = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.deleted_at.is_(None))
-        .all()
-    )
+    grupos = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.deleted_at.is_(None)).all()
     leader_ids = [g.lider_persona_id for g in grupos if g.lider_persona_id]
     leaders: dict = {}
     if leader_ids:
@@ -142,9 +138,7 @@ def list_community_events(db: Session = Depends(get_db)):
             "date": e.fecha_inicio.isoformat() if e.fecha_inicio else "",
             "category": _infer_category(e.titulo),
             "location": e.ubicacion_texto or "",
-            "attendees_count": len(
-                [p for p in e.participantes if p.deleted_at is None]
-            ),
+            "attendees_count": len([p for p in e.participantes if p.deleted_at is None]),
         }
         for e in events
     ]

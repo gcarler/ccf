@@ -1,4 +1,5 @@
 """Tests for grupos_sesiones.py — session CRUD + list."""
+
 from __future__ import annotations
 
 import uuid
@@ -26,23 +27,28 @@ class TestSesionesCRUD:
         assert _ok(full["c"].get("/api/evangelism/grupos/sessions", headers=full["h"]).status_code)
 
     def test_list_mine_pending(self, full):
-        assert _ok(full["c"].get("/api/evangelism/grupos/sessions/mine/pending",
-            headers=full["h"]).status_code)
+        assert _ok(full["c"].get("/api/evangelism/grupos/sessions/mine/pending", headers=full["h"]).status_code)
 
     def test_list_all(self, full):
         assert _ok(full["c"].get("/api/evangelism/sessions", headers=full["h"]).status_code)
 
     def test_get_session_not_found(self, full):
-        assert full["c"].get(f"/api/evangelism/sessions/{uuid.uuid4()}",
-            headers=full["h"]).status_code == 404
+        assert full["c"].get(f"/api/evangelism/sessions/{uuid.uuid4()}", headers=full["h"]).status_code == 404
 
     def test_delete_session_not_found(self, full):
-        assert full["c"].delete(f"/api/evangelism/sessions/{uuid.uuid4()}",
-            headers=full["h"]).status_code == 404
+        assert full["c"].delete(f"/api/evangelism/sessions/{uuid.uuid4()}", headers=full["h"]).status_code == 404
 
     def test_patch_habilitacion_not_found(self, full):
-        assert full["c"].patch(f"/api/evangelism/sessions/{uuid.uuid4()}/habilitacion",
-            json={"estado": "FINALIZADO"}, headers=full["h"]).status_code == 404
+        assert (
+            full["c"]
+            .patch(
+                f"/api/evangelism/sessions/{uuid.uuid4()}/habilitacion",
+                json={"estado": "FINALIZADO"},
+                headers=full["h"],
+            )
+            .status_code
+            == 404
+        )
 
     def test_create_session(self, full, db_session):
         """Create session with correct schema."""
@@ -50,13 +56,17 @@ class TestSesionesCRUD:
         p = models.Persona(id=uuid.uuid4(), first_name="LS", last_name="T", sede_id=s.id)
         db_session.add(p)
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre=f"G-{uuid.uuid4().hex[:6]}",
-            sede_id=s.id, lider_persona_id=p.id,
+            id=uuid.uuid4(),
+            nombre=f"G-{uuid.uuid4().hex[:6]}",
+            sede_id=s.id,
+            lider_persona_id=p.id,
         )
         db_session.add(g)
         db_session.commit()
         now = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
-        resp = c.post("/api/evangelism/sessions",
+        resp = c.post(
+            "/api/evangelism/sessions",
             json={"grupo_id": str(g.id), "session_date": now.isoformat(), "topic": "Test"},
-            headers=h)
+            headers=h,
+        )
         assert _ok(resp.status_code), f"session: {resp.status_code} {resp.text}"

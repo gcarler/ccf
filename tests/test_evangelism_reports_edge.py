@@ -1,4 +1,5 @@
 """Cover remaining uncovered lines in evangelism_reports.py — working only."""
+
 from __future__ import annotations
 
 import uuid
@@ -28,21 +29,34 @@ class TestReportsEdgeCases:
         g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="No Leader", sede_id=full["s"].id)
         db_session.add(g)
         db_session.commit()
-        assert full["c"].get(f"/api/evangelism/reports/group/{g.id}/attendance-pdf", headers=h).status_code in (200, 500)
+        assert full["c"].get(f"/api/evangelism/reports/group/{g.id}/attendance-pdf", headers=h).status_code in (
+            200,
+            500,
+        )
 
     def test_leader_not_found(self, full, db_session):
         """Line 65: leader_id pointing to non-existent persona."""
-        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="Ghost", sede_id=full["s"].id, lider_persona_id=uuid.uuid4())
+        g = models.GrupoEvangelismo(
+            id=uuid.uuid4(), nombre="Ghost", sede_id=full["s"].id, lider_persona_id=uuid.uuid4()
+        )
         db_session.add(g)
         db_session.commit()
-        assert full["c"].get(f"/api/evangelism/reports/group/{g.id}/attendance-pdf", headers=full["h"]).status_code in (200, 500)
+        assert full["c"].get(f"/api/evangelism/reports/group/{g.id}/attendance-pdf", headers=full["h"]).status_code in (
+            200,
+            500,
+        )
 
     def test_no_sessions(self, full, db_session):
         """Line 212: grupo with no sessions."""
-        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="No Sess", sede_id=full["s"].id, lider_persona_id=uuid.uuid4())
+        g = models.GrupoEvangelismo(
+            id=uuid.uuid4(), nombre="No Sess", sede_id=full["s"].id, lider_persona_id=uuid.uuid4()
+        )
         db_session.add(g)
         db_session.commit()
-        assert full["c"].get(f"/api/evangelism/reports/group/{g.id}/attendance-pdf", headers=full["h"]).status_code in (200, 500)
+        assert full["c"].get(f"/api/evangelism/reports/group/{g.id}/attendance-pdf", headers=full["h"]).status_code in (
+            200,
+            500,
+        )
 
     def test_cross_sede_excel(self, full, db_session):
         """Line 347: Excel cross-sede check."""
@@ -52,4 +66,7 @@ class TestReportsEdgeCases:
         g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="Other", sede_id=other.id)
         db_session.add(g)
         db_session.commit()
-        assert full["c"].get(f"/api/evangelism/reports/group/{g.id}/attendance-excel", headers=full["h"]).status_code == 403
+        assert (
+            full["c"].get(f"/api/evangelism/reports/group/{g.id}/attendance-excel", headers=full["h"]).status_code
+            == 403
+        )

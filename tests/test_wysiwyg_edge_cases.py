@@ -1,4 +1,5 @@
 import pytest
+
 from backend.schemas.cms_v2_sections import validate_section_props
 
 

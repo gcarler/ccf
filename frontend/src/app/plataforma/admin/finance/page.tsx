@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { SITE_NAME } from '@/lib/site-config';
-import { 
+import {
     TrendingUp, TrendingDown, DollarSign, Calendar, Download,
     ArrowUpRight, ArrowDownLeft, Wallet, PieChart,
     MoreHorizontal, Plus, Layout, ShieldCheck, History,
@@ -198,7 +198,7 @@ export default function FinanceAdminPage() {
                 }
             `}</style>
 
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: SITE_NAME, icon: Layout }, { label: 'Tesorería y Finanzas', icon: Wallet }]}
                 viewType={viewType} setViewType={setViewType} availableViews={FINANCE_VIEWS} onSearch={setSearch}
                 rightActions={
@@ -284,11 +284,11 @@ export default function FinanceAdminPage() {
                                 <DataTable data={filteredTransactions} columns={columns} onRowClick={handleOpenTx} />
                             </motion.div>
                         ) : activeTab === 'summary' ? (
-                            <motion.div 
-                                key="summary" 
-                                initial={{ opacity: 0, y: 20 }} 
-                                animate={{ opacity: 1, y: 0 }} 
-                                exit={{ opacity: 0, y: -20 }} 
+                            <motion.div
+                                key="summary"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
                                 transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
                                 className="space-y-3"
                             >
@@ -315,8 +315,8 @@ export default function FinanceAdminPage() {
                                             </div>
                                             <div className="h-48 flex items-end justify-between gap-4 px-2">
                                                 {[45, 70, 55, 90, 65, 95, 60, 85, 50, 88, 75, 92].map((h, i) => (
-                                                    <motion.div 
-                                                        key={i} 
+                                                    <motion.div
+                                                        key={i}
                                                         initial={{ height: 0, opacity: 0 }}
                                                         animate={{ height: '100%', opacity: 1 }}
                                                         transition={{ delay: i * 0.05 + 0.3 }}
@@ -349,17 +349,17 @@ export default function FinanceAdminPage() {
                                 </div>
                             </motion.div>
                         ) : activeTab === 'audit' ? (
-                            <motion.div 
-                                key="audit" 
-                                initial={{ opacity: 0, scale: 0.95 }} 
-                                animate={{ opacity: 1, scale: 1 }} 
+                            <motion.div
+                                key="audit"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 className="space-y-3"
                             >
                                 <section className="p-4 lg:p-4 bg-gradient-to-br from-[hsl(var(--bg-muted))] via-[hsl(var(--info))] to-[hsl(var(--info))] rounded-lg text-white shadow-2xl relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000"><Sparkles size={240} /></div>
                                     <div className="absolute -bottom-20 -left-20 size-96 bg-[hsl(var(--primary))/0.1] blur-[100px] rounded-full" />
-                                    
+
                                     <div className="relative z-10 max-w-3xl space-y-3">
                                         <div className="inline-flex items-center gap-3 px-3 py-2 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-full text-xs font-semibold uppercase tracking-wide shadow-2xl">
                                             <Zap size={16} className="text-[hsl(var(--warning))]" fill="currentColor" /> Optimus Finance Intelligence
@@ -379,10 +379,10 @@ export default function FinanceAdminPage() {
                                 </section>
                             </motion.div>
                         ) : (
-                            <motion.div 
-                                key="table" 
-                                initial={{ opacity: 0 }} 
-                                animate={{ opacity: 1 }} 
+                            <motion.div
+                                key="table"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
                                 className="h-full bg-[hsl(var(--bg-primary))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm"
                             >
                                 <DataTable
@@ -396,7 +396,7 @@ export default function FinanceAdminPage() {
                 </div>
             </main>
 
-            <WorkspaceDrawer 
+            <WorkspaceDrawer
                 isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
                 title={selectedTx?.description || 'Detalle de Operación'}
                 subtitle={`${selectedTx?.type?.toUpperCase()} • REF-${selectedTx?.id}`}
@@ -445,7 +445,7 @@ function FinanceTab({ label, active, onClick }: TabButtonProps) {
 
 function SummaryCard({ title, value, trend, icon: Icon, color, auraColor }: SummaryCardProps) {
     return (
-        <div 
+        <div
             className="aura-effect p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as CSSAuraProperties}
         >
@@ -469,11 +469,11 @@ function BudgetItem({ label, percent, color }: BudgetItemProps) {
                 <span className="text-[hsl(var(--text-secondary))] group-hover/item:text-[hsl(var(--primary))] transition-colors">{percent}%</span>
             </div>
             <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
-                <motion.div 
-                    initial={{ width: 0 }} 
-                    animate={{ width: `${percent}%` }} 
+                <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${percent}%` }}
                     transition={{ duration: 1, ease: "easeOut" }}
-                    className={clsx("h-full shimmer-metal relative", color)} 
+                    className={clsx("h-full shimmer-metal relative", color)}
                 />
             </div>
         </div>
@@ -488,4 +488,3 @@ function DrawerStat({ label, value, icon: Icon }: DrawerStatProps) {
         </div>
     );
 }
-

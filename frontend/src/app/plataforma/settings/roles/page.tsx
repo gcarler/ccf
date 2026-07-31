@@ -44,7 +44,7 @@ export default function RolesSettingsPage() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!token || !isEditing) return;
-        
+
         try {
             if (isEditing.id === 0) {
                 // Create
@@ -73,7 +73,7 @@ export default function RolesSettingsPage() {
     const handleDelete = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!token || !isDeleting || fallbackId === '') return;
-        
+
         try {
             await apiFetch(`/crm/roles/${isDeleting.id}?fallback_id=${fallbackId}`, {
                 method: 'DELETE',
@@ -97,7 +97,7 @@ export default function RolesSettingsPage() {
                             <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Ministerios y Tipos de Asistencia</h1>
                             <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-2">Configura los roles de la iglesia. Esto afectará los perfiles y el CRM.</p>
                         </div>
-                        <button 
+                        <button
                             onClick={() => setIsEditing({ id: 0, name: '', color: 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))]', is_leadership: false })}
                             className="px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2"
                         >

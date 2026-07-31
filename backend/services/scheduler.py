@@ -37,30 +37,36 @@ def run_session_governance():
         now = datetime.now(timezone.utc)
         # Semana en curso: lunes 00:00 → domingo 23:59
         days_since_monday = now.weekday()
-        week_start = (now - timedelta(days=days_since_monday)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        week_start = (now - timedelta(days=days_since_monday)).replace(hour=0, minute=0, second=0, microsecond=0)
         week_end = week_start + timedelta(days=7)
 
         # Habilitar sesiones dentro de la semana actual que aún no fueron habilitadas
-        habilitadas = db.query(SesionGrupo).filter(
-            SesionGrupo.fecha_sesion >= week_start,
-            SesionGrupo.fecha_sesion < week_end,
-            SesionGrupo.estado_habilitacion == HabilitacionSesionEnum.DESHABILITADO.value,
-            SesionGrupo.deleted_at.is_(None),
-        ).update(
-            {"estado_habilitacion": HabilitacionSesionEnum.HABILITADO.value},
-            synchronize_session=False,
+        habilitadas = (
+            db.query(SesionGrupo)
+            .filter(
+                SesionGrupo.fecha_sesion >= week_start,
+                SesionGrupo.fecha_sesion < week_end,
+                SesionGrupo.estado_habilitacion == HabilitacionSesionEnum.DESHABILITADO.value,
+                SesionGrupo.deleted_at.is_(None),
+            )
+            .update(
+                {"estado_habilitacion": HabilitacionSesionEnum.HABILITADO.value},
+                synchronize_session=False,
+            )
         )
 
         # Cerrar sesiones HABILITADAS de semanas anteriores
-        cerradas = db.query(SesionGrupo).filter(
-            SesionGrupo.fecha_sesion < week_start,
-            SesionGrupo.estado_habilitacion == HabilitacionSesionEnum.HABILITADO.value,
-            SesionGrupo.deleted_at.is_(None),
-        ).update(
-            {"estado_habilitacion": HabilitacionSesionEnum.CERRADO.value},
-            synchronize_session=False,
+        cerradas = (
+            db.query(SesionGrupo)
+            .filter(
+                SesionGrupo.fecha_sesion < week_start,
+                SesionGrupo.estado_habilitacion == HabilitacionSesionEnum.HABILITADO.value,
+                SesionGrupo.deleted_at.is_(None),
+            )
+            .update(
+                {"estado_habilitacion": HabilitacionSesionEnum.CERRADO.value},
+                synchronize_session=False,
+            )
         )
 
         db.commit()
@@ -103,6 +109,4 @@ def start_background_scheduler():
 
     thread = threading.Thread(target=run_loop, daemon=True)
     thread.start()
-    log.info(
-        "Background Scheduler is running in a native daemon thread (No external dependencies)."
-    )
+    log.info("Background Scheduler is running in a native daemon thread (No external dependencies).")

@@ -1,6 +1,7 @@
 """
 Tests for evangelism_notifications.py — send reminders endpoint.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -22,5 +23,6 @@ def full(client, db_session):
 
 class TestNotifications:
     def test_send_reminders(self, full):
-        assert _ok(full["c"].post("/api/evangelism/notifications/send-reminders",
-            json={}, headers=full["h"]).status_code)
+        assert _ok(
+            full["c"].post("/api/evangelism/notifications/send-reminders", json={}, headers=full["h"]).status_code
+        )

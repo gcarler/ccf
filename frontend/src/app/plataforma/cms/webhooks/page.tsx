@@ -132,26 +132,26 @@ export default function WebhooksPage() {
         {showForm && (
           <div className="mb-6 p-5 border border-[hsl(var(--border))] dark:border-white/10 rounded-xl bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--admin-bg-secondary))] shadow-lg space-y-4">
             <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white border-b border-[hsl(var(--border))] dark:border-white/10 pb-2">Configurar Webhook</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-[hsl(var(--text-secondary))]">Nombre descriptivo</label>
-                <input 
-                  placeholder="Ej: Notificar a Slack" 
-                  value={form.name} 
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))} 
-                  className="w-full px-3 py-2 text-sm border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg outline-none focus:border-[hsl(var(--primary))]" 
+                <input
+                  placeholder="Ej: Notificar a Slack"
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg outline-none focus:border-[hsl(var(--primary))]"
                 />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-[hsl(var(--text-secondary))]">URL de destino (Payload URL)</label>
                 <div className="relative">
                   <LinkIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-                  <input 
-                    placeholder="https://..." 
-                    value={form.url} 
-                    onChange={e => setForm(f => ({ ...f, url: e.target.value }))} 
-                    className="w-full pl-9 pr-3 py-2 text-sm font-mono border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg outline-none focus:border-[hsl(var(--primary))]" 
+                  <input
+                    placeholder="https://..."
+                    value={form.url}
+                    onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
+                    className="w-full pl-9 pr-3 py-2 text-sm font-mono border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg outline-none focus:border-[hsl(var(--primary))]"
                   />
                 </div>
               </div>
@@ -159,11 +159,11 @@ export default function WebhooksPage() {
                 <label className="text-xs font-semibold text-[hsl(var(--text-secondary))]">Secret (Opcional - Para firmar el payload HMAC SHA256)</label>
                 <div className="relative">
                   <Key size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-                  <input 
-                    placeholder="Dejar vacío para no usar firma" 
-                    value={form.secret_key} 
-                    onChange={e => setForm(f => ({ ...f, secret_key: e.target.value }))} 
-                    className="w-full pl-9 pr-3 py-2 text-sm font-mono border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg outline-none focus:border-[hsl(var(--primary))]" 
+                  <input
+                    placeholder="Dejar vacío para no usar firma"
+                    value={form.secret_key}
+                    onChange={e => setForm(f => ({ ...f, secret_key: e.target.value }))}
+                    className="w-full pl-9 pr-3 py-2 text-sm font-mono border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg outline-none focus:border-[hsl(var(--primary))]"
                   />
                 </div>
               </div>
@@ -173,13 +173,13 @@ export default function WebhooksPage() {
               <label className="text-xs font-semibold text-[hsl(var(--text-secondary))]">Eventos que activarán este webhook</label>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {AVAILABLE_EVENTS.map(ev => (
-                  <button 
-                    key={ev} 
-                    onClick={() => toggleEvent(ev)} 
+                  <button
+                    key={ev}
+                    onClick={() => toggleEvent(ev)}
                     className={clsx(
                       "flex items-center gap-1.5 px-3 py-2 text-2xs font-semibold rounded-lg border transition-all text-left",
-                      form.events.includes(ev) 
-                        ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]" 
+                      form.events.includes(ev)
+                        ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]"
                         : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))/50%] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
                     )}
                   >
@@ -237,12 +237,12 @@ export default function WebhooksPage() {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="mb-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center gap-2">
                     <LinkIcon size={12} className="text-[hsl(var(--text-secondary))] shrink-0" />
                     <p className="text-xs text-[hsl(var(--text-secondary))] truncate font-mono select-all" title={wh.url}>{wh.url}</p>
                   </div>
-                  
+
                   <div className="flex flex-wrap gap-1.5">
                     {wh.events.map(ev => (
                       <span key={ev} className="text-2xs font-semibold bg-info-soft text-info-text dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--info))] border border-[hsl(var(--info))/20%] px-2 py-0.5 rounded-full">
@@ -251,16 +251,16 @@ export default function WebhooksPage() {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="border-t border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5">
-                  <button 
+                  <button
                     onClick={() => loadDeliveries(wh.id)}
                     className="w-full p-3 flex items-center justify-between text-xs font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors"
                   >
                     <span>Últimas entregas ({expandedId === wh.id && deliveries.length > 0 ? deliveries.length : '?'})</span>
                     {expandedId === wh.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
-                  
+
                   {expandedId === wh.id && (
                     <div className="p-3 pt-0 max-h-48 overflow-y-auto custom-scrollbar border-t border-[hsl(var(--border))] dark:border-white/5 mt-2">
                       {deliveries.length === 0 ? (
@@ -277,8 +277,8 @@ export default function WebhooksPage() {
                                 <span className="text-2xs text-[hsl(var(--text-secondary))]">{new Date(d.created_at).toLocaleString("es-CO")}</span>
                               </div>
                               <div className="flex items-center gap-3 ml-3.5 text-2xs">
-                                <span className={clsx("font-bold px-1.5 py-0.5 rounded-sm", 
-                                  d.success ? "bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-[hsl(var(--success))]" : 
+                                <span className={clsx("font-bold px-1.5 py-0.5 rounded-sm",
+                                  d.success ? "bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-[hsl(var(--success))]" :
                                   "bg-danger-soft text-danger-text dark:bg-[hsl(var(--danger))]/20 dark:text-[hsl(var(--danger))]"
                                 )}>
                                   {d.response_status ? `HTTP ${d.response_status}` : "Error"}

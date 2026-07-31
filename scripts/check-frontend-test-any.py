@@ -98,9 +98,7 @@ def line_introduces_any(line: str) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Detect new explicit `any` usage in frontend test files."
-    )
+    parser = argparse.ArgumentParser(description="Detect new explicit `any` usage in frontend test files.")
     parser.add_argument(
         "--base-branch",
         dest="base_branch",

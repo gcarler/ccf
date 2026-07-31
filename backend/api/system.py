@@ -99,15 +99,17 @@ def get_global_calendar(
             .all()
         )
         for e in estrategias:
-            events.append({
-                "id": f"estrategia-{e.id}",
-                "title": e.nombre,
-                "start": e.fecha_inicio.isoformat(),
-                "end": e.fecha_fin.isoformat() if e.fecha_fin else None,
-                "type": "evangelism_strategy",
-                "allDay": True,
-                "href": f"/plataforma/evangelism/strategies/{e.id}",
-            })
+            events.append(
+                {
+                    "id": f"estrategia-{e.id}",
+                    "title": e.nombre,
+                    "start": e.fecha_inicio.isoformat(),
+                    "end": e.fecha_fin.isoformat() if e.fecha_fin else None,
+                    "type": "evangelism_strategy",
+                    "allDay": True,
+                    "href": f"/plataforma/evangelism/strategies/{e.id}",
+                }
+            )
 
         # Sesiones de grupos de evangelismo
         sesiones = (
@@ -121,15 +123,17 @@ def get_global_calendar(
         )
         for s in sesiones:
             grupo_name = s.grupo.nombre if s.grupo else "Grupo"
-            events.append({
-                "id": f"sesion-{s.id}",
-                "title": s.tema_estudio or f"Sesión — {grupo_name}",
-                "start": s.fecha_sesion.isoformat(),
-                "end": None,
-                "type": "evangelism_session",
-                "allDay": False,
-                "href": f"/plataforma/evangelism/grupos/{s.grupo_id}",
-            })
+            events.append(
+                {
+                    "id": f"sesion-{s.id}",
+                    "title": s.tema_estudio or f"Sesión — {grupo_name}",
+                    "start": s.fecha_sesion.isoformat(),
+                    "end": None,
+                    "type": "evangelism_session",
+                    "allDay": False,
+                    "href": f"/plataforma/evangelism/grupos/{s.grupo_id}",
+                }
+            )
 
         # Eventos evangelísticos (crm_events)
         crm_events = (
@@ -141,16 +145,18 @@ def get_global_calendar(
             .all()
         )
         for ev in crm_events:
-            events.append({
-                "id": f"evangelism-{ev.id}",
-                "title": ev.name,
-                "start": ev.event_date.isoformat(),
-                "end": None,
-                "type": "evangelism_event",
-                "allDay": False,
-                "href": f"/plataforma/evangelism/events/{ev.id}",
-                "location": ev.location,
-            })
+            events.append(
+                {
+                    "id": f"evangelism-{ev.id}",
+                    "title": ev.name,
+                    "start": ev.event_date.isoformat(),
+                    "end": None,
+                    "type": "evangelism_event",
+                    "allDay": False,
+                    "href": f"/plataforma/evangelism/events/{ev.id}",
+                    "location": ev.location,
+                }
+            )
 
     # ── CRM / CONSOLIDACIÓN ────────────────────────────────────────────────
 
@@ -166,19 +172,18 @@ def get_global_calendar(
             .all()
         )
         for case in crm_casos:
-            persona_name = (
-                f"{case.persona.first_name} {case.persona.last_name}".strip()
-                if case.persona else "Caso CRM"
+            persona_name = f"{case.persona.first_name} {case.persona.last_name}".strip() if case.persona else "Caso CRM"
+            events.append(
+                {
+                    "id": f"crm-caso-{case.id}",
+                    "title": f"Seguimiento: {persona_name}",
+                    "start": case.sla_vencimiento_contacto.isoformat(),
+                    "end": None,
+                    "type": "consolidation_case",
+                    "allDay": False,
+                    "href": f"/plataforma/crm/pipeline/{case.id}",
+                }
             )
-            events.append({
-                "id": f"crm-caso-{case.id}",
-                "title": f"Seguimiento: {persona_name}",
-                "start": case.sla_vencimiento_contacto.isoformat(),
-                "end": None,
-                "type": "consolidation_case",
-                "allDay": False,
-                "href": f"/plataforma/crm/pipeline/{case.id}",
-            })
 
         # Tareas CRM
         crm_tareas = (
@@ -193,15 +198,17 @@ def get_global_calendar(
             .all()
         )
         for task in crm_tareas:
-            events.append({
-                "id": f"crm-tarea-{task.id}",
-                "title": task.titulo,
-                "start": task.fecha_vencimiento.isoformat(),
-                "end": None,
-                "type": "consolidation_task",
-                "allDay": False,
-                "href": f"/plataforma/crm/pipeline/{task.caso_id}",
-            })
+            events.append(
+                {
+                    "id": f"crm-tarea-{task.id}",
+                    "title": task.titulo,
+                    "start": task.fecha_vencimiento.isoformat(),
+                    "end": None,
+                    "type": "consolidation_task",
+                    "allDay": False,
+                    "href": f"/plataforma/crm/pipeline/{task.caso_id}",
+                }
+            )
 
     # ── PROYECTOS ──────────────────────────────────────────────────────────
 
@@ -220,14 +227,16 @@ def get_global_calendar(
             .all()
         )
         for t in proj_tasks:
-            events.append({
-                "id": f"task-{t.id}",
-                "title": t.title,
-                "start": t.due_date.isoformat(),
-                "type": "task",
-                "allDay": False,
-                "href": f"/plataforma/projects/{t.project_id}",
-            })
+            events.append(
+                {
+                    "id": f"task-{t.id}",
+                    "title": t.title,
+                    "start": t.due_date.isoformat(),
+                    "type": "task",
+                    "allDay": False,
+                    "href": f"/plataforma/projects/{t.project_id}",
+                }
+            )
 
         # Hitos de proyectos
         milestones = (
@@ -245,15 +254,17 @@ def get_global_calendar(
             .all()
         )
         for m in milestones:
-            events.append({
-                "id": f"milestone-{m.id}",
-                "title": f"🏁 {m.title}",
-                "start": m.target_date.isoformat(),
-                "end": None,
-                "type": "project_milestone",
-                "allDay": True,
-                "href": f"/plataforma/projects/{m.project_id}",
-            })
+            events.append(
+                {
+                    "id": f"milestone-{m.id}",
+                    "title": f"🏁 {m.title}",
+                    "start": m.target_date.isoformat(),
+                    "end": None,
+                    "type": "project_milestone",
+                    "allDay": True,
+                    "href": f"/plataforma/projects/{m.project_id}",
+                }
+            )
 
     # ── PERSONAL ───────────────────────────────────────────────────────────
 
@@ -264,22 +275,22 @@ def get_global_calendar(
         ]
         # In personal view, show only the user's own events
         if view == "personal" and current_persona_id:
-            personal_filters.append(
-                models.EventoAgenda.organizador_persona_id == current_persona_id
-            )
+            personal_filters.append(models.EventoAgenda.organizador_persona_id == current_persona_id)
 
         agenda_events = db.query(models.EventoAgenda).filter(*personal_filters).all()
         for ev in agenda_events:
-            events.append({
-                "id": f"agenda-{ev.id}",
-                "title": ev.titulo,
-                "start": ev.fecha_inicio.isoformat(),
-                "end": ev.fecha_fin.isoformat() if ev.fecha_fin else None,
-                "type": "agenda_event",
-                "allDay": ev.todo_el_dia,
-                "href": f"/plataforma/agenda/events/{ev.id}",
-                "location": ev.ubicacion_texto,
-            })
+            events.append(
+                {
+                    "id": f"agenda-{ev.id}",
+                    "title": ev.titulo,
+                    "start": ev.fecha_inicio.isoformat(),
+                    "end": ev.fecha_fin.isoformat() if ev.fecha_fin else None,
+                    "type": "agenda_event",
+                    "allDay": ev.todo_el_dia,
+                    "href": f"/plataforma/agenda/events/{ev.id}",
+                    "location": ev.ubicacion_texto,
+                }
+            )
 
     # ── CUMPLEAÑOS (todo + personal + cumpleanos) ──────────────────────────
 
@@ -308,15 +319,17 @@ def get_global_calendar(
                     bday = datetime.fromisoformat(bday).date()
                 event_date = bday.replace(year=today.year)
                 age = today.year - bday.year
-                events.append({
-                    "id": f"birthday-{m.id}",
-                    "title": f"🎂 {m.first_name} {m.last_name or ''} — {age} años".strip(),
-                    "start": event_date.isoformat(),
-                    "end": None,
-                    "type": "birthday",
-                    "allDay": True,
-                    "href": f"/plataforma/crm/personas/{m.id}",
-                })
+                events.append(
+                    {
+                        "id": f"birthday-{m.id}",
+                        "title": f"🎂 {m.first_name} {m.last_name or ''} — {age} años".strip(),
+                        "start": event_date.isoformat(),
+                        "end": None,
+                        "type": "birthday",
+                        "allDay": True,
+                        "href": f"/plataforma/crm/personas/{m.id}",
+                    }
+                )
             except Exception as exc:
                 logger.debug("Failed to process birthday for persona=%s: %s", m.id, exc)
                 continue
@@ -406,7 +419,6 @@ def _compute_workload_via_orm(db: Session) -> List[Dict]:
             for u in db.query(user_model).all()
         ]
 
-
     open_statuses = ("todo", "in_progress", "review")
     rows = (
         db.query(
@@ -421,8 +433,7 @@ def _compute_workload_via_orm(db: Session) -> List[Dict]:
                 func.sum(
                     case(
                         (
-                            (task_model.priority == "urgent")
-                            & (task_model.status != "done"),
+                            (task_model.priority == "urgent") & (task_model.status != "done"),
                             1,
                         ),
                         else_=0,
@@ -434,8 +445,7 @@ def _compute_workload_via_orm(db: Session) -> List[Dict]:
                 func.sum(
                     case(
                         (
-                            (task_model.due_date < func.now())
-                            & (task_model.status != "done"),
+                            (task_model.due_date < func.now()) & (task_model.status != "done"),
                             1,
                         ),
                         else_=0,

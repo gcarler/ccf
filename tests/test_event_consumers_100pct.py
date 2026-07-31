@@ -1,17 +1,16 @@
 """Tests exhaustivos y estructurales para backend/services/event_consumers.py (100% Cobertura)."""
 
-import pytest
 from unittest.mock import MagicMock, patch
 
 from backend.services.event_consumers import (
     EventConsumer,
-    IntelligenceConsumer,
     GraphUpdateConsumer,
+    IntelligenceConsumer,
     KBIndexConsumer,
-    register_consumer,
+    _event_registry,
     dispatch_event,
     register_all_consumers,
-    _event_registry,
+    register_consumer,
 )
 
 
@@ -27,7 +26,6 @@ class CustomConsumer(EventConsumer):
 
 
 class TestEventConsumers100Pct:
-
     def test_base_event_consumer(self):
         base = EventConsumer()
         assert base.subscribed_events == []
@@ -99,11 +97,14 @@ class TestEventConsumers100Pct:
 
         # These handle methods issue log.info statements
         consumer.handle("persona_status_changed", {"persona_id": "123"})
-        consumer.handle("spiritual_stage_transition", {
-            "from_stage": "believer",
-            "to_stage": "disciple",
-            "agent_id": "agent-456",
-        })
+        consumer.handle(
+            "spiritual_stage_transition",
+            {
+                "from_stage": "believer",
+                "to_stage": "disciple",
+                "agent_id": "agent-456",
+            },
+        )
 
     @patch("backend.core.database.SessionLocal")
     @patch("backend.services.knowledge_base.KnowledgeIndexer")

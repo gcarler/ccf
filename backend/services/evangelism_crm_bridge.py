@@ -195,9 +195,7 @@ def _insert_caso_nuevo_visitante(
     )
 
 
-def _obtener_o_crear_pipeline_nuevos_visitantes(
-    db: Session, sede_id: uuid.UUID
-) -> Optional[PipelineCRM]:
+def _obtener_o_crear_pipeline_nuevos_visitantes(db: Session, sede_id: uuid.UUID) -> Optional[PipelineCRM]:
     pipeline = (
         db.query(PipelineCRM)
         .filter(
@@ -256,11 +254,7 @@ def _obtener_o_crear_pipeline_nuevos_visitantes(
         etapa_data["visual_color"] = None
 
     if "visual_color" in live_cols:
-        db.add(
-            EtapaPipeline(
-                **{k: v for k, v in etapa_data.items() if hasattr(EtapaPipeline, k)}
-            )
-        )
+        db.add(EtapaPipeline(**{k: v for k, v in etapa_data.items() if hasattr(EtapaPipeline, k)}))
         db.flush()  # flush sin commit — el caller hace el único db.commit() final
     else:
         etapa_table = Table(
@@ -309,11 +303,7 @@ def _obtener_o_crear_etapa_nuevo_contacto(
     try:
         sp = db.begin_nested()
         if "visual_color" in live_cols:
-            db.add(
-                EtapaPipeline(
-                    **{k: v for k, v in etapa_data.items() if hasattr(EtapaPipeline, k)}
-                )
-            )
+            db.add(EtapaPipeline(**{k: v for k, v in etapa_data.items() if hasattr(EtapaPipeline, k)}))
             db.flush()
         else:
             etapa_table = Table(

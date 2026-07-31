@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
     Send, X, Bot, User, Sparkles, Loader2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -86,12 +86,12 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
         <AnimatePresence>
             {isOpen && (
                 <>
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         onClick={onClose}
                         className="fixed inset-0 z-[1000] bg-[hsl(var(--bg-muted))]/20 backdrop-blur-sm"
                     />
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: 100, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 100, scale: 0.95 }}
@@ -120,7 +120,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                         {/* Chat Messages */}
                         <div className="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-3">
                             {messages.map((msg) => (
-                                <motion.div 
+                                <motion.div
                                     key={msg.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -141,8 +141,8 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     )}>
                                         <div className={clsx(
                                             "p-4 rounded-lg text-base font-medium leading-relaxed shadow-sm",
-                                            msg.role === 'bot' 
-                                                ? "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/5" 
+                                            msg.role === 'bot'
+                                                ? "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/5"
                                                 : "bg-[hsl(var(--primary))] text-white"
                                         )}>
                                             {msg.content}
@@ -180,7 +180,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                         {/* Input Area */}
                         <div className="p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 border-t border-[hsl(var(--border))] dark:border-white/5 shrink-0">
                             <form onSubmit={handleSend} className="relative">
-                                <input 
+                                <input
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     placeholder="Preguntar a Optimus..."

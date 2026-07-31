@@ -30,6 +30,7 @@ Coverage:
 Tests are intentionally separate from the general coverage suite so any
 regression on the sede-isolation / soft-delete gate is caught immediately.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -89,8 +90,11 @@ def _bootstrap_seguimiento_in_sede(db_session, sede_id, *, email_domain="ccf.tes
     db_session.flush()
 
     persona = models.Persona(
-        first_name="V", last_name="Sede", sede_id=sede_id,
-        email=f"v@{email_domain}", phone="3000000001",
+        first_name="V",
+        last_name="Sede",
+        sede_id=sede_id,
+        email=f"v@{email_domain}",
+        phone="3000000001",
     )
     db_session.add(persona)
     db_session.flush()
@@ -121,9 +125,7 @@ class TestFollowUpSedeIsolation:
     def test_pending_follow_up_do_not_leak_cross_sede(self, client, db_session):
         """GET /follow-up/pending must NOT include seguimientos of another sede."""
         admin_a, _, sede_a = seed_admin(db_session, email="admin_a@ccf.test")
-        seguimiento_a = _bootstrap_seguimiento_in_sede(
-            db_session, sede_a.id, email_domain="sedeA"
-        )
+        seguimiento_a = _bootstrap_seguimiento_in_sede(db_session, sede_a.id, email_domain="sedeA")
 
         # Admin B in a different sede
         _, _, sede_b = seed_user_with_role(
@@ -145,9 +147,7 @@ class TestFollowUpSedeIsolation:
     def test_list_seguimientos_for_attendance_filters_cross_sede(self, client, db_session):
         """GET /follow-up/{asistencia_id} returns empty (or filtered) for cross-sede asistencia."""
         admin_a, _, sede_a = seed_admin(db_session, email="admin_a2@ccf.test")
-        seguimiento_a = _bootstrap_seguimiento_in_sede(
-            db_session, sede_a.id, email_domain="sedeA2"
-        )
+        seguimiento_a = _bootstrap_seguimiento_in_sede(db_session, sede_a.id, email_domain="sedeA2")
 
         _, _, sede_b = seed_user_with_role(
             db_session,
@@ -166,13 +166,10 @@ class TestFollowUpSedeIsolation:
         assert resp.status_code == 200
         assert resp.json() == []
 
-
     def test_patch_seguimiento_cross_sede_blocked(self, client, db_session):
         """PATCH /follow-up/{id} from a different sede returns 404."""
         admin_a, _, sede_a = seed_admin(db_session, email="admin_a3@ccf.test")
-        seguimiento_a = _bootstrap_seguimiento_in_sede(
-            db_session, sede_a.id, email_domain="sedeA3"
-        )
+        seguimiento_a = _bootstrap_seguimiento_in_sede(db_session, sede_a.id, email_domain="sedeA3")
 
         _, _, sede_b = seed_user_with_role(
             db_session,
@@ -194,9 +191,7 @@ class TestFollowUpSedeIsolation:
     def test_delete_seguimiento_cross_sede_blocked(self, client, db_session):
         """DELETE /follow-up/{id} from a different sede returns 404."""
         admin_a, _, sede_a = seed_admin(db_session, email="admin_a4@ccf.test")
-        seguimiento_a = _bootstrap_seguimiento_in_sede(
-            db_session, sede_a.id, email_domain="sedeA4"
-        )
+        seguimiento_a = _bootstrap_seguimiento_in_sede(db_session, sede_a.id, email_domain="sedeA4")
 
         _, _, sede_b = seed_user_with_role(
             db_session,
@@ -220,9 +215,7 @@ class TestFollowUpSoftDeleteIntegrity:
     def test_patch_soft_deleted_seguimiento_returns_404(self, client, db_session):
         """PATCH on a soft-deleted seguimiento must return 404, not mutate it."""
         admin, _, sede = seed_admin(db_session, email="admin_sd@ccf.test")
-        seguimiento = _bootstrap_seguimiento_in_sede(
-            db_session, sede.id, email_domain="sd1"
-        )
+        seguimiento = _bootstrap_seguimiento_in_sede(db_session, sede.id, email_domain="sd1")
         # Simulate previous soft-delete
         seguimiento.deleted_at = datetime.now(timezone.utc)
         db_session.commit()
@@ -242,20 +235,14 @@ class TestFollowUpSoftDeleteIntegrity:
     def test_delete_seguimiento_twice_second_returns_404(self, client, db_session):
         """DELETE on already-soft-deleted seguimiento returns 404 (idempotent safe)."""
         admin, _, sede = seed_admin(db_session, email="admin_sd2@ccf.test")
-        seguimiento = _bootstrap_seguimiento_in_sede(
-            db_session, sede.id, email_domain="sd2"
-        )
+        seguimiento = _bootstrap_seguimiento_in_sede(db_session, sede.id, email_domain="sd2")
         headers = auth_headers(client, email="admin_sd2@ccf.test")
 
         # First delete
-        resp1 = client.delete(
-            f"/api/evangelism/follow-up/{seguimiento.id}", headers=headers
-        )
+        resp1 = client.delete(f"/api/evangelism/follow-up/{seguimiento.id}", headers=headers)
         assert resp1.status_code == 200
         assert resp1.json() == {"ok": True}
 
         # Second delete on the same already-soft-deleted row
-        resp2 = client.delete(
-            f"/api/evangelism/follow-up/{seguimiento.id}", headers=headers
-        )
+        resp2 = client.delete(f"/api/evangelism/follow-up/{seguimiento.id}", headers=headers)
         assert resp2.status_code == 404

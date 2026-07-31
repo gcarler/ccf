@@ -1,6 +1,7 @@
 """
 Final coverage push — target 40%.
 """
+
 from unittest.mock import patch
 
 from backend.services.email import _brand_wrap, render_reset_password, render_verify_email, send_email
@@ -23,6 +24,7 @@ class TestEmailFinalPush:
     @patch("backend.services.email.smtplib.SMTP")
     def test_send_email_full_flow(self, mock_smtp):
         from backend.core.config import get_settings
+
         with patch.object(get_settings(), "smtp_host", "smtp.example.com"):
             with patch.object(get_settings(), "smtp_port", 587):
                 with patch.object(get_settings(), "smtp_user", "user"):

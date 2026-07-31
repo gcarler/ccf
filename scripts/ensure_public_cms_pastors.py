@@ -53,9 +53,7 @@ import ensure_public_content_blocks as public_blocks  # noqa: E402
 # Operator override (e.g. deployments that only ever serve a subset) can be
 # set via the ``CCF_PUBLIC_SITE_KEYS`` env var as a comma-separated string.
 TARGET_SITES = [
-    key.strip().lower()
-    for key in os.environ.get("CCF_PUBLIC_SITE_KEYS", "ccf,faro").split(",")
-    if key.strip()
+    key.strip().lower() for key in os.environ.get("CCF_PUBLIC_SITE_KEYS", "ccf,faro").split(",") if key.strip()
 ]
 PAGE_SLUG = "pastors"
 MENU_KEY = "main"
@@ -144,9 +142,7 @@ def _public_menu_items(nav_payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _ensure_menu(db, site: models.CmsSite, nav_payload: dict[str, Any]) -> tuple[bool, bool]:
     menu = (
-        db.query(models.CmsMenu)
-        .filter(models.CmsMenu.site_id == site.id, models.CmsMenu.menu_key == MENU_KEY)
-        .first()
+        db.query(models.CmsMenu).filter(models.CmsMenu.site_id == site.id, models.CmsMenu.menu_key == MENU_KEY).first()
     )
     created = False
     changed = False
@@ -186,9 +182,7 @@ def _ensure_menu(db, site: models.CmsSite, nav_payload: dict[str, Any]) -> tuple
         for item in current_items
     ]
     if current_serialized != desired_items:
-        db.query(models.CmsMenuItem).filter(models.CmsMenuItem.menu_id == menu.id).delete(
-            synchronize_session=False
-        )
+        db.query(models.CmsMenuItem).filter(models.CmsMenuItem.menu_id == menu.id).delete(synchronize_session=False)
         for item in desired_items:
             db.add(models.CmsMenuItem(menu_id=menu.id, **item))
         changed = True
@@ -198,9 +192,7 @@ def _ensure_menu(db, site: models.CmsSite, nav_payload: dict[str, Any]) -> tuple
 
 def _ensure_theme(db, site: models.CmsSite) -> tuple[bool, bool]:
     theme = (
-        db.query(models.CmsTheme)
-        .filter(models.CmsTheme.site_id == site.id, models.CmsTheme.name == THEME_NAME)
-        .first()
+        db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site.id, models.CmsTheme.name == THEME_NAME).first()
     )
     created = False
     changed = False
@@ -225,9 +217,7 @@ def _ensure_theme(db, site: models.CmsSite) -> tuple[bool, bool]:
             theme.tokens_json = THEME_TOKENS
             changed = True
         if not theme.is_active or theme.status != "active":
-            db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site.id).update(
-                {"is_active": False}
-            )
+            db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site.id).update({"is_active": False})
             theme.is_active = True
             theme.status = "active"
             changed = True
@@ -282,11 +272,7 @@ def _ensure_page(db, site: models.CmsSite) -> tuple[bool, bool]:
         ),
     ]
 
-    page = (
-        db.query(models.CmsPage)
-        .filter(models.CmsPage.site_id == site.id, models.CmsPage.slug == PAGE_SLUG)
-        .first()
-    )
+    page = db.query(models.CmsPage).filter(models.CmsPage.site_id == site.id, models.CmsPage.slug == PAGE_SLUG).first()
     created = False
     changed = False
     if page is None:
@@ -327,9 +313,7 @@ def _ensure_page(db, site: models.CmsSite) -> tuple[bool, bool]:
         for section in current_sections
     ]
     if current_serialized != desired_sections:
-        db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(
-            synchronize_session=False
-        )
+        db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(synchronize_session=False)
         for section in desired_sections:
             db.add(models.CmsSection(page_id=page.id, **section))
         changed = True
@@ -350,9 +334,7 @@ def _ensure_page(db, site: models.CmsSite) -> tuple[bool, bool]:
     current_version = None
     if page.published_version_id:
         current_version = (
-            db.query(models.CmsPageVersion)
-            .filter(models.CmsPageVersion.id == page.published_version_id)
-            .first()
+            db.query(models.CmsPageVersion).filter(models.CmsPageVersion.id == page.published_version_id).first()
         )
 
     current_snapshot = current_version.snapshot_json if current_version else None
@@ -399,11 +381,7 @@ def _ensure_site(db, site_key: str) -> tuple[models.CmsSite, bool]:
     matching the documented exception in
     ``backend/api/_cms_helpers/_shared.py``. Do NOT add ``sede_id`` here.
     """
-    site = (
-        db.query(models.CmsSite)
-        .filter(models.CmsSite.site_key == site_key)
-        .first()
-    )
+    site = db.query(models.CmsSite).filter(models.CmsSite.site_key == site_key).first()
     if site is not None:
         if not site.is_active:
             site.is_active = True
@@ -433,8 +411,7 @@ def main() -> int:
                 themes_active += 1
             page_created, page_changed = _ensure_page(db, site)
             page_status = (
-                f"{'created' if page_created else 'exists'}; "
-                f"{'updated/published' if page_changed else 'unchanged'}"
+                f"{'created' if page_created else 'exists'}; {'updated/published' if page_changed else 'unchanged'}"
             )
 
             print(f"--- Site: {site_key} ---")
@@ -450,10 +427,7 @@ def main() -> int:
             print(f"Page {PAGE_SLUG}: {page_status}")
 
         db.commit()
-        print(
-            f"Summary: {len(TARGET_SITES)} sites touched; "
-            f"{themes_active} theme activations/updates."
-        )
+        print(f"Summary: {len(TARGET_SITES)} sites touched; {themes_active} theme activations/updates.")
         print(f"Menu source: {menu_title}")
         return 0
 

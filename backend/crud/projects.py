@@ -12,6 +12,7 @@ from backend.models_shared import _utcnow
 
 # ── Helper ──────────────────────────────────────────────
 
+
 def get_user_persona_id(db: Session, user_id: UUID | str | None) -> Optional[UUID]:
     """Obtiene persona.id desde el identificador canónico del usuario."""
     persona_id = resolve_persona_id_for_user(db, user_id)
@@ -19,6 +20,7 @@ def get_user_persona_id(db: Session, user_id: UUID | str | None) -> Optional[UUI
 
 
 # ── Projects ────────────────────────────────────────────
+
 
 def create_project(
     db: Session,
@@ -40,9 +42,7 @@ def create_project(
     defense-in-depth.
     """
     if sede_id is None:
-        raise ValueError(
-            "sede_id is required (Axioma 3): cannot create a tenant-less project"
-        )
+        raise ValueError("sede_id is required (Axioma 3): cannot create a tenant-less project")
     data = project.model_dump()
     data.pop("owner_id", None)
     row = models.Project(**data)
@@ -55,10 +55,14 @@ def create_project(
 
 
 def get_projects(db: Session, skip: int = 0, limit: int = 100, sede_id=None, status_filter=None):
-    q = db.query(models.Project).options(
-        selectinload(models.Project.owner),
-        selectinload(models.Project.tasks),
-    ).filter(models.Project.deleted_at.is_(None))
+    q = (
+        db.query(models.Project)
+        .options(
+            selectinload(models.Project.owner),
+            selectinload(models.Project.tasks),
+        )
+        .filter(models.Project.deleted_at.is_(None))
+    )
     if sede_id is not None:
         q = q.filter(models.Project.sede_id == sede_id)
     if status_filter:
@@ -68,10 +72,7 @@ def get_projects(db: Session, skip: int = 0, limit: int = 100, sede_id=None, sta
 
 def get_project(db: Session, project_id, sede_id=None):
     """Obtiene un proyecto y aplica el scope de sede cuando se proporciona."""
-    q = (
-        db.query(models.Project)
-        .filter(models.Project.id == project_id, models.Project.deleted_at.is_(None))
-    )
+    q = db.query(models.Project).filter(models.Project.id == project_id, models.Project.deleted_at.is_(None))
     if sede_id is not None:
         q = q.filter(models.Project.sede_id == sede_id)
     return q.first()
@@ -108,6 +109,7 @@ def delete_project(db: Session, project_id) -> bool:
 
 
 # ── Project Tasks ───────────────────────────────────────
+
 
 def create_project_task(db: Session, task: schemas.ProjectTaskCreate):
     db_task = models.ProjectTask(**task.model_dump())
@@ -157,6 +159,7 @@ def delete_project_task(db: Session, task_id) -> bool:
 
 # ── Project Phases ───────────────────────────────────────
 
+
 def get_project_phases(db: Session, project_id):
     return (
         db.query(models.ProjectPhase)
@@ -167,7 +170,9 @@ def get_project_phases(db: Session, project_id):
 
 
 def set_project_phases(db: Session, project_id, phases: list[dict]) -> list[models.ProjectPhase]:
-    db.query(models.ProjectPhase).filter(models.ProjectPhase.project_id == project_id).update({models.ProjectPhase.deleted_at: datetime.now(timezone.utc)}, synchronize_session=False)
+    db.query(models.ProjectPhase).filter(models.ProjectPhase.project_id == project_id).update(
+        {models.ProjectPhase.deleted_at: datetime.now(timezone.utc)}, synchronize_session=False
+    )
     created = []
     for i, p in enumerate(phases):
         phase = models.ProjectPhase(
@@ -187,15 +192,16 @@ def set_project_phases(db: Session, project_id, phases: list[dict]) -> list[mode
 
 def create_default_phases(db: Session, project_id):
     defaults = [
-        {"name": "Por Hacer",  "slug": "todo",        "color": "#94a3b8"},
-        {"name": "En Curso",   "slug": "in_progress",  "color": "#3b82f6"},
-        {"name": "Revisión",   "slug": "review",       "color": "#f59e0b"},
-        {"name": "Completado", "slug": "completed",    "color": "#10b981"},
+        {"name": "Por Hacer", "slug": "todo", "color": "#94a3b8"},
+        {"name": "En Curso", "slug": "in_progress", "color": "#3b82f6"},
+        {"name": "Revisión", "slug": "review", "color": "#f59e0b"},
+        {"name": "Completado", "slug": "completed", "color": "#10b981"},
     ]
     return set_project_phases(db, project_id, defaults)
 
 
 # ── Project Comments ───────────────────────────────────
+
 
 def get_project_comments(db: Session, project_id=None, task_id=None):
     q = db.query(models.ProjectComment).filter(models.ProjectComment.deleted_at.is_(None))
@@ -244,6 +250,7 @@ def delete_comment(db: Session, comment_id: UUID) -> bool:
 
 # ── Project Milestones ─────────────────────────────────
 
+
 def get_project_milestones(db: Session, project_id):
     return (
         db.query(models.ProjectMilestone)
@@ -257,7 +264,9 @@ def get_milestone(db: Session, milestone_id):
     return db.query(models.ProjectMilestone).filter(models.ProjectMilestone.id == milestone_id).first()
 
 
-def create_milestone(db: Session, project_id, title: str, description: str | None = None, target_date=None, is_completed: bool = False):
+def create_milestone(
+    db: Session, project_id, title: str, description: str | None = None, target_date=None, is_completed: bool = False
+):
     row = models.ProjectMilestone(
         project_id=project_id,
         title=title,
@@ -271,7 +280,9 @@ def create_milestone(db: Session, project_id, title: str, description: str | Non
     return row
 
 
-def update_milestone(db: Session, milestone_id, payload: schemas.ProjectMilestoneUpdate) -> Optional[models.ProjectMilestone]:
+def update_milestone(
+    db: Session, milestone_id, payload: schemas.ProjectMilestoneUpdate
+) -> Optional[models.ProjectMilestone]:
     row = get_milestone(db, milestone_id)
     if not row:
         return None
@@ -293,6 +304,7 @@ def delete_milestone(db: Session, milestone_id) -> bool:
 
 # ── Project Attachments ────────────────────────────────
 
+
 def get_task_attachments(db: Session, task_id):
     return (
         db.query(models.ProjectAttachment)
@@ -306,8 +318,15 @@ def get_attachment(db: Session, attachment_id: UUID):
     return db.query(models.ProjectAttachment).filter(models.ProjectAttachment.id == attachment_id).first()
 
 
-def create_attachment(db: Session, task_id, file_url: str, filename: str,
-                      file_size: int = 0, file_type: str | None = None, uploader_id=None):
+def create_attachment(
+    db: Session,
+    task_id,
+    file_url: str,
+    filename: str,
+    file_size: int = 0,
+    file_type: str | None = None,
+    uploader_id=None,
+):
     row = models.ProjectAttachment(
         task_id=task_id,
         file_url=file_url,
@@ -333,6 +352,7 @@ def delete_attachment(db: Session, attachment_id: UUID) -> bool:
 
 # ── Project Whiteboard ─────────────────────────────────
 
+
 def get_project_whiteboard(db: Session, project_id):
     return (
         db.query(models.ProjectWhiteboard)
@@ -344,7 +364,9 @@ def get_project_whiteboard(db: Session, project_id):
     )
 
 
-def update_project_whiteboard(db: Session, project_id, payload: schemas.ProjectWhiteboardUpdate) -> models.ProjectWhiteboard:
+def update_project_whiteboard(
+    db: Session, project_id, payload: schemas.ProjectWhiteboardUpdate
+) -> models.ProjectWhiteboard:
     row = get_project_whiteboard(db, project_id)
     if not row:
         row = models.ProjectWhiteboard(project_id=project_id, elements_json=payload.elements_json or "[]")
@@ -358,6 +380,7 @@ def update_project_whiteboard(db: Session, project_id, payload: schemas.ProjectW
 
 
 # ── Project Wiki / Documents ───────────────────────────
+
 
 def get_project_wiki(db: Session, project_id):
     return (
@@ -383,6 +406,7 @@ def update_project_wiki(db: Session, project_id, content: str, author_id=None) -
 
 
 # ── Task Supplies ───────────────────────────────────────
+
 
 def get_task_supplies(db: Session, task_id):
     return (
@@ -427,6 +451,7 @@ def delete_supply(db: Session, supply_id: UUID) -> bool:
 
 # ── Project Activity Logs ──────────────────────────────
 
+
 def get_project_activities(db: Session, project_id, limit: int = 100):
     return (
         db.query(models.ProjectActivityLog)
@@ -460,6 +485,7 @@ def create_activity_log(db: Session, project_id, persona_id, action_type: str, d
 
 # ── Inbox State ───────────────────────────────────────
 
+
 def get_inbox_state(db: Session, persona_id: UUID | str, item_id: str) -> Optional[models.ProjectInboxState]:
     return (
         db.query(models.ProjectInboxState)
@@ -482,11 +508,16 @@ def update_inbox_state(db: Session, persona_id: UUID | str, item_id: str, is_rea
 
 # ── Portfolio & Workload ───────────────────────────────
 
+
 def get_portfolio_summary(db: Session, sede_id=None):
-    q = db.query(models.Project).options(
-        selectinload(models.Project.owner),
-        selectinload(models.Project.tasks),
-    ).filter(models.Project.deleted_at.is_(None))
+    q = (
+        db.query(models.Project)
+        .options(
+            selectinload(models.Project.owner),
+            selectinload(models.Project.tasks),
+        )
+        .filter(models.Project.deleted_at.is_(None))
+    )
     if sede_id is not None:
         q = q.filter(models.Project.sede_id == sede_id)
     projects = q.all()
@@ -498,6 +529,7 @@ def get_portfolio_summary(db: Session, sede_id=None):
 
 def get_workload_summary(db: Session, sede_id=None):
     from sqlalchemy import func
+
     q = (
         db.query(models.ProjectTask.assignee_id, func.count(models.ProjectTask.id).label("task_count"))
         .filter(models.ProjectTask.deleted_at.is_(None), models.ProjectTask.assignee_id.isnot(None))

@@ -403,7 +403,7 @@ if (!cancelled) setLoading(false);
  setSaving(true);
  try {
  const detail = await apiFetch<Grupo>(  `/evangelism/grupos/${grupoId}`,
- 
+
  { token, silent: true }
  );
  const current = new Set(
@@ -413,7 +413,7 @@ if (!cancelled) setLoading(false);
  );
  current.add(personaId);
  const updated = await apiFetch<Grupo>(  `/evangelism/grupos/${grupoId}`,
- 
+
  {
   method: 'PUT',
  body: {

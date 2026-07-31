@@ -1,42 +1,39 @@
 #!/usr/bin/env python3
 """Apply all consolidation transformation changes to pastoral.py and crud/crm.py"""
 
+
 def fix_pastoral():
-    with open('backend/api/crm/pastoral.py') as f:
+    with open("backend/api/crm/pastoral.py") as f:
         content = f.read()
 
     # 1. Fix case_id: int -> str in consolidation endpoints
     content = content.replace(
-        'def get_consolidation_case(\n    case_id: int,',
-        'def get_consolidation_case(\n    case_id: str,'
+        "def get_consolidation_case(\n    case_id: int,", "def get_consolidation_case(\n    case_id: str,"
     )
     content = content.replace(
-        'def update_consolidation_case(\n    case_id: int,',
-        'def update_consolidation_case(\n    case_id: str,'
+        "def update_consolidation_case(\n    case_id: int,", "def update_consolidation_case(\n    case_id: str,"
     )
     content = content.replace(
-        'def delete_consolidation_case(\n    case_id: int,',
-        'def delete_consolidation_case(\n    case_id: str,'
+        "def delete_consolidation_case(\n    case_id: int,", "def delete_consolidation_case(\n    case_id: str,"
     )
     content = content.replace(
-        'def list_consolidation_tasks(\n    case_id: int,',
-        'def list_consolidation_tasks(\n    case_id: str,'
+        "def list_consolidation_tasks(\n    case_id: int,", "def list_consolidation_tasks(\n    case_id: str,"
     )
     content = content.replace(
-        'def list_consolidation_interactions(\n    case_id: int,',
-        'def list_consolidation_interactions(\n    case_id: str,'
+        "def list_consolidation_interactions(\n    case_id: int,",
+        "def list_consolidation_interactions(\n    case_id: str,",
     )
 
     # update_consolidation_task
     content = content.replace(
-        'def update_consolidation_task(\n    case_id: int,\n    task_id: int,\n    payload: schemas.ConsolidationFollowUpTaskUpdate,',
-        'def update_consolidation_task(\n    case_id: str,\n    task_id: str,\n    payload: schemas.ConsolidationTaskUpdate,'
+        "def update_consolidation_task(\n    case_id: int,\n    task_id: int,\n    payload: schemas.ConsolidationFollowUpTaskUpdate,",
+        "def update_consolidation_task(\n    case_id: str,\n    task_id: str,\n    payload: schemas.ConsolidationTaskUpdate,",
     )
 
     # 2. Fix create_consolidation_case - Member -> Persona lookup
     content = content.replace(
-        "    member = (\n        db.query(models.Member).filter(models.Member.id == payload.persona_id).first()\n    )\n    if not member:\n        raise HTTPException(status_code=404, detail=\"Member not found\")",
-        "    persona = (\n        db.query(models.Persona).filter(models.Persona.id == payload.persona_id).first()\n    )\n    if not persona:\n        raise HTTPException(status_code=404, detail=\"Persona not found\")"
+        '    member = (\n        db.query(models.Member).filter(models.Member.id == payload.persona_id).first()\n    )\n    if not member:\n        raise HTTPException(status_code=404, detail="Member not found")',
+        '    persona = (\n        db.query(models.Persona).filter(models.Persona.id == payload.persona_id).first()\n    )\n    if not persona:\n        raise HTTPException(status_code=404, detail="Persona not found")',
     )
 
     # Wait, the strings may use single or double quotes. Let me check and handle both.
@@ -44,23 +41,20 @@ def fix_pastoral():
 
     # 3. Fix performed_by_member_id -> performed_by_id
     content = content.replace(
-        '"performed_by_member_id": i.performed_by_member_id,',
-        '"performed_by_id": i.performed_by_id,'
+        '"performed_by_member_id": i.performed_by_member_id,', '"performed_by_id": i.performed_by_id,'
     )
 
     # 4. Fix update_consolidation_assignment response
     content = content.replace(
-        '"assigned_by_member_id": assignment.assigned_by_member_id,',
-        '"assigned_by_id": assignment.assigned_by_id,'
+        '"assigned_by_member_id": assignment.assigned_by_member_id,', '"assigned_by_id": assignment.assigned_by_id,'
     )
     content = content.replace(
-        '"assigned_to_member_id": assignment.assigned_to_member_id,',
-        '"assigned_to_id": assignment.assigned_to_id,'
+        '"assigned_to_member_id": assignment.assigned_to_member_id,', '"assigned_to_id": assignment.assigned_to_id,'
     )
 
     # 5. Remove ALL pipeline endpoints + call logs from CONSOLIDATION & PIPELINE to just before messaging
-    pipeline_marker = '# --- CONSOLIDATION & PIPELINE ---'
-    messaging_marker = "@router.post(\"/messaging/send\", response_model=dict)"
+    pipeline_marker = "# --- CONSOLIDATION & PIPELINE ---"
+    messaging_marker = '@router.post("/messaging/send", response_model=dict)'
     idx1 = content.find(pipeline_marker)
     idx2 = content.find(messaging_marker)
     if idx1 >= 0 and idx2 > idx1:
@@ -99,8 +93,8 @@ def fix_pastoral():
 
     # 8. Fix newsletter leads - Member -> Persona join
     content = content.replace(
-        '.join(models.Member, models.ConsolidationCase.persona_id == models.Member.id)',
-        '.join(models.Persona, models.ConsolidationCase.persona_id == models.Persona.id)'
+        ".join(models.Member, models.ConsolidationCase.persona_id == models.Member.id)",
+        ".join(models.Persona, models.ConsolidationCase.persona_id == models.Persona.id)",
     )
 
     # Fix newsletter response (first occurrence - GET /leads/newsletter)
@@ -135,13 +129,13 @@ def fix_pastoral():
             "telefono": persona.telefono if persona else ","""
     content = content.replace(old_export_response, new_export_response)
 
-    with open('backend/api/crm/pastoral.py', 'w') as f:
+    with open("backend/api/crm/pastoral.py", "w") as f:
         f.write(content)
     print("pastoral.py: OK")
 
 
 def fix_crud_crm():
-    with open('backend/crud/crm.py') as f:
+    with open("backend/crud/crm.py") as f:
         content = f.read()
 
     # Remove pipeline CRUD section (lines ~246-315)
@@ -301,37 +295,37 @@ def delete_pastoral_call_log(db: Session, log_id: int) -> bool:
 
     # Fix consolidation_case CRUDs - case_id: int -> str
     content = content.replace(
-        'def get_consolidation_case(db: Session, case_id: int):',
-        'def get_consolidation_case(db: Session, case_id: str):'
+        "def get_consolidation_case(db: Session, case_id: int):",
+        "def get_consolidation_case(db: Session, case_id: str):",
     )
     content = content.replace(
-        'def update_consolidation_case(\n    db: Session, case_id: int, payload: schemas.ConsolidationCaseUpdate',
-        'def update_consolidation_case(\n    db: Session, case_id: str, payload: schemas.ConsolidationCaseUpdate'
+        "def update_consolidation_case(\n    db: Session, case_id: int, payload: schemas.ConsolidationCaseUpdate",
+        "def update_consolidation_case(\n    db: Session, case_id: str, payload: schemas.ConsolidationCaseUpdate",
     )
     content = content.replace(
-        'def delete_consolidation_case(db: Session, case_id: int) -> bool:',
-        'def delete_consolidation_case(db: Session, case_id: str) -> bool:'
+        "def delete_consolidation_case(db: Session, case_id: int) -> bool:",
+        "def delete_consolidation_case(db: Session, case_id: str) -> bool:",
     )
 
-    with open('backend/crud/crm.py', 'w') as f:
+    with open("backend/crud/crm.py", "w") as f:
         f.write(content)
     print("crud/crm.py: OK")
 
 
 def fix_models_identity():
-    with open('backend/models_identity.py') as f:
+    with open("backend/models_identity.py") as f:
         content = f.read()
     content = content.replace(
         '\n    # Relationships for CRM & Pipeline\n    assigned_leads = relationship("ConsolidationPipeline", back_populates="pastor")\n',
-        '\n'
+        "\n",
     )
-    with open('backend/models_identity.py', 'w') as f:
+    with open("backend/models_identity.py", "w") as f:
         f.write(content)
     print("models_identity.py: OK")
 
 
 def fix_crud_init():
-    with open('backend/crud/__init__.py') as f:
+    with open("backend/crud/__init__.py") as f:
         content = f.read()
     # Remove pipeline CRUD exports
     lines_to_remove = [
@@ -341,8 +335,8 @@ def fix_crud_init():
         '"update_pipeline_lead",',
     ]
     for line in lines_to_remove:
-        content = content.replace(f'    {line}\n', '')
-    with open('backend/crud/__init__.py', 'w') as f:
+        content = content.replace(f"    {line}\n", "")
+    with open("backend/crud/__init__.py", "w") as f:
         f.write(content)
     print("crud/__init__.py: OK")
 

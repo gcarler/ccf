@@ -155,11 +155,11 @@ export default function CursoDetailPage() {
                 </motion.div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-center">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
-                        <span 
+                        <span
                             className="inline-block px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wide mb-3"
                             style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}
                         >
@@ -171,7 +171,7 @@ export default function CursoDetailPage() {
                         <p className="text-xl md:text-lg leading-relaxed mb-3 opacity-80" style={{ color: "var(--site-on-surface-variant)" }}>
                             {course.excerpt || course.desc}
                         </p>
-                        
+
                         <div className="flex flex-wrap items-center gap-3 mb-3">
                             {course.lessons && (
                                 <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide" style={{ color: "var(--site-on-surface)" }}>
@@ -210,7 +210,7 @@ export default function CursoDetailPage() {
                         </div>
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 }}
@@ -254,7 +254,7 @@ export default function CursoDetailPage() {
                             <h3 className="text-lg font-bold mb-3" style={{ color: "var(--site-on-surface)" }}>{getString(cms, "syllabus_title")}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {course.syllabus.map((item, idx) => (
-                                    <div 
+                                    <div
                                         key={idx}
                                         className="flex items-center gap-4 p-3 rounded-lg transition-all hover:translate-x-2"
                                         style={{ background: "var(--site-surface)", border: "1px solid var(--site-outline-variant)" }}

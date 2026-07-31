@@ -3,6 +3,7 @@
 Creates: agents, agent_auth, agent_contact, agent_roles,
 agent_activities, agent_families, agent_journey, agent_permissions
 """
+
 import sqlalchemy as sa
 
 from alembic import op

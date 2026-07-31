@@ -38,6 +38,7 @@ from backend.models import Asistencia, GrupoEvangelismo, SesionGrupo
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 def _session_read_options(db: Session):
     return session_read_only_options(db)
 
@@ -168,6 +169,7 @@ def add_groups_attendance(
         raise HTTPException(status_code=403, detail="No autorizado para este grupo")
 
     from backend.models_evangelism import HabilitacionSesionEnum
+
     estado_habilitacion = session_estado_habilitacion(session)
     if estado_habilitacion != HabilitacionSesionEnum.HABILITADO.value:
         raise HTTPException(
@@ -329,11 +331,11 @@ def submit_attendance(
 
     # Protección IDOR: solo sesiones habilitadas aceptan reportes
     from backend.models_evangelism import HabilitacionSesionEnum
+
     estado_habilitacion = session_estado_habilitacion(session)
     if estado_habilitacion != HabilitacionSesionEnum.HABILITADO.value:
         raise HTTPException(
-            status_code=403,
-            detail=f"La sesión está {estado_habilitacion.lower()} y no acepta reportes de asistencia."
+            status_code=403, detail=f"La sesión está {estado_habilitacion.lower()} y no acepta reportes de asistencia."
         )
 
     # Soft-delete existing attendance for this session
@@ -354,6 +356,7 @@ def submit_attendance(
 
         # Mapear estado nuevo (EstadoAsistenciaEnum)
         from backend.models_evangelism import EstadoAsistenciaEnum
+
         nuevo_estado = "presente"
         if raw_status == "absent":
             nuevo_estado = EstadoAsistenciaEnum.FALTO.value
@@ -446,9 +449,7 @@ def submit_attendance(
             tags_nuevos = [
                 f"VISITANTE_ESTRATEGIA_{estrategia_id}" if estrategia_id else "VISITANTE_ESTRATEGIA_NONE",
                 f"GRUPO_{bridge_group_snapshot['nombre']}",
-                f"SESION_{session_fecha_sesion.date().isoformat()}"
-                if session_fecha_sesion
-                else f"SESION_{session_id}",
+                f"SESION_{session_fecha_sesion.date().isoformat()}" if session_fecha_sesion else f"SESION_{session_id}",
             ]
             persona.tags = list(set((persona.tags or []) + tags_nuevos))
             if estrategia_id:
@@ -515,16 +516,11 @@ def list_pending_follow_ups(
     from backend.crud.evangelism import get_pendientes_seguimiento
 
     user_sede = require_user_sede_id(db, current_user)
-    rows = get_pendientes_seguimiento(
-        db, limit=limit, sede_id=user_sede, strategy_id=strategy_id
-    )
+    rows = get_pendientes_seguimiento(db, limit=limit, sede_id=user_sede, strategy_id=strategy_id)
     # Pydantic v2 strict: UUID→str requiere serialización explícita vía
     # model_dump(mode="json") — evita el 500 ``string_type`` en
     # ``RegistroSeguimientoResponse.asistencia_id``.
-    return [
-        schemas.RegistroSeguimientoResponse.model_validate(r).model_dump(mode="json")
-        for r in rows
-    ]
+    return [schemas.RegistroSeguimientoResponse.model_validate(r).model_dump(mode="json") for r in rows]
 
 
 def _serialize_seguimiento(obj) -> dict:
@@ -544,10 +540,7 @@ def list_seguimientos_for_attendance(
 
     user_sede = require_user_sede_id(db, current_user)
     rows = get_seguimientos(db, asistencia_id, sede_id=user_sede)
-    return [
-        schemas.RegistroSeguimientoResponse.model_validate(r).model_dump(mode="json")
-        for r in rows
-    ]
+    return [schemas.RegistroSeguimientoResponse.model_validate(r).model_dump(mode="json") for r in rows]
 
 
 @router.post("/follow-up/{asistencia_id}", response_model=schemas.RegistroSeguimientoResponse)

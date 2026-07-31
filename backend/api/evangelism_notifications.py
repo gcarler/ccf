@@ -23,6 +23,7 @@ from backend.core.tenant import require_user_sede_id
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 @router.post("/notifications/send-reminders", response_model=Dict)
 def send_reminders(
     db: Session = Depends(get_db),
@@ -103,9 +104,7 @@ def send_reminders(
     if _leader_ids_for_sessions:
         _auth_user_ids = {
             row[0]
-            for row in db.query(models.Usuario.id)
-            .filter(models.Usuario.id.in_(list(_leader_ids_for_sessions)))
-            .all()
+            for row in db.query(models.Usuario.id).filter(models.Usuario.id.in_(list(_leader_ids_for_sessions))).all()
         }
 
     for session in sessions_tomorrow:
@@ -119,7 +118,7 @@ def send_reminders(
         content = (
             f"Tienes una sesión programada para mañana "
             f"({tomorrow.strftime('%d/%m/%Y')}) en el grupo "
-            f"\"{group.nombre or group.codigo}\". "
+            f'"{group.nombre or group.codigo}". '
             f"Tema: {session_read_value(session, 'tema_estudio') or session_read_value(session, 'topic') or 'No especificado'}. "
             f"Por favor confirma tu asistencia y prepara el material necesario."
         )
@@ -179,9 +178,7 @@ def send_reminders(
     if _inactive_leader_ids:
         _inactive_auth_ids = {
             row[0]
-            for row in db.query(models.Usuario.id)
-            .filter(models.Usuario.id.in_(list(_inactive_leader_ids)))
-            .all()
+            for row in db.query(models.Usuario.id).filter(models.Usuario.id.in_(list(_inactive_leader_ids))).all()
         }
 
     for group in inactive_groups:
@@ -196,7 +193,7 @@ def send_reminders(
         title = "Falta de reporte de asistencia"
         content = (
             f"No has reportado asistencia para el grupo "
-            f"\"{group.nombre or group.codigo}\" en los últimos 7 días. "
+            f'"{group.nombre or group.codigo}" en los últimos 7 días. '
             f"Por favor registra la asistencia de las sesiones realizadas "
             f"para mantener el seguimiento actualizado."
         )

@@ -55,9 +55,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     conn = op.get_bind()
     if _constraint_exists("sin_colisiones_fisicas"):
-        conn.execute(
-            sa.text(
-                "ALTER TABLE agenda_reserva_recursos "
-                "DROP CONSTRAINT IF EXISTS sin_colisiones_fisicas"
-            )
-        )
+        conn.execute(sa.text("ALTER TABLE agenda_reserva_recursos DROP CONSTRAINT IF EXISTS sin_colisiones_fisicas"))

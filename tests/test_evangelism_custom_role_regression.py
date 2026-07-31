@@ -67,7 +67,8 @@ def fixture_basico(db_session, client):
     db_session.flush()
 
     rp_lider = RolPersonalizadoEstrategia(
-        nombre_rol="Líder", estrategia_id=estrategia.id,
+        nombre_rol="Líder",
+        estrategia_id=estrategia.id,
     )
     db_session.add(rp_lider)
     db_session.flush()
@@ -95,7 +96,8 @@ def fixture_basico(db_session, client):
             sede_id=sede.id,
             church_role="Miembro",
         )
-        db_session.add(p); personas.append(p)
+        db_session.add(p)
+        personas.append(p)
     db_session.flush()
 
     db_session.commit()
@@ -213,9 +215,13 @@ class TestCustomRolUUIDPersiste:
         # quedaría en None.
         sess = _sa_object_session(g)
         db_sess = sess
-        refreshed = db_sess.query(GrupoEvangelismo).filter(
-            GrupoEvangelismo.id == g.id,
-        ).first()
+        refreshed = (
+            db_sess.query(GrupoEvangelismo)
+            .filter(
+                GrupoEvangelismo.id == g.id,
+            )
+            .first()
+        )
         assert refreshed.lider_persona_id == p.id, (
             f"Regresión: lider_persona_id no se sincronizó desde el "
             f"participante con rol custom Lider. Esperado {p.id}, "
@@ -236,7 +242,8 @@ class TestPersonalizadoMarkerRehidrata:
     """
 
     def test_put_con_personalizado_rehidrata_uuid_existente(
-        self, fixture_basico,
+        self,
+        fixture_basico,
     ):
         f = fixture_basico
         g = f["grupo"]
@@ -252,7 +259,8 @@ class TestPersonalizadoMarkerRehidrata:
             rol_personalizado_id=rp_lider.id,
             activo=True,
         )
-        sess.add(preexistente); sess.commit()
+        sess.add(preexistente)
+        sess.commit()
 
         # Ahora el frontend (con bug antiguo) envía role='personalizado'
         # sin UUID → antes del fix: 400 'Rol no configurado en la
@@ -266,14 +274,13 @@ class TestPersonalizadoMarkerRehidrata:
             headers=f["h"],
         )
         assert resp.status_code == 200, (
-            f"Regresión: PUT con marcador legado debería ser 200, "
-            f"recibido {resp.status_code} body={resp.text}"
+            f"Regresión: PUT con marcador legado debería ser 200, recibido {resp.status_code} body={resp.text}"
         )
 
-        sess.expire(preexistente); sess.refresh(preexistente)
+        sess.expire(preexistente)
+        sess.refresh(preexistente)
         assert preexistente.rol_personalizado_id == rp_lider.id, (
-            f"Regresión: rehidratación rota. Esperado {rp_lider.id}, "
-            f"obtenido {preexistente.rol_personalizado_id}."
+            f"Regresión: rehidratación rota. Esperado {rp_lider.id}, obtenido {preexistente.rol_personalizado_id}."
         )
         assert preexistente.rol_base == "personalizado"
 
@@ -291,7 +298,8 @@ class TestPutMixtoSin400:
     """
 
     def test_put_mixto_asignar_lider_con_legados_no_400(
-        self, fixture_basico,
+        self,
+        fixture_basico,
     ):
         f = fixture_basico
         g = f["grupo"]
@@ -303,13 +311,15 @@ class TestPutMixtoSin400:
         sess = _sa_object_session(g)
         # Participantes legados con marcador 'personalizado' y UUID del líder
         for p in (p_legado_a, p_legado_b):
-            sess.add(ParticipanteGrupo(
-                grupo_id=g.id,
-                persona_id=p.id,
-                rol_base="personalizado",
-                rol_personalizado_id=rp_lider.id,
-                activo=True,
-            ))
+            sess.add(
+                ParticipanteGrupo(
+                    grupo_id=g.id,
+                    persona_id=p.id,
+                    rol_base="personalizado",
+                    rol_personalizado_id=rp_lider.id,
+                    activo=True,
+                )
+            )
         sess.commit()
 
         # Replicar exactamente lo que le llega al backend desde el frontend:
@@ -333,18 +343,26 @@ class TestPutMixtoSin400:
         )
 
         sess.expire_all()
-        pg_nuevo = sess.query(ParticipanteGrupo).filter(
-            ParticipanteGrupo.grupo_id == g.id,
-            ParticipanteGrupo.persona_id == p_nuevo.id,
-        ).first()
+        pg_nuevo = (
+            sess.query(ParticipanteGrupo)
+            .filter(
+                ParticipanteGrupo.grupo_id == g.id,
+                ParticipanteGrupo.persona_id == p_nuevo.id,
+            )
+            .first()
+        )
         assert pg_nuevo is not None
         assert pg_nuevo.rol_personalizado_id == rp_lider.id
 
         for p in (p_legado_a, p_legado_b):
-            pg = sess.query(ParticipanteGrupo).filter(
-                ParticipanteGrupo.grupo_id == g.id,
-                ParticipanteGrupo.persona_id == p.id,
-            ).first()
+            pg = (
+                sess.query(ParticipanteGrupo)
+                .filter(
+                    ParticipanteGrupo.grupo_id == g.id,
+                    ParticipanteGrupo.persona_id == p.id,
+                )
+                .first()
+            )
             assert pg is not None
             assert pg.rol_personalizado_id == rp_lider.id, (
                 f"Regresión: antiguo participante {p.id} perdió su "
@@ -352,9 +370,9 @@ class TestPutMixtoSin400:
                 f"{rp_lider.id}, obtenido {pg.rol_personalizado_id}."
             )
 
-
     def test_put_con_custom_uuid_falla_lider_por_issue_secundario(
-        self, fixture_basico,
+        self,
+        fixture_basico,
     ):
         """Sanity del issue secundario: el PUT no debe 500; el sync simplemente
         deja ``lider_persona_id`` en None por el bug pre-existente del
@@ -367,6 +385,7 @@ class TestPutMixtoSin400:
         # para que el sanity test no choque con IndexError.
         p = f["personas"][0]
         from backend.models_evangelism import ParticipanteGrupo
+
         resp = f["c"].put(
             f"/api/evangelism/grupos/{g.id}",
             json=_payload(
@@ -378,10 +397,14 @@ class TestPutMixtoSin400:
         assert resp.status_code == 200, resp.text
         # Caso A sigue verde: el UUID del rol se persiste correctamente.
         sess = _sa_object_session(rp_lider)
-        pg = sess.query(ParticipanteGrupo).filter(
-            ParticipanteGrupo.grupo_id == g.id,
-            ParticipanteGrupo.persona_id == p.id,
-        ).first()
+        pg = (
+            sess.query(ParticipanteGrupo)
+            .filter(
+                ParticipanteGrupo.grupo_id == g.id,
+                ParticipanteGrupo.persona_id == p.id,
+            )
+            .first()
+        )
         assert pg is not None
         assert pg.rol_personalizado_id == rp_lider.id
 

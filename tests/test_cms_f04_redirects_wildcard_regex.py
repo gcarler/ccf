@@ -21,6 +21,7 @@ Tests:
   9) API: list_redirects expone match_type/priority
   10) API: GET /resolve-redirect retorna 404 cuando no match
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -41,9 +42,7 @@ def authed_client(client, db_session):
 
 
 def _seed(db_session, email="cmsF04@example.com"):
-    admin, persona, sede = seed_admin(
-        db_session, email=email, password="testpass123"
-    )
+    admin, persona, sede = seed_admin(db_session, email=email, password="testpass123")
     return admin, persona, sede
 
 
@@ -210,52 +209,72 @@ class TestF04ResolveRedirect:
 class TestF04Api:
     def test_post_invalid_match_type_returns_422(self, authed_client):
         client, headers, _ = authed_client
-        resp = client.post("/api/cms/v2/redirects", headers=headers, json={
-            "site_key": "ccf",
-            "from_path": "/test",
-            "to_path": "/target",
-            "match_type": "invalid-type",  # No permitido
-        })
+        resp = client.post(
+            "/api/cms/v2/redirects",
+            headers=headers,
+            json={
+                "site_key": "ccf",
+                "from_path": "/test",
+                "to_path": "/target",
+                "match_type": "invalid-type",  # No permitido
+            },
+        )
         assert resp.status_code == 422
 
     def test_post_invalid_regex_returns_422(self, authed_client):
         client, headers, _ = authed_client
-        resp = client.post("/api/cms/v2/redirects", headers=headers, json={
-            "site_key": "ccf",
-            "from_path": "[unclosed-bracket",  # Regex inválido
-            "to_path": "/invalid",
-            "match_type": "regex",
-        })
+        resp = client.post(
+            "/api/cms/v2/redirects",
+            headers=headers,
+            json={
+                "site_key": "ccf",
+                "from_path": "[unclosed-bracket",  # Regex inválido
+                "to_path": "/invalid",
+                "match_type": "regex",
+            },
+        )
         assert resp.status_code == 422
 
     def test_post_valid_regex_returns_200(self, authed_client):
         client, headers, _ = authed_client
-        resp = client.post("/api/cms/v2/redirects", headers=headers, json={
-            "site_key": "ccf",
-            "from_path": r"^/posts/(\d{4})/?$",
-            "to_path": "/archive/$1",
-            "match_type": "regex",
-        })
+        resp = client.post(
+            "/api/cms/v2/redirects",
+            headers=headers,
+            json={
+                "site_key": "ccf",
+                "from_path": r"^/posts/(\d{4})/?$",
+                "to_path": "/archive/$1",
+                "match_type": "regex",
+            },
+        )
         assert resp.status_code == 200
 
     def test_post_valid_wildcard_returns_200(self, authed_client):
         client, headers, _ = authed_client
-        resp = client.post("/api/cms/v2/redirects", headers=headers, json={
-            "site_key": "ccf",
-            "from_path": "/legacy/*",
-            "to_path": "/modern/",
-            "match_type": "wildcard",
-        })
+        resp = client.post(
+            "/api/cms/v2/redirects",
+            headers=headers,
+            json={
+                "site_key": "ccf",
+                "from_path": "/legacy/*",
+                "to_path": "/modern/",
+                "match_type": "wildcard",
+            },
+        )
         assert resp.status_code == 200
 
     def test_list_redirects_exposes_match_type_and_priority(self, authed_client):
         client, headers, _ = authed_client
         # Crear un redirect exacto (default)
-        client.post("/api/cms/v2/redirects", headers=headers, json={
-            "site_key": "ccf",
-            "from_path": "/list-test",
-            "to_path": "/list-target",
-        })
+        client.post(
+            "/api/cms/v2/redirects",
+            headers=headers,
+            json={
+                "site_key": "ccf",
+                "from_path": "/list-test",
+                "to_path": "/list-target",
+            },
+        )
 
         resp = client.get("/api/cms/v2/redirects?site_key=ccf", headers=headers)
         assert resp.status_code == 200
@@ -276,12 +295,16 @@ class TestF04Api:
 class TestF04ResolveEndpoint:
     def test_resolve_returns_match(self, authed_client):
         client, headers, _ = authed_client
-        client.post("/api/cms/v2/redirects", headers=headers, json={
-            "site_key": "ccf",
-            "from_path": "/resolve-me",
-            "to_path": "/resolved",
-            "match_type": "exact",
-        })
+        client.post(
+            "/api/cms/v2/redirects",
+            headers=headers,
+            json={
+                "site_key": "ccf",
+                "from_path": "/resolve-me",
+                "to_path": "/resolved",
+                "match_type": "exact",
+            },
+        )
 
         resp = client.get(
             "/api/cms/v2/resolve-redirect?site_key=ccf&path=/resolve-me",
@@ -302,12 +325,16 @@ class TestF04ResolveEndpoint:
 
     def test_resolve_regex_with_capture(self, authed_client):
         client, headers, _ = authed_client
-        client.post("/api/cms/v2/redirects", headers=headers, json={
-            "site_key": "ccf",
-            "from_path": r"^/p/(.*)$",
-            "to_path": "/post/$1",
-            "match_type": "regex",
-        })
+        client.post(
+            "/api/cms/v2/redirects",
+            headers=headers,
+            json={
+                "site_key": "ccf",
+                "from_path": r"^/p/(.*)$",
+                "to_path": "/post/$1",
+                "match_type": "regex",
+            },
+        )
 
         resp = client.get(
             "/api/cms/v2/resolve-redirect?site_key=ccf&path=/p/hola-mundo",

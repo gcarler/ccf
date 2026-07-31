@@ -6,6 +6,7 @@ Reusable service that encapsulates the pattern:
 
 All public-facing endpoints should use this service instead of inline duplication.
 """
+
 import logging
 from dataclasses import dataclass, field
 from typing import Optional
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ContactRecord:
     """Input record for a public contact."""
+
     email: Optional[str] = None
     phone: Optional[str] = None
     first_name: Optional[str] = None
@@ -44,6 +46,7 @@ class ContactRecord:
 @dataclass
 class ContactResult:
     """Output record after tracking a contact."""
+
     persona: Optional[models.Persona] = None
     persona_created: bool = False
     case: Optional[models.CasoCRM] = None
@@ -173,9 +176,7 @@ class PublicContactTracker:
         return result
 
     @staticmethod
-    def _resolve_sede(
-        db: Session, sede_id: Optional[UUID], persona: Optional[models.Persona]
-    ):
+    def _resolve_sede(db: Session, sede_id: Optional[UUID], persona: Optional[models.Persona]):
         candidate = sede_id or (persona.sede_id if persona else None)
         query = db.query(models.Sede).filter(
             models.Sede.es_activa.is_(True),
@@ -186,9 +187,7 @@ class PublicContactTracker:
         return query.order_by(models.Sede.nombre).first()
 
     @staticmethod
-    def _find_persona(
-        db: Session, email: Optional[str], phone: Optional[str]
-    ) -> Optional[models.Persona]:
+    def _find_persona(db: Session, email: Optional[str], phone: Optional[str]) -> Optional[models.Persona]:
         """Find an existing Persona by email or phone."""
         conditions = []
         if phone:

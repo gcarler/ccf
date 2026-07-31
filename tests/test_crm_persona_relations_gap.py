@@ -2,6 +2,7 @@
 API tests for backend.api.crm.persona_relations.
 Simple tests that don't require cross-sede persona validation.
 """
+
 from __future__ import annotations
 
 import uuid

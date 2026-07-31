@@ -84,9 +84,9 @@ def _persona_display_name(persona: models.Persona | None) -> str:
     un placeholder en vez de lanzar AttributeError."""
     if persona is None:
         return "Usuario eliminado"
-    return " ".join(
-        part for part in [persona.first_name, persona.last_name] if part
-    ) or f"Usuario {str(persona.id)[:8]}"
+    return (
+        " ".join(part for part in [persona.first_name, persona.last_name] if part) or f"Usuario {str(persona.id)[:8]}"
+    )
 
 
 def _sanitize_text(value: str | None) -> str | None:
@@ -252,9 +252,7 @@ def list_assessments(
 def get_assessment(assessment_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
     assessment = (
         db.query(models.Assessment)
-        .options(
-            joinedload(models.Assessment.questions).joinedload(models.AssessmentQuestion.options)
-        )
+        .options(joinedload(models.Assessment.questions).joinedload(models.AssessmentQuestion.options))
         .filter(models.Assessment.id == assessment_id, models.Assessment.deleted_at.is_(None))
         .first()
     )
@@ -280,9 +278,7 @@ def submit_assessment(
     # ownership estricto.
     assessment = (
         db.query(models.Assessment)
-        .options(
-            joinedload(models.Assessment.questions).joinedload(models.AssessmentQuestion.options)
-        )
+        .options(joinedload(models.Assessment.questions).joinedload(models.AssessmentQuestion.options))
         .filter(models.Assessment.id == assessment_id, models.Assessment.deleted_at.is_(None))
         .first()
     )
@@ -350,9 +346,7 @@ def submit_assessment(
 
 @router.get("/lessons/{lesson_id}/progress", response_model=schemas.LessonProgressResponse)
 def get_lesson_progress(lesson_id: UUID, current_user: AcademyStudent, db: Session = Depends(get_db)):
-    lesson = db.query(models.Lesson).filter(
-        models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)
-    ).first()
+    lesson = db.query(models.Lesson).filter(models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Lección no encontrada")
     _get_scoped_course(db, current_user, lesson.course_id)
@@ -717,7 +711,9 @@ def my_certificates(
 
 @router.post("/enrollments/{enrollment_id}/request-certificate")
 @academy_limiter.limit("5/minute")
-def request_certificate(enrollment_id: UUID, request: Request, current_user: AcademyStudent, db: Session = Depends(get_db)):
+def request_certificate(
+    enrollment_id: UUID, request: Request, current_user: AcademyStudent, db: Session = Depends(get_db)
+):
     enrollment = _get_own_enrollment(db, current_user, enrollment_id)
     if enrollment.status != "completed" and not enrollment.approved:
         raise HTTPException(status_code=400, detail="El curso todavía no está aprobado")
@@ -753,10 +749,8 @@ def validate_certificate(code: str, request: Request, db: Session = Depends(get_
     certificate = (
         db.query(models.Certificate)
         .options(
-            joinedload(models.Certificate.enrollment)
-            .joinedload(models.Enrollment.persona),
-            joinedload(models.Certificate.enrollment)
-            .joinedload(models.Enrollment.course),
+            joinedload(models.Certificate.enrollment).joinedload(models.Enrollment.persona),
+            joinedload(models.Certificate.enrollment).joinedload(models.Enrollment.course),
         )
         .filter(models.Certificate.certificate_code == code)
         .first()
@@ -783,9 +777,7 @@ def validate_certificate(code: str, request: Request, db: Session = Depends(get_
         issued_at=certificate.issued_at,
         enrollment=schemas.CertificateValidationEnrollment(
             student=schemas.CertificateValidationStudent(username=student_username),
-            course=schemas.CertificateValidationCourse(
-                title=certificate.enrollment.course.title
-            ),
+            course=schemas.CertificateValidationCourse(title=certificate.enrollment.course.title),
         ),
     )
 
@@ -822,10 +814,17 @@ async def submit_assignment(
     if not lesson:
         raise HTTPException(status_code=404, detail="Lección no encontrada")
     ALLOWED_TYPES = {
-        "application/pdf", "image/jpeg", "image/png", "image/gif", "image/webp",
-        "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "text/plain", "text/csv",
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain",
+        "text/csv",
     }
     if file.content_type and file.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=422, detail="Tipo de archivo no permitido")
@@ -1008,7 +1007,9 @@ def list_forum_comments(
     )
 
 
-@router.post("/forum/threads/{thread_id}/comments", response_model=schemas.ForumCommentRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/forum/threads/{thread_id}/comments", response_model=schemas.ForumCommentRead, status_code=status.HTTP_201_CREATED
+)
 def create_forum_comment(
     thread_id: UUID,
     payload: schemas.ForumCommentCreate,
@@ -1017,10 +1018,14 @@ def create_forum_comment(
 ):
     _get_scoped_forum_thread(db, current_user, thread_id)
     if payload.parent_id:
-        parent = db.query(models.ForumComment).filter(
-            models.ForumComment.id == payload.parent_id,
-            models.ForumComment.thread_id == thread_id,
-        ).first()
+        parent = (
+            db.query(models.ForumComment)
+            .filter(
+                models.ForumComment.id == payload.parent_id,
+                models.ForumComment.thread_id == thread_id,
+            )
+            .first()
+        )
         if not parent:
             raise HTTPException(status_code=404, detail="Comentario padre no encontrado")
     comment = models.ForumComment(
@@ -1044,10 +1049,14 @@ def _get_scoped_lesson(
     require_published: bool,
 ) -> models.Lesson:
     """Resuelve una lección por la frontera Course→sede, nunca por UUID aislado."""
-    lesson = db.query(models.Lesson).filter(
-        models.Lesson.id == lesson_id,
-        models.Lesson.deleted_at.is_(None),
-    ).first()
+    lesson = (
+        db.query(models.Lesson)
+        .filter(
+            models.Lesson.id == lesson_id,
+            models.Lesson.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not lesson:
         raise HTTPException(status_code=404, detail="Lección no encontrada")
     _get_scoped_course(db, current_user, lesson.course_id)
@@ -1071,7 +1080,9 @@ def list_lesson_resources(
     )
 
 
-@router.post("/admin/lessons/{lesson_id}/resources", response_model=schemas.Resource, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/admin/lessons/{lesson_id}/resources", response_model=schemas.Resource, status_code=status.HTTP_201_CREATED
+)
 def create_lesson_resource(
     lesson_id: UUID,
     payload: schemas.ResourceCreate,
@@ -1102,10 +1113,14 @@ def archive_lesson_resource(
     current_user: AcademyEditor,
     db: Session = Depends(get_db),
 ):
-    resource = db.query(models.Resource).filter(
-        models.Resource.id == resource_id,
-        models.Resource.deleted_at.is_(None),
-    ).first()
+    resource = (
+        db.query(models.Resource)
+        .filter(
+            models.Resource.id == resource_id,
+            models.Resource.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not resource:
         raise HTTPException(status_code=404, detail="Recurso no encontrado")
     lesson = _get_scoped_lesson(db, current_user, resource.lesson_id, require_published=False)
@@ -1131,7 +1146,9 @@ def academy_schedule(
     db: Session = Depends(get_db),
 ):
     # sede_id applied via _course_scope helper (Axioma 3)
-    courses = _course_scope(db, current_user).filter(models.Course.is_published.is_(True)).offset(skip).limit(limit).all()
+    courses = (
+        _course_scope(db, current_user).filter(models.Course.is_published.is_(True)).offset(skip).limit(limit).all()
+    )
     return [
         {
             "id": course.id,
@@ -1581,11 +1598,15 @@ def create_assessment_admin(
 ):
     _get_scoped_course(db, current_user, payload.course_id)
     if payload.lesson_id is not None:
-        lesson_check = db.query(models.Lesson).filter(
-            models.Lesson.id == payload.lesson_id,
-            models.Lesson.course_id == payload.course_id,
-            models.Lesson.deleted_at.is_(None),
-        ).first()
+        lesson_check = (
+            db.query(models.Lesson)
+            .filter(
+                models.Lesson.id == payload.lesson_id,
+                models.Lesson.course_id == payload.course_id,
+                models.Lesson.deleted_at.is_(None),
+            )
+            .first()
+        )
         if not lesson_check:
             raise HTTPException(status_code=422, detail="La lección no pertenece a este curso")
     assessment = models.Assessment(

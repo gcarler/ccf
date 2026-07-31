@@ -86,9 +86,5 @@ def test_badge_awarding_uniqueness(db_session: Session):
     crud.award_badge(db_session, user.id, "Medalla Pro")
 
     # 3. Verify uniqueness
-    count = (
-        db_session.query(models.UserBadge)
-        .filter(models.UserBadge.user_id == user.id)
-        .count()
-    )
+    count = db_session.query(models.UserBadge).filter(models.UserBadge.user_id == user.id).count()
     assert count == 1

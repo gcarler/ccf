@@ -506,9 +506,9 @@ def test_audit_blocks_non_editor_role(client, db_session):
     )
     headers = auth_headers(client, email="seo-lector@example.com")
     resp = client.get("/api/cms/v2/sites/ccf/seo-audit", headers=headers)
-    assert (
-        resp.status_code == 403
-    ), f"Leak: LECTOR pudo llamar al audit endpoint (status {resp.status_code}): {resp.text}"
+    assert resp.status_code == 403, (
+        f"Leak: LECTOR pudo llamar al audit endpoint (status {resp.status_code}): {resp.text}"
+    )
 
 
 def test_audit_status_filter_excludes_draft(client, db_session):

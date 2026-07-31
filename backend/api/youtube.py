@@ -3,6 +3,7 @@ YouTube RSS proxy para el canal de CCF.
 Sin API key — usa el feed RSS público de YouTube + resolución automática de channel ID.
 Caché en memoria de 15 min con background refresh para detectar videos nuevos rápido.
 """
+
 import asyncio
 import logging
 import os
@@ -22,8 +23,8 @@ YOUTUBE_CHANNEL_ID = os.getenv("YOUTUBE_CHANNEL_ID", "")
 _HTTP_TIMEOUT = httpx.Timeout(5.0, connect=3.0, read=5.0, write=3.0, pool=3.0)
 
 _NS = {
-    "atom":  "http://www.w3.org/2005/Atom",
-    "yt":    "http://www.youtube.com/xml/schemas/2015",
+    "atom": "http://www.w3.org/2005/Atom",
+    "yt": "http://www.youtube.com/xml/schemas/2015",
     "media": "http://search.yahoo.com/mrss/",
 }
 
@@ -65,7 +66,7 @@ async def _resolve_channel_id(handle: str) -> Optional[str]:
         for pattern in (
             r'"channelId":"(UC[A-Za-z0-9_-]{22})"',
             r'"externalId":"(UC[A-Za-z0-9_-]{22})"',
-            r'channel_id=(UC[A-Za-z0-9_-]{22})',
+            r"channel_id=(UC[A-Za-z0-9_-]{22})",
         ):
             m = re.search(pattern, resp.text)
             if m:
@@ -86,32 +87,34 @@ async def _fetch_rss(channel_id: str) -> list[dict]:
     videos: list[dict] = []
 
     for entry in root.findall("atom:entry", _NS):
-        vid_el   = entry.find("yt:videoId",          _NS)
-        title_el = entry.find("atom:title",           _NS)
-        pub_el   = entry.find("atom:published",       _NS)
-        desc_el  = entry.find(".//media:description", _NS)
-        views_el = entry.find(".//yt:statistics",     _NS)
+        vid_el = entry.find("yt:videoId", _NS)
+        title_el = entry.find("atom:title", _NS)
+        pub_el = entry.find("atom:published", _NS)
+        desc_el = entry.find(".//media:description", _NS)
+        views_el = entry.find(".//yt:statistics", _NS)
 
         if vid_el is None or title_el is None:
             continue
 
-        video_id   = vid_el.text or ""
-        title      = title_el.text or ""
-        published  = pub_el.text if pub_el is not None else ""
+        video_id = vid_el.text or ""
+        title = title_el.text or ""
+        published = pub_el.text if pub_el is not None else ""
         description = (desc_el.text or "").strip()[:300] if desc_el is not None else ""
-        view_count  = int(views_el.attrib.get("views", 0)) if views_el is not None else 0
+        view_count = int(views_el.attrib.get("views", 0)) if views_el is not None else 0
 
-        videos.append({
-            "id":           video_id,
-            "title":        title,
-            "description":  description,
-            "published_at": published,
-            "view_count":   view_count,
-            "thumbnail_hq": f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
-            "thumbnail_mq": f"https://img.youtube.com/vi/{video_id}/mqdefault.jpg",
-            "url":          f"https://www.youtube.com/watch?v={video_id}",
-            "embed_url":    f"https://www.youtube.com/embed/{video_id}?rel=0&autoplay=1",
-        })
+        videos.append(
+            {
+                "id": video_id,
+                "title": title,
+                "description": description,
+                "published_at": published,
+                "view_count": view_count,
+                "thumbnail_hq": f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
+                "thumbnail_mq": f"https://img.youtube.com/vi/{video_id}/mqdefault.jpg",
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+                "embed_url": f"https://www.youtube.com/embed/{video_id}?rel=0&autoplay=1",
+            }
+        )
 
     return videos
 
@@ -140,9 +143,9 @@ async def _refresh_cache() -> bool:
     new_count = len(videos)
 
     _videos_cache = {
-        "videos":    videos,
-        "total":     new_count,
-        "channel":   YOUTUBE_HANDLE,
+        "videos": videos,
+        "total": new_count,
+        "channel": YOUTUBE_HANDLE,
         "cached_at": int(now),
     }
     _cache_ts = now

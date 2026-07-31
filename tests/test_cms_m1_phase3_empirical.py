@@ -8,19 +8,20 @@ Target endpoints:
 4. GET /api/cms/v2/public/sites/{site_key}/posts (public_posts_list)
 5. GET /api/cms/v2/public/sites/{site_key}/posts/{slug} (public_post)
 """
+
 import uuid
 from datetime import datetime, timezone
 
+from backend.api.cms_v2.public import (
+    public_menu,
+    public_page,
+    public_post,
+    public_posts_list,
+    public_theme,
+)
 from sqlalchemy import event
 
 from backend import models
-from backend.api.cms_v2.public import (
-    public_theme,
-    public_menu,
-    public_page,
-    public_posts_list,
-    public_post,
-)
 from backend.core.cache_v2 import get_redis
 from tests.conftest import seed_admin
 
@@ -100,7 +101,7 @@ def test_empirical_public_theme_query_count(db_session):
 
 def test_empirical_public_menu_query_count(db_session):
     """public_menu: O(1) query count (3 SELECTs: Site + Menu + MenuItems collection batch).
-    
+
     Test with 15 menu items to empirically prove query count is constant.
     """
     site = _seed_site(db_session, "menu")
@@ -138,7 +139,7 @@ def test_empirical_public_menu_query_count(db_session):
 
 def test_empirical_public_page_query_count(db_session):
     """public_page: O(1) query count regardless of N sections.
-    
+
     Tests 8 sections to ensure SystemVariable fetching is batched into 1 query
     and does NOT issue 8x5 = 40 SELECTs.
     """
@@ -179,7 +180,7 @@ def test_empirical_public_page_query_count(db_session):
 
 def test_empirical_public_posts_list_query_count(db_session):
     """public_posts_list: O(1) query count (5 SELECTs total for 10 posts).
-    
+
     Before fix: 2 + 10*3 = 32 queries.
     After fix: 1 Site + 1 Posts list + 1 batch categories + 1 batch tags + 1 batch authors = 5 SELECTs.
     """

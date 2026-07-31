@@ -76,7 +76,7 @@ export default function EvangelismClient() {
  const filteredData = useMemo(() => {
  if (!search) return data;
  const term = search.toLowerCase();
- return data.filter(item => 
+ return data.filter(item =>
  item.name.toLowerCase().includes(term) ||
  (item.description && item.description.toLowerCase().includes(term)) ||
  (item.strategy_type && item.strategy_type.toLowerCase().includes(term))
@@ -190,7 +190,7 @@ export default function EvangelismClient() {
  </thead>
  <tbody className="divide-y divide-[hsl(var(--border-primary))]">
  {filteredData.map((strategy, idx) => (
- <motion.tr 
+ <motion.tr
  key={strategy.id}
  initial={{ opacity: 0, y: 10 }}
  animate={{ opacity: 1, y: 0 }}
@@ -212,11 +212,11 @@ export default function EvangelismClient() {
  )}
  </td>
  <td className="px-3 py-1.5">
- <span 
+ <span
  className="px-2.5 py-1 rounded-full text-2xs font-bold"
- style={{ 
- backgroundColor: `${statusColors[strategy.status]}12`, 
- color: statusColors[strategy.status] 
+ style={{
+ backgroundColor: `${statusColors[strategy.status]}12`,
+ color: statusColors[strategy.status]
  }}
  >
  {statusLabels[strategy.status]}
@@ -248,14 +248,14 @@ export default function EvangelismClient() {
  {(['pending', 'active', 'done'] as const).map(colStatus => {
  const colItems = filteredData.filter(item => item.status === colStatus);
  return (
- <div 
+ <div
  key={colStatus}
  className="bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 flex flex-col max-h-[80vh] overflow-y-auto scrollbar-thin"
  >
  <header className="flex items-center justify-between mb-4 px-2 shrink-0">
  <div className="flex items-center gap-2">
- <span 
- className="size-2.5 rounded-full" 
+ <span
+ className="size-2.5 rounded-full"
  style={{ backgroundColor: statusColors[colStatus] }}
  />
  <h3 className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))]">
@@ -297,7 +297,7 @@ export default function EvangelismClient() {
  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
  {strategy.strategy_type || 'General'}
  </span>
- 
+
  <div className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))] font-bold">
  <Calendar size={11} />
  <span>{formatDate(strategy.start_date).split(' ')[0]}</span>
@@ -333,7 +333,7 @@ export default function EvangelismClient() {
  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer flex items-center justify-between gap-3"
  >
  <div className="flex items-start gap-4 flex-1 min-w-0">
- <div 
+ <div
  className="size-10 rounded-md flex items-center justify-center shrink-0"
  style={{ backgroundColor: `${statusColors[strategy.status]}12`, color: statusColors[strategy.status] }}
  >
@@ -364,11 +364,11 @@ export default function EvangelismClient() {
  </div>
 
  <div className="flex items-center gap-4">
- <span 
+ <span
  className="px-2.5 py-1 rounded-full text-2xs font-bold shrink-0"
- style={{ 
- backgroundColor: `${statusColors[strategy.status]}12`, 
- color: statusColors[strategy.status] 
+ style={{
+ backgroundColor: `${statusColors[strategy.status]}12`,
+ color: statusColors[strategy.status]
  }}
  >
  {statusLabels[strategy.status]}

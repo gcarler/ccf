@@ -14,6 +14,7 @@ Targets (Sprint 1/2 of the Projects-node debt roadmap):
 5. When PATCH fails, the client receives a stable error envelope
    ("detail" string, no leaked internal trace). — Locks in.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -114,9 +115,7 @@ class TestKanbanProjectScope:
             json={"status": "in_progress"},
             headers=headers,
         )
-        assert resp.status_code == 404, (
-            f"Cross-project PATCH must 404, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 404, f"Cross-project PATCH must 404, got {resp.status_code}: {resp.text}"
 
     def test_delete_task_via_wrong_project_returns_404(self, client, db_session):
         """GREEN today — locks in the route ordering invariant."""
@@ -130,9 +129,7 @@ class TestKanbanProjectScope:
             f"/api/projects/{proj_b.id}/tasks/{task.id}",
             headers=headers,
         )
-        assert resp.status_code == 404, (
-            f"Cross-project DELETE must 404, got {resp.status_code}"
-        )
+        assert resp.status_code == 404, f"Cross-project DELETE must 404, got {resp.status_code}"
 
 
 class TestKanbanAssigneeNotificationAtomicity:
@@ -199,20 +196,12 @@ class TestKanbanAssigneeNotificationAtomicity:
             f"Unexpected status from assignee patch: {resp.status_code}: {resp.text}"
         )
         # Atómico: nunca más de 1 NotificacionUsuario creado en un solo call
-        assert delta_notif <= 1, (
-            f"Multiple notifications persisted in one call: delta={delta_notif}"
-        )
+        assert delta_notif <= 1, f"Multiple notifications persisted in one call: delta={delta_notif}"
         # Si se creó una notificación, debe estar respaldada por un
         # CommunicationLog con outcome consistente (no estado huérfano)
         if delta_notif == 1:
-            assert delta_comm >= 1, (
-                "Notificación persistida sin CommunicationLog de auditoría — estado inconsistente"
-            )
-            last_cl = (
-                db_session.query(_models.CommunicationLog)
-                .order_by(_models.CommunicationLog.id.desc())
-                .first()
-            )
+            assert delta_comm >= 1, "Notificación persistida sin CommunicationLog de auditoría — estado inconsistente"
+            last_cl = db_session.query(_models.CommunicationLog).order_by(_models.CommunicationLog.id.desc()).first()
             assert last_cl.outcome in {"email_sent", "email_failed", "no_email"}, (
                 f"CommunicationLog outcome incoherente con delta_notif=1: {last_cl.outcome}"
             )

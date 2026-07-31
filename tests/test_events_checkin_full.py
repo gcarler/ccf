@@ -1,16 +1,17 @@
 """Tests for events_checkin.py — visitor check-in endpoint."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone
 
 import pytest
 
 from backend import models
-from backend.models_evangelism import Sede
-from backend.models_crm import Persona
-from backend.models_auth import Usuario, RolPlataforma
 from backend.core.security import get_password_hash
+from backend.models_auth import RolPlataforma, Usuario
+from backend.models_crm import Persona
+from backend.models_evangelism import Sede
 from tests.conftest import auth_headers as _auth_headers
 
 
@@ -28,7 +29,8 @@ def evan_user(db_session):
         db_session.flush()
 
     role = RolPlataforma(
-        id=uuid.uuid4(), nombre="EVANGELISTA",
+        id=uuid.uuid4(),
+        nombre="EVANGELISTA",
         permisos={"evangelism:edit": "allow", "evangelism:read": "allow"},
     )
     db_session.add(role)
@@ -39,10 +41,14 @@ def evan_user(db_session):
     db_session.flush()
 
     user = Usuario(
-        id=p.id, sede_id=sede.id, username="checkin",
+        id=p.id,
+        sede_id=sede.id,
+        username="checkin",
         email="checkin@test.com",
         password_hash=get_password_hash("test123"),
-        rol_plataforma_id=role.id, is_active=True, is_email_verified=True,
+        rol_plataforma_id=role.id,
+        is_active=True,
+        is_email_verified=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -59,7 +65,8 @@ def evan_full(client, evan_user, db_session):
 
 def _create_event(db_session, sede):
     evt = models.CrmEvent(
-        id=uuid.uuid4(), name="Checkin Event",
+        id=uuid.uuid4(),
+        name="Checkin Event",
         event_date=datetime(2026, 8, 15, 10, 0, 0, tzinfo=timezone.utc),
         sede_id=sede.id,
     )
@@ -74,10 +81,11 @@ class TestCheckin:
         c, h, s = evan_full["c"], evan_full["h"], evan_full["s"]
         evt = _create_event(db_session, s)
 
-        resp = c.post(f"/api/evangelism/events/{evt.id}/sessions/2026-08-15/visitors",
-            json={"first_name": "New", "last_name": "Visitor",
-                  "phone": "+573001234567", "email": "new@test.com"},
-            headers=h)
+        resp = c.post(
+            f"/api/evangelism/events/{evt.id}/sessions/2026-08-15/visitors",
+            json={"first_name": "New", "last_name": "Visitor", "phone": "+573001234567", "email": "new@test.com"},
+            headers=h,
+        )
         assert _ok(resp.status_code), f"new visitor: {resp.status_code} {resp.text[:200]}"
         data = resp.json()
         assert data["status"] == "success"
@@ -90,15 +98,15 @@ class TestCheckin:
         evt = _create_event(db_session, s)
 
         # Create existing persona with email
-        p = Persona(id=uuid.uuid4(), first_name="Exist", last_name="Email",
-                   sede_id=s.id, email="exist@test.com")
+        p = Persona(id=uuid.uuid4(), first_name="Exist", last_name="Email", sede_id=s.id, email="exist@test.com")
         db_session.add(p)
         db_session.commit()
 
-        resp = c.post(f"/api/evangelism/events/{evt.id}/sessions/2026-08-15/visitors",
-            json={"first_name": "Exist", "last_name": "Email",
-                  "email": "exist@test.com"},
-            headers=h)
+        resp = c.post(
+            f"/api/evangelism/events/{evt.id}/sessions/2026-08-15/visitors",
+            json={"first_name": "Exist", "last_name": "Email", "email": "exist@test.com"},
+            headers=h,
+        )
         assert _ok(resp.status_code), f"existing email: {resp.status_code} {resp.text[:200]}"
         data = resp.json()
         # This returns is_duplicate=True since we use email/phone
@@ -109,15 +117,15 @@ class TestCheckin:
         c, h, s = evan_full["c"], evan_full["h"], evan_full["s"]
         evt = _create_event(db_session, s)
 
-        p = Persona(id=uuid.uuid4(), first_name="Exist", last_name="Phone",
-                   sede_id=s.id, phone="+573009999999")
+        p = Persona(id=uuid.uuid4(), first_name="Exist", last_name="Phone", sede_id=s.id, phone="+573009999999")
         db_session.add(p)
         db_session.commit()
 
-        resp = c.post(f"/api/evangelism/events/{evt.id}/sessions/2026-08-15/visitors",
-            json={"first_name": "Exist", "last_name": "Phone",
-                  "phone": "+573009999999"},
-            headers=h)
+        resp = c.post(
+            f"/api/evangelism/events/{evt.id}/sessions/2026-08-15/visitors",
+            json={"first_name": "Exist", "last_name": "Phone", "phone": "+573009999999"},
+            headers=h,
+        )
         assert _ok(resp.status_code), f"existing phone: {resp.status_code} {resp.text[:200]}"
 
     def test_invalid_date_format(self, evan_full, db_session):
@@ -127,7 +135,8 @@ class TestCheckin:
         resp = c.post(
             f"/api/evangelism/events/{evt.id}/sessions/not-a-date/visitors",
             json={"first_name": "Bad", "last_name": "Date"},
-            headers=h)
+            headers=h,
+        )
         assert resp.status_code == 400
 
     def test_event_not_found(self, evan_full):
@@ -135,5 +144,6 @@ class TestCheckin:
         resp = evan_full["c"].post(
             f"/api/evangelism/events/{uuid.uuid4()}/sessions/2026-08-15/visitors",
             json={"first_name": "No", "last_name": "Event"},
-            headers=evan_full["h"])
+            headers=evan_full["h"],
+        )
         assert resp.status_code == 404

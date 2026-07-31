@@ -1,4 +1,5 @@
 """Tests for the comment admin center endpoints (projects, tasks, agenda)."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -42,15 +43,9 @@ def comments_env(client, db_session):
     other_id = str(other_persona.id)
 
     # Main user authored comments
-    c_project = ProjectComment(
-        project_id=project.id, author_id=main_id, content="Proj comment"
-    )
-    c_activity = ProjectComment(
-        project_id=project.id, task_id=task.id, author_id=main_id, content="Task comment"
-    )
-    c_agenda = AgendaEventComment(
-        event_id=agenda.id, author_id=main_id, content="Agenda comment"
-    )
+    c_project = ProjectComment(project_id=project.id, author_id=main_id, content="Proj comment")
+    c_activity = ProjectComment(project_id=project.id, task_id=task.id, author_id=main_id, content="Task comment")
+    c_agenda = AgendaEventComment(event_id=agenda.id, author_id=main_id, content="Agenda comment")
 
     # Other user authored comments mentioning the main user
     c_mention_project = ProjectComment(
@@ -65,10 +60,16 @@ def comments_env(client, db_session):
         event_id=agenda.id, author_id=main_id, content="Self mention", mentions=[main_id]
     )
 
-    db_session.add_all([
-        c_project, c_activity, c_agenda,
-        c_mention_project, c_mention_agenda, c_self_mention,
-    ])
+    db_session.add_all(
+        [
+            c_project,
+            c_activity,
+            c_agenda,
+            c_mention_project,
+            c_mention_agenda,
+            c_self_mention,
+        ]
+    )
     db_session.commit()
 
     return {

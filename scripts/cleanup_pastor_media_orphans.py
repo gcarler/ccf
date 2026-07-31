@@ -69,6 +69,7 @@ USAGE
     # Different subfolder (defaults to cms/pastores)
     python scripts/cleanup_pastor_media_orphans.py --subfolder cms/blog-hero
 """
+
 from __future__ import annotations
 
 import argparse
@@ -99,14 +100,6 @@ _SCRIPTS_DIR = _HERE.parent  # /root/ccf/scripts
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from backend.core.config import get_settings  # noqa: E402
-from backend.core.database import (  # noqa: E402
-    Base,
-    SessionLocal,
-    engine,
-)
-import backend.models  # noqa: E402,F401  — register all model classes
-
 # Reuse the audit's discovery path so the disk↔DB logic stays in one place.
 # The audit script is the source of truth for "what counts as an orphan".
 # These underscore-prefixed names are intentional private surface — by
@@ -117,6 +110,13 @@ from audit_pastor_media_orphans import (  # type: ignore  # noqa: E402,F401
     _gather_disk_files,
 )
 
+import backend.models  # noqa: E402,F401  — register all model classes
+from backend.core.config import get_settings  # noqa: E402
+from backend.core.database import (  # noqa: E402
+    Base,
+    SessionLocal,
+    engine,
+)
 
 log = logging.getLogger("cleanup_pastor_media_orphans")
 
@@ -194,16 +194,10 @@ def _build_plan(
         db_engine_database=getattr(db_url, "database", "") or "",
         disk_files_total=len(disk_files),
         db_rows_total=len(db_rows),
-        db_rows_active=sum(
-            1 for r in db_rows if (r.status or "").lower() != "archived"
-        ),
+        db_rows_active=sum(1 for r in db_rows if (r.status or "").lower() != "archived"),
     )
 
-    registered_basenames: set[str] = {
-        Path(r.url or "").name
-        for r in db_rows
-        if (r.url or "").strip()
-    }
+    registered_basenames: set[str] = {Path(r.url or "").name for r in db_rows if (r.url or "").strip()}
 
     # Map: filename metadata → list of CmsMediaItem rows. Build BEFORE
     # walking disk_files so we can detect rows whose filename is still
@@ -237,8 +231,7 @@ def _build_plan(
             expected = Path(row.url or "").name
             if not expected:
                 plan.errors.append(
-                    f"row id={row.id} has url='' but filename={row.filename}; "
-                    "cannot infer canonical name"
+                    f"row id={row.id} has url='' but filename={row.filename}; cannot infer canonical name"
                 )
                 continue
             if expected == (row.filename or "").strip():
@@ -325,10 +318,7 @@ def _format_human(plan: CleanupPlan, apply_mode: bool) -> str:
     lines.append(f"  DB engine:           {engine_kind}")
     lines.append(f"  DB host:             {plan.db_engine_host}")
     lines.append(f"  DB database:         {plan.db_engine_database}")
-    lines.append(
-        f"  disk_files_total:    {plan.disk_files_total}"
-        f"    db_rows_active: {plan.db_rows_active}"
-    )
+    lines.append(f"  disk_files_total:    {plan.disk_files_total}    db_rows_active: {plan.db_rows_active}")
     lines.append(f"  planned deletes:     {plan.n_deletes}")
     lines.append(f"  planned updates:     {plan.n_updates}")
     lines.append("")
@@ -347,18 +337,10 @@ def _format_human(plan: CleanupPlan, apply_mode: bool) -> str:
 
     if updates:
         lines.append(f"Updates ({len(updates)}):")
-        lines.append(
-            "  " + f"{'media_id':<18} {'old.filename':<35} {'new.filename':<40}"
-        )
+        lines.append("  " + f"{'media_id':<18} {'old.filename':<35} {'new.filename':<40}")
         for a in updates:
-            mid = (a.media_id[:16] + "…") if len(a.media_id or "") > 16 else (
-                a.media_id or "-"
-            )
-            lines.append(
-                f"  {mid:<18} "
-                f"{a.old_filename or '-':<35} "
-                f"{a.new_filename or '-':<40}"
-            )
+            mid = (a.media_id[:16] + "…") if len(a.media_id or "") > 16 else (a.media_id or "-")
+            lines.append(f"  {mid:<18} {a.old_filename or '-':<35} {a.new_filename or '-':<40}")
         lines.append("")
 
     if deletes:
@@ -441,9 +423,7 @@ def _execute_plan(db_session, plan: CleanupPlan) -> tuple[int, int]:
             # values that the DB may have changed concurrently).
             row = db_session.get(models.CmsMediaItem, action.media_id)
             if row is None:
-                log.warning(
-                    "skipping UPDATE for missing media_id=%s", action.media_id
-                )
+                log.warning("skipping UPDATE for missing media_id=%s", action.media_id)
                 continue
             row.filename = action.new_filename
             rows_updated += 1
@@ -487,10 +467,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--apply",
         action="store_true",
         default=False,
-        help=(
-            "Execute the planned DB updates and disk deletes. Without this "
-            "flag the script is a read-only dry-run."
-        ),
+        help=("Execute the planned DB updates and disk deletes. Without this flag the script is a read-only dry-run."),
     )
     p.add_argument(
         "--json",
@@ -588,8 +565,7 @@ def main(argv: list[str] | None = None) -> int:
     apply_session = SessionLocal()
     try:
         rows_updated, files_deleted = _execute_plan(apply_session, plan)
-        log.info("APPLY done: %d row(s) updated, %d file(s) deleted",
-                 rows_updated, files_deleted)
+        log.info("APPLY done: %d row(s) updated, %d file(s) deleted", rows_updated, files_deleted)
     except Exception as exc:
         log.exception("apply failed: %s", exc)
         return 2

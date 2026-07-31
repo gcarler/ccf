@@ -1,6 +1,7 @@
 """
 Direct unit tests for backend.api.workspace_shared._flags.
 """
+
 from __future__ import annotations
 
 import pytest

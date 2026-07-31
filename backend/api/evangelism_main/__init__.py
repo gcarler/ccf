@@ -5,6 +5,7 @@ Sub-modules:
 - main_roles.py: roles personalizados + motivos de excusa
 - main_utils.py: helpers compartidos (_channel_label, _serialize_crm_task, etc.)
 """
+
 from fastapi import APIRouter
 
 estrategias_router = APIRouter(tags=["Evangelismo - Estrategias"])

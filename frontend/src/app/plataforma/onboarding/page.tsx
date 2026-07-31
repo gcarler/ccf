@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState } from 'react';
-import { 
-    BookOpen, 
-    Users, 
-    Bell, 
-    ArrowRight, 
-    Check, 
-    Sparkles, 
-    ShieldCheck, 
-    MapPin, 
+import {
+    BookOpen,
+    Users,
+    Bell,
+    ArrowRight,
+    Check,
+    Sparkles,
+    ShieldCheck,
+    MapPin,
     Zap,
     CheckCircle2
 } from 'lucide-react';
@@ -45,12 +45,12 @@ export default function OnboardingPage() {
                 <div className="flex justify-between items-center relative">
                     <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 -translate-y-1/2 z-0" />
                     {[1, 2, 3].map((s) => (
-                        <div 
-                            key={s} 
+                        <div
+                            key={s}
                             className={clsx(
                                 "size-8 rounded-full flex items-center justify-center font-semibold z-10 transition-all duration-500",
-                                step >= s 
-                                    ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/30%)] scale-110" 
+                                step >= s
+                                    ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/30%)] scale-110"
                                     : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/5"
                             )}
                         >
@@ -63,7 +63,7 @@ export default function OnboardingPage() {
             <main className="relative z-10 w-full max-w-2xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg p-4 lg:p-4 shadow-2xl border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden">
                 <AnimatePresence mode="wait">
                     {step === 1 && (
-                        <motion.div 
+                        <motion.div
                             key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                             className="space-y-3"
                         >
@@ -85,7 +85,7 @@ export default function OnboardingPage() {
                                 <FeatureItem icon={Zap} title="Propósito" desc="Encuentra tu lugar de servicio en el ministerio." />
                             </div>
 
-                            <button 
+                            <button
                                 onClick={nextStep}
                                 className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-black text-sm uppercase tracking-wide shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
                             >
@@ -95,7 +95,7 @@ export default function OnboardingPage() {
                     )}
 
                     {step === 2 && (
-                        <motion.div 
+                        <motion.div
                             key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                             className="space-y-3"
                         >
@@ -106,13 +106,13 @@ export default function OnboardingPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {CAMPUSES.map((campus) => (
-                                    <div 
+                                    <div
                                         key={campus.id}
                                         onClick={() => setSelectedCampus(campus.id)}
                                         className={clsx(
                                             "p-3 rounded-lg border-2 cursor-pointer transition-all flex flex-col items-center gap-4 group relative overflow-hidden",
-                                            selectedCampus === campus.id 
-                                                ? "border-[hsl(var(--info)/100%)] bg-info-soft/50 dark:bg-[hsl(var(--info))]/10 shadow-lg" 
+                                            selectedCampus === campus.id
+                                                ? "border-[hsl(var(--info)/100%)] bg-info-soft/50 dark:bg-[hsl(var(--info))]/10 shadow-lg"
                                                 : "border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--info)/25%)]"
                                         )}
                                     >
@@ -141,7 +141,7 @@ export default function OnboardingPage() {
                     )}
 
                     {step === 3 && (
-                        <motion.div 
+                        <motion.div
                             key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                             className="space-y-3"
                         >
@@ -172,7 +172,7 @@ export default function OnboardingPage() {
 
                             <div className="flex gap-4">
                                 <button onClick={prevStep} className="px-4 py-2 border-2 border-[hsl(var(--border))] dark:border-white/5 rounded-lg font-black text-xs uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-all">Atrás</button>
-                                <button 
+                                <button
                                     onClick={() => router.push('/plataforma/academy')}
                                     className="flex-1 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-black text-sm uppercase tracking-wide shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
                                 >
@@ -203,4 +203,3 @@ function FeatureItem({ icon: Icon, title, desc }: any) {
         </div>
     );
 }
-

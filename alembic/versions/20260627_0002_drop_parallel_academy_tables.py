@@ -49,9 +49,7 @@ def upgrade() -> None:
             if count:
                 populated.append(f"{table}={count}")
     if populated:
-        raise RuntimeError(
-            "Parallel Academy tables contain data; migration stopped: " + ", ".join(populated)
-        )
+        raise RuntimeError("Parallel Academy tables contain data; migration stopped: " + ", ".join(populated))
     for table in LEGACY_TABLES:
         if table in existing:
             op.drop_table(table)

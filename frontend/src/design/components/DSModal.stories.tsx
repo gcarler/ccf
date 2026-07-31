@@ -84,8 +84,8 @@ export const WithForm: Story = {
                     <label className="block text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">
                         Nombre
                     </label>
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         className="w-full px-2.5 py-1.5 text-xs bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md"
                         placeholder="Nombre completo"
                     />
@@ -94,8 +94,8 @@ export const WithForm: Story = {
                     <label className="block text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">
                         Email
                     </label>
-                    <input 
-                        type="email" 
+                    <input
+                        type="email"
                         className="w-full px-2.5 py-1.5 text-xs bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md"
                         placeholder="correo@ejemplo.com"
                     />

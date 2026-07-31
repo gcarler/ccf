@@ -10,15 +10,16 @@ Covers:
 - rebuild_knowledge_base, search_kb, kb_stats
 - create_conv, list_convs, get_conv_messages, delete_conv
 """
+
 from __future__ import annotations
 
 import uuid
-import pytest
-from unittest.mock import patch
 
-from backend import models
+import pytest
+
 from backend.api.agents import sync_persona_to_agent, sync_user_to_agent
-from tests.conftest import auth_headers as _auth_headers, seed_admin as _seed_admin
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture

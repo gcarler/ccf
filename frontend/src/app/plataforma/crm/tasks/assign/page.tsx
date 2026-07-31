@@ -41,13 +41,13 @@ export default function TaskAssignment() {
     const { isAuthenticated, token, loading: authLoading } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
-    
+
     const [leaders, setLeaders] = useState<Leader[]>([]);
     const [personas, setPersonas] = useState<Persona[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
-    
+
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
     const [selectedLeaderId, setSelectedLeaderId] = useState<string>('');
@@ -68,7 +68,7 @@ export default function TaskAssignment() {
                 apiFetch<{ items: Leader[]; total: number }>('/admin/users', { token, signal }),
                 apiFetch<Persona[]>('/crm/personas', { token, signal })
             ]);
-            
+
             // Filtrar solo líderes/admin/staff para asignar
             const usersItems = usersData?.items ?? [];
             setLeaders(usersItems.filter(u => ['admin', 'pastor', 'coordinador', 'docente'].includes(u.role)));
@@ -216,7 +216,7 @@ export default function TaskAssignment() {
                                 <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Cargando congregación...</p>
                             </div>
                         ) : filteredPersonas.map((m, idx) => (
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.05 }}
@@ -255,7 +255,7 @@ export default function TaskAssignment() {
             <div className="lg:col-span-5">
                 <AnimatePresence mode="wait">
                     {selectedPersona ? (
-                        <motion.div 
+                        <motion.div
                             key="form"
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -291,7 +291,7 @@ export default function TaskAssignment() {
                                     <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-2">Actividad de Consolidación</label>
                                     <div className="grid grid-cols-2 gap-2">
                                         {['Llamada', 'Visita', 'Consejería', 'Bienvenida'].map(type => (
-                                            <button 
+                                            <button
                                                 key={type}
                                                 onClick={() => setTaskTitle(`Seguimiento: ${type}`)}
                                                 className={clsx(

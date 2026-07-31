@@ -378,4 +378,3 @@ Content-Type: application/json
   "publish_at": "2026-08-01T10:00:00Z"
 }
 ```
-

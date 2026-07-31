@@ -51,6 +51,7 @@ class CommunicationLogUpdate(BaseModel):
 
 class CommunicationLog(BaseModel):
     """A-03: Schema extendido con campos faltantes del modelo ORM."""
+
     id: UUID
     persona_id: UUID
     channel: str

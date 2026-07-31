@@ -6,8 +6,10 @@ permitir filtrado multi-tenant directo sin JOIN a ``auth_users``.
 Revision ID: 20260724_0002
 Revises: 20260724_0001
 """
-from alembic import op
+
 import sqlalchemy as sa
+
+from alembic import op
 
 revision = "20260724_0002"
 down_revision = "20260724_0001"

@@ -33,10 +33,5 @@ def downgrade() -> None:
         "source_id",
         existing_type=sa.String(length=120),
         type_=sa.Integer(),
-        postgresql_using=(
-            "CASE "
-            "WHEN source_id ~ '^[0-9]+$' THEN source_id::integer "
-            "ELSE NULL "
-            "END"
-        ),
+        postgresql_using=("CASE WHEN source_id ~ '^[0-9]+$' THEN source_id::integer ELSE NULL END"),
     )

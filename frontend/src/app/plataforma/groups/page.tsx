@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { 
-    Home, 
-    MapPin, 
-    Plus, 
+import {
+    Home,
+    MapPin,
+    Plus,
     TrendingUp,
     MoreHorizontal
 } from 'lucide-react';
@@ -74,7 +74,7 @@ export default function GroupsPage() {
                             </div>
                         </DSCard>
                     ))}
-                    
+
                     {groups.length === 0 && (
                         <div className="col-span-full py-1.5 text-center border-2 border-dashed border-[hsl(var(--border))] rounded-md">
                             <Home size={48} className="mx-auto text-[hsl(var(--text-secondary))] mb-4" />

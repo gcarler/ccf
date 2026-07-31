@@ -49,7 +49,7 @@ projects fetch failed TypeError: fetch failed
     at async serverApiFetch (webpack-internal:///(rsc)/./src/lib/serverApi.ts:25:22)
     at async fetchProjects (webpack-internal:///(rsc)/./src/app/projects/page.tsx:20:22)
     at async ProjectsPage (webpack-internal:///(rsc)/./src/app/projects/page.tsx:28:22) {
-  [cause]: AggregateError [ECONNREFUSED]: 
+  [cause]: AggregateError [ECONNREFUSED]:
       at internalConnectMultiple (node:net:1134:18)
       at afterConnectMultiple (node:net:1715:7) {
     code: 'ECONNREFUSED',
@@ -480,13 +480,13 @@ CRM server fetch failed Error: Server API request failed
 }
  GET /icons/icon-192x192.png 404 in 83ms
  ⨯ ./src/app/projects/[id]/page.tsx
-Error: 
+Error:
   [31mx[0m Unexpected token `WorkspaceLayout`. Expected jsx identifier
     ,-[[36;1;4mD:\ccf\frontend\src\app\projects\[id]\page.tsx[0m:85:1]
  [2m85[0m |     ) : null;
- [2m86[0m | 
+ [2m86[0m |
  [2m87[0m |     return (
- [2m88[0m |         <WorkspaceLayout 
+ [2m88[0m |         <WorkspaceLayout
     : [31;1m         ^^^^^^^^^^^^^^^[0m
  [2m89[0m |             sidebarTitle="Gestión de Proyecto"
  [2m90[0m |             parentTitle="Portfolio CCF"
@@ -500,13 +500,13 @@ Import trace for requested module:
 ./src/app/projects/[id]/page.tsx
  ○ Compiling /_error ...
  ⨯ ./src/app/projects/[id]/page.tsx
-Error: 
+Error:
   [31mx[0m Unexpected token `WorkspaceLayout`. Expected jsx identifier
     ,-[[36;1;4mD:\ccf\frontend\src\app\projects\[id]\page.tsx[0m:85:1]
  [2m85[0m |     ) : null;
- [2m86[0m | 
+ [2m86[0m |
  [2m87[0m |     return (
- [2m88[0m |         <WorkspaceLayout 
+ [2m88[0m |         <WorkspaceLayout
     : [31;1m         ^^^^^^^^^^^^^^^[0m
  [2m89[0m |             sidebarTitle="Gestión de Proyecto"
  [2m90[0m |             parentTitle="Portfolio CCF"
@@ -520,13 +520,13 @@ Import trace for requested module:
 ./src/app/projects/[id]/page.tsx
  GET /crm 500 in 31ms
  ⨯ ./src/app/projects/[id]/page.tsx
-Error: 
+Error:
   [31mx[0m Unexpected token `WorkspaceLayout`. Expected jsx identifier
     ,-[[36;1;4mD:\ccf\frontend\src\app\projects\[id]\page.tsx[0m:85:1]
  [2m85[0m |     ) : null;
- [2m86[0m | 
+ [2m86[0m |
  [2m87[0m |     return (
- [2m88[0m |         <WorkspaceLayout 
+ [2m88[0m |         <WorkspaceLayout
     : [31;1m         ^^^^^^^^^^^^^^^[0m
  [2m89[0m |             sidebarTitle="Gestión de Proyecto"
  [2m90[0m |             parentTitle="Portfolio CCF"
@@ -540,13 +540,13 @@ Import trace for requested module:
 ./src/app/projects/[id]/page.tsx
  GET /crm 200 in 1067ms
  ⨯ ./src/app/projects/[id]/page.tsx
-Error: 
+Error:
   [31mx[0m Unexpected token `WorkspaceLayout`. Expected jsx identifier
     ,-[[36;1;4mD:\ccf\frontend\src\app\projects\[id]\page.tsx[0m:85:1]
  [2m85[0m |     ) : null;
- [2m86[0m | 
+ [2m86[0m |
  [2m87[0m |     return (
- [2m88[0m |         <WorkspaceLayout 
+ [2m88[0m |         <WorkspaceLayout
     : [31;1m         ^^^^^^^^^^^^^^^[0m
  [2m89[0m |             sidebarTitle="Gestión de Proyecto"
  [2m90[0m |             parentTitle="Portfolio CCF"
@@ -563,13 +563,13 @@ Import trace for requested module:
  ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
  GET /crm 500 in 11ms
  ⨯ ./src/app/projects/[id]/page.tsx
-Error: 
+Error:
   [31mx[0m Unexpected token `WorkspaceLayout`. Expected jsx identifier
     ,-[[36;1;4mD:\ccf\frontend\src\app\projects\[id]\page.tsx[0m:85:1]
  [2m85[0m |     ) : null;
- [2m86[0m | 
+ [2m86[0m |
  [2m87[0m |     return (
- [2m88[0m |         <WorkspaceLayout 
+ [2m88[0m |         <WorkspaceLayout
     : [31;1m         ^^^^^^^^^^^^^^^[0m
  [2m89[0m |             sidebarTitle="Gestión de Proyecto"
  [2m90[0m |             parentTitle="Portfolio CCF"

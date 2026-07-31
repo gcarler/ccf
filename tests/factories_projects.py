@@ -297,7 +297,9 @@ def create_default_phases_factory(db, project_id: _uuid.UUID) -> list["ProjectPh
 # ── 8. Activity Log ────────────────────────────────────────────────────────
 
 
-def create_activity_log_factory(db, project_id: _uuid.UUID, action_type: str = "task_created", **overrides) -> "ProjectActivityLog":
+def create_activity_log_factory(
+    db, project_id: _uuid.UUID, action_type: str = "task_created", **overrides
+) -> "ProjectActivityLog":
     """Create an activity log entry."""
     from backend.models_projects import ProjectActivityLog
 

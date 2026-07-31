@@ -18,6 +18,7 @@ def _utcnow():
 # 1. CATÁLOGOS Y ROLES DE ACCESO (RBAC)
 # ==========================================
 
+
 class RolPlataforma(Base):
     __tablename__ = "auth_roles"
 
@@ -39,6 +40,7 @@ class NivelGamificado(Base):
 # ==========================================
 # 2. TABLA PRINCIPAL DE CREDENCIALES
 # ==========================================
+
 
 class Usuario(Base):
     __tablename__ = "auth_users"
@@ -75,6 +77,7 @@ class Usuario(Base):
 # ==========================================
 # 3. ROLES MODULARES GRANULARES
 # ==========================================
+
 
 class UsuarioRolModulo(Base):
     __tablename__ = "auth_user_module_roles"
@@ -119,6 +122,7 @@ class UsuarioPermisoOverride(Base):
 # ==========================================
 # 4. CONTROL DE SESIONES Y SEGURIDAD
 # ==========================================
+
 
 class TokenSesion(Base):
     __tablename__ = "auth_refresh_tokens"
@@ -181,6 +185,7 @@ class HistorialContrasena(Base):
 # 5. PREFERENCIAS, NOTIFICACIONES, RECORDATORIOS
 # ==========================================
 
+
 class PreferenciaUI(Base):
     __tablename__ = "auth_user_ui_preferences"
 
@@ -209,10 +214,9 @@ class NotificacionUsuario(Base):
     Seguridad: ``PATCH /messaging/notifications/{id}`` requiere ownership
     (``user_id == caller_persona_id``). BOLA-style leak prevention.
     """
+
     __tablename__ = "auth_notifications"
-    __table_args__ = (
-        Index("ix_auth_notifications_user_id", "user_id"),
-    )
+    __table_args__ = (Index("ix_auth_notifications_user_id", "user_id"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False)
@@ -226,9 +230,7 @@ class NotificacionUsuario(Base):
 
 class RecordatorioUsuario(Base):
     __tablename__ = "auth_user_reminders"
-    __table_args__ = (
-        Index("ix_user_reminders_user_id", "user_id"),
-    )
+    __table_args__ = (Index("ix_user_reminders_user_id", "user_id"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False)
@@ -244,6 +246,7 @@ class RecordatorioUsuario(Base):
 # ==========================================
 # 6. GAMIFICACIÓN
 # ==========================================
+
 
 class Medalla(Base):
     __tablename__ = "auth_badges"

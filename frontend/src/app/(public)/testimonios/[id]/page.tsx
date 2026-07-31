@@ -118,7 +118,7 @@ export default function TestimonioDetailPage() {
             <main className="pt-[120px] pb-4 min-h-screen">
             <article className="px-3 lg:px-0">
                 {/* ── BACK BUTTON ────────────────────────────────────── */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     className="mb-3"
@@ -133,7 +133,7 @@ export default function TestimonioDetailPage() {
                 </motion.div>
 
                 {/* ── AUTHOR HEADER ──────────────────────────────────── */}
-                <motion.header 
+                <motion.header
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
@@ -154,10 +154,10 @@ export default function TestimonioDetailPage() {
                             {testimonial.author?.username?.[0] ?? "?"}
                         </div>
                     )}
-                    
+
                     <div className="flex-1">
                         {testimonial.emotion && (
-                            <span 
+                            <span
                                 className="inline-block px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wide mb-4 shadow-sm"
                                 style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
                             >
@@ -174,7 +174,7 @@ export default function TestimonioDetailPage() {
                 </motion.header>
 
                 {/* ── CONTENT BODY ───────────────────────────────────── */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
@@ -200,7 +200,7 @@ export default function TestimonioDetailPage() {
                                 )}
                             </div>
                         )}
-                        <p 
+                        <p
                             className="text-lg md:text-lg leading-[1.6] font-medium"
                             style={{ color: "var(--site-on-surface)" }}
                         >

@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import os
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "20260716_0001"
@@ -58,23 +58,17 @@ def upgrade() -> None:
     bind = op.get_bind()
     env_sede_id = os.environ.get("CCF_DEFAULT_SEDE_ID", "")
 
-    null_count = bind.execute(
-        sa.text("SELECT COUNT(*) FROM projects WHERE sede_id IS NULL")
-    ).scalar_one()
+    null_count = bind.execute(sa.text("SELECT COUNT(*) FROM projects WHERE sede_id IS NULL")).scalar_one()
     print(f"[20260716_0001] projects with NULL sede_id found: {null_count}")
 
     if null_count == 0:
         print("[20260716_0001] nothing to backfill, skipping UPDATE.")
         return
 
-    result = bind.execute(
-        sa.text(BACKFILL_QUERY).bindparams(env_sede_id=env_sede_id)
-    )
+    result = bind.execute(sa.text(BACKFILL_QUERY).bindparams(env_sede_id=env_sede_id))
     print(f"[20260716_0001] rows updated: {result.rowcount}")
 
-    remaining_nulls = bind.execute(
-        sa.text("SELECT COUNT(*) FROM projects WHERE sede_id IS NULL")
-    ).scalar_one()
+    remaining_nulls = bind.execute(sa.text("SELECT COUNT(*) FROM projects WHERE sede_id IS NULL")).scalar_one()
     if remaining_nulls:
         print(
             f"[20260716_0001] WARNING: {remaining_nulls} rows still NULL after "
@@ -88,7 +82,4 @@ def downgrade() -> None:
     Without an audit trail we cannot deterministically identify which rows
     were backfilled, so reverting the migration is intentionally manual.
     """
-    print(
-        "[20260716_0001] downgrade is a no-op: this migration does not "
-        "remember which rows it updated."
-    )
+    print("[20260716_0001] downgrade is a no-op: this migration does not remember which rows it updated.")

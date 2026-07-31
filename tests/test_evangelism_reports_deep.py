@@ -1,4 +1,5 @@
 """Tests for evangelism_reports.py — PDF, Excel, and summary with real data."""
+
 from __future__ import annotations
 
 import uuid
@@ -24,26 +25,34 @@ def full(client, db_session):
 def _setup_data(db_session, s):
     """Create persona + grupo + 2 sessions + attendance records."""
     from datetime import datetime, timezone
+
     now = datetime.now(timezone.utc)
     p = models.Persona(id=uuid.uuid4(), first_name="Report", last_name="Test", sede_id=s.id)
     db_session.add(p)
     db_session.flush()
     g = models.GrupoEvangelismo(
-        id=uuid.uuid4(), nombre=f"GR-{uuid.uuid4().hex[:6]}",
-        sede_id=s.id, lider_persona_id=p.id,
+        id=uuid.uuid4(),
+        nombre=f"GR-{uuid.uuid4().hex[:6]}",
+        sede_id=s.id,
+        lider_persona_id=p.id,
     )
     db_session.add(g)
     db_session.flush()
     for i in range(2):
         ses = models.SesionGrupo(
-            id=uuid.uuid4(), grupo_id=g.id,
+            id=uuid.uuid4(),
+            grupo_id=g.id,
             fecha_sesion=datetime(2026, 7, 10 + i, tzinfo=timezone.utc),
-            estado="REALIZADA", tema_estudio=f"Sesión {i+1}",
+            estado="REALIZADA",
+            tema_estudio=f"Sesión {i + 1}",
         )
         db_session.add(ses)
         db_session.flush()
         att = models.Asistencia(
-            id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO",
+            id=uuid.uuid4(),
+            sesion_id=ses.id,
+            persona_id=p.id,
+            estado="ASISTIO",
         )
         db_session.add(att)
     db_session.commit()
@@ -72,8 +81,7 @@ class TestReportsWithData:
         c, h, s = full["c"], full["h"], full["s"]
         p, g = _setup_data(db_session, s)
         # Create strategy
-        strat = c.post("/api/evangelism/strategies",
-            json={"name": f"SR-{uuid.uuid4().hex[:6]}"}, headers=h).json()
+        strat = c.post("/api/evangelism/strategies", json={"name": f"SR-{uuid.uuid4().hex[:6]}"}, headers=h).json()
         sid = uuid.UUID(strat["id"])
         # Link grupo to strategy
         g.estrategia_id = sid
@@ -88,8 +96,10 @@ class TestReportsWithData:
         db_session.add(other_sede)
         db_session.flush()
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre="Other Group",
-            sede_id=other_sede.id, lider_persona_id=None,
+            id=uuid.uuid4(),
+            nombre="Other Group",
+            sede_id=other_sede.id,
+            lider_persona_id=None,
         )
         db_session.add(g)
         db_session.commit()
@@ -99,8 +109,7 @@ class TestReportsWithData:
     def test_summary_no_grupos(self, full, db_session):
         """Strategy with no linked grupos returns empty list."""
         c, h = full["c"], full["h"]
-        strat = c.post("/api/evangelism/strategies",
-            json={"name": f"SE-{uuid.uuid4().hex[:6]}"}, headers=h).json()
+        strat = c.post("/api/evangelism/strategies", json={"name": f"SE-{uuid.uuid4().hex[:6]}"}, headers=h).json()
         resp = c.get(f"/api/evangelism/reports/strategy/{strat['id']}/summary", headers=h)
         assert _ok(resp.status_code)
         assert resp.json()["total_grupos"] == 0

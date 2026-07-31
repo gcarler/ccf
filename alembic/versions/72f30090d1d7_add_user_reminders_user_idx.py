@@ -5,13 +5,14 @@ Revises: 20260701_0002_no_legacy
 Create Date: 2026-07-01 05:41:24.298514
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '72f30090d1d7'
-down_revision: Union[str, None] = '20260701_0002_no_legacy'
+revision: str = "72f30090d1d7"
+down_revision: Union[str, None] = "20260701_0002_no_legacy"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

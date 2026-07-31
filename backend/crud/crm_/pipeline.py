@@ -18,11 +18,7 @@ def list_pipelines(db: Session, sede_id: UUID) -> list[PipelineCRM]:
 
 
 def get_pipeline(db: Session, pipeline_id: UUID) -> PipelineCRM | None:
-    return (
-        db.query(PipelineCRM)
-        .filter(PipelineCRM.id == pipeline_id, PipelineCRM.deleted_at.is_(None))
-        .first()
-    )
+    return db.query(PipelineCRM).filter(PipelineCRM.id == pipeline_id, PipelineCRM.deleted_at.is_(None)).first()
 
 
 def create_pipeline(db: Session, data: dict) -> PipelineCRM:
@@ -60,11 +56,7 @@ def list_stages(db: Session, pipeline_id: UUID) -> list[EtapaPipeline]:
 
 
 def get_stage(db: Session, stage_id: UUID) -> EtapaPipeline | None:
-    return (
-        db.query(EtapaPipeline)
-        .filter(EtapaPipeline.id == stage_id, EtapaPipeline.deleted_at.is_(None))
-        .first()
-    )
+    return db.query(EtapaPipeline).filter(EtapaPipeline.id == stage_id, EtapaPipeline.deleted_at.is_(None)).first()
 
 
 def create_stage(db: Session, data: dict) -> EtapaPipeline:

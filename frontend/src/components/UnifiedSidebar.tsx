@@ -66,7 +66,7 @@ export default function UnifiedSidebar({
 
     const renderItem = (item: any, depth = 0, hasChildren = false, isExpanded = false, onToggle?: (e: React.MouseEvent) => void) => {
         const isActive = (pathname || '') === item.href || (item.href !== '/' && (pathname || '').startsWith(item.href));
-        
+
         return (
             <div key={item.id} className="relative w-full">
                 {item.href && !hasChildren ? (
@@ -76,8 +76,8 @@ export default function UnifiedSidebar({
                         className={clsx(
                             "flex items-center gap-3 py-2 rounded-md transition-all cursor-pointer group relative",
                             isMini ? "justify-center px-0 w-10 mx-auto" : "px-3 w-full",
-                            isActive 
-                                ? "bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white font-bold" 
+                            isActive
+                                ? "bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white font-bold"
                                 : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                         )}
                     >
@@ -90,16 +90,16 @@ export default function UnifiedSidebar({
                         )}
 
                         {item.icon && (
-                            <item.icon 
-                                size={20} 
-                                strokeWidth={isActive ? 2.5 : 2} 
+                            <item.icon
+                                size={20}
+                                strokeWidth={isActive ? 2.5 : 2}
                                 className={clsx(
                                     isActive ? "text-[hsl(var(--text-primary))] dark:text-white" : "text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-[hsl(var(--text-secondary))]",
                                     depth > 0 && !isMini && "ml-4"
-                                )} 
+                                )}
                             />
                         )}
-                        
+
                         {!isMini && <span className="text-base truncate flex-1">{item.label}</span>}
                     </Link>
                 ) : (
@@ -108,28 +108,28 @@ export default function UnifiedSidebar({
                         className={clsx(
                             "flex items-center gap-3 py-2 rounded-md transition-all cursor-pointer group relative",
                             isMini ? "justify-center px-0 w-10 mx-auto" : "px-3 w-full",
-                            isActive 
-                                ? "bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white font-bold" 
+                            isActive
+                                ? "bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white font-bold"
                                 : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
                         )}
                     >
                         {item.icon && (
-                            <item.icon 
-                                size={20} 
-                                strokeWidth={isActive ? 2.5 : 2} 
+                            <item.icon
+                                size={20}
+                                strokeWidth={isActive ? 2.5 : 2}
                                 className={clsx(
                                     isActive ? "text-[hsl(var(--text-primary))] dark:text-white" : "text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-[hsl(var(--text-secondary))]",
                                     depth > 0 && !isMini && "ml-4"
-                                )} 
+                                )}
                             />
                         )}
-                        
+
                         {!isMini && <span className="text-base truncate flex-1">{item.label}</span>}
 
                         {!isMini && hasChildren && (
-                            <ChevronDown 
-                                size={14} 
-                                className={clsx("text-[hsl(var(--text-secondary))] transition-transform duration-200", !isExpanded && "-rotate-90")} 
+                            <ChevronDown
+                                size={14}
+                                className={clsx("text-[hsl(var(--text-secondary))] transition-transform duration-200", !isExpanded && "-rotate-90")}
                             />
                         )}
                     </div>
@@ -146,7 +146,7 @@ export default function UnifiedSidebar({
             )}
         >            {/* Toggle Button `< >` positioned absolutely on the right edge */}
             <div className="absolute right-0 translate-x-1/2 top-3 z-[60]">
-                <button 
+                <button
                     onClick={toggleSidebar}
                     className="w-6 h-6 rounded-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 shadow-sm flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all active:scale-95"
                 >
@@ -176,7 +176,7 @@ export default function UnifiedSidebar({
 
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none py-2 px-3 flex flex-col gap-3">
-                
+
                 {/* 1. Global Module Navigation (MAIN) */}
                 <div className="flex flex-col gap-1">
                     {!isMini && <span className="px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Main</span>}
@@ -187,20 +187,20 @@ export default function UnifiedSidebar({
                 {sections && sections.length > 0 && (
                     <div className="flex flex-col gap-1">
                         {!isMini && <span className="px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Contextual Tools</span>}
-                        
+
                         <div className="flex flex-col gap-0.5">
                             {renderItem(
-                                { id: 'contextual-root', label: sections[0]?.label || 'Herramientas', icon: Folder }, 
-                                0, 
-                                true, 
-                                expandedFolders.includes('contextual-root'), 
+                                { id: 'contextual-root', label: sections[0]?.label || 'Herramientas', icon: Folder },
+                                0,
+                                true,
+                                expandedFolders.includes('contextual-root'),
                                 (e) => toggleFolder('contextual-root', e)
                             )}
-                            
+
                             {/* Nested Contextual Items */}
                             <AnimatePresence initial={false}>
                                 {!isMini && expandedFolders.includes('contextual-root') && (
-                                    <motion.div 
+                                    <motion.div
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: 'auto', opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}

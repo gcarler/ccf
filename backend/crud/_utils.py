@@ -118,10 +118,11 @@ def analyze_pastoral_sentiment(content: str):
 
 def _slugify(value: str) -> str:
     """Normalize a string to a URL-safe slug.
-    
+
     Shared utility used by CMS, Wiki, and Evangelism modules.
     """
     import unicodedata
+
     text = unicodedata.normalize("NFD", str(value or "").strip().lower())
     text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
     cleaned = []

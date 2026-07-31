@@ -17,6 +17,7 @@ Tests:
   5) Schema CmsMediaRead expone width/height/dimensions via API
   6) Schema CmsMediaCreate valida ge=1 (cero o negativo reject 422)
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -32,9 +33,7 @@ from tests.conftest import seed_admin
 
 
 def _seed(db_session):
-    admin, persona, sede = seed_admin(
-        db_session, email="cmsF03@example.com", password="testpass123"
-    )
+    admin, persona, sede = seed_admin(db_session, email="cmsF03@example.com", password="testpass123")
     return admin, persona, sede
 
 

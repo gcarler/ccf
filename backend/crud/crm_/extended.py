@@ -217,9 +217,7 @@ def create_position(db: Session, payload: PositionCreate) -> models.Position:
     return row
 
 
-def update_position(
-    db: Session, position_id: UUID, payload: PositionUpdate
-) -> Optional[models.Position]:
+def update_position(db: Session, position_id: UUID, payload: PositionUpdate) -> Optional[models.Position]:
     row = db.query(models.Position).filter(models.Position.id == position_id).first()
     if not row:
         return None
@@ -266,9 +264,7 @@ def get_persona_position(db: Session, mp_id: UUID) -> Optional[models.PersonaPos
     )
 
 
-def create_persona_position(
-    db: Session, payload: PersonaPositionCreate
-) -> models.PersonaPosition:
+def create_persona_position(db: Session, payload: PersonaPositionCreate) -> models.PersonaPosition:
     row = models.PersonaPosition(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -279,11 +275,7 @@ def create_persona_position(
 def update_persona_position(
     db: Session, mp_id: UUID, payload: PersonaPositionUpdate
 ) -> Optional[models.PersonaPosition]:
-    row = (
-        db.query(models.PersonaPosition)
-        .filter(models.PersonaPosition.id == mp_id)
-        .first()
-    )
+    row = db.query(models.PersonaPosition).filter(models.PersonaPosition.id == mp_id).first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -294,11 +286,7 @@ def update_persona_position(
 
 
 def delete_persona_position(db: Session, mp_id: UUID) -> bool:
-    row = (
-        db.query(models.PersonaPosition)
-        .filter(models.PersonaPosition.id == mp_id)
-        .first()
-    )
+    row = db.query(models.PersonaPosition).filter(models.PersonaPosition.id == mp_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -336,9 +324,7 @@ def get_event_assignment(db: Session, ea_id: UUID) -> Optional[models.EventAssig
     )
 
 
-def create_event_assignment(
-    db: Session, payload: EventAssignmentCreate
-) -> models.EventAssignment:
+def create_event_assignment(db: Session, payload: EventAssignmentCreate) -> models.EventAssignment:
     row = models.EventAssignment(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -386,12 +372,7 @@ def delete_event_assignment(db: Session, ea_id: UUID) -> bool:
 
 
 def get_ministries(db: Session) -> List[models.Ministry]:
-    return (
-        db.query(models.Ministry)
-        .filter(models.Ministry.deleted_at.is_(None))
-        .order_by(models.Ministry.name)
-        .all()
-    )
+    return db.query(models.Ministry).filter(models.Ministry.deleted_at.is_(None)).order_by(models.Ministry.name).all()
 
 
 def get_ministry(db: Session, ministry_id: UUID) -> Optional[models.Ministry]:
@@ -413,9 +394,7 @@ def create_ministry(db: Session, payload: MinistryCreate) -> models.Ministry:
     return row
 
 
-def update_ministry(
-    db: Session, ministry_id: UUID, payload: MinistryUpdate
-) -> Optional[models.Ministry]:
+def update_ministry(db: Session, ministry_id: UUID, payload: MinistryUpdate) -> Optional[models.Ministry]:
     row = db.query(models.Ministry).filter(models.Ministry.id == ministry_id).first()
     if not row:
         return None
@@ -478,11 +457,7 @@ def create_persona_ministry_assignment(
 def update_persona_ministry_assignment(
     db: Session, mm_id: UUID, payload: PersonaMinistryAssignmentUpdate
 ) -> Optional[models.PersonaMinistryAssignment]:
-    row = (
-        db.query(models.PersonaMinistryAssignment)
-        .filter(models.PersonaMinistryAssignment.id == mm_id)
-        .first()
-    )
+    row = db.query(models.PersonaMinistryAssignment).filter(models.PersonaMinistryAssignment.id == mm_id).first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -493,11 +468,7 @@ def update_persona_ministry_assignment(
 
 
 def delete_persona_ministry_assignment(db: Session, mm_id: UUID) -> bool:
-    row = (
-        db.query(models.PersonaMinistryAssignment)
-        .filter(models.PersonaMinistryAssignment.id == mm_id)
-        .first()
-    )
+    row = db.query(models.PersonaMinistryAssignment).filter(models.PersonaMinistryAssignment.id == mm_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -520,21 +491,12 @@ def get_crm_automations(
     if trigger_event:
         q = q.filter(models.CrmAutomation.trigger_event == trigger_event)
     if sede_id:
-        q = q.filter(
-            models.CrmAutomation.sede_id.is_(None)
-            | (models.CrmAutomation.sede_id == sede_id)
-        )
+        q = q.filter(models.CrmAutomation.sede_id.is_(None) | (models.CrmAutomation.sede_id == sede_id))
     return q.order_by(models.CrmAutomation.name).all()
 
 
-def get_crm_automation(
-    db: Session, automation_id: UUID
-) -> Optional[models.CrmAutomation]:
-    return (
-        db.query(models.CrmAutomation)
-        .filter(models.CrmAutomation.id == automation_id)
-        .first()
-    )
+def get_crm_automation(db: Session, automation_id: UUID) -> Optional[models.CrmAutomation]:
+    return db.query(models.CrmAutomation).filter(models.CrmAutomation.id == automation_id).first()
 
 
 def create_crm_automation(
@@ -555,11 +517,7 @@ def update_crm_automation(
     automation_id: UUID,
     payload: CrmAutomationUpdate,
 ) -> Optional[models.CrmAutomation]:
-    row = (
-        db.query(models.CrmAutomation)
-        .filter(models.CrmAutomation.id == automation_id)
-        .first()
-    )
+    row = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == automation_id).first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -570,11 +528,7 @@ def update_crm_automation(
 
 
 def delete_crm_automation(db: Session, automation_id: UUID) -> bool:
-    row = (
-        db.query(models.CrmAutomation)
-        .filter(models.CrmAutomation.id == automation_id)
-        .first()
-    )
+    row = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == automation_id).first()
     if not row:
         return False
     row.is_active = False
@@ -609,9 +563,7 @@ def get_crm_automation_edge(db: Session, edge_id: UUID) -> Optional[models.CrmAu
     )
 
 
-def create_crm_automation_edge(
-    db: Session, payload: CrmAutomationEdgeCreate
-) -> models.CrmAutomationEdge:
+def create_crm_automation_edge(db: Session, payload: CrmAutomationEdgeCreate) -> models.CrmAutomationEdge:
     row = models.CrmAutomationEdge(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -624,11 +576,7 @@ def update_crm_automation_edge(
     edge_id: UUID,
     payload: CrmAutomationEdgeUpdate,
 ) -> Optional[models.CrmAutomationEdge]:
-    row = (
-        db.query(models.CrmAutomationEdge)
-        .filter(models.CrmAutomationEdge.id == edge_id)
-        .first()
-    )
+    row = db.query(models.CrmAutomationEdge).filter(models.CrmAutomationEdge.id == edge_id).first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -639,11 +587,7 @@ def update_crm_automation_edge(
 
 
 def delete_crm_automation_edge(db: Session, edge_id: UUID) -> bool:
-    row = (
-        db.query(models.CrmAutomationEdge)
-        .filter(models.CrmAutomationEdge.id == edge_id)
-        .first()
-    )
+    row = db.query(models.CrmAutomationEdge).filter(models.CrmAutomationEdge.id == edge_id).first()
     if not row:
         return False
     row.deleted_at = datetime.now(timezone.utc)
@@ -654,9 +598,7 @@ def delete_crm_automation_edge(db: Session, edge_id: UUID) -> bool:
 # ── Role Definitions ─────────────────────────────────────────────────────
 
 
-def get_role_definitions(
-    db: Session, only_leadership: bool = False
-) -> List[models.RoleDefinition]:
+def get_role_definitions(db: Session, only_leadership: bool = False) -> List[models.RoleDefinition]:
     q = db.query(models.RoleDefinition).filter(models.RoleDefinition.deleted_at.is_(None))
     if only_leadership:
         q = q.filter(models.RoleDefinition.is_leadership)
@@ -674,9 +616,7 @@ def get_role_definition(db: Session, role_id: UUID) -> Optional[models.RoleDefin
     )
 
 
-def create_role_definition(
-    db: Session, payload: RoleDefinitionCreate
-) -> models.RoleDefinition:
+def create_role_definition(db: Session, payload: RoleDefinitionCreate) -> models.RoleDefinition:
     row = models.RoleDefinition(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -687,11 +627,7 @@ def create_role_definition(
 def update_role_definition(
     db: Session, role_id: UUID, payload: RoleDefinitionUpdate
 ) -> Optional[models.RoleDefinition]:
-    row = (
-        db.query(models.RoleDefinition)
-        .filter(models.RoleDefinition.id == role_id)
-        .first()
-    )
+    row = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -702,11 +638,7 @@ def update_role_definition(
 
 
 def delete_role_definition(db: Session, role_id: UUID) -> bool:
-    row = (
-        db.query(models.RoleDefinition)
-        .filter(models.RoleDefinition.id == role_id)
-        .first()
-    )
+    row = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -776,9 +708,7 @@ def create_fund(db: Session, payload: FundCreate) -> models.Fund:
     return row
 
 
-def update_fund(
-    db: Session, fund_id: UUID, payload: FundUpdate
-) -> Optional[models.Fund]:
+def update_fund(db: Session, fund_id: UUID, payload: FundUpdate) -> Optional[models.Fund]:
     row = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
     if not row:
         return None
@@ -801,9 +731,7 @@ def delete_fund(db: Session, fund_id: UUID) -> bool:
 # ── Volunteer Skills ─────────────────────────────────────────────────────
 
 
-def get_volunteer_skills(
-    db: Session, category: str | None = None
-) -> List[models.VolunteerSkill]:
+def get_volunteer_skills(db: Session, category: str | None = None) -> List[models.VolunteerSkill]:
     q = db.query(models.VolunteerSkill).filter(models.VolunteerSkill.deleted_at.is_(None))
     if category:
         q = q.filter(models.VolunteerSkill.category == category)
@@ -821,9 +749,7 @@ def get_volunteer_skill(db: Session, skill_id: UUID) -> Optional[models.Voluntee
     )
 
 
-def create_volunteer_skill(
-    db: Session, payload: VolunteerSkillCreate
-) -> models.VolunteerSkill:
+def create_volunteer_skill(db: Session, payload: VolunteerSkillCreate) -> models.VolunteerSkill:
     row = models.VolunteerSkill(**payload.model_dump())
     db.add(row)
     db.commit()
@@ -834,11 +760,7 @@ def create_volunteer_skill(
 def update_volunteer_skill(
     db: Session, skill_id: UUID, payload: VolunteerSkillUpdate
 ) -> Optional[models.VolunteerSkill]:
-    row = (
-        db.query(models.VolunteerSkill)
-        .filter(models.VolunteerSkill.id == skill_id)
-        .first()
-    )
+    row = db.query(models.VolunteerSkill).filter(models.VolunteerSkill.id == skill_id).first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -849,11 +771,7 @@ def update_volunteer_skill(
 
 
 def delete_volunteer_skill(db: Session, skill_id: UUID) -> bool:
-    row = (
-        db.query(models.VolunteerSkill)
-        .filter(models.VolunteerSkill.id == skill_id)
-        .first()
-    )
+    row = db.query(models.VolunteerSkill).filter(models.VolunteerSkill.id == skill_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -895,7 +813,7 @@ def create_chat_message(db: Session, payload: ChatMessageCreate) -> models.ChatM
     db.flush()
     if row.room_id and row.room_id.startswith("dm_"):
         try:
-            conv_uuid = UUID(row.room_id[len("dm_"):])
+            conv_uuid = UUID(row.room_id[len("dm_") :])
             conv = get_conversation(db, conv_uuid)
             if conv:
                 conv.last_message_content = row.content
@@ -949,6 +867,7 @@ def create_conversation_by_persona(db: Session, persona_ids: list[uuid.UUID]) ->
 
 def get_user_conversations(db: Session, user_id: uuid.UUID) -> list[models.Conversation]:
     from sqlalchemy.orm import joinedload
+
     return (
         db.query(models.Conversation)
         .join(models.ConversationParticipant)
@@ -968,11 +887,7 @@ def get_user_conversations_by_persona(db: Session, persona_id: uuid.UUID) -> lis
 
 
 def get_conversation(db: Session, conversation_id: UUID) -> Optional[models.Conversation]:
-    return (
-        db.query(models.Conversation)
-        .filter(models.Conversation.id == conversation_id)
-        .first()
-    )
+    return db.query(models.Conversation).filter(models.Conversation.id == conversation_id).first()
 
 
 def get_conversation_messages(
@@ -1000,20 +915,20 @@ def get_conversation_messages(
             )
         )
     elif before_created_at:
-        q = q.filter(
-            models.ChatMessage.created_at < before_created_at
-        )
+        q = q.filter(models.ChatMessage.created_at < before_created_at)
     elif before_id:
         q = q.filter(models.ChatMessage.id < before_id)
-    return q.order_by(
-        models.ChatMessage.created_at.desc(),
-        models.ChatMessage.id.desc(),
-    ).limit(limit).all()
+    return (
+        q.order_by(
+            models.ChatMessage.created_at.desc(),
+            models.ChatMessage.id.desc(),
+        )
+        .limit(limit)
+        .all()
+    )
 
 
-def create_direct_message(
-    db: Session, conversation_id: UUID, sender_id: uuid.UUID, content: str
-) -> models.ChatMessage:
+def create_direct_message(db: Session, conversation_id: UUID, sender_id: uuid.UUID, content: str) -> models.ChatMessage:
     conv = get_conversation(db, conversation_id)
     if not conv:
         raise ValueError(f"Conversation {conversation_id} does not exist")
@@ -1038,9 +953,7 @@ def create_direct_message_by_persona(
     return create_direct_message(db, conversation_id, sender_id, content)
 
 
-def mark_conversation_read(
-    db: Session, conversation_id: UUID, user_id: uuid.UUID
-) -> None:
+def mark_conversation_read(db: Session, conversation_id: UUID, user_id: uuid.UUID) -> None:
     cp = (
         db.query(models.ConversationParticipant)
         .filter(
@@ -1056,16 +969,12 @@ def mark_conversation_read(
     db.commit()
 
 
-def mark_conversation_read_by_persona(
-    db: Session, conversation_id: UUID, persona_id: uuid.UUID
-) -> None:
+def mark_conversation_read_by_persona(db: Session, conversation_id: UUID, persona_id: uuid.UUID) -> None:
     """Versión de mark_conversation_read que acepta persona_id UUID (FK personas.id)."""
     return mark_conversation_read(db, conversation_id, persona_id)
 
 
-def get_unread_count_for_conversation(
-    db: Session, conversation_id: UUID, user_id: uuid.UUID
-) -> int:
+def get_unread_count_for_conversation(db: Session, conversation_id: UUID, user_id: uuid.UUID) -> int:
     cp = (
         db.query(models.ConversationParticipant)
         .filter(
@@ -1076,7 +985,7 @@ def get_unread_count_for_conversation(
     )
     conv = get_conversation(db, conversation_id)
     fallback = conv.created_at if conv else _utcnow()
-    since = (cp.last_read_at if cp and cp.last_read_at else fallback)
+    since = cp.last_read_at if cp and cp.last_read_at else fallback
     return (
         db.query(models.ChatMessage)
         .filter(
@@ -1088,16 +997,12 @@ def get_unread_count_for_conversation(
     )
 
 
-def get_unread_count_for_conversation_by_persona(
-    db: Session, conversation_id: UUID, persona_id: uuid.UUID
-) -> int:
+def get_unread_count_for_conversation_by_persona(db: Session, conversation_id: UUID, persona_id: uuid.UUID) -> int:
     """Versión de get_unread_count_for_conversation que acepta persona_id UUID (FK personas.id)."""
     return get_unread_count_for_conversation(db, conversation_id, persona_id)
 
 
-def get_unread_counts_batch(
-    db: Session, user_id: uuid.UUID, conversation_ids: list[UUID]
-) -> dict[UUID, int]:
+def get_unread_counts_batch(db: Session, user_id: uuid.UUID, conversation_ids: list[UUID]) -> dict[UUID, int]:
     """Return {conversation_id: unread_count} for all given conversations in one query.
 
     Avoids N+1 when listing conversations.

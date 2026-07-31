@@ -151,12 +151,12 @@ export default function FinancesPage() {
                     {/* 📊 Financial Metrics */}
                     <section className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
                         {dashboard?.cards.map((card, idx) => (
-                            <DSMetric 
+                            <DSMetric
                                 key={idx}
-                                label={card.title} 
-                                value={card.value} 
-                                trend={card.trend} 
-                                tone={card.color} 
+                                label={card.title}
+                                value={card.value}
+                                trend={card.trend}
+                                tone={card.color}
                             />
                         ))}
                     </section>

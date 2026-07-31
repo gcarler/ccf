@@ -121,9 +121,7 @@ def upload_cms_media(
     if optimize:
         try:
             optimizer = ImageOptimizer()
-            optimized_bytes, output_ext, width, height = optimizer.optimize(
-                content, original_name
-            )
+            optimized_bytes, output_ext, width, height = optimizer.optimize(content, original_name)
             if output_ext != os.path.splitext(original_name)[1].lower():
                 # Extension changed (e.g. .jpg -> .webp)
                 final_name = os.path.splitext(original_name)[0] + output_ext
@@ -190,9 +188,7 @@ def optimize_cms_media(
         content = f.read()
 
     optimizer = ImageOptimizer()
-    optimized_bytes, output_ext, width, height = optimizer.optimize(
-        content, row.filename or "image.jpg"
-    )
+    optimized_bytes, output_ext, width, height = optimizer.optimize(content, row.filename or "image.jpg")
 
     optimized_name = os.path.splitext(row.filename or "image.jpg")[0] + output_ext
     new_url = storage_service.save_file(optimized_bytes, optimized_name, subfolder="cms")

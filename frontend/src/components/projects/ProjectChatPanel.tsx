@@ -26,7 +26,7 @@ function formatMessageTime(dateStr: string): string {
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   const days = Math.floor(diff / 86400000);
-  
+
   if (days === 0) {
     return date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
   }

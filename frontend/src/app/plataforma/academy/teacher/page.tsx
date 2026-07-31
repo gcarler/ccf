@@ -120,7 +120,7 @@ export default function TeacherWorkspace() {
     }
 
     return (
-        <WorkspaceLayout 
+        <WorkspaceLayout
             sidebarTitle="Academia"
             allowedPermissions={['academy:edit', 'academy:manage']}
         >
@@ -139,7 +139,7 @@ export default function TeacherWorkspace() {
                                 {pending.length} revisiones pendientes
                             </span>
                             <div className="h-4 w-px bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
-                            <button 
+                            <button
                                 onClick={() => loadData()}
                                 className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]"
                             >
@@ -197,8 +197,8 @@ export default function TeacherWorkspace() {
                                                 onClick={() => setViewMode(m)}
                                                 className={clsx(
                                                     "px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all",
-                                                    viewMode === m 
-                                                        ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]" 
+                                                    viewMode === m
+                                                        ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]"
                                                         : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                                                 )}
                                             >
@@ -214,7 +214,7 @@ export default function TeacherWorkspace() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 p-4 gap-3">
                                         {courses.length === 0 && (
                                             <div className="col-span-full py-1.5">
-                                                <EmptyState 
+                                                <EmptyState
                                                     icon={BookOpen}
                                                     title="Sin cursos asignados"
                                                     description="Actualmente no tienes cursos bajo tu supervisión. Contacta con coordinación."
@@ -236,7 +236,7 @@ export default function TeacherWorkspace() {
                                                         <BookOpen size={14} className="text-[hsl(var(--primary))]" /> {course.lessons_count || 0} Lecciones
                                                     </div>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={() => router.push(`/plataforma/academy/courses/${course.id}/manage`)}
                                                     className="w-full py-3 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-lg"
                                                 >
@@ -251,7 +251,7 @@ export default function TeacherWorkspace() {
                                     <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
                                         {pending.length === 0 && (
                                             <div className="py-1.5">
-                                                <EmptyState 
+                                                <EmptyState
                                                     icon={CheckCircle2}
                                                     title="¡Todo al día!"
                                                     description="No hay entregas pendientes de revisión por ahora. Disfruta un café ☕"

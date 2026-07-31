@@ -1,4 +1,5 @@
 """Tests for evangelism_rankings.py."""
+
 from __future__ import annotations
 
 import pytest
@@ -21,7 +22,9 @@ def full(client, db_session):
 class TestRankings:
     def test_groups(self, full):
         assert _ok(full["c"].get("/api/evangelism/rankings/groups", headers=full["h"]).status_code)
+
     def test_leaders(self, full):
         assert _ok(full["c"].get("/api/evangelism/rankings/leaders", headers=full["h"]).status_code)
+
     def test_monthly(self, full):
         assert _ok(full["c"].get("/api/evangelism/rankings/monthly-comparison", headers=full["h"]).status_code)

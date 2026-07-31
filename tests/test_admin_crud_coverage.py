@@ -4,6 +4,7 @@ Targets: lines 93, 120, 239, 274, 424, 520, 599, 603, 709, 711,
 770, 774, 814, 943-963, 1112, 1114, 1116, 1180, 1184,
 1220-1221, 1242-1243, 1250-1251, 1275-1279.
 """
+
 import uuid
 from unittest import mock as _mock
 
@@ -62,6 +63,7 @@ def admin_user(db_session):
 # ROLES (lines 93, 120, 239)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_get_admin_role_not_found(db_session):
     """Line 77: returns None when role does not exist."""
     result = get_admin_role(db_session, uuid.uuid4())
@@ -116,6 +118,7 @@ def test_update_admin_role_list_permissions(db_session):
 # _assign_role_by_name (lines 239)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_assign_role_by_name_alias(db_session, admin_user):
     """Line 241: uses ROLE_ALIASES lookup (admin -> ADMINISTRADOR)."""
     admin, _ = admin_user
@@ -143,6 +146,7 @@ def test_assign_role_by_name_empty(db_session, admin_user):
 # create_admin_user (lines 274)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_create_admin_user_creates_default_role(db_session, admin_user):
     """Line 278: creates default_role when MIEMBRO does not exist."""
     admin, _ = admin_user
@@ -150,11 +154,13 @@ def test_create_admin_user_creates_default_role(db_session, admin_user):
     db_session.commit()
 
     result = create_admin_user(
-        db_session, admin,
+        db_session,
+        admin,
         username=f"test_member_{uuid.uuid4().hex[:6]}",
         email=f"test_member_{uuid.uuid4().hex[:6]}@test.com",
         password="TestPass123!",
-        first_name="Test", last_name="Member",
+        first_name="Test",
+        last_name="Member",
     )
     assert result is not None
     assert result["email"] is not None
@@ -164,11 +170,13 @@ def test_create_admin_user_invalid_role(db_session, admin_user):
     """Lines 312-313: role assignment error is swallowed."""
     admin, _ = admin_user
     result = create_admin_user(
-        db_session, admin,
+        db_session,
+        admin,
         username=f"test_badrole_{uuid.uuid4().hex[:6]}",
         email=f"test_badrole_{uuid.uuid4().hex[:6]}@test.com",
         password="TestPass123!",
-        first_name="Test", last_name="Bad",
+        first_name="Test",
+        last_name="Bad",
         role="NONEXISTENT_ROLE_XYZ",
     )
     assert result is not None
@@ -183,11 +191,13 @@ def test_create_admin_user_no_sede(db_session, admin_user):
     with _mock.patch.object(admin, "sede_id", None):
         with pytest.raises(ValueError, match="Cannot determine admin's sede"):
             create_admin_user(
-                db_session, admin,
+                db_session,
+                admin,
                 username=f"nosede_{uuid.uuid4().hex[:6]}",
                 email=f"nosede_{uuid.uuid4().hex[:6]}@test.com",
                 password="TestPass123!",
-                first_name="No", last_name="Sede",
+                first_name="No",
+                last_name="Sede",
             )
 
 
@@ -195,12 +205,15 @@ def test_create_admin_user_no_sede(db_session, admin_user):
 # update_admin_user
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_update_admin_user_email_updates_persona(db_session, admin_user):
     """Line 345: updating email also updates Persona.email."""
     admin, _ = admin_user
     new_email = f"updated_{uuid.uuid4().hex[:6]}@test.com"
     result = update_admin_user(
-        db_session, admin, admin.id,
+        db_session,
+        admin,
+        admin.id,
         email=new_email,
         password="NewPass123!",
         is_active=True,
@@ -216,6 +229,7 @@ def test_update_admin_user_email_updates_persona(db_session, admin_user):
 # ═══════════════════════════════════════════════════════════════════════════════
 # deactivate / change role
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 def test_deactivate_admin_user_not_found(db_session, admin_user):
     """Line 384: returns False when user not found."""
@@ -234,6 +248,7 @@ def test_change_user_role_not_found(db_session, admin_user):
 # ═══════════════════════════════════════════════════════════════════════════════
 # list_users_with_roles (line 424 - modulares_by_user.setdefault)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 def test_list_users_with_roles_persona_map(db_session, admin_user):
     """Line 520: persona_map building with user IDs."""
@@ -267,6 +282,7 @@ def test_list_users_with_roles_modulares(db_session, admin_user):
 # get_user_permissions (lines 599, 603)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_get_user_permissions_not_found(db_session, admin_user):
     """Lines 599-603: returns None for non-visible user."""
     admin, _ = admin_user
@@ -291,6 +307,7 @@ def test_get_user_permissions_module_roles(db_session, admin_user):
 # set_user_permissions (line 520 - continue for None level)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_set_user_permissions_invalid_module(db_session, admin_user):
     """Line 709: raises ValueError for invalid module."""
     admin, _ = admin_user
@@ -301,9 +318,12 @@ def test_set_user_permissions_invalid_module(db_session, admin_user):
 
     with pytest.raises(ValueError, match="Módulo inválido"):
         set_user_permissions(
-            db_session, admin, admin.id,
+            db_session,
+            admin,
+            admin.id,
             {"nonexistent": "read"},
-            module_permission_map, expand_fn,
+            module_permission_map,
+            expand_fn,
         )
 
 
@@ -317,9 +337,12 @@ def test_set_user_permissions_invalid_level(db_session, admin_user):
 
     with pytest.raises(ValueError, match="Nivel inválido"):
         set_user_permissions(
-            db_session, admin, admin.id,
+            db_session,
+            admin,
+            admin.id,
             {"crm": "invalid_level"},
-            module_permission_map, expand_fn,
+            module_permission_map,
+            expand_fn,
         )
 
 
@@ -332,9 +355,12 @@ def test_set_user_permissions_skip_none_level(db_session, admin_user):
         return module_permission_map[module][level]
 
     result = set_user_permissions(
-        db_session, admin, admin.id,
+        db_session,
+        admin,
+        admin.id,
         {"crm": "read", "chat": None},  # chat: None should be skipped
-        module_permission_map, expand_fn,
+        module_permission_map,
+        expand_fn,
     )
     assert result is not None
     assert result["status"] == "success"
@@ -344,6 +370,7 @@ def test_set_user_permissions_skip_none_level(db_session, admin_user):
 # ═══════════════════════════════════════════════════════════════════════════════
 # assign_user_module_role (lines 599, 603)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 def test_assign_user_module_role_user_not_found(db_session, admin_user):
     """Line 599: raises ValueError when user not found."""
@@ -386,6 +413,7 @@ def test_assign_user_module_role_existing_update(db_session, admin_user):
 # delete_admin_role
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_delete_admin_role_with_users(db_session, admin_user):
     """delete_admin_role returns False when assigned to active users."""
     admin, _ = admin_user
@@ -409,11 +437,13 @@ def test_delete_admin_role_success(db_session):
 # LOCATIONS (lines 709, 711 - update with address and is_active)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_update_admin_location_address_active(db_session):
     """Lines 709, 711: update location with address and is_active."""
     loc = create_admin_location(db_session, f"Loc_{uuid.uuid4().hex[:6]}")
     updated = update_admin_location(
-        db_session, loc.id,
+        db_session,
+        loc.id,
         address="123 Test St",
         is_active=False,
     )
@@ -426,6 +456,7 @@ def test_update_admin_location_address_active(db_session):
 # SOCIALS (lines 770, 774 - update with platform and is_visible)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_update_admin_social_platform_visible(db_session):
     """Lines 770, 774: update social with platform and is_visible."""
     soc = create_admin_social(
@@ -435,7 +466,8 @@ def test_update_admin_social_platform_visible(db_session):
     )
     new_platform = f"Updated_{uuid.uuid4().hex[:6]}"
     updated = update_admin_social(
-        db_session, soc.id,
+        db_session,
+        soc.id,
         platform=new_platform,
         is_visible=False,
     )
@@ -447,6 +479,7 @@ def test_update_admin_social_platform_visible(db_session):
 # ═══════════════════════════════════════════════════════════════════════════════
 # SYSTEM VARIABLES (line 814 - upsert update path)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 def test_set_admin_variable_upsert(db_session):
     """Line 814: update existing variable (upsert path)."""
@@ -464,6 +497,7 @@ def test_set_admin_variable_upsert(db_session):
 # ═══════════════════════════════════════════════════════════════════════════════
 # AUTOMATIONS (lines 943-963)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 def test_list_admin_automations_empty(db_session):
     """Lines 943-963: basic listing (empty)."""
@@ -501,6 +535,7 @@ def test_list_admin_automations_with_data(db_session):
 # VARIABLES (lines 1112, 1114, 1116)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_list_admin_variables_paginated(db_session):
     """Line 1048: paginated listing."""
     variables, total = list_admin_variables(db_session, skip=0, limit=10)
@@ -534,6 +569,7 @@ def test_delete_admin_variable_success(db_session):
 # ═══════════════════════════════════════════════════════════════════════════════
 # MILESTONES (lines 1180, 1184)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 def test_list_admin_milestones_counts(db_session):
     """Lines 1180-1184: badge_counts grouping and badges loop."""
@@ -580,6 +616,7 @@ def test_award_milestone_already_awarded(db_session, admin_user):
 # PROVISION (lines 1275-1279)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_provision_personas_sin_cuenta_basic(db_session):
     """Lines 1275-1279: total_remaining and truncated logic."""
     from backend.models_auth import RolPlataforma
@@ -617,15 +654,14 @@ def test_provision_personas_sin_cuenta_basic(db_session):
 # is_global_admin
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_is_global_admin_superadmin(db_session):
     """_is_global_admin returns True for superadmin role."""
     user = db_session.query(Usuario).first()
     if not user:
         pytest.skip("Need an existing user")
 
-    rol = db_session.query(RolPlataforma).filter(
-        RolPlataforma.nombre == "SUPER_ADMINISTRADOR"
-    ).first()
+    rol = db_session.query(RolPlataforma).filter(RolPlataforma.nombre == "SUPER_ADMINISTRADOR").first()
     if not rol:
         rol = RolPlataforma(id=uuid.uuid4(), nombre="SUPER_ADMINISTRADOR", permisos={})
         db_session.add(rol)
@@ -647,6 +683,7 @@ def test_is_global_admin_not_superadmin(db_session, admin_user):
 # get_admin_stats
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 def test_get_admin_stats_metrics(db_session):
     """Ensure stats query runs without error."""
     stats = get_admin_stats(db_session)
@@ -658,6 +695,7 @@ def test_get_admin_stats_metrics(db_session):
 # ═══════════════════════════════════════════════════════════════════════════════
 # DONATION CATEGORIES (additional edge paths)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 def test_list_admin_roles_with_counts(db_session):
     """get_admin_role_user_counts and list_admin_roles work."""

@@ -162,7 +162,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                             result.passed ? "bg-[hsl(var(--success))] text-white shadow-[hsl(var(--success)/30%)]" : "bg-[hsl(var(--danger))] text-white shadow-[hsl(var(--danger)/30%)]"
                                         )}>
                                             {result.passed ? <Trophy size={64} /> : <AlertCircle size={64} />}
-                                            <motion.div 
+                                            <motion.div
                                                 animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}
                                                 className="absolute -top-4 -right-4 size-7 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg flex items-center justify-center text-[hsl(var(--text-primary))] dark:text-white shadow-xl border border-[hsl(var(--border))] dark:border-white/10"
                                             >
@@ -174,7 +174,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                                 {result.passed ? '¡Felicidades, Siervo!' : 'Sigue Intentándolo'}
                                             </h3>
                                             <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-md mx-auto text-lg leading-relaxed">
-                                                {result.passed 
+                                                {result.passed
                                                     ? `Has aprobado el examen con un puntaje de ${result.score}%. Tu certificado ministerial ha sido generado y está disponible en tu panel.`
                                                     : `Tu puntaje de ${result.score}% no alcanzó el mínimo de ${assessment.min_score}%. Revisa el material de estudio y vuelve a intentarlo.`}
                                             </p>
@@ -198,8 +198,8 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                         <div className="space-y-3">
                                             <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase">Instrucciones de Evaluación</h3>
                                             <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-lg mx-auto text-base">
-                                                Este examen consta de <span className="font-semibold text-[hsl(var(--primary))]">{questions.length} preguntas</span>. 
-                                                Para aprobar, necesitas una nota mínima de <span className="font-semibold text-[hsl(var(--primary))]">{assessment.min_score}%</span>. 
+                                                Este examen consta de <span className="font-semibold text-[hsl(var(--primary))]">{questions.length} preguntas</span>.
+                                                Para aprobar, necesitas una nota mínima de <span className="font-semibold text-[hsl(var(--primary))]">{assessment.min_score}%</span>.
                                                 Asegúrate de estar en un lugar tranquilo antes de iniciar.
                                             </p>
                                         </div>
@@ -208,7 +208,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                         </button>
                                     </motion.div>
                                 ) : (
-                                    <motion.div 
+                                    <motion.div
                                         key={currentStep} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}
                                         className="space-y-3"
                                     >
@@ -244,8 +244,8 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                                 >
                                                     <div className={clsx(
                                                         "size-8 rounded-md flex items-center justify-center shrink-0 shadow-inner border transition-colors",
-                                                        answers[questions[currentStep - 1].id] === option.id 
-                                                            ? "bg-white/20 border-white/30 text-white" 
+                                                        answers[questions[currentStep - 1].id] === option.id
+                                                            ? "bg-white/20 border-white/30 text-white"
                                                             : "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] group-hover:border-[hsl(var(--info)/100%)]/50"
                                                     )}>
                                                         {answers[questions[currentStep - 1].id] === option.id ? <CheckCircle2 size={18} /> : <HelpCircle size={18} />}
@@ -266,9 +266,9 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                 <button onClick={prevStep} className="flex items-center gap-2 px-3 py-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-all font-semibold uppercase text-2xs tracking-wide">
                                     <ArrowLeft size={16} /> Anterior
                                 </button>
-                                
+
                                 {isLastQuestion ? (
-                                    <button 
+                                    <button
                                         onClick={handleSubmit}
                                         disabled={submitting || !answers[questions[currentStep - 1].id]}
                                         className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
@@ -276,7 +276,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                         {submitting ? <Loader2 className="animate-spin" size={18} /> : <>Finalizar Examen <Trophy size={18} /></>}
                                     </button>
                                 ) : (
-                                    <button 
+                                    <button
                                         onClick={nextStep}
                                         disabled={!answers[questions[currentStep - 1].id]}
                                         className="px-4 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3 group"

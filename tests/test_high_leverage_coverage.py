@@ -320,6 +320,7 @@ def test_get_sdk_raises_when_mercadopago_not_installed():
     """Si mercadopago en el módulo es None, _get_sdk raises."""
     with patch("backend.services.payments.mercadopago", None):
         from backend.services.payments import _get_sdk
+
         with pytest.raises(RuntimeError, match=r"mercadopago.*no.*instalado"):
             _get_sdk()
 

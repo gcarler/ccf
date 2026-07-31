@@ -128,10 +128,7 @@ def _provider_para_frecuencia(frecuencia: str, dia_original: int) -> _IncProvide
     p = _FRECUENCIA_A_PROVIDER.get(frecuencia_canonica)
     if p is None:
         soportadas = ", ".join([e.value for e in FrecuenciaEnum])
-        raise ValueError(
-            f"Frecuencia no soportada: '{frecuencia}'. "
-            f"Soportadas: {soportadas}"
-        )
+        raise ValueError(f"Frecuencia no soportada: '{frecuencia}'. Soportadas: {soportadas}")
     # Clonar con el día original correcto
     return _IncProvider(p.incremento, dia_original if p.dia_original else None)
 

@@ -1,6 +1,7 @@
 """
 Coverage push — targeting 40%.
 """
+
 import pytest
 
 from backend.services.email import _brand_wrap, render_verify_email, resolve_brand_colors
@@ -17,16 +18,23 @@ from backend.services.email_templates import (
 )
 
 FULL_BRAND = {
-    "primary": "#1a73e8", "secondary": "#34a853", "accent": "#fbbc04",
-    "dark": "#202124", "light": "#ffffff", "bg": "#f8f9fa",
-    "pale": "#e8f0fe", "medium": "#5f6368",
-    "logo_url": "", "church_name": "CCF Test",
+    "primary": "#1a73e8",
+    "secondary": "#34a853",
+    "accent": "#fbbc04",
+    "dark": "#202124",
+    "light": "#ffffff",
+    "bg": "#f8f9fa",
+    "pale": "#e8f0fe",
+    "medium": "#5f6368",
+    "logo_url": "",
+    "church_name": "CCF Test",
 }
 
 
 @pytest.fixture
 def full(client, db_session):
     from tests.conftest import seed_admin
+
     admin, persona, sede = seed_admin(db_session)
     return {"db": db_session, "sede": sede}
 
@@ -71,8 +79,20 @@ class TestEmailTemplatesRenderers:
         assert isinstance(render_birthday({"name": "Test"}, FULL_BRAND), str)
 
     def test_render_event_invitation(self):
-        assert isinstance(render_event_invitation({"name": "Test", "title": "Evento", "date": "2026-07-20",
-            "time": "10:00", "location": "Salón", "description": "Desc"}, FULL_BRAND), str)
+        assert isinstance(
+            render_event_invitation(
+                {
+                    "name": "Test",
+                    "title": "Evento",
+                    "date": "2026-07-20",
+                    "time": "10:00",
+                    "location": "Salón",
+                    "description": "Desc",
+                },
+                FULL_BRAND,
+            ),
+            str,
+        )
 
     def test_render_welcome_guide(self):
         assert isinstance(render_welcome_guide({"name": "Test"}, FULL_BRAND), str)

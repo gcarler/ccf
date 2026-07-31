@@ -1,22 +1,23 @@
 """Tests exhaustivos y estructurales para backend/services/conversation_memory.py (100% Cobertura)."""
 
-import pytest
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
+import pytest
+
 from backend import models
 from backend.models_conversation import AgentConversation, AgentMessage
 from backend.services.conversation_memory import (
     create_conversation,
-    get_user_conversations,
-    get_conversation_history,
-    save_conversation_turn,
     delete_conversation,
+    get_conversation_history,
     get_conversation_messages,
+    get_user_conversations,
+    save_conversation_turn,
 )
 
 
 class TestConversationMemory100Pct:
-
     def test_create_conversation_invalid_persona_raises(self, db_session):
         with patch("backend.services.conversation_memory.resolve_persona_id_for_user", return_value=None):
             with pytest.raises(ValueError, match="No se pudo resolver la persona"):
@@ -32,7 +33,9 @@ class TestConversationMemory100Pct:
         db_session.commit()
 
         with patch("backend.services.conversation_memory.resolve_persona_id_for_user", return_value=persona.id):
-            conv_id = create_conversation(user_id=str(uuid.uuid4()), title="Mi Chat", agent_name="Optimus", db=db_session)
+            conv_id = create_conversation(
+                user_id=str(uuid.uuid4()), title="Mi Chat", agent_name="Optimus", db=db_session
+            )
             assert conv_id is not None
 
             conv = db_session.query(AgentConversation).filter(AgentConversation.id == conv_id).first()

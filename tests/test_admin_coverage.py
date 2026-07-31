@@ -7,6 +7,7 @@ in admin.py to maximize code execution.
 Key: Creates real entities via models, then calls API endpoints that
 process them to execute code paths.
 """
+
 import uuid
 
 import pytest
@@ -26,8 +27,11 @@ def full(client, db_session):
 
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
-        "c": client, "h": headers, "sede": sede,
-        "admin": admin, "admin_persona": admin_persona,
+        "c": client,
+        "h": headers,
+        "sede": sede,
+        "admin": admin,
+        "admin_persona": admin_persona,
         "_db": db_session,
     }
 
@@ -36,6 +40,7 @@ def full(client, db_session):
 # TIER 1 — Simple CRUD Endpoints (Quick wins)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestSimpleCRUD:
     def test_list_roles(self, full):
         c, h = full["c"], full["h"]
@@ -43,10 +48,14 @@ class TestSimpleCRUD:
 
     def test_create_role(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/roles", json={
-            "name": f"Test Role {uuid.uuid4().hex[:4]}",
-            "permissions": {"crm:read": "allow"},
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/roles",
+            json={
+                "name": f"Test Role {uuid.uuid4().hex[:4]}",
+                "permissions": {"crm:read": "allow"},
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_list_users(self, full):
@@ -101,53 +110,75 @@ class TestSimpleCRUD:
 # TIER 2 — CRUD with Data (Create/Update/Delete)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCRUDWithData:
     def test_create_location(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/locations", json={
-            "name": "Test Location",
-            "address": "Test Address",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/locations",
+            json={
+                "name": "Test Location",
+                "address": "Test Address",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_create_variable(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/variables", json={
-            "key": f"test_{uuid.uuid4().hex[:6]}",
-            "value": "test_value",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/variables",
+            json={
+                "key": f"test_{uuid.uuid4().hex[:6]}",
+                "value": "test_value",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_create_automation(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/automations", json={
-            "name": f"Test Automation {uuid.uuid4().hex[:4]}",
-            "trigger_type": "new_case",
-            "is_active": True,
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/automations",
+            json={
+                "name": f"Test Automation {uuid.uuid4().hex[:4]}",
+                "trigger_type": "new_case",
+                "is_active": True,
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_create_role(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/roles", json={
-            "name": f"Role_{uuid.uuid4().hex[:6]}",
-            "permissions": {"crm:read": "allow"},
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/roles",
+            json={
+                "name": f"Role_{uuid.uuid4().hex[:6]}",
+                "permissions": {"crm:read": "allow"},
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_create_user_module_role(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/user-module-roles", json={
-            "user_id": str(full["admin"].id),
-            "modulo": "crm",
-            "rol_id": str(full["admin"].rol_plataforma_id),
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/user-module-roles",
+            json={
+                "user_id": str(full["admin"].id),
+                "modulo": "crm",
+                "rol_id": str(full["admin"].rol_plataforma_id),
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TIER 3 — User Management (Complex)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestUserManagement:
     def test_get_user(self, full):
@@ -161,27 +192,39 @@ class TestUserManagement:
 
     def test_create_user(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/users", json={
-            "username": f"user_{uuid.uuid4().hex[:6]}",
-            "email": f"user_{uuid.uuid4().hex[:6]}@test.com",
-            "password": "TestPass123!",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/users",
+            json={
+                "username": f"user_{uuid.uuid4().hex[:6]}",
+                "email": f"user_{uuid.uuid4().hex[:6]}@test.com",
+                "password": "TestPass123!",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_create_user_duplicate(self, full):
         c, h, admin = full["c"], full["h"], full["admin"]
-        resp = c.post("/api/admin/users", json={
-            "username": admin.username,
-            "email": f"dup_{uuid.uuid4().hex[:6]}@test.com",
-            "password": "TestPass123!",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/users",
+            json={
+                "username": admin.username,
+                "email": f"dup_{uuid.uuid4().hex[:6]}@test.com",
+                "password": "TestPass123!",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_update_user(self, full):
         c, h = full["c"], full["h"]
-        resp = c.patch(f"/api/admin/users/{full['admin'].id}", json={
-            "username": "updated_admin",
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/users/{full['admin'].id}",
+            json={
+                "username": "updated_admin",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_delete_user(self, full):
@@ -200,6 +243,7 @@ class TestUserManagement:
 # TIER 4 — Permissions & Roles (Complex)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestPermissionsRoles:
     def test_get_user_permissions(self, full):
         c, h = full["c"], full["h"]
@@ -207,26 +251,38 @@ class TestPermissionsRoles:
 
     def test_set_user_permissions(self, full):
         c, h = full["c"], full["h"]
-        resp = c.put(f"/api/admin/users/{full['admin'].id}/permissions", json={
-            "crm": "write",
-        }, headers=h)
+        resp = c.put(
+            f"/api/admin/users/{full['admin'].id}/permissions",
+            json={
+                "crm": "write",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_update_role(self, full):
         c, h = full["c"], full["h"]
         # Create a role
-        create_resp = c.post("/api/admin/roles", json={
-            "name": f"UpdRole_{uuid.uuid4().hex[:4]}",
-            "permissions": {"crm:read": "allow"},
-        }, headers=h)
+        create_resp = c.post(
+            "/api/admin/roles",
+            json={
+                "name": f"UpdRole_{uuid.uuid4().hex[:4]}",
+                "permissions": {"crm:read": "allow"},
+            },
+            headers=h,
+        )
         assert create_resp.status_code == 201
         role_id = create_resp.json().get("id")
         assert role_id is not None
 
         # Update its permissions
-        patch_resp = c.patch(f"/api/admin/roles/{role_id}", json={
-            "permissions": {"crm:read": "allow", "crm:write": "allow"},
-        }, headers=h)
+        patch_resp = c.patch(
+            f"/api/admin/roles/{role_id}",
+            json={
+                "permissions": {"crm:read": "allow", "crm:write": "allow"},
+            },
+            headers=h,
+        )
         assert patch_resp.status_code == 200, f"Expected 200, got {patch_resp.status_code}: {patch_resp.text}"
         data = patch_resp.json()
         assert "id" in data, f"Expected AdminRoleRead, got: {data}"
@@ -235,30 +291,43 @@ class TestPermissionsRoles:
     def test_create_role_duplicate(self, full):
         c, h = full["c"], full["h"]
         role_name = f"DupeRole_{uuid.uuid4().hex[:4]}"
-        resp1 = c.post("/api/admin/roles", json={
-            "name": role_name,
-            "permissions": {"crm:read": "allow"},
-        }, headers=h)
+        resp1 = c.post(
+            "/api/admin/roles",
+            json={
+                "name": role_name,
+                "permissions": {"crm:read": "allow"},
+            },
+            headers=h,
+        )
         assert resp1.status_code == 201
-        resp2 = c.post("/api/admin/roles", json={
-            "name": role_name,
-            "permissions": {"crm:read": "allow"},
-        }, headers=h)
+        resp2 = c.post(
+            "/api/admin/roles",
+            json={
+                "name": role_name,
+                "permissions": {"crm:read": "allow"},
+            },
+            headers=h,
+        )
         assert resp2.status_code == 409, f"Expected 409 for duplicate, got {resp2.status_code}"
 
     def test_create_user_module_role_invalid(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/user-module-roles", json={
-            "user_id": "not-a-uuid",
-            "modulo": "crm",
-            "rol_id": str(full["admin"].rol_plataforma_id),
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/user-module-roles",
+            json={
+                "user_id": "not-a-uuid",
+                "modulo": "crm",
+                "rol_id": str(full["admin"].rol_plataforma_id),
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TIER 5 — Settings & Config
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestSettingsConfig:
     def test_get_permissions(self, full):
@@ -267,16 +336,21 @@ class TestSettingsConfig:
 
     def test_set_variable(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/variables", json={
-            "key": f"set_test_{uuid.uuid4().hex[:6]}",
-            "value": "set_value",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/variables",
+            json={
+                "key": f"set_test_{uuid.uuid4().hex[:6]}",
+                "value": "set_value",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TIER 6 — Audit & Comments
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAuditComments:
     def test_list_audit(self, full):
@@ -297,16 +371,21 @@ class TestAuditComments:
 
     def test_create_donation_category(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/donation-categories", json={
-            "name": "Test Category",
-            "description": "Test",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/donation-categories",
+            json={
+                "name": "Test Category",
+                "description": "Test",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TIER 7 — Personas Multi-Tenant Verification
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestPersonasMultiTenant:
     def test_list_personas_filters_by_sede(self, full):
@@ -327,8 +406,8 @@ class TestPersonasMultiTenant:
 # TIER 8 — Full Coverage (remaining endpoints)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestFullCoverage:
 
+class TestFullCoverage:
     def test_delete_role(self, full):
         """DELETE /roles/{role_id} — hard delete permitido en RolPlataforma."""
         from backend.models_auth import RolPlataforma
@@ -391,10 +470,14 @@ class TestFullCoverage:
         db.add(badge)
         db.commit()
 
-        resp = c.post("/api/admin/milestones/award", json={
-            "badge_id": str(badge.id),
-            "persona_id": str(full["admin_persona"].id),
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/milestones/award",
+            json={
+                "badge_id": str(badge.id),
+                "persona_id": str(full["admin_persona"].id),
+            },
+            headers=h,
+        )
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
         data = resp.json()
         assert data.get("status") == "success"
@@ -409,16 +492,24 @@ class TestFullCoverage:
         db.add(badge)
         db.commit()
 
-        resp1 = c.post("/api/admin/milestones/award", json={
-            "badge_id": str(badge.id),
-            "persona_id": str(full["admin_persona"].id),
-        }, headers=h)
+        resp1 = c.post(
+            "/api/admin/milestones/award",
+            json={
+                "badge_id": str(badge.id),
+                "persona_id": str(full["admin_persona"].id),
+            },
+            headers=h,
+        )
         assert resp1.status_code == 200
 
-        resp2 = c.post("/api/admin/milestones/award", json={
-            "badge_id": str(badge.id),
-            "persona_id": str(full["admin_persona"].id),
-        }, headers=h)
+        resp2 = c.post(
+            "/api/admin/milestones/award",
+            json={
+                "badge_id": str(badge.id),
+                "persona_id": str(full["admin_persona"].id),
+            },
+            headers=h,
+        )
         assert resp2.status_code == 409, f"Expected 409 for duplicate, got {resp2.status_code}"
 
     def test_update_automation(self, full):
@@ -430,10 +521,14 @@ class TestFullCoverage:
         db.add(rule)
         db.commit()
 
-        resp = c.patch(f"/api/admin/automations/{rule.id}", json={
-            "is_active": False,
-            "name": "Updated Rule",
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/automations/{rule.id}",
+            json={
+                "is_active": False,
+                "name": "Updated Rule",
+            },
+            headers=h,
+        )
         assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
         data = resp.json()
         assert data.get("name") == "Updated Rule"
@@ -468,9 +563,13 @@ class TestFullCoverage:
         db.add(rol)
         db.commit()
 
-        resp = c.patch(f"/api/admin/roles/{rol.id}", json={
-            "permissions": {"crm:read": "allow", "crm:write": "allow"},
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/roles/{rol.id}",
+            json={
+                "permissions": {"crm:read": "allow", "crm:write": "allow"},
+            },
+            headers=h,
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert "crm:read" in data.get("permisos", {})

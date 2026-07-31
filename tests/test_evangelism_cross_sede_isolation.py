@@ -7,6 +7,7 @@ from sede B across key endpoints: events, notifications, reports, rankings.
 These tests are intentionally separate from the general coverage suite so
 that any cross-sede regression is caught immediately.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -102,9 +103,7 @@ class TestEventsCrossSedeIsolation:
         headers = auth_headers(client)
 
         # Create event in a different sede
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -121,16 +120,12 @@ class TestEventsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
 
-        resp = client.get(
-            f"/api/evangelism/events/{other_data['estrategia'].id}", headers=headers
-        )
+        resp = client.get(f"/api/evangelism/events/{other_data['estrategia'].id}", headers=headers)
         assert resp.status_code == 404
 
     def test_update_event_returns_404_for_other_sede(self, client, db_session):
@@ -138,9 +133,7 @@ class TestEventsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -157,16 +150,12 @@ class TestEventsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
 
-        resp = client.delete(
-            f"/api/evangelism/events/{other_data['estrategia'].id}", headers=headers
-        )
+        resp = client.delete(f"/api/evangelism/events/{other_data['estrategia'].id}", headers=headers)
         assert resp.status_code == 404
 
     def test_event_analytics_returns_404_for_other_sede(self, client, db_session):
@@ -174,9 +163,7 @@ class TestEventsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -192,9 +179,7 @@ class TestEventsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -211,9 +196,7 @@ class TestEventsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -231,17 +214,13 @@ class TestNotificationsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
 
         # Set a session for tomorrow in the OTHER sede
-        tomorrow = (utc_now() + timedelta(days=1)).replace(
-            hour=14, minute=0, second=0, microsecond=0
-        )
+        tomorrow = (utc_now() + timedelta(days=1)).replace(hour=14, minute=0, second=0, microsecond=0)
         other_data["sesion"].fecha_sesion = tomorrow
         other_data["sesion"].estado = "PENDIENTE"
         # Make the other sede's leader a valid user
@@ -261,9 +240,7 @@ class TestNotificationsCrossSedeIsolation:
 
         # Should NOT create a notification for the other sede's leader
         other_notifications = (
-            db_session.query(NotificacionUsuario)
-            .filter(NotificacionUsuario.user_id == other_user.id)
-            .all()
+            db_session.query(NotificacionUsuario).filter(NotificacionUsuario.user_id == other_user.id).all()
         )
         assert len(other_notifications) == 0
 
@@ -276,9 +253,7 @@ class TestReportsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -294,9 +269,7 @@ class TestReportsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -312,9 +285,7 @@ class TestReportsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -334,9 +305,7 @@ class TestRankingsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -352,9 +321,7 @@ class TestRankingsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -374,9 +341,7 @@ class TestAnalyticsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -392,9 +357,7 @@ class TestAnalyticsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -410,9 +373,7 @@ class TestAnalyticsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)
@@ -428,9 +389,7 @@ class TestAnalyticsCrossSedeIsolation:
         admin, admin_persona, sede = seed_admin(db_session)
         headers = auth_headers(client)
 
-        other_sede = models.Sede(
-            id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True
-        )
+        other_sede = models.Sede(id=uuid.uuid4(), nombre="Sede Other", ciudad="Cali", es_activa=True)
         db_session.add(other_sede)
         db_session.flush()
         other_data = _create_other_sede_event(client, db_session, other_sede)

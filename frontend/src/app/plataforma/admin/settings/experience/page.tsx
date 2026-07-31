@@ -191,7 +191,7 @@ export default function WorkspaceExperienceManager() {
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Ajustes', icon: Settings }, { label: 'Experiencia de Usuario', icon: Sparkles }]}
                 viewType={viewType}
                 setViewType={setViewType}
@@ -199,7 +199,7 @@ export default function WorkspaceExperienceManager() {
                 rightActions={
                     <div className="flex items-center gap-2">
                         <button onClick={() => router.back()} className="px-4 py-2 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide hover:text-[hsl(var(--text-primary))]">Cancelar</button>
-                        <button 
+                        <button
                             onClick={handleSave} disabled={isSaving}
                             className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
                         >
@@ -213,7 +213,7 @@ export default function WorkspaceExperienceManager() {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--primary)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
-                    
+
                     {/* Header */}
                     <header className="space-y-4">
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-info-text rounded-lg text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)]">
@@ -247,18 +247,18 @@ export default function WorkspaceExperienceManager() {
                             <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Módulos y Funcionalidades</h3>
                             <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">Selección Global</span>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {FEATURE_CARDS.map((feature) => {
                                 const isEnabled = !!config?.features_enabled?.[feature.id];
                                 return (
-                                    <div 
+                                    <div
                                         key={feature.id}
                                         onClick={() => toggleFeature(feature.id)}
                                         className={clsx(
                                             "p-4 rounded-lg border-2 transition-all cursor-pointer group relative overflow-hidden",
-                                            isEnabled 
-                                                ? "bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-[hsl(var(--info)/100%)] shadow-2xl shadow-[hsl(var(--info)/10%)] scale-[1.02]" 
+                                            isEnabled
+                                                ? "bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-[hsl(var(--info)/100%)] shadow-2xl shadow-[hsl(var(--info)/10%)] scale-[1.02]"
                                                 : "bg-[hsl(var(--surface-1))] dark:bg-black/20 border-transparent grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
                                         )}
                                     >
@@ -283,7 +283,7 @@ export default function WorkspaceExperienceManager() {
                         <div className="flex items-center justify-between px-2">
                             <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Motor Visual y Marca</h3>
                         </div>
-                        
+
                         <div className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl relative overflow-hidden group border border-white/5">
                             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Palette size={120} /></div>
                             <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
@@ -317,4 +317,3 @@ export default function WorkspaceExperienceManager() {
         </div>
     );
 }
-

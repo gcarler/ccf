@@ -14,6 +14,7 @@ Targets:
    scheduled (`asyncio.ensure_future`). We assert the message row exists
    without blocking on the broadcast. — Locks the side-effect contract.
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -94,12 +95,8 @@ class TestChatMessageListingAndCursor:
             json={"content": "format room"},
             headers=headers,
         )
-        row = db_session.query(ChatMessage).filter(
-            ChatMessage.room_id == f"project_{proj.id}"
-        ).first()
-        assert row is not None, (
-            f"No ChatMessage with room_id='project_{proj.id}' was persisted"
-        )
+        row = db_session.query(ChatMessage).filter(ChatMessage.room_id == f"project_{proj.id}").first()
+        assert row is not None, f"No ChatMessage with room_id='project_{proj.id}' was persisted"
 
 
 class TestChatDeletePermissions:
@@ -118,9 +115,7 @@ class TestChatDeletePermissions:
         assert resp.status_code == 200, resp.text
         assert resp.json()["ok"] is True
 
-    def test_delete_third_party_message_returns_403_for_persona_role(
-        self, client, db_session
-    ):
+    def test_delete_third_party_message_returns_403_for_persona_role(self, client, db_session):
         """A LECTOR/PERSONA user cannot delete messages sent by others."""
         _, owner, sede = seed_admin(db_session, email="author@test.com")
         proj = create_project_factory(db_session, owner_id=owner.id)
@@ -146,14 +141,9 @@ class TestChatDeletePermissions:
         )
         # Confirm the message is still present after the rejected delete —
         # no partial authorization.
-        listed = client.get(
-            f"/api/projects/{proj.id}/messages", headers=hdr_owner
-        ).json()
-        assert isinstance(listed, list), (
-            f"GET /messages must return a list (got: {type(listed).__name__}): {listed}"
-        )
-        assert any(m["id"] == str(msg.id) and m.get("deleted_at") in (None, "null", "")
-                   for m in listed), (
+        listed = client.get(f"/api/projects/{proj.id}/messages", headers=hdr_owner).json()
+        assert isinstance(listed, list), f"GET /messages must return a list (got: {type(listed).__name__}): {listed}"
+        assert any(m["id"] == str(msg.id) and m.get("deleted_at") in (None, "null", "") for m in listed), (
             f"Message should still exist after rejected delete: {listed}"
         )
 
@@ -186,9 +176,7 @@ class TestChatDeletePermissions:
         # a fresh DB read here so the auditability assertion sees the
         # post-commit timestamp.
         db_session.expire_all()
-        row = db_session.query(ChatMessage).filter(
-            ChatMessage.id == msg.id
-        ).first()
+        row = db_session.query(ChatMessage).filter(ChatMessage.id == msg.id).first()
         assert row is not None, "Soft delete removes the row (should NOT)"
         assert row.deleted_at is not None, "deleted_at not stamped"
 
@@ -227,9 +215,7 @@ class TestChatPaginationCursor:
         ).json()
         # All messages on second page must have uuid < cursor
         for m in second_page:
-            assert _uuid.UUID(m["id"]) < cursor, (
-                f"Cursor pagination broken: {m}"
-            )
+            assert _uuid.UUID(m["id"]) < cursor, f"Cursor pagination broken: {m}"
 
 
 class TestChatAsynclyBroadcast:
@@ -243,6 +229,7 @@ class TestChatAsynclyBroadcast:
     def test_post_message_returns_immediately(self, client, db_session):
         """POST /messages is non-blocking even if broadcast is slow."""
         import time as _time
+
         _, persona, sede = seed_admin(db_session)
         proj = create_project_factory(db_session, owner_id=persona.id)
         headers = auth_headers(client)
@@ -255,7 +242,5 @@ class TestChatAsynclyBroadcast:
         )
         elapsed = _time.perf_counter() - t0
         # Generous bound — if we see > 2s the broadcast became blocking
-        assert elapsed < 2.0, (
-            f"POST /messages took {elapsed:.2f}s — broadcast is likely blocking the response"
-        )
+        assert elapsed < 2.0, f"POST /messages took {elapsed:.2f}s — broadcast is likely blocking the response"
         assert resp.status_code == 201

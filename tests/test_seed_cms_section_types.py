@@ -40,9 +40,7 @@ class TestSeedCmsSectionTypes:
         names = {row.name for row in rows}
         assert names == CANONICAL_NAMES
         assert all(row.is_active for row in rows)
-        assert all(
-            row.description == CANONICAL_DESCRIPTIONS[row.name] for row in rows
-        )
+        assert all(row.description == CANONICAL_DESCRIPTIONS[row.name] for row in rows)
 
     def test_seed_is_idempotent_on_sequential_runs(self, db_session):
         """Running the seed twice adds 0 and updates 0 on the second pass."""
@@ -58,18 +56,14 @@ class TestSeedCmsSectionTypes:
         """A row deleted manually between runs is re-inserted on the next run."""
         apply_section_types(db_session)
         target = "countdown"
-        deleted = (
-            db_session.query(CmsSectionType).filter_by(name=target).delete()
-        )
+        deleted = db_session.query(CmsSectionType).filter_by(name=target).delete()
         db_session.commit()
         assert deleted == 1
 
         result = apply_section_types(db_session)
         assert result.added == 1
         assert result.updated == 0
-        assert (
-            db_session.query(CmsSectionType).filter_by(name=target).count() == 1
-        )
+        assert db_session.query(CmsSectionType).filter_by(name=target).count() == 1
 
     def test_seed_preserves_admin_deactivation_and_syncs_description(self, db_session):
         """Hardening policy: do NOT touch ``is_active``; DO sync description drift."""
@@ -84,9 +78,7 @@ class TestSeedCmsSectionTypes:
 
         hero = db_session.query(CmsSectionType).filter_by(name="hero").first()
         cards = db_session.query(CmsSectionType).filter_by(name="cards").first()
-        assert hero.is_active is False, (
-            "Admin deactivation must be respected on subsequent seeds"
-        )
+        assert hero.is_active is False, "Admin deactivation must be respected on subsequent seeds"
         assert cards.description == CANONICAL_DESCRIPTIONS["cards"], (
             "Description drift must be synced to canonical list"
         )
@@ -113,19 +105,13 @@ class TestSeedCmsSectionTypes:
         """``main([])`` runs the apply path: returns 0 and inserts the catalog."""
         rc = main([], db=db_session)
         assert rc == 0
-        assert (
-            db_session.query(CmsSectionType).filter_by(name="hero").count() == 1
-        )
-        assert (
-            db_session.query(CmsSectionType).count() == len(EXPECTED_SECTION_TYPES)
-        )
+        assert db_session.query(CmsSectionType).filter_by(name="hero").count() == 1
+        assert db_session.query(CmsSectionType).count() == len(EXPECTED_SECTION_TYPES)
 
     def test_verify_reports_extra_rows_not_in_canonical(self, db_session):
         """Rows in DB that are not in canonical land in ``extra``."""
         apply_section_types(db_session)
-        db_session.add(
-            CmsSectionType(name="old_type", description="orphan", is_active=True)
-        )
+        db_session.add(CmsSectionType(name="old_type", description="orphan", is_active=True))
         db_session.commit()
 
         result = verify_section_types(db_session)

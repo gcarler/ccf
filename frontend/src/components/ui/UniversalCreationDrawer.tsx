@@ -88,7 +88,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
     const [eventEndDate, setEventEndDate] = useState(() => initialData?.initialDate || new Date().toISOString().split('T')[0]);
     const [eventLocation, setEventLocation] = useState('');
     const [projectColor, setProjectColor] = useState('hsl(var(--primary))');
-    
+
     // Interactivity & dropdown states
     const [showProjectDropdown, setShowProjectDropdown] = useState(false);
     const [showSubmitDropdown, setShowSubmitDropdown] = useState(false);
@@ -297,7 +297,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                 toast.info(`Configuración requerida para ${type}`);
                 return;
             }
-            
+
             if (submitOption === 'create_and_new') {
                 setTitle('');
                 setDescription('');
@@ -306,9 +306,9 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
             } else {
                 onClose();
             }
-        } catch (e: any) { 
+        } catch (e: any) {
             console.error(e);
-            toast.error('Error al crear: ' + (e.message || 'Intente de nuevo más tarde')); 
+            toast.error('Error al crear: ' + (e.message || 'Intente de nuevo más tarde'));
         }
         finally { setLoading(false); }
     };
@@ -396,7 +396,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                     {/* Project + type selectors */}
                                     <div className="flex items-center gap-2 px-3 pt-2 pb-2 relative z-[95]">
                                         <div className="relative">
-                                            <button 
+                                            <button
                                                 onClick={(e) => { e.stopPropagation(); setShowProjectDropdown(!showProjectDropdown); }}
                                                 aria-expanded={showProjectDropdown}
                                                 aria-haspopup="listbox"
@@ -464,7 +464,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-4">
-                                                <button 
+                                                <button
                                                     onClick={() => setShowDescription(true)}
                                                     className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
                                                 >
@@ -491,7 +491,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                     {/* Properties bar */}
                                     <div className="flex items-center gap-2 px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex-wrap">
                                         {/* Status */}
-                                        <button 
+                                        <button
                                             onClick={cycleStatus}
                                             title="Clic para cambiar estado"
                                             className={clsx(
@@ -501,10 +501,10 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         >
                                             {status}
                                         </button>
-                                        
+
                                         {/* Assignee */}
                                         {assignedToMe ? (
-                                            <button 
+                                            <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setAssignedToMe(false);
@@ -517,7 +517,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 Asignado a mí
                                             </button>
                                         ) : (
-                                            <button 
+                                            <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setAssignedToMe(true);
@@ -572,7 +572,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
 
                                         {/* Tags */}
                                         <div className="relative">
-                                            <button 
+                                            <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setShowTagsDropdown(!showTagsDropdown);
@@ -588,7 +588,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 {tags.length > 0 ? `Etiquetas: ${tags.join(', ')}` : 'Etiquetas'}
                                             </button>
                                             {showTagsDropdown && (
-                                                <div 
+                                                <div
                                                     onClick={e => e.stopPropagation()}
                                                     className="absolute bottom-full left-0 mb-1 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-lg z-[9999] py-1"
                                                 >
@@ -634,7 +634,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                     <div className="flex items-center gap-2 px-3 pt-3 pb-2 text-sm text-[hsl(var(--text-secondary))] relative z-[95]">
                                         {/* Event Type dropdown */}
                                         <div className="relative">
-                                            <button 
+                                            <button
                                                 onClick={(e) => { e.stopPropagation(); setShowEventTypeDropdown(!showEventTypeDropdown); }}
                                                 aria-expanded={showEventTypeDropdown}
                                                 aria-haspopup="listbox"
@@ -664,7 +664,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
 
                                         {/* Project Selection dropdown */}
                                         <div className="relative">
-                                            <button 
+                                            <button
                                                 onClick={() => setShowProjectDropdown(!showProjectDropdown)}
                                                 aria-expanded={showProjectDropdown}
                                                 aria-haspopup="listbox"
@@ -723,40 +723,40 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                     <div className="px-3 py-3 space-y-2">
                                         <div className="flex items-center gap-3 flex-wrap">
                                             <Calendar size={14} className="text-[hsl(var(--text-secondary))] font-semibold" />
-                                            <input 
+                                            <input
                                                 type="date"
                                                 value={eventDate}
                                                 onChange={e => setEventDate(e.target.value)}
                                                 aria-label="Fecha de inicio"
-                                                className="text-base font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all cursor-pointer" 
+                                                className="text-base font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all cursor-pointer"
                                             />
                                             <span className="text-[hsl(var(--text-secondary))] text-xs font-semibold">hasta</span>
-                                            <input 
+                                            <input
                                                 type="date"
                                                 value={eventEndDate}
                                                 onChange={e => setEventEndDate(e.target.value)}
                                                 aria-label="Fecha de fin"
-                                                className="text-base font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all cursor-pointer" 
+                                                className="text-base font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2.5 py-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all cursor-pointer"
                                             />
                                         </div>
                                         <div className="flex items-center gap-3 pt-2">
                                             <Users size={14} className="text-[hsl(var(--text-secondary))]" />
-                                            <input 
-                                                type="text" 
+                                            <input
+                                                type="text"
                                                 value={eventLocation}
                                                 onChange={e => setEventLocation(e.target.value)}
                                                 aria-label="Invitados"
-                                                placeholder="Añadir invitados (correo o nombre)" 
+                                                placeholder="Añadir invitados (correo o nombre)"
                                                 className="text-sm flex-1 bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 pb-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:border-[hsl(var(--primary))] placeholder:text-[hsl(var(--text-secondary))]"
                                             />
                                         </div>
                                         <div className="flex items-start gap-3 pt-3">
                                             <FileText size={14} className="text-[hsl(var(--text-secondary))] mt-1" />
-                                            <textarea 
+                                            <textarea
                                                 value={description}
                                                 onChange={e => setDescription(e.target.value)}
                                                 aria-label="Descripción del evento"
-                                                placeholder="Añadir descripción o enlace de la reunión" 
+                                                placeholder="Añadir descripción o enlace de la reunión"
                                                 className="text-sm flex-1 min-h-[60px] bg-transparent border border-[hsl(var(--border))] dark:border-white/10 rounded p-2 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:border-[hsl(var(--primary))] placeholder:text-[hsl(var(--text-secondary))] resize-none"
                                             />
                                         </div>
@@ -836,14 +836,14 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                             />
                                         ) : (
                                             <div className="space-y-2">
-                                                <button 
+                                                <button
                                                     onClick={() => setShowDescription(true)}
                                                     className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors w-full text-left"
                                                 >
                                                     <FileText size={13} />
                                                     Empezar a escribir contenido
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={async () => {
                                                         setShowDescription(true);
                                                         await handleAiWrite();
@@ -888,7 +888,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                                 className="w-full min-h-[60px] text-base bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-2.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all resize-none"
                                             />
                                         ) : (
-                                            <button 
+                                            <button
                                                 onClick={() => setShowDescription(true)}
                                                 className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
                                             >
@@ -923,7 +923,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         placeholder="Ponle un nombre a esta pizarra..."
                                         className="px-3 py-1.5 text-lg font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
-                                    
+
                                     {/* Background option styling */}
                                     <div className="px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/5 space-y-2">
                                         <p className="text-xs font-bold text-[hsl(var(--text-secondary))]">Diseño de Pizarra</p>
@@ -959,7 +959,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                                         placeholder="Nombre del panel..."
                                         className="px-3 py-1.5 text-lg font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] bg-transparent outline-none"
                                     />
-                                    
+
                                     {/* Layout style option */}
                                     <div className="px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/5 space-y-2">
                                         <p className="text-xs font-bold text-[hsl(var(--text-secondary))]">Vista predeterminada del Panel</p>
@@ -1042,7 +1042,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
                             {loading ? <Loader2 size={12} className="animate-spin" /> : null}
                             {submitOption === 'create_and_new' ? 'Crear y nuevo' : 'Crear'}
                         </button>
-                        <button 
+                        <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setShowSubmitDropdown(!showSubmitDropdown);

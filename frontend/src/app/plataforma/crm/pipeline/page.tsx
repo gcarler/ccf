@@ -38,11 +38,11 @@ import clsx from 'clsx';
 import PipelineFiltersSidebar from '@/components/crm/PipelineFiltersSidebar';
 import PipelineLeadSidebar from '@/components/crm/PipelineLeadSidebar';
 
-import { 
-    PIPELINE_STAGES, 
-    STAGE_LABEL, 
-    SOURCES, 
-    STAGE_PROGRESS 
+import {
+    PIPELINE_STAGES,
+    STAGE_LABEL,
+    SOURCES,
+    STAGE_PROGRESS
 } from './constants';
 import { PipelineKanbanBoard } from '@/components/crm/PipelineKanbanBoard';
 
@@ -212,8 +212,8 @@ export default function ConsolidationPipelinePage() {
     };
 
     const handleUpdateStage = useCallback(async (
-        leadId: string, 
-        newStage: string, 
+        leadId: string,
+        newStage: string,
         targetStageId?: string,
         reorderPayload?: { id: string, sort_order: number, etapa_actual_id: string }[]
     ) => {
@@ -382,7 +382,7 @@ export default function ConsolidationPipelinePage() {
             title: selectedLead.nombre_completo || '',
             onBack: () => setSelectedLead(null),
             content: (
-                <PipelineLeadSidebar 
+                <PipelineLeadSidebar
                     lead={selectedLead}
                     stages={stageTargets}
                     onUpdateStage={(leadId, newStage, targetStageId) => {
@@ -397,12 +397,12 @@ export default function ConsolidationPipelinePage() {
 
     // ── Push filters panel when no lead is selected (Level 3) ─────────────────
     useEffect(() => {
-        if (selectedLead) return; 
+        if (selectedLead) return;
         pushSidebarPanel({
             id: 'pipeline-filters',
             title: 'Pipeline de Consolidación',
             content: (
-                <PipelineFiltersSidebar 
+                <PipelineFiltersSidebar
                     stats={stats}
                     search={search}
                     onSearchChange={setSearch}

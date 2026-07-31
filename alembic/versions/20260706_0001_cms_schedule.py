@@ -36,7 +36,6 @@ from __future__ import annotations
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
@@ -60,17 +59,13 @@ def _has_table(table: str) -> bool:
 def _has_column(table: str, column: str) -> bool:
     if not _has_table(table):
         return False
-    return any(
-        col.get("name") == column for col in _inspector().get_columns(table)
-    )
+    return any(col.get("name") == column for col in _inspector().get_columns(table))
 
 
 def _has_index(table: str, index_name: str) -> bool:
     if not _has_table(table):
         return False
-    return any(
-        idx.get("name") == index_name for idx in _inspector().get_indexes(table)
-    )
+    return any(idx.get("name") == index_name for idx in _inspector().get_indexes(table))
 
 
 def _timestamptz():
@@ -91,9 +86,7 @@ def _add_scheduling_columns(table: str, columns: tuple[str, ...]) -> None:
     for column in columns:
         if not _has_column(table, column):
             with op.batch_alter_table(table) as batch_op:
-                batch_op.add_column(
-                    sa.Column(column, _timestamptz(), nullable=True)
-                )
+                batch_op.add_column(sa.Column(column, _timestamptz(), nullable=True))
 
         idx_name = f"ix_{table}_{column}"
         if not _has_index(table, idx_name):

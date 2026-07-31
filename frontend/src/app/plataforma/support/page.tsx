@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    LifeBuoy, 
-    Mail, 
+    LifeBuoy,
+    Mail,
     Loader2,
     Send,
-    MessageSquare, 
+    MessageSquare,
     FileText,
     Book,
-    Layout, 
+    Layout,
     CheckCircle,
     Clock,
     AlertCircle,
@@ -43,7 +43,7 @@ export default function SupportPage() {
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(true);
-    
+
     // New ticket form state
     const [newTicket, setNewTicket] = useState({ subject: '', description: '', category: 'General' });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,7 +99,7 @@ export default function SupportPage() {
     };
 
     const filteredTickets = useMemo(() => {
-        return tickets.filter(t => 
+        return tickets.filter(t =>
             t.subject.toLowerCase().includes(search.toLowerCase()) ||
             t.description.toLowerCase().includes(search.toLowerCase())
         );
@@ -152,7 +152,7 @@ export default function SupportPage() {
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in">
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'CCF', icon: Layout },
                     { label: 'Soporte y Ayuda', icon: LifeBuoy }
@@ -170,10 +170,10 @@ export default function SupportPage() {
                         data={filteredTickets}
                         columns={[
                             { key: 'id', label: 'ID', type: 'id', width: '80px' },
-                            { 
-                                key: 'subject', 
-                                label: 'Asunto / Descripción', 
-                                type: 'text', 
+                            {
+                                key: 'subject',
+                                label: 'Asunto / Descripción',
+                                type: 'text',
                                 width: '400px',
                                 render: (val, ticket) => (
                                     <div className="flex flex-col pr-4">
@@ -182,10 +182,10 @@ export default function SupportPage() {
                                     </div>
                                 )
                             },
-                            { 
-                                key: 'category', 
-                                label: 'Categoría', 
-                                type: 'text', 
+                            {
+                                key: 'category',
+                                label: 'Categoría',
+                                type: 'text',
                                 width: '150px',
                                 render: (val: any) => (
                                     <span className="text-xs font-bold text-[hsl(var(--text-secondary))] flex items-center gap-2">
@@ -262,7 +262,7 @@ export default function SupportPage() {
                             <div className="relative z-10">
                                 <h2 className="text-xl font-bold mb-4">¿Cómo podemos ayudarte?</h2>
                                 <p className="text-[hsl(var(--info))] font-medium text-lg mb-3 max-w-xl">Nuestro equipo pastoral y técnico está listo para apoyarte en lo que necesites.</p>
-                                <button 
+                                <button
                                     onClick={() => setIsCreateDrawerOpen(true)}
                                     className="px-4 py-1.5 bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] rounded-lg font-black text-sm uppercase tracking-wide shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
                                 >
@@ -311,8 +311,8 @@ export default function SupportPage() {
                 )}
             </main>
 
-            <WorkspaceDrawer 
-                isOpen={isDrawerOpen} 
+            <WorkspaceDrawer
+                isOpen={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 title={selectedTicket?.subject || 'Detalles del Ticket'}
                 subtitle={`${selectedTicket?.category || 'Soporte'} • #${selectedTicket?.id}`}

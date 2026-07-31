@@ -1,6 +1,7 @@
 """
 Tests for system.py — mounted at /api/system.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -23,11 +24,15 @@ def full(client, db_session):
 class TestSystem:
     def test_search(self, full):
         assert _ok(full["c"].get("/api/system/search?q=test", headers=full["h"]).status_code)
+
     def test_calendar_todo(self, full):
         assert _ok(full["c"].get("/api/system/calendar?view=todo", headers=full["h"]).status_code)
+
     def test_calendar_crm(self, full):
         assert _ok(full["c"].get("/api/system/calendar?view=crm", headers=full["h"]).status_code)
+
     def test_health(self, full):
         assert _ok(full["c"].get("/api/system/health", headers=full["h"]).status_code)
+
     def test_health_modules(self, full):
         assert _ok(full["c"].get("/api/system/health/modules", headers=full["h"]).status_code)

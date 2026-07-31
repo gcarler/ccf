@@ -24,15 +24,11 @@ _HEALTH_CACHE_TTL_SECONDS = 300
 
 # Bandera de contexto para evitar que los eventos de invalidación borren el
 # caché mientras el propio módulo de salud está escribiendo resultados.
-_health_update_ctx: contextvars.ContextVar[bool] = contextvars.ContextVar(
-    "_health_update_ctx", default=False
-)
+_health_update_ctx: contextvars.ContextVar[bool] = contextvars.ContextVar("_health_update_ctx", default=False)
 
 # Bandera de contexto para evitar re-entrada infinita cuando los listeners de
 # invalidación bulk ejecutan sus propios SELECTs.
-_bulk_invalidation_ctx: contextvars.ContextVar[bool] = contextvars.ContextVar(
-    "_bulk_invalidation_ctx", default=False
-)
+_bulk_invalidation_ctx: contextvars.ContextVar[bool] = contextvars.ContextVar("_bulk_invalidation_ctx", default=False)
 
 # Guarda para evitar registrar los listeners más de una vez si el módulo se
 # importa múltiples veces (por ejemplo, recargas en desarrollo o tests).
@@ -57,7 +53,9 @@ def _normalize_persona_id(persona_id: UUID | str) -> UUID:
         # SQLite puede devolver UUIDs como strings; aceptamos tanto el formato
         # canónico con guiones como el formato hex sin guiones.
         if len(persona_id) == 32:
-            persona_id = f"{persona_id[:8]}-{persona_id[8:12]}-{persona_id[12:16]}-{persona_id[16:20]}-{persona_id[20:]}"
+            persona_id = (
+                f"{persona_id[:8]}-{persona_id[8:12]}-{persona_id[12:16]}-{persona_id[16:20]}-{persona_id[20:]}"
+            )
         return UUID(persona_id)
     return persona_id
 
@@ -105,9 +103,7 @@ def _load_persona_for_health(db: Session, persona_id: UUID):
     return db.get(models.Persona, persona_id)
 
 
-def _compute_pastoral_health_score(
-    db: Session, persona: models.Persona
-) -> tuple[int, str, bool]:
+def _compute_pastoral_health_score(db: Session, persona: models.Persona) -> tuple[int, str, bool]:
     """Calcula el score y status pastoral sin mutar la base de datos.
 
     Devuelve ``(score, status, update_baptized)``. ``update_baptized`` indica
@@ -123,9 +119,12 @@ def _compute_pastoral_health_score(
             func.coalesce(
                 func.sum(
                     case(
-                        (func.lower(func.trim(models.Asistencia.estado)).in_(
-                            {"asistio", "presente", "present", "primera_vez", "first_time"}
-                        ), 1),
+                        (
+                            func.lower(func.trim(models.Asistencia.estado)).in_(
+                                {"asistio", "presente", "present", "primera_vez", "first_time"}
+                            ),
+                            1,
+                        ),
                         else_=0,
                     )
                 ),
@@ -181,10 +180,7 @@ def _compute_pastoral_health_score(
 
     # Communication logs: aggregate count and keyword-matched count in DB.
     comm_log_keywords = ["attend", "asist", "session", "class", "culto", "grupo"]
-    keyword_filters = [
-        models.CommunicationLog.content.ilike(f"%{keyword}%")
-        for keyword in comm_log_keywords
-    ]
+    keyword_filters = [models.CommunicationLog.content.ilike(f"%{keyword}%") for keyword in comm_log_keywords]
     comm_log_attend_count, comm_logs_count = (
         db.query(
             func.coalesce(func.sum(case((or_(*keyword_filters), 1), else_=0)), 0),
@@ -344,11 +340,7 @@ def _persist_pastoral_health(
         update_values["is_baptized"] = True
 
     if update_values:
-        db.execute(
-            update(models.Persona)
-            .where(models.Persona.id == persona_id)
-            .values(**update_values)
-        )
+        db.execute(update(models.Persona).where(models.Persona.id == persona_id).values(**update_values))
 
 
 def recalculate_and_persist_pastoral_health(db: Session, persona_id: UUID) -> tuple[int, str]:
@@ -416,6 +408,7 @@ def update_pastoral_health(db: Session, persona_id: UUID) -> models.Persona | No
 # ═══════════════════════════════════════════════════════════════════
 # Invalidación del caché vía eventos SQLAlchemy
 # ═══════════════════════════════════════════════════════════════════
+
 
 def _persona_id_from_course_attendance(target) -> UUID | None:
     enrollment_id = getattr(target, "enrollment_id", None)
@@ -537,9 +530,7 @@ _BULK_INVALIDATION_TABLES: dict = {
 }
 
 
-def _affected_persona_ids_for_bulk(
-    session: Session, statement, parameters: dict | None = None
-) -> list[UUID]:
+def _affected_persona_ids_for_bulk(session: Session, statement, parameters: dict | None = None) -> list[UUID]:
     """Devuelve las persona_id afectadas por un UPDATE/DELETE bulk.
 
     Para modelos con ``persona_id`` directa se reutiliza la cláusula WHERE del
@@ -617,10 +608,7 @@ def _handle_bulk_orm_execute(orm_execute_state):
         return
     if getattr(orm_execute_state, "is_select", False):
         return
-    if not (
-        getattr(orm_execute_state, "is_update", False)
-        or getattr(orm_execute_state, "is_delete", False)
-    ):
+    if not (getattr(orm_execute_state, "is_update", False) or getattr(orm_execute_state, "is_delete", False)):
         return
 
     statement = getattr(orm_execute_state, "statement", None)

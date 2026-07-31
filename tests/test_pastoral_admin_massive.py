@@ -1,4 +1,5 @@
 """Massive tests for pastoral.py + admin.py endpoints — biggest coverage gaps."""
+
 import uuid
 
 import pytest
@@ -22,6 +23,7 @@ def client_auth(client, db_session, admin_data):
 # PASTORAL ENDPOINTS (pastoral.py) — 827 stmts, 639 missed
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestPastoralCases:
     def test_list_cases(self, client_auth):
         client, headers, _ = client_auth
@@ -30,11 +32,15 @@ class TestPastoralCases:
 
     def test_create_case(self, client_auth):
         client, headers, (_, persona, sede) = client_auth
-        resp = client.post("/api/crm/casos", json={
-            "persona_id": str(persona.id),
-            "titulo": f"Case {uuid.uuid4().hex[:6]}",
-            "sede_id": str(sede.id),
-        }, headers=headers)
+        resp = client.post(
+            "/api/crm/casos",
+            json={
+                "persona_id": str(persona.id),
+                "titulo": f"Case {uuid.uuid4().hex[:6]}",
+                "sede_id": str(sede.id),
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_get_case_404(self, client_auth):
@@ -49,10 +55,14 @@ class TestPastoralCases:
 
     def test_create_task(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/crm/tasks", json={
-            "titulo": f"Task {uuid.uuid4().hex[:6]}",
-            "description": "Test task",
-        }, headers=headers)
+        resp = client.post(
+            "/api/crm/tasks",
+            json={
+                "titulo": f"Task {uuid.uuid4().hex[:6]}",
+                "description": "Test task",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 405, 422)
 
     def test_list_counseling(self, client_auth):
@@ -82,9 +92,13 @@ class TestPastoralCases:
 
     def test_create_role(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/crm/roles", json={
-            "nombre": f"Role {uuid.uuid4().hex[:6]}",
-        }, headers=headers)
+        resp = client.post(
+            "/api/crm/roles",
+            json={
+                "nombre": f"Role {uuid.uuid4().hex[:6]}",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_crm_analytics(self, client_auth):
@@ -127,6 +141,7 @@ class TestPastoralCases:
 # ADMIN ENDPOINTS (admin.py) — 607 stmts, 508 missed
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestAdminRolesFull:
     def test_list_roles(self, client_auth):
         client, headers, _ = client_auth
@@ -162,11 +177,15 @@ class TestAdminUsersFull:
 
     def test_create_user(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/users", json={
-            "email": f"new_{uuid.uuid4().hex[:6]}@test.com",
-            "password": "testpass123",
-            "username": f"user_{uuid.uuid4().hex[:6]}",
-        }, headers=headers)
+        resp = client.post(
+            "/api/admin/users",
+            json={
+                "email": f"new_{uuid.uuid4().hex[:6]}@test.com",
+                "password": "testpass123",
+                "username": f"user_{uuid.uuid4().hex[:6]}",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_get_user(self, client_auth, db_session):
@@ -243,55 +262,80 @@ class TestAdminOtherFull:
 
     def test_create_location(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/locations", json={
-            "nombre": f"Location {uuid.uuid4().hex[:6]}",
-        }, headers=headers)
+        resp = client.post(
+            "/api/admin/locations",
+            json={
+                "nombre": f"Location {uuid.uuid4().hex[:6]}",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_set_variable(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/variables", json={
-            "key": f"var_{uuid.uuid4().hex[:6]}",
-            "value": "test",
-        }, headers=headers)
+        resp = client.post(
+            "/api/admin/variables",
+            json={
+                "key": f"var_{uuid.uuid4().hex[:6]}",
+                "value": "test",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_create_automation(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/automations", json={
-            "name": f"Auto {uuid.uuid4().hex[:6]}",
-            "trigger_type": "manual",
-            "action_type": "notification",
-        }, headers=headers)
+        resp = client.post(
+            "/api/admin/automations",
+            json={
+                "name": f"Auto {uuid.uuid4().hex[:6]}",
+                "trigger_type": "manual",
+                "action_type": "notification",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_create_donation_category(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/donation-categories", json={
-            "nombre": f"Cat {uuid.uuid4().hex[:6]}",
-        }, headers=headers)
+        resp = client.post(
+            "/api/admin/donation-categories",
+            json={
+                "nombre": f"Cat {uuid.uuid4().hex[:6]}",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
     def test_create_testimonial(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/testimonials", json={
-            "author_name": "Test Author",
-            "content": "Great church!",
-        }, headers=headers)
+        resp = client.post(
+            "/api/admin/testimonials",
+            json={
+                "author_name": "Test Author",
+                "content": "Great church!",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 405, 422)
 
     def test_create_announcement(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/admin/announcements", json={
-            "title": f"Announce {uuid.uuid4().hex[:6]}",
-            "content": "Test",
-        }, headers=headers)
+        resp = client.post(
+            "/api/admin/announcements",
+            json={
+                "title": f"Announce {uuid.uuid4().hex[:6]}",
+                "content": "Test",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 405, 422)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # AUTH V3 ENDPOINTS — more coverage
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAuthV3More:
     def test_login(self, client, db_session):
@@ -313,13 +357,16 @@ class TestAuthV3More:
         assert resp.status_code == 401
 
     def test_register(self, client):
-        resp = client.post("/api/v3/auth/register", json={
-            "email": f"reg_{uuid.uuid4().hex[:6]}@test.com",
-            "password": "testpass123",
-            "username": f"reg_{uuid.uuid4().hex[:6]}",
-            "first_name": "Test",
-            "last_name": "User",
-        })
+        resp = client.post(
+            "/api/v3/auth/register",
+            json={
+                "email": f"reg_{uuid.uuid4().hex[:6]}@test.com",
+                "password": "testpass123",
+                "username": f"reg_{uuid.uuid4().hex[:6]}",
+                "first_name": "Test",
+                "last_name": "User",
+            },
+        )
         assert resp.status_code in (200, 201, 400, 404, 422)
 
     def test_forgot_password(self, client):
@@ -328,16 +375,21 @@ class TestAuthV3More:
 
     def test_change_password(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/v3/auth/change-password", json={
-            "old_password": "testpass123",
-            "new_password": "newpass123",
-        }, headers=headers)
+        resp = client.post(
+            "/api/v3/auth/change-password",
+            json={
+                "old_password": "testpass123",
+                "new_password": "newpass123",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 400, 401, 422)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MORE EVANGELISM ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestEvangelismMoreEndpoints:
     def test_list_estrategias(self, client_auth):
@@ -380,6 +432,7 @@ class TestEvangelismMoreEndpoints:
 # MORE PROJECTS ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestProjectsMoreEndpoints:
     def test_list_projects(self, client_auth):
         client, headers, _ = client_auth
@@ -408,16 +461,21 @@ class TestProjectsMoreEndpoints:
 
     def test_create_project(self, client_auth):
         client, headers, _ = client_auth
-        resp = client.post("/api/projects", json={
-            "title": f"Project {uuid.uuid4().hex[:6]}",
-            "description": "Test",
-        }, headers=headers)
+        resp = client.post(
+            "/api/projects",
+            json={
+                "title": f"Project {uuid.uuid4().hex[:6]}",
+                "description": "Test",
+            },
+            headers=headers,
+        )
         assert resp.status_code in (200, 201, 400, 422)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MORE CMS V2 ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCMSV2MoreEndpoints:
     def test_list_sites(self, client_auth):
@@ -454,6 +512,7 @@ class TestCMSV2MoreEndpoints:
 # ═══════════════════════════════════════════════════════════════════════════════
 # MORE ENTERPRISE CMS ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestEnterpriseCMSMore:
     def test_list_permissions(self, client_auth):
@@ -495,6 +554,7 @@ class TestEnterpriseCMSMore:
 # ═══════════════════════════════════════════════════════════════════════════════
 # MORE AGENTS ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAgentsMoreEndpoints:
     def test_agents_root(self, client_auth):
@@ -542,6 +602,7 @@ class TestAgentsMoreEndpoints:
 # WORKSPACE ENDPOINTS — more coverage
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestWorkspaceMoreEndpoints:
     def test_config(self, client_auth):
         client, headers, _ = client_auth
@@ -587,6 +648,7 @@ class TestWorkspaceMoreEndpoints:
 # ═══════════════════════════════════════════════════════════════════════════════
 # SYSTEM ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestSystemMore:
     def test_health(self, client):

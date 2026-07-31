@@ -12,7 +12,6 @@ This package re-exports only symbols consumed via ``from backend import crud``
 from backend.crud import (
     admin,  # noqa: F401
     agenda,  # noqa: F401
-
     kernel,  # noqa: F401
 )
 from backend.crud.crm_ import extended as crm_extended  # noqa: F401
@@ -125,7 +124,6 @@ from backend.crud.cms import (
     record_cms_ab_test_event,
     update_cms_ab_test,
     update_cms_form,
-
     update_cms_post,
     find_pages_due_for_archive,
     find_pages_due_for_publish,

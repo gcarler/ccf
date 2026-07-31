@@ -47,10 +47,14 @@ class TestRolesCRUD:
 
     def test_create_role(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/roles", json={
-            "name": f"TestRole_{uuid.uuid4().hex[:6]}",
-            "permissions": {"crm:read": "allow"},
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/roles",
+            json={
+                "name": f"TestRole_{uuid.uuid4().hex[:6]}",
+                "permissions": {"crm:read": "allow"},
+            },
+            headers=h,
+        )
         assert resp.status_code == 201
         data = resp.json()
         assert "id" in data
@@ -70,14 +74,22 @@ class TestRolesCRUD:
 
     def test_update_role(self, full):
         c, h = full["c"], full["h"]
-        create_resp = c.post("/api/admin/roles", json={
-            "name": f"UpdRole_{uuid.uuid4().hex[:6]}",
-            "permissions": {"crm:read": "allow"},
-        }, headers=h)
+        create_resp = c.post(
+            "/api/admin/roles",
+            json={
+                "name": f"UpdRole_{uuid.uuid4().hex[:6]}",
+                "permissions": {"crm:read": "allow"},
+            },
+            headers=h,
+        )
         role_id = create_resp.json()["id"]
-        resp = c.patch(f"/api/admin/roles/{role_id}", json={
-            "permissions": {"crm:read": "allow", "crm:write": "allow"},
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/roles/{role_id}",
+            json={
+                "permissions": {"crm:read": "allow", "crm:write": "allow"},
+            },
+            headers=h,
+        )
         assert resp.status_code == 200
 
     def test_update_role_not_found(self, full):
@@ -89,16 +101,21 @@ class TestRolesCRUD:
     def test_delete_role(self, full):
         c, h, db = full["c"], full["h"], full["_db"]
         name = f"DelRole_{uuid.uuid4().hex[:6]}"
-        create_resp = c.post("/api/admin/roles", json={
-            "name": name,
-            "permissions": {},
-        }, headers=h)
+        create_resp = c.post(
+            "/api/admin/roles",
+            json={
+                "name": name,
+                "permissions": {},
+            },
+            headers=h,
+        )
         role_id = create_resp.json()["id"]
         resp = c.delete(f"/api/admin/roles/{role_id}", headers=h)
         assert resp.status_code == 204
 
         # Soft-delete: row still exists in DB but is excluded from list/get.
         from backend.models_auth import RolPlataforma
+
         role = db.query(RolPlataforma).filter(RolPlataforma.id == role_id).first()
         assert role is not None
         assert role.deleted_at is not None
@@ -106,10 +123,14 @@ class TestRolesCRUD:
         assert all(r["id"] != str(role_id) for r in list_resp.json()["items"])
 
         # Re-creating a previously deleted role with the same name should succeed.
-        recreate_resp = c.post("/api/admin/roles", json={
-            "name": name,
-            "permissions": {},
-        }, headers=h)
+        recreate_resp = c.post(
+            "/api/admin/roles",
+            json={
+                "name": name,
+                "permissions": {},
+            },
+            headers=h,
+        )
         assert recreate_resp.status_code == 201
 
     def test_delete_role_not_found(self, full):
@@ -119,10 +140,14 @@ class TestRolesCRUD:
 
     def test_create_role_list_permissions(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/roles", json={
-            "name": f"ListPerms_{uuid.uuid4().hex[:6]}",
-            "permissions": ["crm:read", "crm:write"],
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/roles",
+            json={
+                "name": f"ListPerms_{uuid.uuid4().hex[:6]}",
+                "permissions": ["crm:read", "crm:write"],
+            },
+            headers=h,
+        )
         assert resp.status_code == 201
 
 
@@ -173,40 +198,56 @@ class TestUserManagement:
 
     def test_create_user(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/users", json={
-            "username": f"newuser_{uuid.uuid4().hex[:6]}",
-            "email": f"new_{uuid.uuid4().hex[:6]}@test.com",
-            "password": "TestPass123!",
-            "first_name": "New",
-            "last_name": "User",
-            "role": "MIEMBRO",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/users",
+            json={
+                "username": f"newuser_{uuid.uuid4().hex[:6]}",
+                "email": f"new_{uuid.uuid4().hex[:6]}@test.com",
+                "password": "TestPass123!",
+                "first_name": "New",
+                "last_name": "User",
+                "role": "MIEMBRO",
+            },
+            headers=h,
+        )
         assert resp.status_code == 201
 
     def test_create_user_duplicate(self, full):
         c, h, admin = full["c"], full["h"], full["admin"]
-        resp = c.post("/api/admin/users", json={
-            "username": admin.username,
-            "email": f"dup_{uuid.uuid4().hex[:6]}@test.com",
-            "password": "TestPass123!",
-            "first_name": "Dup",
-            "last_name": "User",
-            "role": "MIEMBRO",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/users",
+            json={
+                "username": admin.username,
+                "email": f"dup_{uuid.uuid4().hex[:6]}@test.com",
+                "password": "TestPass123!",
+                "first_name": "Dup",
+                "last_name": "User",
+                "role": "MIEMBRO",
+            },
+            headers=h,
+        )
         assert resp.status_code == 409
 
     def test_update_user(self, full):
         c, h = full["c"], full["h"]
-        resp = c.patch(f"/api/admin/users/{full['admin'].id}", json={
-            "first_name": "Updated",
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/users/{full['admin'].id}",
+            json={
+                "first_name": "Updated",
+            },
+            headers=h,
+        )
         assert resp.status_code == 200
 
     def test_update_user_not_found(self, full):
         c, h = full["c"], full["h"]
-        resp = c.patch(f"/api/admin/users/{uuid.uuid4()}", json={
-            "first_name": "Ghost",
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/users/{uuid.uuid4()}",
+            json={
+                "first_name": "Ghost",
+            },
+            headers=h,
+        )
         assert resp.status_code == 404
 
     def test_delete_user(self, full):
@@ -306,11 +347,15 @@ class TestLocations:
 
     def test_create_location(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/locations", json={
-            "name": "Test Location",
-            "address": "Test Address",
-            "phone": "123456",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/locations",
+            json={
+                "name": "Test Location",
+                "address": "Test Address",
+                "phone": "123456",
+            },
+            headers=h,
+        )
         assert resp.status_code == 201
 
     def test_create_location_empty_name(self, full):
@@ -320,32 +365,49 @@ class TestLocations:
 
     def test_update_location(self, full):
         c, h = full["c"], full["h"]
-        create_resp = c.post("/api/admin/locations", json={
-            "name": f"Loc_{uuid.uuid4().hex[:6]}",
-        }, headers=h)
+        create_resp = c.post(
+            "/api/admin/locations",
+            json={
+                "name": f"Loc_{uuid.uuid4().hex[:6]}",
+            },
+            headers=h,
+        )
         loc_id = create_resp.json()["id"]
-        resp = c.patch(f"/api/admin/locations/{loc_id}", json={
-            "name": "Updated Location",
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/locations/{loc_id}",
+            json={
+                "name": "Updated Location",
+            },
+            headers=h,
+        )
         assert resp.status_code == 200
 
     def test_update_location_not_found(self, full):
         c, h = full["c"], full["h"]
-        resp = c.patch(f"/api/admin/locations/{uuid.uuid4()}", json={
-            "name": "Ghost",
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/locations/{uuid.uuid4()}",
+            json={
+                "name": "Ghost",
+            },
+            headers=h,
+        )
         assert resp.status_code == 404
 
     def test_delete_location(self, full):
         c, h, db = full["c"], full["h"], full["_db"]
-        create_resp = c.post("/api/admin/locations", json={
-            "name": f"DelLoc_{uuid.uuid4().hex[:6]}",
-        }, headers=h)
+        create_resp = c.post(
+            "/api/admin/locations",
+            json={
+                "name": f"DelLoc_{uuid.uuid4().hex[:6]}",
+            },
+            headers=h,
+        )
         loc_id = create_resp.json()["id"]
         resp = c.delete(f"/api/admin/locations/{loc_id}", headers=h)
         assert resp.status_code == 204
 
         from backend.models_ops import ChurchLocation
+
         loc = db.query(ChurchLocation).filter(ChurchLocation.id == loc_id).first()
         assert loc is not None
         assert loc.deleted_at is not None
@@ -369,42 +431,63 @@ class TestSocials:
 
     def test_create_social(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/socials", json={
-            "platform": "Facebook",
-            "url": "https://facebook.com/test",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/socials",
+            json={
+                "platform": "Facebook",
+                "url": "https://facebook.com/test",
+            },
+            headers=h,
+        )
         assert resp.status_code == 201
 
     def test_update_social(self, full):
         c, h = full["c"], full["h"]
-        create_resp = c.post("/api/admin/socials", json={
-            "platform": "Instagram",
-            "url": f"https://instagram.com/{uuid.uuid4().hex[:6]}",
-        }, headers=h)
+        create_resp = c.post(
+            "/api/admin/socials",
+            json={
+                "platform": "Instagram",
+                "url": f"https://instagram.com/{uuid.uuid4().hex[:6]}",
+            },
+            headers=h,
+        )
         soc_id = create_resp.json()["id"]
-        resp = c.patch(f"/api/admin/socials/{soc_id}", json={
-            "url": "https://instagram.com/updated",
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/socials/{soc_id}",
+            json={
+                "url": "https://instagram.com/updated",
+            },
+            headers=h,
+        )
         assert resp.status_code == 200
 
     def test_update_social_not_found(self, full):
         c, h = full["c"], full["h"]
-        resp = c.patch(f"/api/admin/socials/{uuid.uuid4()}", json={
-            "url": "https://ghost.com",
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/socials/{uuid.uuid4()}",
+            json={
+                "url": "https://ghost.com",
+            },
+            headers=h,
+        )
         assert resp.status_code == 404
 
     def test_delete_social(self, full):
         c, h, db = full["c"], full["h"], full["_db"]
-        create_resp = c.post("/api/admin/socials", json={
-            "platform": "Twitter",
-            "url": f"https://twitter.com/{uuid.uuid4().hex[:6]}",
-        }, headers=h)
+        create_resp = c.post(
+            "/api/admin/socials",
+            json={
+                "platform": "Twitter",
+                "url": f"https://twitter.com/{uuid.uuid4().hex[:6]}",
+            },
+            headers=h,
+        )
         soc_id = create_resp.json()["id"]
         resp = c.delete(f"/api/admin/socials/{soc_id}", headers=h)
         assert resp.status_code == 204
 
         from backend.models_ops import SocialChannel
+
         ch = db.query(SocialChannel).filter(SocialChannel.id == soc_id).first()
         assert ch is not None
         assert ch.deleted_at is not None
@@ -428,10 +511,14 @@ class TestVariables:
 
     def test_set_variable(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/variables", json={
-            "key": f"var_{uuid.uuid4().hex[:6]}",
-            "value": "test_value",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/variables",
+            json={
+                "key": f"var_{uuid.uuid4().hex[:6]}",
+                "value": "test_value",
+            },
+            headers=h,
+        )
         assert resp.status_code == 200
 
     def test_delete_variable(self, full):
@@ -440,11 +527,8 @@ class TestVariables:
         c.post("/api/admin/variables", json={"key": key, "value": "x"}, headers=h)
 
         from backend.models_ops import SystemVariable
-        var_id = (
-            db.query(SystemVariable.id)
-            .filter(SystemVariable.key == key)
-            .scalar()
-        )
+
+        var_id = db.query(SystemVariable.id).filter(SystemVariable.key == key).scalar()
 
         resp = c.delete(f"/api/admin/variables/{key}", headers=h)
         assert resp.status_code == 204
@@ -538,10 +622,14 @@ class TestMilestones:
 
     def test_award_milestone_not_found(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/milestones/award", json={
-            "persona_id": str(uuid.uuid4()),
-            "badge_id": str(uuid.uuid4()),
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/milestones/award",
+            json={
+                "persona_id": str(uuid.uuid4()),
+                "badge_id": str(uuid.uuid4()),
+            },
+            headers=h,
+        )
         assert resp.status_code == 404
 
 
@@ -558,10 +646,14 @@ class TestDonationCategories:
 
     def test_create_donation_category(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/donation-categories", json={
-            "name": f"Cat_{uuid.uuid4().hex[:6]}",
-            "description": "Test category",
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/donation-categories",
+            json={
+                "name": f"Cat_{uuid.uuid4().hex[:6]}",
+                "description": "Test category",
+            },
+            headers=h,
+        )
         assert resp.status_code == 201
 
     def test_create_donation_category_empty_name(self, full):
@@ -571,32 +663,49 @@ class TestDonationCategories:
 
     def test_update_donation_category(self, full):
         c, h = full["c"], full["h"]
-        create_resp = c.post("/api/admin/donation-categories", json={
-            "name": f"UpdCat_{uuid.uuid4().hex[:6]}",
-        }, headers=h)
+        create_resp = c.post(
+            "/api/admin/donation-categories",
+            json={
+                "name": f"UpdCat_{uuid.uuid4().hex[:6]}",
+            },
+            headers=h,
+        )
         cat_id = create_resp.json()["id"]
-        resp = c.patch(f"/api/admin/donation-categories/{cat_id}", json={
-            "name": "Updated Category",
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/donation-categories/{cat_id}",
+            json={
+                "name": "Updated Category",
+            },
+            headers=h,
+        )
         assert resp.status_code == 200
 
     def test_update_donation_category_not_found(self, full):
         c, h = full["c"], full["h"]
-        resp = c.patch(f"/api/admin/donation-categories/{uuid.uuid4()}", json={
-            "name": "Ghost",
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/donation-categories/{uuid.uuid4()}",
+            json={
+                "name": "Ghost",
+            },
+            headers=h,
+        )
         assert resp.status_code == 404
 
     def test_delete_donation_category(self, full):
         c, h, db = full["c"], full["h"], full["_db"]
-        create_resp = c.post("/api/admin/donation-categories", json={
-            "name": f"DelCat_{uuid.uuid4().hex[:6]}",
-        }, headers=h)
+        create_resp = c.post(
+            "/api/admin/donation-categories",
+            json={
+                "name": f"DelCat_{uuid.uuid4().hex[:6]}",
+            },
+            headers=h,
+        )
         cat_id = create_resp.json()["id"]
         resp = c.delete(f"/api/admin/donation-categories/{cat_id}", headers=h)
         assert resp.status_code == 204
 
         from backend.models_crm import DonationCategory
+
         cat = db.query(DonationCategory).filter(DonationCategory.id == cat_id).first()
         assert cat is not None
         assert cat.deleted_at is not None
@@ -620,18 +729,26 @@ class TestAutomations:
 
     def test_create_automation(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/automations", json={
-            "name": f"Auto_{uuid.uuid4().hex[:6]}",
-            "trigger_type": "new_case",
-            "is_active": True,
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/automations",
+            json={
+                "name": f"Auto_{uuid.uuid4().hex[:6]}",
+                "trigger_type": "new_case",
+                "is_active": True,
+            },
+            headers=h,
+        )
         assert resp.status_code == 200
         rule_id = resp.json()["id"]
 
         # Update it
-        resp2 = c.patch(f"/api/admin/automations/{rule_id}", json={
-            "is_active": False,
-        }, headers=h)
+        resp2 = c.patch(
+            f"/api/admin/automations/{rule_id}",
+            json={
+                "is_active": False,
+            },
+            headers=h,
+        )
         assert resp2.status_code == 200
 
         # Delete it
@@ -640,9 +757,13 @@ class TestAutomations:
 
     def test_update_automation_not_found(self, full):
         c, h = full["c"], full["h"]
-        resp = c.patch(f"/api/admin/automations/{uuid.uuid4()}", json={
-            "is_active": False,
-        }, headers=h)
+        resp = c.patch(
+            f"/api/admin/automations/{uuid.uuid4()}",
+            json={
+                "is_active": False,
+            },
+            headers=h,
+        )
         assert resp.status_code == 404
 
     def test_delete_automation_not_found(self, full):
@@ -664,20 +785,28 @@ class TestModuleRoles:
 
     def test_assign_module_role(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/user-module-roles", json={
-            "user_id": str(full["admin"].id),
-            "modulo": "crm",
-            "rol_id": str(full["admin"].rol_plataforma_id),
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/user-module-roles",
+            json={
+                "user_id": str(full["admin"].id),
+                "modulo": "crm",
+                "rol_id": str(full["admin"].rol_plataforma_id),
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
 
     def test_assign_module_role_invalid_user(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/admin/user-module-roles", json={
-            "user_id": "not-a-uuid",
-            "modulo": "crm",
-            "rol_id": str(full["admin"].rol_plataforma_id),
-        }, headers=h)
+        resp = c.post(
+            "/api/admin/user-module-roles",
+            json={
+                "user_id": "not-a-uuid",
+                "modulo": "crm",
+                "rol_id": str(full["admin"].rol_plataforma_id),
+            },
+            headers=h,
+        )
         assert resp.status_code == 400
 
     def test_remove_module_role_not_found(self, full):

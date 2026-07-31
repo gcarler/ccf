@@ -28,11 +28,7 @@ def test_public_registration_creates_persona_and_attendance(client, db_session):
 
     assert response.status_code == 200
 
-    persona = (
-        db_session.query(models.Persona)
-        .filter(models.Persona.email == "ana@example.com")
-        .first()
-    )
+    persona = db_session.query(models.Persona).filter(models.Persona.email == "ana@example.com").first()
     assert persona is not None
     assert persona.first_name == "Ana"
     assert persona.last_name == "Perez"
@@ -78,11 +74,7 @@ def test_public_registration_reuses_existing_persona(client, db_session):
     assert first.status_code == 200
     assert second.status_code == 200
 
-    personas = (
-        db_session.query(models.Persona)
-        .filter(models.Persona.email == "laura@example.com")
-        .all()
-    )
+    personas = db_session.query(models.Persona).filter(models.Persona.email == "laura@example.com").all()
     assert len(personas) == 1
 
     attendances = (

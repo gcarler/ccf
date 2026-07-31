@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers
@@ -62,8 +63,7 @@ def upgrade() -> None:
         for name in PHASE2_SECTION_TYPES:
             op.execute(
                 sa.text(
-                    "INSERT INTO cms_section_types (name, is_active) VALUES (:name, true) "
-                    "ON CONFLICT (name) DO NOTHING"
+                    "INSERT INTO cms_section_types (name, is_active) VALUES (:name, true) ON CONFLICT (name) DO NOTHING"
                 ).bindparams(name=name)
             )
 
@@ -75,7 +75,5 @@ def downgrade() -> None:
 
     if _has_table("cms_section_types"):
         op.execute(
-            sa.text(
-                "DELETE FROM cms_section_types WHERE name = ANY(:names)"
-            ).bindparams(names=PHASE2_SECTION_TYPES)
+            sa.text("DELETE FROM cms_section_types WHERE name = ANY(:names)").bindparams(names=PHASE2_SECTION_TYPES)
         )

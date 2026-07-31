@@ -27,7 +27,7 @@ describe('DSModal', () => {
     it('calls onClose when pressing Escape', () => {
         const handleClose = vi.fn();
         render(<DSModal open={true} onClose={handleClose}>Content</DSModal>);
-        
+
         fireEvent.keyDown(document, { key: 'Escape' });
         expect(handleClose).toHaveBeenCalledTimes(1);
     });
@@ -40,7 +40,7 @@ describe('DSModal', () => {
     it('calls onClose when clicking close button', () => {
         const handleClose = vi.fn();
         render(<DSModal open={true} onClose={handleClose}>Content</DSModal>);
-        
+
         fireEvent.click(screen.getByLabelText('Cerrar'));
         expect(handleClose).toHaveBeenCalledTimes(1);
     });
@@ -94,7 +94,7 @@ describe('DSModal', () => {
     it('calls onClose when clicking backdrop', () => {
         const handleClose = vi.fn();
         render(<DSModal open={true} onClose={handleClose}>Content</DSModal>);
-        
+
         const backdrop = document.querySelector('[aria-hidden="true"]');
         if (backdrop) {
             fireEvent.click(backdrop);

@@ -258,13 +258,13 @@ export default function AnnouncementsAdmin() {
                 }
             `}</style>
 
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Comunicaciones Globales', icon: Megaphone }]}
                 viewType={viewType}
                 setViewType={setViewType}
                 availableViews={ANNOUNCEMENT_VIEWS}
                 rightActions={
-                    <button 
+                    <button
                         onClick={() => router.push('/plataforma/cms/announcements/new')}
                         className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
                     >
@@ -277,10 +277,10 @@ export default function AnnouncementsAdmin() {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--info)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
-                    
+
                     {/* Header Cinematic */}
                     <header className="space-y-4 text-center md:text-left">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                             className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                         >
@@ -317,7 +317,7 @@ export default function AnnouncementsAdmin() {
                         <div className="space-y-3">
                             {/* Featured Cinematic */}
                             {featuredAnn && (
-                                <motion.section 
+                                <motion.section
                                     initial={{ opacity: 0, scale: 0.98 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     className="relative group overflow-hidden rounded-lg h-48 shadow-2xl border border-white/10"
@@ -327,7 +327,7 @@ export default function AnnouncementsAdmin() {
                                         style={{ backgroundImage: `linear-gradient(to top, rgba(10, 15, 22, 0.95) 0%, rgba(10, 15, 22, 0.4) 50%, transparent 100%), radial-gradient(circle at 80% 20%, hsl(var(--primary) / 0.18) 0%, transparent 60%)` }}
                                     />
                                     <div className="absolute inset-0 bg-[hsl(var(--info))]/5 mix-blend-overlay" />
-                                    
+
                                     <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-4 flex flex-col items-start gap-3 relative z-10">
                                         <div className="flex items-center gap-4">
                                             <span className="px-3 py-2 bg-[hsl(var(--primary))] text-white text-2xs font-semibold uppercase tracking-wide rounded-full shadow-2xl shadow-[hsl(var(--info)/40%)]">Noticia Destacada</span>
@@ -351,7 +351,7 @@ export default function AnnouncementsAdmin() {
                                     <div className="flex items-center gap-4 w-full md:w-auto flex-1 justify-end">
                                         <div className="relative w-full md:max-w-xs">
                                             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-                                            <input 
+                                            <input
                                                 type="text"
                                                 placeholder="Buscar por título o contenido..."
                                                 value={searchQuery}
@@ -368,7 +368,7 @@ export default function AnnouncementsAdmin() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <AnimatePresence>
                                         {normalAnnouncements.map((ann, i) => (
-                                            <motion.div 
+                                            <motion.div
                                                 key={ann.id}
                                                 initial={{ opacity: 0, y: 30 }}
                                                 animate={{ opacity: 1, y: 0 }}
@@ -385,7 +385,7 @@ export default function AnnouncementsAdmin() {
                                                         <Megaphone size={20} />
                                                     </div>
                                                 </div>
-                                                
+
                                                 <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm font-medium leading-relaxed line-clamp-3 italic">
                                                     {ann.content}
                                                 </p>
@@ -410,7 +410,7 @@ export default function AnnouncementsAdmin() {
                                     </AnimatePresence>
 
                                     {/* Empty State / Add Card */}
-                                    <div 
+                                    <div
                                         onClick={() => router.push('/plataforma/cms/announcements/new')}
                                         className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 hover:border-[hsl(var(--info)/100%)]/50 hover:bg-info-soft/50 transition-all cursor-pointer group"
                                     >
@@ -431,7 +431,7 @@ export default function AnnouncementsAdmin() {
             <AnimatePresence>
                 {pendingArchive && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
@@ -462,5 +462,3 @@ export default function AnnouncementsAdmin() {
         </div>
     );
 }
-
-

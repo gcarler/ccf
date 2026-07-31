@@ -11,6 +11,7 @@ from backend.schemas._common import orm_config
 # COMMON DASHBOARD ELEMENTS
 # ═══════════════════════════════════════════════════════════════════
 
+
 class MetricCard(BaseModel):
     title: str
     value: str
@@ -18,7 +19,6 @@ class MetricCard(BaseModel):
     tone: Optional[str] = "blue"
     icon: Optional[str] = None
     subtitle: Optional[str] = None
-
 
 
 class ChartDataPoint(BaseModel):
@@ -139,6 +139,7 @@ class AgendaDashboard(BaseModel):
 
 class SeoTrendPoint(BaseModel):
     """Un punto diario del widget SEO score trend."""
+
     label: str
     value: int
     metadata: Optional[Dict[str, Any]] = None
@@ -153,6 +154,7 @@ class CmsSeoTrendResponse(BaseModel):
     alerta ``is_alert`` se dispara cuando la última lectura cae más
     de 10 puntos respecto a la previa (sea misma semana o 7d atrás).
     """
+
     current_score: Optional[int] = None
     previous_score: Optional[int] = None
     change_vs_prior: Optional[int] = None

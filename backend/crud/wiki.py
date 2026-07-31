@@ -1,4 +1,5 @@
 """CRUD for standalone wiki pages (WikiPage model)."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -25,9 +26,7 @@ def list_wiki_pages(
     )
     if search:
         term = f"%{search.strip()}%"
-        query = query.filter(
-            models.WikiPage.title.ilike(term) | models.WikiPage.page_key.ilike(term)
-        )
+        query = query.filter(models.WikiPage.title.ilike(term) | models.WikiPage.page_key.ilike(term))
     if category:
         query = query.filter(models.WikiPage.category == category)
     return query.order_by(models.WikiPage.updated_at.desc()).offset(offset).limit(limit).all()
@@ -45,15 +44,11 @@ def count_wiki_pages(
     )
     if search:
         term = f"%{search.strip()}%"
-        query = query.filter(
-            models.WikiPage.title.ilike(term) | models.WikiPage.page_key.ilike(term)
-        )
+        query = query.filter(models.WikiPage.title.ilike(term) | models.WikiPage.page_key.ilike(term))
     return query.count()
 
 
-def get_wiki_page(
-    db: Session, page_key: str, sede_id: UUID | None
-) -> models.WikiPage | None:
+def get_wiki_page(db: Session, page_key: str, sede_id: UUID | None) -> models.WikiPage | None:
     """Get a single active (not deleted) wiki page by key and sede."""
     return (
         db.query(models.WikiPage)
@@ -66,9 +61,7 @@ def get_wiki_page(
     )
 
 
-def get_wiki_page_including_deleted(
-    db: Session, page_key: str, sede_id: UUID | None
-) -> models.WikiPage | None:
+def get_wiki_page_including_deleted(db: Session, page_key: str, sede_id: UUID | None) -> models.WikiPage | None:
     """Get a wiki page by key and sede, including soft-deleted ones."""
     return (
         db.query(models.WikiPage)
@@ -77,7 +70,7 @@ def get_wiki_page_including_deleted(
             models.WikiPage.sede_id == sede_id,
         )
         .first()
-   )
+    )
 
 
 def create_wiki_page(
@@ -107,9 +100,7 @@ def create_wiki_page(
     return row
 
 
-def _create_version_snapshot(
-    db: Session, wiki_page: models.WikiPage, author_id: UUID | None
-) -> None:
+def _create_version_snapshot(db: Session, wiki_page: models.WikiPage, author_id: UUID | None) -> None:
     """Snapshot the current state of a wiki page into its version history."""
     version = models.WikiPageVersion(
         wiki_page_id=wiki_page.id,
@@ -173,9 +164,7 @@ def soft_delete_wiki_page(db: Session, row: models.WikiPage) -> None:
     db.commit()
 
 
-def list_wiki_page_versions(
-    db: Session, wiki_page_id: UUID
-) -> List[models.WikiPageVersion]:
+def list_wiki_page_versions(db: Session, wiki_page_id: UUID) -> List[models.WikiPageVersion]:
     """List all versions for a wiki page, newest first."""
     return (
         db.query(models.WikiPageVersion)

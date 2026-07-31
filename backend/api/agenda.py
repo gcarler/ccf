@@ -133,7 +133,7 @@ def list_events(
     current_user: models.User = AgendaReader,
 ):
     rows = crud.list_events(db, _sede_id(db, current_user))
-    return [_serialize_event(row) for row in rows[skip:skip + limit]]
+    return [_serialize_event(row) for row in rows[skip : skip + limit]]
 
 
 @router.get("/events/by-date-range", response_model=list[AgendaEvent])
@@ -155,9 +155,7 @@ def create_event(
     db: Session = Depends(get_db),
     current_user: models.User = AgendaEditor,
 ):
-    row = crud.create_event(
-        db, _event_payload(payload, _sede_id(db, current_user), current_user.id)
-    )
+    row = crud.create_event(db, _event_payload(payload, _sede_id(db, current_user), current_user.id))
     return _serialize_event(row)
 
 
@@ -184,9 +182,7 @@ def update_event(
     row = crud.get_event(db, event_id, sede_id)
     if not row:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
-    row = crud.update_event(
-        db, row, _event_payload(payload, sede_id, row.organizador_persona_id)
-    )
+    row = crud.update_event(db, row, _event_payload(payload, sede_id, row.organizador_persona_id))
     return _serialize_event(row)
 
 
@@ -287,10 +283,14 @@ def create_participant(
     sede_id = _sede_id(db, current_user)
     if not crud.get_event(db, payload.event_id, sede_id):
         raise HTTPException(status_code=404, detail="Evento no encontrado")
-    persona = db.query(models.Persona).filter(
-        models.Persona.id == payload.persona_id,
-        models.Persona.sede_id == sede_id,
-    ).first()
+    persona = (
+        db.query(models.Persona)
+        .filter(
+            models.Persona.id == payload.persona_id,
+            models.Persona.sede_id == sede_id,
+        )
+        .first()
+    )
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
     row = crud.create_participant(
@@ -342,9 +342,7 @@ def archive_participant(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-def _validate_reservation_scope(
-    db: Session, payload: ResourceReservationCreate, sede_id: UUID
-) -> None:
+def _validate_reservation_scope(db: Session, payload: ResourceReservationCreate, sede_id: UUID) -> None:
     if not crud.get_event(db, payload.event_id, sede_id):
         raise HTTPException(status_code=404, detail="Evento no encontrado")
     if not crud.get_resource(db, payload.resource_id, sede_id):
@@ -369,9 +367,7 @@ def create_reservation(
     current_user: models.User = AgendaEditor,
 ):
     _validate_reservation_scope(db, payload, _sede_id(db, current_user))
-    conflict = crud.check_reservation_conflict(
-        db, payload.resource_id, payload.starts_at, payload.ends_at
-    )
+    conflict = crud.check_reservation_conflict(db, payload.resource_id, payload.starts_at, payload.ends_at)
     if conflict:
         raise HTTPException(status_code=409, detail="El recurso ya está reservado en ese horario")
     row = crud.create_reservation(
@@ -399,7 +395,10 @@ def update_reservation(
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
     _validate_reservation_scope(db, payload, sede_id)
     conflict = crud.check_reservation_conflict(
-        db, payload.resource_id, payload.starts_at, payload.ends_at,
+        db,
+        payload.resource_id,
+        payload.starts_at,
+        payload.ends_at,
         exclude_reservation_id=reservation_id,
     )
     if conflict:
@@ -450,7 +449,11 @@ def list_event_comments(
         .all()
     )
     author_ids = {r.author_id for r in rows if r.author_id}
-    authors = {p.id: p for p in db.query(models.Persona).filter(models.Persona.id.in_(author_ids)).all()} if author_ids else {}
+    authors = (
+        {p.id: p for p in db.query(models.Persona).filter(models.Persona.id.in_(author_ids)).all()}
+        if author_ids
+        else {}
+    )
     return [_serialize_comment(r, authors.get(r.author_id)) for r in rows]
 
 

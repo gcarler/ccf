@@ -1,6 +1,6 @@
 # Agentes Operativos CCF
 
-**Fecha:** 2026-06-15  
+**Fecha:** 2026-06-15
 **Propósito:** Definir la capa operativa para agentes que trabajan sobre la plataforma sin romper UI, backend ni arquitectura.
 
 La documentación existente ya cubre reglas duras y contratos:

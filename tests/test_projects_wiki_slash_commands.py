@@ -19,6 +19,7 @@ Targets (Sprint 2 of the roadmap):
 6. Setting title to empty string after creation must fail validation. —
    RED: today `title or "Wiki Ministerial"` defaults it instead of failing.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -66,11 +67,7 @@ class TestWikiRoundTrip:
         headers = auth_headers(client)
 
         for slug, html_fragment in SLASH_COMMAND_REFERENCES:
-            composed = (
-                f"<p>Anchor before {slug}</p>"
-                f"{html_fragment}"
-                f"<p>Anchor after {slug}</p>"
-            )
+            composed = f"<p>Anchor before {slug}</p>{html_fragment}<p>Anchor after {slug}</p>"
             payload = {"title": f"Wiki {slug}", "content": composed}
             post = client.post(
                 f"/api/projects/{proj.id}/wiki",
@@ -84,8 +81,7 @@ class TestWikiRoundTrip:
             assert get.status_code == 200
             fetched_content = get.json()["content"]
             assert fetched_content == composed, (
-                f"Round-trip drift for {slug}:\n posted={composed!r}\n"
-                f" refetched={fetched_content!r}"
+                f"Round-trip drift for {slug}:\n posted={composed!r}\n refetched={fetched_content!r}"
             )
 
     def test_round_trip_full_document(self, client, db_session):
@@ -174,16 +170,12 @@ class TestWikiAuditTrail:
         headers = auth_headers(client)
 
         # Soft-delete via ORM (avoids session-cache issues with raw SQL)
-        wiki_row = db_session.query(ProjectDocument).filter(
-            ProjectDocument.project_id == proj.id
-        ).first()
+        wiki_row = db_session.query(ProjectDocument).filter(ProjectDocument.project_id == proj.id).first()
         assert wiki_row is not None
         wiki_row.deleted_at = datetime.now(timezone.utc)
         db_session.commit()
 
-        row = db_session.query(ProjectDocument).filter(
-            ProjectDocument.project_id == proj.id
-        ).first()
+        row = db_session.query(ProjectDocument).filter(ProjectDocument.project_id == proj.id).first()
         # Even soft-deleted, the row must exist with content preserved
         assert row is not None
         assert row.deleted_at is not None

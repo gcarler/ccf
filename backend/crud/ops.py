@@ -78,9 +78,7 @@ def create_church_location(db: Session, payload: ChurchLocationCreate):
     return row
 
 
-def update_church_location(
-    db: Session, location_id: UUID, payload: ChurchLocationUpdate
-):
+def update_church_location(db: Session, location_id: UUID, payload: ChurchLocationUpdate):
     row = (
         db.query(models.ChurchLocation)
         .filter(
@@ -99,11 +97,7 @@ def update_church_location(
 
 
 def delete_church_location(db: Session, location_id: UUID) -> bool:
-    row = (
-        db.query(models.ChurchLocation)
-        .filter(models.ChurchLocation.id == location_id)
-        .first()
-    )
+    row = db.query(models.ChurchLocation).filter(models.ChurchLocation.id == location_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -159,11 +153,7 @@ def update_social_channel(db: Session, channel_id: UUID, payload: SocialChannelU
 
 
 def delete_social_channel(db: Session, channel_id: UUID) -> bool:
-    row = (
-        db.query(models.SocialChannel)
-        .filter(models.SocialChannel.id == channel_id)
-        .first()
-    )
+    row = db.query(models.SocialChannel).filter(models.SocialChannel.id == channel_id).first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -189,9 +179,7 @@ def get_system_variable(db: Session, key: str):
     )
 
 
-def get_system_variable_value(
-    db: Session, key: str, default: str | None = None
-) -> str | None:
+def get_system_variable_value(db: Session, key: str, default: str | None = None) -> str | None:
     row = get_system_variable(db, key)
     return row.value if row else default
 
@@ -222,9 +210,7 @@ def update_system_variable(db: Session, key: str, payload: SystemVariableUpdate)
     return row
 
 
-def upsert_system_variable(
-    db: Session, key: str, value: str, description: str | None = None
-):
+def upsert_system_variable(db: Session, key: str, value: str, description: str | None = None):
     # get_system_variable already filters deleted rows.
     row = get_system_variable(db, key)
     if row:

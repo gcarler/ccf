@@ -8,6 +8,7 @@ Creates / updates:
 Usage:
     cd /root/ccf && source venv/bin/activate && python scripts/seed_blog_sermons_cms.py
 """
+
 from __future__ import annotations
 
 import json
@@ -96,9 +97,7 @@ def _snapshot(page: models.CmsPage, sections: list[dict[str, Any]]) -> dict[str,
     }
 
 
-def _get_or_create_page(
-    db: Any, site: models.CmsSite, slug: str, title: str
-) -> models.CmsPage:
+def _get_or_create_page(db: Any, site: models.CmsSite, slug: str, title: str) -> models.CmsPage:
     page = db.query(models.CmsPage).filter_by(site_id=site.id, slug=slug).first()
     if page is None:
         page = models.CmsPage(
@@ -118,13 +117,8 @@ def _get_or_create_page(
     return page
 
 
-def _upsert_sections(
-    db: Any, page: models.CmsPage, sections: list[dict[str, Any]]
-) -> None:
-    existing = {
-        s.section_key: s
-        for s in db.query(models.CmsSection).filter_by(page_id=page.id).all()
-    }
+def _upsert_sections(db: Any, page: models.CmsPage, sections: list[dict[str, Any]]) -> None:
+    existing = {s.section_key: s for s in db.query(models.CmsSection).filter_by(page_id=page.id).all()}
     desired_keys = {s["key"] for s in sections}
 
     for key in list(existing):
@@ -156,23 +150,13 @@ def _upsert_sections(
     db.commit()
 
 
-def _publish_if_changed(
-    db: Any, site: models.CmsSite, page: models.CmsPage, sections: list[dict[str, Any]]
-) -> None:
+def _publish_if_changed(db: Any, site: models.CmsSite, page: models.CmsPage, sections: list[dict[str, Any]]) -> None:
     new_snapshot = _snapshot(page, sections)
     current_version = None
     if page.published_version_id:
-        current_version = (
-            db.query(models.CmsPageVersion)
-            .filter_by(id=page.published_version_id)
-            .first()
-        )
+        current_version = db.query(models.CmsPageVersion).filter_by(id=page.published_version_id).first()
 
-    if (
-        page.status == "published"
-        and current_version is not None
-        and current_version.snapshot_json == new_snapshot
-    ):
+    if page.status == "published" and current_version is not None and current_version.snapshot_json == new_snapshot:
         print(f"  → unchanged (published v{current_version.version_number})")
         return
 
@@ -219,11 +203,7 @@ def _ensure_sermons_youtube_url(db: Any, page: models.CmsPage) -> bool:
 
     Returns ``True`` if the section was changed.
     """
-    section = (
-        db.query(models.CmsSection)
-        .filter_by(page_id=page.id, section_key="feed")
-        .first()
-    )
+    section = db.query(models.CmsSection).filter_by(page_id=page.id, section_key="feed").first()
 
     if section is None:
         section = models.CmsSection(
@@ -292,9 +272,7 @@ def main() -> int:
         _publish_if_changed(db, site, blog_page, BLOG_SECTIONS)
 
         # ── Sermons page YouTube channel URL ────────────────────────────────
-        sermons_page = db.query(models.CmsPage).filter_by(
-            site_id=site.id, slug="sermons"
-        ).first()
+        sermons_page = db.query(models.CmsPage).filter_by(site_id=site.id, slug="sermons").first()
         if sermons_page is None:
             print("Warning: sermons page not found; skipping sermons update")
         else:

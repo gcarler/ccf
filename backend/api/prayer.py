@@ -28,7 +28,9 @@ def create_prayer_request(
 
 @router.get("", response_model=List[schemas.PrayerRequest])
 def read_prayer_requests(
-    skip: int = 0, limit: int = 100, db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
     current_user: "models.User" = Depends(require_active_user),
 ):
     """Solo devuelve pedidos publicos (is_public=True). Los privados van al CRM."""

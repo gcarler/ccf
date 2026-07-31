@@ -13,30 +13,30 @@ const sampleData = [
 
 // Sample columns configuration
 const sampleColumns = [
-  { 
-    header: 'ID', 
+  {
+    header: 'ID',
     accessorKey: 'id',
     size: 80
   },
-  { 
-    header: 'Nombre', 
+  {
+    header: 'Nombre',
     accessorKey: 'name',
   },
-  { 
-    header: 'Email', 
+  {
+    header: 'Email',
     accessorKey: 'email',
   },
-  { 
-    header: 'Estado', 
+  {
+    header: 'Estado',
     accessorKey: 'status',
   },
-  { 
-    header: 'Edad', 
+  {
+    header: 'Edad',
     accessorKey: 'age',
     size: 60
   },
-  { 
-    header: 'Departamento', 
+  {
+    header: 'Departamento',
     accessorKey: 'department',
   },
 ];
@@ -81,12 +81,12 @@ export const WithColumnSelection: Story = {
   args: {
     data: sampleData,
     columns: [
-      { 
-        header: 'Nombre completo', 
+      {
+        header: 'Nombre completo',
         accessorKey: 'name',
       },
-      { 
-        header: 'Correo electrónico', 
+      {
+        header: 'Correo electrónico',
         accessorKey: 'email',
       },
     ],

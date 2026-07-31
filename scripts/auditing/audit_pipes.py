@@ -18,7 +18,7 @@ def extract_apifetch_calls(root: Path):
             continue
         try:
             text = f.read_text(encoding="utf-8")
-        except:
+        except Exception:
             continue
 
         pattern = r"apiFetch(?:<[^>]*>)?\s*\(\s*([`'\"]/[^`'\"]+[`'\"])\s*,"
@@ -63,13 +63,12 @@ def resolve_backend_routes():
     for init_file in api_dir.rglob("__init__.py"):
         try:
             text = init_file.read_text(encoding="utf-8")
-        except:
+        except Exception:
             continue
         parent = str(init_file.parent.relative_to(api_dir)).replace("\\", "/")
         includes = []
         for m in re.finditer(r"from\s+backend\.api\.(\w+)\s+import\s+(\w+)", text):
             sub_pkg = m.group(1)
-            sub_mod = m.group(2)
             includes.append(sub_pkg)
         # Also look for split CRM imports that bypass the package router.
         for m in re.finditer(r"from\s+backend\.api\.([\w.]+)\s+import\s+(\w+)", text):
@@ -100,7 +99,7 @@ def resolve_backend_routes():
                 continue
         try:
             text = f.read_text(encoding="utf-8")
-        except:
+        except Exception:
             continue
 
         # Check if this file defines a router
@@ -136,9 +135,7 @@ def resolve_backend_routes():
             inner_prefix = prefix_m.group(1)
 
         # Extract route decorators
-        for rm in re.finditer(
-            r'@router\.(get|post|put|patch|delete)\s*\(\s*"([^"]*)"', text
-        ):
+        for rm in re.finditer(r'@router\.(get|post|put|patch|delete)\s*\(\s*"([^"]*)"', text):
             http_method = rm.group(1).upper()
             route_path = rm.group(2)
             full_path = mount_prefix + inner_prefix + route_path
@@ -215,9 +212,7 @@ def main():
                 {
                     "call": call,
                     "actual_path": actual_path,
-                    "candidates": sorted(
-                        candidates, key=lambda x: -len(x[0].split("/"))
-                    )[:3],
+                    "candidates": sorted(candidates, key=lambda x: -len(x[0].split("/")))[:3],
                 }
             )
 

@@ -59,27 +59,44 @@ def upgrade() -> None:
     # Ensure cms_section_types has all current types
     if _has_table("cms_section_types"):
         current_types = {
-            "hero", "video_hero", "rich_text", "rich_text_columns",
-            "cards", "cta_banner", "gallery", "faq", "embed",
-            "testimonials", "stats", "team", "countdown", "pricing",
-            "image_text", "timeline", "icon_grid", "newsletter",
-            "popup_banner", "button", "toc", "divider", "collapsible",
-            "social_links", "spacer", "calendar", "map",
-            "document_upload", "content_blocks", "accordion",
+            "hero",
+            "video_hero",
+            "rich_text",
+            "rich_text_columns",
+            "cards",
+            "cta_banner",
+            "gallery",
+            "faq",
+            "embed",
+            "testimonials",
+            "stats",
+            "team",
+            "countdown",
+            "pricing",
+            "image_text",
+            "timeline",
+            "icon_grid",
+            "newsletter",
+            "popup_banner",
+            "button",
+            "toc",
+            "divider",
+            "collapsible",
+            "social_links",
+            "spacer",
+            "calendar",
+            "map",
+            "document_upload",
+            "content_blocks",
+            "accordion",
         }
 
-        existing = {
-            row[0]
-            for row in conn.execute(
-                sa.text("SELECT name FROM cms_section_types")
-            ).fetchall()
-        }
+        existing = {row[0] for row in conn.execute(sa.text("SELECT name FROM cms_section_types")).fetchall()}
 
         for name in current_types - existing:
             conn.execute(
                 sa.text(
-                    "INSERT INTO cms_section_types (name, is_active) "
-                    "VALUES (:name, true) ON CONFLICT (name) DO NOTHING"
+                    "INSERT INTO cms_section_types (name, is_active) VALUES (:name, true) ON CONFLICT (name) DO NOTHING"
                 ),
                 {"name": name},
             )

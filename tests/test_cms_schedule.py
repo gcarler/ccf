@@ -1,4 +1,5 @@
 """pytest suite for scheduled publish + auto-archive (Phase 2026-07-06)."""
+
 from __future__ import annotations
 
 import datetime as dt
@@ -35,8 +36,9 @@ def _seed_site(db, key="ccf"):
     return site
 
 
-def _make_page(db, site_id, *, slug="p", title="P", status="draft", seo=None, sections=None,
-               publish_at=None, expires_at=None):
+def _make_page(
+    db, site_id, *, slug="p", title="P", status="draft", seo=None, sections=None, publish_at=None, expires_at=None
+):
     from backend import models
 
     page = models.CmsPage(
@@ -54,21 +56,22 @@ def _make_page(db, site_id, *, slug="p", title="P", status="draft", seo=None, se
     db.refresh(page)
     if sections:
         for idx, (kind, props) in enumerate(sections):
-            db.add(models.CmsSection(
-                id=uuid.uuid4(),
-                page_id=page.id,
-                section_key=f"sec-{idx}",
-                type=kind,
-                props_json=props or {},
-                sort_order=idx,
-                is_visible=True,
-            ))
+            db.add(
+                models.CmsSection(
+                    id=uuid.uuid4(),
+                    page_id=page.id,
+                    section_key=f"sec-{idx}",
+                    type=kind,
+                    props_json=props or {},
+                    sort_order=idx,
+                    is_visible=True,
+                )
+            )
         db.commit()
     return page
 
 
-def _make_post(db, site_id, *, slug="post", title="Post P", status="published",
-               published_at=None, expires_at=None):
+def _make_post(db, site_id, *, slug="post", title="Post P", status="published", published_at=None, expires_at=None):
     from backend import models
 
     post = models.CmsPost(
@@ -138,8 +141,13 @@ class TestFindDue:
         past = dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc)
         _make_page(db_session, site.id, slug="expired-pub", status="published", expires_at=past)
         _make_page(db_session, site.id, slug="expired-draft", status="draft", expires_at=past)
-        _make_page(db_session, site.id, slug="future", status="published",
-                   expires_at=dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc))
+        _make_page(
+            db_session,
+            site.id,
+            slug="future",
+            status="published",
+            expires_at=dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc),
+        )
 
         from backend.crud.cms import find_pages_due_for_archive
 
@@ -153,8 +161,13 @@ class TestProcessDueContent:
 
         seed_admin(db_session, email="sched-pub@example.com")
         site = _seed_site(db_session)
-        _make_page(db_session, site.id, slug="soon", status="scheduled",
-                   publish_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc))
+        _make_page(
+            db_session,
+            site.id,
+            slug="soon",
+            status="scheduled",
+            publish_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc),
+        )
         counts = process_due_content(db_session)
         db_session.commit()
         assert counts == {"pages_published": 1, "pages_archived": 0, "posts_archived": 0}
@@ -178,8 +191,13 @@ class TestProcessDueContent:
         from backend.crud.cms import process_due_content
 
         site = _seed_site(db_session)
-        _make_page(db_session, site.id, slug="stale", status="published",
-                   expires_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc))
+        _make_page(
+            db_session,
+            site.id,
+            slug="stale",
+            status="published",
+            expires_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc),
+        )
         counts = process_due_content(db_session)
         db_session.commit()
         assert counts["pages_archived"] == 1
@@ -193,9 +211,14 @@ class TestProcessDueContent:
         from backend.crud.cms import process_due_content
 
         site = _seed_site(db_session)
-        _make_post(db_session, site.id, slug="old-post", status="published",
-                   published_at=dt.datetime.now(dt.timezone.utc),
-                   expires_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc))
+        _make_post(
+            db_session,
+            site.id,
+            slug="old-post",
+            status="published",
+            published_at=dt.datetime.now(dt.timezone.utc),
+            expires_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc),
+        )
         counts = process_due_content(db_session)
         db_session.commit()
         assert counts["posts_archived"] == 1
@@ -206,8 +229,7 @@ class TestProcessDueContent:
         assert post.status == "archived"
         log_entry = (
             db_session.query(models.CmsPublishLog)
-            .filter(models.CmsPublishLog.entity_id == str(post.id),
-                    models.CmsPublishLog.entity_type == "post")
+            .filter(models.CmsPublishLog.entity_id == str(post.id), models.CmsPublishLog.entity_type == "post")
             .first()
         )
         assert log_entry is not None
@@ -220,8 +242,13 @@ class TestProcessDueContent:
         from backend.crud.cms import process_due_content
 
         site = _seed_site(db_session)
-        _make_page(db_session, site.id, slug="once", status="scheduled",
-                   publish_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc))
+        _make_page(
+            db_session,
+            site.id,
+            slug="once",
+            status="scheduled",
+            publish_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc),
+        )
         first = process_due_content(db_session)
         db_session.commit()
         second = process_due_content(db_session)
@@ -232,8 +259,13 @@ class TestProcessDueContent:
         from backend.crud.cms import process_due_content
 
         site = _seed_site(db_session)
-        _make_page(db_session, site.id, slug="preview", status="scheduled",
-                   publish_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc))
+        _make_page(
+            db_session,
+            site.id,
+            slug="preview",
+            status="scheduled",
+            publish_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc),
+        )
         counts = process_due_content(db_session, dry_run=True)
         db_session.commit()
         assert counts["pages_published"] == 1
@@ -250,7 +282,9 @@ class TestProcessDueContent:
 
         site = _seed_site(db_session)
         _make_page(
-            db_session, site.id, slug="dual",
+            db_session,
+            site.id,
+            slug="dual",
             status="published",
             publish_at=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
             expires_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc),
@@ -301,8 +335,7 @@ class TestApiPatchPageScheduling:
     def test_patch_page_clears_publish_at_with_null(self, client, db_session):
         seed_admin(db_session, email="patch-clear@example.com")
         site = _seed_site(db_session)
-        _make_page(db_session, site.id, slug="clearable",
-                   publish_at=dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc))
+        _make_page(db_session, site.id, slug="clearable", publish_at=dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc))
         headers = auth_headers(client, email="patch-clear@example.com")
         resp = client.patch(
             f"/api/cms/v2/sites/{site.site_key}/pages/clearable",
@@ -473,7 +506,9 @@ class TestF09PostPublishedBeforeExpires:
         # PATCH parcial: solo trae expires_at < published_at ya en row.
         site = self._seed(db_session)
         _make_post(
-            db_session, site.id, slug="exp-vs-pub",
+            db_session,
+            site.id,
+            slug="exp-vs-pub",
             published_at=dt.datetime(2099, 12, 31, tzinfo=dt.timezone.utc),
         )
         resp = client.patch(
@@ -487,7 +522,9 @@ class TestF09PostPublishedBeforeExpires:
         # PATCH parcial inverso: solo trae published_at > expires_at ya en row.
         site = self._seed(db_session)
         _make_post(
-            db_session, site.id, slug="pub-vs-exp",
+            db_session,
+            site.id,
+            slug="pub-vs-exp",
             expires_at=dt.datetime(2099, 1, 1, tzinfo=dt.timezone.utc),
         )
         resp = client.patch(
@@ -514,7 +551,9 @@ class TestF09PostPublishedBeforeExpires:
         # expires_at=None desactiva la restricción aunque published_at quede.
         site = self._seed(db_session)
         _make_post(
-            db_session, site.id, slug="clear-exp",
+            db_session,
+            site.id,
+            slug="clear-exp",
             published_at=dt.datetime(2099, 6, 1, tzinfo=dt.timezone.utc),
             expires_at=dt.datetime(2099, 12, 31, tzinfo=dt.timezone.utc),
         )
@@ -544,8 +583,11 @@ class TestF09PostPublishedBeforeExpires:
         from backend import crud, models, schemas
 
         site = models.CmsSite(
-            id=uuid.uuid4(), site_key="f09-crud-crt", name="F09",
-            base_path="/f09c", is_active=True,
+            id=uuid.uuid4(),
+            site_key="f09-crud-crt",
+            name="F09",
+            base_path="/f09c",
+            is_active=True,
         )
         db_session.add(site)
         db_session.flush()
@@ -562,14 +604,21 @@ class TestF09PostPublishedBeforeExpires:
         from backend import crud, models, schemas
 
         site = models.CmsSite(
-            id=uuid.uuid4(), site_key="f09-crud-upd", name="F09u",
-            base_path="/f09u", is_active=True,
+            id=uuid.uuid4(),
+            site_key="f09-crud-upd",
+            name="F09u",
+            base_path="/f09u",
+            is_active=True,
         )
         db_session.add(site)
         db_session.flush()
         row = models.CmsPost(
-            id=uuid.uuid4(), site_id=site.id, slug="upd-crud", title="Upd",
-            status="draft", locale="es",
+            id=uuid.uuid4(),
+            site_id=site.id,
+            slug="upd-crud",
+            title="Upd",
+            status="draft",
+            locale="es",
         )
         db_session.add(row)
         db_session.commit()
@@ -605,8 +654,13 @@ class TestSchedulingSedeBoundary:
         from backend.crud.cms import process_due_content
 
         site = _seed_site(db_session)
-        page = _make_page(db_session, site.id, slug="sede-aware", status="scheduled",
-                          publish_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc))
+        page = _make_page(
+            db_session,
+            site.id,
+            slug="sede-aware",
+            status="scheduled",
+            publish_at=dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc),
+        )
         process_due_content(db_session)
         db_session.commit()
 

@@ -144,7 +144,7 @@ export default function GroupsAnalyticsPage() {
                                 <RiskRow
                                     label="Casas sin lider asignado"
                                     value={metrics.withoutLeader}
-                                    description="Asignar liderazgo para mejorar acompanamiento y seguimiento." 
+                                    description="Asignar liderazgo para mejorar acompanamiento y seguimiento."
                                 />
                                 <RiskRow
                                     label="Casas con capacidad al limite"

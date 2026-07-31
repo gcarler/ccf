@@ -23,9 +23,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def _add_deleted_at(table: str) -> None:
     """Idempotently add a nullable deleted_at column to a table."""
-    op.execute(
-        sa.text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE")
-    )
+    op.execute(sa.text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE"))
 
 
 def upgrade() -> None:

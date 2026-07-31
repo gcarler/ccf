@@ -74,9 +74,7 @@ def get_admin_role_user_counts(db: Session) -> Dict[_uuid.UUID, int]:
 
 def get_admin_role(db: Session, role_id: _uuid.UUID) -> Optional[RolPlataforma]:
     """Get a single active role by UUID."""
-    return db.query(RolPlataforma).filter(
-        RolPlataforma.id == role_id, RolPlataforma.deleted_at.is_(None)
-    ).first()
+    return db.query(RolPlataforma).filter(RolPlataforma.id == role_id, RolPlataforma.deleted_at.is_(None)).first()
 
 
 def create_admin_role(
@@ -85,10 +83,14 @@ def create_admin_role(
     permisos: Dict[str, Any] | list[str] | None = None,
 ) -> RolPlataforma:
     """Create a new platform role."""
-    existing = db.query(RolPlataforma).filter(
-        RolPlataforma.nombre == nombre,
-        RolPlataforma.deleted_at.is_(None),
-    ).first()
+    existing = (
+        db.query(RolPlataforma)
+        .filter(
+            RolPlataforma.nombre == nombre,
+            RolPlataforma.deleted_at.is_(None),
+        )
+        .first()
+    )
     if existing:
         raise ValueError("Role name already exists")
     if isinstance(permisos, list):
@@ -111,9 +113,7 @@ def update_admin_role(
     permisos: Optional[Dict[str, Any] | list[str]] = None,
 ) -> Optional[RolPlataforma]:
     """Update a platform role."""
-    rol = db.query(RolPlataforma).filter(
-        RolPlataforma.id == role_id, RolPlataforma.deleted_at.is_(None)
-    ).first()
+    rol = db.query(RolPlataforma).filter(RolPlataforma.id == role_id, RolPlataforma.deleted_at.is_(None)).first()
     if not rol:
         return None
     if nombre is not None:
@@ -130,17 +130,15 @@ def update_admin_role(
 
 def delete_admin_role(db: Session, role_id: _uuid.UUID) -> bool:
     """Soft-delete a role if it has no active assignments. Returns True on success."""
-    rol = db.query(RolPlataforma).filter(
-        RolPlataforma.id == role_id, RolPlataforma.deleted_at.is_(None)
-    ).first()
+    rol = db.query(RolPlataforma).filter(RolPlataforma.id == role_id, RolPlataforma.deleted_at.is_(None)).first()
     if not rol:
         return False
-    assigned = db.query(Usuario).filter(
-        Usuario.rol_plataforma_id == role_id, Usuario.is_active.is_(True)
-    ).count()
-    modular_assigned = db.query(UsuarioRolModulo).filter(
-        UsuarioRolModulo.rol_id == role_id, UsuarioRolModulo.deleted_at.is_(None)
-    ).count()
+    assigned = db.query(Usuario).filter(Usuario.rol_plataforma_id == role_id, Usuario.is_active.is_(True)).count()
+    modular_assigned = (
+        db.query(UsuarioRolModulo)
+        .filter(UsuarioRolModulo.rol_id == role_id, UsuarioRolModulo.deleted_at.is_(None))
+        .count()
+    )
     if assigned > 0 or modular_assigned > 0:
         return False  # caller should raise 409
     # Free the unique name so a new role with the same name can be created.
@@ -175,13 +173,9 @@ def _visible_auth_users_query(db: Session, current_user: Usuario):
     return query
 
 
-def _visible_auth_user(
-    db: Session, current_user: Usuario, user_id: _uuid.UUID
-) -> Optional[Usuario]:
+def _visible_auth_user(db: Session, current_user: Usuario, user_id: _uuid.UUID) -> Optional[Usuario]:
     """Get a user visible to the current admin (sede-scoped)."""
-    query = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(
-        Usuario.id == user_id
-    )
+    query = db.query(Usuario).options(joinedload(Usuario.rol_plataforma)).filter(Usuario.id == user_id)
     if not _is_global_admin(current_user):
         sede_id = getattr(current_user, "sede_id", None)
         if sede_id:
@@ -213,7 +207,10 @@ def _serialize_auth_user(user: Usuario) -> Dict[str, Any]:
 
 
 def list_admin_users(
-    db: Session, current_user: Usuario, skip: int = 0, limit: int = 50,
+    db: Session,
+    current_user: Usuario,
+    skip: int = 0,
+    limit: int = 50,
 ) -> tuple[List[Dict[str, Any]], int]:
     """List auth users visible to the current admin."""
     query = _visible_auth_users_query(db, current_user)
@@ -222,9 +219,7 @@ def list_admin_users(
     return [_serialize_auth_user(u) for u in users], total
 
 
-def get_admin_user(
-    db: Session, current_user: Usuario, user_id: _uuid.UUID
-) -> Optional[Dict[str, Any]]:
+def get_admin_user(db: Session, current_user: Usuario, user_id: _uuid.UUID) -> Optional[Dict[str, Any]]:
     """Get a single auth user by UUID."""
     user = _visible_auth_user(db, current_user, user_id)
     if not user:
@@ -263,9 +258,7 @@ def create_admin_user(
     is_active: bool = True,
 ) -> Dict[str, Any]:
     """Create a new Persona + Usuario from the admin panel."""
-    existing = db.query(Usuario).filter(
-        (Usuario.username == username) | (Usuario.email == email)
-    ).first()
+    existing = db.query(Usuario).filter((Usuario.username == username) | (Usuario.email == email)).first()
     if existing:
         raise ValueError("Username or email already exists")
 
@@ -273,10 +266,14 @@ def create_admin_user(
     if not sede_id:
         raise ValueError("Cannot determine admin's sede")
 
-    default_role = db.query(RolPlataforma).filter(
-        RolPlataforma.nombre == "MIEMBRO",
-        RolPlataforma.deleted_at.is_(None),
-    ).first()
+    default_role = (
+        db.query(RolPlataforma)
+        .filter(
+            RolPlataforma.nombre == "MIEMBRO",
+            RolPlataforma.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not default_role:
         default_role = RolPlataforma(
             nombre="MIEMBRO",
@@ -355,9 +352,7 @@ def update_admin_user(
     return _serialize_auth_user(user)
 
 
-def deactivate_admin_user(
-    db: Session, current_user: Usuario, user_id: _uuid.UUID
-) -> bool:
+def deactivate_admin_user(db: Session, current_user: Usuario, user_id: _uuid.UUID) -> bool:
     """Soft-deactivate a user (is_active=False)."""
     user = _visible_auth_user(db, current_user, user_id)
     if not user:
@@ -377,9 +372,7 @@ def change_user_role(
     user = _visible_auth_user(db, current_user, user_id)
     if not user:
         return None
-    role = db.query(RolPlataforma).filter(
-        RolPlataforma.id == role_id, RolPlataforma.deleted_at.is_(None)
-    ).first()
+    role = db.query(RolPlataforma).filter(RolPlataforma.id == role_id, RolPlataforma.deleted_at.is_(None)).first()
     if not role:
         return None
     user.rol_plataforma_id = role.id
@@ -394,7 +387,10 @@ def change_user_role(
 
 
 def list_users_with_roles(
-    db: Session, current_user: Usuario, skip: int = 0, limit: int = 50,
+    db: Session,
+    current_user: Usuario,
+    skip: int = 0,
+    limit: int = 50,
 ) -> tuple[List[Dict[str, Any]], int]:
     """List all users with platform + modular roles."""
     query = _visible_auth_users_query(db, current_user)
@@ -404,10 +400,7 @@ def list_users_with_roles(
 
     persona_map = {}
     if user_ids:
-        persona_map = {
-            p.id: p
-            for p in db.query(Persona).filter(Persona.id.in_(user_ids)).all()
-        }
+        persona_map = {p.id: p for p in db.query(Persona).filter(Persona.id.in_(user_ids)).all()}
 
     modulares_by_user: Dict[_uuid.UUID, list] = {}
     if user_ids:
@@ -435,16 +428,10 @@ def list_users_with_roles(
             "user_id": str(u.id),
             "username": u.username,
             "email": u.email,
-            "nombre": (
-                persona_map[u.id].nombre_completo
-                if u.id in persona_map
-                else "—"
-            ),
+            "nombre": (persona_map[u.id].nombre_completo if u.id in persona_map else "—"),
             "is_active": u.is_active,
             "rol_plataforma": (
-                {"id": str(u.rol_plataforma.id), "nombre": u.rol_plataforma.nombre}
-                if u.rol_plataforma
-                else None
+                {"id": str(u.rol_plataforma.id), "nombre": u.rol_plataforma.nombre} if u.rol_plataforma else None
             ),
             "roles_modulares": modulares_by_user.get(u.id, []),
         }
@@ -457,9 +444,7 @@ def list_users_with_roles(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def get_user_permissions(
-    db: Session, current_user: Usuario, user_id: _uuid.UUID
-) -> Optional[Dict[str, Any]]:
+def get_user_permissions(db: Session, current_user: Usuario, user_id: _uuid.UUID) -> Optional[Dict[str, Any]]:
     """Get effective permissions for a user."""
     user = _visible_auth_user(db, current_user, user_id)
     if not user:
@@ -467,14 +452,8 @@ def get_user_permissions(
 
     rol = user.rol_plataforma
     role_perms = rol.permisos if rol and isinstance(rol.permisos, dict) else {}
-    direct = (
-        db.query(UsuarioPermisoOverride)
-        .filter(UsuarioPermisoOverride.user_id == user.id)
-        .first()
-    )
-    override_perms = (
-        direct.permisos if direct and isinstance(direct.permisos, dict) else {}
-    )
+    direct = db.query(UsuarioPermisoOverride).filter(UsuarioPermisoOverride.user_id == user.id).first()
+    override_perms = direct.permisos if direct and isinstance(direct.permisos, dict) else {}
     module_rows = (
         db.query(UsuarioRolModulo)
         .filter(
@@ -491,9 +470,7 @@ def get_user_permissions(
         "role": rol.nombre if rol else "LECTOR",
         "role_permissions": role_perms,
         "override_permissions": override_perms,
-        "module_roles": [
-            {"module": row.modulo, "role_id": str(row.rol_id)} for row in module_rows
-        ],
+        "module_roles": [{"module": row.modulo, "role_id": str(row.rol_id)} for row in module_rows],
         "effective_permissions": get_user_effective_permissions(db, user),
     }
 
@@ -520,32 +497,22 @@ def set_user_permissions(
             continue
         level = str(level).strip().lower()
         if module not in valid_modules:
-            raise ValueError(
-                f"Módulo inválido: '{module}'. "
-                f"Válidos: {', '.join(sorted(valid_modules))}"
-            )
+            raise ValueError(f"Módulo inválido: '{module}'. Válidos: {', '.join(sorted(valid_modules))}")
         module_config = module_permission_map[module]
         valid_levels = set(module_config.keys())
         if level not in valid_levels:
             raise ValueError(
-                f"Nivel inválido '{level}' para módulo '{module}'. "
-                f"Válidos: {', '.join(sorted(valid_levels))}"
+                f"Nivel inválido '{level}' para módulo '{module}'. Válidos: {', '.join(sorted(valid_levels))}"
             )
         for perm_key in expand_fn(module, level):
             resolved_perms[perm_key] = "allow"
 
-    direct = (
-        db.query(UsuarioPermisoOverride)
-        .filter(UsuarioPermisoOverride.user_id == user.id)
-        .first()
-    )
+    direct = db.query(UsuarioPermisoOverride).filter(UsuarioPermisoOverride.user_id == user.id).first()
     if direct:
         direct.permisos = resolved_perms
         flag_modified(direct, "permisos")
     else:
-        db.add(
-            UsuarioPermisoOverride(user_id=user.id, permisos=resolved_perms)
-        )
+        db.add(UsuarioPermisoOverride(user_id=user.id, permisos=resolved_perms))
 
     db.commit()
     db.refresh(user)
@@ -563,7 +530,9 @@ def set_user_permissions(
 
 
 def list_user_module_roles(
-    db: Session, skip: int = 0, limit: int = 50,
+    db: Session,
+    skip: int = 0,
+    limit: int = 50,
 ) -> tuple[List[Dict[str, Any]], int]:
     """List all active modular role assignments."""
     base_query = (
@@ -603,18 +572,17 @@ def assign_user_module_role(
         raise ValueError("Role not found")
 
     role_permissions = rol.permisos if isinstance(rol.permisos, dict) else {}
-    if not any(
-        key.startswith(f"{modulo}:") and value
-        for key, value in role_permissions.items()
-    ):
-        raise ValueError(
-            "El rol debe incluir al menos un permiso del módulo asignado"
-        )
+    if not any(key.startswith(f"{modulo}:") and value for key, value in role_permissions.items()):
+        raise ValueError("El rol debe incluir al menos un permiso del módulo asignado")
 
-    existing = db.query(UsuarioRolModulo).filter(
-        UsuarioRolModulo.user_id == user_id,
-        UsuarioRolModulo.modulo == modulo,
-    ).first()
+    existing = (
+        db.query(UsuarioRolModulo)
+        .filter(
+            UsuarioRolModulo.user_id == user_id,
+            UsuarioRolModulo.modulo == modulo,
+        )
+        .first()
+    )
     if existing:
         existing.rol_id = rol_id
         existing.deleted_at = None
@@ -647,9 +615,13 @@ def remove_user_module_role(
     assignment_id: _uuid.UUID,
 ) -> bool:
     """Soft-remove a modular role assignment."""
-    umr_query = db.query(UsuarioRolModulo).join(Usuario).filter(
-        UsuarioRolModulo.id == assignment_id,
-        UsuarioRolModulo.deleted_at.is_(None),
+    umr_query = (
+        db.query(UsuarioRolModulo)
+        .join(Usuario)
+        .filter(
+            UsuarioRolModulo.id == assignment_id,
+            UsuarioRolModulo.deleted_at.is_(None),
+        )
     )
     if not _is_global_admin(current_user):
         sede_id = getattr(current_user, "sede_id", None)
@@ -669,7 +641,9 @@ def remove_user_module_role(
 
 
 def list_admin_locations(
-    db: Session, skip: int = 0, limit: int = 50,
+    db: Session,
+    skip: int = 0,
+    limit: int = 50,
 ) -> tuple[List[models.ChurchLocation], int]:
     """List all active church locations."""
     query = db.query(models.ChurchLocation).filter(models.ChurchLocation.deleted_at.is_(None))
@@ -697,10 +671,14 @@ def update_admin_location(
     is_active: Optional[bool] = None,
 ) -> Optional[models.ChurchLocation]:
     """Update an active church location."""
-    loc = db.query(models.ChurchLocation).filter(
-        models.ChurchLocation.id == location_id,
-        models.ChurchLocation.deleted_at.is_(None),
-    ).first()
+    loc = (
+        db.query(models.ChurchLocation)
+        .filter(
+            models.ChurchLocation.id == location_id,
+            models.ChurchLocation.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not loc:
         return None
     if name is not None:
@@ -716,10 +694,14 @@ def update_admin_location(
 
 def delete_admin_location(db: Session, location_id: Any) -> bool:
     """Soft-delete a church location."""
-    loc = db.query(models.ChurchLocation).filter(
-        models.ChurchLocation.id == location_id,
-        models.ChurchLocation.deleted_at.is_(None),
-    ).first()
+    loc = (
+        db.query(models.ChurchLocation)
+        .filter(
+            models.ChurchLocation.id == location_id,
+            models.ChurchLocation.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not loc:
         return False
     loc.deleted_at = _utcnow()
@@ -733,7 +715,9 @@ def delete_admin_location(db: Session, location_id: Any) -> bool:
 
 
 def list_admin_socials(
-    db: Session, skip: int = 0, limit: int = 50,
+    db: Session,
+    skip: int = 0,
+    limit: int = 50,
 ) -> tuple[List[models.SocialChannel], int]:
     """List all active social channels."""
     query = db.query(models.SocialChannel).filter(models.SocialChannel.deleted_at.is_(None))
@@ -741,9 +725,7 @@ def list_admin_socials(
     return query.offset(skip).limit(limit).all(), total
 
 
-def create_admin_social(
-    db: Session, platform: str, url: str, is_visible: bool = True
-) -> models.SocialChannel:
+def create_admin_social(db: Session, platform: str, url: str, is_visible: bool = True) -> models.SocialChannel:
     """Create a new social channel."""
     ch = models.SocialChannel(platform=platform, url=url, is_visible=is_visible)
     db.add(ch)
@@ -760,10 +742,14 @@ def update_admin_social(
     is_visible: Optional[bool] = None,
 ) -> Optional[models.SocialChannel]:
     """Update an active social channel."""
-    ch = db.query(models.SocialChannel).filter(
-        models.SocialChannel.id == social_id,
-        models.SocialChannel.deleted_at.is_(None),
-    ).first()
+    ch = (
+        db.query(models.SocialChannel)
+        .filter(
+            models.SocialChannel.id == social_id,
+            models.SocialChannel.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not ch:
         return None
     if platform is not None:
@@ -779,10 +765,14 @@ def update_admin_social(
 
 def delete_admin_social(db: Session, social_id: Any) -> bool:
     """Soft-delete a social channel."""
-    ch = db.query(models.SocialChannel).filter(
-        models.SocialChannel.id == social_id,
-        models.SocialChannel.deleted_at.is_(None),
-    ).first()
+    ch = (
+        db.query(models.SocialChannel)
+        .filter(
+            models.SocialChannel.id == social_id,
+            models.SocialChannel.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not ch:
         return False
     ch.deleted_at = _utcnow()
@@ -802,14 +792,16 @@ def list_admin_variables(db: Session, skip: int = 0, limit: int = 50) -> tuple[L
     return query.offset(skip).limit(limit).all(), total
 
 
-def set_admin_variable(
-    db: Session, key: str, value: str
-) -> models.SystemVariable:
+def set_admin_variable(db: Session, key: str, value: str) -> models.SystemVariable:
     """Create or update an active system variable (upsert)."""
-    var = db.query(models.SystemVariable).filter(
-        models.SystemVariable.key == key,
-        models.SystemVariable.deleted_at.is_(None),
-    ).first()
+    var = (
+        db.query(models.SystemVariable)
+        .filter(
+            models.SystemVariable.key == key,
+            models.SystemVariable.deleted_at.is_(None),
+        )
+        .first()
+    )
     if var:
         var.value = value
     else:
@@ -822,10 +814,14 @@ def set_admin_variable(
 
 def delete_admin_variable(db: Session, key: str) -> bool:
     """Soft-delete a system variable by key."""
-    var = db.query(models.SystemVariable).filter(
-        models.SystemVariable.key == key,
-        models.SystemVariable.deleted_at.is_(None),
-    ).first()
+    var = (
+        db.query(models.SystemVariable)
+        .filter(
+            models.SystemVariable.key == key,
+            models.SystemVariable.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not var:
         return False
     # Free the unique key so a new variable with the same key can be created.
@@ -842,14 +838,13 @@ def delete_admin_variable(db: Session, key: str) -> bool:
 
 
 def list_admin_personas(
-    db: Session, sede_id: Any, skip: int = 0, limit: int = 50,
+    db: Session,
+    sede_id: Any,
+    skip: int = 0,
+    limit: int = 50,
 ) -> tuple[List[Persona], int]:
     """List personas filtered by admin's sede."""
-    query = (
-        db.query(Persona)
-        .filter(Persona.sede_id == sede_id)
-        .order_by(Persona.created_at.desc())
-    )
+    query = db.query(Persona).filter(Persona.sede_id == sede_id).order_by(Persona.created_at.desc())
     total = query.count()
     return query.offset(skip).limit(limit).all(), total
 
@@ -862,12 +857,7 @@ def list_admin_personas(
 def get_admin_stats(db: Session) -> Dict[str, Any]:
     """Return aggregated dashboard metrics."""
     total_personas = db.query(func.count(Persona.id)).scalar() or 0
-    total_usuarios_activos = (
-        db.query(func.count(Usuario.id))
-        .filter(Usuario.is_active.is_(True))
-        .scalar()
-        or 0
-    )
+    total_usuarios_activos = db.query(func.count(Usuario.id)).filter(Usuario.is_active.is_(True)).scalar() or 0
 
     now = _utcnow()
     first_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -907,12 +897,7 @@ def get_admin_stats(db: Session) -> Dict[str, Any]:
         .scalar()
         or 0
     )
-    new_personas = (
-        db.query(func.count(Persona.id))
-        .filter(Persona.created_at >= first_of_month)
-        .scalar()
-        or 0
-    )
+    new_personas = db.query(func.count(Persona.id)).filter(Persona.created_at >= first_of_month).scalar() or 0
 
     return {
         "personas": total_personas,
@@ -931,7 +916,9 @@ def get_admin_stats(db: Session) -> Dict[str, Any]:
 
 
 def list_all_comments(
-    db: Session, skip: int = 0, limit: int = 50,
+    db: Session,
+    skip: int = 0,
+    limit: int = 50,
 ) -> tuple[List[Dict[str, Any]], int]:
     """List all forum comments for moderation."""
     query = db.query(models.ForumComment).order_by(models.ForumComment.created_at.desc())
@@ -945,40 +932,20 @@ def list_all_comments(
 
     users_map = {}
     if author_ids:
-        users_map = {
-            u.id: u
-            for u in db.query(models.User).filter(
-                models.User.id.in_(author_ids)
-            ).all()
-        }
+        users_map = {u.id: u for u in db.query(models.User).filter(models.User.id.in_(author_ids)).all()}
     threads_map = {}
     if thread_ids:
         threads_map = {
-            t.id: t
-            for t in db.query(models.ForumThread).filter(
-                models.ForumThread.id.in_(thread_ids)
-            ).all()
+            t.id: t for t in db.query(models.ForumThread).filter(models.ForumThread.id.in_(thread_ids)).all()
         }
 
     return [
         {
             "id": c.id,
-            "author": (
-                users_map[c.author_id].username
-                if c.author_id in users_map
-                else "Anónimo"
-            ),
+            "author": (users_map[c.author_id].username if c.author_id in users_map else "Anónimo"),
             "text": c.content,
-            "context": (
-                threads_map[c.thread_id].title
-                if c.thread_id in threads_map
-                else "General"
-            ),
-            "type": (
-                threads_map[c.thread_id].category
-                if c.thread_id in threads_map
-                else "Foro"
-            ),
+            "context": (threads_map[c.thread_id].title if c.thread_id in threads_map else "General"),
+            "type": (threads_map[c.thread_id].category if c.thread_id in threads_map else "Foro"),
             "created_at": c.created_at.isoformat(),
         }
         for c in comments
@@ -987,9 +954,7 @@ def list_all_comments(
 
 def delete_admin_comment(db: Session, comment_id: Any) -> bool:
     """Soft-delete a comment."""
-    comment = db.query(models.ForumComment).filter(
-        models.ForumComment.id == comment_id
-    ).first()
+    comment = db.query(models.ForumComment).filter(models.ForumComment.id == comment_id).first()
     if not comment:
         return False
     comment.deleted_at = _utcnow()
@@ -1003,7 +968,9 @@ def delete_admin_comment(db: Session, comment_id: Any) -> bool:
 
 
 def list_admin_milestones(
-    db: Session, skip: int = 0, limit: int = 50,
+    db: Session,
+    skip: int = 0,
+    limit: int = 50,
 ) -> tuple[List[Dict[str, Any]], int]:
     """List spiritual milestones with award counts."""
     badge_counts = dict(
@@ -1070,7 +1037,9 @@ def award_milestone(
 
 
 def list_admin_donation_categories(
-    db: Session, skip: int = 0, limit: int = 50,
+    db: Session,
+    skip: int = 0,
+    limit: int = 50,
 ) -> tuple[List[models.DonationCategory], int]:
     """List active donation categories."""
     query = db.query(models.DonationCategory).filter(models.DonationCategory.deleted_at.is_(None))
@@ -1082,9 +1051,7 @@ def create_admin_donation_category(
     db: Session, name: str, description: Optional[str] = None
 ) -> models.DonationCategory:
     """Create a new donation category."""
-    cat = models.DonationCategory(
-        name=name.strip(), description=description, color_code="blue"
-    )
+    cat = models.DonationCategory(name=name.strip(), description=description, color_code="blue")
     db.add(cat)
     db.commit()
     db.refresh(cat)
@@ -1100,10 +1067,14 @@ def update_admin_donation_category(
     is_active: Optional[bool] = None,
 ) -> Optional[models.DonationCategory]:
     """Update an active donation category."""
-    cat = db.query(models.DonationCategory).filter(
-        models.DonationCategory.id == category_id,
-        models.DonationCategory.deleted_at.is_(None),
-    ).first()
+    cat = (
+        db.query(models.DonationCategory)
+        .filter(
+            models.DonationCategory.id == category_id,
+            models.DonationCategory.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not cat:
         return None
     if name is not None:
@@ -1121,10 +1092,14 @@ def update_admin_donation_category(
 
 def delete_admin_donation_category(db: Session, category_id: Any) -> bool:
     """Soft-delete a donation category."""
-    cat = db.query(models.DonationCategory).filter(
-        models.DonationCategory.id == category_id,
-        models.DonationCategory.deleted_at.is_(None),
-    ).first()
+    cat = (
+        db.query(models.DonationCategory)
+        .filter(
+            models.DonationCategory.id == category_id,
+            models.DonationCategory.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not cat:
         return False
     cat.deleted_at = _utcnow()
@@ -1138,7 +1113,9 @@ def delete_admin_donation_category(db: Session, category_id: Any) -> bool:
 
 
 def list_admin_automations(
-    db: Session, skip: int = 0, limit: int = 50,
+    db: Session,
+    skip: int = 0,
+    limit: int = 50,
 ) -> tuple[List[models.AutomationRule], int]:
     """List all automation rules."""
     query = db.query(models.AutomationRule).order_by(models.AutomationRule.name)
@@ -1165,17 +1142,19 @@ def _generate_password(length: int = 12) -> str:
             return pw
 
 
-def provision_personas_sin_cuenta(
-    db: Session, batch_limit: int = 50
-) -> Dict[str, Any]:
+def provision_personas_sin_cuenta(db: Session, batch_limit: int = 50) -> Dict[str, Any]:
     """Create accounts for persona records without an auth_user.
 
     Uses ORM queries instead of raw SQL. Max ``batch_limit`` per call.
     """
-    default_role = db.query(RolPlataforma).filter(
-        RolPlataforma.nombre == "MIEMBRO",
-        RolPlataforma.deleted_at.is_(None),
-    ).first()
+    default_role = (
+        db.query(RolPlataforma)
+        .filter(
+            RolPlataforma.nombre == "MIEMBRO",
+            RolPlataforma.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not default_role:
         raise ValueError("Rol MIEMBRO no configurado")
 
@@ -1220,32 +1199,21 @@ def provision_personas_sin_cuenta(
             skipped += 1
             continue
 
-        email_prefix = (
-            persona.email.split("@")[0]
-            .lower()
-            .replace(".", "_")
-            .replace("-", "_")
-        )
+        email_prefix = persona.email.split("@")[0].lower().replace(".", "_").replace("-", "_")
         base_username = email_prefix[:60]
         username = base_username
 
         # Resolve username collision
         attempt = 0
         while True:
-            exists = (
-                db.query(Usuario)
-                .filter(Usuario.username == username)
-                .first()
-            )
+            exists = db.query(Usuario).filter(Usuario.username == username).first()
             if not exists:
                 break
             attempt += 1
             username = f"{base_username[:55]}_{attempt}"
 
         # Check email collision
-        email_exists = (
-            db.query(Usuario).filter(Usuario.email == persona.email).first()
-        )
+        email_exists = db.query(Usuario).filter(Usuario.email == persona.email).first()
         if email_exists:
             skipped += 1
             continue
@@ -1286,7 +1254,6 @@ def provision_personas_sin_cuenta(
         "errors": errors,
         "accounts": accounts_created,
         "message": (
-            f"{created} cuentas creadas. {skipped} omitidas. "
-            "Distribuir contraseñas temporales a cada usuario."
+            f"{created} cuentas creadas. {skipped} omitidas. Distribuir contraseñas temporales a cada usuario."
         ),
     }

@@ -14,6 +14,7 @@ Convenciones:
 - db_session es function-scoped → no necesitamos try/finally para
   mutaciones a la BD.
 """
+
 from __future__ import annotations
 
 import datetime as _dt
@@ -175,12 +176,14 @@ def full(db_session, client):
     db_session.flush()
 
     for p in personas[:4]:
-        db_session.add(HistorialEmbudo(
-            persona_id=p.id,
-            rol_anterior="Visitante",
-            rol_nuevo="Miembro",
-            fecha_cambio=datetime(2026, 6, 15, tzinfo=timezone.utc),
-        ))
+        db_session.add(
+            HistorialEmbudo(
+                persona_id=p.id,
+                rol_anterior="Visitante",
+                rol_nuevo="Miembro",
+                fecha_cambio=datetime(2026, 6, 15, tzinfo=timezone.utc),
+            )
+        )
     db_session.flush()
 
     db_session.commit()
@@ -212,24 +215,27 @@ def full(db_session, client):
 
 
 class TestSharedPureHelpers:
-
     def test_normalize_attendance_status_present(self):
         from backend.api.evangelism_shared import normalize_attendance_status
+
         for v in ["ASISTIO", "Presente", "present", "presente", "primera_vez", "first_time"]:
             assert normalize_attendance_status(v) == "present", v
 
     def test_normalize_attendance_status_absent(self):
         from backend.api.evangelism_shared import normalize_attendance_status
+
         for v in ["FALTO", "Ausente", "absent", "ausente"]:
             assert normalize_attendance_status(v) == "absent", v
 
     def test_normalize_attendance_status_excused(self):
         from backend.api.evangelism_shared import normalize_attendance_status
+
         for v in ["EXCUSA", "Excusa", "excusa"]:
             assert normalize_attendance_status(v) == "excused", v
 
     def test_normalize_attendance_status_unknown(self):
         from backend.api.evangelism_shared import normalize_attendance_status
+
         assert normalize_attendance_status("xyz") == "xyz"
         assert normalize_attendance_status("") == ""
         assert normalize_attendance_status(None) == ""
@@ -240,6 +246,7 @@ class TestSharedPureHelpers:
             is_attended_status,
             is_excused_status,
         )
+
         assert is_attended_status("ASISTIO") is True
         assert is_attended_status("primera_vez") is True
         assert is_attended_status("FALTO") is False
@@ -251,19 +258,23 @@ class TestSharedPureHelpers:
 
     def test_parse_session_date_date(self):
         from backend.api.evangelism_shared import parse_session_date
+
         assert parse_session_date(_dt.date(2026, 6, 1)) == _dt.date(2026, 6, 1)
 
     def test_parse_session_date_datetime(self):
         from backend.api.evangelism_shared import parse_session_date
+
         assert parse_session_date(_dt.datetime(2026, 6, 15, 12, 0)) == _dt.date(2026, 6, 15)
 
     def test_parse_session_date_string_iso(self):
         from backend.api.evangelism_shared import parse_session_date
+
         assert parse_session_date("2026-06-01") == _dt.date(2026, 6, 1)
         assert parse_session_date("2026-06-01T12:30:00") == _dt.date(2026, 6, 1)
 
     def test_parse_session_date_invalid(self):
         from backend.api.evangelism_shared import parse_session_date
+
         with pytest.raises(ValueError):
             parse_session_date("bad-date")
         with pytest.raises(ValueError):
@@ -273,11 +284,14 @@ class TestSharedPureHelpers:
 
     def test_normalize_role_scope_payload_role(self):
         from backend.api.evangelism_shared import normalize_role_scope_payload
-        result = normalize_role_scope_payload({
-            "target_audience": "ROLE",
-            "target_role_ids": [_uuid_str(), _uuid_str(), "invalid"],
-            "target_persona_ids": [_uuid_str()],
-        })
+
+        result = normalize_role_scope_payload(
+            {
+                "target_audience": "ROLE",
+                "target_role_ids": [_uuid_str(), _uuid_str(), "invalid"],
+                "target_persona_ids": [_uuid_str()],
+            }
+        )
         assert isinstance(result["target_role_ids"], list)
         assert len(result["target_role_ids"]) == 2
         assert result["target_role_id"] == result["target_role_ids"][0]
@@ -285,6 +299,7 @@ class TestSharedPureHelpers:
 
     def test_normalize_role_scope_payload_role_single(self):
         from backend.api.evangelism_shared import normalize_role_scope_payload
+
         rid = _uuid_str()
         result = normalize_role_scope_payload({"target_audience": "ROLE", "target_role_id": rid})
         assert str(result["target_role_id"]) == rid
@@ -292,16 +307,20 @@ class TestSharedPureHelpers:
 
     def test_normalize_role_scope_payload_manual(self):
         from backend.api.evangelism_shared import normalize_role_scope_payload
+
         pid = _uuid_str()
-        result = normalize_role_scope_payload({
-            "target_audience": "MANUAL",
-            "target_persona_ids": [pid, pid, "  "],
-        })
+        result = normalize_role_scope_payload(
+            {
+                "target_audience": "MANUAL",
+                "target_persona_ids": [pid, pid, "  "],
+            }
+        )
         assert result["target_persona_ids"] == [pid]
         assert result["target_role_id"] is None
 
     def test_normalize_role_scope_payload_other(self):
         from backend.api.evangelism_shared import normalize_role_scope_payload
+
         result = normalize_role_scope_payload({"target_audience": "ALL"})
         assert result["target_role_id"] is None
         assert result["target_role_ids"] is None
@@ -309,6 +328,7 @@ class TestSharedPureHelpers:
 
     def test_channel_label(self):
         from backend.api.evangelism_shared import _channel_label
+
         assert _channel_label("whatsapp") == "WhatsApp"
         assert _channel_label("EMAIL") == "Email"
         assert _channel_label("sms") == "SMS"
@@ -317,9 +337,12 @@ class TestSharedPureHelpers:
 
     def test_persona_payload_minimal(self, db_session):
         from backend.api.evangelism_shared import persona_payload
+
         _seed_admin(db_session)
         p = models.Persona(
-            first_name="Min", last_name="User", sede_id=_seed_admin(db_session)[2].id,
+            first_name="Min",
+            last_name="User",
+            sede_id=_seed_admin(db_session)[2].id,
         )
         db_session.add(p)
         db_session.commit()
@@ -329,17 +352,21 @@ class TestSharedPureHelpers:
         assert payload["attended"] is True
         assert payload["es_primera_vez"] is False
         out = persona_payload(
-            p, attended=False, scanned_at=datetime(2026, 6, 1, tzinfo=timezone.utc),
+            p,
+            attended=False,
+            scanned_at=datetime(2026, 6, 1, tzinfo=timezone.utc),
         )
         assert out["scanned_at"] is not None
 
     def test_utc_now_is_aware(self):
         from backend.api.evangelism_shared import utc_now
+
         now = utc_now()
         assert now.tzinfo is not None
 
     def test_normalize_attendance_status_primera_vez(self):
         from backend.api.evangelism_shared import normalize_attendance_status
+
         # Asegurar que 'primera_vez' mapea a 'present' (es presente en primera vez)
         assert normalize_attendance_status("primera_vez") == "present"
         assert normalize_attendance_status("first_time") == "present"
@@ -350,11 +377,13 @@ class TestSharedPureHelpers:
 # field_validator absorbe variantes antiguas sin 422.
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestStatusAsistenciaCanonicoSchema:
     """Validar el enum Pydantic canónico de estado de asistencia."""
 
     def test_canonical_values_present(self):
         from backend.schemas.evangelism import StatusAsistenciaCanonico
+
         assert StatusAsistenciaCanonico.PRESENT.value == "present"
         assert StatusAsistenciaCanonico.ABSENT.value == "absent"
         assert StatusAsistenciaCanonico.EXCUSED.value == "excused"
@@ -364,6 +393,7 @@ class TestStatusAsistenciaCanonicoSchema:
         """Clientes antiguos enviando 'ASISTIO', 'Presente', 'primera_vez', etc.
         no rompen con 422; el field_validator los normaliza al enum."""
         from backend.schemas.evangelism import AsistenciaGrupoCreate, StatusAsistenciaCanonico
+
         variants = [
             ("ASISTIO", StatusAsistenciaCanonico.PRESENT),
             ("Presente", StatusAsistenciaCanonico.PRESENT),
@@ -378,9 +408,7 @@ class TestStatusAsistenciaCanonicoSchema:
             ("excused", StatusAsistenciaCanonico.EXCUSED),
         ]
         for raw, expected in variants:
-            schema = AsistenciaGrupoCreate.model_validate(
-                {"persona_id": _uuid_str(), "status": raw}
-            )
+            schema = AsistenciaGrupoCreate.model_validate({"persona_id": _uuid_str(), "status": raw})
             assert schema.status == expected, (
                 f"Variante {raw!r} esperaba {expected!r} pero schema normalizó a {schema.status!r}"
             )
@@ -389,14 +417,11 @@ class TestStatusAsistenciaCanonicoSchema:
         """Valor que no mapea a ningún miembro del enum no rompe con
         422: cae a PRESENT (semántica conservadora del frontend)."""
         from backend.schemas.evangelism import AsistenciaGrupoCreate, StatusAsistenciaCanonico
-        schema = AsistenciaGrupoCreate.model_validate(
-            {"persona_id": _uuid_str(), "status": "xyz_unknown_legacy"}
-        )
+
+        schema = AsistenciaGrupoCreate.model_validate({"persona_id": _uuid_str(), "status": "xyz_unknown_legacy"})
         assert schema.status == StatusAsistenciaCanonico.PRESENT
 
-    def test_submit_attendance_endpoint_absorbe_old_status_string(
-        self, full, db_session
-    ):
+    def test_submit_attendance_endpoint_absorbe_old_status_string(self, full, db_session):
         """POST /sessions/{id}/attendance con status antiguo string
         'ASISTIO'/'primera_vez' (en español) se procesa correctamente
         gracias al field_validator del schema."""
@@ -424,6 +449,7 @@ class TestStatusAsistenciaCanonicoSchema:
 # AbortController. El endpoint debe filtrar por sede, respetar el
 # mínimo de 3 caracteres y devolver resultados normalizados.
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestPersonaSearchEndpoint:
     def test_search_requires_min_three_chars(self, full):
@@ -466,6 +492,7 @@ class TestPersonaSearchEndpoint:
 # ``?habilitar_inmediatamente=True`` por defecto.
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestGenerateSessionsHabilitarParam:
     def test_default_habilita_sesiones_generadas(self, full, db_session):
         """Por defecto las sesiones nacen HABILITADO y el líder
@@ -480,9 +507,7 @@ class TestGenerateSessionsHabilitarParam:
             .all()
         ]
         if existing_ids:
-            db_session.query(SesionGrupo).filter(
-                SesionGrupo.id.in_(existing_ids)
-            ).update(
+            db_session.query(SesionGrupo).filter(SesionGrupo.id.in_(existing_ids)).update(
                 {SesionGrupo.deleted_at: datetime.now(timezone.utc)},
                 synchronize_session=False,
             )
@@ -511,9 +536,7 @@ class TestGenerateSessionsHabilitarParam:
             .all()
         ]
         if existing_ids:
-            db_session.query(SesionGrupo).filter(
-                SesionGrupo.id.in_(existing_ids)
-            ).update(
+            db_session.query(SesionGrupo).filter(SesionGrupo.id.in_(existing_ids)).update(
                 {SesionGrupo.deleted_at: datetime.now(timezone.utc)},
                 synchronize_session=False,
             )
@@ -551,10 +574,15 @@ class TestModelHybridProperties:
     def test_grupo_status_getter_setter(self, db_session):
         _seed_admin(db_session)
         g = GrupoEvangelismo(
-            nombre="H", sede_id=db_session.query(models.Sede).first().id,
-            ubicacion="u", capacidad=10, activo=True,
+            nombre="H",
+            sede_id=db_session.query(models.Sede).first().id,
+            ubicacion="u",
+            capacidad=10,
+            activo=True,
         )
-        db_session.add(g); db_session.commit(); db_session.refresh(g)
+        db_session.add(g)
+        db_session.commit()
+        db_session.refresh(g)
         assert g.status == "active"
         g.status = "inactive"
         assert g.activo is False
@@ -567,14 +595,24 @@ class TestModelHybridProperties:
         _seed_admin(db_session)
         sede = db_session.query(models.Sede).first()
         p = models.Persona(
-            first_name="L", last_name="P", church_role="Líder", sede_id=sede.id,
+            first_name="L",
+            last_name="P",
+            church_role="Líder",
+            sede_id=sede.id,
         )
-        db_session.add(p); db_session.flush()
+        db_session.add(p)
+        db_session.flush()
         g = GrupoEvangelismo(
-            nombre="G", sede_id=sede.id, ubicacion="u",
-            capacidad=10, lider_persona_id=p.id, activo=True,
+            nombre="G",
+            sede_id=sede.id,
+            ubicacion="u",
+            capacidad=10,
+            lider_persona_id=p.id,
+            activo=True,
         )
-        db_session.add(g); db_session.commit(); db_session.refresh(g)
+        db_session.add(g)
+        db_session.commit()
+        db_session.refresh(g)
         # Getter usa la propiedad hybrida + existe el lider → devuelve concatenación
         assert g.leader_name == "L P"
         # Setter persiste valor custom
@@ -582,7 +620,8 @@ class TestModelHybridProperties:
         assert g._leader_name == "Carlos"
         # Sin lider_persona_id → getter retorna _leader_name
         g.lider_persona_id = None
-        db_session.commit(); db_session.refresh(g)
+        db_session.commit()
+        db_session.refresh(g)
         # Si accedemos al hybrid property, debe devolver _leader_name o ""
         assert g.leader_name == "Carlos" or g.leader_name == ""
 
@@ -592,19 +631,23 @@ class TestModelHybridProperties:
         personas = []
         for i in range(4):
             p = models.Persona(first_name=f"P{i}", last_name="T", sede_id=sede.id)
-            db_session.add(p); personas.append(p)
+            db_session.add(p)
+            personas.append(p)
         db_session.flush()
         g = GrupoEvangelismo(nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True)
-        db_session.add(g); db_session.flush()
+        db_session.add(g)
+        db_session.flush()
         # 2 activos + 1 activo + 1 soft-deleted
         for i, p in enumerate(personas):
-            db_session.add(ParticipanteGrupo(
-                grupo_id=g.id,
-                persona_id=p.id,
-                rol_base="Miembro",
-                activo=(i < 3),
-                deleted_at=(datetime.now(timezone.utc) if i == 2 else None),
-            ))
+            db_session.add(
+                ParticipanteGrupo(
+                    grupo_id=g.id,
+                    persona_id=p.id,
+                    rol_base="Miembro",
+                    activo=(i < 3),
+                    deleted_at=(datetime.now(timezone.utc) if i == 2 else None),
+                )
+            )
         db_session.flush()
         # Cuenta solo activos que no estén soft-deleted
         assert g.personas_count == 2
@@ -613,7 +656,9 @@ class TestModelHybridProperties:
         _seed_admin(db_session)
         sede = db_session.query(models.Sede).first()
         g = GrupoEvangelismo(nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True)
-        db_session.add(g); db_session.commit(); db_session.refresh(g)
+        db_session.add(g)
+        db_session.commit()
+        db_session.refresh(g)
         assert g.end_time is None
         g.end_time = "21:00"
         assert g.end_time == "21:00"
@@ -627,7 +672,8 @@ class TestModelHybridProperties:
             fecha_sesion=datetime(2026, 6, 1, tzinfo=timezone.utc),
             estado="PENDIENTE",
         )
-        db_session.add_all([p, s]); db_session.flush()
+        db_session.add_all([p, s])
+        db_session.flush()
         for estado, valor, pv in [
             ("ASISTIO", "present", False),
             ("Presente", "present", False),
@@ -637,13 +683,18 @@ class TestModelHybridProperties:
             ("EXCUSA", "excused", False),
         ]:
             a = MAsistencia(
-                sesion_id=s.id, persona_id=p.id, estado=estado, es_primera_vez=pv,
+                sesion_id=s.id,
+                persona_id=p.id,
+                estado=estado,
+                es_primera_vez=pv,
             )
-            db_session.add(a); db_session.flush()
+            db_session.add(a)
+            db_session.flush()
             assert a.status == valor, (estado, valor, a.status)
 
         a2 = MAsistencia(sesion_id=s.id, persona_id=p.id, estado="ASISTIO")
-        db_session.add(a2); db_session.flush()
+        db_session.add(a2)
+        db_session.flush()
         a2.status = "absent"
         assert a2.estado == "FALTO"
         a2.status = "first_time"
@@ -660,12 +711,15 @@ class TestModelHybridProperties:
         sede = db_session.query(models.Sede).first()
         p = models.Persona(first_name="A", last_name="B", sede_id=sede.id)
         s = SesionGrupo(
-            grupo_id=uuid.uuid4(), fecha_sesion=datetime(2026, 6, 1, tzinfo=timezone.utc),
+            grupo_id=uuid.uuid4(),
+            fecha_sesion=datetime(2026, 6, 1, tzinfo=timezone.utc),
             estado="PENDIENTE",
         )
-        db_session.add_all([p, s]); db_session.flush()
+        db_session.add_all([p, s])
+        db_session.flush()
         a = MAsistencia(sesion_id=s.id, persona_id=p.id, estado="ASISTIO")
-        db_session.add(a); db_session.flush()
+        db_session.add(a)
+        db_session.flush()
         a.attended = False
         assert a.estado == "Ausente"
         a.attended = True
@@ -712,9 +766,11 @@ class TestGenerateStrategySessions:
             sede_id=full["sede"].id,
             categoria_id=full["categoria"].id,
         )
-        db_session.add(est); db_session.commit()
+        db_session.add(est)
+        db_session.commit()
         resp = full["c"].post(
-            f"/api/evangelism/strategies/{est.id}/generate-sessions", headers=full["h"],
+            f"/api/evangelism/strategies/{est.id}/generate-sessions",
+            headers=full["h"],
         )
         assert resp.status_code == 400
 
@@ -732,17 +788,20 @@ class TestGenerateStrategySessions:
             hora_reunion="19:00",
             activa=True,
         )
-        db_session.add(est); db_session.commit()
+        db_session.add(est)
+        db_session.commit()
         # Reasignar un grupo a esta estrategia
         g = full["grupos"][0]
         g.estrategia_id = est.id
         db_session.commit()
         resp = full["c"].post(
-            f"/api/evangelism/strategies/{est.id}/generate-sessions", headers=full["h"],
+            f"/api/evangelism/strategies/{est.id}/generate-sessions",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         # Verifica que la fecha returned sea un lunes (weekday 0)
         from datetime import datetime as _d
+
         start_str = resp.json().get("start", "")
         if start_str:
             d = _d.fromisoformat(start_str.replace("Z", "+00:00"))
@@ -761,12 +820,14 @@ class TestGenerateStrategySessions:
             fecha_fin=datetime(2026, 6, 30, tzinfo=timezone.utc),
             activa=True,
         )
-        db_session.add(est); db_session.commit()
+        db_session.add(est)
+        db_session.commit()
         for g in full["grupos"]:
             g.estrategia_id = est.id
         db_session.commit()
         resp = full["c"].post(
-            f"/api/evangelism/strategies/{est.id}/generate-sessions", headers=full["h"],
+            f"/api/evangelism/strategies/{est.id}/generate-sessions",
+            headers=full["h"],
         )
         assert resp.status_code == 400, resp.text
 
@@ -780,41 +841,56 @@ class TestPhasesProject:
     """Valida N1 tasks generados al crear/actualizar estrategia evento_masivo."""
 
     def test_create_strategy_evento_masivo_con_phases(self, full, db_session):
-        resp = full["c"].post("/api/evangelism/strategies", json={
-            "name": "Congreso Anual",
-            "description": "Evento grande",
-            "typology": "evento_masivo",
-            "strategy_type": "congreso",
-            "event_format": "MULTILOCACION",
-            "phases": [
-                {"name": "Pre-producción", "type": "prep",
-                 "start_date": "2026-08-01", "end_date": "2026-08-15"},
-                {"name": "Ejecución", "type": "main",
-                 "start_date": "2026-09-01", "end_date": "2026-09-30"},
-            ],
-            "start_date": "2026-08-01",
-            "status": "active",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/strategies",
+            json={
+                "name": "Congreso Anual",
+                "description": "Evento grande",
+                "typology": "evento_masivo",
+                "strategy_type": "congreso",
+                "event_format": "MULTILOCACION",
+                "phases": [
+                    {"name": "Pre-producción", "type": "prep", "start_date": "2026-08-01", "end_date": "2026-08-15"},
+                    {"name": "Ejecución", "type": "main", "start_date": "2026-09-01", "end_date": "2026-09-30"},
+                ],
+                "start_date": "2026-08-01",
+                "status": "active",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
         assert resp.json()["name"] == "Congreso Anual"
         # Verificar Project + ProjectTask
         from backend.models_projects import Project, ProjectTask
-        projects = db_session.query(Project).filter(
-            Project.title.like("[MASIVO] Congreso Anual"),
-        ).all()
+
+        projects = (
+            db_session.query(Project)
+            .filter(
+                Project.title.like("[MASIVO] Congreso Anual"),
+            )
+            .all()
+        )
         assert len(projects) >= 1
-        tasks = db_session.query(ProjectTask).filter(
-            ProjectTask.title.like("[N1]%"),
-        ).all()
+        tasks = (
+            db_session.query(ProjectTask)
+            .filter(
+                ProjectTask.title.like("[N1]%"),
+            )
+            .all()
+        )
         assert len(tasks) >= 2
 
     def test_create_strategy_evento_masivo_sin_phases(self, full):
         """evento_masivo sin phases - NO crea Project."""
-        resp = full["c"].post("/api/evangelism/strategies", json={
-            "name": "Sin Fases",
-            "typology": "evento_masivo",
-            "start_date": "2026-09-01",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/strategies",
+            json={
+                "name": "Sin Fases",
+                "typology": "evento_masivo",
+                "start_date": "2026-09-01",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
 
     def test_update_strategy_con_phases(self, full):
@@ -826,8 +902,7 @@ class TestPhasesProject:
                 "typology": "evento_masivo",
                 "strategy_type": "retiro",
                 "phases": [
-                    {"name": "Fase única", "type": "general",
-                     "start_date": "2026-09-01", "end_date": "2026-09-05"},
+                    {"name": "Fase única", "type": "general", "start_date": "2026-09-01", "end_date": "2026-09-05"},
                 ],
             },
             headers=full["h"],
@@ -882,7 +957,8 @@ class TestRolesYExcusas:
 
     def test_list_strategy_roles_404(self, full):
         resp = full["c"].get(
-            f"/api/evangelism/strategies/{uuid.uuid4()}/roles", headers=full["h"],
+            f"/api/evangelism/strategies/{uuid.uuid4()}/roles",
+            headers=full["h"],
         )
         assert resp.status_code == 404
 
@@ -955,7 +1031,8 @@ class TestRolesYExcusas:
         est = full["estrategia"]
         role_id = full["roles_personalizados"][2].id
         resp = full["c"].delete(
-            f"/api/evangelism/strategies/{est.id}/roles/{role_id}", headers=full["h"],
+            f"/api/evangelism/strategies/{est.id}/roles/{role_id}",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         assert resp.json() == {"ok": True}
@@ -978,13 +1055,17 @@ class TestRolesYExcusas:
 
     def test_create_motivo_excusa(self, full):
         resp = full["c"].post(
-            "/api/evangelism/excuses", json={"descripcion": "Viaje"}, headers=full["h"],
+            "/api/evangelism/excuses",
+            json={"descripcion": "Viaje"},
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
 
     def test_update_motivo_excusa(self, full, db_session):
         me = MotivoExcusa(descripcion="MOTIVO_TEST", es_del_sistema=False, activo=True)
-        db_session.add(me); db_session.commit(); db_session.refresh(me)
+        db_session.add(me)
+        db_session.commit()
+        db_session.refresh(me)
         resp = full["c"].patch(
             f"/api/evangelism/excuses/{me.id}",
             json={"descripcion": "MOTIVO_TEST_V2", "activo": False},
@@ -1002,7 +1083,9 @@ class TestRolesYExcusas:
 
     def test_update_motivo_excusa_sistema_bloqueado(self, full, db_session):
         me = MotivoExcusa(descripcion="SISTEMA_BLOQ", es_del_sistema=True, activo=True)
-        db_session.add(me); db_session.commit(); db_session.refresh(me)
+        db_session.add(me)
+        db_session.commit()
+        db_session.refresh(me)
         resp = full["c"].patch(
             f"/api/evangelism/excuses/{me.id}",
             json={"descripcion": "INTENTO_MODIFICAR_SISTEMA", "activo": True},
@@ -1012,13 +1095,17 @@ class TestRolesYExcusas:
 
     def test_delete_motivo_excusa(self, full, db_session):
         me = MotivoExcusa(descripcion="BORRABLE", es_del_sistema=False, activo=True)
-        db_session.add(me); db_session.commit(); db_session.refresh(me)
+        db_session.add(me)
+        db_session.commit()
+        db_session.refresh(me)
         resp = full["c"].delete(f"/api/evangelism/excuses/{me.id}", headers=full["h"])
         assert resp.status_code == 200, resp.text
 
     def test_delete_motivo_excusa_sistema_bloqueado(self, full, db_session):
         me = MotivoExcusa(descripcion="SISTEMA_X", es_del_sistema=True, activo=True)
-        db_session.add(me); db_session.commit(); db_session.refresh(me)
+        db_session.add(me)
+        db_session.commit()
+        db_session.refresh(me)
         resp = full["c"].delete(f"/api/evangelism/excuses/{me.id}", headers=full["h"])
         assert resp.status_code == 404
 
@@ -1044,7 +1131,8 @@ class TestGruposEndpoints:
     def test_list_grupos_filtro_estrategia(self, full):
         est = full["estrategia"]
         resp = full["c"].get(
-            f"/api/evangelism/grupos?estrategia_id={est.id}", headers=full["h"],
+            f"/api/evangelism/grupos?estrategia_id={est.id}",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         assert len(resp.json()) >= 2
@@ -1081,14 +1169,20 @@ class TestGruposEndpoints:
 
     def test_get_grupo_404(self, full):
         resp = full["c"].get(
-            f"/api/evangelism/grupos/{uuid.uuid4()}", headers=full["h"],
+            f"/api/evangelism/grupos/{uuid.uuid4()}",
+            headers=full["h"],
         )
         assert resp.status_code == 404
 
     def test_create_grupo_minimo(self, full):
-        resp = full["c"].post("/api/evangelism/grupos", json={
-            "name": "Grupo Nuevo", "zone": "Centro",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos",
+            json={
+                "name": "Grupo Nuevo",
+                "zone": "Centro",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
 
     def test_update_grupo_basico(self, full):
@@ -1126,14 +1220,16 @@ class TestGruposEndpoints:
 
     def test_delete_grupo_404(self, full):
         resp = full["c"].delete(
-            f"/api/evangelism/grupos/{uuid.uuid4()}", headers=full["h"],
+            f"/api/evangelism/grupos/{uuid.uuid4()}",
+            headers=full["h"],
         )
         assert resp.status_code == 404
 
     def test_get_grupo_strategy_metrics(self, full):
         est = full["estrategia"]
         resp = full["c"].get(
-            f"/api/evangelism/strategies/{est.id}/metrics", headers=full["h"],
+            f"/api/evangelism/strategies/{est.id}/metrics",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         data = resp.json()
@@ -1159,30 +1255,51 @@ class TestCampaignSeasons:
         assert isinstance(resp.json(), list)
 
     def test_create_season(self, full):
-        resp = full["c"].post("/api/evangelism/grupos/seasons", json={
-            "name": "Temporada Q3",
-            "start_date": "2026-07-01",
-            "end_date": "2026-09-30",
-            "periodicity": "QUINCENAL",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/seasons",
+            json={
+                "name": "Temporada Q3",
+                "start_date": "2026-07-01",
+                "end_date": "2026-09-30",
+                "periodicity": "QUINCENAL",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
 
     def test_create_season_bad_dates(self, full):
-        resp = full["c"].post("/api/evangelism/grupos/seasons", json={
-            "name": "Bad", "start_date": "2026-09-01", "end_date": "2026-08-01",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/seasons",
+            json={
+                "name": "Bad",
+                "start_date": "2026-09-01",
+                "end_date": "2026-08-01",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_create_season_invalid_format(self, full):
-        resp = full["c"].post("/api/evangelism/grupos/seasons", json={
-            "name": "Bad", "start_date": "bad-date", "end_date": "2026-08-01",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/seasons",
+            json={
+                "name": "Bad",
+                "start_date": "bad-date",
+                "end_date": "2026-08-01",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_create_season_missing_name(self, full):
-        resp = full["c"].post("/api/evangelism/grupos/seasons", json={
-            "start_date": "2026-07-01", "end_date": "2026-09-30",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/seasons",
+            json={
+                "start_date": "2026-07-01",
+                "end_date": "2026-09-30",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_update_season(self, full):
@@ -1221,120 +1338,159 @@ class TestSessions:
         resp = full["c"].get("/api/evangelism/grupos/sessions", headers=full["h"])
         assert resp.status_code == 200, resp.text
         body = resp.json()
-        assert any(
-            row["id"] == str(sesion.id) and row["season_name"] == full["season"].name
-            for row in body
-        )
+        assert any(row["id"] == str(sesion.id) and row["season_name"] == full["season"].name for row in body)
 
     def test_list_faro_sessions_filtro_grupo(self, full):
         g = full["grupos"][0]
         resp = full["c"].get(
-            f"/api/evangelism/grupos/sessions?grupo_id={g.id}", headers=full["h"],
+            f"/api/evangelism/grupos/sessions?grupo_id={g.id}",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         assert len(resp.json()) == 3
 
     def test_list_my_pending_faro_sessions(self, full):
         resp = full["c"].get(
-            "/api/evangelism/grupos/sessions/mine/pending", headers=full["h"],
+            "/api/evangelism/grupos/sessions/mine/pending",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
 
     def test_create_faro_session(self, full):
         s = full["season"]
         g = full["grupos"][0]
-        resp = full["c"].post("/api/evangelism/grupos/sessions", json={
-            "season_id": str(s.id),
-            "grupo_id": str(g.id),
-            "session_date": "2026-09-15",
-            "topic": "Nuevo Tema",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/sessions",
+            json={
+                "season_id": str(s.id),
+                "grupo_id": str(g.id),
+                "session_date": "2026-09-15",
+                "topic": "Nuevo Tema",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
         assert resp.json()["created_count"] == 1
 
     def test_create_faro_session_bad_date(self, full):
         s = full["season"]
-        resp = full["c"].post("/api/evangelism/grupos/sessions", json={
-            "season_id": str(s.id),
-            "grupo_id": "all",
-            "session_date": "mal-fecha",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/sessions",
+            json={
+                "season_id": str(s.id),
+                "grupo_id": "all",
+                "session_date": "mal-fecha",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_create_faro_session_missing_data(self, full):
-        resp = full["c"].post("/api/evangelism/grupos/sessions", json={
-            "session_date": "2026-09-15",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/sessions",
+            json={
+                "session_date": "2026-09-15",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_create_faro_session_season_not_found(self, full):
         g = full["grupos"][0]
-        resp = full["c"].post("/api/evangelism/grupos/sessions", json={
-            "season_id": str(uuid.uuid4()),
-            "grupo_id": str(g.id),
-            "session_date": "2026-09-15",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/sessions",
+            json={
+                "season_id": str(uuid.uuid4()),
+                "grupo_id": str(g.id),
+                "session_date": "2026-09-15",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 404
 
     def test_create_faro_session_fecha_fuera_de_temporada(self, full):
         s = full["season"]
         g = full["grupos"][0]
-        resp = full["c"].post("/api/evangelism/grupos/sessions", json={
-            "season_id": str(s.id),
-            "grupo_id": str(g.id),
-            "session_date": "2030-01-01",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/sessions",
+            json={
+                "season_id": str(s.id),
+                "grupo_id": str(g.id),
+                "session_date": "2030-01-01",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_create_faro_session_all_grupos(self, full):
         s = full["season"]
-        resp = full["c"].post("/api/evangelism/grupos/sessions", json={
-            "season_id": str(s.id),
-            "create_for_all_groups": True,
-            "session_date": "2026-09-25",
-            "topic": "All groups",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/sessions",
+            json={
+                "season_id": str(s.id),
+                "create_for_all_groups": True,
+                "session_date": "2026-09-25",
+                "topic": "All groups",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
         assert resp.json()["created_count"] == len(full["grupos"])
         assert resp.json()["create_for_all_groups"] is True
 
     def test_create_faro_session_invalid_uuid(self, full):
         s = full["season"]
-        resp = full["c"].post("/api/evangelism/grupos/sessions", json={
-            "season_id": str(s.id),
-            "grupo_id": "not-a-uuid",
-            "session_date": "2026-09-25",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/sessions",
+            json={
+                "season_id": str(s.id),
+                "grupo_id": "not-a-uuid",
+                "session_date": "2026-09-25",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_create_faro_session_grupo_no_encontrado(self, full):
         s = full["season"]
-        resp = full["c"].post("/api/evangelism/grupos/sessions", json={
-            "season_id": str(s.id),
-            "grupo_id": str(uuid.uuid4()),
-            "session_date": "2026-09-25",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/sessions",
+            json={
+                "season_id": str(s.id),
+                "grupo_id": str(uuid.uuid4()),
+                "session_date": "2026-09-25",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 404
 
     def test_create_faro_session_duplicada(self, full):
         """Si ya existe sesión en esa fecha para un grupo, error."""
         s = full["season"]
         g = full["grupos"][0]
-        resp = full["c"].post("/api/evangelism/grupos/sessions", json={
-            "season_id": str(s.id),
-            "grupo_id": str(g.id),
-            "session_date": "2026-06-08",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/sessions",
+            json={
+                "season_id": str(s.id),
+                "grupo_id": str(g.id),
+                "session_date": "2026-06-08",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_create_faro_session_duplicada_batch_skip(self, full):
         """En batch mode 'all' los duplicados se omiten silenciosamente."""
         s = full["season"]
-        resp = full["c"].post("/api/evangelism/grupos/sessions", json={
-            "season_id": str(s.id),
-            "create_for_all_groups": True,
-            "session_date": "2026-06-08",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/sessions",
+            json={
+                "season_id": str(s.id),
+                "create_for_all_groups": True,
+                "session_date": "2026-06-08",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
 
     def test_list_sessions(self, full):
@@ -1345,7 +1501,8 @@ class TestSessions:
     def test_list_sessions_filtro_house(self, full):
         g = full["grupos"][0]
         resp = full["c"].get(
-            f"/api/evangelism/sessions?house_id={g.id}", headers=full["h"],
+            f"/api/evangelism/sessions?house_id={g.id}",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         assert len(resp.json()) >= 3
@@ -1353,7 +1510,8 @@ class TestSessions:
     def test_list_sessions_filtro_strategy(self, full):
         est = full["estrategia"]
         resp = full["c"].get(
-            f"/api/evangelism/sessions?strategy_id={est.id}", headers=full["h"],
+            f"/api/evangelism/sessions?strategy_id={est.id}",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
 
@@ -1367,7 +1525,8 @@ class TestSessions:
 
     def test_get_session_detail_404(self, full):
         resp = full["c"].get(
-            f"/api/evangelism/sessions/{uuid.uuid4()}", headers=full["h"],
+            f"/api/evangelism/sessions/{uuid.uuid4()}",
+            headers=full["h"],
         )
         assert resp.status_code == 404
 
@@ -1396,7 +1555,8 @@ class TestSessions:
 
     def test_delete_session_404(self, full):
         resp = full["c"].delete(
-            f"/api/evangelism/sessions/{uuid.uuid4()}", headers=full["h"],
+            f"/api/evangelism/sessions/{uuid.uuid4()}",
+            headers=full["h"],
         )
         assert resp.status_code == 404
 
@@ -1467,7 +1627,8 @@ class TestSessions:
             sede_id=full["sede"].id,
             categoria_id=full["categoria"].id,
         )
-        db_session.add(est_vacia); db_session.commit()
+        db_session.add(est_vacia)
+        db_session.commit()
         resp = full["c"].post(
             f"/api/evangelism/strategies/{est_vacia.id}/habilitar-todas",
             headers=full["h"],
@@ -1484,24 +1645,36 @@ class TestSessions:
 
     def test_create_session_direct(self, full):
         g = full["grupos"][0]
-        resp = full["c"].post("/api/evangelism/sessions", json={
-            "grupo_id": str(g.id),
-            "session_date": "2026-09-30",
-            "topic": "Tema directo",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/sessions",
+            json={
+                "grupo_id": str(g.id),
+                "session_date": "2026-09-30",
+                "topic": "Tema directo",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
 
     def test_create_session_missing_grupo(self, full):
-        resp = full["c"].post("/api/evangelism/sessions", json={
-            "session_date": "2026-09-30",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/sessions",
+            json={
+                "session_date": "2026-09-30",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_create_session_grupo_404(self, full):
-        resp = full["c"].post("/api/evangelism/sessions", json={
-            "grupo_id": str(uuid.uuid4()),
-            "session_date": "2026-09-30",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/sessions",
+            json={
+                "grupo_id": str(uuid.uuid4()),
+                "session_date": "2026-09-30",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 404
 
 
@@ -1674,13 +1847,15 @@ class TestSubmitAttendance:
 class TestFollowUp:
     def test_seguimiento_list_pendientes(self, full, db_session):
         a = db_session.query(MAsistencia).first()
-        db_session.add(RegistroSeguimiento(
-            asistencia_id=a.id,
-            responsable_id=full["admin_persona"].id,
-            tipo="LLAMADA",
-            observaciones="Llamada inicial",
-            estado_completado=False,
-        ))
+        db_session.add(
+            RegistroSeguimiento(
+                asistencia_id=a.id,
+                responsable_id=full["admin_persona"].id,
+                tipo="LLAMADA",
+                observaciones="Llamada inicial",
+                estado_completado=False,
+            )
+        )
         db_session.commit()
         resp = full["c"].get("/api/evangelism/follow-up/pending", headers=full["h"])
         assert resp.status_code == 200, resp.text
@@ -1688,15 +1863,18 @@ class TestFollowUp:
 
     def test_seguimiento_list_for_attendance(self, full, db_session):
         a = db_session.query(MAsistencia).first()
-        db_session.add(RegistroSeguimiento(
-            asistencia_id=a.id,
-            responsable_id=full["admin_persona"].id,
-            tipo="MENSAJE_WHATSAPP",
-            estado_completado=True,
-        ))
+        db_session.add(
+            RegistroSeguimiento(
+                asistencia_id=a.id,
+                responsable_id=full["admin_persona"].id,
+                tipo="MENSAJE_WHATSAPP",
+                estado_completado=True,
+            )
+        )
         db_session.commit()
         resp = full["c"].get(
-            f"/api/evangelism/follow-up/{a.id}", headers=full["h"],
+            f"/api/evangelism/follow-up/{a.id}",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         assert isinstance(resp.json(), list)
@@ -1765,7 +1943,9 @@ class TestFollowUp:
             tipo="LLAMADA",
             estado_completado=False,
         )
-        db_session.add(sg); db_session.commit(); db_session.refresh(sg)
+        db_session.add(sg)
+        db_session.commit()
+        db_session.refresh(sg)
         resp = full["c"].patch(
             f"/api/evangelism/follow-up/{sg.id}",
             json={"estado_completado": True},
@@ -1790,62 +1970,88 @@ class TestFollowUp:
 class TestFaroVisitors:
     def test_register_new_visitor(self, full):
         g = full["grupos"][0]
-        resp = full["c"].post("/api/evangelism/grupos/visitors", json={
-            "first_name": "Nueva",
-            "last_name": "Visitante",
-            "phone": "+573009999999",
-            "grupo_id": str(g.id),
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/visitors",
+            json={
+                "first_name": "Nueva",
+                "last_name": "Visitante",
+                "phone": "+573009999999",
+                "grupo_id": str(g.id),
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
         assert resp.json()["status"] == "created"
 
     def test_register_visitor_session_no_pertenece(self, full):
         g = full["grupos"][0]
         otro_grupo = full["grupos"][1]
-        sesion_otro_grupo = next(
-            s for s in full["sesiones"] if s.grupo_id == otro_grupo.id
+        sesion_otro_grupo = next(s for s in full["sesiones"] if s.grupo_id == otro_grupo.id)
+        resp = full["c"].post(
+            "/api/evangelism/grupos/visitors",
+            json={
+                "first_name": "X",
+                "last_name": "Y",
+                "phone": "+573008888888",
+                "grupo_id": str(g.id),
+                "session_id": str(sesion_otro_grupo.id),
+            },
+            headers=full["h"],
         )
-        resp = full["c"].post("/api/evangelism/grupos/visitors", json={
-            "first_name": "X", "last_name": "Y",
-            "phone": "+573008888888",
-            "grupo_id": str(g.id),
-            "session_id": str(sesion_otro_grupo.id),
-        }, headers=full["h"])
         assert resp.status_code == 400
 
     def test_register_visitor_duplicate(self, full):
         g = full["grupos"][0]
-        full["c"].post("/api/evangelism/grupos/visitors", json={
-            "first_name": "Dup", "last_name": "Visit",
-            "phone": "+573007777777",
-            "grupo_id": str(g.id),
-        }, headers=full["h"])
-        resp = full["c"].post("/api/evangelism/grupos/visitors", json={
-            "first_name": "Dup", "last_name": "Visit",
-            "phone": "+573007777777",
-            "grupo_id": str(g.id),
-        }, headers=full["h"])
+        full["c"].post(
+            "/api/evangelism/grupos/visitors",
+            json={
+                "first_name": "Dup",
+                "last_name": "Visit",
+                "phone": "+573007777777",
+                "grupo_id": str(g.id),
+            },
+            headers=full["h"],
+        )
+        resp = full["c"].post(
+            "/api/evangelism/grupos/visitors",
+            json={
+                "first_name": "Dup",
+                "last_name": "Visit",
+                "phone": "+573007777777",
+                "grupo_id": str(g.id),
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
         assert resp.json()["status"] == "duplicate"
 
     def test_register_visitor_grupo_no_encontrado(self, full):
-        resp = full["c"].post("/api/evangelism/grupos/visitors", json={
-            "first_name": "X", "last_name": "Y",
-            "phone": "+573006666666",
-            "grupo_id": str(uuid.uuid4()),
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/visitors",
+            json={
+                "first_name": "X",
+                "last_name": "Y",
+                "phone": "+573006666666",
+                "grupo_id": str(uuid.uuid4()),
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 404
 
     def test_register_visitor_soft_deleted_group_404(self, full, db_session):
         g = full["grupos"][0]
         g.deleted_at = datetime.now(timezone.utc)
         db_session.commit()
-        resp = full["c"].post("/api/evangelism/grupos/visitors", json={
-            "first_name": "X",
-            "last_name": "Y",
-            "phone": "+573006666665",
-            "grupo_id": str(g.id),
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/grupos/visitors",
+            json={
+                "first_name": "X",
+                "last_name": "Y",
+                "phone": "+573006666665",
+                "grupo_id": str(g.id),
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 404
 
 
@@ -1857,7 +2063,8 @@ class TestFaroVisitors:
 class TestMultiplication:
     def test_check_under_umbral(self, full):
         resp = full["c"].get(
-            "/api/evangelism/multiplication/check?umbral=10", headers=full["h"],
+            "/api/evangelism/multiplication/check?umbral=10",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         assert all(not item["excede_umbral"] for item in resp.json())
@@ -1866,16 +2073,24 @@ class TestMultiplication:
         g = full["grupos"][0]
         for i in range(20):
             p = models.Persona(
-                first_name=f"P{i}", last_name="Excedente",
+                first_name=f"P{i}",
+                last_name="Excedente",
                 sede_id=full["sede"].id,
             )
-            db_session.add(p); db_session.flush()
-            db_session.add(ParticipanteGrupo(
-                grupo_id=g.id, persona_id=p.id, rol_base="Miembro", activo=True,
-            ))
+            db_session.add(p)
+            db_session.flush()
+            db_session.add(
+                ParticipanteGrupo(
+                    grupo_id=g.id,
+                    persona_id=p.id,
+                    rol_base="Miembro",
+                    activo=True,
+                )
+            )
         db_session.commit()
         resp = full["c"].get(
-            "/api/evangelism/multiplication/check?umbral=15", headers=full["h"],
+            "/api/evangelism/multiplication/check?umbral=15",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         assert any(item["excede_umbral"] for item in resp.json())
@@ -1889,32 +2104,37 @@ class TestMultiplication:
 class TestRankings:
     def test_rankings_groups_attendance(self, full):
         resp = full["c"].get(
-            "/api/evangelism/rankings/groups?by=attendance", headers=full["h"],
+            "/api/evangelism/rankings/groups?by=attendance",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
 
     def test_rankings_groups_growth(self, full):
         resp = full["c"].get(
-            "/api/evangelism/rankings/groups?by=growth", headers=full["h"],
+            "/api/evangelism/rankings/groups?by=growth",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
 
     def test_rankings_groups_visitors(self, full):
         resp = full["c"].get(
-            "/api/evangelism/rankings/groups?by=visitors", headers=full["h"],
+            "/api/evangelism/rankings/groups?by=visitors",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
 
     def test_rankings_groups_filtro_estrategia(self, full):
         est = full["estrategia"]
         resp = full["c"].get(
-            f"/api/evangelism/rankings/groups?strategy_id={est.id}", headers=full["h"],
+            f"/api/evangelism/rankings/groups?strategy_id={est.id}",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
 
     def test_monthly_comparison(self, full):
         resp = full["c"].get(
-            "/api/evangelism/rankings/monthly-comparison", headers=full["h"],
+            "/api/evangelism/rankings/monthly-comparison",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         body = resp.json()
@@ -1941,7 +2161,8 @@ class TestRankings:
     def test_rankings_leaders_con_estrategia(self, full):
         est = full["estrategia"]
         resp = full["c"].get(
-            f"/api/evangelism/rankings/leaders?strategy_id={est.id}", headers=full["h"],
+            f"/api/evangelism/rankings/leaders?strategy_id={est.id}",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
 
@@ -1962,27 +2183,37 @@ class TestNotifications:
             estado="PENDIENTE",
             estado_habilitacion="DESHABILITADO",
         )
-        db_session.add(sesion); db_session.commit()
+        db_session.add(sesion)
+        db_session.commit()
         # Asegurar que el lider tiene auth_user
         from backend.models import Usuario
-        lider = db_session.query(models.Persona).filter(
-            models.Persona.id == grp.lider_persona_id,
-        ).one()
+
+        lider = (
+            db_session.query(models.Persona)
+            .filter(
+                models.Persona.id == grp.lider_persona_id,
+            )
+            .one()
+        )
         if not db_session.query(Usuario).filter(Usuario.id == lider.id).first():
             from backend.models_auth import RolPlataforma
+
             role = db_session.query(RolPlataforma).first()
-            db_session.add(Usuario(
-                id=lider.id,
-                sede_id=full["sede"].id,
-                username=f"lider_{uuid.uuid4().hex[:6]}",
-                email=f"lider_{uuid.uuid4().hex[:6]}@ccf.test",
-                password_hash="x",
-                rol_plataforma_id=role.id,
-                is_active=True,
-            ))
+            db_session.add(
+                Usuario(
+                    id=lider.id,
+                    sede_id=full["sede"].id,
+                    username=f"lider_{uuid.uuid4().hex[:6]}",
+                    email=f"lider_{uuid.uuid4().hex[:6]}@ccf.test",
+                    password_hash="x",
+                    rol_plataforma_id=role.id,
+                    is_active=True,
+                )
+            )
             db_session.commit()
         resp = full["c"].post(
-            "/api/evangelism/notifications/send-reminders", headers=full["h"],
+            "/api/evangelism/notifications/send-reminders",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         body = resp.json()
@@ -2030,7 +2261,8 @@ class TestReports:
     def test_strategy_summary(self, full):
         est = full["estrategia"]
         resp = full["c"].get(
-            f"/api/evangelism/reports/strategy/{est.id}/summary", headers=full["h"],
+            f"/api/evangelism/reports/strategy/{est.id}/summary",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
         body = resp.json()
@@ -2056,21 +2288,31 @@ class TestEvents:
         assert resp.json() == []
 
     def test_create_event(self, full):
-        resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Culto Familiar",
-            "description": "Culto mensual",
-            "location": "Templo",
-            "event_type": "CULTURE",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Culto Familiar",
+                "description": "Culto mensual",
+                "location": "Templo",
+                "event_type": "CULTURE",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
         assert resp.json()["name"] == "Culto Familiar"
 
     def test_get_roles_create(self, full):
         resp = full["c"].get("/api/evangelism/events/roles", headers=full["h"])
         assert resp.status_code == 200, resp.text
-        resp = full["c"].post("/api/evangelism/events/roles", json={
-            "name": "MC", "color": "#FF0000", "is_leadership": True,
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/events/roles",
+            json={
+                "name": "MC",
+                "color": "#FF0000",
+                "is_leadership": True,
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
         role_id = resp.json()["id"]
         put_resp = full["c"].put(
@@ -2081,12 +2323,24 @@ class TestEvents:
         assert put_resp.status_code == 200, put_resp.text
 
     def test_create_event_role_duplicado(self, full):
-        full["c"].post("/api/evangelism/events/roles", json={
-            "name": "Servidor", "color": "#FFF", "is_leadership": False,
-        }, headers=full["h"])
-        resp = full["c"].post("/api/evangelism/events/roles", json={
-            "name": "Servidor", "color": "#FFF", "is_leadership": False,
-        }, headers=full["h"])
+        full["c"].post(
+            "/api/evangelism/events/roles",
+            json={
+                "name": "Servidor",
+                "color": "#FFF",
+                "is_leadership": False,
+            },
+            headers=full["h"],
+        )
+        resp = full["c"].post(
+            "/api/evangelism/events/roles",
+            json={
+                "name": "Servidor",
+                "color": "#FFF",
+                "is_leadership": False,
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_update_event_role_404(self, full):
@@ -2098,12 +2352,32 @@ class TestEvents:
         assert resp.status_code == 404
 
     def test_update_role_nombre_duplicado(self, full):
-        r1 = full["c"].post("/api/evangelism/events/roles", json={
-            "name": "Pastor", "color": "#FFF", "is_leadership": True,
-        }, headers=full["h"]).json()
-        r2 = full["c"].post("/api/evangelism/events/roles", json={
-            "name": "Director", "color": "#AAA", "is_leadership": True,
-        }, headers=full["h"]).json()
+        r1 = (
+            full["c"]
+            .post(
+                "/api/evangelism/events/roles",
+                json={
+                    "name": "Pastor",
+                    "color": "#FFF",
+                    "is_leadership": True,
+                },
+                headers=full["h"],
+            )
+            .json()
+        )
+        r2 = (
+            full["c"]
+            .post(
+                "/api/evangelism/events/roles",
+                json={
+                    "name": "Director",
+                    "color": "#AAA",
+                    "is_leadership": True,
+                },
+                headers=full["h"],
+            )
+            .json()
+        )
         resp = full["c"].put(
             f"/api/evangelism/events/roles/{r2['id']}",
             json={"name": "Pastor"},
@@ -2112,19 +2386,45 @@ class TestEvents:
         assert resp.status_code == 400
 
     def test_delete_role_sistema_bloqueado(self, full):
-        r1 = full["c"].post("/api/evangelism/events/roles", json={
-            "name": "RolA", "color": "#FFF", "is_leadership": False,
-        }, headers=full["h"]).json()
-        r2 = full["c"].post("/api/evangelism/events/roles", json={
-            "name": "RolB", "color": "#AAA", "is_leadership": False,
-        }, headers=full["h"]).json()
+        r1 = (
+            full["c"]
+            .post(
+                "/api/evangelism/events/roles",
+                json={
+                    "name": "RolA",
+                    "color": "#FFF",
+                    "is_leadership": False,
+                },
+                headers=full["h"],
+            )
+            .json()
+        )
+        r2 = (
+            full["c"]
+            .post(
+                "/api/evangelism/events/roles",
+                json={
+                    "name": "RolB",
+                    "color": "#AAA",
+                    "is_leadership": False,
+                },
+                headers=full["h"],
+            )
+            .json()
+        )
         full["admin"]
         from sqlalchemy.orm import object_session as _os
 
         from backend import models as _m
-        role_obj = _os(full["admin"]).query(_m.RoleDefinition).filter(
-            _m.RoleDefinition.id == r1["id"],
-        ).first()
+
+        role_obj = (
+            _os(full["admin"])
+            .query(_m.RoleDefinition)
+            .filter(
+                _m.RoleDefinition.id == r1["id"],
+            )
+            .first()
+        )
         role_obj.is_system_locked = True
         _os(full["admin"]).commit()
         resp = full["c"].delete(
@@ -2134,9 +2434,19 @@ class TestEvents:
         assert resp.status_code == 400
 
     def test_delete_role_misma_id(self, full):
-        r1 = full["c"].post("/api/evangelism/events/roles", json={
-            "name": "Rolaaa", "color": "#FFF", "is_leadership": False,
-        }, headers=full["h"]).json()
+        r1 = (
+            full["c"]
+            .post(
+                "/api/evangelism/events/roles",
+                json={
+                    "name": "Rolaaa",
+                    "color": "#FFF",
+                    "is_leadership": False,
+                },
+                headers=full["h"],
+            )
+            .json()
+        )
         resp = full["c"].delete(
             f"/api/evangelism/events/roles/{r1['id']}?fallback_id={r1['id']}",
             headers=full["h"],
@@ -2144,9 +2454,19 @@ class TestEvents:
         assert resp.status_code == 400
 
     def test_delete_role_fallback_unexist(self, full):
-        r1 = full["c"].post("/api/evangelism/events/roles", json={
-            "name": "Rolbbb", "color": "#FFF", "is_leadership": False,
-        }, headers=full["h"]).json()
+        r1 = (
+            full["c"]
+            .post(
+                "/api/evangelism/events/roles",
+                json={
+                    "name": "Rolbbb",
+                    "color": "#FFF",
+                    "is_leadership": False,
+                },
+                headers=full["h"],
+            )
+            .json()
+        )
         resp = full["c"].delete(
             f"/api/evangelism/events/roles/{r1['id']}?fallback_id={uuid.uuid4()}",
             headers=full["h"],
@@ -2154,9 +2474,19 @@ class TestEvents:
         assert resp.status_code == 400
 
     def test_delete_role_404(self, full):
-        r1 = full["c"].post("/api/evangelism/events/roles", json={
-            "name": "Rolccc", "color": "#FFF", "is_leadership": False,
-        }, headers=full["h"]).json()
+        r1 = (
+            full["c"]
+            .post(
+                "/api/evangelism/events/roles",
+                json={
+                    "name": "Rolccc",
+                    "color": "#FFF",
+                    "is_leadership": False,
+                },
+                headers=full["h"],
+            )
+            .json()
+        )
         resp = full["c"].delete(
             f"/api/evangelism/events/roles/{uuid.uuid4()}?fallback_id={r1['id']}",
             headers=full["h"],
@@ -2164,19 +2494,24 @@ class TestEvents:
         assert resp.status_code == 404
 
     def test_event_crud(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Conferencia",
-            "description": "Conferencia anual",
-            "location": "Auditorio",
-            "event_type": "CONFERENCE",
-            "event_date": "2026-09-15T10:00:00Z",
-            "target_audience": "ALL",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Conferencia",
+                "description": "Conferencia anual",
+                "location": "Auditorio",
+                "event_type": "CONFERENCE",
+                "event_date": "2026-09-15T10:00:00Z",
+                "target_audience": "ALL",
+            },
+            headers=full["h"],
+        )
         assert create_resp.status_code == 200, create_resp.text
         event_id = create_resp.json()["id"]
 
         get_resp = full["c"].get(
-            f"/api/evangelism/events/{event_id}", headers=full["h"],
+            f"/api/evangelism/events/{event_id}",
+            headers=full["h"],
         )
         assert get_resp.status_code == 200, get_resp.text
 
@@ -2188,15 +2523,21 @@ class TestEvents:
         assert put_resp.status_code == 200, put_resp.text
 
         analytics_resp = full["c"].get(
-            f"/api/evangelism/events/{event_id}/analytics", headers=full["h"],
+            f"/api/evangelism/events/{event_id}/analytics",
+            headers=full["h"],
         )
         assert analytics_resp.status_code == 200, analytics_resp.text
         assert "monthly_data" in analytics_resp.json()
 
     def test_event_audience_update(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Evento Manual", "target_audience": "ALL",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Evento Manual",
+                "target_audience": "ALL",
+            },
+            headers=full["h"],
+        )
         event_id = create_resp.json()["id"]
         resp = full["c"].put(
             f"/api/evangelism/events/{event_id}/audience",
@@ -2218,7 +2559,8 @@ class TestEvents:
 
     def test_event_dashboard_stats_empty(self, full):
         resp = full["c"].get(
-            "/api/evangelism/events/dashboard-stats", headers=full["h"],
+            "/api/evangelism/events/dashboard-stats",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
 
@@ -2231,24 +2573,31 @@ class TestEvents:
             assert resp.status_code == 200, resp.text
 
     def test_event_delete(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Para Borrar",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Para Borrar",
+            },
+            headers=full["h"],
+        )
         event_id = create_resp.json()["id"]
         resp = full["c"].delete(
-            f"/api/evangelism/events/{event_id}", headers=full["h"],
+            f"/api/evangelism/events/{event_id}",
+            headers=full["h"],
         )
         assert resp.status_code == 200, resp.text
 
     def test_event_delete_404(self, full):
         resp = full["c"].delete(
-            f"/api/evangelism/events/{uuid.uuid4()}", headers=full["h"],
+            f"/api/evangelism/events/{uuid.uuid4()}",
+            headers=full["h"],
         )
         assert resp.status_code == 404
 
     def test_event_get_404(self, full):
         resp = full["c"].get(
-            f"/api/evangelism/events/{uuid.uuid4()}", headers=full["h"],
+            f"/api/evangelism/events/{uuid.uuid4()}",
+            headers=full["h"],
         )
         assert resp.status_code == 404
 
@@ -2267,9 +2616,14 @@ class TestEvents:
         assert resp.status_code == 404
 
     def test_export_event_session_csv(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Exportar", "target_audience": "ALL",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Exportar",
+                "target_audience": "ALL",
+            },
+            headers=full["h"],
+        )
         event_id = create_resp.json()["id"]
         resp = full["c"].get(
             f"/api/evangelism/events/{event_id}/sessions/2026-09-15/export",
@@ -2288,76 +2642,133 @@ class TestEvents:
 
 class TestEventAssignments:
     def test_register_event_attendance(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Para Asistencia", "target_audience": "ALL",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Para Asistencia",
+                "target_audience": "ALL",
+            },
+            headers=full["h"],
+        )
         event_id = create_resp.json()["id"]
-        resp = full["c"].post("/api/evangelism/attendance", json={
-            "event_id": event_id,
-            "persona_id": str(full["personas"][0].id),
-            "attended": True,
-            "session_date": "2026-09-15",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/attendance",
+            json={
+                "event_id": event_id,
+                "persona_id": str(full["personas"][0].id),
+                "attended": True,
+                "session_date": "2026-09-15",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
 
     def test_register_bulk_attendance(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Bulk Asistencia", "target_audience": "ALL",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Bulk Asistencia",
+                "target_audience": "ALL",
+            },
+            headers=full["h"],
+        )
         event_id = create_resp.json()["id"]
-        resp = full["c"].post("/api/evangelism/attendance/bulk", json={
-            "event_id": event_id,
-            "persona_ids": [str(p.id) for p in full["personas"][:3]],
-            "attendance_date": "2026-09-20",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/attendance/bulk",
+            json={
+                "event_id": event_id,
+                "persona_ids": [str(p.id) for p in full["personas"][:3]],
+                "attendance_date": "2026-09-20",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
         assert resp.json()["created"] >= 1
 
     def test_register_bulk_attendance_invalid_date(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Bulk Bad Date", "target_audience": "ALL",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Bulk Bad Date",
+                "target_audience": "ALL",
+            },
+            headers=full["h"],
+        )
         event_id = create_resp.json()["id"]
-        resp = full["c"].post("/api/evangelism/attendance/bulk", json={
-            "event_id": event_id, "persona_ids": [],
-            "attendance_date": "bad-date",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/attendance/bulk",
+            json={
+                "event_id": event_id,
+                "persona_ids": [],
+                "attendance_date": "bad-date",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_register_bulk_attendance_missing_event(self, full):
-        resp = full["c"].post("/api/evangelism/attendance/bulk", json={
-            "persona_ids": [], "attendance_date": "2026-09-20",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/attendance/bulk",
+            json={
+                "persona_ids": [],
+                "attendance_date": "2026-09-20",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_register_bulk_attendance_persona_not_list(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Bulk Bad List", "target_audience": "ALL",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Bulk Bad List",
+                "target_audience": "ALL",
+            },
+            headers=full["h"],
+        )
         event_id = create_resp.json()["id"]
-        resp = full["c"].post("/api/evangelism/attendance/bulk", json={
-            "event_id": event_id, "persona_ids": "not-a-list",
-            "attendance_date": "2026-09-20",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/attendance/bulk",
+            json={
+                "event_id": event_id,
+                "persona_ids": "not-a-list",
+                "attendance_date": "2026-09-20",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 400
 
     def test_register_bulk_attendance_event_404(self, full):
-        resp = full["c"].post("/api/evangelism/attendance/bulk", json={
-            "event_id": str(uuid.uuid4()), "persona_ids": [],
-            "attendance_date": "2026-09-20",
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/attendance/bulk",
+            json={
+                "event_id": str(uuid.uuid4()),
+                "persona_ids": [],
+                "attendance_date": "2026-09-20",
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 404
 
     def test_get_event_attendance(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Tener asistencia", "target_audience": "ALL",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Tener asistencia",
+                "target_audience": "ALL",
+            },
+            headers=full["h"],
+        )
         event_id = create_resp.json()["id"]
-        full["c"].post("/api/evangelism/attendance/bulk", json={
-            "event_id": event_id,
-            "persona_ids": [str(full["personas"][0].id)],
-            "attendance_date": "2026-09-22",
-        }, headers=full["h"])
+        full["c"].post(
+            "/api/evangelism/attendance/bulk",
+            json={
+                "event_id": event_id,
+                "persona_ids": [str(full["personas"][0].id)],
+                "attendance_date": "2026-09-22",
+            },
+            headers=full["h"],
+        )
         resp = full["c"].get(
             f"/api/evangelism/events/{event_id}/attendance",
             headers=full["h"],
@@ -2365,9 +2776,14 @@ class TestEventAssignments:
         assert resp.status_code == 200, resp.text
 
     def test_get_event_session_detail(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Detalle Session", "target_audience": "ALL",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Detalle Session",
+                "target_audience": "ALL",
+            },
+            headers=full["h"],
+        )
         event_id = create_resp.json()["id"]
         resp = full["c"].get(
             f"/api/evangelism/events/{event_id}/sessions/2026-09-15",
@@ -2376,9 +2792,14 @@ class TestEventAssignments:
         assert resp.status_code == 200, resp.text
 
     def test_sync_event_assignments(self, full):
-        create_resp = full["c"].post("/api/evangelism/events/", json={
-            "name": "Con Asignaciones", "target_audience": "ALL",
-        }, headers=full["h"])
+        create_resp = full["c"].post(
+            "/api/evangelism/events/",
+            json={
+                "name": "Con Asignaciones",
+                "target_audience": "ALL",
+            },
+            headers=full["h"],
+        )
         event_id = create_resp.json()["id"]
         resp = full["c"].post(
             f"/api/evangelism/events/{event_id}/assignments",
@@ -2403,17 +2824,28 @@ class TestEventAssignments:
 
 class TestFastCheckinVisitor:
     def _create_event(self, full):
-        return full["c"].post("/api/evangelism/events/", json={
-            "name": "Para Checkin", "target_audience": "ALL",
-        }, headers=full["h"]).json()["id"]
+        return (
+            full["c"]
+            .post(
+                "/api/evangelism/events/",
+                json={
+                    "name": "Para Checkin",
+                    "target_audience": "ALL",
+                },
+                headers=full["h"],
+            )
+            .json()["id"]
+        )
 
     def test_fast_checkin_new(self, full):
         event_id = self._create_event(full)
         resp = full["c"].post(
             f"/api/evangelism/events/{event_id}/sessions/2026-09-20/visitors",
             json={
-                "first_name": "Fast", "last_name": "Checkin",
-                "phone": "+573004444444", "email": "fast@ccf.test",
+                "first_name": "Fast",
+                "last_name": "Checkin",
+                "phone": "+573004444444",
+                "email": "fast@ccf.test",
             },
             headers=full["h"],
         )
@@ -2425,7 +2857,8 @@ class TestFastCheckinVisitor:
         full["c"].post(
             f"/api/evangelism/events/{event_id}/sessions/2026-09-20/visitors",
             json={
-                "first_name": "DupF", "last_name": "Checkin",
+                "first_name": "DupF",
+                "last_name": "Checkin",
                 "phone": "+573003333333",
             },
             headers=full["h"],
@@ -2433,7 +2866,8 @@ class TestFastCheckinVisitor:
         resp = full["c"].post(
             f"/api/evangelism/events/{event_id}/sessions/2026-09-20/visitors",
             json={
-                "first_name": "DupF", "last_name": "Checkin",
+                "first_name": "DupF",
+                "last_name": "Checkin",
                 "phone": "+573003333333",
             },
             headers=full["h"],
@@ -2455,9 +2889,10 @@ class TestFastCheckinVisitor:
         )
         assert resp.status_code == 200, resp.text
         assert resp.json()["is_duplicate"] is False
-        assert full["c"].get(
-            f"/api/evangelism/events/{event_id}/attendance", headers=full["h"]
-        ).json()["total_records"] == 1
+        assert (
+            full["c"].get(f"/api/evangelism/events/{event_id}/attendance", headers=full["h"]).json()["total_records"]
+            == 1
+        )
 
     def test_fast_checkin_invalid_date(self, full):
         event_id = self._create_event(full)
@@ -2639,9 +3074,7 @@ class TestEvangelismPermissionMatrix:
         assert listed.status_code == 200, listed.text
         assert str(other_strategy.id) not in {row["id"] for row in listed.json()}
 
-        foreign_filter = full["c"].get(
-            f"/api/evangelism/strategies?sede_id={other_sede.id}", headers=full["h"]
-        )
+        foreign_filter = full["c"].get(f"/api/evangelism/strategies?sede_id={other_sede.id}", headers=full["h"])
         assert foreign_filter.status_code == 200, foreign_filter.text
         assert foreign_filter.json() == []
 
@@ -2660,9 +3093,7 @@ class TestEvangelismPermissionMatrix:
         )
         assert foreign_group.status_code == 404, foreign_group.text
 
-        foreign_roles = full["c"].get(
-            f"/api/evangelism/strategies/{other_strategy.id}/roles", headers=full["h"]
-        )
+        foreign_roles = full["c"].get(f"/api/evangelism/strategies/{other_strategy.id}/roles", headers=full["h"])
         assert foreign_roles.status_code == 404, foreign_roles.text
         foreign_sessions = full["c"].post(
             f"/api/evangelism/strategies/{other_strategy.id}/generate-sessions",
@@ -2677,14 +3108,10 @@ class TestEvangelismPermissionMatrix:
             )
             assert analytics.status_code == 404, analytics.text
 
-        denied = full["c"].post(
-            f"/api/evangelism/scanner/generate/{other_person.id}", headers=full["h"]
-        )
+        denied = full["c"].post(f"/api/evangelism/scanner/generate/{other_person.id}", headers=full["h"])
         assert denied.status_code == 404, denied.text
 
-        generated = full["c"].post(
-            f"/api/evangelism/scanner/generate/{full['personas'][0].id}", headers=full["h"]
-        )
+        generated = full["c"].post(f"/api/evangelism/scanner/generate/{full['personas'][0].id}", headers=full["h"])
         assert generated.status_code == 200, generated.text
         reader, _, _ = _seed_user_with_role(
             db_session,
@@ -2715,9 +3142,7 @@ class TestEvangelismPermissionMatrix:
 
         detail = full["c"].get(f"/api/evangelism/grupos/{group.id}", headers=headers)
         assert detail.status_code == 404, detail.text
-        attendance = full["c"].get(
-            f"/api/evangelism/grupos/sessions/{session.id}/attendance", headers=headers
-        )
+        attendance = full["c"].get(f"/api/evangelism/grupos/sessions/{session.id}/attendance", headers=headers)
         assert attendance.status_code == 404, attendance.text
 
 
@@ -2729,6 +3154,7 @@ class TestEvangelismPermissionMatrix:
 class TestCalculoSesiones:
     def test_normalizar_frecuencia_variants(self):
         from backend.services.calculo_sesiones import _normalizar_frecuencia
+
         assert _normalizar_frecuencia("semanal") == "SEMANAL"
         assert _normalizar_frecuencia("Semanal") == "SEMANAL"
         assert _normalizar_frecuencia("SEMANAL") == "SEMANAL"
@@ -2739,6 +3165,7 @@ class TestCalculoSesiones:
 
     def test_normalizar_frecuencia_vacia(self):
         from backend.services.calculo_sesiones import _normalizar_frecuencia
+
         with pytest.raises(ValueError):
             _normalizar_frecuencia("")
         with pytest.raises(ValueError):
@@ -2748,6 +3175,7 @@ class TestCalculoSesiones:
         from datetime import timedelta
 
         from backend.services.calculo_sesiones import _provider_para_frecuencia
+
         p = _provider_para_frecuencia("SEMANAL", 1)
         assert isinstance(p.incremento, timedelta)
         p = _provider_para_frecuencia("MENSUAL", 31)
@@ -2761,6 +3189,7 @@ class TestCalculoSesiones:
             _generar_fechas,
             _provider_para_frecuencia,
         )
+
         provider = _provider_para_frecuencia("SEMANAL", 1)
         inicio = datetime(2026, 6, 1, tzinfo=timezone.utc)
         fin = datetime(2026, 6, 22, tzinfo=timezone.utc)
@@ -2772,6 +3201,7 @@ class TestCalculoSesiones:
             _generar_fechas,
             _provider_para_frecuencia,
         )
+
         provider = _provider_para_frecuencia("QUINCENAL", 1)
         inicio = datetime(2026, 6, 1, tzinfo=timezone.utc)
         fin = datetime(2026, 6, 29, tzinfo=timezone.utc)
@@ -2783,6 +3213,7 @@ class TestCalculoSesiones:
             _generar_fechas,
             _provider_para_frecuencia,
         )
+
         provider = _provider_para_frecuencia("EVENTO_UNICO", 1)
         inicio = datetime(2026, 6, 1, tzinfo=timezone.utc)
         fin = datetime(2026, 6, 30, tzinfo=timezone.utc)
@@ -2794,6 +3225,7 @@ class TestCalculoSesiones:
             _generar_fechas,
             _provider_para_frecuencia,
         )
+
         provider = _provider_para_frecuencia("SEMANAL", 1)
         with pytest.raises(ValueError):
             _generar_fechas(
@@ -2804,11 +3236,13 @@ class TestCalculoSesiones:
 
     def test_calcular_sesiones_creates(self, full, db_session):
         from backend.services.calculo_sesiones import calcular_sesiones
+
         est = full["estrategia"]
         grupos = full["grupos"]
         n = calcular_sesiones(
             db=db_session,
-            estrategia_id=est.id, sede_id=full["sede"].id,
+            estrategia_id=est.id,
+            sede_id=full["sede"].id,
             fecha_inicio=datetime(2026, 7, 1, tzinfo=timezone.utc),
             fecha_fin=datetime(2026, 7, 15, tzinfo=timezone.utc),
             frecuencia="SEMANAL",
@@ -2818,6 +3252,7 @@ class TestCalculoSesiones:
 
     def test_calcular_sesiones_sin_grupos_validos(self, full, db_session):
         from backend.services.calculo_sesiones import calcular_sesiones
+
         n = calcular_sesiones(
             db=db_session,
             estrategia_id=full["estrategia"].id,
@@ -2831,6 +3266,7 @@ class TestCalculoSesiones:
 
     def test_calcular_sesiones_idempotente(self, full, db_session):
         from backend.services.calculo_sesiones import calcular_sesiones
+
         params = dict(
             db=db_session,
             estrategia_id=full["estrategia"].id,
@@ -2865,18 +3301,27 @@ class TestSesionGrupoReportedAt:
         _seed_admin(db_session)
         sede = db_session.query(models.Sede).first()
         g = GrupoEvangelismo(
-            nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True,
+            nombre="G",
+            sede_id=sede.id,
+            ubicacion="u",
+            capacidad=10,
+            activo=True,
         )
-        db_session.add(g); db_session.flush()
+        db_session.add(g)
+        db_session.flush()
         ts = datetime(2026, 6, 15, 12, 30, tzinfo=timezone.utc)
         s = SesionGrupo(
-            grupo_id=g.id, fecha_sesion=datetime(2026, 6, 15, tzinfo=timezone.utc),
+            grupo_id=g.id,
+            fecha_sesion=datetime(2026, 6, 15, tzinfo=timezone.utc),
             estado="PENDIENTE",
         )
-        db_session.add(s); db_session.commit(); db_session.refresh(s)
+        db_session.add(s)
+        db_session.commit()
+        db_session.refresh(s)
         s.reported_at = ts
         db_session.commit()
-        db_session.expire(s); db_session.refresh(s)
+        db_session.expire(s)
+        db_session.refresh(s)
         assert s.reported_at is not None, (
             "Regression: reported_at sigue retornando None tras persistir. "
             "Revisar si la columna real fue añadida y se eliminó el @property stub."
@@ -2890,14 +3335,22 @@ class TestSesionGrupoReportedAt:
         _seed_admin(db_session)
         sede = db_session.query(models.Sede).first()
         g = GrupoEvangelismo(
-            nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True,
+            nombre="G",
+            sede_id=sede.id,
+            ubicacion="u",
+            capacidad=10,
+            activo=True,
         )
-        db_session.add(g); db_session.flush()
+        db_session.add(g)
+        db_session.flush()
         s = SesionGrupo(
-            grupo_id=g.id, fecha_sesion=datetime(2026, 6, 20, tzinfo=timezone.utc),
+            grupo_id=g.id,
+            fecha_sesion=datetime(2026, 6, 20, tzinfo=timezone.utc),
             estado="PENDIENTE",
         )
-        db_session.add(s); db_session.commit(); db_session.refresh(s)
+        db_session.add(s)
+        db_session.commit()
+        db_session.refresh(s)
         assert s.reported_at is None
 
     def test_update_session_endpoint_persists_reported_at(self, full):
@@ -2909,9 +3362,7 @@ class TestSesionGrupoReportedAt:
         )
         assert resp.status_code == 200, resp.text
         body = resp.json()
-        assert body.get("reported_at") is not None, (
-            "Regression: PUT /sessions/{id} sigue emitiendo reported_at=null."
-        )
+        assert body.get("reported_at") is not None, "Regression: PUT /sessions/{id} sigue emitiendo reported_at=null."
 
 
 class TestSesionGrupoOfferingAmount:
@@ -2929,9 +3380,14 @@ class TestSesionGrupoOfferingAmount:
         _seed_admin(db_session)
         sede = db_session.query(models.Sede).first()
         g = GrupoEvangelismo(
-            nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True,
+            nombre="G",
+            sede_id=sede.id,
+            ubicacion="u",
+            capacidad=10,
+            activo=True,
         )
-        db_session.add(g); db_session.flush()
+        db_session.add(g)
+        db_session.flush()
 
         # Asignación via constructor con offering_amount kwarg.
         # Antes el pop descartaba el valor; ahora debe fluir a la Column.
@@ -2941,9 +3397,11 @@ class TestSesionGrupoOfferingAmount:
             estado="PENDIENTE",
             offering_amount=150.50,
         )
-        db_session.add(s); db_session.commit()
+        db_session.add(s)
+        db_session.commit()
         # Forzar reload completo descartando el cache de SQLAlchemy.
-        db_session.expire(s); db_session.refresh(s)
+        db_session.expire(s)
+        db_session.refresh(s)
         assert s.offering_amount is not None, (
             "Regression: offering_amount quedó NULL tras persistir via constructor. "
             "Verificar que se eliminó el kwargs.pop('offering_amount') del __init__."
@@ -2959,15 +3417,22 @@ class TestSesionGrupoOfferingAmount:
         _seed_admin(db_session)
         sede = db_session.query(models.Sede).first()
         g = GrupoEvangelismo(
-            nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True,
+            nombre="G",
+            sede_id=sede.id,
+            ubicacion="u",
+            capacidad=10,
+            activo=True,
         )
-        db_session.add(g); db_session.flush()
+        db_session.add(g)
+        db_session.flush()
         s = SesionGrupo(
             grupo_id=g.id,
             fecha_sesion=datetime(2026, 7, 15, tzinfo=timezone.utc),
             estado="PENDIENTE",
         )
-        db_session.add(s); db_session.commit(); db_session.refresh(s)
+        db_session.add(s)
+        db_session.commit()
+        db_session.refresh(s)
         assert s.offering_amount is None
 
     def test_offering_amount_setter_via_attribute(self, db_session):
@@ -2976,18 +3441,26 @@ class TestSesionGrupoOfferingAmount:
         _seed_admin(db_session)
         sede = db_session.query(models.Sede).first()
         g = GrupoEvangelismo(
-            nombre="G", sede_id=sede.id, ubicacion="u", capacidad=10, activo=True,
+            nombre="G",
+            sede_id=sede.id,
+            ubicacion="u",
+            capacidad=10,
+            activo=True,
         )
-        db_session.add(g); db_session.flush()
+        db_session.add(g)
+        db_session.flush()
         s = SesionGrupo(
             grupo_id=g.id,
             fecha_sesion=datetime(2026, 7, 22, tzinfo=timezone.utc),
             estado="PENDIENTE",
         )
-        db_session.add(s); db_session.commit(); db_session.refresh(s)
+        db_session.add(s)
+        db_session.commit()
+        db_session.refresh(s)
         s.offering_amount = 99.99
         db_session.commit()
-        db_session.expire(s); db_session.refresh(s)
+        db_session.expire(s)
+        db_session.refresh(s)
         assert float(s.offering_amount) == pytest.approx(99.99, abs=0.01)
 
     def test_get_grupo_serializes_offering_amount(self, full):
@@ -2996,26 +3469,31 @@ class TestSesionGrupoOfferingAmount:
         g = full["grupos"][0]
         # Crear sesión con ofrenda vía POST directo. Antes del fix, el
         # constructor descartaba el valor y el campo llegaba NULL.
-        resp = full["c"].post("/api/evangelism/sessions", json={
-            "grupo_id": str(g.id),
-            "session_date": "2026-10-05",
-            "topic": "Con ofrenda",
-            "offering_amount": 75.25,
-        }, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/sessions",
+            json={
+                "grupo_id": str(g.id),
+                "session_date": "2026-10-05",
+                "topic": "Con ofrenda",
+                "offering_amount": 75.25,
+            },
+            headers=full["h"],
+        )
         assert resp.status_code == 200, resp.text
         new_session_id = resp.json()["id"]
         # GET detalle del grupo incluye la oferta en su lista de sesiones.
         get_resp = full["c"].get(
-            f"/api/evangelism/grupos/{g.id}", headers=full["h"],
+            f"/api/evangelism/grupos/{g.id}",
+            headers=full["h"],
         )
         assert get_resp.status_code == 200, get_resp.text
         sessions_data = get_resp.json().get("sessions", [])
         new_session = next(
-            (s for s in sessions_data if s.get("id") == new_session_id), None,
+            (s for s in sessions_data if s.get("id") == new_session_id),
+            None,
         )
         assert new_session is not None, (
-            "Sesión recién creada no aparece en get_grupo. "
-            "Posible regression del POST /api/evangelism/sessions."
+            "Sesión recién creada no aparece en get_grupo. Posible regression del POST /api/evangelism/sessions."
         )
         assert new_session.get("offering_amount") is not None, (
             "Regression: offering_amount salió None en GET /grupos/{id} aunque "
@@ -3023,13 +3501,15 @@ class TestSesionGrupoOfferingAmount:
             "de SesionGrupo.__init__ está eliminado."
         )
         assert float(new_session["offering_amount"]) == pytest.approx(
-            75.25, abs=0.01,
+            75.25,
+            abs=0.01,
         )
 
 
 class TestMainUtils:
     def test_channel_label(self):
         from backend.api.evangelism_main.main_utils import _channel_label
+
         assert _channel_label("whatsapp") == "WhatsApp"
         assert _channel_label("email") == "Email"
         assert _channel_label("sms") == "SMS"
@@ -3037,6 +3517,7 @@ class TestMainUtils:
 
     def test_persona_matches_segment_basic(self, full):
         from backend.api.evangelism_main.main_utils import _persona_matches_segment
+
         p = full["personas"][0]
         p.church_role_effective = "Miembro"
         p.estado_vital = "nuevo"
@@ -3051,6 +3532,7 @@ class TestMainUtils:
 
     def test_persona_matches_segment_staff_pastor(self, full):
         from backend.api.evangelism_main.main_utils import _persona_matches_segment
+
         p = full["personas"][1]
         p.church_role_effective = "pastor"
         p.estado_vital = ""
@@ -3059,32 +3541,42 @@ class TestMainUtils:
 
     def test_persona_matches_segment_vip(self, full, db_session):
         from backend.api.evangelism_main.main_utils import _persona_matches_segment
+
         p = full["personas"][2]
         # VIP = tiene donación
-        db_session.add(models.Donation(
-            persona_id=p.id, sede_id=full["sede"].id,
-            amount=100, currency="COP",
-        ))
+        db_session.add(
+            models.Donation(
+                persona_id=p.id,
+                sede_id=full["sede"].id,
+                amount=100,
+                currency="COP",
+            )
+        )
         db_session.flush()
         donations = {p.id}
         assert _persona_matches_segment(p, "vip", donations) is True
 
     def test_resolve_campaign_personas_empty(self, full):
         from backend.api.evangelism_main.main_utils import _resolve_campaign_personas
+
         assert _resolve_campaign_personas(full["c"], segments=[], sede_id=full["sede"].id) == []
         assert _resolve_campaign_personas(full["c"], segments=[""], sede_id=full["sede"].id) == []
 
     def test_resolve_campaign_personas_active(self, full, db_session):
         from backend.api.evangelism_main.main_utils import _resolve_campaign_personas
+
         full["personas"][0].church_role_effective = "Miembro"
         _sa_object_session(full["personas"][0]).commit()
         result = _resolve_campaign_personas(
-            db_session, segments=["active"], sede_id=full["sede"].id,
+            db_session,
+            segments=["active"],
+            sede_id=full["sede"].id,
         )
         assert len(result) >= 1
 
     def test_serialize_crm_task(self, full):
         from backend.api.evangelism_main.main_utils import _serialize_crm_task
+
         task = models.TareaCRM(
             id=uuid.uuid4(),
             title="Test task",
@@ -3095,7 +3587,8 @@ class TestMainUtils:
             persona_id=full["personas"][0].id,
         )
         db_sess = _sa_object_session(full["admin"])
-        db_sess.add(task); db_sess.commit()
+        db_sess.add(task)
+        db_sess.commit()
         data = _serialize_crm_task(task, contact_name="Test Name")
         assert data["title"] == "Test task"
         assert data["contact_name"] == "Test Name"

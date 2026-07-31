@@ -1,6 +1,7 @@
 """
 Schemas for Finance Suite — Contabilidad, Facturación, Gastos, Documentos, Firma
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -11,7 +12,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 orm_config: ConfigDict = ConfigDict(from_attributes=True)
-forbid_config: ConfigDict = ConfigDict(extra='forbid')
+forbid_config: ConfigDict = ConfigDict(extra="forbid")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -21,6 +22,7 @@ forbid_config: ConfigDict = ConfigDict(extra='forbid')
 # ═══════════════════════════════════════════════════════════════════════════════
 # 0. FUND (models_crm.Fund)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class FundCreate(BaseModel):
     model_config = forbid_config
@@ -42,6 +44,7 @@ class FundUpdate(BaseModel):
 # 0b. DONATION PAYLOAD (for finance.py register_donation)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class RegisterDonationPayload(BaseModel):
     model_config = forbid_config
     fund_id: UUID
@@ -54,6 +57,7 @@ class RegisterDonationPayload(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. CONTABILIDAD
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class BankAccountCreate(BaseModel):
     model_config = forbid_config
@@ -241,6 +245,7 @@ class TaxConfigurationOut(BaseModel):
 # 2. FACTURACIÓN
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class SalesOrderItemCreate(BaseModel):
     model_config = forbid_config
     description: str
@@ -355,6 +360,7 @@ class InvoiceOut(BaseModel):
 # 3. GASTOS
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class ExpenseItemCreate(BaseModel):
     model_config = forbid_config
     expense_date: date
@@ -427,6 +433,7 @@ class ExpenseReportOut(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════════
 # 4. DOCUMENTOS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class DocumentTagCreate(BaseModel):
     model_config = forbid_config
@@ -507,6 +514,7 @@ class DocumentOut(BaseModel):
 # 5. FIRMA DIGITAL
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class SignSignerCreate(BaseModel):
     model_config = forbid_config
     email: str
@@ -565,6 +573,7 @@ class SignAction(BaseModel):
 # ═══════════════════════════════════════════════════════════════════════════════
 # 6. MERCADOPAGO
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class CreatePreferenceRequest(BaseModel):
     model_config = forbid_config

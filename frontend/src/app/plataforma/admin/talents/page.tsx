@@ -58,8 +58,8 @@ export default function TalentSearchPage() {
             <div className="flex flex-wrap gap-4 items-center">
                 <div className="flex-1 min-w-[300px] relative group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-[hsl(var(--warning))] transition-colors" size={20} />
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         placeholder="Buscar por nombre o habilidad..."
                         className="w-full bg-[hsl(var(--bg-primary))] border border-white/5 rounded-lg py-1.5 pl-12 pr-4 text-white focus:outline-none focus:border-[hsl(var(--warning))/0.5] transition-all shadow-2xl"
                         value={search}
@@ -72,7 +72,7 @@ export default function TalentSearchPage() {
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                     <Zap size={14} className="text-[hsl(var(--warning))]" /> {loading ? 'Buscando...' : 'Resultados Reales'}
                 </h3>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {talents.map((talent, i) => (
                         <div key={i} className="bg-[hsl(var(--bg-primary))] border border-white/5 p-3 rounded-lg group hover:border-[hsl(var(--warning))/0.3] transition-all flex items-center justify-between">
@@ -107,4 +107,3 @@ export default function TalentSearchPage() {
         </div>
     );
 }
-

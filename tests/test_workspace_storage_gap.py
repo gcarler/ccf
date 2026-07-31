@@ -1,6 +1,7 @@
 """
 Direct unit tests for backend.api.workspace_shared._storage.
 """
+
 from __future__ import annotations
 
 from backend.api.workspace_shared import DATA_DIR
@@ -34,7 +35,9 @@ class TestAppendIncidentHistory:
     def test_appends_to_incident(self):
         incident = {"history": []}
         storage._append_incident_history(
-            incident, event="test", actor_id="actor_1",
+            incident,
+            event="test",
+            actor_id="actor_1",
             metadata={"key": "value"},
         )
         assert len(incident["history"]) == 1
@@ -62,9 +65,11 @@ class TestDataDir:
 class TestDefaultConfigs:
     def test_has_default_workspace_config(self):
         from backend.api.workspace_shared import DEFAULT_WORKSPACE_CONFIG
+
         assert isinstance(DEFAULT_WORKSPACE_CONFIG, dict)
         assert "feature_rules" in DEFAULT_WORKSPACE_CONFIG
 
     def test_has_default_compliance_policy(self):
         from backend.api.workspace_shared import DEFAULT_COMPLIANCE_POLICY
+
         assert isinstance(DEFAULT_COMPLIANCE_POLICY, dict)

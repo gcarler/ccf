@@ -7,6 +7,7 @@ the flagged name, re-emit preserving indentation and trailing-comma style.
 This avoids the brittle-pattern approach that previously broke syntax by
 mismatching comma separators.
 """
+
 from __future__ import annotations
 
 import json
@@ -16,7 +17,7 @@ from pathlib import Path
 LINT_JSON = Path("/tmp/lint.json")
 NAME_RE = re.compile(r"'([^']+)' is defined but never used")
 ML_OPEN = re.compile(r"\bimport\b[^{]*\{(?![^{}]*\})")  # import { without closing } on same line
-ML_CLOSE = re.compile(r"\}\s*[A-Za-z]*\s*from\b")      # } from
+ML_CLOSE = re.compile(r"\}\s*[A-Za-z]*\s*from\b")  # } from
 
 
 def find_block_bounds(lines: list[str], idx: int) -> tuple[int, int] | None:
@@ -73,7 +74,7 @@ def remove_from_block(text: str, name: str, ln_no: int) -> tuple[str, bool]:
     if bounds is None:
         return text, False
     start, end = bounds
-    block_text = "\n".join(lines[start:end + 1])
+    block_text = "\n".join(lines[start : end + 1])
 
     # Extract inner braces content
     m = re.search(r"import\s*\{(.*?)\}\s*([A-Za-z]*)\s*from\s*(['\"][^'\"]+['\"])", block_text, re.DOTALL)
@@ -89,7 +90,7 @@ def remove_from_block(text: str, name: str, ln_no: int) -> tuple[str, bool]:
 
     if not new_names:
         # Drop the entire import line
-        return "\n".join(lines[:start] + lines[end + 1:]), True
+        return "\n".join(lines[:start] + lines[end + 1 :]), True
 
     indent, has_tc = detect_indent_and_trailing(inner, names)
     sep = ",\n" + indent
@@ -108,7 +109,7 @@ def remove_from_block(text: str, name: str, ln_no: int) -> tuple[str, bool]:
         tail = "\n"
     new_block = opener + "\n" + indent + new_inner + "\n" + closer + tail
 
-    lines[start:end + 1] = new_block.split("\n")
+    lines[start : end + 1] = new_block.split("\n")
     return "\n".join(lines), True
 
 
@@ -121,9 +122,9 @@ def main() -> int:
         if not fp.is_file():
             continue
         errs = [
-            m for m in entry["messages"]
-            if m.get("severity") == 2
-            and m.get("ruleId") == "@typescript-eslint/no-unused-vars"
+            m
+            for m in entry["messages"]
+            if m.get("severity") == 2 and m.get("ruleId") == "@typescript-eslint/no-unused-vars"
         ]
         if not errs:
             continue

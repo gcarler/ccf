@@ -1,6 +1,7 @@
 """
 Deep tests for evangelism_analytics.py — DB-backed helper functions and endpoint logic.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -45,8 +46,9 @@ class TestGroupIdsForStrategy:
     def test_with_grupo(self, full, db_session):
         s, _ = full["s"], db_session
         # Create strategy via API
-        resp = full["c"].post("/api/evangelism/strategies",
-            json={"name": f"EA-{uuid.uuid4().hex[:6]}"}, headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/strategies", json={"name": f"EA-{uuid.uuid4().hex[:6]}"}, headers=full["h"]
+        )
         assert _ok(resp.status_code)
         strat = resp.json()
         sid = uuid.UUID(strat["id"])
@@ -55,8 +57,11 @@ class TestGroupIdsForStrategy:
         db_session.add(p)
         db_session.flush()
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre="Test Group", estrategia_id=sid,
-            sede_id=s.id, lider_persona_id=p.id,
+            id=uuid.uuid4(),
+            nombre="Test Group",
+            estrategia_id=sid,
+            sede_id=s.id,
+            lider_persona_id=p.id,
         )
         db_session.add(g)
         db_session.commit()
@@ -77,19 +82,27 @@ class TestAttendanceStats:
         db_session.add(p)
         db_session.flush()
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre="G", sede_id=s.id, lider_persona_id=p.id,
+            id=uuid.uuid4(),
+            nombre="G",
+            sede_id=s.id,
+            lider_persona_id=p.id,
         )
         db_session.add(g)
         db_session.flush()
         now = datetime.now(timezone.utc)
         ses = models.SesionGrupo(
-            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now,
+            id=uuid.uuid4(),
+            grupo_id=g.id,
+            fecha_sesion=now,
             estado="REALIZADA",
         )
         db_session.add(ses)
         db_session.flush()
         asis = models.Asistencia(
-            id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO",
+            id=uuid.uuid4(),
+            sesion_id=ses.id,
+            persona_id=p.id,
+            estado="ASISTIO",
         )
         db_session.add(asis)
         db_session.commit()
@@ -109,13 +122,19 @@ class TestSessionsDoneCount:
         db_session.add(p)
         db_session.flush()
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre="G2", sede_id=s.id, lider_persona_id=p.id,
+            id=uuid.uuid4(),
+            nombre="G2",
+            sede_id=s.id,
+            lider_persona_id=p.id,
         )
         db_session.add(g)
         db_session.flush()
         now = datetime.now(timezone.utc)
         ses = models.SesionGrupo(
-            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA",
+            id=uuid.uuid4(),
+            grupo_id=g.id,
+            fecha_sesion=now,
+            estado="REALIZADA",
         )
         db_session.add(ses)
         db_session.commit()
@@ -134,13 +153,19 @@ class TestSessionsTotalCount:
         db_session.add(p)
         db_session.flush()
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre="G3", sede_id=s.id, lider_persona_id=p.id,
+            id=uuid.uuid4(),
+            nombre="G3",
+            sede_id=s.id,
+            lider_persona_id=p.id,
         )
         db_session.add(g)
         db_session.flush()
         now = datetime.now(timezone.utc)
         ses = models.SesionGrupo(
-            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="PENDIENTE",
+            id=uuid.uuid4(),
+            grupo_id=g.id,
+            fecha_sesion=now,
+            estado="PENDIENTE",
         )
         db_session.add(ses)
         db_session.commit()
@@ -158,8 +183,7 @@ class TestAnalyticsWithData:
     def test_kpis_with_strategy(self, full, db_session):
         c, h, s = full["c"], full["h"], full["s"]
         # Create strategy
-        resp = c.post("/api/evangelism/strategies",
-            json={"name": f"KPI-{uuid.uuid4().hex[:6]}"}, headers=h)
+        resp = c.post("/api/evangelism/strategies", json={"name": f"KPI-{uuid.uuid4().hex[:6]}"}, headers=h)
         assert _ok(resp.status_code)
         strat = resp.json()
         sid = strat["id"]
@@ -168,19 +192,28 @@ class TestAnalyticsWithData:
         db_session.add(p)
         db_session.flush()
         g = models.GrupoEvangelismo(
-            id=uuid.uuid4(), nombre="KPI Group", estrategia_id=uuid.UUID(sid),
-            sede_id=s.id, lider_persona_id=p.id,
+            id=uuid.uuid4(),
+            nombre="KPI Group",
+            estrategia_id=uuid.UUID(sid),
+            sede_id=s.id,
+            lider_persona_id=p.id,
         )
         db_session.add(g)
         db_session.flush()
         now = datetime.now(timezone.utc)
         ses = models.SesionGrupo(
-            id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA",
+            id=uuid.uuid4(),
+            grupo_id=g.id,
+            fecha_sesion=now,
+            estado="REALIZADA",
         )
         db_session.add(ses)
         db_session.flush()
         asis = models.Asistencia(
-            id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO",
+            id=uuid.uuid4(),
+            sesion_id=ses.id,
+            persona_id=p.id,
+            estado="ASISTIO",
         )
         db_session.add(asis)
         db_session.commit()
@@ -190,8 +223,7 @@ class TestAnalyticsWithData:
 
     def test_trend_with_data(self, full, db_session):
         c, h, s = full["c"], full["h"], full["s"]
-        resp = c.post("/api/evangelism/strategies",
-            json={"name": f"TR-{uuid.uuid4().hex[:6]}"}, headers=h)
+        resp = c.post("/api/evangelism/strategies", json={"name": f"TR-{uuid.uuid4().hex[:6]}"}, headers=h)
         assert _ok(resp.status_code)
         sid = resp.json()["id"]
         resp = c.get(f"/api/evangelism/analytics/strategy/{sid}/trend", headers=h)
@@ -199,8 +231,7 @@ class TestAnalyticsWithData:
 
     def test_funnel_with_data(self, full, db_session):
         c, h, s = full["c"], full["h"], full["s"]
-        resp = c.post("/api/evangelism/strategies",
-            json={"name": f"FU-{uuid.uuid4().hex[:6]}"}, headers=h)
+        resp = c.post("/api/evangelism/strategies", json={"name": f"FU-{uuid.uuid4().hex[:6]}"}, headers=h)
         assert _ok(resp.status_code)
         sid = resp.json()["id"]
         resp = c.get(f"/api/evangelism/analytics/strategy/{sid}/funnel", headers=h)
@@ -208,8 +239,7 @@ class TestAnalyticsWithData:
 
     def test_velocity_with_data(self, full, db_session):
         c, h, s = full["c"], full["h"], full["s"]
-        resp = c.post("/api/evangelism/strategies",
-            json={"name": f"VE-{uuid.uuid4().hex[:6]}"}, headers=h)
+        resp = c.post("/api/evangelism/strategies", json={"name": f"VE-{uuid.uuid4().hex[:6]}"}, headers=h)
         assert _ok(resp.status_code)
         sid = resp.json()["id"]
         resp = c.get(f"/api/evangelism/analytics/strategy/{sid}/velocity", headers=h)

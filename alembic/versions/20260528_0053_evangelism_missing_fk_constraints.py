@@ -27,19 +27,25 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def _constraint_exists(name: str) -> bool:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT count(*) FROM information_schema.table_constraints "
-        "WHERE constraint_name=:n AND constraint_type='FOREIGN KEY'"
-    ), {"n": name})
+    r = conn.execute(
+        sa.text(
+            "SELECT count(*) FROM information_schema.table_constraints "
+            "WHERE constraint_name=:n AND constraint_type='FOREIGN KEY'"
+        ),
+        {"n": name},
+    )
     return r.scalar() > 0
 
 
 def _col_type(table: str, col: str) -> str:
     conn = op.get_bind()
-    r = conn.execute(sa.text(
-        "SELECT data_type FROM information_schema.columns "
-        "WHERE table_name=:t AND column_name=:c AND table_schema='public'"
-    ), {"t": table, "c": col})
+    r = conn.execute(
+        sa.text(
+            "SELECT data_type FROM information_schema.columns "
+            "WHERE table_name=:t AND column_name=:c AND table_schema='public'"
+        ),
+        {"t": table, "c": col},
+    )
     row = r.fetchone()
     return row[0] if row else ""
 
@@ -49,40 +55,44 @@ def upgrade() -> None:
 
     # A) Convertir columnas INTEGER → UUID (datos compat son de prueba)
     int_to_uuid = [
-        ("grupo_participantes",   "persona_id"),
-        ("asistencias",           "persona_id"),
+        ("grupo_participantes", "persona_id"),
+        ("asistencias", "persona_id"),
         ("registros_seguimiento", "responsable_id"),
-        ("historial_embudo",      "persona_id"),
+        ("historial_embudo", "persona_id"),
     ]
     for table, col in int_to_uuid:
         if _col_type(table, col) == "integer":
             # Eliminar filas con IDs enteros (no corresponden a personas UUID)
             conn.execute(sa.text(f"DELETE FROM {table} WHERE {col} IS NOT NULL"))
-            conn.execute(sa.text(
-                f"ALTER TABLE {table} ALTER COLUMN {col} DROP NOT NULL"
-            ))
-            conn.execute(sa.text(
-                f"ALTER TABLE {table} ALTER COLUMN {col} TYPE UUID "
-                f"USING NULL"
-            ))
+            conn.execute(sa.text(f"ALTER TABLE {table} ALTER COLUMN {col} DROP NOT NULL"))
+            conn.execute(sa.text(f"ALTER TABLE {table} ALTER COLUMN {col} TYPE UUID USING NULL"))
 
     # B) Añadir FK constraints UUID→UUID
     constraints = [
-        ("grupo_participantes",   "persona_id",     "personas", "id", "CASCADE",  "fk_grupo_participantes_persona"),
-        ("asistencias",           "persona_id",     "personas", "id", "CASCADE",  "fk_asistencias_persona"),
-        ("registros_seguimiento", "responsable_id", "personas", "id", "SET NULL", "fk_registros_seguimiento_responsable"),
-        ("historial_embudo",      "persona_id",     "personas", "id", "CASCADE",  "fk_historial_embudo_persona"),
-        ("logs_auditoria",        "usuario_id",     "personas", "id", "SET NULL", "fk_logs_auditoria_usuario"),
+        ("grupo_participantes", "persona_id", "personas", "id", "CASCADE", "fk_grupo_participantes_persona"),
+        ("asistencias", "persona_id", "personas", "id", "CASCADE", "fk_asistencias_persona"),
+        (
+            "registros_seguimiento",
+            "responsable_id",
+            "personas",
+            "id",
+            "SET NULL",
+            "fk_registros_seguimiento_responsable",
+        ),
+        ("historial_embudo", "persona_id", "personas", "id", "CASCADE", "fk_historial_embudo_persona"),
+        ("logs_auditoria", "usuario_id", "personas", "id", "SET NULL", "fk_logs_auditoria_usuario"),
     ]
     for table, col, ref_table, ref_col, on_delete, name in constraints:
         if not _constraint_exists(name):
-            conn.execute(sa.text(f"""
+            conn.execute(
+                sa.text(f"""
                 ALTER TABLE {table}
                 ADD CONSTRAINT {name}
                 FOREIGN KEY ({col}) REFERENCES {ref_table}({ref_col})
                 ON DELETE {on_delete}
                 NOT VALID
-            """))
+            """)
+            )
             conn.execute(sa.text(f"ALTER TABLE {table} VALIDATE CONSTRAINT {name}"))
 
 

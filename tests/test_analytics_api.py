@@ -9,9 +9,7 @@ from tests.conftest import seed_admin as _seed_admin
 
 
 def _seed_sede(db_session):
-    sede = models.Sede(
-        id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True
-    )
+    sede = models.Sede(id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True)
     db_session.add(sede)
     db_session.commit()
     db_session.refresh(sede)
@@ -28,9 +26,7 @@ def test_analytics_radar_returns_data(client, db_session):
     assert "bautismos_este_anio" in data
 
 
-@pytest.mark.xfail(
-    reason="backend.crud has no attribute 'get_dashboard_metrics'", strict=False
-)
+@pytest.mark.xfail(reason="backend.crud has no attribute 'get_dashboard_metrics'", strict=False)
 def test_analytics_dashboard_metrics(client, db_session):
     _seed_admin(db_session)
     headers = _auth_headers(client)

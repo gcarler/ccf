@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-    Award, 
-    Plus, 
-    ChevronRight, 
+import {
+    Award,
+    Plus,
+    ChevronRight,
     Zap,
     Heart,
     Star,
@@ -174,7 +174,7 @@ export default function SpiritualMilestones() {
                 }
             `}</style>
 
-            <WorkspaceToolbar 
+            <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Vida Espiritual', icon: Heart }, { label: 'Insignias e Hitos', icon: Award }]}
                 viewType={viewType}
                 setViewType={setViewType}
@@ -190,10 +190,10 @@ export default function SpiritualMilestones() {
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--info)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
  <div className="w-full space-y-3 relative z-10">
-                    
+
                     {/* Header Cinematic */}
                     <header className="space-y-4">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                             className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/100%)]/20"
                         >
@@ -224,7 +224,7 @@ export default function SpiritualMilestones() {
                                     {milestones.map((m, i) => {
                                         const Icon = iconMap[m.icon?.toLowerCase() ?? ''] || Award;
                                         return (
-                                            <motion.div 
+                                            <motion.div
                                                 key={m.id}
                                                 initial={{ opacity: 0, scale: 0.95 }}
                                                 animate={{ opacity: 1, scale: 1 }}
@@ -235,7 +235,7 @@ export default function SpiritualMilestones() {
                                                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-1000">
                                                     <Icon size={120} />
                                                 </div>
-                                                
+
                                                 <div className="relative z-10 space-y-3">
                                                     <div className="size-8 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform duration-500">
                                                         <Icon size={32} strokeWidth={1.5} />
@@ -260,7 +260,7 @@ export default function SpiritualMilestones() {
                                 {/* Bulk Action Area Cinematic */}
                                 <section className="bg-[hsl(var(--bg-muted))] p-4 lg:p-4 rounded-lg text-white relative overflow-hidden group shadow-2xl">
                                     <div className="absolute top-0 right-0 -mr-20 -mt-20 size-96 bg-[hsl(var(--info))]/20 rounded-full blur-[120px] group-hover:bg-[hsl(var(--info))]/30 transition-all duration-1000" />
-                                    
+
                                     <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-3 items-center">
                                         <div className="space-y-3">
                                             <div className="space-y-4">
@@ -297,4 +297,3 @@ export default function SpiritualMilestones() {
         </div>
     );
 }
-

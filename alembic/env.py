@@ -6,6 +6,7 @@ and we cannot `from backend.core.bootstrap import …` until `sys.path` is
 rooted. After that one-line setup, `load_settings()` re-applies the same
 walk-up idempotently (defense-in-depth).
 """
+
 from __future__ import annotations
 
 import sys
@@ -15,10 +16,7 @@ from pathlib import Path
 # One-line walk-up so the imports below can find `backend.*`.
 sys.path.insert(
     0,
-    str(next(
-        p for p in Path(__file__).resolve().parents
-        if (p / "backend" / "__init__.py").is_file()
-    )),
+    str(next(p for p in Path(__file__).resolve().parents if (p / "backend" / "__init__.py").is_file())),
 )
 
 from sqlalchemy import engine_from_config, pool  # noqa: E402
@@ -44,9 +42,7 @@ target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True, compare_type=True
-    )
+    context.configure(url=url, target_metadata=target_metadata, literal_binds=True, compare_type=True)
 
     with context.begin_transaction():
         context.run_migrations()

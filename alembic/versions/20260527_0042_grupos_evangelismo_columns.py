@@ -39,19 +39,31 @@ def upgrade() -> None:
     if "lider_persona_id" not in cols:
         op.add_column(
             "grupos_evangelismo",
-            sa.Column("lider_persona_id", UUID(as_uuid=True), sa.ForeignKey("personas.id", ondelete="SET NULL"), nullable=True),
+            sa.Column(
+                "lider_persona_id", UUID(as_uuid=True), sa.ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+            ),
         )
 
     if "asistente_persona_id" not in cols:
         op.add_column(
             "grupos_evangelismo",
-            sa.Column("asistente_persona_id", UUID(as_uuid=True), sa.ForeignKey("personas.id", ondelete="SET NULL"), nullable=True),
+            sa.Column(
+                "asistente_persona_id",
+                UUID(as_uuid=True),
+                sa.ForeignKey("personas.id", ondelete="SET NULL"),
+                nullable=True,
+            ),
         )
 
     if "anfitrion_persona_id" not in cols:
         op.add_column(
             "grupos_evangelismo",
-            sa.Column("anfitrion_persona_id", UUID(as_uuid=True), sa.ForeignKey("personas.id", ondelete="SET NULL"), nullable=True),
+            sa.Column(
+                "anfitrion_persona_id",
+                UUID(as_uuid=True),
+                sa.ForeignKey("personas.id", ondelete="SET NULL"),
+                nullable=True,
+            ),
         )
 
     if "updated_at" not in cols:
@@ -65,8 +77,14 @@ def downgrade() -> None:
     conn = op.get_bind()
     cols = [c["name"] for c in sa.inspect(conn).get_columns("grupos_evangelismo")]
 
-    for col in ["updated_at", "anfitrion_persona_id", "asistente_persona_id",
-                "lider_persona_id", "capacidad", "direccion"]:
+    for col in [
+        "updated_at",
+        "anfitrion_persona_id",
+        "asistente_persona_id",
+        "lider_persona_id",
+        "capacidad",
+        "direccion",
+    ]:
         if col in cols:
             op.drop_column("grupos_evangelismo", col)
 

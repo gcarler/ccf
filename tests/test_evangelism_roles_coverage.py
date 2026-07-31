@@ -1,6 +1,7 @@
 """
 Coverage tests for evangelism_main/main_roles.py — target 90%+.
 """
+
 import uuid
 
 import pytest
@@ -17,8 +18,12 @@ def full(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
-        "c": client, "h": headers, "db": db_session,
-        "admin": admin, "persona": persona, "sede": sede,
+        "c": client,
+        "h": headers,
+        "db": db_session,
+        "admin": admin,
+        "persona": persona,
+        "sede": sede,
     }
 
 
@@ -26,12 +31,15 @@ def _make_strategy(db, sede_id):
     from datetime import datetime, timezone
 
     from backend.models_evangelism import CategoriaEstrategia, EstrategiaEvangelismo
+
     # Create a category first
     cat = CategoriaEstrategia(id=uuid.uuid4(), nombre="Test Cat")
     db.add(cat)
     db.flush()
     s = EstrategiaEvangelismo(
-        id=uuid.uuid4(), nombre="Estrategia Test", sede_id=sede_id,
+        id=uuid.uuid4(),
+        nombre="Estrategia Test",
+        sede_id=sede_id,
         categoria_id=cat.id,
         fecha_inicio=datetime.now(timezone.utc),
         fecha_fin=datetime.now(timezone.utc),
@@ -43,8 +51,11 @@ def _make_strategy(db, sede_id):
 
 def _make_role(db, estrategia_id, nombre="Rol Test"):
     from backend.models_evangelism import RolPersonalizadoEstrategia
+
     r = RolPersonalizadoEstrategia(
-        id=uuid.uuid4(), estrategia_id=estrategia_id, nombre=nombre,
+        id=uuid.uuid4(),
+        estrategia_id=estrategia_id,
+        nombre=nombre,
         permisos={},
     )
     db.add(r)
@@ -77,16 +88,24 @@ class TestRolesEndpoints:
         c, h = full["c"], full["h"]
         s = _make_strategy(full["db"], full["sede"].id)
         full["db"].commit()
-        resp = c.post(f"/api/evangelism/strategies/{s.id}/roles", headers=h, json={
-            "nombre_rol": "Nuevo Rol",
-        })
+        resp = c.post(
+            f"/api/evangelism/strategies/{s.id}/roles",
+            headers=h,
+            json={
+                "nombre_rol": "Nuevo Rol",
+            },
+        )
         assert resp.status_code in (200, 201), f"Expected 2xx, got {resp.status_code}: {resp.text[:200]}"
 
     def test_create_role_strategy_not_found(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post(f"/api/evangelism/strategies/{uuid.uuid4()}/roles", headers=h, json={
-            "nombre_rol": "Rol",
-        })
+        resp = c.post(
+            f"/api/evangelism/strategies/{uuid.uuid4()}/roles",
+            headers=h,
+            json={
+                "nombre_rol": "Rol",
+            },
+        )
         assert resp.status_code == 404
 
     @pytest.mark.xfail(reason="CRUD permission issue in test DB", strict=False)

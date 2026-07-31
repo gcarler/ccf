@@ -1,9 +1,10 @@
 """Coverage for backend/api/crm/personas.py — target 90%."""
+
 from __future__ import annotations
 
 import uuid
 
-from backend import models, schemas
+from backend import models
 from tests.conftest import auth_headers, seed_admin
 
 
@@ -118,9 +119,7 @@ def test_mentor_candidates(client, db_session):
     headers = auth_headers(client)
     p = _create_persona(db_session, sede)
     candidate = _create_persona(db_session, sede, first_name="Mentor", email="mentor_cand@example.com")
-    db_session.query(models.Persona).filter(models.Persona.id == candidate.id).update(
-        {"health_score": 95.0}
-    )
+    db_session.query(models.Persona).filter(models.Persona.id == candidate.id).update({"health_score": 95.0})
     db_session.commit()
     response = client.get(f"/api/crm/personas/{p.id}/mentor-candidates", headers=headers)
     assert response.status_code == 200

@@ -79,8 +79,7 @@ def donations_summary(
             func.sum(models.Donation.amount).label("total"),
         )
         .filter(
-            models.Donation.created_at
-            >= now.replace(year=now.year, month=1, day=1, tzinfo=None),
+            models.Donation.created_at >= now.replace(year=now.year, month=1, day=1, tzinfo=None),
             models.Donation.sede_id == sede_id,
         )
         .group_by("month_num")
@@ -89,13 +88,20 @@ def donations_summary(
     )
 
     month_names = {
-        1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
-        7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic",
+        1: "Ene",
+        2: "Feb",
+        3: "Mar",
+        4: "Abr",
+        5: "May",
+        6: "Jun",
+        7: "Jul",
+        8: "Ago",
+        9: "Sep",
+        10: "Oct",
+        11: "Nov",
+        12: "Dic",
     }
-    return [
-        {"month": month_names.get(int(r[0]), r[0]), "amount": round(r[1])}
-        for r in monthly
-    ]
+    return [{"month": month_names.get(int(r[0]), r[0]), "amount": round(r[1])} for r in monthly]
 
 
 @router.get("/{donation_id}/certificate")
@@ -106,11 +112,7 @@ def download_certificate(
 ):
     # FIN-H11: Agregar sede check
     sede_id = get_user_sede_id(db, current_user.id)
-    donation = (
-        db.query(models.Donation)
-        .filter(models.Donation.id == donation_id)
-        .first()
-    )
+    donation = db.query(models.Donation).filter(models.Donation.id == donation_id).first()
     if not donation:
         raise HTTPException(status_code=404, detail="Donation not found")
     if sede_id and donation.sede_id and str(donation.sede_id) != sede_id:

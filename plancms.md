@@ -1,9 +1,9 @@
 # Plan de Trabajo — Mejora Integral del Módulo CMS
 
-**Proyecto:** CCF (Centro Cristiano Faro)  
-**Módulo:** CMS v2  
-**Fecha:** 2026-07-22  
-**Estado:** En producción  
+**Proyecto:** CCF (Centro Cristiano Faro)
+**Módulo:** CMS v2
+**Fecha:** 2026-07-22
+**Estado:** En producción
 
 ---
 

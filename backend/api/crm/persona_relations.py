@@ -31,16 +31,8 @@ def _serialize_persona_position(persona_position, position) -> dict:
         "position_id": persona_position.position_id,
         "position_name": position.name if position else None,
         "category": position.category if position else None,
-        "start_date": (
-            persona_position.start_date.isoformat()
-            if persona_position.start_date
-            else None
-        ),
-        "end_date": (
-            persona_position.end_date.isoformat()
-            if persona_position.end_date
-            else None
-        ),
+        "start_date": (persona_position.start_date.isoformat() if persona_position.start_date else None),
+        "end_date": (persona_position.end_date.isoformat() if persona_position.end_date else None),
         "is_active": persona_position.is_active,
         "notes": persona_position.notes,
     }
@@ -84,20 +76,14 @@ def get_persona_ministries(
     )
     result = []
     for mm in rows:
-        ministry = (
-            db.query(models.Ministry)
-            .filter(models.Ministry.id == mm.ministry_id)
-            .first()
-        )
+        ministry = db.query(models.Ministry).filter(models.Ministry.id == mm.ministry_id).first()
         result.append(
             {
                 "id": mm.id,
                 "persona_id": mm.persona_id,
                 "ministry_id": mm.ministry_id,
                 "ministry_name": ministry.name if ministry else None,
-                "ministry": (
-                    {"id": ministry.id, "name": ministry.name} if ministry else None
-                ),
+                "ministry": ({"id": ministry.id, "name": ministry.name} if ministry else None),
                 "role": mm.role,
                 "start_date": mm.start_date.isoformat() if mm.start_date else None,
                 "end_date": mm.end_date.isoformat() if mm.end_date else None,
@@ -131,12 +117,9 @@ def get_persona_crm_profile(
         .all()
     )
 
-    cases = (
-        case_query(db)
-        .filter(
-            models.CasoCRM.persona_id == persona_uuid,
-            models.CasoCRM.deleted_at.is_(None),
-        )
+    cases = case_query(db).filter(
+        models.CasoCRM.persona_id == persona_uuid,
+        models.CasoCRM.deleted_at.is_(None),
     )
     created_col = _case_created_column(db)
     if created_col is not None:
@@ -146,8 +129,7 @@ def get_persona_crm_profile(
     case_rows = [_serialize_case(prepare_case_for_output(db, case)) for case in cases]
 
     position_rows = [
-        _serialize_persona_position(persona_position, position)
-        for persona_position, position in positions
+        _serialize_persona_position(persona_position, position) for persona_position, position in positions
     ]
 
     return {
@@ -181,10 +163,7 @@ def get_persona_positions(
         )
         .all()
     )
-    return [
-        _serialize_persona_position(persona_position, position)
-        for persona_position, position in rows
-    ]
+    return [_serialize_persona_position(persona_position, position) for persona_position, position in rows]
 
 
 @router.get("/personas/{persona_id}/consolidation", response_model=dict)
@@ -217,9 +196,7 @@ def get_persona_consolidation(
     )
 
     communications_count = (
-        db.query(models.CommunicationLog)
-        .filter(models.CommunicationLog.persona_id == persona.id)
-        .count()
+        db.query(models.CommunicationLog).filter(models.CommunicationLog.persona_id == persona.id).count()
     )
 
     open_tasks_count = sum(1 for task in tasks if task.status != "completed")
@@ -251,11 +228,7 @@ def list_positions(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
-    return (
-        db.query(models.Position)
-        .order_by(models.Position.is_active.desc(), models.Position.name.asc())
-        .all()
-    )
+    return db.query(models.Position).order_by(models.Position.is_active.desc(), models.Position.name.asc()).all()
 
 
 @router.post("/positions", response_model=schemas.Position)
@@ -264,9 +237,7 @@ def create_position(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    existing = (
-        db.query(models.Position).filter(models.Position.name == payload.name).first()
-    )
+    existing = db.query(models.Position).filter(models.Position.name == payload.name).first()
     if existing:
         raise HTTPException(status_code=409, detail="Position already exists")
     row = models.Position(**payload.model_dump())
@@ -303,11 +274,7 @@ def assign_persona_position(
     """Axioma 3: sólo se asignan posiciones a personas en la sede del usuario."""
     persona = _get_scoped_persona(db, current_user, persona_id)
     persona_uuid = persona.id
-    position = (
-        db.query(models.Position)
-        .filter(models.Position.id == payload.position_id)
-        .first()
-    )
+    position = db.query(models.Position).filter(models.Position.id == payload.position_id).first()
     if not position:
         raise HTTPException(status_code=404, detail="Position not found")
 
@@ -452,11 +419,7 @@ def list_colombian_departments(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Devuelve la lista de los 32 departamentos de Colombia + Bogotá D.C."""
-    return (
-        db.query(models.ColombianDepartment)
-        .order_by(models.ColombianDepartment.name)
-        .all()
-    )
+    return db.query(models.ColombianDepartment).order_by(models.ColombianDepartment.name).all()
 
 
 @router.get("/colombian-departments/{department_id}/cities", response_model=List[schemas.ColombianCity])
@@ -466,11 +429,7 @@ def list_cities_by_department(
     current_user: models.User = Depends(require_module_access("crm", "read")),
 ):
     """Devuelve las ciudades de un departamento específico."""
-    department = (
-        db.query(models.ColombianDepartment)
-        .filter(models.ColombianDepartment.id == department_id)
-        .first()
-    )
+    department = db.query(models.ColombianDepartment).filter(models.ColombianDepartment.id == department_id).first()
     if not department:
         raise HTTPException(status_code=404, detail="Departamento no encontrado")
     return (

@@ -202,7 +202,8 @@ class AutomationEngine:
                     logger.warning(
                         "evaluate_condition: fallo al comparar actual_val=%r con expected=%r, "
                         "degradando a comparación de strings",
-                        actual_val, expected_val_str,
+                        actual_val,
+                        expected_val_str,
                     )
                     return str(actual_val) == str(expected_val_str)
 
@@ -457,7 +458,9 @@ class AutomationEngine:
                             val = getattr(persona, edge.condition_key)
                             found = True
 
-                        if cond_type_str != "always" and (not found or not evaluate_condition(edge.condition_type, val, edge.condition_value)):
+                        if cond_type_str != "always" and (
+                            not found or not evaluate_condition(edge.condition_type, val, edge.condition_value)
+                        ):
                             # Skip this edge since condition evaluates to False
                             logger.info(f"Skipping edge {edge.id} due to condition mismatch: {edge.condition_key}")
                             continue

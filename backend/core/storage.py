@@ -21,9 +21,7 @@ class StorageService:
         self.base_dir = base_dir or settings.uploads_dir
         pathlib.Path(self.base_dir).mkdir(parents=True, exist_ok=True)
 
-    def save_file(
-        self, content: bytes, filename: str, subfolder: str = "general"
-    ) -> str:
+    def save_file(self, content: bytes, filename: str, subfolder: str = "general") -> str:
         """
         Saves a file and returns the public URL/path.
 
@@ -47,9 +45,7 @@ class StorageService:
         log.info(f"File saved: {full_path}  ({len(optimized)} bytes)")
         return f"/api/static/{subfolder}/{unique_name}"
 
-    def save_file_original(
-        self, content: bytes, filename: str, subfolder: str = "general"
-    ) -> str:
+    def save_file_original(self, content: bytes, filename: str, subfolder: str = "general") -> str:
         """
         Save a file **without** any image optimization.
 
@@ -69,9 +65,7 @@ class StorageService:
         log.info(f"File saved (original): {full_path}")
         return f"/api/static/{subfolder}/{unique_name}"
 
-    def save_file_seaweed(
-        self, content: bytes, filename: str, subfolder: str = "general"
-    ) -> str:
+    def save_file_seaweed(self, content: bytes, filename: str, subfolder: str = "general") -> str:
         """
         Guarda un archivo en SeaweedFS (o S3) y retorna su FID.
         Esta es la implementación de integración. Si no está configurado,
@@ -80,12 +74,13 @@ class StorageService:
         seaweed_url = getattr(settings, "seaweed_url", None)
         ext = pathlib.Path(filename).suffix
         unique_name = f"{uuid.uuid4().hex}{ext}"
-        
+
         if not seaweed_url:
             log.warning("SeaweedFS URL not configured. Mocking FID generation.")
             return f"mock-fid-{unique_name}"
-            
+
         import requests
+
         try:
             target_url = f"{seaweed_url}/{subfolder}/{unique_name}"
             resp = requests.post(target_url, files={"file": content}, timeout=10)

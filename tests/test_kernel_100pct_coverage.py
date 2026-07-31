@@ -9,12 +9,15 @@ Covers:
 - get_my_permissions, get_persona_permissions
 - check_can_receive_assignment
 """
+
 from __future__ import annotations
 
 import uuid
+
 import pytest
-from backend import models
-from tests.conftest import auth_headers as _auth_headers, seed_admin as _seed_admin
+
+from tests.conftest import auth_headers as _auth_headers
+from tests.conftest import seed_admin as _seed_admin
 
 
 @pytest.fixture

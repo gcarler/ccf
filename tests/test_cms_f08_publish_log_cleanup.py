@@ -19,6 +19,7 @@ Tests:
   5) CRUD-direct: no borra logs recientes (created_at >= cutoff)
   6) Scheduler integration: _run_scheduling_pass retorna publish_logs_purged
 """
+
 from __future__ import annotations
 
 import datetime as dt
@@ -95,16 +96,10 @@ class TestF08CleanupOldPublishLogs:
         ).id
         db_session.flush()
 
-        deleted = cleanup_old_publish_logs(
-            db_session, retention_days=90, now=NOW
-        )
+        deleted = cleanup_old_publish_logs(db_session, retention_days=90, now=NOW)
         assert deleted == 1
         # El log reciente debe seguir
-        still_there = (
-            db_session.query(models.CmsPublishLog)
-            .filter(models.CmsPublishLog.id == recent_log_id)
-            .first()
-        )
+        still_there = db_session.query(models.CmsPublishLog).filter(models.CmsPublishLog.id == recent_log_id).first()
         assert still_there is not None
 
     def test_dry_run_returns_count_without_deleting(self, db_session):
@@ -117,16 +112,10 @@ class TestF08CleanupOldPublishLogs:
             created_at=NOW - dt.timedelta(days=200),
         ).id
 
-        count = cleanup_old_publish_logs(
-            db_session, retention_days=90, dry_run=True, now=NOW
-        )
+        count = cleanup_old_publish_logs(db_session, retention_days=90, dry_run=True, now=NOW)
         assert count == 1
         # No se borro
-        still_there = (
-            db_session.query(models.CmsPublishLog)
-            .filter(models.CmsPublishLog.id == log_id)
-            .first()
-        )
+        still_there = db_session.query(models.CmsPublishLog).filter(models.CmsPublishLog.id == log_id).first()
         assert still_there is not None
 
     def test_custom_retention_days(self, db_session):
@@ -141,15 +130,11 @@ class TestF08CleanupOldPublishLogs:
         )
 
         # Con retention=90: no se borra
-        deleted_90 = cleanup_old_publish_logs(
-            db_session, retention_days=90, dry_run=True, now=NOW
-        )
+        deleted_90 = cleanup_old_publish_logs(db_session, retention_days=90, dry_run=True, now=NOW)
         assert deleted_90 == 0
 
         # Con retention=30: se borra
-        deleted_30 = cleanup_old_publish_logs(
-            db_session, retention_days=30, dry_run=True, now=NOW
-        )
+        deleted_30 = cleanup_old_publish_logs(db_session, retention_days=30, dry_run=True, now=NOW)
         assert deleted_30 == 1
 
     def test_does_not_purge_recent_logs(self, db_session):
@@ -164,9 +149,7 @@ class TestF08CleanupOldPublishLogs:
                 created_at=NOW - dt.timedelta(days=days),
             )
 
-        deleted = cleanup_old_publish_logs(
-            db_session, retention_days=90, now=NOW
-        )
+        deleted = cleanup_old_publish_logs(db_session, retention_days=90, now=NOW)
         assert deleted == 0
 
     def test_empty_table_returns_zero(self, db_session):
@@ -174,9 +157,7 @@ class TestF08CleanupOldPublishLogs:
         site = _seed_site(db_session, sede_id=sede.id)
         # Sin insertar logs
 
-        deleted = cleanup_old_publish_logs(
-            db_session, retention_days=90, now=NOW
-        )
+        deleted = cleanup_old_publish_logs(db_session, retention_days=90, now=NOW)
         assert deleted == 0
 
     def test_multiple_logs_purged_in_one_call(self, db_session):
@@ -190,9 +171,7 @@ class TestF08CleanupOldPublishLogs:
                 created_at=NOW - dt.timedelta(days=days),
             )
 
-        deleted = cleanup_old_publish_logs(
-            db_session, retention_days=90, now=NOW
-        )
+        deleted = cleanup_old_publish_logs(db_session, retention_days=90, now=NOW)
         assert deleted == 4
 
 

@@ -1,5 +1,5 @@
-"""Public post endpoints (Fase 4 refactor & N+1 query optimization).
-"""
+"""Public post endpoints (Fase 4 refactor & N+1 query optimization)."""
+
 from __future__ import annotations
 
 import logging
@@ -25,7 +25,9 @@ router = APIRouter(tags=["cms_v2_public_posts"])
 
 
 def _enrich_public_posts(
-    db: Session, site_key: str, posts: list[models.CmsPost],
+    db: Session,
+    site_key: str,
+    posts: list[models.CmsPost],
 ) -> list[schemas.CmsPublicPostRead]:
     """Batch-enrich public posts with categories, tags and author names without lazy-loading post.site."""
     if not posts:
@@ -75,9 +77,15 @@ def public_posts_list(
     tag_slug: str | None = Query(None),
 ):
     site = _get_public_site_or_404(db, site_key)
-    query = db.query(models.CmsPost).options(lazyload("*")).filter(models.CmsPost.site_id == site.id, models.CmsPost.status == "published")
+    query = (
+        db.query(models.CmsPost)
+        .options(lazyload("*"))
+        .filter(models.CmsPost.site_id == site.id, models.CmsPost.status == "published")
+    )
     if category_slug:
-        query = query.join(models.CmsPostCategory).join(models.CmsCategory).filter(models.CmsCategory.slug == category_slug)
+        query = (
+            query.join(models.CmsPostCategory).join(models.CmsCategory).filter(models.CmsCategory.slug == category_slug)
+        )
     if tag_slug:
         query = query.join(models.CmsPostTag).join(models.CmsTag).filter(models.CmsTag.slug == tag_slug)
     total = query.count()
@@ -95,8 +103,13 @@ def public_posts_list(
 def public_post(site_key: str, slug: str, db: Session = Depends(get_db)):
     site = _get_public_site_or_404(db, site_key)
     post = (
-        db.query(models.CmsPost).options(lazyload("*"))
-        .filter(models.CmsPost.site_id == site.id, models.CmsPost.slug == _slugify(slug), models.CmsPost.status == "published")
+        db.query(models.CmsPost)
+        .options(lazyload("*"))
+        .filter(
+            models.CmsPost.site_id == site.id,
+            models.CmsPost.slug == _slugify(slug),
+            models.CmsPost.status == "published",
+        )
         .first()
     )
     if not post:

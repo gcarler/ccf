@@ -1,6 +1,7 @@
 """
 Coverage tests for evangelism_multiplication.py — target 90%+.
 """
+
 import uuid
 
 import pytest
@@ -25,16 +26,23 @@ def full(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
-        "c": client, "h": headers, "db": db_session,
-        "admin": admin, "persona": persona, "sede": sede,
+        "c": client,
+        "h": headers,
+        "db": db_session,
+        "admin": admin,
+        "persona": persona,
+        "sede": sede,
     }
 
 
 def _make_grupo(db, sede_id, lider_persona_id=None, activo=True):
     g = models.GrupoEvangelismo(
-        id=uuid.uuid4(), nombre=f"Grupo_{uuid.uuid4().hex[:6]}",
-        sede_id=sede_id, lider_persona_id=lider_persona_id,
-        activo=activo, capacidad=20,
+        id=uuid.uuid4(),
+        nombre=f"Grupo_{uuid.uuid4().hex[:6]}",
+        sede_id=sede_id,
+        lider_persona_id=lider_persona_id,
+        activo=activo,
+        capacidad=20,
     )
     db.add(g)
     db.flush()
@@ -43,8 +51,10 @@ def _make_grupo(db, sede_id, lider_persona_id=None, activo=True):
 
 def _add_participante(db, grupo_id, persona_id):
     p = models.ParticipanteGrupo(
-        grupo_id=grupo_id, persona_id=persona_id,
-        activo=True, rol_base="miembro",
+        grupo_id=grupo_id,
+        persona_id=persona_id,
+        activo=True,
+        rol_base="miembro",
     )
     db.add(p)
     db.flush()
@@ -59,27 +69,37 @@ class TestMultiplicationSchemas:
 
     def test_multiplication_check_item(self):
         item = MultiplicationCheckItem(
-            grupo_id=uuid.uuid4(), grupo_nombre="G1",
-            lider_nombre="Leader", total_personas=10,
-            excede_umbral=False, sugerencia="No",
+            grupo_id=uuid.uuid4(),
+            grupo_nombre="G1",
+            lider_nombre="Leader",
+            total_personas=10,
+            excede_umbral=False,
+            sugerencia="No",
         )
         assert item.grupo_nombre == "G1"
 
     def test_multiplication_history_item(self):
         item = MultiplicationHistoryItem(
-            grupo_id=uuid.uuid4(), grupo_nombre="G1",
+            grupo_id=uuid.uuid4(),
+            grupo_nombre="G1",
         )
         assert item.grupo_nombre == "G1"
 
     def test_grupo_resumen(self):
         res = GrupoResumenMultiplicacion(
-            id=uuid.uuid4(), nombre="G1", activo=True, total_personas=5,
+            id=uuid.uuid4(),
+            nombre="G1",
+            activo=True,
+            total_personas=5,
         )
         assert res.total_personas == 5
 
     def test_split_response(self):
         res = GrupoResumenMultiplicacion(
-            id=uuid.uuid4(), nombre="G1", activo=True, total_personas=5,
+            id=uuid.uuid4(),
+            nombre="G1",
+            activo=True,
+            total_personas=5,
         )
         sr = SplitResponse(ok=True, mensaje="OK", grupo_original=res, nuevo_grupo=res, personas_transferidas=3)
         assert sr.ok is True
@@ -149,22 +169,30 @@ class TestMultiplicationEndpoints:
 
     def test_split_endpoint_not_found(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/evangelism/multiplication/split", headers=h, json={
-            "grupo_id": str(uuid.uuid4()),
-            "nuevo_nombre": "Nuevo Grupo",
-            "nuevo_lider_id": str(full["persona"].id),
-        })
+        resp = c.post(
+            "/api/evangelism/multiplication/split",
+            headers=h,
+            json={
+                "grupo_id": str(uuid.uuid4()),
+                "nuevo_nombre": "Nuevo Grupo",
+                "nuevo_lider_id": str(full["persona"].id),
+            },
+        )
         assert resp.status_code == 404
 
     def test_split_endpoint_inactive(self, full):
         grupo = _make_grupo(full["db"], full["sede"].id, full["persona"].id, activo=False)
         full["db"].commit()
         c, h = full["c"], full["h"]
-        resp = c.post("/api/evangelism/multiplication/split", headers=h, json={
-            "grupo_id": str(grupo.id),
-            "nuevo_nombre": "Nuevo Grupo",
-            "nuevo_lider_id": str(full["persona"].id),
-        })
+        resp = c.post(
+            "/api/evangelism/multiplication/split",
+            headers=h,
+            json={
+                "grupo_id": str(grupo.id),
+                "nuevo_nombre": "Nuevo Grupo",
+                "nuevo_lider_id": str(full["persona"].id),
+            },
+        )
         assert resp.status_code == 400
         assert "inactivo" in resp.text.lower()
 
@@ -173,11 +201,15 @@ class TestMultiplicationEndpoints:
         _add_participante(full["db"], grupo.id, full["persona"].id)
         full["db"].commit()
         c, h = full["c"], full["h"]
-        resp = c.post("/api/evangelism/multiplication/split", headers=h, json={
-            "grupo_id": str(grupo.id),
-            "nuevo_nombre": "Nuevo Grupo",
-            "nuevo_lider_id": str(full["persona"].id),
-        })
+        resp = c.post(
+            "/api/evangelism/multiplication/split",
+            headers=h,
+            json={
+                "grupo_id": str(grupo.id),
+                "nuevo_nombre": "Nuevo Grupo",
+                "nuevo_lider_id": str(full["persona"].id),
+            },
+        )
         assert resp.status_code == 400
         assert "2 personas" in resp.text.lower()
 
@@ -186,17 +218,22 @@ class TestMultiplicationEndpoints:
         _add_participante(full["db"], grupo.id, full["persona"].id)
         # Need a second persona
         from backend.models_crm import Persona
+
         p2 = Persona(id=uuid.uuid4(), first_name="Segunda", last_name="Persona", sede_id=full["sede"].id)
         full["db"].add(p2)
         _add_participante(full["db"], grupo.id, p2.id)
         full["db"].commit()
 
         c, h = full["c"], full["h"]
-        resp = c.post("/api/evangelism/multiplication/split", headers=h, json={
-            "grupo_id": str(grupo.id),
-            "nuevo_nombre": "Grupo Hijo Test",
-            "nuevo_lider_id": str(p2.id),
-        })
+        resp = c.post(
+            "/api/evangelism/multiplication/split",
+            headers=h,
+            json={
+                "grupo_id": str(grupo.id),
+                "nuevo_nombre": "Grupo Hijo Test",
+                "nuevo_lider_id": str(p2.id),
+            },
+        )
         assert resp.status_code == 200, f"Expected 200 got {resp.status_code}: {resp.text}"
         data = resp.json()
         assert data["ok"] is True
@@ -227,11 +264,15 @@ class TestMultiplicationRBACBoundary:
             permisos={"default": "allow"},
         )
         h = _auth_headers(client, email="noevsplit@test.com")
-        resp = client.post("/api/evangelism/multiplication/split", headers=h, json={
-            "grupo_id": str(uuid.uuid4()),
-            "nuevo_nombre": "Test",
-            "nuevo_lider_id": str(uuid.uuid4()),
-        })
+        resp = client.post(
+            "/api/evangelism/multiplication/split",
+            headers=h,
+            json={
+                "grupo_id": str(uuid.uuid4()),
+                "nuevo_nombre": "Test",
+                "nuevo_lider_id": str(uuid.uuid4()),
+            },
+        )
         assert resp.status_code == 403
 
     def test_no_perms_403_on_history(self, client, db_session):
@@ -267,11 +308,15 @@ class TestMultiplicationRBACBoundary:
             permisos={"evangelism:read": "allow"},
         )
         h = _auth_headers(client, email="readsplt@test.com")
-        resp = client.post("/api/evangelism/multiplication/split", headers=h, json={
-            "grupo_id": str(uuid.uuid4()),
-            "nuevo_nombre": "Test",
-            "nuevo_lider_id": str(uuid.uuid4()),
-        })
+        resp = client.post(
+            "/api/evangelism/multiplication/split",
+            headers=h,
+            json={
+                "grupo_id": str(uuid.uuid4()),
+                "nuevo_nombre": "Test",
+                "nuevo_lider_id": str(uuid.uuid4()),
+            },
+        )
         assert resp.status_code == 403
 
     def test_read_only_200_on_history(self, client, db_session):

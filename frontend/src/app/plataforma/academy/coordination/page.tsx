@@ -97,7 +97,7 @@ export default function CoordinationConsole() {
     }
 
     return (
-        <WorkspaceLayout 
+        <WorkspaceLayout
             sidebarTitle="Academia"
             allowedPermissions={['academy:manage']}
         >
@@ -112,7 +112,7 @@ export default function CoordinationConsole() {
                     availableViews={['grid', 'table', 'list', 'wiki']}
                     rightActions={
                         <div className="flex items-center gap-3">
-                            <button 
+                            <button
                                 onClick={() => router.push('/plataforma/academy/coordination/courses/new')}
                                 className="inline-flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
                             >
@@ -155,8 +155,8 @@ export default function CoordinationConsole() {
                                 {readiness.checklist.map((item) => (
                                     <article key={item.key} className={clsx(
                                         'rounded-lg border p-3 flex items-center gap-4 transition-all group hover:scale-[1.01]',
-                                        item.completed 
-                                            ? 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success-muted))]' 
+                                        item.completed
+                                            ? 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success-muted))]'
                                             : 'border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]'
                                     )}>
                                         <div className={clsx(
@@ -200,14 +200,14 @@ export default function CoordinationConsole() {
                                         <DSBadge tone="blue" label="Gestión de Cohortes" />
                                         <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight mt-2">Programas Académicos</h3>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={downloadSnapshot}
                                         className="inline-flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide px-3 py-2.5 rounded-md border-2 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all active:scale-95"
                                     >
                                         <Download size={14} /> Exportar Auditoría
                                     </button>
                                 </div>
-                                
+
                                 <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                                     <div className="flex-1 relative group">
                                         <Filter size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] transition-colors group-focus-within:text-[hsl(var(--primary))]" />
@@ -226,8 +226,8 @@ export default function CoordinationConsole() {
                                                     onClick={() => setModalityFilter(m)}
                                                     className={clsx(
                                                         "px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all",
-                                                        modalityFilter === m 
-                                                            ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]" 
+                                                        modalityFilter === m
+                                                            ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]"
                                                             : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                                                     )}
                                                 >
@@ -255,7 +255,7 @@ export default function CoordinationConsole() {
                                             {filteredCourses.map((course) => (
                                                 <tr key={course.id} className="group hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.01] transition-colors">
                                                     <td className="px-4 py-2">
-                                                        <div 
+                                                        <div
                                                             className="font-bold text-[hsl(var(--text-primary))] dark:text-white cursor-pointer group-hover:text-[hsl(var(--primary))] transition-colors"
                                                             onClick={() => router.push(`/plataforma/academy/courses/${course.id}`)}
                                                         >
@@ -269,9 +269,9 @@ export default function CoordinationConsole() {
                                                         </span>
                                                     </td>
                                                     <td className="px-4 py-2">
-                                                        <DSBadge 
-                                                            tone={course.modality === 'formal' ? 'amber' : 'emerald'} 
-                                                            label={course.modality === 'formal' ? 'ACADÉMICO' : 'LIBRE'} 
+                                                        <DSBadge
+                                                            tone={course.modality === 'formal' ? 'amber' : 'emerald'}
+                                                            label={course.modality === 'formal' ? 'ACADÉMICO' : 'LIBRE'}
                                                         />
                                                     </td>
                                                     <td className="px-4 py-2">
@@ -303,7 +303,7 @@ export default function CoordinationConsole() {
                                 </div>
                             ) : (
                                 <div className="py-1.5">
-                                    <EmptyState 
+                                    <EmptyState
                                         icon={GraduationCap}
                                         title="No se encontraron programas"
                                         description="Ajusta los filtros o crea un nuevo programa académico para comenzar."

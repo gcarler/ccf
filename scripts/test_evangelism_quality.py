@@ -153,9 +153,7 @@ def build_checks(args: argparse.Namespace) -> list[Check]:
                 label="4. Smoke frontend Evangelismo",
                 cmd=("npm", "run", "test:e2e:evangelism"),
                 cwd=FRONTEND_ROOT,
-                reason=(
-                    "Ejecuta el comando oficial del módulo (smoke autenticado + cobertura profunda mockeada)."
-                ),
+                reason=("Ejecuta el comando oficial del módulo (smoke autenticado + cobertura profunda mockeada)."),
             )
         )
 

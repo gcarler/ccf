@@ -1,17 +1,18 @@
 """Tests for evangelism.py — scanner token generation and validation."""
+
 from __future__ import annotations
 
 import hashlib
 import secrets
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from backend import models
 from backend.api.evangelism import (
-    _get_scoped_scanner_persona,
     _generate_scanner_token,
+    _get_scoped_scanner_persona,
 )
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
@@ -31,10 +32,10 @@ def full(client, db_session):
 
 # ── Unit: _get_scoped_scanner_persona ─────────────────────────────────────────
 
+
 class TestGetScopedScannerPersona:
     def test_found(self, db_session, full):
-        p = models.Persona(id=uuid.uuid4(), first_name="Scan", last_name="Test",
-                          sede_id=full["s"].id)
+        p = models.Persona(id=uuid.uuid4(), first_name="Scan", last_name="Test", sede_id=full["s"].id)
         db_session.add(p)
         db_session.commit()
 
@@ -45,6 +46,7 @@ class TestGetScopedScannerPersona:
 
     def test_not_found(self, db_session, full):
         from fastapi import HTTPException
+
         user = db_session.query(models.Usuario).filter_by(email="evan@test.com").first()
         with pytest.raises(HTTPException) as exc:
             _get_scoped_scanner_persona(uuid.uuid4(), db_session, user)
@@ -53,10 +55,10 @@ class TestGetScopedScannerPersona:
 
 # ── Unit: _generate_scanner_token ─────────────────────────────────────────────
 
+
 class TestGenerateScannerToken:
     def test_generates_token(self, db_session, full):
-        p = models.Persona(id=uuid.uuid4(), first_name="Tok", last_name="Test",
-                          sede_id=full["s"].id)
+        p = models.Persona(id=uuid.uuid4(), first_name="Tok", last_name="Test", sede_id=full["s"].id)
         db_session.add(p)
         db_session.commit()
 
@@ -68,11 +70,11 @@ class TestGenerateScannerToken:
 
 # ── Integration: API endpoints ────────────────────────────────────────────────
 
+
 class TestScannerGenerate:
     def test_generate(self, full, db_session):
         c, h, s = full["c"], full["h"], full["s"]
-        p = models.Persona(id=uuid.uuid4(), first_name="Gen", last_name="Test",
-                          sede_id=s.id)
+        p = models.Persona(id=uuid.uuid4(), first_name="Gen", last_name="Test", sede_id=s.id)
         db_session.add(p)
         db_session.commit()
 
@@ -88,8 +90,7 @@ class TestScannerGenerate:
         other = models.Sede(id=uuid.uuid4(), nombre="Other", ciudad="Other", es_activa=True)
         db_session.add(other)
         db_session.flush()
-        p = models.Persona(id=uuid.uuid4(), first_name="Cross", last_name="Test",
-                          sede_id=other.id)
+        p = models.Persona(id=uuid.uuid4(), first_name="Cross", last_name="Test", sede_id=other.id)
         db_session.add(p)
         db_session.commit()
 
@@ -101,8 +102,7 @@ class TestScannerValidate:
     def test_validate_valid_token(self, full, db_session):
         """Full flow: generate -> validate."""
         c, h, s = full["c"], full["h"], full["s"]
-        p = models.Persona(id=uuid.uuid4(), first_name="Val", last_name="Test",
-                          sede_id=s.id, church_role="miembro")
+        p = models.Persona(id=uuid.uuid4(), first_name="Val", last_name="Test", sede_id=s.id, church_role="miembro")
         db_session.add(p)
         db_session.commit()
 
@@ -118,29 +118,27 @@ class TestScannerValidate:
 
     def test_validate_invalid_prefix(self, full):
         """Invalid token prefix -> 400."""
-        resp = full["c"].post("/api/evangelism/scanner/validate/BAD-PREFIX-xxx",
-            headers=full["h"])
+        resp = full["c"].post("/api/evangelism/scanner/validate/BAD-PREFIX-xxx", headers=full["h"])
         assert resp.status_code == 400
 
     def test_validate_malformed_short(self, full):
         """Too short token -> 400."""
-        resp = full["c"].post("/api/evangelism/scanner/validate/CCF-PER-short",
-            headers=full["h"])
+        resp = full["c"].post("/api/evangelism/scanner/validate/CCF-PER-short", headers=full["h"])
         assert resp.status_code == 400
 
     def test_validate_wrong_separator(self, full):
         """Missing separator after persona_id -> 400."""
         # CCF-PER-{uuid} (no separator after uuid before secret)
-        resp = full["c"].post("/api/evangelism/scanner/validate/CCF-PER-" +
-            str(uuid.uuid4()).replace("-", "") + "secret",
-            headers=full["h"])
+        resp = full["c"].post(
+            "/api/evangelism/scanner/validate/CCF-PER-" + str(uuid.uuid4()).replace("-", "") + "secret",
+            headers=full["h"],
+        )
         assert resp.status_code in (400, 404)
 
     def test_validate_expired_token(self, full, db_session):
         """Expired scanner token -> 403."""
         c, h, s = full["c"], full["h"], full["s"]
-        p = models.Persona(id=uuid.uuid4(), first_name="Exp", last_name="Test",
-                          sede_id=s.id)
+        p = models.Persona(id=uuid.uuid4(), first_name="Exp", last_name="Test", sede_id=s.id)
         db_session.add(p)
         db_session.commit()
 
@@ -157,8 +155,7 @@ class TestScannerValidate:
     def test_validate_no_token_set(self, full, db_session):
         """Persona without token -> 403."""
         c, h, s = full["c"], full["h"], full["s"]
-        p = models.Persona(id=uuid.uuid4(), first_name="NoTok", last_name="Test",
-                          sede_id=s.id)
+        p = models.Persona(id=uuid.uuid4(), first_name="NoTok", last_name="Test", sede_id=s.id)
         db_session.add(p)
         db_session.commit()
 
@@ -172,8 +169,7 @@ class TestScannerValidate:
     def test_validate_wrong_secret(self, full, db_session):
         """Wrong secret hash -> 403."""
         c, h, s = full["c"], full["h"], full["s"]
-        p = models.Persona(id=uuid.uuid4(), first_name="Wrng", last_name="Test",
-                          sede_id=s.id)
+        p = models.Persona(id=uuid.uuid4(), first_name="Wrng", last_name="Test", sede_id=s.id)
         db_session.add(p)
         db_session.commit()
 

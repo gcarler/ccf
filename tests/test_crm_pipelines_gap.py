@@ -9,6 +9,7 @@ Covers:
 - Reorder casos (lines 227-250)
 - Automation flows (lines 35-54, 400+)
 """
+
 import uuid
 
 import pytest

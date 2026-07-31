@@ -14,7 +14,7 @@ export default function DashboardEmbed({
     module, label, defaultOpen = false,
 }: DashboardEmbedProps) {
     const [open, setOpen] = useState(defaultOpen);
-    
+
     const moduleLabels: Record<string, string> = {
         crm: 'CRM', academy: 'Academia', evangelism: 'Evangelismo',
         finance: 'Finanzas', agenda: 'Agenda', cms: 'CMS',

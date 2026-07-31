@@ -57,8 +57,8 @@ export const WithDefaultTab: Story = {
 
 export const WithOnChange: Story = {
     render: () => (
-        <DSTabs 
-            tabs={simpleTabs} 
+        <DSTabs
+            tabs={simpleTabs}
             onChange={(tabId) => console.log('Tab changed:', tabId)}
         >
             <div className="p-4 text-sm text-[hsl(var(--text-secondary))]">
@@ -70,7 +70,7 @@ export const WithOnChange: Story = {
 
 export const WithDisabledTab: Story = {
     render: () => (
-        <DSTabs 
+        <DSTabs
             tabs={[
                 { id: 'tab1', label: 'Activo' },
                 { id: 'tab2', label: 'Deshabilitado', disabled: true },

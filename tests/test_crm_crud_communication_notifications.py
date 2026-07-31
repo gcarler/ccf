@@ -18,6 +18,7 @@ Posture mirrors `tests/test_crm_crud_personas.py`: SQLite in-memory via
   * `get_communication_logs(sede_id=X)` filters via Persona JOIN (Axioma 3).
   * notifications ownership: mark_read by another user returns None (no leak).
 """
+
 from __future__ import annotations
 
 import datetime as dt
@@ -35,6 +36,7 @@ from backend.schemas.notifications import CommunicationLogUpdate
 
 # ─── Fixtures local ────────────────────────────────────────────────────────────
 
+
 def _seed_sede(db: Session, name: str = "Sede QC-18.E") -> models.Sede:
     sede = models.Sede(id=_uuid.uuid4(), nombre=name, ciudad="QC18 City", es_activa=True)
     db.add(sede)
@@ -44,7 +46,11 @@ def _seed_sede(db: Session, name: str = "Sede QC-18.E") -> models.Sede:
 
 def _seed_persona(db: Session, sede_id: _uuid.UUID, first: str = "P") -> models.Persona:
     p = models.Persona(
-        id=_uuid.uuid4(), first_name=first, last_name="T", sede_id=sede_id, estado_vital="ACTIVO",
+        id=_uuid.uuid4(),
+        first_name=first,
+        last_name="T",
+        sede_id=sede_id,
+        estado_vital="ACTIVO",
         email=f"{first.lower()}{_uuid.uuid4().hex[:6]}@example.com",
     )
     db.add(p)
@@ -60,8 +66,12 @@ def _seed_user_persona_link(db: Session, persona: models.Persona, sede_id: _uuid
 
 
 def _seed_comm_log(
-    db: Session, *, persona: models.Persona, channel: str = "WHATSAPP",
-    content: str = "follow-up", deleted_at=None,
+    db: Session,
+    *,
+    persona: models.Persona,
+    channel: str = "WHATSAPP",
+    content: str = "follow-up",
+    deleted_at=None,
 ) -> models.CommunicationLog:
     log = models.CommunicationLog(
         id=_uuid.uuid4(),
@@ -78,8 +88,13 @@ def _seed_comm_log(
 
 
 def _seed_notification(
-    db: Session, *, user_id: _uuid.UUID, title: str = "N", content: str = "c",
-    is_read: bool = False, sede_id: Optional[_uuid.UUID] = None,
+    db: Session,
+    *,
+    user_id: _uuid.UUID,
+    title: str = "N",
+    content: str = "c",
+    is_read: bool = False,
+    sede_id: Optional[_uuid.UUID] = None,
 ) -> models.Notification:
     n = models.Notification(
         id=_uuid.uuid4(),
@@ -164,14 +179,21 @@ def test_create_communication_log_allows_when_actor_superadmin_no_sede(db_sessio
     p_target = _seed_persona(db_session, sede_id=sede.id)
     # Persona del actor SIN sede assignment (superadmin-style)
     p_actor = models.Persona(
-        id=_uuid.uuid4(), first_name="Super", last_name="Admin", estado_vital="ACTIVO",
-        email=f"super{_uuid.uuid4().hex[:6]}@example.com", sede_id=None,
+        id=_uuid.uuid4(),
+        first_name="Super",
+        last_name="Admin",
+        estado_vital="ACTIVO",
+        email=f"super{_uuid.uuid4().hex[:6]}@example.com",
+        sede_id=None,
     )
     db_session.add(p_actor)
     _commit(db_session)
 
     payload = schemas.CommunicationLogCreate(
-        persona_id=p_target.id, channel="EMAIL", content="hi", leader_id=None,
+        persona_id=p_target.id,
+        channel="EMAIL",
+        content="hi",
+        leader_id=None,
     )
     row = crud_comm.create_communication_log(db_session, payload, actor_user_id=p_actor.id)
     assert row.id is not None
@@ -187,7 +209,10 @@ def test_create_communication_log_rejects_cross_sede_persona(db_session):
     _commit(db_session)
 
     payload = schemas.CommunicationLogCreate(
-        persona_id=p_b.id, channel="EMAIL", content="attempt leak", leader_id=None,
+        persona_id=p_b.id,
+        channel="EMAIL",
+        content="attempt leak",
+        leader_id=None,
     )
     with pytest.raises(HTTPException) as exc:
         crud_comm.create_communication_log(db_session, payload, actor_user_id=p_a.id)
@@ -211,7 +236,9 @@ def test_create_communication_log_rejects_orphan_when_actor_in_sede(db_session):
 
     with pytest.raises(HTTPException) as exc:
         crud_comm._crud_scope_re_check_communication_log_create(
-            db_session, actor_user_id=p_actor.id, persona_id=None,
+            db_session,
+            actor_user_id=p_actor.id,
+            persona_id=None,
         )
     assert exc.value.status_code == 404
 
@@ -224,7 +251,10 @@ def test_create_communication_log_same_sede_succeeds(db_session):
     _commit(db_session)
 
     payload = schemas.CommunicationLogCreate(
-        persona_id=p_target.id, channel="WHATSAPP", content="ok", leader_id=None,
+        persona_id=p_target.id,
+        channel="WHATSAPP",
+        content="ok",
+        leader_id=None,
     )
     row = crud_comm.create_communication_log(db_session, payload, actor_user_id=p_actor.id)
     assert row.id is not None
@@ -241,7 +271,9 @@ def test_update_communication_log_updates_provided_fields(db_session):
     p = _seed_persona(db_session, sede_id=sede.id)
     log = _seed_comm_log(db_session, persona=p, content="orig")
     _commit(db_session)
-    out = crud_comm.update_communication_log(db_session, str(log.id), CommunicationLogUpdate(content="new", outcome="DELIVERED"))
+    out = crud_comm.update_communication_log(
+        db_session, str(log.id), CommunicationLogUpdate(content="new", outcome="DELIVERED")
+    )
     assert out.content == "new"
     assert out.outcome == "DELIVERED"
 

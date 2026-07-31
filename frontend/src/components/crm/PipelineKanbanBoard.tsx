@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { 
-    DndContext, 
+import {
+    DndContext,
     closestCorners,
     PointerSensor,
     TouchSensor,
@@ -66,7 +66,7 @@ export function PipelineKanbanBoard({ leads = [], stages = [], onLeadClick, onDr
             return;
         }
         const { active, over } = event;
-        
+
         setActiveLead(null);
 
         if (!over) return;
@@ -185,8 +185,8 @@ export function PipelineKanbanBoard({ leads = [], stages = [], onLeadClick, onDr
             }}>
                         {activeLead ? (
                             <div className="rotate-2 scale-110 opacity-100 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] backdrop-blur-3xl ring-4 ring-[hsl(var(--primary))]/20 rounded-lg">
-                                <SortableLeadCard 
-                                    lead={activeLead} 
+                                <SortableLeadCard
+                                    lead={activeLead}
                                     stage={(safeStages.find(s => s.value === activeLead.stage) || PIPELINE_STAGES.find(s => s.value === activeLead.stage))}
                                     onClick={() => onLeadClick(activeLead)}
                                     isDragging={true}

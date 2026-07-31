@@ -24,10 +24,7 @@ def _col_exists(table, column):
     dialect = conn.dialect.name
     if dialect == "postgresql":
         result = conn.execute(
-            sa.text(
-                "SELECT column_name FROM information_schema.columns "
-                "WHERE table_name = :t AND column_name = :c"
-            ),
+            sa.text("SELECT column_name FROM information_schema.columns WHERE table_name = :t AND column_name = :c"),
             {"t": table, "c": column},
         )
         return result.fetchone() is not None

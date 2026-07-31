@@ -1,22 +1,21 @@
 """Edge cases for evangelism_rankings.py — TTL cache, month ranges, strategy filters."""
+
 from __future__ import annotations
 
-import time
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from backend import models
-from backend.models_evangelism import Sede
 from backend.api.evangelism_rankings import (
-    _ttl_cache,
-    _month_range,
-    _this_month_range,
-    _last_month_range,
-    _active_groups_query,
     _TTL_CACHE,
+    _active_groups_query,
+    _last_month_range,
+    _month_range,
+    _ttl_cache,
 )
+from backend.models_evangelism import Sede
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
 
@@ -36,6 +35,7 @@ def _ok(status):
 
 
 # ── Unit: _month_range ────────────────────────────────────────────────────────
+
 
 class TestMonthRange:
     def test_normal_month(self):
@@ -73,6 +73,7 @@ class TestLastMonthRange:
 
 # ── Unit: _active_groups_query ────────────────────────────────────────────────
 
+
 class TestActiveGroupsQuery:
     def test_with_strategy_id(self, db_session, sede):
         """Line 88: filters by strategy_id."""
@@ -80,8 +81,7 @@ class TestActiveGroupsQuery:
         db_session.add(p)
         db_session.flush()
 
-        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="SG", sede_id=sede.id,
-                                     lider_persona_id=p.id, activo=True)
+        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="SG", sede_id=sede.id, lider_persona_id=p.id, activo=True)
         db_session.add(g)
         db_session.commit()
 
@@ -97,6 +97,7 @@ class TestActiveGroupsQuery:
 
 
 # ── Unit: _ttl_cache ──────────────────────────────────────────────────────────
+
 
 class TestTTLCache:
     def test_cache_hit(self):
@@ -162,6 +163,7 @@ class TestTTLCache:
 
 # ── Integration: rankings with strategy_id filter ─────────────────────────────
 
+
 @pytest.fixture
 def full(client, db_session):
     admin, _, _ = _seed_admin(db_session, email="rnk2@test.com")
@@ -180,25 +182,28 @@ class TestRankingsWithStrategy:
         db_session.add(p)
         db_session.flush()
 
-        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="SG", sede_id=s.id,
-                                     lider_persona_id=p.id, activo=True)
+        g = models.GrupoEvangelismo(id=uuid.uuid4(), nombre="SG", sede_id=s.id, lider_persona_id=p.id, activo=True)
         db_session.add(g)
         db_session.flush()
 
-        ses = models.SesionGrupo(id=uuid.uuid4(), grupo_id=g.id,
-                                 fecha_sesion=now, estado="REALIZADA")
+        ses = models.SesionGrupo(id=uuid.uuid4(), grupo_id=g.id, fecha_sesion=now, estado="REALIZADA")
         db_session.add(ses)
         db_session.flush()
-        db_session.add(models.Asistencia(id=uuid.uuid4(), sesion_id=ses.id,
-                        persona_id=p.id, estado="ASISTIO"))
-        db_session.add(models.ParticipanteGrupo(id=uuid.uuid4(), grupo_id=g.id,
-                        persona_id=p.id, rol_base="miembro", activo=True,
-                        fecha_ingreso=now - timedelta(days=5)))
+        db_session.add(models.Asistencia(id=uuid.uuid4(), sesion_id=ses.id, persona_id=p.id, estado="ASISTIO"))
+        db_session.add(
+            models.ParticipanteGrupo(
+                id=uuid.uuid4(),
+                grupo_id=g.id,
+                persona_id=p.id,
+                rol_base="miembro",
+                activo=True,
+                fecha_ingreso=now - timedelta(days=5),
+            )
+        )
         db_session.commit()
 
         # Test with a non-existent strategy_id — should return data for all groups
-        resp = c.get(f"/api/evangelism/rankings/monthly-comparison?strategy_id={uuid.uuid4()}",
-                     headers=h)
+        resp = c.get(f"/api/evangelism/rankings/monthly-comparison?strategy_id={uuid.uuid4()}", headers=h)
         assert _ok(resp.status_code), f"monthly strategy: {resp.status_code}"
 
     def test_leaders_with_strategy(self, full, db_session):
@@ -209,13 +214,11 @@ class TestRankingsWithStrategy:
         db_session.add(p)
         db_session.commit()
 
-        resp = c.get(f"/api/evangelism/rankings/leaders?strategy_id={uuid.uuid4()}",
-                     headers=h)
+        resp = c.get(f"/api/evangelism/rankings/leaders?strategy_id={uuid.uuid4()}", headers=h)
         assert _ok(resp.status_code)
 
     def test_groups_with_strategy(self, full, db_session):
         """Groups rankings with strategy_id."""
         c, h, s = full["c"], full["h"], full["s"]
-        resp = c.get(f"/api/evangelism/rankings/groups?strategy_id={uuid.uuid4()}",
-                     headers=h)
+        resp = c.get(f"/api/evangelism/rankings/groups?strategy_id={uuid.uuid4()}", headers=h)
         assert _ok(resp.status_code)

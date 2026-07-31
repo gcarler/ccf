@@ -45,9 +45,7 @@ from backend.schemas.evangelism import (
 # cada router; el CRUD re-valida pre-commit aquí.
 
 
-def _actor_sede_or_none_evangelismo(
-    db: Session, actor_user_id: str | uuid.UUID | None
-) -> str | None:
+def _actor_sede_or_none_evangelismo(db: Session, actor_user_id: str | uuid.UUID | None) -> str | None:
     """Resuelve la sede del actor.
 
     ``None`` solo representa un superadministrador canonico sin sede.
@@ -72,11 +70,7 @@ def _resolve_persona_sede(db: Session, persona_id) -> str | None:
         persona_uuid = uuid.UUID(str(persona_id))
     except (TypeError, ValueError, AttributeError):
         return None
-    row = (
-        db.query(models.Persona.sede_id)
-        .filter(models.Persona.id == persona_uuid)
-        .first()
-    )
+    row = db.query(models.Persona.sede_id).filter(models.Persona.id == persona_uuid).first()
     if not row or row[0] is None:
         return None
     return str(row[0])
@@ -105,15 +99,11 @@ def _crud_scope_re_check_evangelism_create(
             detail="Evangelism content requires an attributed persona and sede",
         )
     if str(target_sede) != str(actor_sede):
-        raise HTTPException(
-            status_code=404, detail="Evangelism create cross-sede blocked"
-        )
+        raise HTTPException(status_code=404, detail="Evangelism create cross-sede blocked")
     if target_persona_id is not None:
         target_persona_sede = _resolve_persona_sede(db, target_persona_id)
         if target_persona_sede is None or str(target_persona_sede) != str(actor_sede):
-            raise HTTPException(
-                status_code=404, detail="Evangelism create FK cross-sede blocked"
-            )
+            raise HTTPException(status_code=404, detail="Evangelism create FK cross-sede blocked")
     return target_sede
 
 
@@ -129,13 +119,9 @@ def _crud_scope_re_check_evangelism_update(
     if not actor_sede:
         return  # superadmin bypass (consistente con API-layer + crud/cms)
     if current_row_sede is None or str(current_row_sede) != str(actor_sede):
-        raise HTTPException(
-            status_code=404, detail="Evangelism update row cross-sede blocked"
-        )
+        raise HTTPException(status_code=404, detail="Evangelism update row cross-sede blocked")
     if incoming_fk_sede is not None and str(incoming_fk_sede) != str(actor_sede):
-        raise HTTPException(
-            status_code=404, detail="Evangelism update FK cross-sede blocked"
-        )
+        raise HTTPException(status_code=404, detail="Evangelism update FK cross-sede blocked")
 
 
 # ──────────────────────────────────────────────
@@ -152,9 +138,11 @@ def get_estrategias(
     sede_id: Optional[str] = None,
 ) -> List[EstrategiaEvangelismo]:
     """Lista estrategias con filtros opcionales."""
-    q = db.query(EstrategiaEvangelismo).filter(
-        EstrategiaEvangelismo.deleted_at.is_(None)
-    ).order_by(EstrategiaEvangelismo.created_at.desc())
+    q = (
+        db.query(EstrategiaEvangelismo)
+        .filter(EstrategiaEvangelismo.deleted_at.is_(None))
+        .order_by(EstrategiaEvangelismo.created_at.desc())
+    )
     if activa is not None:
         q = q.filter(EstrategiaEvangelismo.activa == activa)
     if clase_raiz is not None:
@@ -190,12 +178,18 @@ def create_estrategia(
     # Mapear clase_raiz a string si viene como enum; normalizar a mayúsculas
     if "clase_raiz" in dump and dump["clase_raiz"] is not None:
         dump["clase_raiz"] = (
-            dump["clase_raiz"].value
-            if hasattr(dump["clase_raiz"], "value")
-            else dump["clase_raiz"].upper()
+            dump["clase_raiz"].value if hasattr(dump["clase_raiz"], "value") else dump["clase_raiz"].upper()
         )
     # Map English schema fields to Spanish model columns (via synonym — no field_map needed)
-    FIELD_MAP = {"name": "nombre", "description": "descripcion", "start_date": "fecha_inicio", "end_date": "fecha_fin", "day_of_week": "dia_reunion", "start_time": "hora_reunion", "recurrence": "frecuencia"}
+    FIELD_MAP = {
+        "name": "nombre",
+        "description": "descripcion",
+        "start_date": "fecha_inicio",
+        "end_date": "fecha_fin",
+        "day_of_week": "dia_reunion",
+        "start_time": "hora_reunion",
+        "recurrence": "frecuencia",
+    }
     for eng, spa in FIELD_MAP.items():
         if eng in dump and dump[eng] is not None:
             dump[spa] = dump[eng]
@@ -265,9 +259,7 @@ def update_estrategia(
     # Mapear clase_raiz: normalizar a mayúsculas si viene en minúsculas
     if "clase_raiz" in dump and dump["clase_raiz"] is not None:
         dump["clase_raiz"] = (
-            dump["clase_raiz"].value
-            if hasattr(dump["clase_raiz"], "value")
-            else dump["clase_raiz"].upper()
+            dump["clase_raiz"].value if hasattr(dump["clase_raiz"], "value") else dump["clase_raiz"].upper()
         )
     update_data = {k: v for k, v in dump.items() if k in valid_cols}
     # Agregar synonyms mapeados a sus columnas reales
@@ -322,9 +314,8 @@ def delete_estrategia(
 # ROLES PERSONALIZADOS DE ESTRATEGIA
 # ──────────────────────────────────────────────
 
-def get_roles_personalizados(
-    db: Session, estrategia_id: UUID
-) -> List[RolPersonalizadoEstrategia]:
+
+def get_roles_personalizados(db: Session, estrategia_id: UUID) -> List[RolPersonalizadoEstrategia]:
     return (
         db.query(RolPersonalizadoEstrategia)
         .filter(
@@ -353,9 +344,7 @@ def create_rol_personalizado(
     actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
     target_sede: str | None = None
     if data.estrategia_id is not None:
-        strategy_uuid = _coerce_uuid_or_404(
-            data.estrategia_id, "Estrategia no encontrada"
-        )
+        strategy_uuid = _coerce_uuid_or_404(data.estrategia_id, "Estrategia no encontrada")
         strategy_row = (
             db.query(EstrategiaEvangelismo.sede_id)
             .filter(
@@ -364,9 +353,7 @@ def create_rol_personalizado(
             )
             .first()
         )
-        target_sede = (
-            str(strategy_row[0]) if strategy_row and strategy_row[0] else None
-        )
+        target_sede = str(strategy_row[0]) if strategy_row and strategy_row[0] else None
     _crud_scope_re_check_evangelism_create(
         db,
         actor_user_id,
@@ -400,19 +387,13 @@ def delete_rol_personalizado(
         return False
     strategy = None
     if db_obj.estrategia_id:
-        strategy = (
-            db.query(EstrategiaEvangelismo)
-            .filter(EstrategiaEvangelismo.id == db_obj.estrategia_id)
-            .first()
-        )
+        strategy = db.query(EstrategiaEvangelismo).filter(EstrategiaEvangelismo.id == db_obj.estrategia_id).first()
     # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-soft-delete ──
     _crud_scope_re_check_evangelism_update(
         db,
         actor_user_id,
         actor_sede=actor_sede,
-        current_row_sede=(
-            str(strategy.sede_id) if strategy and strategy.sede_id else None
-        ),
+        current_row_sede=(str(strategy.sede_id) if strategy and strategy.sede_id else None),
     )
     if strategy and strategy.default_role_id == db_obj.id:
         strategy.default_role_id = None
@@ -424,6 +405,7 @@ def delete_rol_personalizado(
 # ──────────────────────────────────────────────
 # PARTICIPANTES DE GRUPO
 # ──────────────────────────────────────────────
+
 
 def get_participantes(
     db: Session,
@@ -447,11 +429,7 @@ def agregar_participante(
 ) -> ParticipanteGrupo:
     # ── Axioma 3 — Multi-Tenant: validate grupo + persona FK against actor's sede ──
     actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
-    grupo_row = (
-        db.query(GrupoEvangelismo.sede_id)
-        .filter(GrupoEvangelismo.id == data.grupo_id)
-        .first()
-    )
+    grupo_row = db.query(GrupoEvangelismo.sede_id).filter(GrupoEvangelismo.id == data.grupo_id).first()
     grupo_sede = str(grupo_row[0]) if grupo_row and grupo_row[0] else None
     _crud_scope_re_check_evangelism_create(
         db,
@@ -495,11 +473,7 @@ def actualizar_participante(
         return None
     update_data = data.model_dump(exclude_unset=True)
     # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-commit ──
-    grupo_row = (
-        db.query(GrupoEvangelismo.sede_id)
-        .filter(GrupoEvangelismo.id == db_obj.grupo_id)
-        .first()
-    )
+    grupo_row = db.query(GrupoEvangelismo.sede_id).filter(GrupoEvangelismo.id == db_obj.grupo_id).first()
     current_grupo_sede = str(grupo_row[0]) if grupo_row and grupo_row[0] else None
     _crud_scope_re_check_evangelism_update(
         db,
@@ -507,8 +481,7 @@ def actualizar_participante(
         actor_sede=actor_sede,
         current_row_sede=current_grupo_sede,
         incoming_fk_sede=(
-            _resolve_persona_sede(db, update_data.get("persona_id"))
-            if update_data.get("persona_id") else None
+            _resolve_persona_sede(db, update_data.get("persona_id")) if update_data.get("persona_id") else None
         ),
     )
     for key, value in update_data.items():
@@ -538,11 +511,7 @@ def remover_participante(
     if not db_obj:
         return False
     # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-soft-delete ──
-    grupo_row = (
-        db.query(GrupoEvangelismo.sede_id)
-        .filter(GrupoEvangelismo.id == db_obj.grupo_id)
-        .first()
-    )
+    grupo_row = db.query(GrupoEvangelismo.sede_id).filter(GrupoEvangelismo.id == db_obj.grupo_id).first()
     grupo_sede = str(grupo_row[0]) if grupo_row and grupo_row[0] else None
     _crud_scope_re_check_evangelism_update(
         db,
@@ -558,6 +527,7 @@ def remover_participante(
 # ──────────────────────────────────────────────
 # ASISTENCIA
 # ──────────────────────────────────────────────
+
 
 def submit_asistencia(
     db: Session,
@@ -628,9 +598,8 @@ def submit_asistencia(
 # SEGUIMIENTO
 # ──────────────────────────────────────────────
 
-def get_seguimientos(
-    db: Session, asistencia_id: UUID, *, sede_id: str | None = None
-) -> List[RegistroSeguimiento]:
+
+def get_seguimientos(db: Session, asistencia_id: UUID, *, sede_id: str | None = None) -> List[RegistroSeguimiento]:
     """Lista seguimientos de una asistencia.
 
     ``sede_id`` opcional aplica Axioma 3 (multi-tenant) por join
@@ -740,8 +709,7 @@ def update_seguimiento(
         actor_sede=actor_sede,
         current_row_sede=current_sede,
         incoming_fk_sede=(
-            _resolve_persona_sede(db, update_data.get("responsable_id"))
-            if update_data.get("responsable_id") else None
+            _resolve_persona_sede(db, update_data.get("responsable_id")) if update_data.get("responsable_id") else None
         ),
     )
     for key, value in update_data.items():
@@ -789,11 +757,7 @@ def get_pendientes_seguimiento(
                 strategy_uuid = None
             if strategy_uuid is not None:
                 q = q.filter(GrupoEvangelismo.estrategia_id == strategy_uuid)
-    return (
-        q.order_by(RegistroSeguimiento.fecha_seguimiento.asc().nullsfirst())
-        .limit(limit)
-        .all()
-    )
+    return q.order_by(RegistroSeguimiento.fecha_seguimiento.asc().nullsfirst()).limit(limit).all()
 
 
 def delete_seguimiento(
@@ -845,9 +809,8 @@ def delete_seguimiento(
 # MOTIVOS DE EXCUSA
 # ──────────────────────────────────────────────
 
-def get_motivos_excusa(
-    db: Session, solo_activos: bool = True
-) -> List[models.MotivoExcusa]:
+
+def get_motivos_excusa(db: Session, solo_activos: bool = True) -> List[models.MotivoExcusa]:
     q = db.query(models.MotivoExcusa).order_by(models.MotivoExcusa.descripcion)
     if solo_activos:
         q = q.filter(models.MotivoExcusa.activo == True)  # noqa: E712
@@ -922,9 +885,7 @@ def delete_motivo_excusa(
     return True
 
 
-def seed_motivos_excusa(
-    db: Session, *, actor_user_id: str | uuid.UUID | None = None
-) -> list[models.MotivoExcusa]:
+def seed_motivos_excusa(db: Session, *, actor_user_id: str | uuid.UUID | None = None) -> list[models.MotivoExcusa]:
     """Inserta las excusas base del sistema si no existen.
 
     ``MotivoExcusa`` es lookup-table global (cross-sede por naturaleza),
@@ -934,9 +895,7 @@ def seed_motivos_excusa(
     base = ["SALUD", "TRABAJO", "FAMILIA", "OTRA (VER DETALLE)"]
     created = []
     for desc in base:
-        existing = db.query(models.MotivoExcusa).filter(
-            models.MotivoExcusa.descripcion == desc
-        ).first()
+        existing = db.query(models.MotivoExcusa).filter(models.MotivoExcusa.descripcion == desc).first()
         if not existing:
             row = models.MotivoExcusa(
                 descripcion=desc.upper(),

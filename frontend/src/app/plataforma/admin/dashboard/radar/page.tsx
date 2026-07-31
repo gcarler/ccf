@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { 
-    Users, 
-    Waves, 
-    BookOpen, 
-    DollarSign, 
+import {
+    Users,
+    Waves,
+    BookOpen,
+    DollarSign,
     Target,
     Shield,
     Zap,
@@ -100,21 +100,21 @@ export default function PastorRadarPage() {
             <div className="absolute top-0 right-0 size-[600px] bg-[hsl(var(--info))]/5 blur-[120px] rounded-full -mr-40 -mt-40 pointer-events-none" />
 
             <header className="flex flex-col gap-4 relative z-10">
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] rounded-full text-2xs font-semibold uppercase tracking-wide w-fit border border-[hsl(var(--info)/100%)]/20"
                 >
                     <Shield size={12} className="animate-pulse" /> Inteligencia Ministerial Optimus v3.9
                 </motion.div>
-                <motion.h1 
+                <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-xl lg:text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none"
                 >
                     Radar <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Pastoral</span>
                 </motion.h1>
-                <motion.p 
+                <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
@@ -137,7 +137,7 @@ export default function PastorRadarPage() {
                 </div>
             ) : (
                 <>
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
@@ -149,7 +149,7 @@ export default function PastorRadarPage() {
                 </motion.div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 relative z-10">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
@@ -164,11 +164,11 @@ export default function PastorRadarPage() {
                             </div>
                             <span className="font-semibold text-[hsl(var(--primary))] bg-info-soft px-4 py-1.5 rounded-full tracking-wide border border-[hsl(var(--info)/20%)] uppercase">Live BI</span>
                         </div>
-                        
+
                         <div className="h-48 flex items-end justify-between gap-4 pt-10 px-4">
                             {[45, 70, 55, 90, 85, 100].map((h, i) => (
                                 <div key={i} className="flex-1 flex flex-col items-center gap-4 group/bar">
-                                    <div 
+                                    <div
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative shimmer-bar",
                                             i === 5 ? "bg-gradient-to-t from-[hsl(var(--info))] to-[hsl(var(--info))] shadow-[0_0_30px_rgba(37,99,235,0.3)]" : "bg-[hsl(var(--surface-2))] dark:bg-white/5 group-hover/bar:bg-[hsl(var(--surface-3))]"
@@ -185,14 +185,14 @@ export default function PastorRadarPage() {
                         </div>
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: 30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.4 }}
                         className="lg:col-span-5 glass-card p-4 rounded-lg shadow-2xl space-y-3 relative overflow-hidden"
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:rotate-12 transition-transform duration-1000"><Sparkles size={120} /></div>
-                        
+
                         <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter uppercase flex items-center gap-3">
                             <Target className="text-[hsl(var(--primary))]" /> Metas Trimestrales
                         </h2>
@@ -227,7 +227,7 @@ function RadarStat({ label, value, icon: Icon, color = 'blue', trend, auraColor 
         amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.3)]'
     };
     return (
-        <div 
+        <div
             className="radar-aura p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as CSSAuraProperties}
         >
@@ -257,14 +257,13 @@ function GoalItem({ label, target, current, color }: GoalItemProps) {
                 <span className="text-[hsl(var(--text-primary))] dark:text-white">{current} / {target}</span>
             </div>
             <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
-                <motion.div 
-                    initial={{ width: 0 }} 
-                    animate={{ width: `${pct}%` }} 
+                <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
-                    className={clsx("h-full shimmer-bar relative", color)} 
+                    className={clsx("h-full shimmer-bar relative", color)}
                 />
             </div>
         </div>
     );
 }
-

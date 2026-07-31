@@ -13,6 +13,7 @@ Covers:
 - Documents (lines 600+)
 - Sign Requests (lines 700+)
 """
+
 import uuid
 from datetime import datetime, timezone
 
@@ -280,7 +281,14 @@ class TestExpenseReports:
             "/api/finance-suite/expense-reports",
             json={
                 "description": "Test Expense",
-                "items": [{"description": "Lunch", "amount": 25.00, "expense_date": datetime.now(timezone.utc).date().isoformat(), "category": "food"}],
+                "items": [
+                    {
+                        "description": "Lunch",
+                        "amount": 25.00,
+                        "expense_date": datetime.now(timezone.utc).date().isoformat(),
+                        "category": "food",
+                    }
+                ],
             },
             headers=h,
         )

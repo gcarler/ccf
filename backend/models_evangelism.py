@@ -5,6 +5,7 @@ Tablas: sedes, categorias_estrategia, motivos_excusa, logs_auditoria,
         grupos_evangelismo, grupo_participantes, sesiones_grupo,
         asistencias, registros_seguimiento, historial_embudo.
 """
+
 from __future__ import annotations
 
 import enum
@@ -51,6 +52,7 @@ class CampaignSeason(Base):
 # ENUMS
 # ──────────────────────────────────────────────
 
+
 class RolEnGrupoEnum(str, enum.Enum):
     LIDER = "LIDER"
     COLIDER = "COLIDER"
@@ -89,6 +91,7 @@ class EstadoSesionEnum(str, enum.Enum):
     REALIZADA = "REALIZADA"
     CANCELADA = "CANCELADA"
 
+
 class HabilitacionSesionEnum(str, enum.Enum):
     DESHABILITADO = "DESHABILITADO"
     HABILITADO = "HABILITADO"
@@ -99,6 +102,7 @@ class HabilitacionSesionEnum(str, enum.Enum):
 # ──────────────────────────────────────────────
 # MULTI-TENANT
 # ──────────────────────────────────────────────
+
 
 class Sede(Base):
     __tablename__ = "sedes"
@@ -116,6 +120,7 @@ class Sede(Base):
 # AUDITORÍA
 # ──────────────────────────────────────────────
 
+
 class LogAuditoria(Base):
     __tablename__ = "logs_auditoria"
 
@@ -132,6 +137,7 @@ class LogAuditoria(Base):
 # ──────────────────────────────────────────────
 # CONFIGURACIÓN DINÁMICA
 # ──────────────────────────────────────────────
+
 
 class CategoriaEstrategia(Base):
     __tablename__ = "categorias_estrategia"
@@ -157,6 +163,7 @@ class MotivoExcusa(Base):
 # ──────────────────────────────────────────────
 # CORE EVANGELISMO
 # ──────────────────────────────────────────────
+
 
 class EstrategiaEvangelismo(Base):
     __tablename__ = "estrategias_evangelismo"
@@ -186,7 +193,9 @@ class EstrategiaEvangelismo(Base):
     # General
     strategy_type = Column(String(100), nullable=True)
     status = Column(String(50), default="active")
-    default_role_id = Column(UUID(as_uuid=True), ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True)
+    default_role_id = Column(
+        UUID(as_uuid=True), ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True
+    )
 
     # Fechas
     fecha_inicio = Column(DateTime(timezone=True), nullable=True)
@@ -229,7 +238,9 @@ class RolPersonalizadoEstrategia(Base):
     __tablename__ = "estrategia_roles_personalizados"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True, index=True)
+    estrategia_id = Column(
+        UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     nombre_rol = Column(String(100), nullable=False)
     descripcion = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
@@ -247,7 +258,9 @@ class GrupoEvangelismo(Base):
     __tablename__ = "grupos_evangelismo"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    estrategia_id = Column(UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    estrategia_id = Column(
+        UUID(as_uuid=True), ForeignKey("estrategias_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False)
     codigo = Column(String(30), unique=True, nullable=True, index=True)
     nombre = Column(String(150), nullable=False)
@@ -262,7 +275,9 @@ class GrupoEvangelismo(Base):
     lider_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     asistente_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     anfitrion_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
-    parent_group_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True)
+    parent_group_id = Column(
+        UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     notes_historial = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -305,7 +320,7 @@ class GrupoEvangelismo(Base):
 
     @hybrid_property
     def leader_name(self):
-        val = getattr(self, '_leader_name', None)
+        val = getattr(self, "_leader_name", None)
         if not val and self.lider is not None:
             return f"{self.lider.first_name} {self.lider.last_name}"
         return val
@@ -351,6 +366,7 @@ class GrupoEvangelismo(Base):
 # PARTICIPANTES, SESIONES Y ASISTENCIA
 # ──────────────────────────────────────────────
 
+
 class ParticipanteGrupo(Base):
     __tablename__ = "grupo_participantes"
     __table_args__ = (
@@ -362,7 +378,9 @@ class ParticipanteGrupo(Base):
     grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
     rol_base = Column(String(20), nullable=False)
-    rol_personalizado_id = Column(UUID(as_uuid=True), ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True)
+    rol_personalizado_id = Column(
+        UUID(as_uuid=True), ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True
+    )
     fecha_ingreso = Column(DateTime(timezone=True), default=_utcnow)
     activo = Column(Boolean, default=True)
 
@@ -374,11 +392,10 @@ class ParticipanteGrupo(Base):
 
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
+
 class SesionGrupo(Base):
     __tablename__ = "sesiones_grupo"
-    __table_args__ = (
-        Index("ix_sesion_grupo_grupo_fecha", "grupo_id", "fecha_sesion"),
-    )
+    __table_args__ = (Index("ix_sesion_grupo_grupo_fecha", "grupo_id", "fecha_sesion"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     grupo_id = Column(UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="CASCADE"), nullable=False)
@@ -391,7 +408,9 @@ class SesionGrupo(Base):
     tema_estudio = Column(String(200), nullable=True)
     notas_lider = Column(Text, nullable=True)
     offering_amount = Column(Numeric(12, 2), nullable=True)
-    season_id = Column(UUID(as_uuid=True), ForeignKey("campaign_seasons.id", ondelete="SET NULL"), nullable=True, index=True)
+    season_id = Column(
+        UUID(as_uuid=True), ForeignKey("campaign_seasons.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     # Marca de tiempo de cuando se reportó la asistencia por última vez.
@@ -437,9 +456,7 @@ class SesionGrupo(Base):
 
 class Asistencia(Base):
     __tablename__ = "asistencias"
-    __table_args__ = (
-        Index("ix_asistencia_sesion_persona", "sesion_id", "persona_id"),
-    )
+    __table_args__ = (Index("ix_asistencia_sesion_persona", "sesion_id", "persona_id"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="CASCADE"), nullable=False)
@@ -518,8 +535,12 @@ class RegistroSeguimiento(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    asistencia_id = Column(UUID(as_uuid=True), ForeignKey("asistencias.id", ondelete="CASCADE"), nullable=False, index=True)
-    responsable_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    asistencia_id = Column(
+        UUID(as_uuid=True), ForeignKey("asistencias.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    responsable_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     fecha_seguimiento = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     fecha_creacion = Column(DateTime(timezone=True), default=_utcnow, nullable=False, index=True)
     created_at = synonym("fecha_creacion")
@@ -538,6 +559,7 @@ class RegistroSeguimiento(Base):
 # ──────────────────────────────────────────────
 # HISTORIAL DE EMBUDO (VELOCIDAD MINISTERIAL)
 # ──────────────────────────────────────────────
+
 
 class HistorialEmbudo(Base):
     __tablename__ = "historial_embudo"

@@ -9,6 +9,7 @@ Endpoints:
 Uses real column names from the canonical evangelism models (GrupoEvangelismo,
 SesionGrupo, Asistencia, ParticipanteGrupo) and Persona from CRM.
 """
+
 from __future__ import annotations
 
 import datetime as _dt
@@ -36,6 +37,7 @@ _TTL_SECONDS = 60
 
 def _ttl_cache(key_fn, ttl: int = _TTL_SECONDS):
     """Decorator that caches function results by *key_fn(args, kwargs)* for *ttl* seconds."""
+
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
@@ -53,12 +55,16 @@ def _ttl_cache(key_fn, ttl: int = _TTL_SECONDS):
                 for k in stale[:100]:
                     _TTL_CACHE.pop(k, None)
             return result
+
         return wrapper
+
     return decorator
+
 
 # ────────────────────────────────────────────────────────────────────
 # helpers
 # ────────────────────────────────────────────────────────────────────
+
 
 def _month_range(year: int, month: int):
     """Return (start, end) datetimes for *month* (1-indexed)."""
@@ -94,6 +100,7 @@ def _active_groups_query(db: Session, strategy_id: Optional[UUID] = None, sede_i
 # ────────────────────────────────────────────────────────────────────
 # GET /rankings/groups
 # ────────────────────────────────────────────────────────────────────
+
 
 @router.get("/rankings/groups")
 def rankings_groups(
@@ -235,6 +242,7 @@ def _rank_by_visitors(db: Session, groups, start, end):
 # GET /rankings/monthly-comparison
 # ────────────────────────────────────────────────────────────────────
 
+
 @router.get("/rankings/monthly-comparison")
 def monthly_comparison(
     strategy_id: Optional[UUID] = Query(None),
@@ -252,11 +260,7 @@ def monthly_comparison(
             base_filter = (models.GrupoEvangelismo.activo) & (models.GrupoEvangelismo.sede_id == sede_id)
 
         # sessions
-        sess_q = (
-            db.query(_func.count(models.SesionGrupo.id))
-            .join(models.GrupoEvangelismo)
-            .filter(base_filter)
-        )
+        sess_q = db.query(_func.count(models.SesionGrupo.id)).join(models.GrupoEvangelismo).filter(base_filter)
         if strategy_id:
             sess_q = sess_q.filter(models.GrupoEvangelismo.estrategia_id == strategy_id)
         sess_q = sess_q.filter(
@@ -320,13 +324,10 @@ def monthly_comparison(
         new_visitors = vis_q.scalar() or 0
 
         # new conversions — people who changed rol_anterior this month in HistorialEmbudo
-        conv_q = (
-            db.query(_func.count(models.HistorialEmbudo.id))
-            .filter(
-                models.HistorialEmbudo.fecha_cambio >= start,
-                models.HistorialEmbudo.fecha_cambio < end,
-                models.HistorialEmbudo.deleted_at.is_(None),
-            )
+        conv_q = db.query(_func.count(models.HistorialEmbudo.id)).filter(
+            models.HistorialEmbudo.fecha_cambio >= start,
+            models.HistorialEmbudo.fecha_cambio < end,
+            models.HistorialEmbudo.deleted_at.is_(None),
         )
         new_conversions = conv_q.scalar() or 0
 
@@ -352,6 +353,7 @@ def monthly_comparison(
 # GET /rankings/leaders
 # ────────────────────────────────────────────────────────────────────
 
+
 @router.get("/rankings/leaders")
 def rankings_leaders(
     strategy_id: Optional[UUID] = Query(None),
@@ -368,8 +370,7 @@ def rankings_leaders(
     leader_map = {}
     if leader_ids:
         leader_map = {
-            persona.id: persona
-            for persona in db.query(models.Persona).filter(models.Persona.id.in_(leader_ids)).all()
+            persona.id: persona for persona in db.query(models.Persona).filter(models.Persona.id.in_(leader_ids)).all()
         }
     attendance_rows = []
     if group_ids:
@@ -415,11 +416,7 @@ def rankings_leaders(
     for g in groups:
         # leader name
         leader_name = leader_map.get(g.lider_persona_id)
-        leader_display = (
-            f"{leader_name.first_name} {leader_name.last_name}"
-            if leader_name
-            else "Sin líder"
-        )
+        leader_display = f"{leader_name.first_name} {leader_name.last_name}" if leader_name else "Sin líder"
 
         present = present_by_group.get(g.id, 0)
         expected = expected_by_group.get(g.id, 0)

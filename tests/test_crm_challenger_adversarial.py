@@ -14,16 +14,15 @@ def test_atomic_sort_reorder_empty_payload(db_session):
     admin_a, persona_a, sede_a = seed_admin(db_session, email="chal_admin_a@example.com")
     CasoCRM.atomic_sort_reorder(db_session, [], sede_a.id)  # Should not raise exception
 
+
 def test_atomic_sort_reorder_duplicate_ids(db_session):
     admin_a, persona_a, sede_a = seed_admin(db_session, email="chal_admin_a@example.com")
     case_id = uuid.uuid4()
-    payload = [
-        {"id": str(case_id), "sort_order": 1},
-        {"id": str(case_id), "sort_order": 2}
-    ]
+    payload = [{"id": str(case_id), "sort_order": 1}, {"id": str(case_id), "sort_order": 2}]
     with pytest.raises(ValueError) as excinfo:
         CasoCRM.atomic_sort_reorder(db_session, payload, sede_a.id)
     assert "Duplicate IDs in reorder payload." in str(excinfo.value)
+
 
 def test_atomic_sort_reorder_non_existent_case(db_session):
     admin_a, persona_a, sede_a = seed_admin(db_session, email="chal_admin_a@example.com")
@@ -32,6 +31,7 @@ def test_atomic_sort_reorder_non_existent_case(db_session):
     with pytest.raises(ValueError) as excinfo:
         CasoCRM.atomic_sort_reorder(db_session, payload, sede_a.id)
     assert "Case not found" in str(excinfo.value)
+
 
 def test_atomic_sort_reorder_cross_sede_case(db_session):
     admin_a, persona_a, sede_a = seed_admin(db_session, email="chal_admin_a@example.com")
@@ -62,6 +62,7 @@ def test_atomic_sort_reorder_cross_sede_case(db_session):
         CasoCRM.atomic_sort_reorder(db_session, payload, sede_a.id)
     assert "Sede isolation violation" in str(excinfo.value)
     assert "some cases do not belong to user's Sede" in str(excinfo.value)
+
 
 def test_atomic_sort_reorder_cross_sede_target_stage(db_session):
     admin_a, persona_a, sede_a = seed_admin(db_session, email="chal_admin_a@example.com")
@@ -95,6 +96,7 @@ def test_atomic_sort_reorder_cross_sede_target_stage(db_session):
             CasoCRM.atomic_sort_reorder(db_session, payload, sede_a.id)
         assert "Sede isolation violation" in str(excinfo.value)
         assert "some target stages do not belong to user's Sede" in str(excinfo.value)
+
 
 def test_automation_engine_operators_adversarial(db_session):
     persona_id = uuid.uuid4()
@@ -197,10 +199,9 @@ def test_automation_engine_operators_adversarial(db_session):
     check_condition("in", "text_key", '["hello world", "other"]', should_match=True)
     # Non-list JSON (e.g. string/int)
     check_condition("in", "text_key", '"hello world"', should_match=True)
-    check_condition("in", "number_key", '100', should_match=True)
+    check_condition("in", "number_key", "100", should_match=True)
     # invalid JSON string with brackets fallback to splitting (brackets remain, so it shouldn't match)
-    check_condition("in", "text_key", '[hello world, other]', should_match=False)
-
+    check_condition("in", "text_key", "[hello world, other]", should_match=False)
 
     # 4. Test numeric comparison fallback
     # non-numeric gt comparison should do string comparison
@@ -220,4 +221,3 @@ def test_automation_engine_operators_adversarial(db_session):
     # 6. Test float comparison
     check_condition("gt", "number_key", "99.9", should_match=True)
     check_condition("lt", "number_key", "100.1", should_match=True)
-

@@ -1,4 +1,5 @@
 """Tests for the Spiritual Life module."""
+
 from datetime import date
 
 import pytest
@@ -111,6 +112,7 @@ class TestMilestoneCRUD:
             notes="Original",
         )
         from tests.conftest import TestingSessionLocal
+
         db = TestingSessionLocal()
         db.add(milestone)
         db.commit()
@@ -133,6 +135,7 @@ class TestMilestoneCRUD:
             event_date=date.today(),
         )
         from tests.conftest import TestingSessionLocal
+
         db = TestingSessionLocal()
         db.add(milestone)
         db.commit()
@@ -166,6 +169,7 @@ class TestMilestoneRBAC:
             event_date=date.today(),
         )
         from tests.conftest import TestingSessionLocal
+
         db = TestingSessionLocal()
         db.add(milestone)
         db.commit()

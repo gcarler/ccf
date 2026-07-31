@@ -38,6 +38,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 if str(_PROJECT_ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT / "scripts"))
 
+
 # ── Contenido de cada bloque (catálogo canónico único, carga perezosa) ───
 def __getattr__(name: str):
     """Lazily resolve ``BLOCKS`` from the canonical catalog (PEP 562)."""

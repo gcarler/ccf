@@ -1,6 +1,7 @@
 """
 Direct unit tests for backend.api.workspace_shared._incidents.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -87,11 +88,13 @@ class TestSummarizeIncidents:
         assert result["mtta_minutes"] is None
 
     def test_single_open_incident(self):
-        inc = [{
-            "status": "open",
-            "severity": "high",
-            "created_at": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
-        }]
+        inc = [
+            {
+                "status": "open",
+                "severity": "high",
+                "created_at": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
+            }
+        ]
         result = incidents._summarize_incidents(inc)
         assert result["total"] == 1
         assert result["counts"].get("open") == 1
@@ -101,13 +104,15 @@ class TestSummarizeIncidents:
         created = (datetime.now(timezone.utc) - timedelta(hours=3)).isoformat()
         ack_at = (datetime.now(timezone.utc) - timedelta(hours=2, minutes=30)).isoformat()
         closed_at = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
-        inc = [{
-            "status": "closed",
-            "severity": "critical",
-            "created_at": created,
-            "ack_at": ack_at,
-            "closed_at": closed_at,
-        }]
+        inc = [
+            {
+                "status": "closed",
+                "severity": "critical",
+                "created_at": created,
+                "ack_at": ack_at,
+                "closed_at": closed_at,
+            }
+        ]
         result = incidents._summarize_incidents(inc)
         assert result["total"] == 1
         assert result["mtta_minutes"] is not None
@@ -134,11 +139,13 @@ class TestIncidentDailyTrends:
         assert len(result) == 7
 
     def test_with_incidents(self):
-        inc = [{
-            "status": "closed",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "closed_at": datetime.now(timezone.utc).isoformat(),
-            "ack_at": datetime.now(timezone.utc).isoformat(),
-        }]
+        inc = [
+            {
+                "status": "closed",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "closed_at": datetime.now(timezone.utc).isoformat(),
+                "ack_at": datetime.now(timezone.utc).isoformat(),
+            }
+        ]
         result = incidents._incident_daily_trends(inc, days=1)
         assert len(result) >= 1

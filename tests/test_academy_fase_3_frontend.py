@@ -76,10 +76,7 @@ def test_acad_tkt_030_no_bare_academy_paths(directory: str) -> None:
         for match in pattern_bare.finditer(text):
             offenders.append(f"{ts_file.name}: {match.group(0)}")
 
-    assert not offenders, (
-        "TKT-030 drift: paths '/academy/...' rotos encontrados:\n  "
-        + "\n  ".join(offenders)
-    )
+    assert not offenders, "TKT-030 drift: paths '/academy/...' rotos encontrados:\n  " + "\n  ".join(offenders)
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -96,8 +93,7 @@ def test_acad_tkt_031_no_promise_resolve_stats() -> None:
     text = _read("app/plataforma/academy/courses/[id]/page.tsx")
     # Excluir `Promise.all` y `Promise.allSettled` que son legítimos.
     assert "Promise.resolve" not in text, (
-        "TKT-031 drift: Promise.resolve detectado — los datos deben venir del backend, "
-        "no de un mock local de stats."
+        "TKT-031 drift: Promise.resolve detectado — los datos deben venir del backend, no de un mock local de stats."
     )
 
 
@@ -113,9 +109,7 @@ def test_acad_tkt_032_no_hardcoded_account_stats() -> None:
     # seguido de llaves con números literales. Conservador: solo bloquea si hay un
     # token "Mock", "Fake", "Demo" como identificador.
     offenders = re.findall(r"\b(MockData|FakeData|DemoData|FAKE_STATS)\b", text)
-    assert not offenders, (
-        f"TKT-032 drift: bloque de stats mock detectado en account/page.tsx: {offenders}"
-    )
+    assert not offenders, f"TKT-032 drift: bloque de stats mock detectado en account/page.tsx: {offenders}"
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -138,10 +132,7 @@ def test_acad_tkt_033_no_mock_pii() -> None:
     for pattern in pii_patterns:
         for match in pattern.finditer(text):
             offenders.append(match.group(0))
-    assert not offenders, (
-        "TKT-033 drift: PII mockeada detectada en account/page.tsx:\n  "
-        + "\n  ".join(offenders)
-    )
+    assert not offenders, "TKT-033 drift: PII mockeada detectada en account/page.tsx:\n  " + "\n  ".join(offenders)
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -173,9 +164,7 @@ def test_acad_tkt_034_abort_controller_present(relative_path: str) -> None:
 def test_acad_tkt_035_no_onkeypress() -> None:
     """TKT-035 — ``forum/[id]/page.tsx`` no usa ``onKeyPress`` (deprecated en React 17+)."""
     text = _read("app/plataforma/academy/forum/[id]/page.tsx")
-    assert "onKeyPress" not in text, (
-        "TKT-035 drift: onKeyPress detectado. Usar onKeyDown (el estándar actual)."
-    )
+    assert "onKeyPress" not in text, "TKT-035 drift: onKeyPress detectado. Usar onKeyDown (el estándar actual)."
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -211,9 +200,8 @@ def test_acad_tkt_036_to_038_no_any_types(relative_path: str) -> None:
             # Calcula línea aproximada (no crítico, basta con file + match)
             line_no = text[: match.start()].count("\n") + 1
             offenders.append((match.group(0).strip(), line_no))
-    assert not offenders, (
-        f"TKT-036..038 drift: tipos 'any' encontrados en {relative_path}:\n  "
-        + "\n  ".join(f"L{ln}: {tok}" for tok, ln in offenders)
+    assert not offenders, f"TKT-036..038 drift: tipos 'any' encontrados en {relative_path}:\n  " + "\n  ".join(
+        f"L{ln}: {tok}" for tok, ln in offenders
     )
 
 

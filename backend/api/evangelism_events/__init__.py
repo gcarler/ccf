@@ -6,6 +6,7 @@ Sub-modules:
 - events_checkin.py: fast check-in / visitor registration
 - _shared.py: permission helpers
 """
+
 from fastapi import APIRouter
 
 router = APIRouter(tags=["Evangelismo - Eventos"])

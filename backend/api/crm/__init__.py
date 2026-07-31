@@ -10,12 +10,12 @@ from fastapi import APIRouter
 
 # ── shared utilities ───────────────────────────────────────────────────
 from backend.api.crm._shared import (
-                                     _persona_full_name,
-                                     _serialize_case,
-                                     _serialize_message_group,
-                                     _serialize_persona_position,
-                                     _serialize_task,
-                                     utc_now,
+    _persona_full_name,
+    _serialize_case,
+    _serialize_message_group,
+    _serialize_persona_position,
+    _serialize_task,
+    utc_now,
 )
 
 # ── main router (used by app.py: ``crm.router``) ──────────────────────

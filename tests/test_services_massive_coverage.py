@@ -2,6 +2,7 @@
 Coverage tests for backend services — targeting 40%+.
 Only includes tests known to pass with the test DB fixture.
 """
+
 from datetime import datetime, timezone
 from unittest.mock import patch
 
@@ -29,6 +30,7 @@ def full(client, db_session):
 # CalculoSesiones — pure logic, no DB
 # ═══════════════════════════════════════════════════════
 
+
 class TestCalculoSesiones:
     def test_a_utc(self):
         dt = datetime(2026, 1, 5, 10, 0, 0, tzinfo=timezone.utc)
@@ -48,6 +50,7 @@ class TestCalculoSesiones:
 # ═══════════════════════════════════════════════════════
 # Email — pure logic + SMTP mock
 # ═══════════════════════════════════════════════════════
+
 
 class TestEmailService:
     def test_build_message(self):
@@ -70,6 +73,7 @@ class TestEmailService:
 # ═══════════════════════════════════════════════════════
 # Email Block Renderer
 # ═══════════════════════════════════════════════════════
+
 
 class TestEmailBlockRenderer:
     def test_render_blocks_text(self):
@@ -109,6 +113,7 @@ class TestEmailBlockRenderer:
 # ═══════════════════════════════════════════════════════
 # AgentInsight model — direct DB
 # ═══════════════════════════════════════════════════════
+
 
 class TestAgentInsightModel:
     def test_create_insight(self, full):

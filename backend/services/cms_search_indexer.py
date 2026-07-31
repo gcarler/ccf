@@ -3,16 +3,18 @@
 Provides content extraction, upserting into SearchIndex, deletion, and bulk re-indexing
 for pages, posts, and other CMS content.
 """
+
 from __future__ import annotations
 
 import logging
+import uuid
 from datetime import datetime, timezone
 from typing import Any
-import uuid
 
 from sqlalchemy.orm import Session
-from backend.models_enterprise import SearchIndex
+
 from backend.models_cms import CmsPage, CmsPost, CmsSite
+from backend.models_enterprise import SearchIndex
 
 logger = logging.getLogger(__name__)
 
@@ -124,9 +126,7 @@ def index_cms_content(
     return item
 
 
-def delete_from_search_index(
-    db: Session, site_key: str, entity_type: str, entity_id: str
-) -> bool:
+def delete_from_search_index(db: Session, site_key: str, entity_type: str, entity_id: str) -> bool:
     """Remove indexed item from search index upon deletion or unpublishing."""
     item = (
         db.query(SearchIndex)

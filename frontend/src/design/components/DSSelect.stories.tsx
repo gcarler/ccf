@@ -69,8 +69,8 @@ export const Disabled: Story = {
 export const FormExample: Story = {
     render: () => (
         <div className="w-64 space-y-4">
-            <DSSelect 
-                label="País" 
+            <DSSelect
+                label="País"
                 placeholder="Selecciona un país"
                 options={[
                     { value: 'mx', label: 'México' },
@@ -79,16 +79,16 @@ export const FormExample: Story = {
                     { value: 'cl', label: 'Chile' },
                 ]}
             />
-            <DSSelect 
-                label="Rol" 
+            <DSSelect
+                label="Rol"
                 options={[
                     { value: 'admin', label: 'Administrador' },
                     { value: 'user', label: 'Usuario' },
                     { value: 'viewer', label: 'Visor' },
                 ]}
             />
-            <DSSelect 
-                label="Estado" 
+            <DSSelect
+                label="Estado"
                 error="Selecciona un estado"
                 options={sampleOptions}
             />

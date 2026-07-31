@@ -16,9 +16,11 @@ from backend.core.security import get_password_hash
 # HELPERS
 # ──────────────────────────────────────────────
 
+
 def _login_as_admin(client: TestClient, db_session: Session) -> str:
     """Create admin user and return Bearer token."""
     from tests.conftest import seed_admin
+
     admin, persona, sede = seed_admin(db_session, email="permadmin@ccf.test", password="test123")
 
     resp = client.post(
@@ -32,6 +34,7 @@ def _login_as_admin(client: TestClient, db_session: Session) -> str:
 def _create_persona(db_session: Session) -> str:
     """Create a test persona and return its UUID."""
     from backend import models as m
+
     p = m.Persona(first_name="Perm", last_name="Test", email=f"permtest_{uuid.uuid4().hex[:8]}@ccf.test")
     db_session.add(p)
     db_session.commit()
@@ -42,6 +45,7 @@ def _create_persona(db_session: Session) -> str:
 def _create_auth_user(db_session: Session, persona_id: str) -> str:
     """Create an Auth v3 user linked to a persona and return its UUID."""
     from backend.models_auth import RolPlataforma, Usuario
+
     rol = db_session.query(RolPlataforma).first()
     if not rol:
         rol = RolPlataforma(nombre="LECTOR", permisos={"profile:manage": "allow"})
@@ -49,6 +53,7 @@ def _create_auth_user(db_session: Session, persona_id: str) -> str:
         db_session.commit()
         db_session.refresh(rol)
     from backend import models as m
+
     sede = db_session.query(m.Sede).first()
     if not sede:
         sede = m.Sede(nombre="TestSede", ciudad="Bogota", es_activa=True)
@@ -57,7 +62,7 @@ def _create_auth_user(db_session: Session, persona_id: str) -> str:
         db_session.refresh(sede)
     user = Usuario(
         id=uuid.UUID(persona_id),
-        sede_id=sede.id if hasattr(sede, 'id') else uuid.uuid4(),
+        sede_id=sede.id if hasattr(sede, "id") else uuid.uuid4(),
         username=f"permuser_{uuid.uuid4().hex[:8]}",
         email=f"permuser_{uuid.uuid4().hex[:8]}@ccf.test",
         password_hash=get_password_hash("test123"),
@@ -72,6 +77,7 @@ def _create_auth_user(db_session: Session, persona_id: str) -> str:
 def _seed_auth_roles(db_session: Session):
     """Seed RolPlataforma definitions needed by tests."""
     from backend.models_auth import RolPlataforma
+
     roles_to_seed = [
         ("ADMINISTRADOR", {"*": ["create", "read", "update", "delete", "admin"]}),
         ("GESTOR", {"crm": ["create", "read", "update"], "projects": ["create", "read", "update"]}),
@@ -100,6 +106,7 @@ def _create_module_role(db_session: Session, module: str) -> str:
 # ──────────────────────────────────────────────
 # TESTS
 # ──────────────────────────────────────────────
+
 
 class TestRoles:
     """CRUD de RolPlataforma via /admin/roles (consolidated endpoint)."""
@@ -316,13 +323,18 @@ class TestAdminSedeIsolation:
             sede_id=foreign_sede.id,
             permisos={"academy:study": "allow"},
         )
-        token = client.post("/api/v3/auth/login", json={"email": admin.email, "password": "test123"}).json()["access_token"]
+        token = client.post("/api/v3/auth/login", json={"email": admin.email, "password": "test123"}).json()[
+            "access_token"
+        ]
         headers = {"Authorization": f"Bearer {token}"}
 
         assert client.get(f"/api/admin/users/{foreign_user.id}", headers=headers).status_code == 404
         assert client.get(f"/api/admin/users/{foreign_user.id}/permissions", headers=headers).status_code == 404
-        assert client.put(
-            f"/api/admin/users/{foreign_user.id}/permissions",
-            headers=headers,
-            json={"projects": "read"},
-        ).status_code == 404
+        assert (
+            client.put(
+                f"/api/admin/users/{foreign_user.id}/permissions",
+                headers=headers,
+                json={"projects": "read"},
+            ).status_code
+            == 404
+        )

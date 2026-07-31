@@ -2,6 +2,7 @@
 FINAL PUSH — Tests for the 5 modules with most remaining missed lines.
 crm.py (362), academy.py (360), cms.py (332), auth_v3.py (320), evangelism.py (283).
 """
+
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
@@ -35,13 +36,15 @@ def full(client, db_session):
     personas = []
     for i in range(15):
         p = models.Persona(
-            first_name=f"U{i}", last_name=f"T{i}",
+            first_name=f"U{i}",
+            last_name=f"T{i}",
             email=f"u{i}_{uuid.uuid4().hex[:6]}@t.com",
             phone=f"+5730011122{i:02d}",
             spiritual_status=["Miembro", "Visitante", "Nuevo", "Activo"][i % 4],
             church_role=["Miembro", "Líder", "Pastor", "Voluntario"][i % 4],
             estado_vital=["ACTIVO", "ACTIVO", "INACTIVO", "ACTIVO"][i % 4],
-            sede_id=sede.id, sex=["M", "F"][i % 2],
+            sede_id=sede.id,
+            sex=["M", "F"][i % 2],
         )
         db_session.add(p)
         personas.append(p)
@@ -60,24 +63,36 @@ def full(client, db_session):
 
     for i, pr in enumerate(projects[:2]):
         for j in range(3):
-            db_session.add(models.ProjectTask(project_id=pr.id, title=f"T{i}_{j}",
-                status=["pending", "in_progress", "done"][j]))
+            db_session.add(
+                models.ProjectTask(project_id=pr.id, title=f"T{i}_{j}", status=["pending", "in_progress", "done"][j])
+            )
     db_session.commit()
 
     cat = CategoriaEstrategia(nombre="Cat")
     db_session.add(cat)
     db_session.flush()
-    strategy = EstrategiaEvangelismo(nombre="Strat", sede_id=sede.id, frecuencia="semanal",
-        categoria_id=cat.id, fecha_inicio=datetime.now(timezone.utc)-timedelta(days=90),
-        fecha_fin=datetime.now(timezone.utc)+timedelta(days=90))
+    strategy = EstrategiaEvangelismo(
+        nombre="Strat",
+        sede_id=sede.id,
+        frecuencia="semanal",
+        categoria_id=cat.id,
+        fecha_inicio=datetime.now(timezone.utc) - timedelta(days=90),
+        fecha_fin=datetime.now(timezone.utc) + timedelta(days=90),
+    )
     db_session.add(strategy)
     db_session.flush()
 
     groups = []
     for i in range(4):
-        g = GrupoEvangelismo(nombre=f"G{i}", ubicacion=f"U{i}", sede_id=sede.id,
-            lider_persona_id=personas[i].id, codigo=f"G{uuid.uuid4().hex[:6]}",
-            capacidad=20, estrategia_id=strategy.id)
+        g = GrupoEvangelismo(
+            nombre=f"G{i}",
+            ubicacion=f"U{i}",
+            sede_id=sede.id,
+            lider_persona_id=personas[i].id,
+            codigo=f"G{uuid.uuid4().hex[:6]}",
+            capacidad=20,
+            estrategia_id=strategy.id,
+        )
         db_session.add(g)
         groups.append(g)
     db_session.commit()
@@ -92,8 +107,11 @@ def full(client, db_session):
     sessions = []
     for g in groups:
         for j in range(3):
-            s = SesionGrupo(grupo_id=g.id, tema_estudio=f"S{j}",
-                fecha_sesion=datetime.now(timezone.utc)-timedelta(days=30-j*7))
+            s = SesionGrupo(
+                grupo_id=g.id,
+                tema_estudio=f"S{j}",
+                fecha_sesion=datetime.now(timezone.utc) - timedelta(days=30 - j * 7),
+            )
             db_session.add(s)
             sessions.append(s)
     db_session.commit()
@@ -101,44 +119,69 @@ def full(client, db_session):
         db_session.refresh(s)
 
     for s in sessions:
-        for pg in db_session.query(ParticipanteGrupo).filter(ParticipanteGrupo.grupo_id==s.grupo_id).limit(2).all():
+        for pg in db_session.query(ParticipanteGrupo).filter(ParticipanteGrupo.grupo_id == s.grupo_id).limit(2).all():
             db_session.add(Asistencia(sesion_id=s.id, persona_id=pg.persona_id, estado="ASISTIO"))
     db_session.commit()
 
     for i in range(6):
-        db_session.add(models.TareaCRM(title=f"Task_{i}", persona_id=personas[i].id, status=["pending","completed","in_progress"][i%3]))
+        db_session.add(
+            models.TareaCRM(
+                title=f"Task_{i}", persona_id=personas[i].id, status=["pending", "completed", "in_progress"][i % 3]
+            )
+        )
         db_session.add(models.CounselingTicket(persona_id=personas[i].id, subject=f"CT_{i}", status="open"))
         db_session.add(models.PrayerRequest(requester_name=personas[i].first_name, request_text="P", sede_id=sede.id))
         db_session.add(models.CommunicationLog(persona_id=personas[i].id, channel="email", content=f"Msg_{i}"))
-        db_session.add(models.VolunteerShift(persona_id=personas[i].id,
-            role_name=["worship","kids","tech","media","sound"][i%5],
-            team_name=["worship","kids","tech","media","sound"][i%5],
-            shift_start=datetime.now(timezone.utc)-timedelta(hours=4),
-            shift_end=datetime.now(timezone.utc)))
+        db_session.add(
+            models.VolunteerShift(
+                persona_id=personas[i].id,
+                role_name=["worship", "kids", "tech", "media", "sound"][i % 5],
+                team_name=["worship", "kids", "tech", "media", "sound"][i % 5],
+                shift_start=datetime.now(timezone.utc) - timedelta(hours=4),
+                shift_end=datetime.now(timezone.utc),
+            )
+        )
     db_session.commit()
 
     headers = _auth_headers(client, email=admin.email, password="testpass123")
-    return {"c": client, "h": headers, "sede": sede, "admin": admin, "personas": personas,
-            "projects": projects, "groups": groups, "sessions": sessions, "strategy": strategy}
+    return {
+        "c": client,
+        "h": headers,
+        "sede": sede,
+        "admin": admin,
+        "personas": personas,
+        "projects": projects,
+        "groups": groups,
+        "sessions": sessions,
+        "strategy": strategy,
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CRM CRUD DIRECT (crm.py — 362 missed, 55%)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCRMFinalPush:
     def test_crud_every_function(self, db_session, full):
         from backend.crud import crm
         from backend.schemas import PersonaCreate, PersonaUpdate
+
         db = db_session
         pid = str(full["personas"][0].id)
         sid = str(full["sede"].id)
         fid = str(full["families"][0].id) if hasattr(full, "families") else None
         # Create persona
-        _call(crm.create_persona, db, PersonaCreate(first_name="Full", last_name="Long",
-            email=f"f_{uuid.uuid4().hex[:6]}@t.com", phone="+573009999999"))
-        _call(crm.create_persona, db, PersonaCreate(first_name="Dup", last_name="Person",
-            phone=full["personas"][0].phone))  # duplicate
+        _call(
+            crm.create_persona,
+            db,
+            PersonaCreate(
+                first_name="Full", last_name="Long", email=f"f_{uuid.uuid4().hex[:6]}@t.com", phone="+573009999999"
+            ),
+        )
+        _call(
+            crm.create_persona, db, PersonaCreate(first_name="Dup", last_name="Person", phone=full["personas"][0].phone)
+        )  # duplicate
         # Get
         _call(crm.get_persona, db, pid)
         # Update
@@ -146,9 +189,13 @@ class TestCRMFinalPush:
         # Delete (soft)
         _call(crm.delete_persona, db, str(full["personas"][14].id))
         # Search personas
-        for kw in [dict(search="U0", sede_id=sid), dict(role="Miembro", sede_id=sid),
-                   dict(estado_vital="ACTIVO", sede_id=sid), dict(sex="M", sede_id=sid),
-                   dict(min_age=18, max_age=65, sede_id=sid)]:
+        for kw in [
+            dict(search="U0", sede_id=sid),
+            dict(role="Miembro", sede_id=sid),
+            dict(estado_vital="ACTIVO", sede_id=sid),
+            dict(sex="M", sede_id=sid),
+            dict(min_age=18, max_age=65, sede_id=sid),
+        ]:
             _call(crm.search_personas, db, **kw)
         # Search personas
         _call(crm.search_personas, db, sede_id=sid)
@@ -211,9 +258,11 @@ class TestCRMFinalPush:
 # ACADEMY CRUD DIRECT (academy.py — 360 missed, 23%)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCMSFinalPush:
     def test_crud_every_function(self, db_session, full):
         from backend.crud import cms
+
         db = db_session
         # Old page_contents functions removed — CMS v2 uses CmsPage CRUD.
         # Sites / themes / menus / pages / sections covered below.
@@ -262,13 +311,19 @@ class TestCMSFinalPush:
 # EVANGELISM MAIN (evangelism.py — 283 missed, 41%)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEvangelismFinalPush:
     def test_counseling_crud(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
         c.get("/api/evangelism/counseling/", headers=h)
-        resp = c.post("/api/evangelism/counseling/", json={
-            "persona_id": str(personas[0].id), "subject": f"S_{uuid.uuid4().hex[:6]}",
-        }, headers=h)
+        resp = c.post(
+            "/api/evangelism/counseling/",
+            json={
+                "persona_id": str(personas[0].id),
+                "subject": f"S_{uuid.uuid4().hex[:6]}",
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             tid = resp.json().get("id")
@@ -281,32 +336,61 @@ class TestEvangelismFinalPush:
     def test_prayer_crud(self, full):
         c, h, personas, sede = full["c"], full["h"], full["personas"], full["sede"]
         c.get("/api/evangelism/prayer-requests/", headers=h)
-        resp = c.post("/api/evangelism/prayer-requests/", json={
-            "requester_name": "Praying", "request_text": "Help", "sede_id": str(sede.id),
-        }, headers=h)
+        resp = c.post(
+            "/api/evangelism/prayer-requests/",
+            json={
+                "requester_name": "Praying",
+                "request_text": "Help",
+                "sede_id": str(sede.id),
+            },
+            headers=h,
+        )
         assert _ok(resp.status_code)
         if resp.status_code in (200, 201):
             rid = resp.json().get("id")
             if rid:
                 c.get(f"/api/evangelism/prayer-requests/{rid}", headers=h)
-                c.patch(f"/api/evangelism/prayer-requests/{rid}", json={"status": "answered", "is_answered": True}, headers=h)
+                c.patch(
+                    f"/api/evangelism/prayer-requests/{rid}",
+                    json={"status": "answered", "is_answered": True},
+                    headers=h,
+                )
         c.get("/api/evangelism/prayer-requests/99999", headers=h)
 
     def test_messaging_all_channels(self, full):
         c, h, personas = full["c"], full["h"], full["personas"]
         for ch in ["email", "whatsapp", "sms"]:
-            c.post("/api/evangelism/messaging/send", json={
-                "channel": ch, "persona_id": str(personas[0].id), "content": f"M {ch}",
-            }, headers=h)
+            c.post(
+                "/api/evangelism/messaging/send",
+                json={
+                    "channel": ch,
+                    "persona_id": str(personas[0].id),
+                    "content": f"M {ch}",
+                },
+                headers=h,
+            )
         # Segments
         for seg in ["active", "groups"]:
-            c.post("/api/evangelism/messaging/send", json={
-                "channel": "email", "content": "Seg", "target_segments": [seg], "campaign_name": "C",
-            }, headers=h)
+            c.post(
+                "/api/evangelism/messaging/send",
+                json={
+                    "channel": "email",
+                    "content": "Seg",
+                    "target_segments": [seg],
+                    "campaign_name": "C",
+                },
+                headers=h,
+            )
         # No target
-        c.post("/api/evangelism/messaging/send", json={
-            "channel": "email", "content": "No target", "target_segments": ["nonexistent"],
-        }, headers=h)
+        c.post(
+            "/api/evangelism/messaging/send",
+            json={
+                "channel": "email",
+                "content": "No target",
+                "target_segments": ["nonexistent"],
+            },
+            headers=h,
+        )
         c.get("/api/evangelism/messaging/history", headers=h)
 
     def test_messaging_no_channel(self, full):
@@ -318,18 +402,29 @@ class TestEvangelismFinalPush:
 # AUTH V3 (auth_v3.py — 320 missed, 28%)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestAuthFinalPush:
     def test_auth_endpoints(self, full):
         c, h, admin = full["c"], full["h"], full["admin"]
         # Profile
         c.get("/api/v3/auth/me", headers=h)
         # Change password
-        c.post("/api/v3/auth/change-password", json={
-            "current_password": "testpass123", "new_password": "NewPass456!",
-        }, headers=h)
-        c.post("/api/v3/auth/change-password", json={
-            "current_password": "wrong", "new_password": "X",
-        }, headers=h)
+        c.post(
+            "/api/v3/auth/change-password",
+            json={
+                "current_password": "testpass123",
+                "new_password": "NewPass456!",
+            },
+            headers=h,
+        )
+        c.post(
+            "/api/v3/auth/change-password",
+            json={
+                "current_password": "wrong",
+                "new_password": "X",
+            },
+            headers=h,
+        )
         # Refresh
         c.post("/api/v3/auth/refresh", headers=h)
         # Verify email
@@ -342,16 +437,26 @@ class TestAuthFinalPush:
 
     def test_register(self, full):
         c = full["c"]
-        c.post("/api/v3/auth/register", json={
-            "email": f"reg_{uuid.uuid4().hex[:6]}@t.com",
-            "password": "TestPass123!",
-            "first_name": "Reg", "last_name": "User",
-        })
+        c.post(
+            "/api/v3/auth/register",
+            json={
+                "email": f"reg_{uuid.uuid4().hex[:6]}@t.com",
+                "password": "TestPass123!",
+                "first_name": "Reg",
+                "last_name": "User",
+            },
+        )
         # Duplicate
         email = f"dup_{uuid.uuid4().hex[:6]}@t.com"
-        c.post("/api/v3/auth/register", json={
-            "email": email, "password": "P1!", "first_name": "D", "last_name": "U",
-        })
+        c.post(
+            "/api/v3/auth/register",
+            json={
+                "email": email,
+                "password": "P1!",
+                "first_name": "D",
+                "last_name": "U",
+            },
+        )
         c.post("/api/v3/auth/register", json={"email": email, "password": "P1!", "first_name": "D2", "last_name": "U2"})
 
 
@@ -359,11 +464,17 @@ class TestAuthFinalPush:
 # ENTERPRISE CMS (enterprise_cms.py — 262 missed, 42%)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEnterpriseCMSFinalPush:
     def test_all_crud(self, full):
         c, h = full["c"], full["h"]
-        for endpoint in ["/api/cms/v2/webhooks", "/api/cms/v2/redirects", "/api/cms/v2/custom-types",
-                         "/api/cms/v2/glossary", "/api/cms/v2/media-folders"]:
+        for endpoint in [
+            "/api/cms/v2/webhooks",
+            "/api/cms/v2/redirects",
+            "/api/cms/v2/custom-types",
+            "/api/cms/v2/glossary",
+            "/api/cms/v2/media-folders",
+        ]:
             _ok(c.get(endpoint, headers=h).status_code)
             resp = c.post(endpoint, json=_payload_for(endpoint), headers=h)
             assert _ok(resp.status_code)
@@ -393,6 +504,7 @@ def _payload_for(endpoint):
 # ═══════════════════════════════════════════════════════════════════════════════
 # PROJECTS FINAL (projects.py — 193 missed, 67%)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestProjectsFinalPush:
     def test_create_project(self, full):
@@ -428,10 +540,14 @@ class TestProjectsFinalPush:
         c, h, projects = full["c"], full["h"], full["projects"]
         pid = str(projects[0].id)
         c.get(f"/api/projects/{pid}/phases", headers=h)
-        c.put(f"/api/projects/{pid}/phases", json=[
-            {"name": "P1", "slug": "p1", "color": "#000", "order_index": 0},
-            {"name": "P2", "slug": "p2", "color": "#FFF", "order_index": 1},
-        ], headers=h)
+        c.put(
+            f"/api/projects/{pid}/phases",
+            json=[
+                {"name": "P1", "slug": "p1", "color": "#000", "order_index": 0},
+                {"name": "P2", "slug": "p2", "color": "#FFF", "order_index": 1},
+            ],
+            headers=h,
+        )
 
     def test_comments_crud(self, full):
         c, h, projects = full["c"], full["h"], full["projects"]
@@ -454,7 +570,14 @@ class TestProjectsFinalPush:
         c, h, projects = full["c"], full["h"], full["projects"]
         pid = str(projects[0].id)
         c.get(f"/api/projects/{pid}/milestones", headers=h)
-        resp = c.post(f"/api/projects/{pid}/milestones", json={"title": f"MS_{uuid.uuid4().hex[:6]}", "target_date": (date.today()+timedelta(days=30)).isoformat()}, headers=h)
+        resp = c.post(
+            f"/api/projects/{pid}/milestones",
+            json={
+                "title": f"MS_{uuid.uuid4().hex[:6]}",
+                "target_date": (date.today() + timedelta(days=30)).isoformat(),
+            },
+            headers=h,
+        )
         if resp.status_code in (200, 201) and resp.json().get("id"):
             mid = resp.json()["id"]
             c.patch(f"/api/projects/milestones/{mid}", json={"title": "U"}, headers=h)

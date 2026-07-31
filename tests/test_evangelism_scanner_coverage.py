@@ -1,6 +1,7 @@
 """
 Coverage tests for evangelism.py — target 90%+.
 """
+
 import uuid
 
 import pytest
@@ -18,8 +19,12 @@ def full(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
-        "c": client, "h": headers, "db": db_session,
-        "admin": admin, "persona": persona, "sede": sede,
+        "c": client,
+        "h": headers,
+        "db": db_session,
+        "admin": admin,
+        "persona": persona,
+        "sede": sede,
     }
 
 

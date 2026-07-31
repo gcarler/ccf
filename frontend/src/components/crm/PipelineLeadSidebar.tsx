@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { 
-    Phone, 
-    MessageCircle, 
-    FileText, 
-    CheckCircle2, 
-    Zap, 
+import {
+    Phone,
+    MessageCircle,
+    FileText,
+    CheckCircle2,
+    Zap,
     ExternalLink,
     User,
     Smartphone,
@@ -65,7 +65,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
 
                 <div className="flex items-center gap-4 relative z-10">
                     <div className="relative">
-                        <motion.div 
+                        <motion.div
                             whileHover={{ scale: 1.05 }}
                             className="size-10 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] text-white flex items-center justify-center font-bold text-xl shadow-2xl shadow-[hsl(var(--info)/30%)] border-4 border-white dark:border-[hsl(var(--border))]"
                         >
@@ -115,7 +115,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                             onClick={() => onViewFullProfile(lead.id)}
                             className="w-full flex items-center gap-4 p-3 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--primary))] transition-all shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 group"
                         >
-                            <ExternalLink size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> 
+                            <ExternalLink size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                             Ver Expediente Completo
                         </button>
                         <div className="grid grid-cols-2 gap-2">
@@ -152,19 +152,19 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                         ))}
                     </div>
                 </section>
-                
+
 
 
                 <section className="space-y-3 pb-12">
                     <h3 className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                         <History size={14} className="text-[hsl(var(--primary))]" /> Historial de Actividad
                     </h3>
-                    
+
                     <div className="relative pl-4 space-y-3 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-[hsl(var(--surface-2))] dark:before:bg-white/5">
                         <AnimatePresence mode="popLayout">
                             {auditLogs.length > 0 ? (
                                 auditLogs.map((log, idx) => (
-                                    <motion.div 
+                                    <motion.div
                                         key={log.id}
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
@@ -172,7 +172,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                                         className="relative"
                                     >
                                         <div className="absolute -left-[21px] top-0 size-[13px] rounded-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-2 border-[hsl(var(--info)/100%)] shadow-sm z-10" />
-                                        
+
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
@@ -184,7 +184,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                                                     <Clock size={10} /> {new Date(log.created_at).toLocaleDateString()}
                                                 </span>
                                             </div>
-                                            
+
                                             <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.04] text-xs leading-relaxed">
                                                 <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">
                                                     {log.metadata?.stage ? (

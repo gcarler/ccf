@@ -68,7 +68,7 @@ def test_flujo_estrategia_triple7_geografica_relacional_semanal(client, db_sessi
                 "capacity": 10,
                 "day_of_week": "Lunes",
                 "start_time": "19:00",
-                    "evangelism_strategy_id": strategy["id"],
+                "evangelism_strategy_id": strategy["id"],
                 "base_attendee_ids": [str(persona.id) for persona in group_personas],
             },
             headers=headers,
@@ -178,5 +178,3 @@ def test_flujo_estrategia_triple7_geografica_relacional_semanal(client, db_sessi
     strategy_detail = client.get(f"/api/evangelism/strategies/{strategy['id']}", headers=headers)
     assert strategy_detail.status_code == 200, strategy_detail.text
     assert strategy_detail.json()["group_count"] == 4
-
-

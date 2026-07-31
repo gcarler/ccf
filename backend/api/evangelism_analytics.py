@@ -10,6 +10,7 @@ Endpoints:
   GET /analytics/strategy/{strategy_id}/velocity  — Velocidad de cambio de roles
   GET /analytics/strategy/{strategy_id}/groups    — Grupos con mini-métricas detalladas
 """
+
 from __future__ import annotations
 
 import datetime as _dt
@@ -44,9 +45,11 @@ logger = logging.getLogger(__name__)
 
 _PERIOD_DAYS = {"7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365}
 
+
 def _normalize_rol(name: str) -> str:
     """Normalize a role name string for fuzzy matching (lowercase, strip accents)."""
     import unicodedata
+
     s = unicodedata.normalize("NFD", name.lower())
     return "".join(c for c in s if unicodedata.category(c) != "Mn")
 
@@ -73,9 +76,11 @@ def _rol_to_funnel_stage(nombre_rol: str) -> str:
     # Unknown custom role — return as-is so UI can show it
     return "personalizado"
 
+
 # ─────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────
+
 
 def _parse_period(period: str) -> int:
     return _PERIOD_DAYS.get(period, 30)
@@ -148,7 +153,8 @@ def _sessions_done_count(db: Session, group_ids: list[_uuid.UUID], start, end) -
             models.SesionGrupo.fecha_sesion < end,
             models.SesionGrupo.deleted_at.is_(None),
         )
-        .scalar() or 0
+        .scalar()
+        or 0
     )
 
 
@@ -163,13 +169,15 @@ def _sessions_total_count(db: Session, group_ids: list[_uuid.UUID], start, end) 
             models.SesionGrupo.fecha_sesion < end,
             models.SesionGrupo.deleted_at.is_(None),
         )
-        .scalar() or 0
+        .scalar()
+        or 0
     )
 
 
 # ─────────────────────────────────────────────────────────
 # GET /analytics/strategy/{strategy_id}  — KPIs principales
 # ─────────────────────────────────────────────────────────
+
 
 @router.get("/analytics/strategy/{strategy_id}")
 def strategy_kpis(
@@ -204,7 +212,8 @@ def strategy_kpis(
                 models.ParticipanteGrupo.deleted_at.is_(None),
                 models.ParticipanteGrupo.fecha_ingreso < end,
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
         prev_active_personas = (
             db.query(_func.count(models.ParticipanteGrupo.id))
@@ -214,7 +223,8 @@ def strategy_kpis(
                 models.ParticipanteGrupo.deleted_at.is_(None),
                 models.ParticipanteGrupo.fecha_ingreso < prev_end,
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     # ── Sesiones (case-insensitive para manejar "Realizada" vs "REALIZADA") ──
@@ -234,7 +244,8 @@ def strategy_kpis(
                 models.ParticipanteGrupo.fecha_ingreso < end,
                 models.ParticipanteGrupo.deleted_at.is_(None),
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
         prev_new_joiners = (
             db.query(_func.count(models.ParticipanteGrupo.id))
@@ -244,7 +255,8 @@ def strategy_kpis(
                 models.ParticipanteGrupo.fecha_ingreso < prev_end,
                 models.ParticipanteGrupo.deleted_at.is_(None),
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     # ── Grupos activos ──
@@ -259,7 +271,8 @@ def strategy_kpis(
                 models.SesionGrupo.fecha_sesion < end,
                 models.SesionGrupo.deleted_at.is_(None),
             )
-            .scalar() or 0
+            .scalar()
+            or 0
         )
 
     # ── Retención ──
@@ -304,6 +317,7 @@ def strategy_kpis(
 # GET /analytics/strategy/{strategy_id}/trend
 # ─────────────────────────────────────────────────────────
 
+
 @router.get("/analytics/strategy/{strategy_id}/trend")
 def strategy_trend(
     strategy_id: UUID,
@@ -321,11 +335,7 @@ def strategy_trend(
     start, end = _date_range(days)
     use_weeks = days <= 90
 
-    groups = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.id.in_(group_ids))
-        .all()
-    )
+    groups = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id.in_(group_ids)).all()
 
     rows = (
         db.query(
@@ -406,6 +416,7 @@ def _bucket_label(key: str, use_weeks: bool) -> str:
 # GET /analytics/strategy/{strategy_id}/funnel
 # ─────────────────────────────────────────────────────────
 
+
 @router.get("/analytics/strategy/{strategy_id}/funnel")
 def strategy_funnel(
     strategy_id: UUID,
@@ -459,11 +470,13 @@ def strategy_funnel(
             # Has a custom role — classify by role name
             stage = _rol_to_funnel_stage(nombre_rol)
             stage_counts[stage] += count
-            role_breakdown.append({
-                "nombre_rol": nombre_rol,
-                "stage": stage,
-                "count": count,
-            })
+            role_breakdown.append(
+                {
+                    "nombre_rol": nombre_rol,
+                    "stage": stage,
+                    "count": count,
+                }
+            )
         else:
             # No custom role assigned — not a funnel stage
             without_role += count
@@ -485,11 +498,11 @@ def strategy_funnel(
             velocity_map[stage] = round(float(avg_days), 0)
 
     STAGES = [
-        {"key": "visitante",     "label": "Visitante / Invitado"},
-        {"key": "asistente",     "label": "Asistente"},
-        {"key": "anfitrion",     "label": "Anfitrión"},
-        {"key": "colider",       "label": "Colíder"},
-        {"key": "lider",         "label": "Líder"},
+        {"key": "visitante", "label": "Visitante / Invitado"},
+        {"key": "asistente", "label": "Asistente"},
+        {"key": "anfitrion", "label": "Anfitrión"},
+        {"key": "colider", "label": "Colíder"},
+        {"key": "lider", "label": "Líder"},
         {"key": "personalizado", "label": "Otro rol"},
     ]
 
@@ -502,13 +515,15 @@ def strategy_funnel(
         count = stage_counts.get(stage_def["key"], 0)
         if count == 0 and stage_def["key"] == "personalizado":
             continue
-        stages.append({
-            "key": stage_def["key"],
-            "label": stage_def["label"],
-            "count": count,
-            "pct_of_total": round((count / top) * 100, 1),
-            "avg_days_before": velocity_map.get(stage_def["key"]),
-        })
+        stages.append(
+            {
+                "key": stage_def["key"],
+                "label": stage_def["label"],
+                "count": count,
+                "pct_of_total": round((count / top) * 100, 1),
+                "avg_days_before": velocity_map.get(stage_def["key"]),
+            }
+        )
 
     return {
         "total_active": total_active,
@@ -522,6 +537,7 @@ def strategy_funnel(
 # ─────────────────────────────────────────────────────────
 # GET /analytics/strategy/{strategy_id}/heatmap
 # ─────────────────────────────────────────────────────────
+
 
 @router.get("/analytics/strategy/{strategy_id}/heatmap")
 def strategy_heatmap(
@@ -578,14 +594,16 @@ def strategy_heatmap(
     for wd in range(7):
         agg = weekday_agg.get(wd, {"p": 0, "t": 0, "sessions": 0})
         pct = round((agg["p"] / agg["t"]) * 100, 1) if agg["t"] else None
-        cells.append({
-            "weekday": wd,
-            "label": _DAY_NAMES[wd],
-            "sessions": agg["sessions"],
-            "present": agg["p"],
-            "total": agg["t"],
-            "pct": pct,
-        })
+        cells.append(
+            {
+                "weekday": wd,
+                "label": _DAY_NAMES[wd],
+                "sessions": agg["sessions"],
+                "present": agg["p"],
+                "total": agg["t"],
+                "pct": pct,
+            }
+        )
 
     return {"cells": cells}
 
@@ -593,6 +611,7 @@ def strategy_heatmap(
 # ─────────────────────────────────────────────────────────
 # GET /analytics/strategy/{strategy_id}/alerts
 # ─────────────────────────────────────────────────────────
+
 
 @router.get("/analytics/strategy/{strategy_id}/alerts")
 def strategy_alerts(
@@ -608,11 +627,7 @@ def strategy_alerts(
     if not group_ids:
         return {"alerts": []}
 
-    groups = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.id.in_(group_ids))
-        .all()
-    )
+    groups = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id.in_(group_ids)).all()
     group_map = {g.id: g for g in groups}
     alerts = []
 
@@ -637,13 +652,17 @@ def strategy_alerts(
     # All attendance for those sessions (for alert 1)
     session_ids = [s.id for s in all_sessions]
     att_rows = (
-        db.query(models.Asistencia.sesion_id, models.Asistencia.estado)
-        .filter(
-            models.Asistencia.sesion_id.in_(session_ids),
-            models.Asistencia.deleted_at.is_(None),
+        (
+            db.query(models.Asistencia.sesion_id, models.Asistencia.estado)
+            .filter(
+                models.Asistencia.sesion_id.in_(session_ids),
+                models.Asistencia.deleted_at.is_(None),
+            )
+            .all()
         )
-        .all()
-    ) if session_ids else []
+        if session_ids
+        else []
+    )
     att_by_session: dict = defaultdict(list)
     for sid, estado in att_rows:
         att_by_session[sid].append(estado)
@@ -681,7 +700,7 @@ def strategy_alerts(
 
     # ── Alert type 1: Groups with N consecutive low-attendance sessions ──
     for gid in group_ids:
-        recent = sessions_by_group.get(gid, [])[:consecutive_sessions + 2]
+        recent = sessions_by_group.get(gid, [])[: consecutive_sessions + 2]
         if len(recent) < consecutive_sessions:
             continue
 
@@ -696,13 +715,15 @@ def strategy_alerts(
 
         if low_count >= consecutive_sessions:
             g = group_map.get(gid)
-            alerts.append({
-                "type": "low_attendance",
-                "severity": "high",
-                "group_id": gid,
-                "group_name": g.nombre if g else str(gid),
-                "message": f"{consecutive_sessions} sesiones consecutivas con asistencia bajo {threshold_pct}%",
-            })
+            alerts.append(
+                {
+                    "type": "low_attendance",
+                    "severity": "high",
+                    "group_id": gid,
+                    "group_name": g.nombre if g else str(gid),
+                    "message": f"{consecutive_sessions} sesiones consecutivas con asistencia bajo {threshold_pct}%",
+                }
+            )
 
     # ── Alert type 2: Groups without a session in 30+ days ──
     cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=30)
@@ -713,29 +734,33 @@ def strategy_alerts(
         if last is None or last < cutoff:
             g = group_map.get(gid)
             days_ago = int((_dt.datetime.now(_dt.timezone.utc) - last).days) if last else None
-            alerts.append({
-                "type": "no_recent_session",
-                "severity": "medium",
-                "group_id": gid,
-                "group_name": g.nombre if g else str(gid),
-                "message": f"Sin sesión en {days_ago} días" if days_ago else "Sin sesiones registradas",
-                "days_since_last": days_ago,
-            })
+            alerts.append(
+                {
+                    "type": "no_recent_session",
+                    "severity": "medium",
+                    "group_id": gid,
+                    "group_name": g.nombre if g else str(gid),
+                    "message": f"Sin sesión en {days_ago} días" if days_ago else "Sin sesiones registradas",
+                    "days_since_last": days_ago,
+                }
+            )
 
     # ── Alert type 3: Groups near capacity (ready to multiply) ──
     for g in groups:
         persona_count = persona_count_by_group.get(g.id, 0)
         capacity = g.capacidad or 15
         if persona_count >= int(capacity * 0.85):
-            alerts.append({
-                "type": "ready_to_multiply",
-                "severity": "info",
-                "group_id": g.id,
-                "group_name": g.nombre,
-                "message": f"{persona_count} personas — {round(persona_count / capacity * 100)}% de capacidad ({capacity})",
-                "personas": persona_count,
-                "capacity": capacity,
-            })
+            alerts.append(
+                {
+                    "type": "ready_to_multiply",
+                    "severity": "info",
+                    "group_id": g.id,
+                    "group_name": g.nombre,
+                    "message": f"{persona_count} personas — {round(persona_count / capacity * 100)}% de capacidad ({capacity})",
+                    "personas": persona_count,
+                    "capacity": capacity,
+                }
+            )
 
     # Alert type 4: People with 2+ consecutive absences (top 10)
     thirty_days_ago = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=30)
@@ -776,11 +801,7 @@ def strategy_alerts(
 
             persona_records = {}
             if person_att:
-                persons = (
-                    db.query(models.Persona)
-                    .filter(models.Persona.id.in_(list(person_att.keys())))
-                    .all()
-                )
+                persons = db.query(models.Persona).filter(models.Persona.id.in_(list(person_att.keys()))).all()
                 persona_records = {str(p.id): p for p in persons}
 
             absent_alerts = []
@@ -794,14 +815,16 @@ def strategy_alerts(
                 if consecutive_absent >= 2:
                     p = persona_records.get(str(pid))
                     name = f"{p.first_name} {p.last_name}" if p else str(pid)
-                    absent_alerts.append({
-                        "type": "consecutive_absences",
-                        "severity": "medium",
-                        "persona_id": str(pid),
-                        "persona_name": name,
-                        "message": f"{consecutive_absent} ausencias consecutivas",
-                        "consecutive_absences": consecutive_absent,
-                    })
+                    absent_alerts.append(
+                        {
+                            "type": "consecutive_absences",
+                            "severity": "medium",
+                            "persona_id": str(pid),
+                            "persona_name": name,
+                            "message": f"{consecutive_absent} ausencias consecutivas",
+                            "consecutive_absences": consecutive_absent,
+                        }
+                    )
 
             absent_alerts.sort(key=lambda x: x["consecutive_absences"], reverse=True)
             alerts.extend(absent_alerts[:10])
@@ -812,6 +835,7 @@ def strategy_alerts(
 # ─────────────────────────────────────────────────────────
 # GET /analytics/strategy/{strategy_id}/velocity
 # ─────────────────────────────────────────────────────────
+
 
 @router.get("/analytics/strategy/{strategy_id}/velocity")
 def strategy_velocity(
@@ -849,14 +873,20 @@ def strategy_velocity(
     )
 
     _ROLE_LABELS = {
-        "visitante": "Visitante", "VISITANTE": "Visitante",
+        "visitante": "Visitante",
+        "VISITANTE": "Visitante",
         "persona": "Visitante",
-        "invitado": "Invitado", "INVITADO": "Invitado",
-        "asistente": "Asistente", "ASISTENTE": "Asistente",
+        "invitado": "Invitado",
+        "INVITADO": "Invitado",
+        "asistente": "Asistente",
+        "ASISTENTE": "Asistente",
         "miembro": "Integrante",
-        "anfitrion": "Anfitrión", "ANFITRION": "Anfitrión",
-        "colider": "Colíder", "COLIDER": "Colíder",
-        "lider": "Líder", "LIDER": "Líder",
+        "anfitrion": "Anfitrión",
+        "ANFITRION": "Anfitrión",
+        "colider": "Colíder",
+        "COLIDER": "Colíder",
+        "lider": "Líder",
+        "LIDER": "Líder",
     }
     _ROLE_ORDER = ["visitante", "persona", "invitado", "asistente", "miembro", "anfitrion", "colider", "lider"]
 
@@ -865,13 +895,15 @@ def strategy_velocity(
         if avg_days is None:
             continue
         order = _ROLE_ORDER.index(rol.lower()) if rol and rol.lower() in _ROLE_ORDER else 99
-        stages.append({
-            "role": rol,
-            "label": _ROLE_LABELS.get(rol, rol),
-            "avg_days": round(float(avg_days), 1),
-            "transitions": count,
-            "order": order,
-        })
+        stages.append(
+            {
+                "role": rol,
+                "label": _ROLE_LABELS.get(rol, rol),
+                "avg_days": round(float(avg_days), 1),
+                "transitions": count,
+                "order": order,
+            }
+        )
 
     stages.sort(key=lambda x: x["order"])
     max_days = max((s["avg_days"] for s in stages), default=1) or 1
@@ -884,6 +916,7 @@ def strategy_velocity(
 # ─────────────────────────────────────────────────────────
 # GET /analytics/strategy/{strategy_id}/groups
 # ─────────────────────────────────────────────────────────
+
 
 @router.get("/analytics/strategy/{strategy_id}/groups")
 def strategy_groups_detail(
@@ -902,11 +935,7 @@ def strategy_groups_detail(
     start, end = _date_range(days)
     prev_start, prev_end = _prev_range(days)
 
-    groups = (
-        db.query(models.GrupoEvangelismo)
-        .filter(models.GrupoEvangelismo.id.in_(group_ids))
-        .all()
-    )
+    groups = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.id.in_(group_ids)).all()
 
     leader_ids = [g.lider_persona_id for g in groups if g.lider_persona_id]
     leader_map = {}
@@ -988,12 +1017,15 @@ def strategy_groups_detail(
 
     spark_session_ids = [s.id for s in spark_sessions]
     spark_att_rows = (
-        db.query(models.Asistencia.sesion_id, models.Asistencia.estado)
-        .filter(
-            models.Asistencia.sesion_id.in_(spark_session_ids),
-            models.Asistencia.deleted_at.is_(None),
-        )
-    ).all() if spark_session_ids else []
+        (
+            db.query(models.Asistencia.sesion_id, models.Asistencia.estado).filter(
+                models.Asistencia.sesion_id.in_(spark_session_ids),
+                models.Asistencia.deleted_at.is_(None),
+            )
+        ).all()
+        if spark_session_ids
+        else []
+    )
     spark_att_by_session: dict = defaultdict(list)
     for sid, estado in spark_att_rows:
         spark_att_by_session[sid].append(estado)
@@ -1015,19 +1047,21 @@ def strategy_groups_detail(
         pct = round((cur_present / cur_total) * 100, 1) if cur_total else 0.0
         prev_pct = round((prev_present / prev_total) * 100, 1) if prev_total else 0.0
 
-        result.append({
-            "id": g.id,
-            "name": g.nombre,
-            "code": g.codigo,
-            "leader_name": leader_map.get(str(g.lider_persona_id), "Sin líder"),
-            "personas": persona_counts.get(g.id, 0),
-            "attendance_pct": pct,
-            "prev_attendance_pct": prev_pct,
-            "attendance_delta": round(pct - prev_pct, 1),
-            "new_joiners": new_joiners_map.get(g.id, 0),
-            "sparkline": _compute_sparkline(g.id),
-            "capacity": g.capacidad or 15,
-        })
+        result.append(
+            {
+                "id": g.id,
+                "name": g.nombre,
+                "code": g.codigo,
+                "leader_name": leader_map.get(str(g.lider_persona_id), "Sin líder"),
+                "personas": persona_counts.get(g.id, 0),
+                "attendance_pct": pct,
+                "prev_attendance_pct": prev_pct,
+                "attendance_delta": round(pct - prev_pct, 1),
+                "new_joiners": new_joiners_map.get(g.id, 0),
+                "sparkline": _compute_sparkline(g.id),
+                "capacity": g.capacidad or 15,
+            }
+        )
 
     result.sort(key=lambda x: x["attendance_pct"], reverse=True)
     return {"groups": result}
@@ -1160,10 +1194,8 @@ def get_strategy_full_analytics(
 
     # Asistencias
     asistencias = (
-        db.query(models.Asistencia)
-        .filter(models.Asistencia.sesion_id.in_(session_ids))
-        .all()
-    ) if session_ids else []
+        (db.query(models.Asistencia).filter(models.Asistencia.sesion_id.in_(session_ids)).all()) if session_ids else []
+    )
     att_by_session: dict = defaultdict(list)
     att_by_persona: dict = defaultdict(list)
     for a in asistencias:
@@ -1200,24 +1232,28 @@ def get_strategy_full_analytics(
 
     # CRM casos vinculados a estos grupos
     crm_casos = (
-        db.query(models.CrmCaso)
-        .filter(models.CrmCaso.origen_grupo_id.in_(group_ids))
-        .all()
-    ) if hasattr(models, "CrmCaso") else []
+        (db.query(models.CrmCaso).filter(models.CrmCaso.origen_grupo_id.in_(group_ids)).all())
+        if hasattr(models, "CrmCaso")
+        else []
+    )
     crm_by_group: dict = defaultdict(list)
     for c in crm_casos:
         crm_by_group[c.origen_grupo_id].append(c)
 
     # Grupos hijos (multiplicación)
     grupos_hijos = (
-        db.query(models.GrupoEvangelismo)
-        .filter(
-            models.GrupoEvangelismo.parent_group_id.in_(group_ids),
-            models.GrupoEvangelismo.deleted_at.is_(None),
-            models.GrupoEvangelismo.created_at >= _dt.datetime.combine(fecha_desde, _dt.time.min),
+        (
+            db.query(models.GrupoEvangelismo)
+            .filter(
+                models.GrupoEvangelismo.parent_group_id.in_(group_ids),
+                models.GrupoEvangelismo.deleted_at.is_(None),
+                models.GrupoEvangelismo.created_at >= _dt.datetime.combine(fecha_desde, _dt.time.min),
+            )
+            .all()
         )
-        .all()
-    ) if any(True for g in grupos if hasattr(g, "parent_group_id")) else []
+        if any(True for g in grupos if hasattr(g, "parent_group_id"))
+        else []
+    )
 
     # ── DIM 1: Territorial ────────────────────────────────────
     zonas: dict = defaultdict(int)
@@ -1243,14 +1279,16 @@ def get_strategy_full_analytics(
         activos = len(parts_by_group.get(g.id, []))
         cap = g.capacidad or 15
         tof = round(activos / cap * 100, 1)
-        grupos_tof.append({
-            "grupo_id": str(g.id),
-            "nombre": g.nombre,
-            "participantes_activos": activos,
-            "capacidad": cap,
-            "tof_porcentaje": tof,
-            "estado": _semaforo_tof(tof),
-        })
+        grupos_tof.append(
+            {
+                "grupo_id": str(g.id),
+                "nombre": g.nombre,
+                "participantes_activos": activos,
+                "capacidad": cap,
+                "tof_porcentaje": tof,
+                "estado": _semaforo_tof(tof),
+            }
+        )
     dim2 = {
         "grupos": sorted(grupos_tof, key=lambda x: -x["tof_porcentaje"]),
         "saturados": sum(1 for x in grupos_tof if x["estado"] == "SATURADO"),
@@ -1290,30 +1328,29 @@ def get_strategy_full_analytics(
                     break
             if first_sess_idx is None:
                 continue
-            next4 = gsessions_sorted[first_sess_idx:first_sess_idx + 4]
+            next4 = gsessions_sorted[first_sess_idx : first_sess_idx + 4]
             count = sum(
-                1 for s in next4
-                for a in att_by_session.get(s.id, [])
-                if a.persona_id == pid and _attended(a.estado)
+                1 for s in next4 for a in att_by_session.get(s.id, []) if a.persona_id == pid and _attended(a.estado)
             )
             irt_vals.append(count)
 
         irt_prom = round(sum(irt_vals) / len(irt_vals), 2) if irt_vals else 0
         irt_sem = "EXCELENTE" if irt_prom >= 3 else ("REGULAR" if irt_prom >= 2 else "ALERTA_DESERCION")
-        grupos_tan.append({
-            "grupo_id": str(g.id),
-            "nombre": g.nombre,
-            "nuevos_visitantes": len(nuevos),
-            "tan_porcentaje": tan,
-            "irt_promedio": irt_prom,
-            "irt_semaforo": irt_sem,
-        })
+        grupos_tan.append(
+            {
+                "grupo_id": str(g.id),
+                "nombre": g.nombre,
+                "nuevos_visitantes": len(nuevos),
+                "tan_porcentaje": tan,
+                "irt_promedio": irt_prom,
+                "irt_semaforo": irt_sem,
+            }
+        )
 
     dim3 = {
         "total_nuevos_periodo": sum(len(v) for v in nuevos_por_grupo.values()),
         "tan_global_porcentaje": round(
-            sum(len(v) for v in nuevos_por_grupo.values()) /
-            max(sum(total_presentes_por_grupo.values()), 1) * 100, 1
+            sum(len(v) for v in nuevos_por_grupo.values()) / max(sum(total_presentes_por_grupo.values()), 1) * 100, 1
         ),
         "por_grupo": sorted(grupos_tan, key=lambda x: -x["nuevos_visitantes"]),
     }
@@ -1324,26 +1361,32 @@ def get_strategy_full_analytics(
         casos = crm_by_group.get(g.id, [])
         total_casos = len(casos)
         resueltos = sum(1 for c in casos if (c.estado or "").upper() in {"RESUELTO_EXITO", "CERRADO_EXITO", "GANADO"})
-        perdidos = sum(1 for c in casos if (c.estado or "").upper() in {"RESUELTO_PERDIDO", "CERRADO_PERDIDO", "PERDIDO"})
+        perdidos = sum(
+            1 for c in casos if (c.estado or "").upper() in {"RESUELTO_PERDIDO", "CERRADO_PERDIDO", "PERDIDO"}
+        )
         icn = round(resueltos / total_casos * 100, 1) if total_casos > 0 else 0
         nuevos = len(nuevos_por_grupo.get(g.id, set()))
-        grupos_icn.append({
-            "grupo_id": str(g.id),
-            "nombre": g.nombre,
-            "casos_crm_total": total_casos,
-            "casos_resueltos_exito": resueltos,
-            "casos_perdidos": perdidos,
-            "casos_abiertos": total_casos - resueltos - perdidos,
-            "icn_porcentaje": icn,
-            "clasificacion": _classify_group(nuevos, icn),
-        })
+        grupos_icn.append(
+            {
+                "grupo_id": str(g.id),
+                "nombre": g.nombre,
+                "casos_crm_total": total_casos,
+                "casos_resueltos_exito": resueltos,
+                "casos_perdidos": perdidos,
+                "casos_abiertos": total_casos - resueltos - perdidos,
+                "icn_porcentaje": icn,
+                "clasificacion": _classify_group(nuevos, icn),
+            }
+        )
 
     dim4 = {
         "total_casos_crm": sum(x["casos_crm_total"] for x in grupos_icn),
         "total_resueltos": sum(x["casos_resueltos_exito"] for x in grupos_icn),
         "icn_global": round(
-            sum(x["casos_resueltos_exito"] for x in grupos_icn) /
-            max(sum(x["casos_crm_total"] for x in grupos_icn), 1) * 100, 1
+            sum(x["casos_resueltos_exito"] for x in grupos_icn)
+            / max(sum(x["casos_crm_total"] for x in grupos_icn), 1)
+            * 100,
+            1,
         ),
         "por_grupo": grupos_icn,
     }
@@ -1375,19 +1418,21 @@ def get_strategy_full_analytics(
         personas_ica.append({"nombre": nombre, "ica": ica, "grupo": grupo_nombre, "consecutivos_falta": consecutivos})
 
         if consecutivos >= 3:
-            alertas_enfriamiento.append({
-                "persona_id": str(pid),
-                "nombre": nombre,
-                "grupo": grupo_nombre,
-                "ausencias_consecutivas": consecutivos,
-            })
+            alertas_enfriamiento.append(
+                {
+                    "persona_id": str(pid),
+                    "nombre": nombre,
+                    "grupo": grupo_nombre,
+                    "ausencias_consecutivas": consecutivos,
+                }
+            )
         if ica >= 80 and presentes >= 3:
-            top_asistentes.append({"nombre": nombre, "ica_porcentaje": ica, "sesiones_asistidas": presentes, "grupo": grupo_nombre})
+            top_asistentes.append(
+                {"nombre": nombre, "ica_porcentaje": ica, "sesiones_asistidas": presentes, "grupo": grupo_nombre}
+            )
 
     dim5 = {
-        "ica_global_porcentaje": round(
-            sum(x["ica"] for x in personas_ica) / max(len(personas_ica), 1), 1
-        ),
+        "ica_global_porcentaje": round(sum(x["ica"] for x in personas_ica) / max(len(personas_ica), 1), 1),
         "total_personas_analizadas": len(personas_ica),
         "alertas_enfriamiento": sorted(alertas_enfriamiento, key=lambda x: -x["ausencias_consecutivas"])[:20],
         "total_alertas_enfriamiento": len(alertas_enfriamiento),
@@ -1405,18 +1450,20 @@ def get_strategy_full_analytics(
         # Ofrendas
         ofrenda_total = sum(float(s.offering_amount or 0) for s in gsess if s.offering_amount)
         ofrenda_prom = round(ofrenda_total / max(realizadas, 1), 0)
-        grupos_ics.append({
-            "grupo_id": str(g.id),
-            "nombre": g.nombre,
-            "sesiones_proyectadas": proyectadas,
-            "sesiones_realizadas": realizadas,
-            "sesiones_canceladas": canceladas,
-            "sesiones_pendientes": proyectadas - realizadas - canceladas,
-            "ics_porcentaje": ics,
-            "estado_operativo": _semaforo_ics(ics),
-            "ofrenda_total": ofrenda_total,
-            "ofrenda_promedio_por_sesion": ofrenda_prom,
-        })
+        grupos_ics.append(
+            {
+                "grupo_id": str(g.id),
+                "nombre": g.nombre,
+                "sesiones_proyectadas": proyectadas,
+                "sesiones_realizadas": realizadas,
+                "sesiones_canceladas": canceladas,
+                "sesiones_pendientes": proyectadas - realizadas - canceladas,
+                "ics_porcentaje": ics,
+                "estado_operativo": _semaforo_ics(ics),
+                "ofrenda_total": ofrenda_total,
+                "ofrenda_promedio_por_sesion": ofrenda_prom,
+            }
+        )
 
     total_proy = sum(x["sesiones_proyectadas"] for x in grupos_ics)
     total_real = sum(x["sesiones_realizadas"] for x in grupos_ics)
@@ -1443,7 +1490,9 @@ def get_strategy_full_analytics(
         "grupos_multiplicados_periodo": len(grupos_hijos),
         "tmg_porcentaje": tmg,
         "tpm_meses_promedio": tpm,
-        "estado_reproduccion": "EXPONENCIAL" if (tpm and tpm < 9) else ("SALUDABLE" if (tpm and tpm <= 18) else "ESTANCADO"),
+        "estado_reproduccion": "EXPONENCIAL"
+        if (tpm and tpm < 9)
+        else ("SALUDABLE" if (tpm and tpm <= 18) else "ESTANCADO"),
         "detalle_multiplicaciones": [
             {
                 "grupo_hijo": h.nombre,
@@ -1458,19 +1507,24 @@ def get_strategy_full_analytics(
     # Promociones: personas que cambiaron a rol lider/servidor en el período
     desde_dt = _dt.datetime.combine(fecha_desde, _dt.time.min)
     promovidos = (
-        db.query(models.PersonaChurchRole)
-        .filter(
-            models.PersonaChurchRole.persona_id.in_(persona_ids),
-            models.PersonaChurchRole.church_role.in_(["LIDER", "Líder", "SERVIDOR", "Servidor", "Lider"]),
-            models.PersonaChurchRole.assigned_at >= desde_dt,
+        (
+            db.query(models.PersonaChurchRole)
+            .filter(
+                models.PersonaChurchRole.persona_id.in_(persona_ids),
+                models.PersonaChurchRole.church_role.in_(["LIDER", "Líder", "SERVIDOR", "Servidor", "Lider"]),
+                models.PersonaChurchRole.assigned_at >= desde_dt,
+            )
+            .all()
         )
-        .all()
-    ) if persona_ids and hasattr(models, "PersonaChurchRole") else []
+        if persona_ids and hasattr(models, "PersonaChurchRole")
+        else []
+    )
 
     # Deserción: líderes con estado_vital inactivo
     lideres_ids = [g.lider_persona_id for g in grupos if g.lider_persona_id]
     lideres_inactivos = sum(
-        1 for pid in lideres_ids
+        1
+        for pid in lideres_ids
         if pid in personas_map and str(personas_map[pid].estado_vital or "").upper() in {"INACTIVO", "FRIO", "DESERTOR"}
     )
 
@@ -1481,7 +1535,11 @@ def get_strategy_full_analytics(
         "promovidos_periodo": len(promovidos),
         "irl_porcentaje": round(len(promovidos) / max(len(persona_ids), 1) * 100, 1),
         "alertas_burnout": [
-            {"nombre": personas_map[pid].nombre_completo, "grupo": group_map[gid].nombre if gid in group_map else "?", "estado_vital": personas_map[pid].estado_vital}
+            {
+                "nombre": personas_map[pid].nombre_completo,
+                "grupo": group_map[gid].nombre if gid in group_map else "?",
+                "estado_vital": personas_map[pid].estado_vital,
+            }
             for gid, g in group_map.items()
             for pid in ([g.lider_persona_id] if g.lider_persona_id and g.lider_persona_id in personas_map else [])
             if str(personas_map[pid].estado_vital or "").upper() in {"INACTIVO", "FRIO", "DESERTOR"}
@@ -1490,11 +1548,7 @@ def get_strategy_full_analytics(
 
     # ── DIM 9: Retención de Campañas ─────────────────────────
     # Personas cuyo origen_estrategia_id = strategy_id
-    personas_campana = (
-        db.query(models.Persona)
-        .filter(models.Persona.origen_estrategia_id == strategy_id)
-        .all()
-    )
+    personas_campana = db.query(models.Persona).filter(models.Persona.origen_estrategia_id == strategy_id).all()
     retenidos = 0
     for p in personas_campana:
         atts_p = att_by_persona.get(p.id, [])
@@ -1562,11 +1616,13 @@ def get_strategy_full_analytics(
     for wk in sorted(weekly.keys()):
         d = weekly[wk]
         total_w = d["presentes"] + d["ausentes"] + d["primera_vez"]
-        weekly_list.append({
-            "semana": wk,
-            **d,
-            "tasa_asistencia": round((d["presentes"] + d["primera_vez"]) / max(total_w, 1) * 100, 1),
-        })
+        weekly_list.append(
+            {
+                "semana": wk,
+                **d,
+                "tasa_asistencia": round((d["presentes"] + d["primera_vez"]) / max(total_w, 1) * 100, 1),
+            }
+        )
 
     # ── RESUMEN EJECUTIVO ─────────────────────────────────────
     total_presentes_glob = sum(w["presentes"] + w["primera_vez"] for w in weekly_list)

@@ -92,12 +92,12 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
 
                         <div className="px-1.5 flex flex-col gap-0.5">
                             {displayOptions.map((opt, idx) => (
-                                <DropdownItem 
-                                    key={opt.id} 
-                                    icon={opt.icon} 
-                                    label={opt.label} 
-                                    onClick={() => handleOption(opt.id, opt.onClick)} 
-                                    selected={idx === 0} 
+                                <DropdownItem
+                                    key={opt.id}
+                                    icon={opt.icon}
+                                    label={opt.label}
+                                    onClick={() => handleOption(opt.id, opt.onClick)}
+                                    selected={idx === 0}
                                 />
                             ))}
                         </div>
@@ -110,11 +110,11 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
 
 function DropdownItem({ icon: Icon, label, selected, onClick }: any) {
     return (
-        <button 
+        <button
             onClick={onClick}
             className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-base text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))] ${
-                selected 
-                    ? 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white font-bold' 
+                selected
+                    ? 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white font-bold'
                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
             }`}
         >

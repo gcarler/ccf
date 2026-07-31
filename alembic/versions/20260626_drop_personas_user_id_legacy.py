@@ -5,6 +5,7 @@ Revises: 20260622_0001_mass_uuid_migr
 Create Date: 2026-06-26 00:00:00.000000
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -57,9 +58,7 @@ def downgrade() -> None:
         return
 
     with op.batch_alter_table("personas") as batch_op:
-        batch_op.add_column(
-            sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True)
-        )
+        batch_op.add_column(sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True))
         if _table_exists("auth_users"):
             batch_op.create_foreign_key(
                 "personas_user_id_fkey",

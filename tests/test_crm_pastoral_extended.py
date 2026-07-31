@@ -1,6 +1,7 @@
 """
 Extended tests for crm/pastoral.py — casos, tasks, messaging, grupos.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -38,9 +39,7 @@ class TestCasos:
         p = models.Persona(id=uuid.uuid4(), first_name="Caso", last_name="Test", sede_id=s.id)
         db_session.add(p)
         db_session.commit()
-        resp = c.post("/api/crm/casos",
-            json={"persona_id": str(p.id)},
-            headers=h)
+        resp = c.post("/api/crm/casos", json={"persona_id": str(p.id)}, headers=h)
         assert _ok(resp.status_code), f"create: {resp.status_code} {resp.text}"
 
     def test_delete_not_found(self, full):
@@ -58,8 +57,9 @@ class TestTasks:
         assert full["c"].get(f"/api/crm/tasks/{uuid.uuid4()}", headers=full["h"]).status_code == 404
 
     def test_patch_not_found(self, full):
-        assert full["c"].patch(f"/api/crm/tasks/{uuid.uuid4()}",
-            json={"title": "X"}, headers=full["h"]).status_code == 404
+        assert (
+            full["c"].patch(f"/api/crm/tasks/{uuid.uuid4()}", json={"title": "X"}, headers=full["h"]).status_code == 404
+        )
 
     def test_delete_not_found(self, full):
         assert full["c"].delete(f"/api/crm/tasks/{uuid.uuid4()}", headers=full["h"]).status_code == 404
@@ -69,9 +69,7 @@ class TestTasks:
         p = models.Persona(id=uuid.uuid4(), first_name="Task", last_name="Test", sede_id=s.id)
         db_session.add(p)
         db_session.commit()
-        resp = c.post("/api/crm/tasks/",
-            json={"title": "Test Task", "persona_id": str(p.id)},
-            headers=h)
+        resp = c.post("/api/crm/tasks/", json={"title": "Test Task", "persona_id": str(p.id)}, headers=h)
         assert _ok(resp.status_code), f"create_task: {resp.status_code} {resp.text}"
 
 
@@ -80,8 +78,7 @@ class TestMessaging:
         assert _ok(full["c"].get("/api/crm/messaging/history", headers=full["h"]).status_code)
 
     def test_history_item_not_found(self, full):
-        assert full["c"].get(f"/api/crm/messaging/history/{uuid.uuid4()}",
-            headers=full["h"]).status_code == 404
+        assert full["c"].get(f"/api/crm/messaging/history/{uuid.uuid4()}", headers=full["h"]).status_code == 404
 
 
 class TestGrupos:
@@ -102,5 +99,4 @@ class TestCounseling:
 
 class TestPrayer:
     def test_get_not_found(self, full):
-        assert full["c"].get(f"/api/crm/prayer-requests/{uuid.uuid4()}",
-            headers=full["h"]).status_code == 404
+        assert full["c"].get(f"/api/crm/prayer-requests/{uuid.uuid4()}", headers=full["h"]).status_code == 404

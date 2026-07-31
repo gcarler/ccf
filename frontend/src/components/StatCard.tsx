@@ -11,8 +11,8 @@ interface StatCardProps {
     trend?: string;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ 
-    label, value, icon: Icon, color, bg, desc, trend 
+export const StatCard: React.FC<StatCardProps> = ({
+    label, value, icon: Icon, color, bg, desc, trend
 }) => (
     <div className="group relative bg-[hsl(var(--surface-2))] border border-white/5 p-3 rounded-lg hover:border-primary/50 transition-all duration-500 overflow-hidden">
         <div className={`absolute top-0 right-0 p-4 opacity-5 group-hover:scale-150 transition-transform duration-700 ${color}`}>
