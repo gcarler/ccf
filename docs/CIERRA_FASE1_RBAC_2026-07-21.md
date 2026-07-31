@@ -15,7 +15,7 @@ El usuario pidió continuar con la calidad de la plataforma CCF. Tras recall de 
 - **Fase 1 (Homogeneizar RBAC a `evangelism:*`)** 🔄 en progreso, diagnosis hecha, código sin editar
 - **Fases 2–5** ⏳ pendientes (enum canónico de asistencia, descomponer strategies monolito, búsqueda remota personas, QA final + docs)
 
-Al inspeccionar el árbol actual se descubrió que la infraestructura de la Fase 1 ya estaba hecha por sesiones intermedias. El último eslabón pendiente era un paquete **muerto** (`backend/api/_evangelism_helpers/`) que aún referenciaba el guard legacy vía el wrapper `require_pastor_or_admin_with_sede`.
+Al inspeccionar el árbol actual se descubrió que la infraestructura de la Fase 1 ya estaba hecha por sesiones intermedias. El último eslabón pendiente era un paquete **muerto** (`backend/api/_evangelism_helpers/`) que aún referenciaba el guard antiguo vía el wrapper `require_pastor_or_admin_with_sede`.
 
 ## 2. Hallazgos operacionales al retomar
 
@@ -117,16 +117,16 @@ Commit `339539e9` (5 archivos, +8 / −395 líneas). Cambios:
 Se actualizaron 4 documentos del módulo:
 
 1. **`docs/ESTADO_EVANGELISMO.md`**:
-   - Añadida entrada "Actualizacion QA 2026-07-21 (cierre Fase 1 RBAC — wrapper legacy)" tras la sección 115 (línea ~117).
+   - Añadida entrada "Actualizacion QA 2026-07-21 (cierre Fase 1 RBAC — wrapper antiguo)" tras la sección 115 (línea ~117).
    - Añadida entrada 6 en "Cerrado recientemente" con el cierre formal.
    - Actualizada fila de `PARCIAL-RUNTIME-AUTH-001` en la tabla de IDs estables (sección 14).
 2. **`docs/EVANGELISMO_RBAC_MATRIX.md`**:
    - Actualizada fecha de verificación de 2026-07-18 a 2026-07-21.
    - Añadida SECTION 10 "Verificación post-cierre (2026-07-21)" con comandos verificables y resultados.
-   - Detallado el cierre del wrapper legacy en sección 9 "Estado documental".
+   - Detallado el cierre del wrapper antiguo en sección 9 "Estado documental".
 3. **`docs/EVANGELISMO_QA_CHECKLIST.md`**:
    - Corregida la línea 133 obsoleta (decía "EDITOR puede quedar fuera de superficies con `require_pastor_or_admin` aunque tenga `evangelism:edit`" — tras la migración esto ya no aplica).
-   - Añadida nota explicativa sobre el cierre del wrapper legacy.
+   - Añadida nota explicativa sobre el cierre del wrapper antiguo.
 4. **`docs/PLAN_EVANGELISMO_CALIDAD.md`**:
    - Actualizada fecha a 2026-07-21.
    - Reescrita la sección "Fase 1 — QA runtime de permisos" como cerrada con ID `PARCIAL-RUNTIME-AUTH-001`.

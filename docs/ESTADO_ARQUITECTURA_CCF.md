@@ -109,7 +109,7 @@ rg -n 'ForeignKey\("users\.id"\)' \
   -g '!tests/test_structural_contracts.py'
 # Esperado: vacio.
 
-# 2. CCF-MBR — busqueda de tokens legacy.
+# 2. CCF-MBR — busqueda de tokens históricos.
 # EXCEPCION FIRMADA (REGLAS §9.1.1): los archivos en ``alembic/versions/``
 # 0024_prod_hardening3.py + 0025_prod_final.py contienen la cadena como
 # memoria del backfill mayo-2026. Ver REGLAS §9.1 para la regla.
@@ -119,14 +119,14 @@ rg -n "CCF-MBR" \
   -g '!tests/test_arquitectura*.py'
 # Esperado: vacio.
 
-# 3. Academy — sin duplicacion legacy v2.
+# 3. Academy — sin duplicacion v1/v2.
 rg -n "/api/v2/academy" \
   backend frontend/src tests scripts \
   -g '!tests/test_arquitectura*.py' \
   -g '!tests/test_structural_contracts.py'
 # Esperado: vacio. (El test structural_contracts es el assert de la ausencia.)
 
-# 4. Sin scripts legacy en scripts/.
+# 4. Sin scripts antiguos en scripts/.
 find scripts -name '_tmp_*' -o -name '_scratch_*' -o -name '_validate_old_*'
 find scripts -path '*/__pycache__/*' -prune -o -type f -print | grep -E '(_tmp_|_scratch_|_validate_old_)\.py$'
 # Esperado: vacio. REGLAS §9.2.

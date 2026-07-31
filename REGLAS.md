@@ -167,12 +167,12 @@ rg -n "ForeignKey\\(.users\\.id.\\)|personas\\.user_id" \
   backend frontend/src tests scripts docs REGLAS.md \
   -g '!alembic/versions/*.py'
 
-# 2. CCF-MBR fuera de migraciones legacy (vigilancia de regresion).
+# 2. CCF-MBR fuera de migraciones históricas (vigilancia de regresion).
 rg -n "CCF-MBR" \
   backend frontend/src tests scripts docs REGLAS.md \
   -g '!alembic/versions/*.py'
 
-# 3. Sin scripts legacy _tmp_ en scripts/.
+# 3. Sin scripts antiguos _tmp_ en scripts/.
 find scripts -name '_tmp_*' -o -name '_scratch_*'
 
 # 4. Conteo de cobertura multi-tenant — debe ser >= 190 refs.

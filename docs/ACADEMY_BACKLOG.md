@@ -4,7 +4,7 @@
 >
 > Este documento es la **única fuente de verdad** para el backlog del módulo Academy. Cualquier ticket `ACAD-*` antiguo que exista en `docs/PLAN_ACADEMY_CALIDAD.md`, `docs/ESTADO_ACADEMY.md` §15 o `docs/ACADEMY_QA_CHECKLIST.md` §10 está **DEPRECADO** y se conserva solo como rastro histórico de auditoría.
 >
-> Los 3 documentos legacy deben redirigir aquí:
+> Los 3 documentos antiguos deben redirigir aquí:
 >
 > - `docs/PLAN_ACADEMY_CALIDAD.md` → ver `docs/ACADEMY_BACKLOG.md`
 > - `docs/ESTADO_ACADEMY.md` (§15) → ver `docs/ACADEMY_BACKLOG.md`
@@ -646,7 +646,7 @@ producto.
 
 ## 6. Métrica de progreso
 
-> **Nota importante:** este backlog **consolida** los IDs del PLAN/ESTADO/QA_CHECKLIST legacy bajo `ACAD-TKT-NNN` consecutivo. Algunos rangos se agrupan en **lotes compartidos** (gate pytest único cubre toda la sublista) para evitar duplicar tickets cuando el fix es atómico. La métrica mezcla **IDs únicos explícitos** + **rangos compactos** referenciados como un solo gate.
+> **Nota importante:** este backlog **consolida** los IDs del PLAN/ESTADO/QA_CHECKLIST antiguos bajo `ACAD-TKT-NNN` consecutivo. Algunos rangos se agrupan en **lotes compartidos** (gate pytest único cubre toda la sublista) para evitar duplicar tickets cuando el fix es atómico. La métrica mezcla **IDs únicos explícitos** + **rangos compactos** referenciados como un solo gate.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|

@@ -6,7 +6,7 @@
 
 ## Resumen
 
-Módulo financiero de la plataforma CCF. Gestiona contabilidad, facturación, gastos, documentos, firma digital, donaciones y reportes de tesorería. Compuesto por dos routers: `finance` (legacy, dashboard/donaciones/fondos) y `finance-suite` (suite completa avanzada).
+Módulo financiero de la plataforma CCF. Gestiona contabilidad, facturación, gastos, documentos, firma digital, donaciones y reportes de tesorería. Compuesto por dos routers: `finance` (v1, dashboard/donaciones/fondos) y `finance-suite` (suite completa avanzada).
 
 | Métrica | Valor |
 |---|---|
@@ -23,7 +23,7 @@ Módulo financiero de la plataforma CCF. Gestiona contabilidad, facturación, ga
 
 | Router | Prefijo | Propósito |
 |---|---|---|
-| `backend/api/finance.py` | `/finance` | Dashboard, donaciones, fondos (legacy) |
+| `backend/api/finance.py` | `/finance` | Dashboard, donaciones, fondos (v1) |
 | `backend/api/finance_suite.py` | `/finance-suite` | Contabilidad, facturación, gastos, documentos, firma |
 | `backend/api/donations.py` | `/donations` | Donaciones, categorías, MercadoPago |
 
@@ -73,7 +73,7 @@ Módulo financiero de la plataforma CCF. Gestiona contabilidad, facturación, ga
 
 ## Hallazgos abiertos
 
-Ninguno de los identificados en la auditoría de 2026-07-25. Para el backlog histórico de hallazgos de la auditoría 2026-07-18 (principalmente mejoras de type-safety frontend y código legacy), ver `PLAN_FINANCE_CALIDAD.md`.
+Ninguno de los identificados en la auditoría de 2026-07-25. Para el backlog histórico de hallazgos de la auditoría 2026-07-18 (principalmente mejoras de type-safety frontend y código antiguo), ver `PLAN_FINANCE_CALIDAD.md`.
 
 ---
 

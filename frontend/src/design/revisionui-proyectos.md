@@ -382,7 +382,7 @@ RootLayout
 
 | # | Acción | Capa | Beneficio |
 |---|--------|------|-----------|
-| 15 | **Migrar `GanttView.tsx` legacy** a `UniversalGanttView` | Frontend | Eliminar duplicación |
+| 15 | **Migrar `GanttView.tsx` antiguo** a `UniversalGanttView` | Frontend | Eliminar duplicación |
 | 16 | **Refactorizar `_normalize_dates`** sin bare `except Exception` | Backend | Robustez |
 | 17 | **Agregar logging** a WebSocket broadcast failure | Backend | Observabilidad |
 

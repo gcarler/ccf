@@ -78,7 +78,7 @@ Gate 3 — CCF-MBR fuera de alembic/versions/:
     doc y en ESTADO_ARQUITECTURA como regla de exclusion — comportamiento
     correcto, la regla misma lo nombra) ✅
 
-Gate 4 — Scripts legacy _tmp_/ en scripts/:
+Gate 4 — Scripts antiguos _tmp_/ en scripts/:
   → scripts/_tmp_validate_backfill_pg.py borrado (2026-07-01)
   → scripts/_tmp_list_routes.py borrado (2026-07-01)
   → 0 archivos _tmp_ remanentes ✅
@@ -133,7 +133,7 @@ rg -c 'get_user_sede_id\(' backend/api backend/crud
 - [x] Axioma 2 (3 dimensiones de identidad) — schema `persona_church_roles` activo.
 - [x] Axioma 3 (multi-tenant) — 194+ referencias en backend, cobertura al 100 %.
 - [x] Auth v3 (`auth_users.id == personas.id`) — ruta unica `/api/v3/auth`.
-- [x] Kernel sin rutas legacy — `/api/v2/academy`, `personas.user_id`, CCF-MBR
+- [x] Kernel sin rutas antiguas — `/api/v2/academy`, `personas.user_id`, CCF-MBR
       NO aparecen en codigo vivo.
 - [x] Migraciones reversibles — `20260701_*` tiene `downgrade()` idempotente.
 - [x] Tests proporcionales — 5 nuevas suites CMS/Messaging.
@@ -144,6 +144,6 @@ rg -c 'get_user_sede_id\(' backend/api backend/crud
 
 Este cierre arquitectonico es firmado por la auditoria interna del state del
 2026-07-01. Cualquier cambio que introduzca codigo con `ForeignKey("users.id")`,
-`/api/v2/*`, `CCF-MBR` en directorios fuera de migraciones legacy o
+`/api/v2/*`, `CCF-MBR` en directorios fuera de migraciones históricas o
 `actor_user_id=None` en endpoints admin debe ser rechazado por code-review
 pre-merge.

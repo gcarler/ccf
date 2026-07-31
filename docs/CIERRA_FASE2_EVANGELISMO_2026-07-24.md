@@ -11,7 +11,7 @@
 
 ## 1. Contexto de retoma
 
-La Fase 1 (RBAC radical + eliminación del wrapper legacy) se cerró el 2026-07-21 con commit `339539e9` y bitácora propia `CIERRA_FASE1_RBAC_2026-07-21.md`. Quedaba pendiente la **Fase 2 — descomposición de `strategies/[id]/page.tsx`** por ser el monolito más sensible del módulo: 2580 LOC que concentraban fetches, mutations, búsqueda remota, estados de attendance y rendering.
+La Fase 1 (RBAC radical + eliminación del wrapper antiguo) se cerró el 2026-07-21 con commit `339539e9` y bitácora propia `CIERRA_FASE1_RBAC_2026-07-21.md`. Quedaba pendiente la **Fase 2 — descomposición de `strategies/[id]/page.tsx`** por ser el monolito más sensible del módulo: 2580 LOC que concentraban fetches, mutations, búsqueda remota, estados de attendance y rendering.
 
 La memoria inter-sesión (`MEMORY-evangelism-rbac.md` ses_075c59c7) ya había cerrado **panel-extraction física** entre el 2026-07-22 con 5 commits atómicos, pero la bitácora de cierre nunca se escribió. Este documento rellena ese hueco documental y captura el último eslabón pendiente — limpieza del drift de tipos entre `strategyDetailShared.ts` y `types.ts` (`51c2a0a0`).
 

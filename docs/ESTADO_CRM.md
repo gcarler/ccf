@@ -292,7 +292,7 @@ No quedan frentes parciales activos dentro del plan de cierre fino ejecutado y r
 | `PARCIAL-PERSONAS-UI-001` | ✅ Cerrado y revalidado 2026-07-18 — directorio y navegación viva verificados en `personas-live.spec.ts` | `frontend/src/app/plataforma/crm/personas/page.tsx` |
 | `PARCIAL-PERSONA-DETAIL-001` | ✅ Cerrado y revalidado 2026-07-18 — detalle profundo validado en `persona-detail.spec.ts` y navegación viva desde directorio | `frontend/src/app/plataforma/crm/personas/[id]/page.tsx` |
 | `PARCIAL-GROUPS-BRIDGE-001` | ✅ Cerrado y revalidado 2026-07-18 — bridge CRM↔evangelismo validado en smoke mockeado y live | CRM groups + evangelism contracts |
-| `PARCIAL-AUTOMATIONS-001` | ✅ Cerrado y revalidado 2026-07-18 — builder usa contrato estable `automation-edges` con gateway Next compatible new/legacy y smoke live verde | `backend/api/crm/resources.py` + frontend CRM automations builder |
+| `PARCIAL-AUTOMATIONS-001` | ✅ Cerrado y revalidado 2026-07-18 — builder usa contrato estable `automation-edges` con gateway Next compatible new/old y smoke live verde | `backend/api/crm/resources.py` + frontend CRM automations builder |
 | `PARCIAL-FRONTEND-SMOKE-001` | ✅ Cerrado y revalidado 2026-07-18 — `npm run test:e2e:crm` verde con 14 tests | `frontend/tests/e2e/crm/` |
 | `PARCIAL-SMOKE-CRM-001` | ✅ Cerrado y revalidado 2026-07-18 — circuito profundo verde con 17 tests y backend base verde | `scripts/test_crm_quality.py` |
 | `PEND-FRONTEND-E2E-CRM-001` | ✅ **Hecho 2026-07-16** — smoke frontend CRM dedicado para dashboard, personas y pipeline con guard de consola/API/assets. | `frontend/tests/e2e/crm/smoke.spec.ts` |
@@ -443,7 +443,7 @@ Backend CRM: **100% verde** en tests canónicos y lint. Frontend E2E CRM: pendie
 - `scripts/test_crm_quality.py` RBAC HTTP: 33 passed en 22.83s ✅
 - Acceptance tests `AwareDateTime`: `BitacoraEnvioOut.fecha_envio` y `PrayerRequest.created_at` naive datetime → `+00:00` en validación Pydantic ✅
 - Baseline stash-pop comparison confirma cero regresiones introducidas por el widening: `3 failed / 25 passed` en `test_crm_extended_coverage.py` **idéntico** pre vs post I-02. Los 3 fallos pre-existing son dirty-tree de otras sesiones/módulos (`GrupoEvangelismoCreate` schema de Evangelismo, `projects` table en `migration_robustness`, `flow_builder scenarios` en `test_crm_visual`) — **ninguno relacionado con datetime fields**.
-- Migración `alembic/canonical_versions/20260725_0001_crm_automation_flows_sede_id.py` aplicada en prod: columna `sede_id` confirmada presente vía `information_schema.columns`. Probe DB directo: `SELECT COUNT(*) FROM crm_automation_flows WHERE sede_id IS NULL` → **0** — backfill de flows legacy C-04 era no-op (no hay data pre-migración en prod).
+- Migración `alembic/canonical_versions/20260725_0001_crm_automation_flows_sede_id.py` aplicada en prod: columna `sede_id` confirmada presente vía `information_schema.columns`. Probe DB directo: `SELECT COUNT(*) FROM crm_automation_flows WHERE sede_id IS NULL` → **0** — backfill de flows antiguos C-04 era no-op (no hay data pre-migración en prod).
 
 ### 18.4 Notas para sesiones futuras (CRM)
 

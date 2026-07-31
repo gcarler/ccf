@@ -37,7 +37,7 @@
 - `docs/PLATAFORMA_AUTH_RBAC_API_UI.md`
 - `docs/PLATAFORMA_AUTH_RUNTIME_CONTRACT.md`
 - errores historicos reportados en CRM y Evangelismo ligados a auth/runtime
-- consumers públicos críticos ya migrados a `/api/v3/auth/*`; queda drift admin legacy en `/auth/stats/summary` y `/auth/sessions`
+- consumers públicos críticos ya migrados a `/api/v3/auth/*`; queda drift admin antiguo en `/auth/stats/summary` y `/auth/sessions`
 
 **Gate minimo.**
 
@@ -80,7 +80,7 @@
 **Estado parcial 2026-07-16.**
 
 - `frontend/src/components/ProtectedRoute.tsx` ya prioriza `allowedPermissions` como contrato canónico.
-- `allowedRoles` queda solo como compatibilidad legacy cuando un call site todavía no tiene permiso backend definido.
+- `allowedRoles` queda solo como compatibilidad antigua cuando un call site todavía no tiene permiso backend definido.
 - Admin, Academy Coordination y Academy Teacher ya migraron a permisos canónicos.
 
 ### DRIFT-HTTP-001 — `apiFetch` vs `fetch` directo
@@ -113,7 +113,7 @@
 
 **Patron.**
 
-- reaparecen errores por CSS legacy, Theming API mixta o modulos no registrados.
+- reaparecen errores por CSS antiguo, Theming API mixta o modulos no registrados.
 
 **Capas afectadas.**
 
