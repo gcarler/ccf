@@ -5,7 +5,7 @@
 
 ## Resumen Ejecutivo
 
-El backend CMS presenta una **alta concentración de deuda estructural**: archivos monolíticos, duplicación de lógica entre la API legacy (`cms.py`) y la API v2 (`cms_v2/`), y patrones de consulta que pueden degenerar en N+1. La separación física entre legacy y v2 es positiva, pero el paquete `cms_v2` aún no está completamente desacoplado de `crud/cms.py`, y ambos contienen funciones muy largas.
+El backend CMS presenta una **alta concentración de deuda estructural**: archivos monolíticos, duplicación de lógica entre la API v1 (`cms.py`) y la API v2 (`cms_v2/`), y patrones de consulta que pueden degenerar en N+1. La separación física entre v1 y v2 es positiva, pero el paquete `cms_v2` aún no está completamente desacoplado de `crud/cms.py`, y ambos contienen funciones muy largas.
 
 ## Métricas generales
 
@@ -17,7 +17,7 @@ El backend CMS presenta una **alta concentración de deuda estructural**: archiv
 | `backend/schemas/cms.py` | 820 | Esquemas extensos; validaciones potencialmente duplicadas con `cms_v2_sections`. |
 | `backend/schemas/cms_v2_sections.py` | 744 | Esquemas de secciones v2; solapamiento con el anterior. |
 | `backend/models_cms.py` | 637 | Modelos base del CMS; el resto vive en `models_enterprise.py`. |
-| `backend/api/cms.py` | 689 | API legacy para testimonios, anuncios y media. |
+| `backend/api/cms.py` | 689 | API v1 para testimonios, anuncios y media. |
 | `backend/services/public_contact_tracking.py` | 206 | Servicio acoplado a publicaciones y contactos. |
 | `backend/crud/cms_pastors_sync.py` | 303 | Sincronización pastoral; depende de CmsSite/CmsPage. |
 
@@ -32,13 +32,13 @@ El backend CMS presenta una **alta concentración de deuda estructural**: archiv
 - **Riesgo:** difícil de testear, de revisar en PR y de mantener. Un cambio menor puede impactar flujos no relacionados.
 - **Recomendación:** dividir en módulos por dominio (`pages.py`, `sections.py`, `sites.py`, `media.py`, `themes.py`, `menus.py`) y mover helpers a `utils/`.
 
-#### 2. Duplicación de lógica entre legacy y v2
+#### 2. Duplicación de lógica entre v1 y v2
 - Manejo de **concurrent create unique-key conflict** aparece en:
   - `backend/crud/cms.py`
   - `backend/api/cms_v2/_shared.py`
-- Existe `backend/api/cms.py` (legacy) y `backend/api/cms_v2/__init__.py` (nueva). Ambos gestionan conceptos similares (testimoniales, anuncios, media) con contratos distintos.
+- Existe `backend/api/cms.py` (v1) y `backend/api/cms_v2/__init__.py` (nueva). Ambos gestionan conceptos similares (testimoniales, anuncios, media) con contratos distintos.
 - **Riesgo:** parches en un lado no se aplican en el otro; inconsistencias de contrato.
-- **Recomendación:** consolidar helpers en `crud/cms_helpers.py` y deprecar endpoints legacy con un plan de migración documentado.
+- **Recomendación:** consolidar helpers en `crud/cms_helpers.py` y deprecar endpoints v1 con un plan de migración documentado.
 
 #### 3. Patrón de carga de autores (no N+1, pero acoplado)
 - En `backend/api/cms_v2/__init__.py:2291` se resuelven autores de posts con `db.query(models.Persona).filter(models.Persona.id.in_(author_ids)).all()` antes del bucle, lo cual evita el N+1.
@@ -101,7 +101,7 @@ El backend CMS presenta una **alta concentración de deuda estructural**: archiv
 
 1. **Priorizar la eliminación del N+1** y la división de `api/cms_v2/__init__.py` en routers por dominio.
 2. **Escribir tests backend** para `crud/cms.py` usando fixtures de base de datos.
-3. **Crear un plan de consolidación legacy → v2** con cronograma de deprecación.
+3. **Crear un plan de consolidación v1 → v2** con cronograma de deprecación.
 
 ---
 

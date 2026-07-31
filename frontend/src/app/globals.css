@@ -10,7 +10,7 @@
   --text-primary: 222 47% 11%;
   --text-secondary: 215 16% 47%;
 
-  /* Legacy brand colors — sourced from CSS variables so Tailwind config can reference them */
+  /* Base brand colors — sourced from CSS variables so Tailwind config can reference them */
   --navy-dark: 210 41% 12%;
   --sky-blue: 190 100% 43%;
   --background-light: 220 14% 97%;
@@ -136,8 +136,8 @@
   --weight-bold:     700;
   --weight-extrabold: 800;
 
-  /* Legacy alias — keep for backward compat */
-  --font-display-legacy: var(--font-display);
+  /* Compat alias — keep for backward compat */
+  --font-display-compat: var(--font-display);
 }
 
 

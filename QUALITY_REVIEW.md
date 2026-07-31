@@ -104,7 +104,7 @@
 - **UI Component Library:** Componentes en `src/components/ui/` con Storybook.
 - **Diseño system:** Directorio `src/design/` con tests unitarios.
 - **Error Boundaries:** `ErrorBoundary.tsx` y `ModuleErrorBoundary.tsx` implementados.
-- **Middleware de routing:** Reescritura automática de rutas legacy a `/plataforma/...`.
+- **Middleware de routing:** Reescritura automática de rutas antiguas a `/plataforma/...`.
 - **SEO:** Sitemap, robots.txt, metadata, y schema markup.
 - **Gestión de estado:** Zustand para stores globales, context providers para Auth, Config, Toast, Theme, Command Center.
 - **AG Grid:** Integración de AG Grid para vistas de tabla (CRM, Academy).

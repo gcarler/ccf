@@ -86,7 +86,7 @@ El módulo **CRM (Customer Relationship Management / Consolidación)** de CCF es
 | `backend/api/crm/pipelines.py` | Pipelines, etapas, kanban, reorder, drag & drop, automatizaciones y validaciones de flujo. |
 | `backend/api/crm/resources.py` | Categorías, plantillas, adjuntos, envíos, campañas, bitácora, automatizaciones resource-bank. |
 | `backend/api/crm/_shared.py` | Helpers de serialización y scoping multi-tenant (`_get_scoped_*`). |
-| `backend/crud/crm.py` | CRUD legacy/consolidado de personas. |
+| `backend/crud/crm.py` | CRUD v1/consolidado de personas. |
 | `backend/crud/crm_/*.py` | CRUD por subdominio: `personas.py`, `tasks.py`, `events.py`, `extended.py`, `resources.py`, etc. |
 | `backend/models_crm.py` | Modelos SQLAlchemy de personas, familias, eventos, recursos, automatizaciones. |
 | `backend/models_crm_pipeline.py` | Modelos SQLAlchemy de pipelines, etapas, casos, interacciones y tareas. |
