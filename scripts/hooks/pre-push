@@ -350,9 +350,20 @@ fi
 if [ -n "$PY_FILES" ]; then
     echo "  [deploy] Reiniciando backend (PM2)..."
     if pm2 restart ccf-backend-staging > /dev/null 2>&1; then
-        sleep 2
-        BACK_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/system/health 2>/dev/null || echo "000")
-        echo -e "  ${GREEN}✓ Backend reiniciado — health: HTTP $BACK_HTTP${NC}"
+        echo "  [deploy] Esperando health check del backend..."
+        BACK_HTTP="000"
+        for i in {1..30}; do
+            BACK_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/system/health 2>/dev/null || echo "000")
+            if [ "$BACK_HTTP" = "200" ]; then
+                break
+            fi
+            sleep 1
+        done
+        if [ "$BACK_HTTP" = "200" ]; then
+            echo -e "  ${GREEN}✓ Backend reiniciado — health: HTTP $BACK_HTTP${NC}"
+        else
+            echo -e "  ${YELLOW}⚠ Backend no logró levantar tras 30s — health: HTTP $BACK_HTTP${NC}"
+        fi
     else
         echo -e "  ${YELLOW}⚠ No se pudo reiniciar el backend — revisa PM2${NC}"
     fi
