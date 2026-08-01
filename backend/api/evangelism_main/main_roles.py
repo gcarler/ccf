@@ -89,6 +89,31 @@ def delete_strategy_role(
     return {"ok": True}
 
 
+@roles_router.put(
+    "/strategies/{strategy_id}/roles/{role_id}",
+    response_model=schemas.RolPersonalizadoEstrategiaResponse,
+)
+def update_strategy_role(
+    strategy_id: UUID,
+    role_id: UUID,
+    payload: schemas.RolPersonalizadoEstrategiaUpdate,
+    db: Session = Depends(get_db),
+    _user: models.User = Depends(require_evangelism_manage),
+):
+    """Actualiza un rol personalizado de una estrategia (F3-2).
+
+    Permite renombrar o cambiar la descripción del rol sin recrearlo,
+    preservando el ``id`` y las asignaciones de participantes existentes.
+    """
+    from backend.crud.evangelism import update_rol_personalizado
+
+    _require_visible_strategy(db, strategy_id, _user)
+    result = update_rol_personalizado(db, role_id, payload, actor_user_id=str(_user.id))
+    if not result:
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+    return _serialize_rol_personalizado(result)
+
+
 # ──────────────────────────────────────────────
 # MOTIVOS DE EXCUSA
 # ──────────────────────────────────────────────

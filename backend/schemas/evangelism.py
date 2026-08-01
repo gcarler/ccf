@@ -233,6 +233,20 @@ class RolPersonalizadoEstrategiaResponse(RolPersonalizadoEstrategiaBase):
     model_config = orm_config
 
 
+class RolPersonalizadoEstrategiaUpdate(BaseModel):
+    """Schema para actualizar un rol personalizado de estrategia (F3-2).
+
+    Permite renombrar o cambiar la descripción de un rol existente sin
+    recrearlo, preservando el ``id`` y las asignaciones de participantes
+    que lo referencian vía ``rol_personalizado_id``.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    nombre_rol: Optional[str] = None
+    descripcion: Optional[str] = None
+
+
 # ──────────────────────────────────────────────
 # PARTICIPANTE DE GRUPO
 # ──────────────────────────────────────────────
@@ -501,6 +515,44 @@ class GrupoEvangelismoUpdate(BaseModel):
     end_time: Optional[str] = None
     base_attendee_ids: Optional[List[UUID]] = None
     base_attendees_with_roles: Optional[List[ParticipanteGrupoConRol]] = None
+
+
+class GrupoEvangelismoResponse(BaseModel):
+    """Schema de respuesta canónica para ``GrupoEvangelismo`` (F3-1).
+
+    Reemplaza los ``dict`` manuales que devolvían ``list_grupos`` y
+    ``get_grupo`` via ``_serialize_grupo``. Los campos reflejan exactamente
+    el contrato que el frontend consume hoy (``types.ts`` → ``StrategyGroup``
+    y ``GroupDetailResponse``), serializando ``UUID`` a ``str`` para
+    preservar compatibilidad con el cliente.
+    """
+
+    model_config = orm_config
+
+    id: str
+    name: str
+    zone: Optional[str] = None
+    address: Optional[str] = None
+    leader_name: str = ""
+    leader_id: Optional[str] = None
+    assistant_id: Optional[str] = None
+    host_id: Optional[str] = None
+    personas_count: int = 0
+    capacity: int = 15
+    day_of_week: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    status: str = "Activo"
+    evangelism_strategy_id: Optional[str] = None
+
+    @field_validator("id", "leader_id", "assistant_id", "host_id", "evangelism_strategy_id", mode="before")
+    @classmethod
+    def _coerce_uuid_to_str(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, UUID):
+            return str(v)
+        return v
 
 
 class SesionGrupoCreate(BaseModel):

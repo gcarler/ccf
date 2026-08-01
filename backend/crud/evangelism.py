@@ -33,6 +33,7 @@ from backend.schemas.evangelism import (
     RegistroSeguimientoCreate,
     RegistroSeguimientoUpdate,
     RolPersonalizadoEstrategiaCreate,
+    RolPersonalizadoEstrategiaUpdate,
 )
 
 # ============================================================
@@ -362,6 +363,51 @@ def create_rol_personalizado(
     )
     db_obj = RolPersonalizadoEstrategia(**data.model_dump())
     db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return db_obj
+
+
+def update_rol_personalizado(
+    db: Session,
+    role_id: UUID,
+    data: RolPersonalizadoEstrategiaUpdate,
+    *,
+    actor_user_id: str | uuid.UUID,
+) -> Optional[RolPersonalizadoEstrategia]:
+    """Actualiza un rol personalizado de estrategia (F3-2).
+
+    Permite renombrar o cambiar la descripción. Preserva el ``id`` y las
+    asignaciones de participantes que lo referencian.
+
+    Axioma 3: defense-in-depth — valida que el rol pertenece a una
+    estrategia de la sede del actor antes de mutar.
+    """
+    # ── Axioma 3 — Multi-Tenant: resolve actor ──
+    actor_sede = _actor_sede_or_none_evangelismo(db, actor_user_id)
+    db_obj = (
+        db.query(RolPersonalizadoEstrategia)
+        .filter(
+            RolPersonalizadoEstrategia.id == role_id,
+            RolPersonalizadoEstrategia.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not db_obj:
+        return None
+    strategy = None
+    if db_obj.estrategia_id:
+        strategy = db.query(EstrategiaEvangelismo).filter(EstrategiaEvangelismo.id == db_obj.estrategia_id).first()
+    # ── Axioma 3 — Multi-Tenant: defense-in-depth pre-commit ──
+    _crud_scope_re_check_evangelism_update(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        current_row_sede=(str(strategy.sede_id) if strategy and strategy.sede_id else None),
+    )
+    update_data = data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_obj, key, value)
     db.commit()
     db.refresh(db_obj)
     return db_obj
