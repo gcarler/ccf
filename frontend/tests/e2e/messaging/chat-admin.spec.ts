@@ -30,7 +30,7 @@ const ITEMS_PAGE_1 = generateMockItems(50, 0);
 const ITEMS_PAGE_2 = generateMockItems(5, 50);
 
 async function installChatAdminMocks(page: Page) {
-  await page.route('**/api/chat/my-messages*', async (route) => {
+  await page.route('**/chat/my-messages*', async (route) => {
     const url = new URL(route.request().url());
     const offset = Number(url.searchParams.get('offset') ?? '0');
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -42,7 +42,7 @@ async function installChatAdminMocks(page: Page) {
     }
   });
 
-  await page.route('**/api/chat/mentions*', async (route) => {
+  await page.route('**/chat/mentions*', async (route) => {
     const url = new URL(route.request().url());
     const offset = Number(url.searchParams.get('offset') ?? '0');
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -52,6 +52,22 @@ async function installChatAdminMocks(page: Page) {
     } else {
       await route.fulfill({ status: 200, json: ITEMS_PAGE_1 });
     }
+  });
+
+  // ConfigContext loads this authenticated workspace endpoint on every
+  // platform page. Keep the admin-center E2E focused on chat pagination
+  // instead of producing unrelated 401/"Config load failed" noise.
+  await page.route('**/workspace/config*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      json: {
+        id: 'e2e-workspace',
+        name: 'E2E Test Workspace',
+        features_enabled: {},
+        modules: ['admin', 'crm', 'academy', 'finance'],
+      },
+    });
   });
 }
 
