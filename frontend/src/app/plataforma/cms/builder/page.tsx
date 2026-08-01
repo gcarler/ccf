@@ -435,7 +435,7 @@ export default function PuckBuilderPage() {
               type: "array",
               label: "Testimonios",
               getItemSummary: (item: any) => item.author || "Autor vacío",
-              defaultItemProps: { author: "Nombre del Autor", role: "Miembro", content: "El testimonio...", stars: 5 },
+              defaultItemProps: { author: "Nombre del Autor", role: "Colaborador", content: "El testimonio...", stars: 5 },
               arrayFields: {
                 author: { type: "text", label: "Autor" },
                 role: { type: "text", label: "Cargo/Rol" },
