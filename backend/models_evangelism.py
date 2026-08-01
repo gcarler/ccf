@@ -271,6 +271,7 @@ class GrupoEvangelismo(Base):
     longitud = Column(Float, nullable=True)
     dia_reunion = Column(String(20), nullable=True)
     hora_reunion = Column(String(10), nullable=True)
+    end_time = Column(String(50), nullable=True)
     activo = Column(Boolean, default=True)
     lider_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     asistente_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
@@ -339,18 +340,9 @@ class GrupoEvangelismo(Base):
     def personas_count(self, val):
         self._personas_count = val
 
-    @hybrid_property
-    def end_time(self):
-        return getattr(self, "_end_time", None)
-
-    @end_time.setter
-    def end_time(self, val):
-        self._end_time = val
-
     def __init__(self, **kwargs):
         leader_name = kwargs.pop("leader_name", None)
         personas_count = kwargs.pop("personas_count", None)
-        end_time = kwargs.pop("end_time", None)
         if "evangelism_strategy_id" in kwargs and "estrategia_id" not in kwargs:
             kwargs["estrategia_id"] = kwargs.pop("evangelism_strategy_id")
         super().__init__(**kwargs)
@@ -358,8 +350,6 @@ class GrupoEvangelismo(Base):
             self._leader_name = leader_name
         if personas_count is not None:
             self._personas_count = personas_count
-        if end_time is not None:
-            self._end_time = end_time
 
 
 # ──────────────────────────────────────────────

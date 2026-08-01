@@ -125,6 +125,138 @@ class TestRolesEndpoints:
         resp = c.delete(f"/api/evangelism/strategies/{s.id}/roles/{uuid.uuid4()}", headers=h)
         assert resp.status_code == 404
 
+    # ── F3-2 regression: PUT /strategies/{id}/roles/{role_id} ──
+
+    def test_update_role_via_api(self, full):
+        """PUT /strategies/{id}/roles/{role_id} actualiza nombre y descripción."""
+        c, h = full["c"], full["h"]
+        s = _make_strategy(full["db"], full["sede"].id)
+        full["db"].commit()
+        # Create role via API
+        create_resp = c.post(
+            f"/api/evangelism/strategies/{s.id}/roles",
+            headers=h,
+            json={"nombre_rol": "Rol Original"},
+        )
+        assert create_resp.status_code in (200, 201)
+        role_id = create_resp.json()["id"]
+        # Update role via API
+        update_resp = c.put(
+            f"/api/evangelism/strategies/{s.id}/roles/{role_id}",
+            headers=h,
+            json={"nombre_rol": "Rol Renombrado", "descripcion": "Descripción actualizada"},
+        )
+        assert update_resp.status_code == 200, f"Expected 200, got {update_resp.status_code}: {update_resp.text[:200]}"
+        data = update_resp.json()
+        assert data["nombre_rol"] == "Rol Renombrado"
+        assert data["descripcion"] == "Descripción actualizada"
+        assert data["id"] == role_id
+
+    def test_update_role_not_found(self, full):
+        """PUT con role_id inexistente retorna 404."""
+        c, h = full["c"], full["h"]
+        s = _make_strategy(full["db"], full["sede"].id)
+        full["db"].commit()
+        resp = c.put(
+            f"/api/evangelism/strategies/{s.id}/roles/{uuid.uuid4()}",
+            headers=h,
+            json={"nombre_rol": "Nuevo Nombre"},
+        )
+        assert resp.status_code == 404
+
+    def test_update_role_strategy_not_found(self, full):
+        """PUT con strategy_id inexistente retorna 404."""
+        c, h = full["c"], full["h"]
+        resp = c.put(
+            f"/api/evangelism/strategies/{uuid.uuid4()}/roles/{uuid.uuid4()}",
+            headers=h,
+            json={"nombre_rol": "Nuevo Nombre"},
+        )
+        assert resp.status_code == 404
+
+    def test_update_role_extra_forbid(self, full):
+        """PUT con campo no permitido retorna 422 (extra=forbid)."""
+        c, h = full["c"], full["h"]
+        s = _make_strategy(full["db"], full["sede"].id)
+        full["db"].commit()
+        create_resp = c.post(
+            f"/api/evangelism/strategies/{s.id}/roles",
+            headers=h,
+            json={"nombre_rol": "Rol Test"},
+        )
+        assert create_resp.status_code in (200, 201)
+        role_id = create_resp.json()["id"]
+        resp = c.put(
+            f"/api/evangelism/strategies/{s.id}/roles/{role_id}",
+            headers=h,
+            json={"nombre_rol": "Ok", "campo_inexistente": "bad"},
+        )
+        assert resp.status_code == 422
+
+    # ── F3-1 regression: GrupoEvangelismoResponse schema ──
+
+    def test_grupo_evangelismo_response_schema(self, full):
+        """Verifica que GrupoEvangelismoResponse serializa correctamente."""
+        c, h = full["c"], full["h"]
+        s = _make_strategy(full["db"], full["sede"].id)
+        full["db"].commit()
+        # Create group via API
+        group_resp = c.post(
+            "/api/evangelism/groups",
+            headers=h,
+            json={
+                "name": "Grupo Test",
+                "zone": "Zona 1",
+                "address": "Calle Test 123",
+                "leader_id": str(full["persona"].id),
+                "capacity": 15,
+                "day_of_week": "Lunes",
+                "start_time": "10:00",
+                "end_time": "12:00",
+            },
+        )
+        assert group_resp.status_code in (200, 201)
+        group_id = group_resp.json()["id"]
+        # Get group via API and verify response schema
+        get_resp = c.get(f"/api/evangelism/groups/{group_id}", headers=h)
+        assert get_resp.status_code == 200
+        data = get_resp.json()
+        # Verify required fields from GrupoEvangelismoResponse
+        assert data["id"] == str(group_id)
+        assert data["name"] == "Grupo Test"
+        assert data["zone"] == "Zona 1"
+        assert data["address"] == "Calle Test 123"
+        assert data["leader_name"] == full["persona"].nombre_completo
+        assert data["leader_id"] == str(full["persona"].id)
+        assert data["capacity"] == 15
+        assert data["day_of_week"] == "Lunes"
+        assert data["start_time"] == "10:00"
+        assert data["end_time"] == "12:00"
+        assert data["status"] == "Activo"
+        # Verify UUID fields are strings
+        assert isinstance(data["id"], str)
+        assert isinstance(data["leader_id"], str)
+        # Verify optional fields can be None
+        assert data["assistant_id"] is None
+        assert data["host_id"] is None
+        assert data["evangelism_strategy_id"] is None
+
+        # Verify update persistence and response contract, not just the initial
+        # create path. The subsequent GET must read the committed DB value.
+        update_resp = c.put(
+            f"/api/evangelism/groups/{group_id}",
+            headers=h,
+            json={"end_time": "13:00"},
+        )
+        assert update_resp.status_code == 200, update_resp.text[:300]
+        update_data = update_resp.json()
+        assert update_data["end_time"] == "13:00"
+        assert update_data["status"] == "Activo"
+
+        persisted_resp = c.get(f"/api/evangelism/groups/{group_id}", headers=h)
+        assert persisted_resp.status_code == 200
+        assert persisted_resp.json()["end_time"] == "13:00"
+
     def test_list_excuses(self, full):
         c, h = full["c"], full["h"]
         resp = c.get("/api/evangelism/excuses", headers=h)

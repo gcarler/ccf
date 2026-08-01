@@ -164,6 +164,7 @@ def _serialize_grupo(g):
         "capacity": g.capacidad,
         "day_of_week": g.dia_reunion,
         "start_time": g.hora_reunion,
+        "end_time": g.end_time,
         "status": "Activo" if g.activo else "Inactivo",
         "evangelism_strategy_id": str(g.estrategia_id) if g.estrategia_id else None,
     }
@@ -520,7 +521,8 @@ def get_grupo(
         "day_of_week": house.day_of_week,
         "start_time": house.start_time,
         "end_time": house.end_time,
-        "status": house.status,
+        "status": "Activo" if house.activo else "Inactivo",
+        "evangelism_strategy_id": str(house.estrategia_id) if house.estrategia_id else None,
         "created_at": house.created_at.isoformat() if house.created_at else None,
         "sessions": sessions_data,
         "total_sessions": len(sessions_data),
@@ -606,6 +608,7 @@ async def create_grupo(
         "capacity": obj.capacidad,
         "day_of_week": obj.dia_reunion,
         "start_time": obj.hora_reunion,
+        "end_time": obj.end_time,
         "leader_id": str(obj.lider_persona_id) if obj.lider_persona_id else None,
         "assistant_id": str(obj.asistente_persona_id) if obj.asistente_persona_id else None,
         "host_id": str(obj.anfitrion_persona_id) if obj.anfitrion_persona_id else None,
@@ -678,6 +681,8 @@ def update_grupo(
         "leader_id": str(house.lider_persona_id) if house.lider_persona_id else None,
         "assistant_id": str(house.asistente_persona_id) if house.asistente_persona_id else None,
         "host_id": str(house.anfitrion_persona_id) if house.anfitrion_persona_id else None,
+        "end_time": house.end_time,
+        "status": "Activo" if house.activo else "Inactivo",
     }
 
 
