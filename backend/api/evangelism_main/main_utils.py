@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime
 from typing import Optional
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
@@ -29,7 +30,7 @@ def _channel_label(channel: str) -> str:
 def _persona_matches_segment(
     persona: models.Persona,
     segment: str,
-    donation_persona_ids: set[str],
+    donation_persona_ids: set[str | UUID],
 ) -> bool:
     """Return True if *persona* matches the named segment."""
     value = str(segment or "").strip().lower()
@@ -60,7 +61,8 @@ def _persona_matches_segment(
             "creyente",
         }
     if value == "vip":
-        return str(persona.id) in donation_persona_ids
+        donation_ids = {str(persona_id) for persona_id in donation_persona_ids}
+        return str(persona.id) in donation_ids
     return False
 
 
@@ -88,11 +90,12 @@ def _resolve_campaign_personas(
     selected: list[models.Persona] = []
     seen_ids: set[str] = set()
     for persona in personas:
-        if persona.id in seen_ids:
+        persona_key = str(persona.id)
+        if persona_key in seen_ids:
             continue
         if any(_persona_matches_segment(persona, segment, donation_persona_ids) for segment in normalized_segments):
             selected.append(persona)
-            seen_ids.add(persona.id)
+            seen_ids.add(persona_key)
     return selected
 
 

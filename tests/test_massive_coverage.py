@@ -387,7 +387,9 @@ class TestCRMAllFunctions:
         db.commit()
         resp = c.get("/api/crm/counseling/", headers=h)
         assert resp.status_code == 200, resp.text
-        ids = {item["id"] for item in resp.json()}
+        payload = resp.json()
+        items = payload["items"] if isinstance(payload, dict) else payload
+        ids = {str(item["id"]) for item in items}
         assert str(row.id) not in ids
 
     def test_prayer_requests_every_filter(self, rich_data):

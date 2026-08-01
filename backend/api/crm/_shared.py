@@ -518,7 +518,7 @@ def _serialize_message_group(logs: list[models.CommunicationLog]) -> dict:
     }
 
 
-def _persona_matches_segment(persona, segment: str, donation_persona_ids: set) -> bool:
+def _persona_matches_segment(persona, segment: str, donation_persona_ids: set[str | UUID]) -> bool:
     value = str(segment or "").strip().lower()
     if value == "active":
         return str(persona.church_role or "").strip().lower() in {
@@ -547,7 +547,8 @@ def _persona_matches_segment(persona, segment: str, donation_persona_ids: set) -
             "creyente",
         }
     if value == "vip":
-        return persona.id in donation_persona_ids
+        donation_ids = {str(persona_id) for persona_id in donation_persona_ids}
+        return str(persona.id) in donation_ids
     return False
 
 
@@ -565,12 +566,13 @@ def _resolve_campaign_personas(db, segments: list, sede_id=None) -> list:
         personas_q = personas_q.filter(models.Persona.sede_id == sede_id)
     personas = personas_q.all()
     selected = []
-    seen_ids: set = set()
+    seen_ids: set[str] = set()
     for persona in personas:
         persona = prepare_persona_for_output(db, persona)
-        if persona.id in seen_ids:
+        persona_key = str(persona.id)
+        if persona_key in seen_ids:
             continue
         if any(_persona_matches_segment(persona, segment, donation_persona_ids) for segment in normalized_segments):
             selected.append(persona)
-            seen_ids.add(persona.id)
+            seen_ids.add(persona_key)
     return selected

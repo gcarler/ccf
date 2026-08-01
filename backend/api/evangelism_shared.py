@@ -513,7 +513,7 @@ def _channel_label(channel: str) -> str:
     return "SMS"
 
 
-def _persona_matches_segment(persona: models.Persona, segment: str, donation_persona_ids: set[str]) -> bool:
+def _persona_matches_segment(persona: models.Persona, segment: str, donation_persona_ids: set[str | UUID]) -> bool:
     value = str(segment or "").strip().lower()
     if value == "active":
         return str(persona.church_role_effective or "").strip().lower() in {
@@ -542,7 +542,8 @@ def _persona_matches_segment(persona: models.Persona, segment: str, donation_per
             "creyente",
         }
     if value == "vip":
-        return str(persona.id) in donation_persona_ids
+        donation_ids = {str(persona_id) for persona_id in donation_persona_ids}
+        return str(persona.id) in donation_ids
     return False
 
 
@@ -562,11 +563,12 @@ def _resolve_campaign_personas(db: Session, segments: list[str], sede_id=None) -
     selected = []
     seen_ids: set[str] = set()
     for persona in personas:
-        if persona.id in seen_ids:
+        persona_key = str(persona.id)
+        if persona_key in seen_ids:
             continue
         if any(_persona_matches_segment(persona, segment, donation_persona_ids) for segment in normalized_segments):
             selected.append(persona)
-            seen_ids.add(persona.id)
+            seen_ids.add(persona_key)
     return selected
 
 
