@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Roboto, Inter, Open_Sans } from "next/font/google";
+import { Roboto, Inter, Open_Sans, Outfit } from "next/font/google";
 import "./globals.css";
 
 // ── Typography: Load production fonts via next/font/google (self-hosted, no FOUC) ──
@@ -23,6 +23,14 @@ const inter = Inter({
     subsets: ["latin"],
     weight: ["400", "500", "600", "700"],
     variable: "--font-inter",
+    display: "swap",
+    preload: false,
+});
+
+const outfit = Outfit({
+    subsets: ["latin"],
+    weight: ["400", "500", "600", "700", "800"],
+    variable: "--font-outfit",
     display: "swap",
     preload: false,
 });
@@ -62,8 +70,12 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="es" suppressHydrationWarning className={`${roboto.variable} ${openSans.variable} ${inter.variable}`}>
+        <html lang="es" suppressHydrationWarning className={`${roboto.variable} ${openSans.variable} ${inter.variable} ${outfit.variable}`}>
             <head>
+                <link
+                    rel="stylesheet"
+                    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+                />
                 <script
                     dangerouslySetInnerHTML={{
                         __html: `

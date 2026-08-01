@@ -3,9 +3,9 @@
 Provides WebSocket and REST endpoints for tracking real-time presence of users
 editing pages in the CMS Page Builder.
 """
+
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import urllib.parse

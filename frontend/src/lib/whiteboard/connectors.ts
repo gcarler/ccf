@@ -228,6 +228,23 @@ function toScreen(x: number, y: number, vpt: number[]): { x: number; y: number }
   return { x: x * vpt[0] + y * vpt[2] + vpt[4], y: x * vpt[1] + y * vpt[3] + vpt[5] };
 }
 
+// Object-space geometry cache for rendered connectors (see renderConnectors).
+// WeakMap → no leak: entries are collected when a connector line is GC'd
+// after canvas.dispose()/reload.
+const _connectorGeometryCache = new WeakMap<
+  fabric.FabricObject,
+  {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    fromAnchor: AnchorPosition;
+    toAnchor: AnchorPosition;
+    cp1: { x: number; y: number };
+    cp2: { x: number; y: number };
+  }
+>();
+
 /** Draw bezier curves + arrowheads + labels for every connector. */
 export function renderConnectors(
   canvas: fabric.Canvas,
@@ -245,14 +262,37 @@ export function renderConnectors(
     const p1 = toScreen(line.x1, line.y1, vpt);
     const p2 = toScreen(line.x2, line.y2, vpt);
 
-    // Control points for bezier
-    const { cp1, cp2 } = calculateControlPoints(
-      { x: line.x1, y: line.y1 },
-      { x: line.x2, y: line.y2 },
-      d.fromAnchor, d.toAnchor,
-    );
-    const scp1 = toScreen(cp1.x, cp1.y, vpt);
-    const scp2 = toScreen(cp2.x, cp2.y, vpt);
+    // Control points (object space) are cached per connector and reused
+    // across idle/pan/zoom renders. The cache is self-invalidating: any
+    // change to the line coordinates or anchors recomputes the geometry.
+    let geometry = _connectorGeometryCache.get(obj);
+    if (
+      !geometry ||
+      geometry.x1 !== line.x1 ||
+      geometry.y1 !== line.y1 ||
+      geometry.x2 !== line.x2 ||
+      geometry.y2 !== line.y2 ||
+      geometry.fromAnchor !== d.fromAnchor ||
+      geometry.toAnchor !== d.toAnchor
+    ) {
+      geometry = {
+        x1: line.x1,
+        y1: line.y1,
+        x2: line.x2,
+        y2: line.y2,
+        fromAnchor: d.fromAnchor,
+        toAnchor: d.toAnchor,
+        ...calculateControlPoints(
+          { x: line.x1, y: line.y1 },
+          { x: line.x2, y: line.y2 },
+          d.fromAnchor,
+          d.toAnchor,
+        ),
+      };
+      _connectorGeometryCache.set(obj, geometry);
+    }
+    const scp1 = toScreen(geometry.cp1.x, geometry.cp1.y, vpt);
+    const scp2 = toScreen(geometry.cp2.x, geometry.cp2.y, vpt);
 
     const color = d.color || "#2563eb";
     const lw = (d.lineWidth || 2) * zoom;

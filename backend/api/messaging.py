@@ -99,6 +99,69 @@ class MessageSendPayload(BaseModel):
 router = APIRouter()
 
 
+def _authorize_requested_rooms(db: Session, current_user: models.User, raw_rooms: list[str]) -> list[str]:
+    """Return only rooms the authenticated user may subscribe to.
+
+    Generic workspace rooms remain governed by the module permission checked by
+    the WebSocket handler. Direct-message rooms require an explicit
+    ``ConversationParticipant`` row so knowing a conversation UUID is never
+    enough to receive its events.
+    """
+    authorized: list[str] = []
+    for raw_room in raw_rooms:
+        room = raw_room.strip()
+        if not room or not _VALID_ROOM_RE.match(room):
+            continue
+        if room.lower().startswith("dm_"):
+            try:
+                conversation_id = _uuid.UUID(room[3:])
+            except (TypeError, ValueError):
+                continue
+            participant = (
+                db.query(models.ConversationParticipant.id)
+                .filter(
+                    models.ConversationParticipant.conversation_id == conversation_id,
+                    models.ConversationParticipant.user_id == current_user.id,
+                )
+                .first()
+            )
+            if participant is None:
+                continue
+
+            # Keep realtime isolation consistent with the HTTP chat guards:
+            # inherited conversations containing participants from another
+            # sede must not become reachable through the room transport.
+            actor_sede = get_user_sede_id(db, current_user.id)
+            if actor_sede is not None:
+                participant_user_ids = [
+                    user_id
+                    for (user_id,) in db.query(models.ConversationParticipant.user_id)
+                    .filter(models.ConversationParticipant.conversation_id == conversation_id)
+                    .all()
+                    if user_id is not None
+                ]
+                participant_sede_rows = (
+                    db.query(models.Persona.id, models.Persona.sede_id)
+                    .filter(models.Persona.id.in_(participant_user_ids))
+                    .all()
+                    if participant_user_ids
+                    else []
+                )
+                participant_sedes = {str(persona_id): sede_id for persona_id, sede_id in participant_sede_rows}
+                # Fail closed for inherited/corrupt rows: every participant
+                # must resolve to a Persona with an assigned sede, and all
+                # resolved sedes must match the actor's tenant.
+                if any(
+                    str(participant_id) not in participant_sedes
+                    or participant_sedes[str(participant_id)] is None
+                    or str(participant_sedes[str(participant_id)]) != str(actor_sede)
+                    for participant_id in participant_user_ids
+                ):
+                    continue
+        authorized.append(room)
+    return authorized
+
+
 @router.websocket("/messaging/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     """WebSocket endpoint para comunicación en tiempo real.
@@ -142,19 +205,18 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
         if not check_ws_module_access(_db, _user, "messaging", "read"):
             await websocket.close(code=4003, reason="Insufficient permissions")
             return
+
+        rooms_param = websocket.query_params.get("rooms")
+        raw_rooms = rooms_param.split(",") if rooms_param is not None else None
+        # M-04 + BOLA defense: validate names and authorize every private DM room.
+        rooms = None
+        if raw_rooms is not None:
+            rooms = _authorize_requested_rooms(_db, _user, raw_rooms)
+            if not rooms:
+                await websocket.close(code=4003, reason="No authorized rooms")
+                return
     finally:
         _db.close()
-    rooms_param = websocket.query_params.get("rooms")
-    raw_rooms = rooms_param.split(",") if rooms_param else None
-    # M-04: Validate room names against allowlist.
-    rooms = None
-    if raw_rooms:
-        rooms = []
-        for r in raw_rooms:
-            r = r.strip()
-            if r and _VALID_ROOM_RE.match(r):
-                rooms.append(r)
-        rooms = rooms or None
     await manager.connect(client_id, websocket, rooms=rooms)
     try:
         while True:

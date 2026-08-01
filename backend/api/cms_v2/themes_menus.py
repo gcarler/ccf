@@ -2,6 +2,7 @@
 
 Extracted from the monolithic ``cms_v2/__init__.py`` to reduce module size.
 """
+
 from __future__ import annotations
 
 import logging

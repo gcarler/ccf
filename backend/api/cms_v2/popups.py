@@ -1,4 +1,5 @@
 """Native Popups API endpoints (R3-BE). Admin CRUD & Public active popups listing."""
+
 from __future__ import annotations
 
 import logging
@@ -35,6 +36,7 @@ def _get_popup_or_404(db: Session, site_id: UUID, popup_id: UUID) -> models.CmsP
 
 # ── Public Endpoint ─────────────────────────────────────────────────────────
 
+
 @router.get(
     "/public/popups",
     response_model=List[schemas.CmsPopupRead],
@@ -50,15 +52,13 @@ def get_public_popups(
 
     if page_slug is not None:
         clean_slug = page_slug.strip()
-        popups = [
-            p for p in popups
-            if not p.show_on_pages or clean_slug in p.show_on_pages
-        ]
+        popups = [p for p in popups if not p.show_on_pages or clean_slug in p.show_on_pages]
 
     return popups
 
 
 # ── Admin CRUD Endpoints ─────────────────────────────────────────────────────
+
 
 @router.get("/sites/{site_key}/popups", response_model=List[schemas.CmsPopupRead])
 def list_popups(

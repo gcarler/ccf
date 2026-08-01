@@ -17,6 +17,7 @@ Covers:
 - Workflow edge cases (approve, archive, submit_for_review)
 - _slugify edge cases
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -1313,9 +1314,7 @@ class TestImageResizeGap:
 
     def test_resize_with_params(self, full):
         # This endpoint requires an existing media item — if none exists, 404
-        resp = full["c"].get(
-            f"/api/cms/v2/images/{uuid.uuid4()}/resize?width=800&height=600&quality=80"
-        )
+        resp = full["c"].get(f"/api/cms/v2/images/{uuid.uuid4()}/resize?width=800&height=600&quality=80")
         assert resp.status_code == 404
 
 
@@ -1434,6 +1433,7 @@ class TestAssertRole:
         c, h = full["c"], full["h"]
         # Create a non-admin user
         from tests.conftest import seed_user_with_role
+
         user, persona, sede = seed_user_with_role(
             db_session,
             role_name="persona",
@@ -1915,6 +1915,7 @@ class TestCmsPastoralProfileUpdate:
         c, h = full["c"], full["h"]
         # Create a pastoral leader persona
         from tests.conftest import seed_user_with_role
+
         user, persona, sede = seed_user_with_role(
             db_session,
             role_name="pastor",
@@ -2050,9 +2051,7 @@ class TestImageResizeWithMedia:
         assert resp.status_code == 404
 
     def test_resize_with_params(self, full):
-        resp = full["c"].get(
-            f"/api/cms/v2/images/{uuid.uuid4()}/resize?width=1200&height=600&quality=90"
-        )
+        resp = full["c"].get(f"/api/cms/v2/images/{uuid.uuid4()}/resize?width=1200&height=600&quality=90")
         assert resp.status_code == 404
 
 
@@ -2470,6 +2469,7 @@ class TestCmsPastoralProfileUpdate:
     def test_update_pastoral_profile(self, full, db_session):
         c, h = full["c"], full["h"]
         from tests.conftest import seed_user_with_role
+
         user, persona, sede = seed_user_with_role(
             db_session,
             role_name="pastor",
@@ -2623,6 +2623,7 @@ class TestAssertRole403:
     def test_non_admin_user_gets_403(self, full, db_session):
         c, h = full["c"], full["h"]
         from tests.conftest import seed_user_with_role
+
         user, persona, sede = seed_user_with_role(
             db_session,
             role_name="persona",
@@ -2976,6 +2977,7 @@ class TestCmsPastoralProfileUpdate:
     def test_update_pastoral_profile(self, full, db_session):
         c, h = full["c"], full["h"]
         from tests.conftest import seed_user_with_role
+
         user, persona, sede = seed_user_with_role(
             db_session,
             role_name="pastor",

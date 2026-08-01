@@ -104,6 +104,10 @@ describe('useChatThread', () => {
       '/chat/upload-attachment',
       expect.objectContaining({ method: 'POST' })
     );
+    const uploadCall = vi.mocked(apiFetch).mock.calls.find(([path]) => path === '/chat/upload-attachment');
+    const uploadBody = uploadCall?.[1]?.body;
+    expect(uploadBody).toBeInstanceOf(FormData);
+    expect((uploadBody as FormData).get('conversation_id')).toBe('conv-1');
   });    it('loads older messages and prepends them', async () => {
         const initial = Array.from({ length: 100 }, (_, i) => makeMessage(`m${i + 1}`, `Msg ${i + 1}`));
         vi.mocked(apiFetch)

@@ -154,6 +154,7 @@ export function useChatThread({ token, activeConv, onMessage, onError }: UseChat
                 try {
                     const formData = new FormData();
                     formData.append('file', opts.attachment);
+                    formData.append('conversation_id', activeConvId);
                     const uploaded = await apiFetch<AttachmentMeta>('/chat/upload-attachment', {
                         method: 'POST',
                         token,

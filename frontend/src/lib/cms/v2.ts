@@ -221,10 +221,10 @@ export async function deleteCmsPage(siteKey: string, slug: string, token?: strin
 }
 
 export async function listCmsSections(siteKey: string, slug: string, token?: string | null): Promise<CmsSection[]> {
-  const res = await apiFetch<{ items: CmsSection[]; total: number; skip: number; limit: number }>(
+  const res = await apiFetch<{ items: CmsSection[]; total: number; skip: number; limit: number } | CmsSection[]>(
     `/cms/v2/sites/${siteKey}/pages/${slug}/sections`, { token }
   );
-  return res.items ?? [];
+  return Array.isArray(res) ? res : res?.items ?? [];
 }
 
 export async function createCmsSection(

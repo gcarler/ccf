@@ -1,4 +1,5 @@
 """Tests for CMS v2 Search Auto-Indexing Pipeline and Upgraded Search Endpoint."""
+
 from __future__ import annotations
 
 import uuid
@@ -7,11 +8,11 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from backend.models import User, Persona, Sede, RolPlataforma, CmsSite, CmsPage, CmsPost
+from backend.models import CmsPage, CmsPost, CmsSite, Persona, RolPlataforma, Sede, User
 from backend.models_enterprise import SearchIndex, SearchPromotion
 from backend.services.cms_search_indexer import (
-    index_cms_content,
     delete_from_search_index,
+    index_cms_content,
 )
 
 
@@ -61,6 +62,7 @@ def auth_headers(db_session: Session) -> dict[str, str]:
 
     # Access token bypass fixture pattern in tests
     from backend.core.permissions import create_access_token
+
     token = create_access_token(data={"sub": str(user.id)})
     return {"Authorization": f"Bearer {token}"}
 
@@ -87,7 +89,7 @@ class TestCmsSearchIndexing:
         site_key = "test_service_site"
         entity_type = "page"
         entity_id = str(uuid.uuid4())
-        
+
         # 1. Upsert new item
         item = index_cms_content(
             db=db_session,
@@ -136,14 +138,20 @@ class TestCmsSearchIndexing:
         assert deleted is True
 
         # Verify query returns empty
-        found = db_session.query(SearchIndex).filter(
-            SearchIndex.site_key == site_key,
-            SearchIndex.entity_type == entity_type,
-            SearchIndex.entity_id == entity_id,
-        ).first()
+        found = (
+            db_session.query(SearchIndex)
+            .filter(
+                SearchIndex.site_key == site_key,
+                SearchIndex.entity_type == entity_type,
+                SearchIndex.entity_id == entity_id,
+            )
+            .first()
+        )
         assert found is None
 
-    def test_auto_indexing_on_page_and_post_crud(self, client: TestClient, auth_headers: dict[str, str], test_site: CmsSite, db_session: Session):
+    def test_auto_indexing_on_page_and_post_crud(
+        self, client: TestClient, auth_headers: dict[str, str], test_site: CmsSite, db_session: Session
+    ):
         """Test automatic search index creation, section updates, and deletion for pages & posts."""
         site_key = test_site.site_key
 
@@ -162,11 +170,15 @@ class TestCmsSearchIndexing:
         page_id = page_data["id"]
 
         # Check search index created (is_published=False for draft)
-        idx = db_session.query(SearchIndex).filter(
-            SearchIndex.site_key == site_key,
-            SearchIndex.entity_type == "page",
-            SearchIndex.entity_id == page_id,
-        ).first()
+        idx = (
+            db_session.query(SearchIndex)
+            .filter(
+                SearchIndex.site_key == site_key,
+                SearchIndex.entity_type == "page",
+                SearchIndex.entity_id == page_id,
+            )
+            .first()
+        )
         assert idx is not None
         assert idx.title == "Página Auto-Indexada"
         assert idx.is_published is False
@@ -213,11 +225,15 @@ class TestCmsSearchIndexing:
         post_data = post_resp.json()
         post_id = post_data["id"]
 
-        post_idx = db_session.query(SearchIndex).filter(
-            SearchIndex.site_key == site_key,
-            SearchIndex.entity_type == "post",
-            SearchIndex.entity_id == post_id,
-        ).first()
+        post_idx = (
+            db_session.query(SearchIndex)
+            .filter(
+                SearchIndex.site_key == site_key,
+                SearchIndex.entity_type == "post",
+                SearchIndex.entity_id == post_id,
+            )
+            .first()
+        )
         assert post_idx is not None
         assert post_idx.title == "Publicación de Noticias"
         assert post_idx.is_published is True
@@ -227,24 +243,34 @@ class TestCmsSearchIndexing:
         del_post_resp = client.delete(f"/api/cms/v2/sites/{site_key}/posts/noticias-auto-index", headers=auth_headers)
         assert del_post_resp.status_code == 204
 
-        post_idx_after = db_session.query(SearchIndex).filter(
-            SearchIndex.site_key == site_key,
-            SearchIndex.entity_type == "post",
-            SearchIndex.entity_id == post_id,
-        ).first()
+        post_idx_after = (
+            db_session.query(SearchIndex)
+            .filter(
+                SearchIndex.site_key == site_key,
+                SearchIndex.entity_type == "post",
+                SearchIndex.entity_id == post_id,
+            )
+            .first()
+        )
         assert post_idx_after is None
 
         del_page_resp = client.delete(f"/api/cms/v2/sites/{site_key}/pages/pagina-auto-index", headers=auth_headers)
         assert del_page_resp.status_code == 204
 
-        page_idx_after = db_session.query(SearchIndex).filter(
-            SearchIndex.site_key == site_key,
-            SearchIndex.entity_type == "page",
-            SearchIndex.entity_id == page_id,
-        ).first()
+        page_idx_after = (
+            db_session.query(SearchIndex)
+            .filter(
+                SearchIndex.site_key == site_key,
+                SearchIndex.entity_type == "page",
+                SearchIndex.entity_id == page_id,
+            )
+            .first()
+        )
         assert page_idx_after is None
 
-    def test_bulk_reindex_endpoint(self, client: TestClient, auth_headers: dict[str, str], test_site: CmsSite, db_session: Session):
+    def test_bulk_reindex_endpoint(
+        self, client: TestClient, auth_headers: dict[str, str], test_site: CmsSite, db_session: Session
+    ):
         """Test POST /api/cms/v2/search/reindex bulk re-indexing API."""
         site_key = test_site.site_key
 
@@ -278,15 +304,21 @@ class TestCmsSearchIndexing:
         assert data["total_indexed"] >= 2
 
         # Verify index entries exist
-        idx_page = db_session.query(SearchIndex).filter(
-            SearchIndex.site_key == site_key,
-            SearchIndex.entity_type == "page",
-            SearchIndex.entity_id == str(page.id),
-        ).first()
+        idx_page = (
+            db_session.query(SearchIndex)
+            .filter(
+                SearchIndex.site_key == site_key,
+                SearchIndex.entity_type == "page",
+                SearchIndex.entity_id == str(page.id),
+            )
+            .first()
+        )
         assert idx_page is not None
         assert idx_page.title == "Página para Reindexar"
 
-    def test_search_filtering_and_promotions(self, client: TestClient, auth_headers: dict[str, str], test_site: CmsSite, db_session: Session):
+    def test_search_filtering_and_promotions(
+        self, client: TestClient, auth_headers: dict[str, str], test_site: CmsSite, db_session: Session
+    ):
         """Test search query matching with category, tags, date range, and promoted search items."""
         site_key = test_site.site_key
 

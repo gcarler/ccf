@@ -2,6 +2,7 @@
 
 Covers KnowledgeIndexer, search_knowledge_base_real, and edge cases.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -40,6 +41,7 @@ class TestKnowledgeIndexer:
     def _ensure_sede(self, db_session):
         """Create a sede for tests that need it."""
         from backend.models_evangelism import Sede
+
         s = Sede(id=uuid.uuid4(), nombre="Test Sede", ciudad="Bogota", es_activa=True)
         db_session.add(s)
         db_session.commit()
@@ -74,8 +76,14 @@ class TestKnowledgeIndexer:
         from backend.services.knowledge_base import KnowledgeIndexer
 
         course = Course(
-            id=uuid.uuid4(), code="TEST-001", title="Test Course", description="A test course",
-            modality="online", duration_hours=10, is_published=True, is_self_paced=True,
+            id=uuid.uuid4(),
+            code="TEST-001",
+            title="Test Course",
+            description="A test course",
+            modality="online",
+            duration_hours=10,
+            is_published=True,
+            is_self_paced=True,
             xp_per_lesson=100,
         )
         db_session.add(course)
@@ -85,9 +93,7 @@ class TestKnowledgeIndexer:
         count = indexer._index_courses(None)
         assert count == 1
 
-        entry = db_session.query(AgentKnowledgeBase).filter(
-            AgentKnowledgeBase.source_module == "academy"
-        ).first()
+        entry = db_session.query(AgentKnowledgeBase).filter(AgentKnowledgeBase.source_module == "academy").first()
         assert entry is not None
         assert "Test Course" in entry.title
         assert entry.is_active is True
@@ -106,7 +112,9 @@ class TestKnowledgeIndexer:
         from backend.services.knowledge_base import KnowledgeIndexer
 
         project = Project(
-            id=uuid.uuid4(), title="Test Project", description="A test project",
+            id=uuid.uuid4(),
+            title="Test Project",
+            description="A test project",
             status="active",
         )
         db_session.add(project)
@@ -127,9 +135,7 @@ class TestKnowledgeIndexer:
         indexer = KnowledgeIndexer(db_session)
         count = indexer._index_persona_stats(None)
         assert count == 1
-        entry = db_session.query(AgentKnowledgeBase).filter(
-            AgentKnowledgeBase.category == "crm_stats"
-        ).first()
+        entry = db_session.query(AgentKnowledgeBase).filter(AgentKnowledgeBase.category == "crm_stats").first()
         assert entry is not None
         assert "LIDER" in entry.content
 
@@ -143,8 +149,12 @@ class TestKnowledgeIndexer:
         db_session.add(cat)
         db_session.flush()
         strategy = EstrategiaEvangelismo(
-            id=uuid.uuid4(), name="Test Strategy", description="A strategy",
-            activa=True, sede_id=sede.id, categoria_id=cat.id,
+            id=uuid.uuid4(),
+            name="Test Strategy",
+            description="A strategy",
+            activa=True,
+            sede_id=sede.id,
+            categoria_id=cat.id,
         )
         db_session.add(strategy)
         db_session.commit()
@@ -164,9 +174,7 @@ class TestKnowledgeIndexer:
         indexer = KnowledgeIndexer(db_session)
         count = indexer._index_system_vars(None)
         assert count == 1
-        entry = db_session.query(AgentKnowledgeBase).filter(
-            AgentKnowledgeBase.category == "system"
-        ).first()
+        entry = db_session.query(AgentKnowledgeBase).filter(AgentKnowledgeBase.category == "system").first()
         assert entry is not None
         assert "test_key" in entry.content
 
@@ -175,17 +183,25 @@ class TestKnowledgeIndexer:
         from backend.services.knowledge_base import KnowledgeIndexer
 
         entry = AgentKnowledgeBase(
-            title="Original Title", content="old", source_module="test",
-            source_id="test-1", is_active=False, category="test",
+            title="Original Title",
+            content="old",
+            source_module="test",
+            source_id="test-1",
+            is_active=False,
+            category="test",
         )
         db_session.add(entry)
         db_session.commit()
 
         indexer = KnowledgeIndexer(db_session)
         indexer._upsert_kb(
-            title="Original Title", content="updated content",
-            source_module="test", source_id="test-1",
-            summary="new summary", category="test", indexed_by=None,
+            title="Original Title",
+            content="updated content",
+            source_module="test",
+            source_id="test-1",
+            summary="new summary",
+            category="test",
+            indexed_by=None,
         )
         db_session.commit()
         db_session.refresh(entry)
@@ -306,12 +322,14 @@ class TestMessagingGateway:
         db_session.add(p)
         db_session.commit()
 
-        log = asyncio.run(gateway.send_whatsapp(
-            db_session,
-            persona_id=str(p.id),
-            content="Test WhatsApp message",
-            leader_id=None,
-        ))
+        log = asyncio.run(
+            gateway.send_whatsapp(
+                db_session,
+                persona_id=str(p.id),
+                content="Test WhatsApp message",
+                leader_id=None,
+            )
+        )
         assert log is not None
         assert log.channel == "WhatsApp"
         assert log.outcome == "sent"
@@ -326,12 +344,14 @@ class TestMessagingGateway:
         db_session.commit()
 
         try:
-            asyncio.run(gateway.send_whatsapp(
-                db_session,
-                persona_id=str(p.id),
-                content="Test",
-                leader_id=None,
-            ))
+            asyncio.run(
+                gateway.send_whatsapp(
+                    db_session,
+                    persona_id=str(p.id),
+                    content="Test",
+                    leader_id=None,
+                )
+            )
             assert False, "Expected ValueError"
         except ValueError as e:
             assert "sin numero de telefono" in str(e)
@@ -345,12 +365,14 @@ class TestMessagingGateway:
         db_session.add(p)
         db_session.commit()
 
-        log = asyncio.run(gateway.send_sms(
-            db_session,
-            persona_id=str(p.id),
-            content="Test SMS",
-            leader_id=None,
-        ))
+        log = asyncio.run(
+            gateway.send_sms(
+                db_session,
+                persona_id=str(p.id),
+                content="Test SMS",
+                leader_id=None,
+            )
+        )
         assert log is not None
         assert log.channel == "SMS"
 
@@ -364,12 +386,14 @@ class TestMessagingGateway:
         db_session.commit()
 
         try:
-            asyncio.run(gateway.send_sms(
-                db_session,
-                persona_id=str(p.id),
-                content="Test",
-                leader_id=None,
-            ))
+            asyncio.run(
+                gateway.send_sms(
+                    db_session,
+                    persona_id=str(p.id),
+                    content="Test",
+                    leader_id=None,
+                )
+            )
             assert False, "Expected ValueError"
         except ValueError as e:
             assert "sin numero celular" in str(e)
@@ -390,12 +414,14 @@ class TestMessagingGateway:
         with patch.object(settings, "smtp_host", ""):
             with patch.object(settings, "smtp_user", ""):
                 with patch.object(settings, "smtp_password", ""):
-                    log = asyncio.run(gateway.send_email(
-                        db_session,
-                        persona_id=str(p.id),
-                        content="Test email",
-                        leader_id=None,
-                    ))
+                    log = asyncio.run(
+                        gateway.send_email(
+                            db_session,
+                            persona_id=str(p.id),
+                            content="Test email",
+                            leader_id=None,
+                        )
+                    )
         assert log is not None
         assert log.channel == "Email"
         assert log.outcome == CommunicationOutcome.PENDING_SMTP_CONFIG.value
@@ -414,13 +440,15 @@ class TestMessagingGateway:
         with patch.object(settings, "smtp_host", ""):
             with patch.object(settings, "smtp_user", ""):
                 with patch.object(settings, "smtp_password", ""):
-                    log = asyncio.run(gateway.send_email(
-                        db_session,
-                        persona_id=str(p.id),
-                        content="plain text",
-                        leader_id=None,
-                        html="<p>HTML content</p>",
-                    ))
+                    log = asyncio.run(
+                        gateway.send_email(
+                            db_session,
+                            persona_id=str(p.id),
+                            content="plain text",
+                            leader_id=None,
+                            html="<p>HTML content</p>",
+                        )
+                    )
         assert log is not None
         assert log.channel == "Email"
 
@@ -434,12 +462,14 @@ class TestMessagingGateway:
         db_session.commit()
 
         try:
-            asyncio.run(gateway.send_email(
-                db_session,
-                persona_id=str(p.id),
-                content="Test",
-                leader_id=None,
-            ))
+            asyncio.run(
+                gateway.send_email(
+                    db_session,
+                    persona_id=str(p.id),
+                    content="Test",
+                    leader_id=None,
+                )
+            )
             assert False, "Expected ValueError"
         except ValueError as e:
             assert "sin correo electronico" in str(e)
@@ -452,12 +482,14 @@ class TestMessagingGateway:
         fake_id = str(uuid.uuid4())
 
         try:
-            asyncio.run(gateway.send_email(
-                db_session,
-                persona_id=fake_id,
-                content="Test",
-                leader_id=None,
-            ))
+            asyncio.run(
+                gateway.send_email(
+                    db_session,
+                    persona_id=fake_id,
+                    content="Test",
+                    leader_id=None,
+                )
+            )
             assert False, "Expected ValueError"
         except ValueError as e:
             assert "Persona no encontrada" in str(e)
@@ -472,12 +504,14 @@ class TestMessagingGateway:
         db_session.commit()
         leader_id_str = str(uuid.uuid4())
 
-        log = asyncio.run(gateway.send_whatsapp(
-            db_session,
-            persona_id=str(p.id),
-            content="Test with leader",
-            leader_id=leader_id_str,
-        ))
+        log = asyncio.run(
+            gateway.send_whatsapp(
+                db_session,
+                persona_id=str(p.id),
+                content="Test with leader",
+                leader_id=leader_id_str,
+            )
+        )
         assert log is not None
         assert log.leader_id is not None
 
@@ -495,12 +529,14 @@ class TestStubMessagingGateway:
         db_session.add(p)
         db_session.commit()
 
-        log = asyncio.run(gateway.send_whatsapp(
-            db_session,
-            persona_id=str(p.id),
-            content="Stub test",
-            leader_id=None,
-        ))
+        log = asyncio.run(
+            gateway.send_whatsapp(
+                db_session,
+                persona_id=str(p.id),
+                content="Stub test",
+                leader_id=None,
+            )
+        )
         assert log.outcome == CommunicationOutcome.STUB.value
 
     def test_stub_email_override(self, db_session):
@@ -519,12 +555,14 @@ class TestStubMessagingGateway:
                         db_session.add(p)
                         db_session.commit()
 
-                        log = asyncio.run(gateway.send_email(
-                            db_session,
-                            persona_id=str(p.id),
-                            content="Override test",
-                            leader_id=None,
-                        ))
+                        log = asyncio.run(
+                            gateway.send_email(
+                                db_session,
+                                persona_id=str(p.id),
+                                content="Override test",
+                                leader_id=None,
+                            )
+                        )
                         assert log.outcome == CommunicationOutcome.PENDING_SMTP_CONFIG.value
 
     def test_stub_email_override_no_match(self, db_session):
@@ -540,12 +578,14 @@ class TestStubMessagingGateway:
             db_session.add(p)
             db_session.commit()
 
-            log = asyncio.run(gateway.send_email(
-                db_session,
-                persona_id=str(p.id),
-                content="No match",
-                leader_id=None,
-            ))
+            log = asyncio.run(
+                gateway.send_email(
+                    db_session,
+                    persona_id=str(p.id),
+                    content="No match",
+                    leader_id=None,
+                )
+            )
             assert log.outcome == CommunicationOutcome.STUB.value
 
 
@@ -582,10 +622,14 @@ class TestGetMessagingGateway:
         db_session.commit()
 
         leader_uuid = uuid.uuid4()
-        log = asyncio.run(gateway.send_whatsapp(
-            db_session, persona_id=str(p.id), content="Leader test",
-            leader_id=leader_uuid,
-        ))
+        log = asyncio.run(
+            gateway.send_whatsapp(
+                db_session,
+                persona_id=str(p.id),
+                content="Leader test",
+                leader_id=leader_uuid,
+            )
+        )
         assert log.leader_id == leader_uuid
 
     def test_gateway_invalid_leader_id_ignored(self, db_session):
@@ -598,10 +642,14 @@ class TestGetMessagingGateway:
         db_session.add(p)
         db_session.commit()
 
-        log = asyncio.run(gateway.send_whatsapp(
-            db_session, persona_id=str(p.id), content="Bad leader",
-            leader_id="not-a-valid-uuid",
-        ))
+        log = asyncio.run(
+            gateway.send_whatsapp(
+                db_session,
+                persona_id=str(p.id),
+                content="Bad leader",
+                leader_id="not-a-valid-uuid",
+            )
+        )
         assert log.leader_id is None
 
     def test_stub_sms(self, db_session):
@@ -614,9 +662,14 @@ class TestGetMessagingGateway:
         db_session.add(p)
         db_session.commit()
 
-        log = asyncio.run(gateway.send_sms(
-            db_session, persona_id=str(p.id), content="SMS stub", leader_id=None,
-        ))
+        log = asyncio.run(
+            gateway.send_sms(
+                db_session,
+                persona_id=str(p.id),
+                content="SMS stub",
+                leader_id=None,
+            )
+        )
         assert log.outcome == CommunicationOutcome.STUB.value
 
     def test_stub_whatsapp_no_persona(self, db_session):
@@ -625,9 +678,14 @@ class TestGetMessagingGateway:
         from backend.services.messaging_outcomes import CommunicationOutcome
 
         gateway = StubMessagingGateway()
-        log = asyncio.run(gateway.send_whatsapp(
-            db_session, persona_id=str(uuid.uuid4()), content="No persona", leader_id=None,
-        ))
+        log = asyncio.run(
+            gateway.send_whatsapp(
+                db_session,
+                persona_id=str(uuid.uuid4()),
+                content="No persona",
+                leader_id=None,
+            )
+        )
         assert log.outcome == CommunicationOutcome.STUB.value
 
     def test_get_messaging_gateway_stub_mode(self):
@@ -657,10 +715,14 @@ class TestGetMessagingGateway:
         with patch.object(settings, "smtp_host", "smtp.invalid.local"):
             with patch.object(settings, "smtp_user", "user"):
                 with patch.object(settings, "smtp_password", "pass"):
-                    log = asyncio.run(gateway.send_email(
-                        db_session, persona_id=str(p.id), content="Fail test",
-                        leader_id=None,
-                    ))
+                    log = asyncio.run(
+                        gateway.send_email(
+                            db_session,
+                            persona_id=str(p.id),
+                            content="Fail test",
+                            leader_id=None,
+                        )
+                    )
         assert log.outcome == CommunicationOutcome.SMTP_FAILED.value
 
     def test_gateway_smtp_success_with_html(self, db_session):
@@ -682,9 +744,13 @@ class TestGetMessagingGateway:
                     # Mock smtplib.SMTP to avoid real connection
                     with patch("smtplib.SMTP") as mock_smtp:
                         mock_instance = mock_smtp.return_value.__enter__.return_value
-                        log = asyncio.run(gateway.send_email(
-                            db_session, persona_id=str(p.id),
-                            content="plain", leader_id=None,
-                            html="<p>html</p>",
-                        ))
+                        log = asyncio.run(
+                            gateway.send_email(
+                                db_session,
+                                persona_id=str(p.id),
+                                content="plain",
+                                leader_id=None,
+                                html="<p>html</p>",
+                            )
+                        )
         assert log.outcome == CommunicationOutcome.SENT_REAL.value

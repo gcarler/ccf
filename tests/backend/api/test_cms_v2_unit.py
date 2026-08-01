@@ -45,6 +45,7 @@ class DummyQuery:
     def scalar(self):
         return None
 
+
 class DummyDB:
     def __init__(self):
         self.added = []
@@ -67,11 +68,13 @@ class DummyDB:
     def flush(self):
         pass
 
+
 # Tests for internal helper _slugify
 def test_slugify_basic():
-    assert cms_v2._slugify('Hello World') == 'hello-world'
-    assert cms_v2._slugify('  Foo_Bar  ') == 'foo_bar'
-    assert cms_v2._slugify('Café!') == 'cafe'
+    assert cms_v2._slugify("Hello World") == "hello-world"
+    assert cms_v2._slugify("  Foo_Bar  ") == "foo_bar"
+    assert cms_v2._slugify("Café!") == "cafe"
+
 
 # Test list_sites returns empty list with dummy DB
 def test_list_sites_empty():
@@ -79,15 +82,16 @@ def test_list_sites_empty():
     result = cms_v2.list_sites(db=db, only_active=False)
     assert result == []
 
+
 # Test create_site uses payload correctly and interacts with DB
 def test_create_site_interaction():
     db = DummyDB()
-    payload = schemas.CmsSiteCreate(site_key='test', name='Test Site', base_path='/test')
-    dummy_user = type('U', (), {'id': uuid.uuid4(), 'role': 'admin'})()
+    payload = schemas.CmsSiteCreate(site_key="test", name="Test Site", base_path="/test")
+    dummy_user = type("U", (), {"id": uuid.uuid4(), "role": "admin"})()
     site = cms_v2.create_site(payload, db=db, current_user=dummy_user)
     assert isinstance(site, models.CmsSite)
-    assert site.site_key == 'test'
-    assert site.name == 'Test Site'
-    assert site.base_path == '/test'
+    assert site.site_key == "test"
+    assert site.name == "Test Site"
+    assert site.base_path == "/test"
     assert db.added[0] is site
     assert db.committed

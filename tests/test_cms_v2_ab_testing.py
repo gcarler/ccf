@@ -7,10 +7,13 @@ Verifies:
   - Winner application: POST /api/cms/v2/sites/{site_key}/ab-tests/{id}/apply-winner
   - Error handling: 404 AbTestNotFoundError
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
+
 import pytest
+
 from backend import models
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin

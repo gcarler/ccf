@@ -13,10 +13,12 @@ from backend.api import cms_v2
 def full():
     class DummyDB:
         pass
+
     class DummyUser:
         id = uuid.uuid4()
         role = "admin"
         rol_plataforma = None
+
     return DummyDB(), DummyUser()
 
 

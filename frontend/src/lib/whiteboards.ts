@@ -1,4 +1,5 @@
 import { apiFetch } from "./http";
+import { apiUrl } from "./api";
 
 export type GridStyle = "dots" | "lines" | "ruled" | "none";
 export type GridSize = 16 | 24 | 32;
@@ -76,10 +77,12 @@ export interface ProjectWhiteboardInput {
 // ═════════════════════════════════════════════════════════════════════════════
 
 export async function fetchProjectWhiteboards(
-  token: string
+  token: string,
+  options?: { limit?: number; offset?: number }
 ): Promise<ProjectWhiteboard[]> {
   const data = await apiFetch<ProjectWhiteboard[]>("/projects/whiteboards", {
     token,
+    query: options,
   });
   return Array.isArray(data) ? data : [];
 }
@@ -115,4 +118,44 @@ export async function deleteProjectWhiteboard(
     method: "DELETE",
     token,
   });
+}
+
+export interface WhiteboardThumbnailResult {
+  thumbnail_url: string;
+}
+
+/** Uploads a thumbnail image for the board. Returns the persisted storage URL. */
+export async function uploadProjectWhiteboardThumbnail(
+  projectId: string,
+  blob: Blob,
+  token: string
+): Promise<string> {
+  const form = new FormData();
+  form.append("file", blob, "thumbnail.png");
+  const data = await apiFetch<WhiteboardThumbnailResult>(
+    `/projects/${projectId}/whiteboard/thumbnail`,
+    { method: "POST", token, body: form }
+  );
+  return data?.thumbnail_url ?? "";
+}
+
+/** Converts a canvas data URL into a Blob (best-effort; null on failure). */
+export function dataUrlToBlob(dataUrl: string): Blob | null {
+  try {
+    const [head, base64] = dataUrl.split(",");
+    const mime = /data:(.*?);base64/.exec(head)?.[1] || "image/png";
+    const bin = atob(base64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  } catch {
+    return null;
+  }
+}
+
+/** Resolves an API-relative static URL (e.g. "/api/static/...") to an absolute one. */
+export function resolveApiUrl(path: string): string {
+  if (!path) return path;
+  if (/^https?:\/\//.test(path)) return path;
+  return apiUrl(path);
 }

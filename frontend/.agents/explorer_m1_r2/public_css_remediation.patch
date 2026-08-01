@@ -1,0 +1,91 @@
+--- src/app/(public)/public.css
++++ src/app/(public)/public.css
+@@ -36,3 +36,29 @@
+   --site-outline: #72777f;
++
++  /* --- Material Design 3 Site Palette Tokens (Remediation Round 2) --- */
++  --site-surface-container-high: #e2e7f0;
++  --site-surface-variant: #dfe2eb;
++  --site-inverse-surface: #2e3137;
++  --site-inverse-on-surface: #f0f0f7;
++  --site-inverse-primary: #a5c8ff;
++  --site-primary-fixed: #d4e3ff;
++  --site-on-primary-fixed: #001c3b;
++  --site-on-primary-fixed-variant: #00477b;
++  --site-on-primary-container: #001c3b;
++  --site-on-secondary: #ffffff;
++  --site-secondary-fixed: #c5e7ff;
++  --site-secondary-fixed-dim: #9bcdf0;
++  --site-on-secondary-fixed: #001e2e;
++  --site-on-secondary-fixed-variant: #004d6d;
++  --site-tertiary: #006874;
++  --site-on-tertiary: #ffffff;
++  --site-tertiary-container: #97f0ff;
++  --site-on-tertiary-container: #001f24;
++  --site-tertiary-fixed: #97f0ff;
++  --site-tertiary-fixed-dim: #7ed4e6;
++  --site-on-tertiary-fixed: #001f24;
++  --site-on-tertiary-fixed-variant: #004f58;
++  --site-on-error: #ffffff;
++  --site-error-container: #ffdad6;
++  --site-on-error-container: #410002;
+ 
+@@ -96,3 +122,29 @@
+   --site-outline: #8c919b;
++
++  /* --- Material Design 3 Site Palette Tokens (Remediation Round 2) --- */
++  --site-surface-container-high: #132854;
++  --site-surface-variant: #253966;
++  --site-inverse-surface: #d9e2ff;
++  --site-inverse-on-surface: #001134;
++  --site-inverse-primary: #005faf;
++  --site-primary-fixed: #d4e3ff;
++  --site-on-primary-fixed: #001c3b;
++  --site-on-primary-fixed-variant: #00477b;
++  --site-on-primary-container: #d4e3ff;
++  --site-on-secondary: #00344f;
++  --site-secondary-fixed: #c5e7ff;
++  --site-secondary-fixed-dim: #80d0ff;
++  --site-on-secondary-fixed: #001e2e;
++  --site-on-secondary-fixed-variant: #004d6d;
++  --site-tertiary: #7fd0ff;
++  --site-on-tertiary: #00344d;
++  --site-tertiary-container: #004c6d;
++  --site-on-tertiary-container: #c6e7ff;
++  --site-tertiary-fixed: #c6e7ff;
++  --site-tertiary-fixed-dim: #7fd0ff;
++  --site-on-tertiary-fixed: #001e2d;
++  --site-on-tertiary-fixed-variant: #004c6d;
++  --site-on-error: #690005;
++  --site-error-container: #93000a;
++  --site-on-error-container: #ffdad6;
+ 
+@@ -157,3 +209,29 @@
+   --site-outline: #555555;
++
++  /* --- Material Design 3 Site Palette Tokens (Remediation Round 2) --- */
++  --site-surface-container-high: #171717;
++  --site-surface-variant: #262626;
++  --site-inverse-surface: #eeeeee;
++  --site-inverse-on-surface: #0a0a0a;
++  --site-inverse-primary: #000000;
++  --site-primary-fixed: #ffffff;
++  --site-on-primary-fixed: #000000;
++  --site-on-primary-fixed-variant: #333333;
++  --site-on-primary-container: #ffffff;
++  --site-on-secondary: #000000;
++  --site-secondary-fixed: #e0e0e0;
++  --site-secondary-fixed-dim: #cccccc;
++  --site-on-secondary-fixed: #000000;
++  --site-on-secondary-fixed-variant: #444444;
++  --site-tertiary: #dddddd;
++  --site-on-tertiary: #000000;
++  --site-tertiary-container: #2a2a2a;
++  --site-on-tertiary-container: #ffffff;
++  --site-tertiary-fixed: #eeeeee;
++  --site-tertiary-fixed-dim: #dddddd;
++  --site-on-tertiary-fixed: #000000;
++  --site-on-tertiary-fixed-variant: #444444;
++  --site-on-error: #690005;
++  --site-error-container: #93000a;
++  --site-on-error-container: #ffdad6;

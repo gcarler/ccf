@@ -6,10 +6,13 @@ Verifies:
   - Form submissions listing endpoint: GET /api/cms/v2/sites/{site_key}/forms/{form_id}/submissions
   - Error handling (404 FormNotFoundError)
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
+
 import pytest
+
 from backend import models
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
@@ -216,7 +219,9 @@ class TestCmsFormsPublicAndSubmissionsApi:
         db_session.add_all([sub1, sub2])
         db_session.commit()
 
-        resp = c.get(f"/api/cms/v2/sites/{cms_site.site_key}/forms/{form.id}/submissions?page=1&page_size=10", headers=h)
+        resp = c.get(
+            f"/api/cms/v2/sites/{cms_site.site_key}/forms/{form.id}/submissions?page=1&page_size=10", headers=h
+        )
         assert resp.status_code == 200, resp.text
         data = resp.json()
         assert data["total"] == 2

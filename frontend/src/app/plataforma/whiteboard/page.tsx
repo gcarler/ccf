@@ -16,6 +16,7 @@ import {
 import {
   fetchProjectWhiteboards,
   deleteProjectWhiteboard,
+  resolveApiUrl,
   ProjectWhiteboard,
 } from "@/lib/whiteboards";
 import { useAuth } from "@/context/AuthContext";
@@ -122,11 +123,20 @@ export default function WhiteboardPage() {
                     }
                     className="block w-full text-left"
                   >
-                    <div className="mb-5 flex h-36 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:border-white/10 dark:bg-black/20 dark:bg-[radial-gradient(#334155_1px,transparent_1px)]">
-                      <Sparkles
-                        className="text-[hsl(var(--primary))] opacity-70"
-                        size={34}
-                      />
+                    <div className="relative mb-5 flex h-36 items-center justify-center overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:border-white/10 dark:bg-black/20 dark:bg-[radial-gradient(#334155_1px,transparent_1px)]">
+                      {board.thumbnail_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={resolveApiUrl(board.thumbnail_url)}
+                          alt={board.title}
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      ) : (
+                        <Sparkles
+                          className="text-[hsl(var(--primary))] opacity-70"
+                          size={34}
+                        />
+                      )}
                     </div>
                     <h3 className="text-lg font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
                       {board.title}

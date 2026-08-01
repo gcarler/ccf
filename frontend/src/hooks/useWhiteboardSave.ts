@@ -16,8 +16,15 @@ interface UseWhiteboardSaveOptions {
 
 interface UseWhiteboardSaveReturn {
   saveStatus: SaveStatus;
+  /** True while there are edits that have not been persisted successfully. */
+  isDirty: boolean;
   save: (canvas: Canvas, immediate?: boolean) => void;
   saveNow: (canvas: Canvas) => void;
+  /** Flushes any unsaved state (pending debounce or queued write). Call it
+   *  before the canvas is disposed (e.g. component unmount) so the last edit
+   *  is not lost inside the debounce window. Safe no-op when nothing is
+   *  pending. */
+  flushPending: () => void;
 }
 
 export function useWhiteboardSave(
@@ -32,6 +39,15 @@ export function useWhiteboardSave(
   // ``persistToApi`` to avoid setState-after-unmount warnings if a save lands
   // while the panel is being torn down.
   const canceledRef = useRef<boolean>(false);
+  // Whether a POST is currently in flight and which canvas it serialized.
+  // Writes are serialized (chained) so rapid saves cannot arrive out of order
+  // and overwrite newer state with older state on the server (last-writer-wins
+  // only holds if the *newest* request lands last).
+  const inFlightRef = useRef<boolean>(false);
+  const inFlightCanvasRef = useRef<Canvas | null>(null);
+  // The most recent canvas handed to ``save`` — what a flush must persist.
+  const latestCanvasRef = useRef<Canvas | null>(null);
+  const persistRef = useRef<(canvas: Canvas) => void>(() => {});
   // Use a ref for the title so callers can change it without causing the
   // returned ``save``/``saveNow`` callbacks to be recreated. This keeps the
   // canvas initialization effect in ``WhiteboardEditor`` stable.
@@ -40,6 +56,7 @@ export function useWhiteboardSave(
     titleRef.current = title;
   }, [title]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [isDirty, setIsDirty] = useState(false);
 
   const clearTimers = useCallback(() => {
     if (saveTimerRef.current) {
@@ -52,9 +69,9 @@ export function useWhiteboardSave(
     }
   }, []);
 
-  const persistToApi = useCallback(
+  const doPersist = useCallback(
     async (canvas: Canvas) => {
-      if (!projectId || !token) return;
+      if (!projectId || !token || canceledRef.current) return;
 
       setSaveStatus("saving");
       if (statusResetTimerRef.current) {
@@ -72,6 +89,7 @@ export function useWhiteboardSave(
           },
         });
         if (canceledRef.current) return;
+        setIsDirty(false);
         setSaveStatus("saved");
         statusResetTimerRef.current = setTimeout(() => {
           if (canceledRef.current) return;
@@ -79,7 +97,10 @@ export function useWhiteboardSave(
           statusResetTimerRef.current = null;
         }, 2000);
       } catch {
+        // Suppress error feedback while the panel is being torn down or the
+        // tab is hidden (requests may be throttled/aborted by the browser).
         if (canceledRef.current) return;
+        if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
         setSaveStatus("error");
         statusResetTimerRef.current = setTimeout(() => {
           if (canceledRef.current) return;
@@ -91,6 +112,31 @@ export function useWhiteboardSave(
     [projectId, token]
   );
 
+  const persistToApi = useCallback(
+    (canvas: Canvas) => {
+      if (!projectId || !token) return;
+
+      if (inFlightRef.current) {
+        // A write is already in flight — queue the newest state so it is
+        // persisted after the current request resolves (ordered writes).
+        latestCanvasRef.current = canvas;
+        return;
+      }
+
+      inFlightRef.current = true;
+      inFlightCanvasRef.current = canvas;
+      doPersist(canvas).finally(() => {
+        inFlightRef.current = false;
+        inFlightCanvasRef.current = null;
+        const next = latestCanvasRef.current;
+        if (next && next !== canvas) persistRef.current(next);
+      });
+    },
+    [doPersist, projectId, token]
+  );
+
+  persistRef.current = persistToApi;
+
   const save = useCallback(
     (canvas: Canvas, immediate = false) => {
       if (!projectId || !token) {
@@ -99,6 +145,8 @@ export function useWhiteboardSave(
         return;
       }
 
+      latestCanvasRef.current = canvas;
+      setIsDirty(true);
       clearTimers();
 
       if (immediate) {
@@ -108,7 +156,8 @@ export function useWhiteboardSave(
 
       setSaveStatus("saving");
       saveTimerRef.current = setTimeout(() => {
-        persistToApi(canvas);
+        saveTimerRef.current = null;
+        persistToApi(latestCanvasRef.current ?? canvas);
       }, debounceMs);
     },
     [projectId, token, persistToApi, debounceMs, clearTimers]
@@ -121,6 +170,22 @@ export function useWhiteboardSave(
     [save]
   );
 
+  const flushPending = useCallback(() => {
+    const hasPendingTimer = saveTimerRef.current !== null;
+    const needsResend =
+      inFlightRef.current && latestCanvasRef.current !== inFlightCanvasRef.current;
+    if (!hasPendingTimer && !needsResend) return;
+
+    const canvas = latestCanvasRef.current;
+    if (!canvas) return;
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    persistToApi(canvas);
+  }, [persistToApi]);
+
   useEffect(() => {
     return () => {
       canceledRef.current = true;
@@ -130,7 +195,9 @@ export function useWhiteboardSave(
 
   return {
     saveStatus,
+    isDirty,
     save,
     saveNow,
+    flushPending,
   };
 }

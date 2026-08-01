@@ -17,7 +17,7 @@ export default function WhiteboardSessionPage() {
             <WhiteboardEditor
                 projectId={projectId}
                 token={token}
-                header={({ title, saveStatus, saveNow }) => (
+                header={({ title, saveStatus, saveNow, isDirty }) => (
                     <WorkspaceToolbar
                         breadcrumbs={[
                             { label: "CCF Tools", icon: LayoutDashboard, href: "/plataforma/whiteboard" },
@@ -32,6 +32,8 @@ export default function WhiteboardSessionPage() {
                                         <span className="text-[hsl(var(--destructive))]">Error</span>
                                     ) : saveStatus === "saved" ? (
                                         <span className="text-[hsl(var(--success))]">Guardado</span>
+                                    ) : isDirty ? (
+                                        <span className="text-[hsl(var(--warning))]">Sin guardar</span>
                                     ) : (
                                         <span>Local</span>
                                     )}
