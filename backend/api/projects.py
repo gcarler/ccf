@@ -462,10 +462,6 @@ def require_project_access(min_level: str = "read"):
         current_user: models.User = Depends(get_current_active_user),
         db: Session = Depends(get_db),
     ):
-        # Role-based access (admin bypass + projects:* permissions)
-        if _has_role_based_project_access(db, current_user, min_level):
-            return current_user
-
         project_id = request.path_params.get("project_id")
         task_id = request.path_params.get("task_id")
 
@@ -511,6 +507,12 @@ def require_project_access(min_level: str = "read"):
                 )
                 if project_sede is None or str(project_sede) != str(user_sede):
                     raise HTTPException(status_code=404, detail="Project not found")
+
+        # Role-based access is granted only after the resource scope check
+        # above. This prevents an admin/editor role from probing or mutating
+        # a project belonging to another sede.
+        if _has_role_based_project_access(db, current_user, min_level):
+            return current_user
 
         # manage level is strictly role-based
         if min_level == "manage":
@@ -577,7 +579,7 @@ def _assert_assignee_in_sede(
     persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Assignee not found")
-    if persona.sede_id is not None and str(persona.sede_id) != str(user_sede):
+    if persona.sede_id is None or str(persona.sede_id) != str(user_sede):
         # Existence-leak safe: indistinguishable from "not found".
         raise HTTPException(status_code=404, detail="Assignee not found")
 
@@ -1133,6 +1135,158 @@ def workload_summary(
     ]
 
 
+# ── TEAM (MEMBRESÍA DEL PROYECTO) ────────────────────────────────────────────
+
+
+def _serialize_member(member: models.ProjectMember) -> schemas.ProjectMember:
+    name = None
+    if member.persona:
+        name = (
+            getattr(member.persona, "nombre_completo", None)
+            or getattr(member.persona, "full_name", None)
+            or f"{getattr(member.persona, 'first_name', '')} {getattr(member.persona, 'last_name', '')}".strip()
+            or None
+        )
+    return schemas.ProjectMember(
+        id=str(member.id),
+        project_id=str(member.project_id),
+        persona_id=str(member.persona_id),
+        role=member.role or "member",
+        invited_at=member.invited_at,
+        persona_name=name,
+    )
+
+
+@router.get("/{project_id}/team", response_model=List[schemas.ProjectMember])
+def list_project_team(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Lista los miembros del equipo del proyecto.
+
+    Axioma 3 — strict scope: ``_ensure_project`` valida que el proyecto
+    pertenezca a la sede del actor antes de listar miembros.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    members = (
+        db.query(models.ProjectMember)
+        .options(selectinload(models.ProjectMember.persona))
+        .filter(
+            models.ProjectMember.project_id == _to_uuid(project_id),
+            models.ProjectMember.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectMember.invited_at.asc())
+        .all()
+    )
+    return [_serialize_member(m) for m in members]
+
+
+@router.post(
+    "/{project_id}/team",
+    response_model=schemas.ProjectMember,
+    status_code=status.HTTP_201_CREATED,
+)
+def invite_project_member(
+    project_id: str,
+    payload: schemas.ProjectMemberCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Invita a una persona de la sede a colaborar en el proyecto (F4).
+
+    Valida que la persona exista y pertenezca a la sede del actor, y evita
+    duplicados (unique constraint ``uq_project_member_persona`` → 409).
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    persona = db.query(models.Persona).filter(models.Persona.id == _to_uuid(payload.persona_id)).first()
+    if not persona:
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
+    if user_sede is not None:
+        persona_sede = getattr(persona, "sede_id", None)
+        if persona_sede is None or str(persona_sede) != str(user_sede):
+            raise HTTPException(status_code=404, detail="Persona no encontrada en esta sede")
+
+    existing = (
+        db.query(models.ProjectMember)
+        .filter(
+            models.ProjectMember.project_id == _to_uuid(project_id),
+            models.ProjectMember.persona_id == _to_uuid(payload.persona_id),
+        )
+        .first()
+    )
+    if existing and existing.deleted_at is None:
+        raise HTTPException(status_code=409, detail="La persona ya es miembro del proyecto")
+
+    if existing and existing.deleted_at is not None:
+        # Re-invitación: reactivar la membresía previamente retirada (soft delete).
+        existing.deleted_at = None
+        existing.invited_at = _utcnow()
+        db.add(existing)
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "member_invited",
+            f"{_author_name(persona)} invitado al equipo de '{project.title}'",
+        )
+        db.commit()
+        db.refresh(existing)
+        existing.persona = persona
+        return _serialize_member(existing)
+
+    member = models.ProjectMember(
+        project_id=_to_uuid(project_id),
+        persona_id=_to_uuid(payload.persona_id),
+        role="member",
+    )
+    db.add(member)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "member_invited",
+        f"{_author_name(persona)} invitado al equipo de '{project.title}'",
+    )
+    db.commit()
+    db.refresh(member)
+    member.persona = persona
+    return _serialize_member(member)
+
+
+@router.delete("/{project_id}/team/{persona_id}", response_model=dict)
+def remove_project_member(
+    project_id: str,
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Retira a una persona del equipo del proyecto (F4, soft delete).
+
+    Cumple Regla 4 (no hard deletes en tablas transaccionales): marca
+    ``deleted_at`` en lugar de ``db.delete``. Una persona retirada puede
+    volver a ser invitada (reactivación en POST /team).
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    member = (
+        db.query(models.ProjectMember)
+        .filter(
+            models.ProjectMember.project_id == _to_uuid(project_id),
+            models.ProjectMember.persona_id == _to_uuid(persona_id),
+            models.ProjectMember.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not member:
+        raise HTTPException(status_code=404, detail="La persona no es miembro del proyecto")
+    member.deleted_at = _utcnow()
+    db.commit()
+    return {"ok": True, "removed": str(persona_id)}
+
+
 @router.get("/activities", response_model=List[schemas.ProjectActivityItem])
 def list_activities(
     limit: int = Query(20, le=200),
@@ -1557,6 +1711,94 @@ def get_project(
     return p
 
 
+@router.get("/{project_id}/analytics", response_model=schemas.ProjectAnalytics)
+def get_project_analytics(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Analítica real del proyecto para la vista maestra.
+
+    Reemplaza las métricas hardcodeadas que antes se renderizaban en
+    ``ProjectMasterView`` (Velocidad / Retraso / Riesgo / Salud). Todo se
+    deriva del set de tareas persistido del proyecto, dentro de la sede
+    del actor (Axioma 3, vía ``_ensure_project``).
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+
+    now = datetime.now(timezone.utc)
+    tasks = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.project_id == _to_uuid(project_id),
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .all()
+    )
+    total_tasks = len(tasks)
+    completed_tasks = sum(1 for t in tasks if t.status == "completed")
+    open_statuses = ("todo", "in_progress", "review")
+    open_tasks = sum(1 for t in tasks if t.status in open_statuses)
+    unassigned_tasks = sum(1 for t in tasks if t.status in open_statuses and not t.assignee_id)
+
+    def _as_aware(dt) -> datetime:
+        if dt is None:
+            return None
+        return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
+
+    overdue_tasks = 0
+    max_overdue_days = 0
+    for t in tasks:
+        due = _as_aware(t.due_date)
+        if t.status in open_statuses and due is not None and due < now:
+            overdue_tasks += 1
+            max_overdue_days = max(max_overdue_days, max((now - due).days, 0))
+
+    # Velocidad: tareas completadas por día desde la creación del proyecto.
+    created = _as_aware(project.created_at) or now
+    days_since_creation = max((now - created).days, 1)
+    velocity = round(completed_tasks / days_since_creation, 2)
+
+    # Riesgo: bloqueos reales (vencidas > atascadas > saludable).
+    if overdue_tasks > 0:
+        risk_level = "alto"
+        risk_reason = f"{overdue_tasks} tarea(s) vencida(s)"
+    elif unassigned_tasks > 0:
+        risk_level = "medio"
+        risk_reason = f"{unassigned_tasks} tarea(s) sin responsable"
+    else:
+        risk_level = "bajo"
+        risk_reason = "Sin bloqueos"
+
+    # Salud: % de avance penalizado por vencidas y sin responsable.
+    completion_pct = round((completed_tasks / max(total_tasks, 1)) * 100) if total_tasks else 0
+    health_score = max(completion_pct - min(overdue_tasks * 15, 45) - min(unassigned_tasks * 5, 15), 0)
+    if health_score >= 80:
+        health_label = "óptima"
+    elif health_score >= 60:
+        health_label = "buena"
+    elif health_score >= 40:
+        health_label = "en riesgo"
+    else:
+        health_label = "crítica"
+
+    return schemas.ProjectAnalytics(
+        project_id=str(project.id),
+        total_tasks=total_tasks,
+        completed_tasks=completed_tasks,
+        open_tasks=open_tasks,
+        overdue_tasks=overdue_tasks,
+        unassigned_tasks=unassigned_tasks,
+        velocity=velocity,
+        overdue_days=max_overdue_days,
+        risk_level=risk_level,
+        risk_reason=risk_reason,
+        health_score=health_score,
+        health_label=health_label,
+    )
+
+
 @router.get("/{project_id}/wiki", response_model=Optional[schemas.ProjectDocument])
 def get_project_wiki(
     project_id: str,
@@ -1962,7 +2204,7 @@ def create_subtask(
     task_id: str,
     subtask: schemas.ProjectTaskCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
     """Crea una subtarea (nivel 2 o 3) bajo una tarea existente."""
     user_sede = get_user_sede_id(db, current_user.id)

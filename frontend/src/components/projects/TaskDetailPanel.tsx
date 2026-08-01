@@ -251,6 +251,15 @@ export default function TaskDetailPanel({
         catch { setError('No se pudo reasignar la tarea.'); }
     };
 
+    const handleNodeCycle = async () => {
+        if (!task || !requireAuth('Debes iniciar sesión para cambiar el nodo de la tarea.')) return;
+        const currentNode = task.node ?? null;
+        const nextNode = currentNode === 'nutrition' ? 'digital' : currentNode === 'digital' ? null : 'nutrition';
+        onUpdate?.({ ...task, node: nextNode });
+        try { await apiFetch(`/projects/tasks/${task.id}`, { method: 'PATCH', token, body: { node: nextNode } }); }
+        catch { setError('No se pudo actualizar el nodo de la tarea.'); }
+    };
+
     const handleDeleteTask = async () => {
         if (!task || !requireAuth('Debes iniciar sesión para eliminar la tarea.')) return;
         try {
@@ -346,6 +355,7 @@ export default function TaskDetailPanel({
                         onLabelsChange={setLabels}
                         onAssigneeChange={handleAssigneeChange}
                         onPriorityCycle={handlePriorityCycle}
+                        onNodeCycle={handleNodeCycle}
                         priority={priority}
                         token={token}
                     />

@@ -133,6 +133,7 @@ class ProjectTaskBase(BaseModel):
     assignee_id: Optional[UUID] = None
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
+    node: Optional[str] = Field(default=None, max_length=50)
     labels: List[str] = Field(default_factory=list)
     attachments: List[ProjectAttachment] = Field(default_factory=list)
 
@@ -140,6 +141,11 @@ class ProjectTaskBase(BaseModel):
     @classmethod
     def _title_no_blank(cls, v: Any) -> Any:
         return _strip_str_or_passthrough(v)
+
+    @field_validator("node", mode="before")
+    @classmethod
+    def _node_strip(cls, v: Any) -> Any:
+        return v.strip() if isinstance(v, str) and v.strip() else (None if isinstance(v, str) else v)
 
 
 class ProjectTaskCreate(ProjectTaskBase):
@@ -155,6 +161,7 @@ class ProjectTaskUpdate(BaseModel):
     assignee_id: Optional[UUID] = None
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
+    node: Optional[str] = Field(default=None, max_length=50)
     labels: Optional[List[str]] = None
     attachments: Optional[List[dict]] = None
 
@@ -397,6 +404,29 @@ class ProjectWorkloadSummaryRow(BaseModel):
     overdue_tasks: int
 
 
+class ProjectAnalytics(BaseModel):
+    """Real computed analytics for the project master view.
+
+    Replaces the hardcoded metrics previously rendered in
+    ``ProjectMasterView`` (Velocidad / Retraso / Riesgo / Salud). All values
+    are derived from the persisted task set of the project.
+    """
+
+    project_id: UUIDStr
+    total_tasks: int
+    completed_tasks: int
+    open_tasks: int
+    overdue_tasks: int
+    unassigned_tasks: int
+    velocity: float
+    velocity_unit: str = "tareas/día"
+    overdue_days: int
+    risk_level: Literal["bajo", "medio", "alto"]
+    risk_reason: str
+    health_score: int
+    health_label: Literal["óptima", "buena", "en riesgo", "crítica"]
+
+
 # Resolve forward references for ProjectTask.subtasks
 ProjectTask.model_rebuild()
 
@@ -412,4 +442,18 @@ class ProjectMessageItem(BaseModel):
     content: str
     created_at: datetime
     is_read: bool = False
+    model_config = orm_config
+
+
+class ProjectMemberCreate(BaseModel):
+    persona_id: UUIDStr
+
+
+class ProjectMember(BaseModel):
+    id: UUIDStr
+    project_id: UUIDStr
+    persona_id: UUIDStr
+    role: str = "member"
+    invited_at: Optional[datetime] = None
+    persona_name: Optional[str] = None
     model_config = orm_config

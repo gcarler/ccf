@@ -470,7 +470,13 @@ class TestTasks:
         persona_id = str(_uuid.uuid4())
         # Create the persona so the FK resolves
         db_session.add(
-            Persona(id=_uuid.UUID(persona_id), first_name="Assign", last_name="Test", email="assignee@test.com")
+            Persona(
+                id=_uuid.UUID(persona_id),
+                first_name="Assign",
+                last_name="Test",
+                email="assignee@test.com",
+                sede_id=sede.id,
+            )
         )
         db_session.flush()
         headers = auth_headers(client)
@@ -482,6 +488,46 @@ class TestTasks:
         assert resp.status_code == 201
         data = resp.json()
         assert data["assignee_id"] == persona_id
+
+    def test_create_task_with_node(self, client, db_session):
+        """POST task with a node persists it (F2: nodos operativos reales)."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        resp = client.post(
+            f"/api/projects/{proj.id}/tasks",
+            json={"title": "Tarea nodo", "node": "nutrition"},
+            headers=headers,
+        )
+        assert resp.status_code == 201
+        assert resp.json()["node"] == "nutrition"
+
+    def test_update_task_node(self, client, db_session):
+        """PATCH task node updates it (F2)."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        task = create_task_factory(db_session, proj.id, node="digital")
+        headers = auth_headers(client)
+        resp = client.patch(
+            f"/api/projects/{proj.id}/tasks/{task.id}",
+            json={"node": "nutrition"},
+            headers=headers,
+        )
+        assert resp.status_code == 200
+        assert resp.json()["node"] == "nutrition"
+
+    def test_create_task_node_blank_becomes_null(self, client, db_session):
+        """POST task with node='' or whitespace stores null (F2)."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        resp = client.post(
+            f"/api/projects/{proj.id}/tasks",
+            json={"title": "Tarea sin nodo", "node": "   "},
+            headers=headers,
+        )
+        assert resp.status_code == 201
+        assert resp.json()["node"] is None
 
 
 # ── D: Subtasks ──────────────────────────────────────────────────────────
@@ -997,6 +1043,237 @@ class TestPortfolioWorkload:
         resp = client.get("/api/projects/tasks", headers=headers)
         assert resp.status_code == 200
         assert len(resp.json()) >= 1
+
+
+class TestAnalytics:
+    """GET /projects/{id}/analytics — F1: métricas reales del proyecto."""
+
+    def _get(self, client, project_id):
+        headers = auth_headers(client)
+        return client.get(f"/api/projects/{project_id}/analytics", headers=headers)
+
+    def test_analytics_empty_project(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        resp = self._get(client, proj.id)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total_tasks"] == 0
+        assert data["completed_tasks"] == 0
+        assert data["open_tasks"] == 0
+        assert data["overdue_tasks"] == 0
+        assert data["unassigned_tasks"] == 0
+        assert data["risk_level"] == "bajo"
+        assert data["risk_reason"] == "Sin bloqueos"
+        assert data["health_label"] == "crítica" or data["health_label"] == "en riesgo"
+
+    def test_analytics_healthy_project(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        create_task_factory(db_session, proj.id, status="completed")
+        create_task_factory(db_session, proj.id, status="completed")
+        resp = self._get(client, proj.id)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total_tasks"] == 2
+        assert data["completed_tasks"] == 2
+        assert data["open_tasks"] == 0
+        assert data["overdue_tasks"] == 0
+        assert data["unassigned_tasks"] == 0
+        assert data["risk_level"] == "bajo"
+        assert data["health_label"] == "óptima"
+
+    def test_analytics_overdue_raises_risk(self, client, db_session):
+        from datetime import datetime, timedelta, timezone
+
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        overdue = datetime.now(timezone.utc) - timedelta(days=3)
+        create_task_factory(db_session, proj.id, status="in_progress", due_date=overdue)
+        create_task_factory(db_session, proj.id, status="completed", due_date=overdue)
+        resp = self._get(client, proj.id)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["overdue_tasks"] == 1
+        assert data["overdue_days"] == 3
+        assert data["risk_level"] == "alto"
+        assert "vencida" in data["risk_reason"]
+
+    def test_analytics_unassigned_raises_risk(self, client, db_session):
+        from backend.models_projects import ProjectTask
+
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        db_session.add(
+            ProjectTask(
+                id=_uuid.uuid4(),
+                project_id=proj.id,
+                title="Tarea sin responsable",
+                status="todo",
+                priority="medium",
+                order_index=0,
+                labels=[],
+            )
+        )
+        db_session.commit()
+        resp = self._get(client, proj.id)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["unassigned_tasks"] == 1
+        assert data["risk_level"] == "medio"
+        assert "responsable" in data["risk_reason"]
+
+    def test_analytics_velocity(self, client, db_session):
+        from datetime import datetime, timedelta, timezone
+
+        _, _, sede = seed_admin(db_session)
+        created = datetime.now(timezone.utc) - timedelta(days=10)
+        proj = create_project_factory(db_session, created_at=created)
+        for _ in range(5):
+            create_task_factory(db_session, proj.id, status="completed")
+        resp = self._get(client, proj.id)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["completed_tasks"] == 5
+        assert data["velocity"] == 0.5
+
+    def test_analytics_cross_sede_returns_404(self, client, db_session):
+        """Axioma 3: analytics de un proyecto de otra sede → 404."""
+        from tests.conftest import seed_user_with_role
+
+        _, _, sede_a = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede_a.id)
+        seed_user_with_role(
+            db_session,
+            role_name="pastor",
+            email="useranalytics@test.com",
+            sede_id=_uuid.uuid4(),
+        )
+        headers = auth_headers(client, email="useranalytics@test.com")
+        resp = client.get(f"/api/projects/{proj.id}/analytics", headers=headers)
+        assert resp.status_code == 404
+
+
+# ── H.1: Equipo / Membresía (F4) ─────────────────────────────────────────
+# Routes (3): GET/POST /projects/{id}/team, DELETE /projects/{id}/team/{persona_id}
+
+
+class TestProjectTeam:
+    def test_team_empty(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede.id)
+        headers = auth_headers(client)
+        resp = client.get(f"/api/projects/{proj.id}/team", headers=headers)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_invite_member(self, client, db_session):
+        from tests.factories_projects import _ensure_persona
+
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede.id)
+        persona = _ensure_persona(db_session)
+        persona.sede_id = sede.id
+        db_session.commit()
+        headers = auth_headers(client)
+        resp = client.post(
+            f"/api/projects/{proj.id}/team",
+            json={"persona_id": str(persona.id)},
+            headers=headers,
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["persona_id"] == str(persona.id)
+        assert data["project_id"] == str(proj.id)
+        assert data["role"] == "member"
+
+    def test_invite_member_then_list(self, client, db_session):
+        from tests.factories_projects import _ensure_persona
+
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede.id)
+        persona = _ensure_persona(db_session)
+        persona.sede_id = sede.id
+        db_session.commit()
+        headers = auth_headers(client)
+        client.post(f"/api/projects/{proj.id}/team", json={"persona_id": str(persona.id)}, headers=headers)
+        resp = client.get(f"/api/projects/{proj.id}/team", headers=headers)
+        assert resp.status_code == 200
+        rows = resp.json()
+        assert len(rows) == 1
+        assert rows[0]["persona_id"] == str(persona.id)
+        assert rows[0]["persona_name"] == persona.nombre_completo
+
+    def test_invite_duplicate_returns_409(self, client, db_session):
+        from tests.factories_projects import _ensure_persona
+
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede.id)
+        persona = _ensure_persona(db_session)
+        persona.sede_id = sede.id
+        db_session.commit()
+        headers = auth_headers(client)
+        payload = {"persona_id": str(persona.id)}
+        assert client.post(f"/api/projects/{proj.id}/team", json=payload, headers=headers).status_code == 201
+        resp = client.post(f"/api/projects/{proj.id}/team", json=payload, headers=headers)
+        assert resp.status_code == 409
+
+    def test_invite_unknown_persona_returns_404(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        resp = client.post(
+            f"/api/projects/{proj.id}/team",
+            json={"persona_id": str(_uuid.uuid4())},
+            headers=headers,
+        )
+        assert resp.status_code == 404
+
+    def test_remove_member(self, client, db_session):
+        from tests.factories_projects import _ensure_persona
+
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede.id)
+        persona = _ensure_persona(db_session)
+        persona.sede_id = sede.id
+        db_session.commit()
+        headers = auth_headers(client)
+        client.post(f"/api/projects/{proj.id}/team", json={"persona_id": str(persona.id)}, headers=headers)
+        resp = client.delete(f"/api/projects/{proj.id}/team/{persona.id}", headers=headers)
+        assert resp.status_code == 200
+        assert resp.json()["removed"] == str(persona.id)
+        assert client.get(f"/api/projects/{proj.id}/team", headers=headers).json() == []
+
+    def test_remove_unknown_member_returns_404(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        resp = client.delete(f"/api/projects/{proj.id}/team/{_uuid.uuid4()}", headers=headers)
+        assert resp.status_code == 404
+
+    def test_team_cross_sede_returns_404(self, client, db_session):
+        """Axioma 3: invitar/listar en proyecto de otra sede → 404."""
+        from tests.conftest import seed_user_with_role
+        from tests.factories_projects import _ensure_persona
+
+        _, _, sede_a = seed_admin(db_session)
+        proj = create_project_factory(db_session, sede_id=sede_a.id)
+        persona = _ensure_persona(db_session)
+        persona.sede_id = sede_a.id
+        db_session.commit()
+        seed_user_with_role(
+            db_session,
+            role_name="pastor",
+            email="userteam@test.com",
+            sede_id=_uuid.uuid4(),
+        )
+        headers = auth_headers(client, email="userteam@test.com")
+        resp = client.post(
+            f"/api/projects/{proj.id}/team",
+            json={"persona_id": str(persona.id)},
+            headers=headers,
+        )
+        assert resp.status_code == 404
 
 
 # ── I: Wiki / Whiteboard ────────────────────────────────────────────────

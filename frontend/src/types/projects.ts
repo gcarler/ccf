@@ -51,6 +51,7 @@ export interface ProjectTaskRecord {
   parent_id?: string | null;
   start_date?: string | null;
   due_date?: string | null;
+  node?: string | null;
   labels?: string[];
   order_index?: number;
   supplies?: TaskSupplyRecord[];
@@ -127,4 +128,20 @@ export interface ProjectWorkloadSummaryRow {
   open_tasks: number;
   in_review: number;
   overdue_tasks: number;
+}
+
+export interface ProjectAnalytics {
+  project_id: string;
+  total_tasks: number;
+  completed_tasks: number;
+  open_tasks: number;
+  overdue_tasks: number;
+  unassigned_tasks: number;
+  velocity: number;
+  velocity_unit: string;
+  overdue_days: number;
+  risk_level: 'bajo' | 'medio' | 'alto';
+  risk_reason: string;
+  health_score: number;
+  health_label: 'óptima' | 'buena' | 'en riesgo' | 'crítica';
 }

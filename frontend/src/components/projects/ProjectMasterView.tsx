@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ElementType } from 'react';
+import { useState, useEffect, ElementType } from 'react';
 import { motion } from 'framer-motion';
 import {
     Radio, Share2, Globe, CheckCircle2, Clock,
@@ -8,7 +8,7 @@ import {
     ArrowUpRight, BarChart3, Plus, Trash2,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord } from '@/types/projects';
+import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics } from '@/types/projects';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
 import { InlineTextArea } from '@/components/ui/inline-editors/InlineTextArea';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
@@ -46,10 +46,25 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     const [busyMilestoneId, setBusyMilestoneId] = useState<string | null>(null);
     const [newMilestone, setNewMilestone] = useState<{ title: string; date: string | null }>({ title: '', date: null });
     const [addingMilestone, setAddingMilestone] = useState(false);
+    const [analytics, setAnalytics] = useState<ProjectAnalytics | null>(null);
 
-    // Agrupación por prefijo semántico (transicional hasta que se persista)
-    const nutritionTasks = tasks.filter(t => /\[(Gesti[oó]n|Nutrici[oó]n)\]/i.test(t.title));
-    const webTasks = tasks.filter(t => /\[(Web|Digital)\]/i.test(t.title));
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const data = await apiFetch<ProjectAnalytics>(`/projects/${project.id}/analytics`, { token });
+                if (!cancelled) setAnalytics(data);
+            } catch {
+                if (!cancelled) setAnalytics(null);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [project.id, token]);
+
+    // Nodos operativos reales (F2): agrupación por la columna persistida ``node``
+    // (antes por prefijo en ``task.title``).
+    const nutritionTasks = tasks.filter(t => t.node === 'nutrition');
+    const webTasks = tasks.filter(t => t.node === 'digital');
 
     const milestones = project.milestones || [];
     const dbProgress = project.progress_percent || 0;
@@ -118,9 +133,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     };
 
     const taskSaveTitle = async (task: ProjectTaskRecord, cleanTitle: string) => {
-        const prefixMatch = task.title.match(/^(\[[^\]]+\]\s*)/);
-        const prefix = prefixMatch ? prefixMatch[1] : '';
-        const newTitle = (prefix + cleanTitle).trim();
+        const newTitle = cleanTitle.trim();
         if (!newTitle || newTitle === task.title) return;
         try {
             await updateTask(task.id, { title: newTitle });
@@ -200,7 +213,16 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-0.5">Avance Real</span>
                             <div className="text-xl font-bold tracking-tighter">{dbProgress}%</div>
                             <div className="flex items-center gap-2 mt-2">
-                                <div className="px-2 py-0.5 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] rounded text-2xs font-semibold uppercase">Salud: Óptima</div>
+                                <div className={clsx(
+                                    "px-2 py-0.5 rounded text-2xs font-semibold uppercase",
+                                    analytics?.health_label === 'óptima' && "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
+                                    analytics?.health_label === 'buena' && "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
+                                    analytics?.health_label === 'en riesgo' && "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]",
+                                    analytics?.health_label === 'crítica' && "bg-[hsl(var(--danger))]/10 text-[hsl(var(--danger))]",
+                                    !analytics && "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))]",
+                                )}>
+                                    Salud: {analytics ? analytics.health_label : '…'}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -209,10 +231,22 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
 
             {/* 2. Analítica de Impacto */}
             <section className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <AnalyticCard title="Velocidad" value="4.2" detail="Tareas/Día" icon={TrendingUp} color="text-[hsl(var(--primary))]" />
-                <AnalyticCard title="Retraso" value="0" detail="Días de lag" icon={Clock} color="text-[hsl(var(--success))]" />
+                <AnalyticCard title="Velocidad" value={analytics ? String(analytics.velocity) : '—'} detail="Tareas/Día" icon={TrendingUp} color="text-[hsl(var(--primary))]" />
+                <AnalyticCard
+                    title="Retraso"
+                    value={analytics ? String(analytics.overdue_days) : '—'}
+                    detail={analytics && analytics.overdue_days > 0 ? "Días de lag" : "Sin retraso"}
+                    icon={Clock}
+                    color={analytics && analytics.overdue_days > 0 ? "text-[hsl(var(--danger))]" : "text-[hsl(var(--success))]"}
+                />
                 <AnalyticCard title="Hitos" value={`${milestones.filter(m => m.is_completed).length}/${milestones.length}`} detail="Metas logradas" icon={Trophy} color="text-yellow-500" />
-                <AnalyticCard title="Riesgo" value="Bajo" detail="Sin bloqueos" icon={AlertCircle} color="text-[hsl(var(--text-secondary))]" />
+                <AnalyticCard
+                    title="Riesgo"
+                    value={analytics ? capitalize(analytics.risk_level) : '—'}
+                    detail={analytics ? analytics.risk_reason : 'Calculando…'}
+                    icon={AlertCircle}
+                    color={analytics?.risk_level === 'alto' ? "text-[hsl(var(--danger))]" : analytics?.risk_level === 'medio' ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--text-secondary))]"}
+                />
             </section>
 
             {/* 3. Línea de Tiempo de Hitos — auto-gestionada */}
@@ -339,6 +373,10 @@ interface AnalyticCardProps {
     color: string;
 }
 
+function capitalize(value: string): string {
+    return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 function AnalyticCard({ title, value, detail, icon: Icon, color }: AnalyticCardProps) {
     return (
         <div className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm hover:shadow-xl transition-all">
@@ -378,8 +416,6 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
             </div>
             <div className="space-y-2">
                 {tasks.slice(0, 4).map((t) => {
-                    const match = t.title.match(/^(\[[^\]]+\]\s*)(.*)$/);
-                    const cleanTitle = match ? match[2] : t.title;
                     return (
                         <div
                             key={t.id}
@@ -395,7 +431,7 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                                 )}
                             />
                             <InlineTextInput
-                                value={cleanTitle}
+                                value={t.title}
                                 onChange={(v) => onTitleSave(t, v)}
                                 placeholder="Título de la tarea..."
                                 className="flex-1 min-w-0"

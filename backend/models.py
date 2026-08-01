@@ -263,6 +263,7 @@ from backend.models_projects import (
     ProjectComment,
     ProjectDocument,
     ProjectInboxState,
+    ProjectMember,
     ProjectMilestone,
     ProjectPhase,
     ProjectTask,

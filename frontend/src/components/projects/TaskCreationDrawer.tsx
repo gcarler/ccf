@@ -2,17 +2,17 @@
 
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { CheckSquare, Type, AlignLeft, Flag, Loader2, User } from 'lucide-react';
+import { CheckSquare, Type, AlignLeft, Flag, Loader2, User, Boxes } from 'lucide-react';
 import PersonaSelect from '@/components/ui/PersonaSelect';
 import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import { PRIORITY_LABELS } from '@/lib/projects/constants';
+import { PRIORITY_LABELS, NODE_OPTIONS } from '@/lib/projects/constants';
 
 interface Props {
     isOpen: boolean;
     defaultStatus?: string;
     onClose: () => void;
-    onSubmit: (data: { title: string; description: string; priority: string; status: string; assignee_id?: string | null }) => Promise<boolean> | Promise<void> | boolean | void;
+    onSubmit: (data: { title: string; description: string; priority: string; status: string; assignee_id?: string | null; node?: string | null }) => Promise<boolean> | Promise<void> | boolean | void;
 }
 
 interface FormValues {
@@ -20,6 +20,7 @@ interface FormValues {
     description: string;
     priority: string;
     assignee_id: string | null;
+    node: string | null;
 }
 
 const PRIORITIES = [
@@ -36,15 +37,17 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
             description: '',
             priority: 'medium',
             assignee_id: null,
+            node: null,
         }
     });
 
     const priority = watch('priority');
     const assigneeId = watch('assignee_id');
+    const node = watch('node');
 
     useEffect(() => {
         if (isOpen) {
-            reset({ title: '', description: '', priority: 'medium', assignee_id: null });
+            reset({ title: '', description: '', priority: 'medium', assignee_id: null, node: null });
         }
     }, [isOpen, reset]);
 
@@ -125,6 +128,41 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                             </button>
                         ))}
                     </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                        <Boxes size={12} /> Nodo Operativo
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {NODE_OPTIONS.map((n) => (
+                            <button
+                                key={n.value}
+                                type="button"
+                                onClick={() => setValue('node', node === n.value ? null : n.value)}
+                                className={clsx(
+                                    "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-wide transition-all",
+                                    node === n.value
+                                        ? "border-transparent text-white shadow-md"
+                                        : "bg-transparent border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                                )}
+                                style={node === n.value ? { backgroundColor: n.value === 'nutrition' ? '#f97316' : 'hsl(var(--primary))' } : undefined}
+                            >
+                                {node !== n.value && <div className={clsx("size-1.5 rounded-full", n.dot)} />}
+                                {n.short}
+                            </button>
+                        ))}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setValue('node', null)}
+                        className={clsx(
+                            "text-2xs font-semibold uppercase tracking-wide transition-colors",
+                            node === null ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+                        )}
+                    >
+                        Sin nodo
+                    </button>
                 </div>
 
                 <div className="space-y-1.5">
