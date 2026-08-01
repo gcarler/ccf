@@ -1,11 +1,12 @@
 """Email Marketing / Newsletter API endpoints (R2-BE). Admin CRUD & Public Subscription/Unsubscription."""
+
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
+from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -45,6 +46,7 @@ def _get_subscriber_or_404(db: Session, site_id: UUID, subscriber_id: UUID) -> m
 
 # ── Public Endpoints ─────────────────────────────────────────────────────────
 
+
 @router.post(
     "/public/subscribe",
     dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
@@ -83,6 +85,7 @@ def public_unsubscribe_endpoint(
 
 
 # ── Admin CRUD Endpoints — Newsletters ──────────────────────────────────────
+
 
 @router.get("/sites/{site_key}/newsletters", response_model=List[schemas.CmsNewsletterRead])
 def list_newsletters(
@@ -163,6 +166,7 @@ def send_newsletter(
 
 
 # ── Admin CRUD Endpoints — Subscribers ──────────────────────────────────────
+
 
 @router.get("/sites/{site_key}/subscribers")
 def list_subscribers(

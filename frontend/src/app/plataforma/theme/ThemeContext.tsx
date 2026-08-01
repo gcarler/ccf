@@ -33,7 +33,7 @@ const themeTokens: Record<ThemeMode, Record<string, string>> = {
         '--surface-2': '222 47% 10%',
         '--surface-3': '222 47% 15%',
         '--border': '217 33% 17%',
-        '--border-glass': '255 255% 255% / 0.05',
+        '--border-glass': '0 0% 100% / 0.05',
         '--shadow-glass': '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
     }
 };

@@ -17,6 +17,7 @@ Tests:
 Cubierto por el cierre de M-12 (alineación defensiva, no unificación de
 layers).
 """
+
 from __future__ import annotations
 
 import pytest

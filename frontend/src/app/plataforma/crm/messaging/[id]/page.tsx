@@ -73,7 +73,7 @@ export default function MessagingDetailPage() {
         };
         loadCampaign();
         return () => controller.abort();
-    }, [authLoading, id, reloadKey, token]);
+    }, [addToast, authLoading, id, reloadKey, token]);
 
     if (authLoading) {
         return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Verificando sesión...</div>;

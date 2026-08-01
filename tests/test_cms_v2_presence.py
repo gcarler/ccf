@@ -1,11 +1,13 @@
 """Tests for CMS v2 Presence Real-Time Collaboration endpoints (WebSocket & REST)."""
+
 import json
 import urllib.parse
+
 import pytest
 from fastapi.testclient import TestClient
 
+from backend.api.cms_v2.presence import _parse_user_from_token, presence_manager
 from backend.app import app
-from backend.api.cms_v2.presence import presence_manager, _parse_user_from_token
 
 
 @pytest.fixture(autouse=True)
@@ -51,8 +53,12 @@ def test_rest_presence_empty():
 def test_websocket_presence_flow():
     """Test WebSocket connection, presence broadcast, and disconnection."""
     client = TestClient(app)
-    token_user1 = urllib.parse.quote(json.dumps({"user_id": "usr-1", "name": "Carlos Gomez", "color": "#10B981", "avatar_initials": "CG"}))
-    token_user2 = urllib.parse.quote(json.dumps({"user_id": "usr-2", "name": "Elena Diaz", "color": "#EF4444", "avatar_initials": "ED"}))
+    token_user1 = urllib.parse.quote(
+        json.dumps({"user_id": "usr-1", "name": "Carlos Gomez", "color": "#10B981", "avatar_initials": "CG"})
+    )
+    token_user2 = urllib.parse.quote(
+        json.dumps({"user_id": "usr-2", "name": "Elena Diaz", "color": "#EF4444", "avatar_initials": "ED"})
+    )
 
     # Client 1 connects
     with client.websocket_connect(f"/api/cms/v2/ws/presence/main/home?token={token_user1}") as ws1:
@@ -70,7 +76,6 @@ def test_websocket_presence_flow():
 
         # Client 2 connects
         with client.websocket_connect(f"/api/cms/v2/ws/presence/main/home?token={token_user2}") as ws2:
-
             data2_ws2 = ws2.receive_json()
             assert data2_ws2["type"] == "presence_update"
             assert len(data2_ws2["presence_users"]) == 2
@@ -92,6 +97,7 @@ def test_websocket_presence_flow():
 
     # Client 1 disconnects when exiting context block
     import time
+
     time.sleep(0.05)
     resp_empty = client.get("/api/cms/v2/sites/main/pages/home/presence")
     assert len(resp_empty.json()["presence_users"]) == 0

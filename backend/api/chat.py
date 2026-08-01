@@ -22,7 +22,8 @@ import uuid as _uuid
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -300,6 +301,83 @@ def _assert_actor_is_active_participant(
 # ── Helpers de serialización / lookup ────────────────────────────────────────
 
 
+def _parse_mentions_raw(raw: str | None) -> list[str] | None:
+    if not raw:
+        return None
+    try:
+        value = json.loads(raw)
+    except (TypeError, ValueError):
+        return None
+    return [str(item) for item in value] if isinstance(value, list) else None
+
+
+def _protected_attachment_url(msg: models.ChatMessage, conversation_id: str | _uuid.UUID | None) -> str | None:
+    """Normalize a chat attachment URL to the authenticated download route."""
+    raw_url = msg.attachment_url
+    if not raw_url or not conversation_id:
+        return raw_url
+    if raw_url.startswith("/api/chat/attachments/"):
+        return raw_url[len("/api") :]
+    prefix = "/static/chat_attachments/"
+    if raw_url.startswith(prefix):
+        suffix = raw_url[len(prefix) :].split("?", 1)[0]
+        parts = suffix.split("/", 1)
+        if len(parts) == 2:
+            sede_bucket, filename = parts
+            return f"/chat/attachments/{conversation_id}/{sede_bucket}/{filename}"
+    return raw_url
+
+
+def _validate_attachment_reference(attachment_url: str | None, conversation_id: str | _uuid.UUID) -> None:
+    """Reject protected attachment references that target another conversation.
+
+    External URLs remain supported for legacy/API clients, but an internal
+    protected URL must be bound to the conversation in which it is sent.
+    """
+    if not attachment_url:
+        return
+    prefixes = ("/chat/attachments/", "/api/chat/attachments/")
+    prefix = next((candidate for candidate in prefixes if attachment_url.startswith(candidate)), None)
+    if prefix is None:
+        return
+    parts = attachment_url[len(prefix) :].split("/", 2)
+    if len(parts) != 3:
+        raise HTTPException(status_code=422, detail="Invalid attachment reference")
+    try:
+        referenced_conversation = _uuid.UUID(parts[0])
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="Invalid attachment reference")
+    if referenced_conversation != _uuid.UUID(str(conversation_id)):
+        raise HTTPException(status_code=422, detail="Invalid attachment reference")
+
+
+def _build_reply_preview(
+    db: Session,
+    reply_to_id: _uuid.UUID | None,
+    room_id: str,
+) -> schemas.ReplyPreview | None:
+    if not reply_to_id:
+        return None
+    reply = (
+        db.query(models.ChatMessage)
+        .filter(
+            models.ChatMessage.id == reply_to_id,
+            models.ChatMessage.room_id == room_id,
+            models.ChatMessage.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not reply:
+        return None
+    sender = db.query(models.Persona).filter(models.Persona.id == reply.sender_id).first()
+    return schemas.ReplyPreview(
+        id=reply.id,
+        sender_name=_persona_display_name(sender),
+        content=reply.content or "",
+        attachment_type=reply.attachment_type,
+    )
+
+
 def _build_admin_message(
     current_user: models.User,
     msg: models.ChatMessage,
@@ -343,7 +421,7 @@ def _build_admin_message(
         content=msg.content,
         created_at=msg.created_at,
         is_read=is_read,
-        attachment_url=msg.attachment_url,
+        attachment_url=_protected_attachment_url(msg, conversation_id),
         attachment_type=msg.attachment_type,
         attachment_name=msg.attachment_name,
         attachment_size=msg.attachment_size,
@@ -614,6 +692,13 @@ def list_direct_messages(
             content=r.content,
             created_at=r.created_at,
             is_read=(r.sender_id == current_user.id or (last_read is not None and r.created_at <= last_read)),
+            attachment_url=_protected_attachment_url(r, conv_id),
+            attachment_type=r.attachment_type,
+            attachment_name=r.attachment_name,
+            attachment_size=r.attachment_size,
+            reply_to_id=r.reply_to_id,
+            reply_preview=_build_reply_preview(db, r.reply_to_id, f"dm_{conv_id}"),
+            mentions=_parse_mentions_raw(r.mentions_raw),
         )
         for r in rows
     ]
@@ -824,6 +909,28 @@ def send_direct_message(
 
     persona = _get_persona(db, current_user)
     sender_name = _persona_display_name(persona)
+    _validate_attachment_reference(payload.attachment_url, conv_id)
+    if payload.reply_to_id:
+        parent = (
+            db.query(models.ChatMessage.id)
+            .filter(
+                models.ChatMessage.id == payload.reply_to_id,
+                models.ChatMessage.room_id == f"dm_{conv_id}",
+                models.ChatMessage.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if parent is None:
+            existing_parent = (
+                db.query(models.ChatMessage.id)
+                .filter(
+                    models.ChatMessage.id == payload.reply_to_id,
+                    models.ChatMessage.deleted_at.is_(None),
+                )
+                .first()
+            )
+            if existing_parent is not None:
+                raise HTTPException(status_code=422, detail="Invalid reply reference")
 
     msg = crud.create_direct_message(db, conv_id, current_user.id, payload.content)
 
@@ -850,18 +957,27 @@ def send_direct_message(
     db.commit()
     db.refresh(msg)
 
+    reply_preview = _build_reply_preview(db, msg.reply_to_id, f"dm_{conv_id}")
+
     # Broadcast via WebSocket (scheduled as background task to avoid RuntimeError
     # from asyncio.get_running_loop in sync endpoint context)
     ws_payload = {
         "event": "direct_message",
-        "conversation_id": conv_id,
+        "conversation_id": str(conv_id),
         "message": {
             "id": str(msg.id),
-            "sender_id": str(current_user.id),
+            "sender_id": str(msg.sender_id),
             "sender_name": sender_name,
             "content": msg.content,
             "created_at": msg.created_at.isoformat(),
             "is_read": False,
+            "attachment_url": _protected_attachment_url(msg, conv_id),
+            "attachment_type": msg.attachment_type,
+            "attachment_name": msg.attachment_name,
+            "attachment_size": msg.attachment_size,
+            "reply_to_id": str(msg.reply_to_id) if msg.reply_to_id else None,
+            "reply_preview": reply_preview.model_dump(mode="json") if reply_preview else None,
+            "mentions": _parse_mentions_raw(msg.mentions_raw),
         },
     }
     background_tasks.add_task(manager.broadcast_event, ws_payload, room=f"dm_{conv_id}")
@@ -871,11 +987,12 @@ def send_direct_message(
         sender_name=sender_name,
         content=msg.content,
         created_at=msg.created_at,
-        attachment_url=msg.attachment_url,
+        attachment_url=_protected_attachment_url(msg, conv_id),
         attachment_type=msg.attachment_type,
         attachment_name=msg.attachment_name,
         attachment_size=msg.attachment_size,
         reply_to_id=msg.reply_to_id,
+        reply_preview=reply_preview,
         mentions=[str(m) for m in payload.mentions] if payload.mentions else None,
     )
 
@@ -969,9 +1086,73 @@ def delete_chat_message_endpoint(
     return {"ok": True}
 
 
+@router.get("/chat/attachments/{conversation_id}/{sede_bucket}/{filename}")
+def download_chat_attachment(
+    conversation_id: _uuid.UUID,
+    sede_bucket: str,
+    filename: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
+):
+    """Serve a direct-chat attachment only to conversation participants.
+
+    Attachments are deliberately not exposed through the public static mount.
+    The conversation UUID in the URL is an address, not an authorization
+    primitive: access is checked against ``ConversationParticipant`` and the
+    file must be referenced by a live message in that conversation.
+    """
+    import os
+    import re as _re
+
+    if not _re.fullmatch(r"[0-9a-fA-F-]{36}", sede_bucket) and sede_bucket != "_global":
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    if not _re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,254}", filename):
+        raise HTTPException(status_code=404, detail="Attachment not found")
+
+    participant = (
+        db.query(models.ConversationParticipant.id)
+        .filter(
+            models.ConversationParticipant.conversation_id == conversation_id,
+            models.ConversationParticipant.user_id == current_user.id,
+        )
+        .first()
+    )
+    if participant is None:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+
+    actor_sede = get_user_sede_id(db, current_user.id)
+    if actor_sede is not None and sede_bucket != str(actor_sede):
+        raise HTTPException(status_code=404, detail="Attachment not found")
+
+    protected_url = f"/chat/attachments/{conversation_id}/{sede_bucket}/{filename}"
+    api_protected_url = f"/api{protected_url}"
+    legacy_url = f"/static/chat_attachments/{sede_bucket}/{filename}"
+    message = (
+        db.query(models.ChatMessage.id)
+        .filter(
+            models.ChatMessage.room_id == f"dm_{conversation_id}",
+            models.ChatMessage.deleted_at.is_(None),
+            models.ChatMessage.attachment_url.in_([protected_url, api_protected_url, legacy_url]),
+        )
+        .first()
+    )
+    if message is None:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+
+    uploads_root = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "static", "chat_attachments")
+    )
+    filepath = os.path.normpath(os.path.join(uploads_root, sede_bucket, filename))
+    if not filepath.startswith(uploads_root + os.sep) or not os.path.isfile(filepath):
+        raise HTTPException(status_code=404, detail="Attachment not found")
+
+    return FileResponse(filepath, filename=filename)
+
+
 @router.post("/chat/upload-attachment")
 async def upload_chat_attachment(
     file: UploadFile = File(...),
+    conversation_id: Optional[_uuid.UUID] = Form(None),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "edit")),
 ):
@@ -1066,7 +1247,25 @@ async def upload_chat_attachment(
     with open(filepath, "wb") as f:
         f.write(contents)
 
-    url = f"/static/chat_attachments/{sede_bucket}/{filename}"
+    if conversation_id is not None:
+        participant = (
+            db.query(models.ConversationParticipant.id)
+            .filter(
+                models.ConversationParticipant.conversation_id == conversation_id,
+                models.ConversationParticipant.user_id == current_user.id,
+            )
+            .first()
+        )
+        if participant is None:
+            os.remove(filepath)
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        url = f"/chat/attachments/{conversation_id}/{sede_bucket}/{filename}"
+    else:
+        # Backward-compatible upload response for callers that upload before
+        # selecting a conversation. Without a conversation binding there is
+        # intentionally no downloadable URL; the canonical chat UI always
+        # supplies conversation_id.
+        url = ""
 
     return {
         "url": url,

@@ -1,27 +1,30 @@
 """Cross-cutting comment endpoints: attachments and personal comment center."""
+
 from __future__ import annotations
 
 import os
 import uuid as _uuid
-from typing import Any, List, Optional
-from uuid import UUID
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from sqlalchemy import String, cast, literal
+from sqlalchemy import String, cast, literal, not_, or_, select
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.schemas.projects import CommentAttachment
 from backend.core.database import get_db
 from backend.core.permissions import get_current_active_user
 from backend.crud.crm import get_user_sede_id
+from backend.schemas.projects import CommentAttachment
 
 router = APIRouter()
 
 
 ALLOWED_TYPES = {
-    "image/jpeg": "image", "image/png": "image", "image/gif": "image",
-    "image/webp": "image", "image/svg+xml": "image",
+    "image/jpeg": "image",
+    "image/png": "image",
+    "image/gif": "image",
+    "image/webp": "image",
+    "image/svg+xml": "image",
     "application/pdf": "pdf",
     "application/msword": "document",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "document",
@@ -29,8 +32,11 @@ ALLOWED_TYPES = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "document",
     "text/plain": "document",
     "text/csv": "document",
-    "video/mp4": "video", "video/webm": "video",
-    "audio/mpeg": "audio", "audio/ogg": "audio", "audio/wav": "audio",
+    "video/mp4": "video",
+    "video/webm": "video",
+    "audio/mpeg": "audio",
+    "audio/ogg": "audio",
+    "audio/wav": "audio",
 }
 
 
@@ -71,6 +77,7 @@ async def upload_comment_attachment(
 
 def _persona_id(current_user: models.User, db: Session):
     from backend.crud.projects import get_user_persona_id
+
     return get_user_persona_id(db, current_user.id) or current_user.id
 
 
@@ -85,6 +92,15 @@ def _mention_filter(column, persona_id: str, dialect_name: str):
         return column.contains([str(persona_id)])
     # SQLite / other engines: JSON is stored as text.
     return cast(column, String).ilike(f"%{persona_id}%")
+
+
+def _not_mention_filter(column, persona_id: str, dialect_name: str):
+    """Exclude comments where ``persona_id`` appears in the ``mentions`` column.
+
+    NULL-safe counterpart of :func:`_mention_filter`: rows with no mentions
+    must be kept, so the negation is guarded with ``column IS NULL``.
+    """
+    return or_(column.is_(None), not_(_mention_filter(column, persona_id, dialect_name)))
 
 
 def _base_columns_project(module_type: str):
@@ -127,27 +143,30 @@ def _build_comment_rows(db: Session, rows: list) -> List[schemas.ProjectCommentI
     authors_map: dict = {}
     if author_ids:
         from backend.models import Persona
+
         authors_map = {
             p.id: (getattr(p, "nombre_completo", None) or getattr(p, "full_name", None) or "Usuario")
             for p in db.query(Persona).filter(Persona.id.in_(author_ids)).all()
         }
     result = []
     for row in rows:
-        result.append(schemas.ProjectCommentItem(
-            id=row.id,
-            project_id=str(row.project_id) if row.project_id is not None else None,
-            task_id=str(row.task_id) if row.task_id is not None else None,
-            content=row.content,
-            author_id=str(row.author_id) if row.author_id is not None else None,
-            author_name=authors_map.get(row.author_id, "Usuario"),
-            is_resolved=row.is_resolved,
-            created_at=row.created_at,
-            updated_at=row.updated_at,
-            attachments=row.attachments or [],
-            mentions=[str(m) for m in (row.mentions or [])],
-            module_type=row.module_type,
-            context_title=row.context_title,
-        ))
+        result.append(
+            schemas.ProjectCommentItem(
+                id=row.id,
+                project_id=str(row.project_id) if row.project_id is not None else None,
+                task_id=str(row.task_id) if row.task_id is not None else None,
+                content=row.content,
+                author_id=str(row.author_id) if row.author_id is not None else None,
+                author_name=authors_map.get(row.author_id, "Usuario"),
+                is_resolved=row.is_resolved,
+                created_at=row.created_at,
+                updated_at=row.updated_at,
+                attachments=row.attachments or [],
+                mentions=[str(m) for m in (row.mentions or [])],
+                module_type=row.module_type,
+                context_title=row.context_title,
+            )
+        )
     return result
 
 
@@ -166,54 +185,60 @@ def list_my_created_comments(
     persona = _persona_id(current_user, db)
     user_sede = get_user_sede_id(db, current_user.id)
     dialect = db.bind.dialect.name if db.bind and db.bind.dialect else "sqlite"
-    queries = []
+    selects = []
 
     if type_filter in (None, "project"):
-        project_q = db.query(*_base_columns_project("project")).join(
-            models.Project, models.Project.id == models.ProjectComment.project_id
-        ).filter(
-            models.ProjectComment.author_id == persona,
-            models.ProjectComment.deleted_at.is_(None),
-            models.Project.deleted_at.is_(None),
-            models.ProjectComment.task_id.is_(None),
+        project_s = (
+            select(*_base_columns_project("project"))
+            .join(models.Project, models.Project.id == models.ProjectComment.project_id)
+            .where(
+                models.ProjectComment.author_id == persona,
+                models.ProjectComment.deleted_at.is_(None),
+                models.Project.deleted_at.is_(None),
+                models.ProjectComment.task_id.is_(None),
+                _not_mention_filter(models.ProjectComment.mentions, str(persona), dialect),
+            )
         )
         if user_sede:
-            project_q = project_q.filter(models.Project.sede_id == user_sede)
-        queries.append(project_q)
+            project_s = project_s.where(models.Project.sede_id == user_sede)
+        selects.append(project_s)
 
     if type_filter in (None, "activity"):
-        activity_q = db.query(*_base_columns_project("activity")).join(
-            models.Project, models.Project.id == models.ProjectComment.project_id
-        ).filter(
-            models.ProjectComment.author_id == persona,
-            models.ProjectComment.deleted_at.is_(None),
-            models.Project.deleted_at.is_(None),
-            models.ProjectComment.task_id.isnot(None),
+        activity_s = (
+            select(*_base_columns_project("activity"))
+            .join(models.Project, models.Project.id == models.ProjectComment.project_id)
+            .where(
+                models.ProjectComment.author_id == persona,
+                models.ProjectComment.deleted_at.is_(None),
+                models.Project.deleted_at.is_(None),
+                models.ProjectComment.task_id.isnot(None),
+                _not_mention_filter(models.ProjectComment.mentions, str(persona), dialect),
+            )
         )
         if user_sede:
-            activity_q = activity_q.filter(models.Project.sede_id == user_sede)
-        queries.append(activity_q)
+            activity_s = activity_s.where(models.Project.sede_id == user_sede)
+        selects.append(activity_s)
 
     if type_filter in (None, "agenda"):
-        agenda_q = db.query(*_base_columns_agenda()).join(
-            models.EventoAgenda, models.EventoAgenda.id == models.AgendaEventComment.event_id
-        ).filter(
-            models.AgendaEventComment.author_id == persona,
-            models.AgendaEventComment.deleted_at.is_(None),
-            models.EventoAgenda.deleted_at.is_(None),
+        agenda_s = (
+            select(*_base_columns_agenda())
+            .join(models.EventoAgenda, models.EventoAgenda.id == models.AgendaEventComment.event_id)
+            .where(
+                models.AgendaEventComment.author_id == persona,
+                models.AgendaEventComment.deleted_at.is_(None),
+                models.EventoAgenda.deleted_at.is_(None),
+                _not_mention_filter(models.AgendaEventComment.mentions, str(persona), dialect),
+            )
         )
         if user_sede:
-            agenda_q = agenda_q.filter(models.EventoAgenda.sede_id == user_sede)
-        queries.append(agenda_q)
+            agenda_s = agenda_s.where(models.EventoAgenda.sede_id == user_sede)
+        selects.append(agenda_s)
 
-    if not queries:
+    if not selects:
         return []
 
-    union_q = queries[0]
-    for q in queries[1:]:
-        union_q = union_q.union_all(q)
-    subq = union_q.subquery()
-    rows = db.query(subq).order_by(subq.c.created_at.desc()).offset(offset).limit(limit).all()
+    sub = selects[0].union_all(*selects[1:]).subquery()
+    rows = db.execute(select(sub).order_by(sub.c.created_at.desc()).offset(offset).limit(limit)).all()
     return _build_comment_rows(db, rows)
 
 
@@ -232,56 +257,58 @@ def list_my_mentions(
     persona = _persona_id(current_user, db)
     user_sede = get_user_sede_id(db, current_user.id)
     dialect = db.bind.dialect.name if db.bind and db.bind.dialect else "sqlite"
-    queries = []
+    selects = []
 
     if type_filter in (None, "project"):
-        project_q = db.query(*_base_columns_project("project")).join(
-            models.Project, models.Project.id == models.ProjectComment.project_id
-        ).filter(
-            models.ProjectComment.deleted_at.is_(None),
-            models.Project.deleted_at.is_(None),
-            models.ProjectComment.task_id.is_(None),
+        project_s = (
+            select(*_base_columns_project("project"))
+            .join(models.Project, models.Project.id == models.ProjectComment.project_id)
+            .where(
+                models.ProjectComment.deleted_at.is_(None),
+                models.Project.deleted_at.is_(None),
+                models.ProjectComment.task_id.is_(None),
+                _mention_filter(models.ProjectComment.mentions, str(persona), dialect),
+                models.ProjectComment.author_id != persona,
+            )
         )
         if user_sede:
-            project_q = project_q.filter(models.Project.sede_id == user_sede)
-        project_q = project_q.filter(_mention_filter(models.ProjectComment.mentions, str(persona), dialect))
-        # Exclude self-mentions server side.
-        project_q = project_q.filter(models.ProjectComment.author_id != persona)
-        queries.append(project_q)
+            project_s = project_s.where(models.Project.sede_id == user_sede)
+        selects.append(project_s)
 
     if type_filter in (None, "activity"):
-        activity_q = db.query(*_base_columns_project("activity")).join(
-            models.Project, models.Project.id == models.ProjectComment.project_id
-        ).filter(
-            models.ProjectComment.deleted_at.is_(None),
-            models.Project.deleted_at.is_(None),
-            models.ProjectComment.task_id.isnot(None),
+        activity_s = (
+            select(*_base_columns_project("activity"))
+            .join(models.Project, models.Project.id == models.ProjectComment.project_id)
+            .where(
+                models.ProjectComment.deleted_at.is_(None),
+                models.Project.deleted_at.is_(None),
+                models.ProjectComment.task_id.isnot(None),
+                _mention_filter(models.ProjectComment.mentions, str(persona), dialect),
+                models.ProjectComment.author_id != persona,
+            )
         )
         if user_sede:
-            activity_q = activity_q.filter(models.Project.sede_id == user_sede)
-        activity_q = activity_q.filter(_mention_filter(models.ProjectComment.mentions, str(persona), dialect))
-        activity_q = activity_q.filter(models.ProjectComment.author_id != persona)
-        queries.append(activity_q)
+            activity_s = activity_s.where(models.Project.sede_id == user_sede)
+        selects.append(activity_s)
 
     if type_filter in (None, "agenda"):
-        agenda_q = db.query(*_base_columns_agenda()).join(
-            models.EventoAgenda, models.EventoAgenda.id == models.AgendaEventComment.event_id
-        ).filter(
-            models.AgendaEventComment.deleted_at.is_(None),
-            models.EventoAgenda.deleted_at.is_(None),
+        agenda_s = (
+            select(*_base_columns_agenda())
+            .join(models.EventoAgenda, models.EventoAgenda.id == models.AgendaEventComment.event_id)
+            .where(
+                models.AgendaEventComment.deleted_at.is_(None),
+                models.EventoAgenda.deleted_at.is_(None),
+                _mention_filter(models.AgendaEventComment.mentions, str(persona), dialect),
+                models.AgendaEventComment.author_id != persona,
+            )
         )
         if user_sede:
-            agenda_q = agenda_q.filter(models.EventoAgenda.sede_id == user_sede)
-        agenda_q = agenda_q.filter(_mention_filter(models.AgendaEventComment.mentions, str(persona), dialect))
-        agenda_q = agenda_q.filter(models.AgendaEventComment.author_id != persona)
-        queries.append(agenda_q)
+            agenda_s = agenda_s.where(models.EventoAgenda.sede_id == user_sede)
+        selects.append(agenda_s)
 
-    if not queries:
+    if not selects:
         return []
 
-    union_q = queries[0]
-    for q in queries[1:]:
-        union_q = union_q.union_all(q)
-    subq = union_q.subquery()
-    rows = db.query(subq).order_by(subq.c.created_at.desc()).offset(offset).limit(limit).all()
+    sub = selects[0].union_all(*selects[1:]).subquery()
+    rows = db.execute(select(sub).order_by(sub.c.created_at.desc()).offset(offset).limit(limit)).all()
     return _build_comment_rows(db, rows)

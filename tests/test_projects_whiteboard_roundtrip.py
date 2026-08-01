@@ -90,6 +90,75 @@ class TestWhiteboardJSONValidation:
         assert resp.status_code == 200, resp.text
         assert resp.json()["elements_json"] == "[]"
 
+    def test_post_whiteboard_with_scalar_json_rejected(self, client, db_session):
+        """RED→GREEN: a bare JSON scalar ('"hola"', 42, true) is not a board."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+
+        for scalar in ('"hola"', "42", "true"):
+            resp = client.post(
+                f"/api/projects/{proj.id}/whiteboard",
+                json={"title": "Scalar", "elements_json": scalar},
+                headers=headers,
+            )
+            assert resp.status_code == 400, (
+                f"Scalar JSON {scalar!r} must be rejected, got {resp.status_code}: {resp.text}"
+            )
+
+    def test_post_whiteboard_with_primitive_element_rejected(self, client, db_session):
+        """RED→GREEN: array items must be objects (fabric shapes), not primitives."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+
+        resp = client.post(
+            f"/api/projects/{proj.id}/whiteboard",
+            json={"title": "Primitive", "elements_json": '[{"type": "rectangle"}, 42]'},
+            headers=headers,
+        )
+        assert resp.status_code == 400, f"Primitive array item must be rejected, got {resp.status_code}: {resp.text}"
+
+    def test_post_whiteboard_with_fabric_tojson_shape_accepted(self, client, db_session):
+        """fabric.Canvas.toJSON() shape ({"version": ..., "objects": [...]})
+        is what the real client sends — must round-trip."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        payload = _json.dumps({"version": "7.2.0", "objects": [{"type": "rect", "left": 0, "top": 0}]})
+
+        resp = client.post(
+            f"/api/projects/{proj.id}/whiteboard",
+            json={"title": "Fabric", "elements_json": payload},
+            headers=headers,
+        )
+        assert resp.status_code == 200, resp.text
+
+    def test_post_whiteboard_empty_string_coerced_to_empty_board(self, client, db_session):
+        """Missing/empty elements_json is coerced to '[]' (never stored as an
+        empty string), while whitespace-only is rejected explicitly and the
+        literal 'undefined' is still rejected."""
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+
+        resp = client.post(
+            f"/api/projects/{proj.id}/whiteboard",
+            json={"title": "Empty str", "elements_json": ""},
+            headers=headers,
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["elements_json"] == "[]"
+
+        resp = client.post(
+            f"/api/projects/{proj.id}/whiteboard",
+            json={"title": "WS str", "elements_json": "   "},
+            headers=headers,
+        )
+        assert resp.status_code == 400, (
+            f"Whitespace-only elements_json must be rejected, got {resp.status_code}: {resp.text}"
+        )
+
 
 class TestWhiteboardRoundTrip:
     """POST → GET must return identical content."""
@@ -203,6 +272,144 @@ class TestWhiteboardSoftDelete:
         assert board_row is not None, "Soft delete removed the row (should NOT)"
         assert board_row.deleted_at is not None, "deleted_at not stamped"
         assert _json.loads(board_row.elements_json) == elements
+
+    def test_soft_deleted_whiteboard_restored_on_resave(self, client, db_session):
+        """RED→GREEN: a save after soft delete must restore visibility.
+
+        ``project_id`` is UNIQUE, so a second POST cannot create a fresh row;
+        the existing (soft-deleted) row must be restored (deleted_at = NULL)
+        and serve the new content. Before the fix the POST returned 200 into a
+        hidden row and GET kept returning null (lost data from the user's POV).
+        """
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+
+        client.post(
+            f"/api/projects/{proj.id}/whiteboard",
+            json={"title": "Borrada", "elements_json": _json.dumps([{"type": "rectangle", "id": "old"}])},
+            headers=headers,
+        )
+        client.delete(f"/api/projects/{proj.id}/whiteboard", headers=headers)
+
+        post = client.post(
+            f"/api/projects/{proj.id}/whiteboard",
+            json={"title": "Restaurada", "elements_json": _json.dumps([{"type": "i-text", "text": "nuevo"}])},
+            headers=headers,
+        )
+        assert post.status_code == 200, post.text
+
+        get = client.get(f"/api/projects/{proj.id}/whiteboard", headers=headers)
+        assert get.status_code == 200
+        assert get.json() is not None, "GET must return the restored board"
+        assert _json.loads(get.json()["elements_json"]) == [{"type": "i-text", "text": "nuevo"}]
+        assert get.json()["title"] == "Restaurada"
+
+        listing = client.get("/api/projects/whiteboards", headers=headers)
+        ids = [b["id"] for b in listing.json()]
+        assert get.json()["id"] in ids, "Restored board must appear in active listings"
+
+
+class TestWhiteboardListingPagination:
+    """The listing endpoint is bounded by limit/offset."""
+
+    def test_listing_respects_limit_and_offset(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        headers = auth_headers(client)
+        from datetime import datetime, timedelta, timezone
+
+        base = datetime.now(timezone.utc)
+        for i in range(5):
+            proj = create_project_factory(db_session)
+            create_whiteboard_factory(
+                db_session,
+                proj.id,
+                title="Pizarra %d" % i,
+                updated_at=base - timedelta(minutes=5 - i),
+            )
+
+        full = client.get("/api/projects/whiteboards", headers=headers)
+        assert full.status_code == 200
+        assert len(full.json()) == 5
+
+        page = client.get("/api/projects/whiteboards?limit=2&offset=0", headers=headers)
+        assert page.status_code == 200
+        assert len(page.json()) == 2
+        assert [b["id"] for b in page.json()] == [b["id"] for b in full.json()[:2]]
+
+        page2 = client.get("/api/projects/whiteboards?limit=2&offset=2", headers=headers)
+        assert [b["id"] for b in page2.json()] == [b["id"] for b in full.json()[2:4]]
+
+    def test_listing_rejects_invalid_pagination(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        headers = auth_headers(client)
+
+        resp = client.get("/api/projects/whiteboards?limit=0", headers=headers)
+        assert resp.status_code == 422, resp.status_code
+
+        resp = client.get("/api/projects/whiteboards?limit=501", headers=headers)
+        assert resp.status_code == 422, resp.status_code
+
+
+class TestWhiteboardThumbnail:
+    """Thumbnail upload persists a storage URL on the whiteboard row."""
+
+    # 1x1 transparent PNG
+    _PNG_BYTES = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+
+    def test_upload_thumbnail_returns_url_and_persists(self, client, db_session):
+        import base64
+
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        client.post(
+            f"/api/projects/{proj.id}/whiteboard",
+            json={"title": "Thumb", "elements_json": "[]"},
+            headers=headers,
+        )
+
+        png = base64.b64decode(self._PNG_BYTES)
+        resp = client.post(
+            f"/api/projects/{proj.id}/whiteboard/thumbnail",
+            headers=headers,
+            files={"file": ("thumb.png", png, "image/png")},
+        )
+        assert resp.status_code == 200, resp.text
+        url = resp.json().get("thumbnail_url")
+        assert url and url.startswith("/api/static/projects/whiteboards/"), url
+
+        get = client.get(f"/api/projects/{proj.id}/whiteboard", headers=headers)
+        assert get.json()["thumbnail_url"] == url
+
+    def test_upload_thumbnail_rejects_non_image(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+        client.post(
+            f"/api/projects/{proj.id}/whiteboard",
+            json={"title": "Thumb", "elements_json": "[]"},
+            headers=headers,
+        )
+
+        resp = client.post(
+            f"/api/projects/{proj.id}/whiteboard/thumbnail",
+            headers=headers,
+            files={"file": ("note.txt", b"not an image", "text/plain")},
+        )
+        assert resp.status_code == 400, resp.text
+
+    def test_upload_thumbnail_404_when_no_board(self, client, db_session):
+        _, _, sede = seed_admin(db_session)
+        proj = create_project_factory(db_session)
+        headers = auth_headers(client)
+
+        resp = client.post(
+            f"/api/projects/{proj.id}/whiteboard/thumbnail",
+            headers=headers,
+            files={"file": ("thumb.png", self._PNG_BYTES.encode(), "image/png")},
+        )
+        assert resp.status_code == 404, resp.text
 
 
 class TestWhiteboardAuth:

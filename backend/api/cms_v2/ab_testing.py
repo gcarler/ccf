@@ -1,4 +1,5 @@
 """A/B Testing of Sections API endpoints (R3-BE). Admin CRUD, Event Recording, Results, Apply Winner."""
+
 from __future__ import annotations
 
 import logging
@@ -35,6 +36,7 @@ def _get_ab_test_or_404(db: Session, site_id: UUID, test_id: UUID) -> models.Cms
 
 # ── Public Endpoints ─────────────────────────────────────────────────────────
 
+
 @router.get(
     "/public/sites/{site_key}/ab-tests/active",
     response_model=List[schemas.CmsAbTestRead],
@@ -50,6 +52,7 @@ def get_public_active_ab_tests(
 
 
 # ── Event Recording ──────────────────────────────────────────────────────────
+
 
 @router.post(
     "/sites/{site_key}/ab-tests/{id}/record-event",
@@ -70,6 +73,7 @@ def record_ab_test_event(
 
 
 # ── Admin CRUD Endpoints ─────────────────────────────────────────────────────
+
 
 @router.get("/sites/{site_key}/ab-tests", response_model=List[schemas.CmsAbTestRead])
 def list_ab_tests(

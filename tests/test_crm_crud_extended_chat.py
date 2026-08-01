@@ -3,6 +3,7 @@
 Covers the non-trivial DM logic: conversation creation, message posting,
 compound cursor pagination, unread counters, and soft-delete semantics.
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
@@ -150,11 +151,7 @@ def test_mark_conversation_read_updates_participant(db_session):
     _commit(db_session)
 
     mark_conversation_read(db_session, conv.id, u1.id)
-    cp = (
-        db_session.query(models.ConversationParticipant)
-        .filter_by(conversation_id=conv.id, user_id=u1.id)
-        .first()
-    )
+    cp = db_session.query(models.ConversationParticipant).filter_by(conversation_id=conv.id, user_id=u1.id).first()
     assert cp.last_read_at is not None
 
 

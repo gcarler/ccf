@@ -2,6 +2,7 @@
 
 Extracted from the monolithic ``cms_v2/__init__.py``.
 """
+
 from __future__ import annotations
 
 import logging
@@ -199,7 +200,9 @@ def list_posts(
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    items, total = crud.list_cms_posts(db, site.id, skip=skip, limit=limit, status=status, category_id=category_id, tag_id=tag_id)
+    items, total = crud.list_cms_posts(
+        db, site.id, skip=skip, limit=limit, status=status, category_id=category_id, tag_id=tag_id
+    )
     post_ids = [post.id for post in items]
     cats_by_post = crud.get_posts_categories_batch(db, post_ids)
     tags_by_post = crud.get_posts_tags_batch(db, post_ids)
@@ -265,7 +268,13 @@ def patch_post(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_post_or_404(db, site.id, slug)
-    if payload.status is not None and payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
+    if payload.status is not None and payload.status.strip().lower() not in {
+        "draft",
+        "in_review",
+        "approved",
+        "published",
+        "archived",
+    }:
         raise InvalidStatusError()
     try:
         updated = crud.update_cms_post(db, row, payload, current_user.id, actor_user_id=str(current_user.id))
@@ -314,7 +323,15 @@ def list_posts_by_category(
     _validate_canonical_category(category)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     _ensure_canonical_category(db, site.id, category)
-    items, total = crud.list_cms_posts_by_category(db, site_id=site.id, category_slug=category, skip=skip, limit=limit, status=status, include_archived=include_archived)
+    items, total = crud.list_cms_posts_by_category(
+        db,
+        site_id=site.id,
+        category_slug=category,
+        skip=skip,
+        limit=limit,
+        status=status,
+        include_archived=include_archived,
+    )
     post_ids = [post.id for post in items]
     cats_by_post = crud.get_posts_categories_batch(db, post_ids)
     tags_by_post = crud.get_posts_tags_batch(db, post_ids)
@@ -401,7 +418,13 @@ def patch_post_by_category(
     row = crud.get_cms_post_by_slug_and_category(db, site.id, slug, category)
     if not row:
         raise PostNotFoundError()
-    if payload.status is not None and payload.status.strip().lower() not in {"draft", "in_review", "approved", "published", "archived"}:
+    if payload.status is not None and payload.status.strip().lower() not in {
+        "draft",
+        "in_review",
+        "approved",
+        "published",
+        "archived",
+    }:
         raise InvalidStatusError()
     if payload.category_ids is not None:
         raise CmsValidationError("Cannot change canonical category", error_code="cannot_change_canonical_category")

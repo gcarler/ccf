@@ -14,6 +14,7 @@ import uuid as _uuid
 from datetime import datetime, timezone
 
 from backend import models
+from backend.api.messaging import _authorize_requested_rooms
 from backend.core.permissions import check_ws_module_access
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
@@ -82,6 +83,58 @@ def test_soft_delete_log_via_orm(client, db_session):
 
 
 # ── C-03: WebSocket permission check ─────────────────────────────────────
+
+
+def test_ws_dm_rooms_require_conversation_participation(db_session):
+    """Private DM rooms are authorized by participant membership, not UUID knowledge."""
+    user, _, _ = seed_admin(db_session, email="ws-room-owner@example.com")
+    allowed_conversation = models.Conversation(id=_uuid.uuid4())
+    denied_conversation_id = _uuid.uuid4()
+    db_session.add(allowed_conversation)
+    db_session.flush()
+    db_session.add(
+        models.ConversationParticipant(
+            conversation_id=allowed_conversation.id,
+            user_id=user.id,
+        )
+    )
+    db_session.commit()
+
+    rooms = _authorize_requested_rooms(
+        db_session,
+        user,
+        [
+            f"dm_{allowed_conversation.id}",
+            f"dm_{denied_conversation_id}",
+            "general",
+            "not-a-room",
+        ],
+    )
+
+    assert f"dm_{allowed_conversation.id}" in rooms
+    assert f"dm_{denied_conversation_id}" not in rooms
+    assert "general" in rooms
+    assert "not-a-room" not in rooms
+
+
+def test_ws_dm_rooms_reject_inherited_cross_sede_conversation(db_session):
+    """Realtime room authorization also enforces the HTTP tenant boundary."""
+    user_a, persona_a, sede_a = seed_admin(db_session, email="ws-sede-a@example.com")
+    user_b, persona_b, sede_b = seed_admin(db_session, email="ws-sede-b@example.com")
+    conversation = models.Conversation(id=_uuid.uuid4())
+    db_session.add(conversation)
+    db_session.flush()
+    db_session.add_all(
+        [
+            models.ConversationParticipant(conversation_id=conversation.id, user_id=user_a.id),
+            models.ConversationParticipant(conversation_id=conversation.id, user_id=user_b.id),
+        ]
+    )
+    db_session.commit()
+
+    rooms = _authorize_requested_rooms(db_session, user_a, [f"dm_{conversation.id}"])
+
+    assert rooms == []
 
 
 def test_check_ws_module_access_allows_admin(db_session):

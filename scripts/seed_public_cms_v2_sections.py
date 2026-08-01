@@ -128,10 +128,7 @@ def _media_lookup(db: Any) -> Any:
     """Return a helper that prefers existing CmsMediaItem URLs."""
     try:
         rows = (
-            db.query(models.CmsMediaItem)
-            .options(lazyload("*"))
-            .filter(models.CmsMediaItem.url.like("%/cms/%"))
-            .all()
+            db.query(models.CmsMediaItem).options(lazyload("*")).filter(models.CmsMediaItem.url.like("%/cms/%")).all()
         )
         urls = [r.url for r in rows]
     except Exception:
@@ -205,12 +202,7 @@ def _localize_external_images(db: Any, sections: list[dict[str, Any]]) -> list[d
     reference external placeholder images.
     """
     media_by_url_hash: dict[str, models.CmsMediaItem] = {}
-    for m in (
-        db.query(models.CmsMediaItem)
-        .options(lazyload("*"))
-        .filter(models.CmsMediaItem.filename.like("%"))
-        .all()
-    ):
+    for m in db.query(models.CmsMediaItem).options(lazyload("*")).filter(models.CmsMediaItem.filename.like("%")).all():
         media_by_url_hash[m.filename] = m
 
     for spec in sections:
@@ -876,10 +868,7 @@ def run(site_key: str = "ccf") -> int:
 
             existing_sections = {
                 s.section_key: s
-                for s in db.query(models.CmsSection)
-                .options(lazyload("*"))
-                .filter_by(page_id=_value(page, "id"))
-                .all()
+                for s in db.query(models.CmsSection).options(lazyload("*")).filter_by(page_id=_value(page, "id")).all()
             }
             desired_keys = {s["key"] for s in sections}
 

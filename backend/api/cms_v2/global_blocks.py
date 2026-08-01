@@ -6,6 +6,7 @@ across multiple pages. This module holds their CRUD endpoints; the runtime
 guard ``get_allowed_section_types`` (consulted by ``create_global_block``)
 lives in ``section_types.py``.
 """
+
 from __future__ import annotations
 
 import logging

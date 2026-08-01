@@ -3,6 +3,7 @@ CMS V2 Coverage Tests — 28% -> 70%+
 
 Exercises ALL CMS v2 endpoints with real data.
 """
+
 import uuid
 
 import pytest
@@ -50,11 +51,21 @@ class TestPages:
         slug = f"page-{uuid.uuid4().hex[:6]}"
         c.post("/api/cms/v2/sites/faro/pages", json={"slug": slug, "title": "T"}, headers=h)
         sid = f"sec-{uuid.uuid4().hex[:6]}"
-        resp = c.post(f"/api/cms/v2/sites/faro/pages/{slug}/sections", json={"section_key": sid, "section_type": "hero", "title": "T"}, headers=h)
+        resp = c.post(
+            f"/api/cms/v2/sites/faro/pages/{slug}/sections",
+            json={"section_key": sid, "section_type": "hero", "title": "T"},
+            headers=h,
+        )
         assert _ok(resp.status_code)
         assert _ok(c.get(f"/api/cms/v2/sites/faro/pages/{slug}/sections", headers=h).status_code)
-        assert _ok(c.patch(f"/api/cms/v2/sites/faro/pages/{slug}/sections/{sid}", json={"title": "U"}, headers=h).status_code)
-        assert _ok(c.put(f"/api/cms/v2/sites/faro/pages/{slug}/sections/reorder", json={"section_ids": []}, headers=h).status_code)
+        assert _ok(
+            c.patch(f"/api/cms/v2/sites/faro/pages/{slug}/sections/{sid}", json={"title": "U"}, headers=h).status_code
+        )
+        assert _ok(
+            c.put(
+                f"/api/cms/v2/sites/faro/pages/{slug}/sections/reorder", json={"section_ids": []}, headers=h
+            ).status_code
+        )
         assert _ok(c.delete(f"/api/cms/v2/sites/faro/pages/{slug}/sections/{sid}", headers=h).status_code)
 
 
@@ -76,7 +87,9 @@ class TestMenus:
         assert _ok(c.get(f"/api/cms/v2/sites/faro/menus/{key}/items", headers=h).status_code)
         resp = c.post(f"/api/cms/v2/sites/faro/menus/{key}/items", json={"label": "L", "url": "/u"}, headers=h)
         assert _ok(resp.status_code)
-        assert _ok(c.put(f"/api/cms/v2/sites/faro/menus/{key}/items/reorder", json={"item_ids": []}, headers=h).status_code)
+        assert _ok(
+            c.put(f"/api/cms/v2/sites/faro/menus/{key}/items/reorder", json={"item_ids": []}, headers=h).status_code
+        )
 
 
 class TestThemes:

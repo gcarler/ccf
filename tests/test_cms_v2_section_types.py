@@ -112,11 +112,7 @@ class TestCreateSectionType:
         assert body["is_active"] is True
 
         # Persisted in DB.
-        row = (
-            db_session.query(models.CmsSectionType)
-            .filter_by(name="custom_widget")
-            .first()
-        )
+        row = db_session.query(models.CmsSectionType).filter_by(name="custom_widget").first()
         assert row is not None
         assert row.description == "editor's pick"
 
@@ -155,9 +151,7 @@ class TestPatchSectionType:
         assert body["description"] == "New desc"
         assert body["is_active"] is False
 
-    def test_patch_partial_only_touches_supplied_fields(
-        self, db_session, admin_client
-    ):
+    def test_patch_partial_only_touches_supplied_fields(self, db_session, admin_client):
         c, h = admin_client
         _seed_types(db_session, [("hero", "Hero banner", True)])
 
@@ -169,9 +163,7 @@ class TestPatchSectionType:
         assert resp.status_code == 200
         body = resp.json()
         assert body["description"] == "Updated only description"
-        assert body["is_active"] is True, (
-            "PATCH without is_active must leave is_active untouched"
-        )
+        assert body["is_active"] is True, "PATCH without is_active must leave is_active untouched"
 
     def test_patch_ignores_extraneous_name_field(self, db_session, admin_client):
         c, h = admin_client
@@ -184,16 +176,9 @@ class TestPatchSectionType:
         )
         assert resp.status_code == 200
         # name stays 'hero' (Pydantic silently drops the unknown field).
-        row = (
-            db_session.query(models.CmsSectionType).filter_by(name="hero").first()
-        )
+        row = db_session.query(models.CmsSectionType).filter_by(name="hero").first()
         assert row is not None
-        assert (
-            db_session.query(models.CmsSectionType)
-            .filter_by(name="renamed")
-            .first()
-            is None
-        )
+        assert db_session.query(models.CmsSectionType).filter_by(name="renamed").first() is None
 
     def test_patch_unknown_returns_404(self, db_session, admin_client):
         c, h = admin_client
@@ -206,24 +191,18 @@ class TestPatchSectionType:
 
 
 class TestDeleteSectionType:
-    def test_delete_returns_204_and_soft_deactivates(
-        self, db_session, admin_client
-    ):
+    def test_delete_returns_204_and_soft_deactivates(self, db_session, admin_client):
         c, h = admin_client
         _seed_types(db_session, [("hero", "Hero banner", True)])
 
         resp = c.delete("/api/cms/v2/section-types/hero", headers=h)
         assert resp.status_code == 204
 
-        row = (
-            db_session.query(models.CmsSectionType).filter_by(name="hero").first()
-        )
+        row = db_session.query(models.CmsSectionType).filter_by(name="hero").first()
         assert row is not None, "Row must remain for audit (soft-delete)."
         assert row.is_active is False
 
-    def test_deleted_type_excluded_from_only_active_list(
-        self, db_session, admin_client
-    ):
+    def test_deleted_type_excluded_from_only_active_list(self, db_session, admin_client):
         from backend.api.cms_v2 import get_allowed_section_types
 
         c, h = admin_client
@@ -274,11 +253,7 @@ class TestAuthOnWrites:
         )
         db_session.add(persona)
         db_session.flush()
-        role = (
-            db_session.query(RolPlataforma)
-            .filter(RolPlataforma.nombre == "DOCENTE")
-            .first()
-        )
+        role = db_session.query(RolPlataforma).filter(RolPlataforma.nombre == "DOCENTE").first()
         if not role:
             role = RolPlataforma(
                 id=_u.uuid4(),
@@ -330,6 +305,4 @@ class TestAuthOnWrites:
             json={"name": "x", "description": "x", "is_active": True},
             headers=h,
         )
-        assert resp.status_code == 403, (
-            "Non-publisher role (DOCENTE) must NOT be allowed to create."
-        )
+        assert resp.status_code == 403, "Non-publisher role (DOCENTE) must NOT be allowed to create."

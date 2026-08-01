@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Check,
   FileImage,
@@ -43,6 +44,11 @@ export default function MediaPicker({
   onSelect,
 }: MediaPickerProps) {
   const [items, setItems] = useState<CmsMediaItem[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
@@ -58,6 +64,17 @@ export default function MediaPicker({
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
   }, [open, token]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
 
   const uploadImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -84,11 +101,11 @@ export default function MediaPicker({
 
   const imageItems = useMemo(
     () =>
-      items.filter((item) => {
-        const mime = item.mime_type || "";
+      items.filter((item: any) => {
+        const mime = item.mime_type || item.mimetype || "";
         return (
           mime.startsWith("image/") ||
-          /\.(png|jpe?g|webp|gif|svg)$/i.test(item.url)
+          /\.(png|jpe?g|webp|gif|svg)$/i.test(item.url || "")
         );
       }),
     [items]
@@ -106,15 +123,15 @@ export default function MediaPicker({
     [imageItems, normalizedSearch]
   );
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Selector de medios"
       data-testid="media-picker"
-      className="fixed inset-0 z-50 bg-[hsl(var(--bg-muted))]/50 backdrop-blur-sm p-4 flex items-center justify-center"
+      className="fixed inset-0 z-[99999] bg-[hsl(var(--bg-muted))]/50 backdrop-blur-sm p-4 flex items-center justify-center"
       onClick={onClose}
     >
       <div
@@ -223,6 +240,7 @@ export default function MediaPicker({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

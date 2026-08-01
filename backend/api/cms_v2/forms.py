@@ -1,9 +1,10 @@
 """Native Contact Forms API endpoints (R1-BE). Admin CRUD & Public Form Submissions."""
+
 from __future__ import annotations
 
 import logging
 from html import escape
-from typing import List, Optional
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -35,6 +36,7 @@ def _get_form_or_404(db: Session, site_id: UUID, form_id: UUID) -> models.CmsFor
 
 # ── Public Endpoint ─────────────────────────────────────────────────────────
 
+
 @router.post(
     "/public/forms/{form_id}/submit",
     dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
@@ -50,18 +52,14 @@ def submit_public_form(
         raise FormNotFoundError(detail="Form not found or inactive")
 
     client_ip = request.client.host if request.client else None
-    submission = crud.create_cms_form_submission(
-        db, form_id=form.id, data=payload.data, ip_address=client_ip
-    )
+    submission = crud.create_cms_form_submission(db, form_id=form.id, data=payload.data, ip_address=client_ip)
 
     if form.notify_emails:
         try:
             from backend.services.email import send_email
 
             subject = f"Nueva respuesta recibida: {form.name}"
-            data_summary = "<br>".join(
-                [f"<b>{escape(str(k))}:</b> {escape(str(v))}" for k, v in payload.data.items()]
-            )
+            data_summary = "<br>".join([f"<b>{escape(str(k))}:</b> {escape(str(v))}" for k, v in payload.data.items()])
             html_content = (
                 f"<h2>Nueva respuesta en el formulario {escape(form.name)}</h2>"
                 f"<p>Detalles de la respuesta:</p>"
@@ -81,6 +79,7 @@ def submit_public_form(
 
 
 # ── Admin CRUD Endpoints ─────────────────────────────────────────────────────
+
 
 @router.get("/sites/{site_key}/forms", response_model=List[schemas.CmsFormRead])
 def list_forms(
@@ -162,9 +161,7 @@ def list_form_submissions(
 ):
     site = _get_scoped_site_or_404(db, site_key, current_user)
     _get_form_or_404(db, site.id, form_id)
-    items, total = crud.list_cms_form_submissions(
-        db, form_id, page=page, page_size=page_size
-    )
+    items, total = crud.list_cms_form_submissions(db, form_id, page=page, page_size=page_size)
     return {
         "page": page,
         "page_size": page_size,

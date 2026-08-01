@@ -5,9 +5,11 @@ Revises: 20260731_0007_add_cms_ab_tests
 Create Date: 2026-07-31 00:00:00.000000
 
 """
+
 from __future__ import annotations
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision = "20260731_0008_add_cms_post_comments"

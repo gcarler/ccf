@@ -36,6 +36,7 @@ import {
     LayoutGrid,
     AlignCenter,
     Hand,
+    AlertTriangle,
 } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -45,6 +46,8 @@ import {
     GridSize,
     WHITEBOARD_COLORS,
     WHITEBOARD_COLOR_PRESETS,
+    uploadProjectWhiteboardThumbnail,
+    dataUrlToBlob,
 } from "@/lib/whiteboards";
 import { exportToPng, exportToSvg, exportToJson } from "@/lib/whiteboardExport";
 import { useWhiteboardHistory } from "@/hooks/useWhiteboardHistory";
@@ -92,6 +95,7 @@ interface WhiteboardEditorProps {
     header?: (state: {
         title: string;
         saveStatus: "idle" | "saving" | "saved" | "error";
+        isDirty: boolean;
         saveNow: () => void;
     }) => React.ReactNode;
     className?: string;
@@ -188,11 +192,14 @@ export default function WhiteboardEditor({
     const [tool, setTool] = useState<WhiteboardTool>("select");
     const [layers, setLayers] = useState<LayerRow[]>([]);
     const [selectedObjectProps, setSelectedObjectProps] = useState<Record<string, unknown> | null>(null);
-    const { saveStatus, save, saveNow } = useWhiteboardSave({
+    const { saveStatus, save, saveNow, flushPending, isDirty } = useWhiteboardSave({
         projectId,
         token,
         title,
     });
+    // True when the same board is open in another tab (detected via
+    // BroadcastChannel) — warns that concurrent edits may overwrite each other.
+    const [duplicateTabOpen, setDuplicateTabOpen] = useState(false);
 
     // Grid state
     const [gridStyle, setGridStyle] = useState<GridStyle>("dots");
@@ -341,6 +348,8 @@ export default function WhiteboardEditor({
     saveRef.current = save;
     const saveNowRef = useRef(saveNow);
     saveNowRef.current = saveNow;
+    const flushPendingRef = useRef(flushPending);
+    flushPendingRef.current = flushPending;
 
     // ── Init Fabric canvas ──
     useEffect(() => {
@@ -589,6 +598,9 @@ export default function WhiteboardEditor({
 
         return () => {
             window.removeEventListener("resize", resizeCanvas);
+            // Flush any debounced/queued save BEFORE disposing the canvas so
+            // the last edit is not lost when the panel closes.
+            flushPendingRef.current();
             canvas.dispose();
             fabricCanvas.current = null;
             setIsCanvasReady(false);
@@ -597,6 +609,55 @@ export default function WhiteboardEditor({
         // are accessed via stable refs to avoid re-creating the canvas on every
         // undo/redo state change.
     }, [projectId, syncLayers, token, updateSelectedProps]);
+
+    // ── Duplicate-tab detection (concurrent edits may overwrite each other) ──
+    useEffect(() => {
+        if (typeof window === "undefined" || typeof BroadcastChannel === "undefined" || !projectId) return;
+        const channel = new BroadcastChannel(`ccf-whiteboard:${projectId}`);
+        let lastSeen = Date.now();
+        const markSeen = () => {
+            lastSeen = Date.now();
+            setDuplicateTabOpen(true);
+        };
+        channel.onmessage = (event) => {
+            if (event.data?.type === "heartbeat") markSeen();
+        };
+        const heartbeat = setInterval(() => {
+            channel.postMessage({ type: "heartbeat" });
+            // Clear the banner when the other tab has been gone for a while.
+            if (Date.now() - lastSeen > 12000) setDuplicateTabOpen(false);
+        }, 4000);
+        channel.postMessage({ type: "heartbeat" });
+        return () => {
+            clearInterval(heartbeat);
+            channel.close();
+        };
+    }, [projectId]);
+
+    // ── Thumbnail generation (throttled; best-effort, never blocks saves) ──
+    const lastThumbAtRef = useRef(0);
+    useEffect(() => {
+        if (saveStatus !== "saved") return;
+        const canvas = fabricCanvas.current;
+        if (!canvas || !projectId || !token) return;
+        const now = Date.now();
+        if (now - lastThumbAtRef.current < 30000) return;
+        lastThumbAtRef.current = now;
+        try {
+            const dataUrl = canvas.toDataURL({
+                format: "jpeg",
+                quality: 0.6,
+                multiplier: 0.2,
+            });
+            const blob = dataUrlToBlob(dataUrl);
+            if (!blob) return;
+            uploadProjectWhiteboardThumbnail(projectId, blob, token).catch(() => {
+                // Thumbnails are best-effort — ignore failures silently.
+            });
+        } catch {
+            // toDataURL can throw for canvases with unusual state — ignore.
+        }
+    }, [saveStatus, projectId, token]);
 
     // ── Keyboard shortcuts ──
     useEffect(() => {
@@ -981,7 +1042,17 @@ export default function WhiteboardEditor({
 
     return (
         <div className={clsx("flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]", className)}>
-            {header && header({ title, saveStatus, saveNow: handleSaveNow })}
+            {header && header({ title, saveStatus, isDirty, saveNow: handleSaveNow })}
+
+            {duplicateTabOpen && (
+                <div
+                    data-testid="whiteboard-duplicate-tab"
+                    className="z-30 flex items-center justify-center gap-2 border-b border-[hsl(var(--warning))]/20 bg-[hsl(var(--warning))]/10 px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]"
+                >
+                    <AlertTriangle size={12} />
+                    Esta pizarra está abierta en otra pestaña — los cambios simultáneos pueden sobrescribirse.
+                </div>
+            )}
 
             <div className="relative flex flex-1 overflow-hidden">
                 {/* ── Export / share floating bar ── */}

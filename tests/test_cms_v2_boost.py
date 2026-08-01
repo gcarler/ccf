@@ -4,6 +4,7 @@ Targets: _build_section_defaults (all 8 branches), public_page, list_pages fallb
 track_page_view, get_page_analytics, schedule_page_publish, _snapshot_section_read,
 _get_system_var, public_menu visibility, helper functions.
 """
+
 import uuid
 
 import pytest
@@ -22,13 +23,19 @@ def full(client, db_session):
     from backend import models
 
     site = models.CmsSite(
-        site_key="faro", name="El Faro", base_path="/", is_active=True,
+        site_key="faro",
+        name="El Faro",
+        base_path="/",
+        is_active=True,
     )
     db_session.add(site)
     db_session.flush()
 
     theme = models.CmsTheme(
-        site_id=site.id, name="Dark", tokens_json={"primary": "#000"}, is_active=True,
+        site_id=site.id,
+        name="Dark",
+        tokens_json={"primary": "#000"},
+        is_active=True,
     )
     db_session.add(theme)
 
@@ -41,17 +48,25 @@ def full(client, db_session):
         {"label": "Nosotros", "href": "/nosotros", "sort_order": 2, "visibility": "public"},
         {"label": "Admin", "href": "/admin", "sort_order": 3, "visibility": "admin"},
     ]:
-        db_session.add(models.CmsMenuItem(
-            menu_id=menu.id, label=item["label"], href=item["href"],
-            sort_order=item["sort_order"], visibility=item.get("visibility", "public"),
-        ))
+        db_session.add(
+            models.CmsMenuItem(
+                menu_id=menu.id,
+                label=item["label"],
+                href=item["href"],
+                sort_order=item["sort_order"],
+                visibility=item.get("visibility", "public"),
+            )
+        )
 
     page_slugs = ["home", "nosotros", "eventos", "conocer-a-jesus", "predicas", "cursos"]
     pages = {}
     for slug in page_slugs:
         p = models.CmsPage(
-            site_id=site.id, slug=slug, title=slug.replace("-", " ").title(),
-            status="published", seo_json={"description": f"Page {slug}"},
+            site_id=site.id,
+            slug=slug,
+            title=slug.replace("-", " ").title(),
+            status="published",
+            seo_json={"description": f"Page {slug}"},
         )
         db_session.add(p)
         db_session.flush()
@@ -61,31 +76,43 @@ def full(client, db_session):
     for i, st in enumerate(section_types):
         page = pages[page_slugs[i % len(page_slugs)]]
         sec = models.CmsSection(
-            page_id=page.id, section_key=f"sec-{st}-{i}", type=st,
-            props_json={}, sort_order=i, is_visible=True, status="active",
+            page_id=page.id,
+            section_key=f"sec-{st}-{i}",
+            type=st,
+            props_json={},
+            sort_order=i,
+            is_visible=True,
+            status="active",
         )
         db_session.add(sec)
     db_session.commit()
 
     for p_obj in db_session.query(models.Persona).all():
-        if hasattr(p_obj, 'is_pastoral_leader'):
+        if hasattr(p_obj, "is_pastoral_leader"):
             p_obj.is_pastoral_leader = True
-        if hasattr(p_obj, 'is_main_pastor'):
+        if hasattr(p_obj, "is_main_pastor"):
             p_obj.is_main_pastor = True
-        if hasattr(p_obj, 'bio_short'):
+        if hasattr(p_obj, "bio_short"):
             p_obj.bio_short = "Pastor principal"
     db_session.commit()
 
     headers = _auth_headers(client, email=admin.email, password="testpass123")
     return {
-        "c": client, "h": headers, "sede": sede, "admin": admin,
-        "site": site, "pages": pages, "menu": menu, "theme": theme,
+        "c": client,
+        "h": headers,
+        "sede": sede,
+        "admin": admin,
+        "site": site,
+        "pages": pages,
+        "menu": menu,
+        "theme": theme,
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # _build_section_defaults — 8 branches (~120 lines)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestBuildSectionDefaults:
     def test_hero_defaults(self, full):
@@ -140,6 +167,7 @@ class TestBuildSectionDefaults:
     def test_section_with_existing_props(self, full, db_session):
         c, db = full["c"], db_session
         from backend import models
+
         sec = db.query(models.CmsSection).filter(models.CmsSection.type == "hero").first()
         if sec:
             sec.props_json = {"title": "Custom Title", "subtitle": "Custom Sub"}
@@ -151,6 +179,7 @@ class TestBuildSectionDefaults:
     def test_section_with_body_prop(self, full, db_session):
         c, db = full["c"], db_session
         from backend import models
+
         sec = db.query(models.CmsSection).filter(models.CmsSection.type == "rich_text").first()
         if sec:
             sec.props_json = {"body": "<p>Existing content</p>"}
@@ -163,6 +192,7 @@ class TestBuildSectionDefaults:
 # ═══════════════════════════════════════════════════════════════════════════════
 # PUBLIC PAGE — main path (~90 lines)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestPublicPageDeep:
     def test_public_page_all_slugs(self, full):
@@ -178,6 +208,7 @@ class TestPublicPageDeep:
     def test_public_page_inactive_site(self, full, db_session):
         c, db = full["c"], db_session
         from backend import models
+
         site = db.query(models.CmsSite).filter(models.CmsSite.site_key == "faro").first()
         if site:
             site.is_active = False
@@ -205,6 +236,7 @@ class TestPublicPageDeep:
 # PUBLIC MENU — visibility filtering
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestPublicMenuDeep:
     def test_public_menu_filters_visibility(self, full):
         c = full["c"]
@@ -229,6 +261,7 @@ class TestPublicMenuDeep:
 # PUBLIC THEME
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestPublicThemeDeep:
     def test_public_theme(self, full):
         c = full["c"]
@@ -247,6 +280,7 @@ class TestPublicThemeDeep:
 # ═══════════════════════════════════════════════════════════════════════════════
 # TRACK PAGE VIEW + ANALYTICS
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestAnalyticsDeep:
     def test_track_page_view(self, full):
@@ -287,16 +321,24 @@ class TestAnalyticsDeep:
 # HELPER FUNCTIONS — _assert_role, _slugify, _get_system_var, _snapshot_section_read
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestHelpersDeep:
     def test_slugify_via_create_page(self, full):
         c, h = full["c"], full["h"]
-        c.post("/api/cms/v2/sites/faro/pages", json={
-            "title": "Test Page", "slug": "Test Page With Spaces", "status": "draft",
-        }, headers=h)
+        c.post(
+            "/api/cms/v2/sites/faro/pages",
+            json={
+                "title": "Test Page",
+                "slug": "Test Page With Spaces",
+                "status": "draft",
+            },
+            headers=h,
+        )
 
     def test_get_system_var_via_sections(self, full, db_session):
         c, db = full["c"], db_session
         from backend import models
+
         db.add(models.SystemVariable(key="faro_church_name", value="Mi Iglesia"))
         db.add(models.SystemVariable(key="faro_mission_statement", value="Misión test"))
         db.add(models.SystemVariable(key="faro_service_time", value="Domingos 9am"))
@@ -311,6 +353,7 @@ class TestHelpersDeep:
 # ═══════════════════════════════════════════════════════════════════════════════
 # LIST PAGES — fallback path
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestListPagesDeep:
     def test_list_pages_with_data(self, full):
@@ -341,6 +384,7 @@ class TestListPagesDeep:
 # GLOBAL BLOCKS — CRUD
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestGlobalBlocksDeep:
     def test_global_blocks_list(self, full):
         c, h = full["c"], full["h"]
@@ -349,36 +393,57 @@ class TestGlobalBlocksDeep:
 
     def test_global_blocks_create_richtext(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/cms/v2/global-blocks", json={
-            "type": "RichText", "props_json": {"content": "<p>Global</p>"},
-        }, headers=h)
+        resp = c.post(
+            "/api/cms/v2/global-blocks",
+            json={
+                "type": "RichText",
+                "props_json": {"content": "<p>Global</p>"},
+            },
+            headers=h,
+        )
         assert resp.status_code in (200, 201, 403, 422)
 
     def test_global_blocks_create_stats(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/cms/v2/global-blocks", json={
-            "type": "Stats", "props_json": {"stats": [{"label": "X", "value": "1"}]},
-        }, headers=h)
+        resp = c.post(
+            "/api/cms/v2/global-blocks",
+            json={
+                "type": "Stats",
+                "props_json": {"stats": [{"label": "X", "value": "1"}]},
+            },
+            headers=h,
+        )
         assert resp.status_code in (200, 201, 403, 422)
 
     def test_global_blocks_create_team(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/cms/v2/global-blocks", json={
-            "type": "Team", "props_json": {"personas": []},
-        }, headers=h)
+        resp = c.post(
+            "/api/cms/v2/global-blocks",
+            json={
+                "type": "Team",
+                "props_json": {"personas": []},
+            },
+            headers=h,
+        )
         assert resp.status_code in (200, 201, 403, 422)
 
     def test_global_blocks_create_testimonials(self, full):
         c, h = full["c"], full["h"]
-        resp = c.post("/api/cms/v2/global-blocks", json={
-            "type": "Testimonials", "props_json": {"testimonials": []},
-        }, headers=h)
+        resp = c.post(
+            "/api/cms/v2/global-blocks",
+            json={
+                "type": "Testimonials",
+                "props_json": {"testimonials": []},
+            },
+            headers=h,
+        )
         assert resp.status_code in (200, 201, 403, 422)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CMS OPERATIONS — site/page/theme/menu CRUD
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCMSOperationsDeep:
     def test_list_sites(self, full):
@@ -458,6 +523,7 @@ class TestCMSOperationsDeep:
 # ═══════════════════════════════════════════════════════════════════════════════
 # ENTERPRISE CMS — webhooks, redirects, custom types, glossary, media folders
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestEnterpriseCMSDeep:
     def test_webhooks_list(self, full):

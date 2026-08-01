@@ -39,7 +39,7 @@ export default function ProjectWhiteboard({
             <WhiteboardEditor
                 projectId={project_id}
                 token={token}
-                header={({ title, saveStatus, saveNow }) => (
+                header={({ title, saveStatus, saveNow, isDirty }) => (
                     <header className="h-11 px-4 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="size-7 rounded-md bg-orange-500 flex items-center justify-center text-white">
@@ -63,6 +63,11 @@ export default function ProjectWhiteboard({
                                     <>
                                         <Cloud size={10} className="text-[hsl(var(--success))]" />
                                         <span className="text-2xs font-semibold uppercase text-[hsl(var(--success))]">Guardado</span>
+                                    </>
+                                ) : isDirty ? (
+                                    <>
+                                        <Cloud size={10} className="text-[hsl(var(--warning))]" />
+                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--warning))]">Sin guardar</span>
                                     </>
                                 ) : (
                                     <>

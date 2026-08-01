@@ -6,6 +6,7 @@ This module holds the site CRUD endpoints; the scoping helper
 ``_get_scoped_site_or_404`` consulted by every nested resource lives in
 ``_shared`` so the rest of the package can keep importing it directly.
 """
+
 from __future__ import annotations
 
 import logging

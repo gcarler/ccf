@@ -35,15 +35,9 @@ def upgrade() -> None:
         sa.UniqueConstraint("site_key"),
     )
     op.create_index(op.f("ix_cms_sites_id"), "cms_sites", ["id"], unique=False)
-    op.create_index(
-        op.f("ix_cms_sites_site_key"), "cms_sites", ["site_key"], unique=False
-    )
-    op.create_index(
-        op.f("ix_cms_sites_base_path"), "cms_sites", ["base_path"], unique=False
-    )
-    op.create_index(
-        op.f("ix_cms_sites_is_active"), "cms_sites", ["is_active"], unique=False
-    )
+    op.create_index(op.f("ix_cms_sites_site_key"), "cms_sites", ["site_key"], unique=False)
+    op.create_index(op.f("ix_cms_sites_base_path"), "cms_sites", ["base_path"], unique=False)
+    op.create_index(op.f("ix_cms_sites_is_active"), "cms_sites", ["is_active"], unique=False)
 
     op.create_table(
         "cms_themes",
@@ -61,12 +55,8 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_cms_themes_id"), "cms_themes", ["id"], unique=False)
-    op.create_index(
-        op.f("ix_cms_themes_site_id"), "cms_themes", ["site_id"], unique=False
-    )
-    op.create_index(
-        op.f("ix_cms_themes_is_active"), "cms_themes", ["is_active"], unique=False
-    )
+    op.create_index(op.f("ix_cms_themes_site_id"), "cms_themes", ["site_id"], unique=False)
+    op.create_index(op.f("ix_cms_themes_is_active"), "cms_themes", ["is_active"], unique=False)
 
     op.create_table(
         "cms_menus",
@@ -82,15 +72,9 @@ def upgrade() -> None:
         sa.UniqueConstraint("site_id", "menu_key", name="uq_cms_menu_site_key"),
     )
     op.create_index(op.f("ix_cms_menus_id"), "cms_menus", ["id"], unique=False)
-    op.create_index(
-        op.f("ix_cms_menus_site_id"), "cms_menus", ["site_id"], unique=False
-    )
-    op.create_index(
-        op.f("ix_cms_menus_menu_key"), "cms_menus", ["menu_key"], unique=False
-    )
-    op.create_index(
-        op.f("ix_cms_menus_is_active"), "cms_menus", ["is_active"], unique=False
-    )
+    op.create_index(op.f("ix_cms_menus_site_id"), "cms_menus", ["site_id"], unique=False)
+    op.create_index(op.f("ix_cms_menus_menu_key"), "cms_menus", ["menu_key"], unique=False)
+    op.create_index(op.f("ix_cms_menus_is_active"), "cms_menus", ["is_active"], unique=False)
 
     op.create_table(
         "cms_menu_items",
@@ -107,17 +91,11 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.ForeignKeyConstraint(["menu_id"], ["cms_menus.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(
-            ["parent_id"], ["cms_menu_items.id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["parent_id"], ["cms_menu_items.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_cms_menu_items_id"), "cms_menu_items", ["id"], unique=False
-    )
-    op.create_index(
-        op.f("ix_cms_menu_items_menu_id"), "cms_menu_items", ["menu_id"], unique=False
-    )
+    op.create_index(op.f("ix_cms_menu_items_id"), "cms_menu_items", ["id"], unique=False)
+    op.create_index(op.f("ix_cms_menu_items_menu_id"), "cms_menu_items", ["menu_id"], unique=False)
     op.create_index(
         op.f("ix_cms_menu_items_parent_id"),
         "cms_menu_items",
@@ -145,9 +123,7 @@ def upgrade() -> None:
         sa.UniqueConstraint("site_id", "slug", name="uq_cms_page_site_slug"),
     )
     op.create_index(op.f("ix_cms_pages_id"), "cms_pages", ["id"], unique=False)
-    op.create_index(
-        op.f("ix_cms_pages_site_id"), "cms_pages", ["site_id"], unique=False
-    )
+    op.create_index(op.f("ix_cms_pages_site_id"), "cms_pages", ["site_id"], unique=False)
     op.create_index(op.f("ix_cms_pages_slug"), "cms_pages", ["slug"], unique=False)
     op.create_index(op.f("ix_cms_pages_status"), "cms_pages", ["status"], unique=False)
 
@@ -163,13 +139,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["created_by"], ["users.id"]),
         sa.ForeignKeyConstraint(["page_id"], ["cms_pages.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint(
-            "page_id", "version_number", name="uq_cms_page_version_number"
-        ),
+        sa.UniqueConstraint("page_id", "version_number", name="uq_cms_page_version_number"),
     )
-    op.create_index(
-        op.f("ix_cms_page_versions_id"), "cms_page_versions", ["id"], unique=False
-    )
+    op.create_index(op.f("ix_cms_page_versions_id"), "cms_page_versions", ["id"], unique=False)
     op.create_index(
         op.f("ix_cms_page_versions_page_id"),
         "cms_page_versions",
@@ -200,21 +172,15 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_cms_sections_id"), "cms_sections", ["id"], unique=False)
-    op.create_index(
-        op.f("ix_cms_sections_page_id"), "cms_sections", ["page_id"], unique=False
-    )
+    op.create_index(op.f("ix_cms_sections_page_id"), "cms_sections", ["page_id"], unique=False)
     op.create_index(
         op.f("ix_cms_sections_section_key"),
         "cms_sections",
         ["section_key"],
         unique=False,
     )
-    op.create_index(
-        op.f("ix_cms_sections_type"), "cms_sections", ["type"], unique=False
-    )
-    op.create_index(
-        op.f("ix_cms_sections_is_visible"), "cms_sections", ["is_visible"], unique=False
-    )
+    op.create_index(op.f("ix_cms_sections_type"), "cms_sections", ["type"], unique=False)
+    op.create_index(op.f("ix_cms_sections_is_visible"), "cms_sections", ["is_visible"], unique=False)
 
     op.create_table(
         "cms_publish_logs",
@@ -234,9 +200,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["site_id"], ["cms_sites.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_cms_publish_logs_id"), "cms_publish_logs", ["id"], unique=False
-    )
+    op.create_index(op.f("ix_cms_publish_logs_id"), "cms_publish_logs", ["id"], unique=False)
     op.create_index(
         op.f("ix_cms_publish_logs_site_id"),
         "cms_publish_logs",
@@ -255,9 +219,7 @@ def upgrade() -> None:
         ["entity_type"],
         unique=False,
     )
-    op.create_index(
-        op.f("ix_cms_publish_logs_action"), "cms_publish_logs", ["action"], unique=False
-    )
+    op.create_index(op.f("ix_cms_publish_logs_action"), "cms_publish_logs", ["action"], unique=False)
     op.create_index(
         op.f("ix_cms_publish_logs_created_at"),
         "cms_publish_logs",
@@ -274,9 +236,7 @@ def downgrade() -> None:
 
     op.drop_index(op.f("ix_cms_publish_logs_created_at"), table_name="cms_publish_logs")
     op.drop_index(op.f("ix_cms_publish_logs_action"), table_name="cms_publish_logs")
-    op.drop_index(
-        op.f("ix_cms_publish_logs_entity_type"), table_name="cms_publish_logs"
-    )
+    op.drop_index(op.f("ix_cms_publish_logs_entity_type"), table_name="cms_publish_logs")
     op.drop_index(op.f("ix_cms_publish_logs_page_id"), table_name="cms_publish_logs")
     op.drop_index(op.f("ix_cms_publish_logs_site_id"), table_name="cms_publish_logs")
     op.drop_index(op.f("ix_cms_publish_logs_id"), table_name="cms_publish_logs")
@@ -289,9 +249,7 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_cms_sections_id"), table_name="cms_sections")
     op.drop_table("cms_sections")
 
-    op.drop_constraint(
-        "fk_cms_pages_published_version_id", "cms_pages", type_="foreignkey"
-    )
+    op.drop_constraint("fk_cms_pages_published_version_id", "cms_pages", type_="foreignkey")
     op.drop_index(op.f("ix_cms_page_versions_page_id"), table_name="cms_page_versions")
     op.drop_index(op.f("ix_cms_page_versions_id"), table_name="cms_page_versions")
     op.drop_table("cms_page_versions")

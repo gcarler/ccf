@@ -5,6 +5,7 @@ Fixes previous broken tests that used wrong field names ("key" vs "site_key",
 "section_type" vs "type", "url" vs "href", "colors" vs "tokens_json") and
 non-existent top-level endpoints (/media, /versions, /publish-logs, /workflow).
 """
+
 import uuid
 
 import pytest
@@ -78,8 +79,7 @@ class TestSitesValidationM01M02:
             headers=h,
         )
         assert resp.status_code == 422, (
-            f"M-01 regression: site_key>80 deberia responder 422, "
-            f"got {resp.status_code} {resp.text[:200]}"
+            f"M-01 regression: site_key>80 deberia responder 422, got {resp.status_code} {resp.text[:200]}"
         )
         assert "80" in resp.text or "max_length" in resp.text, (
             f"M-01 regression: el error no menciona length: {resp.text[:200]}"
@@ -92,10 +92,7 @@ class TestSitesValidationM01M02:
             json={"site_key": "", "name": "X", "base_path": "/x"},
             headers=h,
         )
-        assert resp.status_code == 422, (
-            f"M-01 regression: empty site_key deberia responder 422, "
-            f"got {resp.status_code}"
-        )
+        assert resp.status_code == 422, f"M-01 regression: empty site_key deberia responder 422, got {resp.status_code}"
 
     def test_create_page_with_too_long_slug_returns_422(self, full):
         c, h = full["c"], full["h"]
@@ -114,8 +111,7 @@ class TestSitesValidationM01M02:
             headers=h,
         )
         assert resp.status_code == 422, (
-            f"M-02 regression: slug>160 deberia responder 422, "
-            f"got {resp.status_code} {resp.text[:200]}"
+            f"M-02 regression: slug>160 deberia responder 422, got {resp.status_code} {resp.text[:200]}"
         )
 
 
@@ -547,12 +543,34 @@ class TestClonePageF02:
         site_key = f"clone-{uuid.uuid4().hex[:6]}"
 
         # Create site + source page
-        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone Site", "base_path": "/cl"}, headers=h).status_code)
-        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "source", "title": "Source Page", "status": "draft"}, headers=h).status_code)
+        assert _ok(
+            c.post(
+                "/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone Site", "base_path": "/cl"}, headers=h
+            ).status_code
+        )
+        assert _ok(
+            c.post(
+                f"/api/cms/v2/sites/{site_key}/pages",
+                json={"slug": "source", "title": "Source Page", "status": "draft"},
+                headers=h,
+            ).status_code
+        )
 
         # Add two sections to source page
-        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages/source/sections", json={"type": "hero", "props_json": {"title": "Hello"}}, headers=h).status_code)
-        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages/source/sections", json={"type": "rich_text", "props_json": {"content": "<p>Body</p>"}}, headers=h).status_code)
+        assert _ok(
+            c.post(
+                f"/api/cms/v2/sites/{site_key}/pages/source/sections",
+                json={"type": "hero", "props_json": {"title": "Hello"}},
+                headers=h,
+            ).status_code
+        )
+        assert _ok(
+            c.post(
+                f"/api/cms/v2/sites/{site_key}/pages/source/sections",
+                json={"type": "rich_text", "props_json": {"content": "<p>Body</p>"}},
+                headers=h,
+            ).status_code
+        )
 
         # Clone
         resp = c.post(
@@ -579,8 +597,18 @@ class TestClonePageF02:
         c, h = full["c"], full["h"]
         site_key = f"clonet-{uuid.uuid4().hex[:6]}"
 
-        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone T", "base_path": "/ct"}, headers=h).status_code)
-        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "orig", "title": "Original Title", "status": "draft"}, headers=h).status_code)
+        assert _ok(
+            c.post(
+                "/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone T", "base_path": "/ct"}, headers=h
+            ).status_code
+        )
+        assert _ok(
+            c.post(
+                f"/api/cms/v2/sites/{site_key}/pages",
+                json={"slug": "orig", "title": "Original Title", "status": "draft"},
+                headers=h,
+            ).status_code
+        )
 
         resp = c.post(
             f"/api/cms/v2/sites/{site_key}/pages/orig/clone",
@@ -595,9 +623,25 @@ class TestClonePageF02:
         c, h = full["c"], full["h"]
         site_key = f"cloned-{uuid.uuid4().hex[:6]}"
 
-        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone D", "base_path": "/cd"}, headers=h).status_code)
-        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "page-a", "title": "A", "status": "draft"}, headers=h).status_code)
-        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "page-b", "title": "B", "status": "draft"}, headers=h).status_code)
+        assert _ok(
+            c.post(
+                "/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone D", "base_path": "/cd"}, headers=h
+            ).status_code
+        )
+        assert _ok(
+            c.post(
+                f"/api/cms/v2/sites/{site_key}/pages",
+                json={"slug": "page-a", "title": "A", "status": "draft"},
+                headers=h,
+            ).status_code
+        )
+        assert _ok(
+            c.post(
+                f"/api/cms/v2/sites/{site_key}/pages",
+                json={"slug": "page-b", "title": "B", "status": "draft"},
+                headers=h,
+            ).status_code
+        )
 
         resp = c.post(
             f"/api/cms/v2/sites/{site_key}/pages/page-a/clone",
@@ -611,8 +655,18 @@ class TestClonePageF02:
         c, h = full["c"], full["h"]
         site_key = f"clones-{uuid.uuid4().hex[:6]}"
 
-        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone S", "base_path": "/cs"}, headers=h).status_code)
-        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "same", "title": "Same", "status": "draft"}, headers=h).status_code)
+        assert _ok(
+            c.post(
+                "/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone S", "base_path": "/cs"}, headers=h
+            ).status_code
+        )
+        assert _ok(
+            c.post(
+                f"/api/cms/v2/sites/{site_key}/pages",
+                json={"slug": "same", "title": "Same", "status": "draft"},
+                headers=h,
+            ).status_code
+        )
 
         resp = c.post(
             f"/api/cms/v2/sites/{site_key}/pages/same/clone",
@@ -626,7 +680,11 @@ class TestClonePageF02:
         c, h = full["c"], full["h"]
         site_key = f"clonen-{uuid.uuid4().hex[:6]}"
 
-        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone N", "base_path": "/cn"}, headers=h).status_code)
+        assert _ok(
+            c.post(
+                "/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone N", "base_path": "/cn"}, headers=h
+            ).status_code
+        )
 
         resp = c.post(
             f"/api/cms/v2/sites/{site_key}/pages/nonexistent/clone",
@@ -640,8 +698,18 @@ class TestClonePageF02:
         c, h = full["c"], full["h"]
         site_key = f"clonee-{uuid.uuid4().hex[:6]}"
 
-        assert _ok(c.post("/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone E", "base_path": "/ce"}, headers=h).status_code)
-        assert _ok(c.post(f"/api/cms/v2/sites/{site_key}/pages", json={"slug": "source", "title": "S", "status": "draft"}, headers=h).status_code)
+        assert _ok(
+            c.post(
+                "/api/cms/v2/sites", json={"site_key": site_key, "name": "Clone E", "base_path": "/ce"}, headers=h
+            ).status_code
+        )
+        assert _ok(
+            c.post(
+                f"/api/cms/v2/sites/{site_key}/pages",
+                json={"slug": "source", "title": "S", "status": "draft"},
+                headers=h,
+            ).status_code
+        )
 
         resp = c.post(
             f"/api/cms/v2/sites/{site_key}/pages/source/clone",
@@ -649,4 +717,3 @@ class TestClonePageF02:
             headers=h,
         )
         assert resp.status_code == 422
-

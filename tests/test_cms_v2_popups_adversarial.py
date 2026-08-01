@@ -7,10 +7,13 @@ Empirically tests:
 4. Schema validations (trigger_type, trigger_value, name, content_html)
 5. Database model & CRUD edge conditions
 """
+
 from __future__ import annotations
 
 import uuid
+
 import pytest
+
 from backend import models
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
@@ -224,7 +227,9 @@ class TestSchemaValidation:
         headers = auth_headers(client, email=admin_user.email, password="testpass123")
 
         # Missing name
-        resp1 = client.post(f"/api/cms/v2/sites/{site_a.site_key}/popups", json={"content_html": "<p>No name</p>"}, headers=headers)
+        resp1 = client.post(
+            f"/api/cms/v2/sites/{site_a.site_key}/popups", json={"content_html": "<p>No name</p>"}, headers=headers
+        )
         assert resp1.status_code == 422
 
         # Missing content_html
@@ -235,5 +240,9 @@ class TestSchemaValidation:
         site_a, _, _, _ = dual_sites
         headers = auth_headers(client, email=admin_user.email, password="testpass123")
 
-        resp = client.post(f"/api/cms/v2/sites/{site_a.site_key}/popups", json={"name": "", "content_html": "<p>Empty name</p>"}, headers=headers)
+        resp = client.post(
+            f"/api/cms/v2/sites/{site_a.site_key}/popups",
+            json={"name": "", "content_html": "<p>Empty name</p>"},
+            headers=headers,
+        )
         assert resp.status_code == 422

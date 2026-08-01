@@ -1,4 +1,5 @@
 """Pydantic schemas for CMS v2 section props validation."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -50,7 +51,18 @@ class SocialLinkItem(BaseModel):
     @field_validator("platform")
     @classmethod
     def validate_platform(cls, v: str) -> str:
-        allowed = {"facebook", "instagram", "youtube", "tiktok", "whatsapp", "twitter", "telegram", "linkedin", "spotify", "apple-podcasts"}
+        allowed = {
+            "facebook",
+            "instagram",
+            "youtube",
+            "tiktok",
+            "whatsapp",
+            "twitter",
+            "telegram",
+            "linkedin",
+            "spotify",
+            "apple-podcasts",
+        }
         if v not in allowed:
             raise ValueError(f"platform must be one of {allowed}")
         return v

@@ -2,6 +2,7 @@
 
 Extracted from the monolithic ``cms_v2/__init__.py``.
 """
+
 from __future__ import annotations
 
 import logging
@@ -41,12 +42,21 @@ router = APIRouter(tags=["cms_v2_analytics_ops"])
 )
 def track_page_view(page_key: str, request: Request, db: Session = Depends(get_db)):
     try:
-        page = db.query(models.CmsPage).join(models.CmsSite).filter(models.CmsPage.slug == page_key, models.CmsSite.is_active.is_(True)).first()
+        page = (
+            db.query(models.CmsPage)
+            .join(models.CmsSite)
+            .filter(models.CmsPage.slug == page_key, models.CmsSite.is_active.is_(True))
+            .first()
+        )
         if page:
-            db.add(models.CmsPageView(
-                page_id=page.id, ip_address=request.client.host if request.client else None,
-                user_agent=request.headers.get("user-agent", ""), referrer=request.headers.get("referer", ""),
-            ))
+            db.add(
+                models.CmsPageView(
+                    page_id=page.id,
+                    ip_address=request.client.host if request.client else None,
+                    user_agent=request.headers.get("user-agent", ""),
+                    referrer=request.headers.get("referer", ""),
+                )
+            )
             db.commit()
     except Exception as exc:
         logger.warning("Analytics tracking failed for page_key=%s: %s", page_key, exc)
@@ -67,13 +77,27 @@ def get_page_analytics(
     page = db.query(models.CmsPage).join(models.CmsSite).filter(models.CmsPage.slug == page_key).first()
     if not page:
         raise PageNotFoundError()
-    total = db.query(func.count(models.CmsPageView.id)).filter(models.CmsPageView.page_id == page.id, models.CmsPageView.created_at >= cutoff).scalar() or 0
-    daily = (
-        db.query(func.date(models.CmsPageView.created_at).label("date"), func.count(models.CmsPageView.id).label("views"))
+    total = (
+        db.query(func.count(models.CmsPageView.id))
         .filter(models.CmsPageView.page_id == page.id, models.CmsPageView.created_at >= cutoff)
-        .group_by(func.date(models.CmsPageView.created_at)).order_by(func.date(models.CmsPageView.created_at)).all()
+        .scalar()
+        or 0
     )
-    return {"page_key": page_key, "total_views": total, "days": days, "daily_views": [{"date": str(d), "views": v} for d, v in daily]}
+    daily = (
+        db.query(
+            func.date(models.CmsPageView.created_at).label("date"), func.count(models.CmsPageView.id).label("views")
+        )
+        .filter(models.CmsPageView.page_id == page.id, models.CmsPageView.created_at >= cutoff)
+        .group_by(func.date(models.CmsPageView.created_at))
+        .order_by(func.date(models.CmsPageView.created_at))
+        .all()
+    )
+    return {
+        "page_key": page_key,
+        "total_views": total,
+        "days": days,
+        "daily_views": [{"date": str(d), "views": v} for d, v in daily],
+    }
 
 
 # ── Scheduled Publishing ─────────────────────────────────────────────────────

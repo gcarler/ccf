@@ -139,6 +139,24 @@ describe("MediaPicker", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("calls onClose when pressing Escape key", () => {
+    const onClose = vi.fn();
+    render(<MediaPicker open onClose={onClose} onSelect={vi.fn()} />);
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes Escape key listener on unmount", () => {
+    const onClose = vi.fn();
+    const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
+    const { unmount } = render(<MediaPicker open onClose={onClose} onSelect={vi.fn()} />);
+
+    unmount();
+    expect(removeEventListenerSpy).toHaveBeenCalledWith("keydown", expect.any(Function));
+    removeEventListenerSpy.mockRestore();
+  });
+
   it("shows empty state when no images match", async () => {
     (apiFetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ items: [] });
 
@@ -149,3 +167,4 @@ describe("MediaPicker", () => {
     });
   });
 });
+

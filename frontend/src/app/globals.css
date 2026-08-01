@@ -95,8 +95,8 @@
    * var(--font-*) tokens are injected by Next.js into the <html> element.
    * Fallback chain: actual loaded font → Google CDN name → system stack.
    * ─────────────────────────────────────────────────────────────────────────── */
-  --font-display:   var(--font-roboto, 'Roboto'), var(--font-open-sans, 'Open Sans'), var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-headline:  var(--font-roboto, 'Roboto'), var(--font-open-sans, 'Open Sans'), -apple-system, sans-serif;
+  --font-display:   var(--font-outfit, 'Outfit'), var(--font-roboto, 'Roboto'), var(--font-open-sans, 'Open Sans'), var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-headline:  var(--font-outfit, 'Outfit'), var(--font-roboto, 'Roboto'), var(--font-open-sans, 'Open Sans'), -apple-system, sans-serif;
   --font-body:      var(--font-inter, 'Inter'), var(--font-roboto, 'Roboto'), -apple-system, sans-serif;
   --font-label:     var(--font-inter, 'Inter'), -apple-system, sans-serif;
   --font-mono:      'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
@@ -156,7 +156,7 @@
 
   --border: 217 33% 17%;
   --border-primary: 217 33% 17%;
-  --border-glass: 255 255% 255% / 0.05;
+  --border-glass: 0 0% 100% / 0.05;
 
   --destructive: 0 62.8% 30.6%;
   --secondary: 142 71% 45%;
@@ -237,34 +237,62 @@
     font-size: var(--text-base);
     font-family: var(--font-body);
   }
-  .workspace-platform h1 {
+  .workspace-platform h1:not([class*="text-"]) {
     font-size: var(--text-xl);
     font-family: var(--font-headline);
     font-weight: var(--weight-semibold);
     line-height: var(--leading-tight);
   }
-  .workspace-platform h2 {
+  .workspace-platform h2:not([class*="text-"]) {
     font-size: var(--text-lg);
     font-family: var(--font-headline);
     font-weight: var(--weight-semibold);
     line-height: var(--leading-snug);
   }
-  .workspace-platform h3 {
+  .workspace-platform h3:not([class*="text-"]) {
     font-size: var(--text-md);
     font-family: var(--font-headline);
     font-weight: var(--weight-medium);
     line-height: var(--leading-snug);
   }
-  .workspace-platform h4 {
+  .workspace-platform h4:not([class*="text-"]) {
     font-size: var(--text-base);
     font-family: var(--font-headline);
     font-weight: var(--weight-medium);
   }
-  .workspace-platform h5,
-  .workspace-platform h6 {
+  .workspace-platform h5:not([class*="text-"]),
+  .workspace-platform h6:not([class*="text-"]) {
     font-size: var(--text-sm);
     font-family: var(--font-body);
     font-weight: var(--weight-medium);
+  }
+
+  /* Puck editor heading override: ensure headings inside Puck editor canvas preserve utility font sizes */
+  .puck-editor h1:not([class*="text-"]),
+  .puck-editor h2:not([class*="text-"]),
+  .puck-editor h3:not([class*="text-"]),
+  .puck-editor h4:not([class*="text-"]),
+  .puck-editor h5:not([class*="text-"]),
+  .puck-editor h6:not([class*="text-"]),
+  .Puck h1:not([class*="text-"]),
+  .Puck h2:not([class*="text-"]),
+  .Puck h3:not([class*="text-"]),
+  .Puck h4:not([class*="text-"]),
+  .Puck h5:not([class*="text-"]),
+  .Puck h6:not([class*="text-"]),
+  .workspace-platform .puck-editor h1:not([class*="text-"]),
+  .workspace-platform .puck-editor h2:not([class*="text-"]),
+  .workspace-platform .puck-editor h3:not([class*="text-"]),
+  .workspace-platform .puck-editor h4:not([class*="text-"]),
+  .workspace-platform .puck-editor h5:not([class*="text-"]),
+  .workspace-platform .puck-editor h6:not([class*="text-"]),
+  .workspace-platform .Puck h1:not([class*="text-"]),
+  .workspace-platform .Puck h2:not([class*="text-"]),
+  .workspace-platform .Puck h3:not([class*="text-"]),
+  .workspace-platform .Puck h4:not([class*="text-"]),
+  .workspace-platform .Puck h5:not([class*="text-"]),
+  .workspace-platform .Puck h6:not([class*="text-"]) {
+    font-size: inherit;
   }
 
   .workspace-platform :where(div, main, section, article, aside, header, footer, nav, form, ul, ol, li, p, h1, h2, h3, h4, h5, h6, span, a) {

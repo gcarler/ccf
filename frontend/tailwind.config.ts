@@ -96,9 +96,11 @@ const config: Config = {
                 // ── Connected to next/font/google CSS variables (see layout.tsx) ──
                 // var(--font-*) is injected into <html> by Next.js at build time.
                 // Static fallback strings ensure prerender/SSR correctness.
-                "display":  ["var(--font-roboto)", "Roboto", "var(--font-open-sans)", "Open Sans", "var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
-                "sans":     ["var(--font-roboto)", "Roboto", "var(--font-open-sans)", "Open Sans", "var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
-                "headline": ["var(--font-roboto)", "Roboto", "var(--font-open-sans)", "Open Sans", "-apple-system", "sans-serif"],
+                "outfit":   ["var(--font-outfit)", "Outfit", "sans-serif"],
+                "heading":  ["var(--font-outfit)", "Outfit", "var(--font-roboto)", "Roboto", "sans-serif"],
+                "display":  ["var(--font-outfit)", "Outfit", "var(--font-roboto)", "Roboto", "var(--font-open-sans)", "Open Sans", "var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
+                "sans":     ["var(--font-inter)", "Inter", "var(--font-roboto)", "Roboto", "-apple-system", "sans-serif"],
+                "headline": ["var(--font-outfit)", "Outfit", "var(--font-roboto)", "Roboto", "-apple-system", "sans-serif"],
                 "body":     ["var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
                 "label":    ["var(--font-inter)", "Inter", "-apple-system", "sans-serif"],
                 "mono":     ["JetBrains Mono", "Fira Code", "ui-monospace", "monospace"],

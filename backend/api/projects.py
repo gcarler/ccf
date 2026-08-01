@@ -639,17 +639,46 @@ def _assert_status_in_project_phases(db: Session, project_id: Any, status_value:
     )
 
 
-def _validate_whiteboard_json(elements_json: str) -> None:
-    """Valida que elements_json sea JSON válido.
+_MAX_WHITEBOARD_JSON_BYTES = 20 * 1024 * 1024
 
-    Rechaza el literal "undefined" (bug de cliente JS) y JSON malformado.
+
+def _validate_whiteboard_json(elements_json: str) -> None:
+    """Valida que elements_json sea JSON válido y con forma esperada.
+
+    Rechaza el literal "undefined" (bug de cliente JS), JSON malformado,
+    payloads vacíos o demasiado grandes, y árboles JSON cuya top-level no sea
+    un objeto (canvas.toJSON de fabric) o un array de elementos (tests / API
+    directa). Cada elemento debe ser un objeto, no un primitivo.
     """
-    if elements_json.strip().lower() == "undefined":
+    if not isinstance(elements_json, str):
+        raise HTTPException(status_code=400, detail="elements_json must be a string")
+    if len(elements_json.encode("utf-8")) > _MAX_WHITEBOARD_JSON_BYTES:
+        raise HTTPException(status_code=400, detail="elements_json exceeds the maximum allowed size")
+    stripped = elements_json.strip()
+    if not stripped:
+        raise HTTPException(status_code=400, detail="elements_json must not be empty")
+    if stripped.lower() == "undefined":
         raise HTTPException(status_code=400, detail="elements_json must be valid JSON, got 'undefined'")
     try:
-        json.loads(elements_json)
+        parsed = json.loads(elements_json)
     except (json.JSONDecodeError, TypeError, ValueError):
         raise HTTPException(status_code=400, detail="elements_json must be valid JSON")
+
+    if not isinstance(parsed, (dict, list)):
+        raise HTTPException(status_code=400, detail="elements_json must be a JSON object or array")
+
+    def _items_are_objects(items: list) -> None:
+        for item in items:
+            if not isinstance(item, dict):
+                raise HTTPException(status_code=400, detail="elements_json list items must be JSON objects")
+
+    if isinstance(parsed, list):
+        _items_are_objects(parsed)
+    elif "objects" in parsed:
+        # fabric.Canvas.toJSON() shape: {"version": "...", "objects": [...]}
+        if not isinstance(parsed["objects"], list):
+            raise HTTPException(status_code=400, detail="elements_json 'objects' must be a list")
+        _items_are_objects(parsed["objects"])
 
 
 # Canonical 4-phase set used when a project has no active Phase rows
@@ -1488,6 +1517,8 @@ def mark_inbox_read(
 def list_whiteboards(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
+    limit: int = Query(default=200, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
 ):
     """Lista todas las pizarras activas del alcance del actor actual.
 
@@ -1495,6 +1526,9 @@ def list_whiteboards(
     ``sede_id`` del actor. Esto previene el leak cross-sede del feed de
     whiteboards en el módulo de plataforma. El superadmin (``user_sede``
     = ``None``) sigue viendo todas, consistente con list_projects.
+
+    El listado está paginado (``limit``/``offset``, default 200, cap 500)
+    para no materializar el feed completo en memoria en sedes grandes.
     """
     user_sede = get_user_sede_id(db, current_user.id)
     q = (
@@ -1504,7 +1538,7 @@ def list_whiteboards(
     )
     if user_sede:
         q = q.filter(models.Project.sede_id == user_sede)
-    boards = q.order_by(models.ProjectWhiteboard.updated_at.desc()).all()
+    boards = q.order_by(models.ProjectWhiteboard.updated_at.desc()).offset(offset).limit(limit).all()
     return [_normalize_dates(b) for b in boards]
 
 
@@ -1604,6 +1638,9 @@ def update_project_whiteboard(
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
+    # Busca cualquier fila (incluso soft-deleted): project_id es UNIQUE, así
+    # que una pizarra borrada debe restaurarse (deleted_at = NULL) en lugar de
+    # dejar un hueco invisible que sigue aceptando 200 sin aparecer en GET.
     board = (
         db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
     )
@@ -1618,6 +1655,7 @@ def update_project_whiteboard(
         db.add(board)
     else:
         board.elements_json = elements
+        board.deleted_at = None
         board.updated_at = datetime.now(timezone.utc)
 
     board.title = title
@@ -1645,6 +1683,48 @@ def delete_project_whiteboard(
         board.deleted_at = datetime.now(timezone.utc)
         db.commit()
     return None
+
+
+@router.post("/{project_id}/whiteboard/thumbnail", response_model=dict)
+async def upload_project_whiteboard_thumbnail(
+    project_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Sube el thumbnail de la pizarra.
+
+    El archivo se optimiza automáticamente (WebP re-encoded y resize) por el
+    storage service y el URL resultante se persiste en ``thumbnail_url`` para
+    que el feed pueda mostrar una vista previa sin transportar el canvas.
+    """
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    content_type = (file.content_type or "").lower()
+    if content_type not in ("image/png", "image/jpeg", "image/webp"):
+        raise HTTPException(status_code=400, detail="Thumbnail must be a PNG, JPEG or WebP image")
+
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="File exceeds maximum size")
+
+    board = (
+        db.query(models.ProjectWhiteboard)
+        .filter(
+            models.ProjectWhiteboard.project_id == _to_uuid(project_id),
+            models.ProjectWhiteboard.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not board:
+        raise HTTPException(status_code=404, detail="Whiteboard not found")
+
+    filename = sanitize_filename(file.filename or "thumbnail.png")
+    url = storage_service.save_file(contents, filename, subfolder="projects/whiteboards")
+    board.thumbnail_url = url
+    db.commit()
+    return {"thumbnail_url": url}
 
 
 # --- ATTACHMENTS & SUPPLIES ---

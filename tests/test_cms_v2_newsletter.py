@@ -6,10 +6,13 @@ Verifies:
   - Public endpoints: POST /api/cms/v2/public/subscribe, POST /api/cms/v2/public/unsubscribe
   - Error handling (404 NewsletterNotFoundError, SubscriberNotFoundError)
 """
+
 from __future__ import annotations
 
 import uuid as _uuid
+
 import pytest
+
 from backend import models
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin

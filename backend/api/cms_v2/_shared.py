@@ -9,6 +9,7 @@ in the original single-file design.
 Everything here is import-safe: no FastAPI router definitions, no
 ``@router.get`` decorators, just plain functions and constants.
 """
+
 from __future__ import annotations
 
 import logging
@@ -329,18 +330,20 @@ def _get_system_var(db: Session, site_key: str, var_key: str, default: str = "")
         cached_time, cached_val = _system_var_cache[cache_key]
         if now - cached_time < _SYSTEM_VAR_TTL:
             return cached_val
-    row = db.query(models.SystemVariable).filter(
-        models.SystemVariable.key == f"{site_key}_{var_key}",
-        models.SystemVariable.deleted_at.is_(None),
-    ).first()
+    row = (
+        db.query(models.SystemVariable)
+        .filter(
+            models.SystemVariable.key == f"{site_key}_{var_key}",
+            models.SystemVariable.deleted_at.is_(None),
+        )
+        .first()
+    )
     val = row.value if row and row.value else default
     _system_var_cache[cache_key] = (now, val)
     return val
 
 
-def _get_system_vars_batch(
-    db: Session, site_key: str, var_keys: tuple[str, ...]
-) -> dict[str, str]:
+def _get_system_vars_batch(db: Session, site_key: str, var_keys: tuple[str, ...]) -> dict[str, str]:
     """Batch-read multiple SystemVariable rows for a site in one query (N+1 fix)."""
     now = time.monotonic()
     cached: dict[str, str] = {}
@@ -364,7 +367,7 @@ def _get_system_vars_batch(
         )
         found: dict[str, str] = {}
         for row in rows:
-            suffix = row.key[len(f"{site_key}_"):] if row.key.startswith(f"{site_key}_") else row.key
+            suffix = row.key[len(f"{site_key}_") :] if row.key.startswith(f"{site_key}_") else row.key
             found[suffix] = row.value
         now_mono = time.monotonic()
         for var_key in missing:
@@ -382,18 +385,41 @@ def _build_section_defaults(
     if props and any(
         key in props
         for key in (
-            "title", "subtitle", "body", "content", "items", "personas",
-            "pastors", "stats", "testimonials", "faqs", "embed_url",
-            "map_url", "eyebrow", "title_lead", "primary_cta", "bg_image",
+            "title",
+            "subtitle",
+            "body",
+            "content",
+            "items",
+            "personas",
+            "pastors",
+            "stats",
+            "testimonials",
+            "faqs",
+            "embed_url",
+            "map_url",
+            "eyebrow",
+            "title_lead",
+            "primary_cta",
+            "bg_image",
         )
     ):
         return props or {}
 
     _get_system_vars_batch(
-        db, site_key,
-        ("church_name", "mission_statement", "service_time", "address",
-         "map_embed_url", "welcome_title", "cta_text", "cta_link",
-         "cta_title", "cta_description"),
+        db,
+        site_key,
+        (
+            "church_name",
+            "mission_statement",
+            "service_time",
+            "address",
+            "map_embed_url",
+            "welcome_title",
+            "cta_text",
+            "cta_link",
+            "cta_title",
+            "cta_description",
+        ),
     )
     church_name = _get_system_var(db, site_key, "church_name", "Nuestra Iglesia")
     mission = _get_system_var(db, site_key, "mission_statement", "Compartir el amor de Dios y hacer discípulos")
@@ -412,8 +438,9 @@ def _build_section_defaults(
     if section_type == "cta_banner":
         return {
             "title": _get_system_var(db, site_key, "cta_title", "Únete a nuestra comunidad"),
-            "description": _get_system_var(db, site_key, "cta_description",
-                                          "Te invitamos a ser parte de nuestra familia. Todos son bienvenidos."),
+            "description": _get_system_var(
+                db, site_key, "cta_description", "Te invitamos a ser parte de nuestra familia. Todos son bienvenidos."
+            ),
             "button_text": "Visítanos",
             "button_link": "/contacto",
         }
@@ -443,18 +470,25 @@ def _build_section_defaults(
         for p in leaders:
             name = p.nombre_completo
             slug = _slugify(name)
-            personas.append({
-                "name": name, "role": "Pastor Principal" if p.is_main_pastor else "Pastor",
-                "photo_url": p.photo_url or "", "slug": slug, "bio_short": p.bio_short or "",
-            })
+            personas.append(
+                {
+                    "name": name,
+                    "role": "Pastor Principal" if p.is_main_pastor else "Pastor",
+                    "photo_url": p.photo_url or "",
+                    "slug": slug,
+                    "bio_short": p.bio_short or "",
+                }
+            )
         if not personas:
-            personas = [{"name": "Pastor", "role": "Pastor Principal", "photo_url": "",
-                        "slug": "pastor", "bio_short": ""}]
+            personas = [
+                {"name": "Pastor", "role": "Pastor Principal", "photo_url": "", "slug": "pastor", "bio_short": ""}
+            ]
         return {"personas": personas, "title": "Nuestro Equipo Pastoral"}
     if section_type == "testimonials":
         if props and isinstance(props, dict) and ("testimonials" in props or "items" in props):
             return props
         from sqlalchemy.orm import joinedload
+
         rows = (
             db.query(models.CmsPost)
             .options(lazyload("*"))
@@ -462,19 +496,29 @@ def _build_section_defaults(
             .join(models.CmsPost.categories)
             .filter(models.CmsCategory.slug == "testimonials", models.CmsPost.status == "published")
             .order_by(models.CmsPost.published_at.desc(), models.CmsPost.created_at.desc())
-            .limit(6).all()
+            .limit(6)
+            .all()
         )
         testimonials = []
         for post in rows:
             author_name = post.author_persona.nombre_completo if post.author_persona else "Anónimo"
-            testimonials.append({
-                "content": post.content or "", "author": author_name,
-                "emotion": (post.seo_json or {}).get("emotion", "Gratitud"),
-                "image_url": post.featured_image_url or "",
-            })
+            testimonials.append(
+                {
+                    "content": post.content or "",
+                    "author": author_name,
+                    "emotion": (post.seo_json or {}).get("emotion", "Gratitud"),
+                    "image_url": post.featured_image_url or "",
+                }
+            )
         if not testimonials:
-            testimonials = [{"content": "Dios ha sido fiel en cada etapa. Bendigo a esta iglesia por su amor y apoyo.",
-                           "author": "Miembro de la Iglesia", "emotion": "Gratitud", "image_url": ""}]
+            testimonials = [
+                {
+                    "content": "Dios ha sido fiel en cada etapa. Bendigo a esta iglesia por su amor y apoyo.",
+                    "author": "Miembro de la Iglesia",
+                    "emotion": "Gratitud",
+                    "image_url": "",
+                }
+            ]
         return {"testimonials": testimonials, "title": "Testimonios"}
     if section_type == "faq":
         if props and isinstance(props, dict) and ("faqs" in props or "items" in props):
@@ -483,10 +527,14 @@ def _build_section_defaults(
             "faqs": [
                 {"question": "¿A qué hora son los servicios?", "answer": service_time},
                 {"question": "¿Dónde están ubicados?", "answer": address},
-                {"question": "¿Qué debo esperar en mi primera visita?",
-                 "answer": "Una comunidad cálida que te recibirá con los brazos abiertos. Ven tal como eres."},
-                {"question": "¿Tienen grupos de estudio?",
-                 "answer": "Sí, tenemos grupos de casa que se reúnen durante la semana. Contáctanos para más información."},
+                {
+                    "question": "¿Qué debo esperar en mi primera visita?",
+                    "answer": "Una comunidad cálida que te recibirá con los brazos abiertos. Ven tal como eres.",
+                },
+                {
+                    "question": "¿Tienen grupos de estudio?",
+                    "answer": "Sí, tenemos grupos de casa que se reúnen durante la semana. Contáctanos para más información.",
+                },
             ],
             "title": "Preguntas Frecuentes",
         }
@@ -499,6 +547,7 @@ def _build_section_defaults(
 
 # ── Pastoral role helper ───────────────────────────────────────────────────────
 
+
 def _pastoral_role(persona: models.Persona) -> str:
     """Derive the pastoral role label from a Persona record."""
     role = (getattr(persona, "church_role", None) or "").strip()
@@ -508,6 +557,7 @@ def _pastoral_role(persona: models.Persona) -> str:
 
 
 # ── Taxonomy / post lookup helpers ──────────────────────────────────────────────
+
 
 def _get_category_or_404(db: Session, site_id: UUID, slug: str) -> models.CmsCategory:
     row = (

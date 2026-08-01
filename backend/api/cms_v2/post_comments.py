@@ -8,6 +8,7 @@ Admin endpoints:
   - GET   /sites/{site_key}/post-comments (list comments with status filter + pending_count)
   - PATCH /sites/{site_key}/post-comments/{id} (update comment status)
 """
+
 from __future__ import annotations
 
 import logging
@@ -167,12 +168,7 @@ def list_admin_post_comments(
 
     total = query.count()
 
-    rows = (
-        query.order_by(models.CmsPostComment.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    rows = query.order_by(models.CmsPostComment.created_at.desc()).offset(skip).limit(limit).all()
 
     items: List[schemas.CmsPostCommentRead] = []
     for comment, p_title, p_slug in rows:

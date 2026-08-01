@@ -12,13 +12,10 @@ Target endpoints:
 import uuid
 from datetime import datetime, timezone
 
-from backend.api.cms_v2.public import (
-    public_menu,
-    public_page,
-    public_post,
-    public_posts_list,
-    public_theme,
-)
+from backend.api.cms.public.menus import public_menu
+from backend.api.cms.public.pages import public_page
+from backend.api.cms.public.posts import public_post, public_posts_list
+from backend.api.cms.public.themes import public_theme
 from sqlalchemy import event
 
 from backend import models

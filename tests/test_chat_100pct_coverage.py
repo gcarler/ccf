@@ -19,6 +19,7 @@ from backend.api.chat import (
     _assert_conversation_sede_aligned,
     _assert_sender_sede_matches_actor,
     _persona_display_name,
+    _validate_attachment_reference,
 )
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
@@ -569,13 +570,31 @@ class TestChat100PctCoverage:
         h = chat_setup["headers"]
         resp = c.post(
             "/api/chat/upload-attachment",
-            files={"file": ("test.jpg", io.BytesIO(b"fake_image_data"), "image/jpeg")},
+            files={"file": ("test.jpg", io.BytesIO(b"\xff\xd8\xff\xe0\x00\x10JFIF\x00"), "image/jpeg")},
             headers={"Authorization": h.get("Authorization", "")},
         )
         assert resp.status_code == 200
         data = resp.json()
         assert "url" in data
         assert data["type"] == "image"
+
+    def test_protected_attachment_reference_is_bound_to_conversation(self, chat_setup):
+        conversation_id = uuid.uuid4()
+        other_conversation_id = uuid.uuid4()
+
+        _validate_attachment_reference(
+            f"/chat/attachments/{conversation_id}/_global/file.pdf",
+            conversation_id,
+        )
+        _validate_attachment_reference("https://example.com/file.pdf", conversation_id)
+
+        with pytest.raises(HTTPException) as exc_info:
+            _validate_attachment_reference(
+                f"/api/chat/attachments/{other_conversation_id}/_global/file.pdf",
+                conversation_id,
+            )
+        assert exc_info.value.status_code == 422
+        assert exc_info.value.detail == "Invalid attachment reference"
 
     def test_upload_chat_attachment_invalid_type(self, chat_setup):
         import io
