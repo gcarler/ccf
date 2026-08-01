@@ -2,6 +2,7 @@ import uuid
 
 from backend import models, schemas
 from backend.api import cms_v2
+from backend.api.cms.admin.sites import create_site, list_sites
 
 
 # Minimal dummy DB to satisfy CRUD operations used in tests
@@ -79,7 +80,7 @@ def test_slugify_basic():
 # Test list_sites returns empty list with dummy DB
 def test_list_sites_empty():
     db = DummyDB()
-    result = cms_v2.list_sites(db=db, only_active=False)
+    result = list_sites(db=db, only_active=False)
     assert result == []
 
 
@@ -88,7 +89,7 @@ def test_create_site_interaction():
     db = DummyDB()
     payload = schemas.CmsSiteCreate(site_key="test", name="Test Site", base_path="/test")
     dummy_user = type("U", (), {"id": uuid.uuid4(), "role": "admin"})()
-    site = cms_v2.create_site(payload, db=db, current_user=dummy_user)
+    site = create_site(payload, db=db, current_user=dummy_user)
     assert isinstance(site, models.CmsSite)
     assert site.site_key == "test"
     assert site.name == "Test Site"

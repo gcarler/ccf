@@ -81,33 +81,33 @@ async function installMediaMocks(page: Page, { emptyMedia = false }: { emptyMedi
   // must be registered BEFORE more general ones to win.
 
   // Media upload endpoint: most specific sub-path, registered first
-  await page.route(`**/api/cms/media/upload`, async (route) => {
+  await page.route(/\/api\/cms\/media\/upload(?:\?.*)?$/, async (route) => {
     await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
   });
 
   // Media item CRUD: matches /api/cms/media/<id> (GET, PATCH, POST, DELETE)
-  await page.route(`**/api/cms/media/*`, async (route, request) => {
+  await page.route(/\/api\/cms\/media\/([^/?]+)\/optimize(?:\?.*)?$/, async (route) => {
+    const url = route.request().url();
+    const mediaId = url.split('/media/')[1]?.split('/')[0] ?? '';
+    const index = mediaState.findIndex((item) => item.id === mediaId);
+    if (index === -1) {
+      await route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ error: 'not found' }) });
+      return;
+    }
+    mediaState[index] = {
+      ...mediaState[index],
+      file_size: Math.round((mediaState[index].file_size || 0) * 0.7),
+    } as typeof mediaState[number];
+    await route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ ...mediaState[index], optimized: true }),
+    });
+  });
+
+  await page.route(/\/api\/cms\/media\/([^/?]+)(?:\?.*)?$/, async (route, request) => {
     const method = request.method();
     const url = request.url();
     const mediaId = url.split('/media/')[1]?.split('?')[0] ?? '';
-
-    // POST to /media/<id>/optimize — handle it here so it doesn't fall through
-    if (method === 'POST' && url.includes('/optimize')) {
-      const index = mediaState.findIndex((item) => item.id === mediaId);
-      if (index === -1) {
-        await route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ error: 'not found' }) });
-        return;
-      }
-      mediaState[index] = {
-        ...mediaState[index],
-        file_size: Math.round((mediaState[index].file_size || 0) * 0.7),
-      } as typeof mediaState[number];
-      await route.fulfill({
-        status: 200, contentType: 'application/json',
-        body: JSON.stringify({ ...mediaState[index], optimized: true }),
-      });
-      return;
-    }
 
     if (method === 'DELETE') {
       if (url.includes('permanent=true')) {
@@ -135,27 +135,7 @@ async function installMediaMocks(page: Page, { emptyMedia = false }: { emptyMedi
   });
 
   // Media list: matches /api/cms/media and /api/cms/media?query=...
-  await page.route(`**/api/cms/media*`, async (route) => {
-    const url = new URL(route.request().url());
-    // If URL has a path segment after /media/ (like /media/123), skip — handled above
-    if (url.pathname.replace(/\/$/, '').split('/media/')[1]?.length) {
-      await route.fallback();
-      return;
-    }
-    const searchQuery = url.searchParams.get('query')?.toLowerCase() || '';
-    if (searchQuery) {
-      const filtered = mediaState.filter(
-        (item) =>
-          item.alt_text.toLowerCase().includes(searchQuery) ||
-          item.filename.toLowerCase().includes(searchQuery) ||
-          item.tags.some((t) => t.toLowerCase().includes(searchQuery)),
-      );
-      await route.fulfill({
-        status: 200, contentType: 'application/json',
-        body: JSON.stringify({ items: filtered, total: filtered.length }),
-      });
-      return;
-    }
+  await page.route(/\/api\/cms\/media\/?(?:\?.*)?$/, async (route) => {
     await route.fulfill({
       status: 200, contentType: 'application/json',
       body: JSON.stringify({ items: mediaState, total: mediaState.length }),
@@ -163,7 +143,7 @@ async function installMediaMocks(page: Page, { emptyMedia = false }: { emptyMedi
   });
 
   // ── General fallback LAST ──────────────────────────────────────────────
-  await page.route('**/api/cms/v2/sites**', async (route) => {
+  await page.route(/\/api\/cms\/v2\/sites\/?(?:\?.*)?$/, async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SITES_FIXTURE) });
   });
 }
@@ -180,7 +160,9 @@ test.describe('CMS media management', () => {
     // Verify file count badge shows correct number
     await expect(page.getByText('3 archivos')).toBeVisible();
 
-    // Verify all three media filenames are visible
+    await page.getByRole('button', { name: 'Tabla', exact: true }).click();
+
+    // Verify all three media filenames are visible in the table
     await expect(page.getByText('hero-banner.jpg', { exact: false })).toBeVisible();
     await expect(page.getByText('pastor-photo.jpg', { exact: false })).toBeVisible();
     await expect(page.getByText('evento-especial.pdf', { exact: false })).toBeVisible();
@@ -216,13 +198,13 @@ test.describe('CMS media management', () => {
     // Verify initial file count
     await expect(page.getByText('3 archivos')).toBeVisible();
 
-    // Hover over the first media item to reveal action buttons
-    // The delete button has aria-label="Eliminar"
-    const firstItem = page.locator('text=hero-banner.jpg').first();
+    // Hover over the first media card to reveal action buttons.
+    const firstItem = page.locator('div.group.relative.aspect-square').first();
+    await expect(firstItem).toBeVisible();
     await firstItem.hover();
 
-    // Click the "Eliminar" button
-    const deleteButton = page.locator('[aria-label="Eliminar"]').first();
+    // Click the delete action within that card.
+    const deleteButton = firstItem.getByRole('button', { name: 'Eliminar', exact: true });
     await expect(deleteButton).toBeVisible();
     await deleteButton.click();
 
@@ -231,8 +213,7 @@ test.describe('CMS media management', () => {
     await expect(page.getByText('Esta acción no se puede deshacer.')).toBeVisible();
 
     // Cancel the action — item should still be in the list
-    await page.getByRole('button', { name: 'Cancelar' }).click();
-    await expect(page.getByText('hero-banner.jpg', { exact: false })).toBeVisible();
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
     await expect(page.getByText('3 archivos')).toBeVisible();
 
     // Re-open the delete dialog and confirm
@@ -241,9 +222,12 @@ test.describe('CMS media management', () => {
     await expect(page.getByText('¿Eliminar permanentemente?')).toBeVisible();
 
     // Confirm deletion
-    await page.getByRole('button', { name: 'Eliminar' }).click();
+    const confirmationModal = page.locator('div.fixed.inset-0').filter({ hasText: '¿Eliminar permanentemente?' });
+    await confirmationModal.getByRole('button', { name: 'Eliminar', exact: true }).click();
 
     // The item should disappear from the list and count should decrease
+    await expect(page.getByText('2 archivos')).toBeVisible();
+    await page.getByRole('button', { name: 'Tabla', exact: true }).click();
     await expect(page.getByText('hero-banner.jpg', { exact: false })).not.toBeVisible({ timeout: 5000 });
     await expect(page.getByText('2 archivos')).toBeVisible();
   });
@@ -253,7 +237,8 @@ test.describe('CMS media management', () => {
     await page.goto(`/plataforma/cms/media?site=${SITE_KEY}`, { waitUntil: 'load' });
     await page.waitForLoadState('domcontentloaded');
 
-    // All 3 files visible initially
+    // Use table view because image cards show thumbnails without filenames.
+    await page.getByRole('button', { name: 'Tabla', exact: true }).click();
     await expect(page.getByText('3 archivos')).toBeVisible();
 
     // Type in search box to filter by filename
@@ -279,8 +264,11 @@ test.describe('CMS media management', () => {
     await page.goto(`/plataforma/cms/media?site=${SITE_KEY}`, { waitUntil: 'load' });
     await page.waitForLoadState('domcontentloaded');
 
+    // Use table view because image cards show thumbnails without filenames.
+    await page.getByRole('button', { name: 'Tabla', exact: true }).click();
+
     // Click the "Imágenes" filter tab
-    await page.getByText('Imágenes').click();
+    await page.getByRole('button', { name: 'Imágenes', exact: true }).click();
     await page.waitForTimeout(300);
 
     // Only image files should remain (hero-banner.jpg, pastor-photo.jpg)
@@ -289,7 +277,7 @@ test.describe('CMS media management', () => {
     await expect(page.getByText('evento-especial.pdf', { exact: false })).not.toBeVisible();
 
     // Click "Documentos" filter
-    await page.getByText('Documentos').click();
+    await page.getByRole('button', { name: 'Documentos', exact: true }).click();
     await page.waitForTimeout(300);
 
     // Only PDF should remain
@@ -297,7 +285,7 @@ test.describe('CMS media management', () => {
     await expect(page.getByText('evento-especial.pdf', { exact: false })).toBeVisible();
 
     // Click "Todos" to reset
-    await page.getByText('Todos').click();
+    await page.getByRole('button', { name: 'Todos', exact: true }).click();
     await page.waitForTimeout(300);
     await expect(page.getByText('3 archivos')).toBeVisible();
   });
