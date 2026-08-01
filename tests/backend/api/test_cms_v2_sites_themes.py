@@ -7,6 +7,7 @@ pytestmark = pytest.mark.skip(reason="Old test disabled")
 from backend import crud as crud_cms
 from backend import schemas
 from backend.api import cms_v2
+from backend.api.cms.admin.sites import list_sites
 
 
 @pytest.fixture
@@ -37,7 +38,7 @@ def test_crud_sites_and_themes(full):
     theme = crud_cms.create_cms_theme(db, site.id, theme_payload, created_by=None)
     assert theme.name == "Blue Theme"
     # List sites and themes
-    sites = cms_v2.list_sites(db=db)
+    sites = list_sites(db=db)
     assert any(s.key == "full" for s in sites)
     themes = cms_v2.list_themes("full", db, admin)
     assert any(t.id == theme.id for t in themes)
@@ -48,5 +49,5 @@ def test_crud_sites_and_themes(full):
     cms_v2.delete_theme("full", theme.id, db=db, current_user=admin)
     cms_v2.delete_site("full", db=db, current_user=admin)
     # Verify deletion
-    sites_after = cms_v2.list_sites(db=db)
+    sites_after = list_sites(db=db)
     assert not any(s.key == "full" for s in sites_after)

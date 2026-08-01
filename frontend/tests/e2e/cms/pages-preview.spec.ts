@@ -287,6 +287,7 @@ test.describe('CMS pages and preview deep smoke', () => {
     await expect(page.locator('body')).toContainText(/1 seleccionadas/i);
 
     await page.getByRole('button', { name: /Archivar seleccion/i }).click();
+    await page.getByRole('button', { name: /Archivar todas/i }).click();
     await expect(draftRow).toContainText(/Archivado/i);
   });
 
