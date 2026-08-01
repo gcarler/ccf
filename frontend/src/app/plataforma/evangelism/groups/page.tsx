@@ -117,7 +117,7 @@ export default function GroupPage() {
 
  useEffect(() => {
    if (!token) return;
-   apiFetch<CounselingListResponse | unknown[]>('/crm/counseling', { token, silent: true, query: { status: 'open', limit: 1 } })
+   apiFetch<CounselingListResponse | unknown[]>('/crm/counseling/', { token, silent: true, query: { status: 'open', limit: 1 } })
      .then((res) => {
        const arr = Array.isArray(res) ? res : Array.isArray(res?.items) ? res.items : [];
        setCounselingCount(arr.length);

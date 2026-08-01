@@ -1383,6 +1383,7 @@ def get_prayer_request_detail(
 # ── Counseling (CRM prefix) ──────────────────────────────
 
 
+@router.get("/counseling", response_model=dict)
 @router.get("/counseling/", response_model=dict)
 def list_counseling_tickets(
     status: Optional[str] = None,
@@ -1429,6 +1430,7 @@ def _resolve_pastor_identity(db: Session, current_user: models.User, pastor_id: 
     return _get_scoped_persona(db, current_user, pastor_id).id
 
 
+@router.post("/counseling", response_model=dict, status_code=201)
 @router.post("/counseling/", response_model=dict, status_code=201)
 def create_counseling_ticket(
     payload: schemas.CounselingTicketCreate,
