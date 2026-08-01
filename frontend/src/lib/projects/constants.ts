@@ -10,6 +10,38 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 export const TASK_PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
+// Canonical operational nodes for project tasks (F2: persisted ``node`` column).
+// Must stay in sync with backend ``project_tasks.node`` values.
+export const TASK_NODES = ['nutrition', 'digital'] as const;
+export type TaskNode = (typeof TASK_NODES)[number];
+
+export const NODE_LABELS: Record<TaskNode, string> = {
+    nutrition: 'Nodo de Nutrición',
+    digital: 'Nodo Digital',
+};
+
+export interface NodeOption {
+    readonly value: TaskNode;
+    readonly label: string;
+    readonly short: string;
+    readonly dot: string;
+    readonly color: string;
+}
+
+export const NODE_OPTIONS: readonly NodeOption[] = [
+    { value: 'nutrition', label: 'Nodo de Nutrición', short: 'Nutrición', dot: 'bg-orange-500', color: 'bg-orange-500' },
+    { value: 'digital', label: 'Nodo Digital', short: 'Digital', dot: 'bg-[hsl(var(--primary))]', color: 'bg-[hsl(var(--primary))]' },
+] as const;
+
+export function getNodeOption(val: string | null | undefined): NodeOption | undefined {
+    return NODE_OPTIONS.find(n => n.value === val);
+}
+
+export function getNodeLabel(val: string | null | undefined): string {
+    const opt = getNodeOption(val);
+    return opt ? opt.label : 'Sin nodo';
+}
+
 export const DEFAULT_TASK_STATUS: TaskStatus = 'todo';
 export const DEFAULT_TASK_PRIORITY: TaskPriority = 'medium';
 
