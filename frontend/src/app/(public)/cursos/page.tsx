@@ -49,8 +49,16 @@ export default function CursosPage() {
     : "";
 
   useEffect(() => {
-    setCourses([]);
-    setLoading(false);
+    fetch('/api/public/courses')
+      .then(res => res.json())
+      .then(data => {
+        setCourses(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching courses:', err);
+        setLoading(false);
+      });
   }, []);
 
   const featured = courses[0];
@@ -104,7 +112,7 @@ export default function CursosPage() {
         ) : featured ? (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6">
             <motion.article className="md:col-span-8 group relative rounded-lg overflow-hidden min-h-[280px] md:min-h-[450px] cursor-pointer" style={{ background: "var(--site-surface-container-low)" }} whileHover={{ y: -2 }}>
-              <Link href={`/academy/courses/${featured.id}`} className="absolute inset-0 z-20" />
+              <Link href={`/plataforma/academy/course/${featured.id}`} className="absolute inset-0 z-20" />
               <div className="absolute inset-0">
                 <Image src={heroImageUrl || "/og-default.png"} alt={featured.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" style={{ opacity: 0.5 }} />
               </div>
@@ -122,7 +130,7 @@ export default function CursosPage() {
             <div className="md:col-span-4 grid gap-4">
               {rest.slice(0, 3).map((course) => (
                 <motion.article key={course.id} className="group rounded-lg overflow-hidden border bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/10" whileHover={{ y: -2 }}>
-                  <Link href={`/academy/courses/${course.id}`} className="block">
+                  <Link href={`/plataforma/academy/course/${course.id}`} className="block">
                     <div className="relative h-40 bg-[hsl(var(--surface-2))]">
                       <Image src={heroImageUrl || "/og-default.png"} alt={course.title} fill className="object-cover" />
                     </div>
@@ -149,7 +157,7 @@ export default function CursosPage() {
       <section className="ccf-section ccf-container">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {rest.slice(3).map((course) => (
-            <Link key={course.id} href={`/academy/courses/${course.id}`} className="rounded-lg border p-5 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/10 hover:shadow-lg transition-shadow">
+            <Link key={course.id} href={`/plataforma/academy/course/${course.id}`} className="rounded-lg border p-5 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/10 hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide" style={{ background: "var(--site-surface-container)", color: "var(--site-primary)" }}>
                   {course.modality || "Academia"}

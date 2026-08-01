@@ -75,18 +75,19 @@ export default async function CcfDynamicPage({ params }: { params: Promise<{ slu
     notFound();
   }
 
-  const jsonLdScripts: string[] = [];
-  if (page.json_ld) {
-    jsonLdScripts.push(`<script type="application/ld+json">${JSON.stringify(page.json_ld)}</script>`);
-  }
-  if (page.breadcrumb_json_ld) {
-    jsonLdScripts.push(`<script type="application/ld+json">${JSON.stringify(page.breadcrumb_json_ld)}</script>`);
-  }
-
   return (
     <>
-      {jsonLdScripts.length > 0 && (
-        <head dangerouslySetInnerHTML={{ __html: jsonLdScripts.join("") }} />
+      {page.json_ld && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(page.json_ld) }}
+        />
+      )}
+      {page.breadcrumb_json_ld && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(page.breadcrumb_json_ld) }}
+        />
       )}
       <main className="ccf-dynamic-main flex-1 px-4 md:px-8 lg:px-12">
         {page.breadcrumbs && page.breadcrumbs.length > 1 && (
