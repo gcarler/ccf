@@ -25,7 +25,7 @@ interface Props {
     projectTitle?: string;
     tasks: ProjectTaskRecord[];
     onOpenTask: (task: ProjectTaskRecord) => void;
-    onCreateTask: (data: { title: string; description: string; priority: string; status: string; due_date?: string }) => Promise<boolean | void> | boolean | void;
+    onCreateTask: (data: { title: string; description: string; priority: string; status: string; due_date?: string; node?: string | null }) => Promise<boolean | void> | boolean | void;
 }
 
 export default function ProjectCalendarView({ projectId, projectTitle, tasks, onOpenTask, onCreateTask }: Props) {
@@ -84,7 +84,7 @@ export default function ProjectCalendarView({ projectId, projectTitle, tasks, on
         }
     };
 
-    const handleSubmit = async (data: { title: string; description: string; priority: string; status: string }) => {
+    const handleSubmit = async (data: { title: string; description: string; priority: string; status: string; node?: string | null }) => {
         const result = await onCreateTask({ ...data, due_date: draftDueDate });
         if (result === true || result === undefined) {
             setShowCreateDrawer(false);

@@ -31,6 +31,7 @@ export interface CreateTaskInput {
     status: string;
     assignee_id?: string | null;
     due_date?: string | null;
+    node?: string | null;
 }
 
 export interface UseProjectPageDataResult {

@@ -4,7 +4,8 @@ import PersonaSelect from '@/components/ui/PersonaSelect';
 import MetaRow from '@/components/ui/MetaRow';
 import TaskLabelManager from './TaskLabelManager';
 import type { ProjectTaskRecord } from '@/types/projects';
-import { CalendarDays, Flag, Tag, UserRound } from 'lucide-react';
+import { getNodeOption } from '@/lib/projects/constants';
+import { Boxes, CalendarDays, Flag, Tag, UserRound } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function TaskMetaFields({
@@ -13,6 +14,7 @@ export default function TaskMetaFields({
     onLabelsChange,
     onAssigneeChange,
     onPriorityCycle,
+    onNodeCycle,
     priority,
     token,
 }: {
@@ -21,9 +23,12 @@ export default function TaskMetaFields({
     onLabelsChange: (labels: string[]) => void;
     onAssigneeChange: (id: string | null) => void;
     onPriorityCycle: () => void;
+    onNodeCycle: () => void;
     priority: { color: string; dot: string; label: string };
     token: string | null;
 }) {
+    const nodeOpt = getNodeOption(task.node);
+
     return (
         <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05] space-y-2">
             <MetaRow icon={<UserRound size={13} className="text-[hsl(var(--text-secondary))]" />} label="Persona asignada">
@@ -51,6 +56,19 @@ export default function TaskMetaFields({
                     className={clsx('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm font-bold border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/[0.08] transition-all cursor-pointer', priority.color)}>
                     <span className={clsx('size-2 rounded-full', priority.dot)} />
                     {priority.label}
+                </button>
+            </MetaRow>
+
+            <MetaRow icon={<Boxes size={13} className="text-[hsl(var(--text-secondary))]" />} label="Nodo Operativo">
+                <button
+                    onClick={onNodeCycle}
+                    title="Click para cambiar de nodo"
+                    className={clsx(
+                        'flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm font-bold border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/[0.08] transition-all cursor-pointer',
+                        nodeOpt ? nodeOpt.color : 'text-[hsl(var(--text-secondary))]'
+                    )}>
+                    {nodeOpt && <span className={clsx('size-2 rounded-full', nodeOpt.dot)} />}
+                    {nodeOpt ? nodeOpt.label : 'Sin nodo'}
                 </button>
             </MetaRow>
 

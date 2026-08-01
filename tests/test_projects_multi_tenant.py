@@ -145,6 +145,27 @@ class TestAssigneeSedeScope:
         assert resp.status_code == 404
         assert resp.json()["detail"] == "Assignee not found"
 
+    def test_create_task_with_unscoped_assignee_returns_404(self, client, db_session):
+        s_a, _, _, _ = _seed_paired_sedes_with_personas(db_session)
+        unscoped = _models.Persona(
+            id=_uuid.uuid4(),
+            first_name="Unscoped",
+            last_name="Persona",
+            email=f"unscoped-{_uuid.uuid4().hex[:8]}@example.com",
+            sede_id=None,
+        )
+        db_session.add(unscoped)
+        db_session.commit()
+        proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
+        hdr_a = auth_headers(client, email="adminA@test.com")
+        resp = client.post(
+            f"/api/projects/{proj_in_a.id}/tasks",
+            json={"title": "Task with unscoped assignee", "assignee_id": str(unscoped.id)},
+            headers=hdr_a,
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Assignee not found"
+
     def test_update_task_with_cross_sede_assignee_returns_404(self, client, db_session):
         s_a, persona_a, _, persona_b = _seed_paired_sedes_with_personas(db_session)
         proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
@@ -185,6 +206,28 @@ class TestAssigneeSedeScope:
         assert resp.status_code == 404
         assert resp.json()["detail"] == "Assignee not found"
 
+    def test_create_subtask_with_unscoped_assignee_returns_404(self, client, db_session):
+        s_a, persona_a, _, _ = _seed_paired_sedes_with_personas(db_session)
+        unscoped = _models.Persona(
+            id=_uuid.uuid4(),
+            first_name="Unscoped",
+            last_name="Subtask",
+            email=f"unscoped-subtask-{_uuid.uuid4().hex[:8]}@example.com",
+            sede_id=None,
+        )
+        db_session.add(unscoped)
+        db_session.commit()
+        project = create_project_factory(db_session, sede_id=s_a.id)
+        parent = create_task_factory(db_session, project.id, assignee_id=persona_a.id)
+        headers = auth_headers(client, email="adminA@test.com")
+        response = client.post(
+            f"/api/projects/{project.id}/tasks/{parent.id}/subtasks",
+            json={"title": "Subtask with unscoped assignee", "assignee_id": str(unscoped.id)},
+            headers=headers,
+        )
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Assignee not found"
+
     def test_update_task_flat_with_cross_sede_assignee_returns_404(self, client, db_session):
         s_a, persona_a, _, persona_b = _seed_paired_sedes_with_personas(db_session)
         proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
@@ -197,6 +240,73 @@ class TestAssigneeSedeScope:
         )
         assert resp.status_code == 404
         assert resp.json()["detail"] == "Assignee not found"
+
+    def test_update_task_with_unscoped_assignee_returns_404(self, client, db_session):
+        s_a, persona_a, _, _ = _seed_paired_sedes_with_personas(db_session)
+        unscoped = _models.Persona(
+            id=_uuid.uuid4(),
+            first_name="Unscoped",
+            last_name="Persona",
+            email=f"unscoped-update-{_uuid.uuid4().hex[:8]}@example.com",
+            sede_id=None,
+        )
+        db_session.add(unscoped)
+        db_session.commit()
+        proj_in_a = create_project_factory(db_session, sede_id=s_a.id)
+        task = create_task_factory(db_session, proj_in_a.id, assignee_id=persona_a.id)
+        hdr_a = auth_headers(client, email="adminA@test.com")
+        resp = client.patch(
+            f"/api/projects/{proj_in_a.id}/tasks/{task.id}",
+            json={"assignee_id": str(unscoped.id)},
+            headers=hdr_a,
+        )
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Assignee not found"
+
+
+    def test_create_subtask_cross_sede_project_returns_404(self, client, db_session):
+        s_a, _ = _seed_paired_sedes(db_session)
+        project = create_project_factory(db_session, sede_id=s_a.id)
+        parent = create_task_factory(db_session, project.id)
+        headers_b = auth_headers(client, email="adminB@test.com")
+        response = client.post(
+            f"/api/projects/{project.id}/tasks/{parent.id}/subtasks",
+            json={"title": "Subtask injected from B"},
+            headers=headers_b,
+        )
+        assert response.status_code == 404
+
+
+class TestProjectTeamSedeScope:
+    def test_invite_unscoped_persona_returns_404(self, client, db_session):
+        s_a, _ = _seed_paired_sedes(db_session)
+        unscoped = _models.Persona(
+            id=_uuid.uuid4(),
+            first_name="Unscoped",
+            last_name="Team member",
+            email=f"unscoped-team-{_uuid.uuid4().hex[:8]}@example.com",
+            sede_id=None,
+        )
+        db_session.add(unscoped)
+        db_session.commit()
+        project = create_project_factory(db_session, sede_id=s_a.id)
+        headers_a = auth_headers(client, email="adminA@test.com")
+        response = client.post(
+            f"/api/projects/{project.id}/team",
+            json={"persona_id": str(unscoped.id)},
+            headers=headers_a,
+        )
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Persona no encontrada en esta sede"
+        assert (
+            db_session.query(_models.ProjectMember)
+            .filter(
+                _models.ProjectMember.project_id == project.id,
+                _models.ProjectMember.persona_id == unscoped.id,
+            )
+            .first()
+            is None
+        )
 
 
 # ── B: CRUD-layer defense-in-depth (the gap!) ────────────────────────────

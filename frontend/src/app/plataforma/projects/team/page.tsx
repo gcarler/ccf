@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     Users, AlertTriangle,
-    ChevronRight, UserPlus
+    ChevronRight, UserPlus, Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -13,7 +13,10 @@ import ProjectsShell from '@/components/projects/ProjectsShell';
 import { DSSkeleton } from '@/design';
 import EmptyState from '@/components/ui/EmptyState';
 import RightPanel from '@/components/ui/RightPanel';
+import PersonaSelect from '@/components/ui/PersonaSelect';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
+import { toast } from 'sonner';
+import type { ProjectRecord } from '@/types/projects';
 
 interface TeamPersona {
     persona_id: string;
@@ -24,6 +27,15 @@ interface TeamPersona {
     capacity_percent: number;
 }
 
+interface ProjectMemberItem {
+    id: string;
+    project_id: string;
+    persona_id: string;
+    role: string;
+    invited_at?: string | null;
+    persona_name?: string | null;
+}
+
 export default function TeamPage() {
     const { token, loading: authLoading } = useAuth();
     const { openLayer, closeLayer, setRightMode, layers } = useSidebarLayers();
@@ -31,6 +43,12 @@ export default function TeamPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedPersona, setSelectedPersona] = useState<TeamPersona | null>(null);
+    const [showInvite, setShowInvite] = useState(false);
+    const [inviteProjectId, setInviteProjectId] = useState('');
+    const [invitePersonaId, setInvitePersonaId] = useState<string | null>(null);
+    const [inviting, setInviting] = useState(false);
+    const [projects, setProjects] = useState<ProjectRecord[]>([]);
+    const [members, setMembers] = useState<Record<string, ProjectMemberItem[]>>({});
 
     useEffect(() => {
         if (!layers.RIGHT && selectedPersona) setSelectedPersona(null);
@@ -55,10 +73,45 @@ export default function TeamPage() {
             .finally(() => setLoading(false));
     }, [authLoading, token]);
 
+    useEffect(() => {
+        if (!showInvite || !token) return;
+        apiFetch<ProjectRecord[]>('/projects', { token })
+            .then(data => setProjects(Array.isArray(data) ? data : []))
+            .catch(() => setProjects([]));
+    }, [showInvite, token]);
+
     const handleSelect = (persona: TeamPersona) => {
         setSelectedPersona(persona);
         setRightMode('overlay');
         openLayer('RIGHT');
+    };
+
+    const openInvite = () => {
+        setInviteProjectId(projects[0]?.id ?? '');
+        setInvitePersonaId(null);
+        setShowInvite(true);
+    };
+
+    const handleInvite = async () => {
+        if (!token) return;
+        if (!inviteProjectId || !invitePersonaId) {
+            toast.error('Selecciona proyecto y persona para invitar');
+            return;
+        }
+        setInviting(true);
+        try {
+            const member = await apiFetch<ProjectMemberItem>(`/projects/${inviteProjectId}/team`, {
+                method: 'POST', token, body: { persona_id: invitePersonaId },
+            });
+            setMembers(prev => ({ ...prev, [inviteProjectId]: [...(prev[inviteProjectId] ?? []), member] }));
+            toast.success('Persona invitada al equipo');
+            setShowInvite(false);
+            setInvitePersonaId(null);
+        } catch {
+            toast.error('No se pudo invitar a la persona');
+        } finally {
+            setInviting(false);
+        }
     };
 
     return (
@@ -98,7 +151,10 @@ export default function TeamPage() {
                                     </p>
                                 </div>
                             )}
-                            <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                            <button
+                                onClick={openInvite}
+                                className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
+                            >
                                 <UserPlus size={13} /> Invitar
                             </button>
                         </div>
@@ -228,6 +284,72 @@ export default function TeamPage() {
                     </div>
                 </RightPanel>
             )}
+
+            {/* Right Panel — Invitar al equipo (F4) */}
+            <RightPanel
+                title="Invitar al Equipo"
+                width={380}
+                open={showInvite}
+                onClose={() => setShowInvite(false)}
+            >
+                <div className="p-3 space-y-4">
+                    <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed">
+                        Agrega una persona de la sede al equipo de un proyecto para que colabore y aparezca en la carga de trabajo.
+                    </p>
+
+                    <div className="space-y-1.5">
+                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            Proyecto
+                        </label>
+                        <select
+                            value={inviteProjectId}
+                            onChange={(e) => setInviteProjectId(e.target.value)}
+                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all text-[hsl(var(--text-primary))] dark:text-white"
+                        >
+                            {projects.length === 0 && <option value="">Sin proyectos disponibles</option>}
+                            {projects.map((p) => (
+                                <option key={p.id} value={p.id}>{p.title}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            Persona
+                        </label>
+                        <PersonaSelect
+                            value={invitePersonaId}
+                            onChange={(v) => setInvitePersonaId(v)}
+                            placeholder="Seleccionar persona"
+                        />
+                    </div>
+
+                    {inviteProjectId && (members[inviteProjectId]?.length ?? 0) > 0 && (
+                        <div className="space-y-1.5">
+                            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                Ya en el equipo ({members[inviteProjectId].length})
+                            </p>
+                            <ul className="space-y-1">
+                                {members[inviteProjectId].map((m) => (
+                                    <li key={m.id} className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                                        <span>{m.persona_name ?? m.persona_id}</span>
+                                        <span className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">{m.role}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    <button
+                        onClick={handleInvite}
+                        disabled={inviting || !inviteProjectId || !invitePersonaId}
+                        className="w-full py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {inviting ? <Loader2 className="animate-spin" size={12} /> : <UserPlus size={12} />}
+                        {inviting ? 'Invitando...' : 'Invitar al equipo'}
+                    </button>
+                </div>
+            </RightPanel>
         </ProjectsShell>
     );
 }

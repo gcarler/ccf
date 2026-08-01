@@ -36,6 +36,7 @@ class Project(Base):
     tasks = relationship("ProjectTask", back_populates="project", cascade="all, delete-orphan")
     milestones = relationship("ProjectMilestone", back_populates="project", cascade="all, delete-orphan")
     activity_logs = relationship("ProjectActivityLog", back_populates="project", cascade="all, delete-orphan")
+    members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
     whiteboard = relationship(
         "ProjectWhiteboard", back_populates="project", uselist=False, cascade="all, delete-orphan"
     )
@@ -111,6 +112,7 @@ class ProjectTask(Base):
     assignee_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     start_date = Column(DateTime(timezone=True), nullable=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
+    node = Column(String(50), nullable=True, index=True)
     labels = Column(JSON, default=list, nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
@@ -196,6 +198,27 @@ class ProjectInboxState(Base):
     item_id = Column(String(80), nullable=False)
     is_read = Column(Boolean, default=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+class ProjectMember(Base):
+    """Membresía del equipo de un proyecto (F4).
+
+    Persona invitada a colaborar en un proyecto, distinta de ``Project.owner_id``
+    (responsable). Persiste la pertenencia al equipo para alimentar la vista
+    ``/plataforma/projects/team`` y el flujo de invitación del botón "Invitar".
+    """
+
+    __tablename__ = "project_members"
+    __table_args__ = (UniqueConstraint("project_id", "persona_id", name="uq_project_member_persona"),)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(50), default="member")
+    invited_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    project = relationship("Project", back_populates="members")
+    persona = relationship("Persona", foreign_keys=[persona_id])
 
 
 class ProjectDocument(Base):

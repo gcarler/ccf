@@ -19,6 +19,11 @@ vi.mock('@/context/ToastContext', () => ({
     useToast: () => ({ addToast: vi.fn() }),
 }));
 
+// Mock apiFetch so ProjectMasterView analytics fetch is inert in tests
+vi.mock('@/lib/http', () => ({
+    apiFetch: vi.fn().mockResolvedValue(null),
+}));
+
 // Mock inline editors to keep tests simple
 vi.mock('@/components/ui/inline-editors/InlineTextInput', () => ({
     InlineTextInput: ({ value }: { value: string }) => <span data-testid="inline-text-input">{value}</span>,

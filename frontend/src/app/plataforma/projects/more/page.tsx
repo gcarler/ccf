@@ -8,15 +8,26 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
-import type { ProjectPortfolioSummaryRow, ProjectWorkloadSummaryRow } from '@/types/projects';
+import type { ProjectPortfolioSummaryRow, ProjectWorkloadSummaryRow, ProjectRecord, ProjectTaskRecord } from '@/types/projects';
 import { BarChart3, Layout, MoreHorizontal } from 'lucide-react';
 import { DSSkeleton } from '@/design';
 import { toast } from 'sonner';
+
+function taskColor(task: ProjectTaskRecord, todayKey: string): 'blue' | 'emerald' | 'amber' | 'rose' | 'sky' {
+    if (task.status === 'completed') return 'emerald';
+    if (task.priority === 'urgent') return 'rose';
+    const due = task.due_date ? task.due_date.slice(0, 10) : null;
+    if (due && due < todayKey) return 'rose';
+    if (due === todayKey) return 'amber';
+    if (task.priority === 'high') return 'sky';
+    return 'blue';
+}
 
 export default function ProjectsMorePage() {
     const { token, loading: authLoading } = useAuth();
     const [summary, setSummary] = useState<ProjectPortfolioSummaryRow[]>([]);
     const [workload, setWorkload] = useState<ProjectWorkloadSummaryRow[]>([]);
+    const [projects, setProjects] = useState<ProjectRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [viewType, setViewType] = useState<ViewType>('grid');
@@ -27,20 +38,24 @@ export default function ProjectsMorePage() {
                 setLoading(false);
                 setSummary([]);
                 setWorkload([]);
+                setProjects([]);
                 setError('Debes iniciar sesión para ver el resumen de proyectos.');
                 return;
             }
             try {
                 setError(null);
-                const [summaryRows, workloadRows] = await Promise.all([
+                const [summaryRows, workloadRows, projectRows] = await Promise.all([
                     apiFetch<ProjectPortfolioSummaryRow[]>('/projects/summary', { token, cache: 'no-store' }),
                     apiFetch<ProjectWorkloadSummaryRow[]>('/projects/workload', { token, cache: 'no-store' }),
+                    apiFetch<ProjectRecord[]>('/projects', { token, cache: 'no-store' }).catch(() => []),
                 ]);
                 setSummary(Array.isArray(summaryRows) ? summaryRows : []);
                 setWorkload(Array.isArray(workloadRows) ? workloadRows : []);
+                setProjects(Array.isArray(projectRows) ? projectRows : []);
             } catch (error) {
                 setSummary([]);
                 setWorkload([]);
+                setProjects([]);
                 setError('No se pudo cargar el resumen de proyectos.');
                 toast.error("Error inesperado");
                 toast.error('Error al cargar resumen');
@@ -69,12 +84,50 @@ export default function ProjectsMorePage() {
             overloaded,
         };
     }, [summary, workload]);
-    const calendarEvents = workload.map((row, index) => ({ id: row.assignee_id || index, title: `Responsable ${row.assignee_id ?? index + 1}`, date: new Date(Date.now() + index * 86400000).toISOString().split('T')[0], color: row.overdue_tasks > 0 ? 'rose' as const : 'emerald' as const, location: `${row.open_tasks + row.in_review} tareas activas` }));
-    const ganttItems = workload.map((row, index) => {
-        const date = new Date(Date.now() + index * 86400000).toISOString();
-        const activeTasks = row.open_tasks + row.in_review;
-        return { id: row.assignee_id || index, title: `Responsable ${row.assignee_id ?? index + 1}`, subtitle: `${activeTasks} tareas activas`, start_date: date, end_date: date, color: row.overdue_tasks > 0 ? 'rose' as const : 'emerald' as const, progress: activeTasks > 0 ? Math.max(10, 100 - Math.min(90, row.overdue_tasks * 10)) : 100 };
-    });
+
+    // Eventos de calendario y gantt construidos desde tareas reales (F3):
+    // antes se fabricaban con ``Date.now() + index * 86400000`` y títulos
+    // "Responsable <UUID>". Ahora se usan ``due_date``/``start_date`` y el
+    // título real de cada tarea, con el proyecto como contexto.
+    const calendarEvents = useMemo(() => {
+        const todayKey = new Date().toISOString().slice(0, 10);
+        const events: Array<{ id: string | number; title: string; date: string; color?: 'blue' | 'emerald' | 'amber' | 'rose' | 'sky'; location?: string }> = [];
+        for (const project of projects) {
+            for (const task of project.tasks ?? []) {
+                const date = (task.due_date || task.start_date || '').slice(0, 10);
+                if (!date) continue;
+                events.push({
+                    id: task.id,
+                    title: task.title,
+                    date,
+                    color: taskColor(task, todayKey),
+                    location: project.title,
+                });
+            }
+        }
+        return events.sort((a, b) => a.date.localeCompare(b.date));
+    }, [projects]);
+
+    const ganttItems = useMemo(() => {
+        const items: Array<{ id: string | number; title: string; subtitle?: string; start_date: string; end_date: string; color?: 'blue' | 'emerald' | 'amber' | 'rose' | 'sky'; progress?: number }> = [];
+        for (const project of projects) {
+            for (const task of project.tasks ?? []) {
+                const start = (task.start_date || task.due_date || '').slice(0, 10);
+                const end = (task.due_date || task.start_date || '').slice(0, 10);
+                if (!start || !end) continue;
+                items.push({
+                    id: task.id,
+                    title: task.title,
+                    subtitle: project.title,
+                    start_date: start,
+                    end_date: end,
+                    color: task.status === 'completed' ? 'emerald' : task.status === 'review' ? 'amber' : 'blue',
+                    progress: task.status === 'completed' ? 100 : 0,
+                });
+            }
+        }
+        return items.sort((a, b) => a.start_date.localeCompare(b.start_date));
+    }, [projects]);
 
     return (
         <ProjectsShell
@@ -91,7 +144,7 @@ export default function ProjectsMorePage() {
                 )}
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((idx) => <DSSkeleton key={idx} className="h-32 rounded-lg" />)}</div>
-                ) : !error && summary.length === 0 && workload.length === 0 ? (
+                ) : !error && summary.length === 0 && workload.length === 0 && projects.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <BarChart3 size={48} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4" />
                         <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Sin datos de resumen</h3>
