@@ -22,6 +22,7 @@ import { PhaseManagerDrawer } from '@/components/projects/PhaseManagerDrawer';
 import ProjectSettingsDrawer from '@/components/projects/ProjectSettingsDrawer';
 import { ProjectUpdateProvider } from '@/context/ProjectUpdateContext';
 import { ProjectViewsContent } from '@/components/projects/ProjectViewsContent';
+import ProjectContextPanel from '@/components/projects/ProjectContextPanel';
 import { useProjectPageData } from '@/hooks/useProjectPageData';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectTaskRecord } from '@/types/projects';
@@ -213,17 +214,22 @@ export default function ProjectDetailPage() {
                     }
                 />
 
-                <div className="flex min-h-0 flex-1 overflow-hidden">
-                    <ProjectViewsContent
-                        viewType={viewType}
-                        onOpenTask={handleOpenTask}
-                        onTaskUpdated={handleTaskUpdated}
-                        onActivityCreated={() => void reloadProject()}
-                        onDeleteTask={handleDeleteFromPanel}
-                        setShowTaskModal={setShowTaskModal}
-                        setWhiteboardOpen={setWhiteboardOpen}
-                        setTaskCreationStatus={setTaskCreationStatus}
-                    />
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+                    <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+                        <ProjectViewsContent
+                            viewType={viewType}
+                            onOpenTask={handleOpenTask}
+                            onTaskUpdated={handleTaskUpdated}
+                            onActivityCreated={() => void reloadProject()}
+                            onDeleteTask={handleDeleteFromPanel}
+                            setShowTaskModal={setShowTaskModal}
+                            setWhiteboardOpen={setWhiteboardOpen}
+                            setTaskCreationStatus={setTaskCreationStatus}
+                        />
+                    </div>
+                    {viewType !== 'chat' && !selectedTask && (
+                        <ProjectContextPanel onOpenTask={handleOpenTask} />
+                    )}
                     <TaskDetailPanel
                         task={selectedTask}
                         projectTitle={project?.title}

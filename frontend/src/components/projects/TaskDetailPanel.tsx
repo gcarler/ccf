@@ -302,7 +302,7 @@ export default function TaskDetailPanel({
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: width, opacity: 0 }}
                 transition={{ type: 'spring', damping: 32, stiffness: 300 }}
-                style={{ width, minWidth: MIN_WIDTH }}
+                style={{ width, minWidth: `min(${MIN_WIDTH}px, 100%)`, maxWidth: '100%' }}
                 role="complementary"
                 aria-label="Detalle de tarea"
                 className="relative h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border-l border-[hsl(var(--border))] dark:border-white/[0.07] shadow-[-16px_0_48px_rgba(0,0,0,0.08)] dark:shadow-[-16px_0_48px_rgba(0,0,0,0.35)] overflow-hidden"

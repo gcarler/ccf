@@ -27,6 +27,7 @@ interface ProjectViewsContentProps {
     onActivityCreated: () => void;
     onDeleteTask: (taskId: string) => void;
     setShowTaskModal: (open: boolean) => void;
+    setTaskCreationStatus: (status: string) => void;
     setWhiteboardOpen: (open: boolean) => void;
 }
 
@@ -48,6 +49,7 @@ export function ProjectViewsContent({
     onActivityCreated: _onActivityCreated,
     onDeleteTask: _onDeleteTask,
     setShowTaskModal,
+    setTaskCreationStatus,
     setWhiteboardOpen: _setWhiteboardOpen,
 }: ProjectViewsContentProps) {
     const { project, tasks, phases, activities, createTask, reloadProject, updateTask } = useProjectUpdate();
@@ -69,7 +71,10 @@ export function ProjectViewsContent({
                     tasks={tasks}
                     phases={phases}
                     onOpenTask={onOpenTask}
-                    onAddTask={() => setShowTaskModal(true)}
+                    onAddTask={() => {
+                        setTaskCreationStatus('todo');
+                        setShowTaskModal(true);
+                    }}
                 />
             </div>
         );
@@ -107,16 +112,17 @@ export function ProjectViewsContent({
             {viewType === 'list' && (
                 <div className="w-full h-[calc(100vh-8rem)]">
                     <ProjectListView
-                        projectId={project?.id}
                         tasks={tasks}
+                        phaseDefs={phases}
                         onOpenTask={onOpenTask}
-                        onAddTask={(status) =>
-                            createTask({ title: '', description: '', priority: 'medium', status })
-                        }
-                        // ProjectListView promotes its own updates to context via the
-                        // useProjectTasks hook (Fase 1). The parent-owned update paths
-                        // stay here as no-ops to keep the prop shape stable.
-                        onTasksChange={() => { /* handled via useProjectTasks inside ProjectListView */ }}
+                        onAddTask={(status) => {
+                            setTaskCreationStatus(status);
+                            setShowTaskModal(true);
+                        }}
+                        // List and Kanban intentionally consume the same
+                        // ProjectUpdateContext source of truth. The list owns
+                        // only its presentation; persistence and optimistic
+                        // rollback remain in useProjectPageData.
                         onTaskUpdate={async (taskId, patch) => {
                             await updateTask(taskId, patch);
                         }}
