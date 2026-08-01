@@ -10,7 +10,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import type { ProjectTaskRecord } from '@/types/projects';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
-import { useProjectTasks } from '@/hooks/useProjectTasks';
 import { buildStatusOptions, getStatusOption, STATUS_GROUP_PILL } from '@/lib/projects/constants';
 import type { PhaseDef } from '@/context/ProjectUpdateContext';
 import type { TaskStatus } from '@/lib/projects/constants';
@@ -23,23 +22,13 @@ import {
 
 // ─── TYPE DEFINITIONS ─────────────────────────────────────────────────────────
 interface Props {
-    /** When provided, useProjectTasks is the single source of truth
-     *  (handles optimistic update + rollback; see useProjectTasks.test.tsx).
-     *  In that mode, `onTasksChange` is invoked by the sync effect below
-     *  to mirror hook state back to the parent so sibling views stay in sync.
-     *  When omitted, the parent-owned callback path below is used instead. */
-    projectId?: string;
     /** Project phases used as the canonical List grouping when customized. */
     phaseDefs?: readonly PhaseDef[];
     tasks: ProjectTaskRecord[];
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string) => void;
-    /** Parent-owned tasks setter. Only used as the source of truth when
-     *  `projectId` is NOT provided; otherwise it is invoked by the internal
-     *  sync effect to keep the parent's `tasks` array in lockstep with the hook. */
-    onTasksChange?: (tasks: ProjectTaskRecord[]) => void;
-    /** Parent-owned persistence callback. Only used as the persistence path
-     *  when `projectId` is NOT provided. */
+    /** Parent-owned persistence callback; it also owns optimistic updates
+     *  and rollback so List and Kanban share one source of truth. */
     onTaskUpdate?: (taskId: string, patch: Partial<ProjectTaskRecord>) => void;
     quickAddStatus?: string | null;
     quickAddTitle?: string;
@@ -402,12 +391,10 @@ function StatusGroup({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function ProjectListView({
-    projectId,
     phaseDefs,
-    tasks: propTasks,
+    tasks,
     onOpenTask,
     onAddTask,
-    onTasksChange,
     onTaskUpdate,
     quickAddStatus,
     quickAddTitle,
@@ -415,38 +402,9 @@ export default function ProjectListView({
     onQuickAddConfirm,
     onQuickAddCancel,
 }: Props) {
-    // Use shared hook when projectId is provided; otherwise fall back to props/callbacks
-    const { tasks: hookTasks, updateTask } = useProjectTasks({ projectId });
-    const tasks = projectId ? hookTasks : propTasks;
-
-    // Keep a ref to latest tasks so the change handler can compute an updated array
-    // without depending on the tasks array itself (avoids stale closure).
-    const tasksRef = useRef(tasks);
-    useEffect(() => { tasksRef.current = tasks; }, [tasks]);
-
-    // Sync hook state back to the parent when `projectId` is provided.
-    // This keeps sibling views (Kanban/Calendar/Dashboard/TaskDetailPanel)
-    // — which all read `tasks` from the parent — in lockstep with the hook.
-    // Does NOT interfere with the hook's optimistic+rollback: this effect only
-    // fires after the hook has settled its own internal state.
-    useEffect(() => {
-        if (projectId) onTasksChange?.(hookTasks);
-    }, [hookTasks, projectId, onTasksChange]);
-
-    const handleChangeTask = useCallback(async (taskId: number | string, patch: Partial<ProjectTaskRecord>) => {
-        // Strict mutex: when projectId is set, useProjectTasks is the single source of truth
-        // (handles optimistic update + rollback internally — see useProjectTasks.test.tsx).
-        // The parent-owned callbacks are only used when no projectId is provided.
-        if (projectId) {
-            await updateTask(String(taskId), patch, { optimistic: true });
-        } else {
-            // Parent-owned persistence path: optimistic local update + PATCH via parent
-            onTasksChange?.(
-                tasksRef.current.map(t => (t.id === taskId ? { ...t, ...patch } : t))
-            );
-            onTaskUpdate?.(String(taskId), patch);
-        }
-    }, [onTasksChange, onTaskUpdate, projectId, updateTask]);
+    const handleChangeTask = useCallback((taskId: number | string, patch: Partial<ProjectTaskRecord>) => {
+        onTaskUpdate?.(String(taskId), patch);
+    }, [onTaskUpdate]);
 
     const statusOptions = buildStatusOptions(phaseDefs);
     const statusOrder = statusOptions.map(option => option.value.toLowerCase());
