@@ -35,7 +35,7 @@ Multi-Tenant (Axioma 3):
   - ``GET /messaging/history`` filtra por ``Persona.sede_id == user_sede``.
   - ``POST /messaging/send`` rechaza 404 si ``persona_id`` es cross-sede.
 
-Rutas legacy (redirect 307):
+Rutas de compatibilidad (redirect 307):
   - ``/plataforma/inbox/messages`` → ``/plataforma/messages``
   - ``/plataforma/community/messages`` → ``/plataforma/messages``
   - ``PATCH /notifications/{id}`` requiere ownership (BOLA-style leak prevention).

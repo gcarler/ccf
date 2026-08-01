@@ -64,6 +64,22 @@ async function installChatAdminMocks(page: Page) {
     },
   });
 
+  // ConfigContext requests this authenticated workspace endpoint on every
+  // platform page. Mock it here as well so this spec cannot regress into
+  // unrelated 401/"Config load failed" errors.
+  await page.route('**/workspace/config*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      json: {
+        id: 'e2e-workspace',
+        name: 'E2E Test Workspace',
+        features_enabled: {},
+        modules: ['admin', 'crm', 'academy', 'finance'],
+      },
+    });
+  });
+
   await page.route('**/api/chat/my-messages**', async (route) => {
     await route.fulfill({
       status: 200,

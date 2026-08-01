@@ -331,7 +331,7 @@ def _protected_attachment_url(msg: models.ChatMessage, conversation_id: str | _u
 def _validate_attachment_reference(attachment_url: str | None, conversation_id: str | _uuid.UUID) -> None:
     """Reject protected attachment references that target another conversation.
 
-    External URLs remain supported for legacy/API clients, but an internal
+    External URLs remain supported for older/API clients, but an internal
     protected URL must be bound to the conversation in which it is sent.
     """
     if not attachment_url:
@@ -1126,13 +1126,13 @@ def download_chat_attachment(
 
     protected_url = f"/chat/attachments/{conversation_id}/{sede_bucket}/{filename}"
     api_protected_url = f"/api{protected_url}"
-    legacy_url = f"/static/chat_attachments/{sede_bucket}/{filename}"
+    fallback_url = f"/static/chat_attachments/{sede_bucket}/{filename}"
     message = (
         db.query(models.ChatMessage.id)
         .filter(
             models.ChatMessage.room_id == f"dm_{conversation_id}",
             models.ChatMessage.deleted_at.is_(None),
-            models.ChatMessage.attachment_url.in_([protected_url, api_protected_url, legacy_url]),
+            models.ChatMessage.attachment_url.in_([protected_url, api_protected_url, fallback_url]),
         )
         .first()
     )
