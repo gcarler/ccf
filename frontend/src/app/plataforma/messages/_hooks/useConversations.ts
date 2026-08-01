@@ -21,7 +21,7 @@ export function useConversations({ token, userPersonaId }: UseConversationsOptio
         }
         setLoading(true);
         try {
-            const data = await apiFetch<ConversationRead[]>('/chat/conversations', { token });
+            const data = await apiFetch<ConversationRead[]>('/chat/conversations', { token, silent: true });
             if (Array.isArray(data)) {
                 setConversations(data);
             }
