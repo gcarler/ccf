@@ -348,14 +348,22 @@ def google_callback(
 
         persona = db.query(models.Persona).filter(models.Persona.email == google_email).first()
         if not persona:
-            frontend_url = getattr(settings, "frontend_url", "http://localhost:3000")
-            return RedirectResponse(
-                url=_build_public_welcome_redirect(
-                    frontend_url,
-                    name=google_user.get("name") or google_email.split("@")[0],
-                    email=google_email,
-                )
+            # Auto-create persona for public academy access
+            fallback_sede = db.query(models.Sede).first()
+            full_name = google_user.get("name") or google_email.split("@")[0]
+            name_parts = full_name.split(" ", 1)
+            first_name = name_parts[0]
+            last_name = name_parts[1] if len(name_parts) > 1 else ""
+            
+            persona = models.Persona(
+                first_name=first_name,
+                last_name=last_name,
+                email=google_email,
+                sede_id=fallback_sede.id if fallback_sede else None
             )
+            db.add(persona)
+            db.commit()
+            db.refresh(persona)
 
         persona_default_role = _resolve_persona_default_role(db)
 

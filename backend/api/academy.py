@@ -191,16 +191,40 @@ def list_courses(
     return [_serialize_course(course) for course in query.offset(skip).limit(limit).all()]
 
 
-@router.get("/courses/{course_id}")
-def get_course(course_id: UUID, current_user: AcademyReader, db: Session = Depends(get_db)):
+@router.get("/courses/{course_id_or_slug}")
+def get_course(course_id_or_slug: str, current_user: AcademyReader, db: Session = Depends(get_db)):
+    try:
+        parsed_uuid = UUID(course_id_or_slug)
+        filter_cond = models.Course.id == parsed_uuid
+    except ValueError:
+        filter_cond = models.Course.slug == course_id_or_slug
+
     course = (
         _course_scope(db, current_user)
         .options(selectinload(models.Course.lessons).selectinload(models.Lesson.resources))
-        .filter(models.Course.id == course_id)
+        .filter(filter_cond)
         .first()
     )
     if not course or (not course.is_published and not _can_edit_academy(db, current_user)):
         raise HTTPException(status_code=404, detail="Curso no encontrado")
+        
+    # Auto-enroll user if it's a public self-paced course (or just any course for now since it's the public academy)
+    # Check if enrollment exists
+    enrollment = db.query(models.Enrollment).filter(
+        models.Enrollment.persona_id == current_user.id,
+        models.Enrollment.course_id == course.id,
+        models.Enrollment.deleted_at.is_(None)
+    ).first()
+    
+    if not enrollment:
+        enrollment = models.Enrollment(
+            persona_id=current_user.id,
+            course_id=course.id,
+            status="active"
+        )
+        db.add(enrollment)
+        db.commit()
+
     return _serialize_course(course)
 
 
