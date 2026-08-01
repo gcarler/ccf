@@ -104,6 +104,7 @@ export default function ProjectDetailPage() {
 
     // ── Drawers toggles (UI local) ──
     const [showTaskModal, setShowTaskModal] = useState(false);
+    const [taskCreationStatus, setTaskCreationStatus] = useState('todo');
     const [showProjectSettings, setShowProjectSettings] = useState(false);
     const [whiteboardOpen, setWhiteboardOpen] = useState(false);
     const [showPhaseManager, setShowPhaseManager] = useState(false);
@@ -188,7 +189,10 @@ export default function ProjectDetailPage() {
                     availableViews={PROJECT_DETAIL_VIEWS}
                     rightActions={
                         <div className="flex items-center gap-2">
-                            <button onClick={() => setShowTaskModal(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
+                            <button onClick={() => {
+                                setTaskCreationStatus('todo');
+                                setShowTaskModal(true);
+                            }} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
                                 <Plus size={14} /> Nueva Tarea
                             </button>
                             <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-2 border border-[hsl(var(--border))] dark:border-white/10">
@@ -218,6 +222,7 @@ export default function ProjectDetailPage() {
                         onDeleteTask={handleDeleteFromPanel}
                         setShowTaskModal={setShowTaskModal}
                         setWhiteboardOpen={setWhiteboardOpen}
+                        setTaskCreationStatus={setTaskCreationStatus}
                     />
                     <TaskDetailPanel
                         task={selectedTask}
@@ -233,6 +238,7 @@ export default function ProjectDetailPage() {
 
                 <TaskCreationDrawer
                     isOpen={showTaskModal}
+                    defaultStatus={taskCreationStatus}
                     onClose={() => setShowTaskModal(false)}
                     onSubmit={async (data) => {
                         const ok = await createTask(data);

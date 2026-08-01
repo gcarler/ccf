@@ -11,7 +11,8 @@ import clsx from 'clsx';
 import type { ProjectTaskRecord } from '@/types/projects';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { useProjectTasks } from '@/hooks/useProjectTasks';
-import { getStatusOption, STATUS_GROUP_PILL } from '@/lib/projects/constants';
+import { buildStatusOptions, getStatusOption, STATUS_GROUP_PILL } from '@/lib/projects/constants';
+import type { PhaseDef } from '@/context/ProjectUpdateContext';
 import type { TaskStatus } from '@/lib/projects/constants';
 import {
     InlineStatusPicker,
@@ -28,6 +29,8 @@ interface Props {
      *  to mirror hook state back to the parent so sibling views stay in sync.
      *  When omitted, the parent-owned callback path below is used instead. */
     projectId?: string;
+    /** Project phases used as the canonical List grouping when customized. */
+    phaseDefs?: readonly PhaseDef[];
     tasks: ProjectTaskRecord[];
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string) => void;
@@ -107,10 +110,12 @@ function TaskRow({
     task,
     onOpen,
     onChange,
+    phases,
 }: {
     task: ProjectTaskRecord;
     onOpen: () => void;
     onChange: (patch: Partial<ProjectTaskRecord>) => void;
+    phases?: readonly PhaseDef[];
 }) {
     const { openLayer, setRightMode } = useSidebarLayers();
     const [commentOpen, setCommentOpen] = useState(false);
@@ -206,6 +211,7 @@ function TaskRow({
             <div className="w-36 flex-shrink-0 flex items-center px-2">
                 <InlineStatusPicker
                     value={status}
+                    phases={phases ? [...phases] : undefined}
                     onChange={(s) => onChange({ status: s })}
                 />
             </div>
@@ -252,11 +258,13 @@ function TaskRow({
 // ─── Status Group ─────────────────────────────────────────────────────────────
 function StatusGroup({
     status,
+    statusLabel,
     tasks,
     onOpenTask,
     onAddTask,
     isFirst,
     onChangeTask,
+    phaseDefs,
     quickAddStatus,
     quickAddTitle = '',
     onQuickAddTitleChange,
@@ -264,11 +272,13 @@ function StatusGroup({
     onQuickAddCancel,
 }: {
     status: string;
+    statusLabel?: string;
     tasks: ProjectTaskRecord[];
     onOpenTask: (t: ProjectTaskRecord) => void;
     onAddTask: (s: string) => void;
     isFirst?: boolean;
     onChangeTask: (taskId: number | string, patch: Partial<ProjectTaskRecord>) => void;
+    phaseDefs?: readonly PhaseDef[];
     quickAddStatus?: string | null;
     quickAddTitle?: string;
     onQuickAddTitleChange?: (v: string) => void;
@@ -289,7 +299,8 @@ function StatusGroup({
     }, [isAddingHere]);
 
     const cfg = getStatusOption(status);
-    const pillCls = STATUS_GROUP_PILL[status as TaskStatus] ?? STATUS_GROUP_PILL.todo;
+    const pillCls = STATUS_GROUP_PILL[status as TaskStatus]
+        ?? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]';
 
     return (
         <div className="mb-0">
@@ -304,7 +315,7 @@ function StatusGroup({
                     {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                 </button>
                 <span className={clsx('px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wide', pillCls)}>
-                    {cfg.label}
+                    {statusLabel ?? cfg.label}
                 </span>
                 <span className="text-sm font-bold text-[hsl(var(--text-secondary))]">{tasks.length}</span>
             </div>
@@ -337,6 +348,7 @@ function StatusGroup({
                                 task={task}
                                 onOpen={() => onOpenTask(task)}
                                 onChange={(patch) => onChangeTask(task.id, patch)}
+                                phases={phaseDefs}
                             />
                         ))}
 
@@ -389,10 +401,9 @@ function StatusGroup({
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const STATUS_ORDER = ['todo', 'in_progress', 'review', 'completed'];
-
 export default function ProjectListView({
     projectId,
+    phaseDefs,
     tasks: propTasks,
     onOpenTask,
     onAddTask,
@@ -437,8 +448,13 @@ export default function ProjectListView({
         }
     }, [onTasksChange, onTaskUpdate, projectId, updateTask]);
 
-    const groups = STATUS_ORDER.map(status => ({
+    const statusOptions = buildStatusOptions(phaseDefs);
+    const statusOrder = statusOptions.map(option => option.value.toLowerCase());
+    const statusLabels = new Map(statusOptions.map(option => [option.value.toLowerCase(), option.label]));
+
+    const groups = statusOrder.map(status => ({
         status,
+        label: statusLabels.get(status) ?? status,
         tasks: tasks.filter(t => (t.status ?? 'todo').toLowerCase() === status),
     })).filter(g => {
         const isTarget = quickAddStatus === g.status;
@@ -447,7 +463,7 @@ export default function ProjectListView({
 
     const ungrouped = tasks.filter(t => {
         const s = (t.status ?? 'todo').toLowerCase();
-        return !STATUS_ORDER.includes(s);
+        return !statusOrder.includes(s);
     });
 
     return (
@@ -477,11 +493,13 @@ export default function ProjectListView({
                 <StatusGroup
                     key={g.status}
                     status={g.status}
+                    statusLabel={g.label}
                     tasks={g.tasks}
                     onOpenTask={onOpenTask}
                     onAddTask={onAddTask}
                     isFirst={i === 0}
                     onChangeTask={handleChangeTask}
+                    phaseDefs={phaseDefs}
                     quickAddStatus={null}
                     quickAddTitle={quickAddTitle}
                     onQuickAddTitleChange={onQuickAddTitleChange}
@@ -493,10 +511,12 @@ export default function ProjectListView({
             {ungrouped.length > 0 && (
                 <StatusGroup
                     status="todo"
+                    statusLabel="Otros"
                     tasks={ungrouped}
                     onOpenTask={onOpenTask}
                     onAddTask={onAddTask}
                     onChangeTask={handleChangeTask}
+                    phaseDefs={phaseDefs}
                 />
             )}
 
