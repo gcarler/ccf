@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -96,8 +97,7 @@ def test_messaging_gateway_persona_or_raise():
     assert res == persona_with_email
 
 
-@pytest.mark.asyncio
-async def test_messaging_gateway_send_whatsapp():
+def test_messaging_gateway_send_whatsapp():
     gw = MessagingGateway()
     db = MagicMock()
     valid_uuid = uuid.uuid4()
@@ -106,19 +106,20 @@ async def test_messaging_gateway_send_whatsapp():
     persona_no_phone = DummyPersona(valid_uuid, phone=None)
     db.query.return_value.filter.return_value.first.return_value = persona_no_phone
     with pytest.raises(ValueError, match="Persona sin numero de telefono"):
-        await gw.send_whatsapp(db, str(valid_uuid), "Hello", None)
+        asyncio.run(gw.send_whatsapp(db, str(valid_uuid), "Hello", None))
 
     # Persona with phone
     persona_with_phone = DummyPersona(valid_uuid, phone="123456789")
     db.query.return_value.filter.return_value.first.return_value = persona_with_phone
-    log = await gw.send_whatsapp(db, str(valid_uuid), "Hello", None, campaign_name="Campaign", external_id="EXT-123")
+    log = asyncio.run(
+        gw.send_whatsapp(db, str(valid_uuid), "Hello", None, campaign_name="Campaign", external_id="EXT-123")
+    )
     assert log.channel == "WhatsApp"
     assert log.recipient_phone == "123456789"
     assert log.external_id == "EXT-123"
 
 
-@pytest.mark.asyncio
-async def test_messaging_gateway_send_sms():
+def test_messaging_gateway_send_sms():
     gw = MessagingGateway()
     db = MagicMock()
     valid_uuid = uuid.uuid4()
@@ -127,19 +128,20 @@ async def test_messaging_gateway_send_sms():
     persona_no_phone = DummyPersona(valid_uuid, phone=None)
     db.query.return_value.filter.return_value.first.return_value = persona_no_phone
     with pytest.raises(ValueError, match="Persona sin numero celular"):
-        await gw.send_sms(db, str(valid_uuid), "Hello", None)
+        asyncio.run(gw.send_sms(db, str(valid_uuid), "Hello", None))
 
     # Persona with phone
     persona_with_phone = DummyPersona(valid_uuid, phone="123456789")
     db.query.return_value.filter.return_value.first.return_value = persona_with_phone
-    log = await gw.send_sms(db, str(valid_uuid), "Hello", None, campaign_name="Campaign", external_id="EXT-456")
+    log = asyncio.run(
+        gw.send_sms(db, str(valid_uuid), "Hello", None, campaign_name="Campaign", external_id="EXT-456")
+    )
     assert log.channel == "SMS"
     assert log.recipient_phone == "123456789"
     assert log.external_id == "EXT-456"
 
 
-@pytest.mark.asyncio
-async def test_messaging_gateway_send_email_outcomes():
+def test_messaging_gateway_send_email_outcomes():
     db = MagicMock()
     valid_uuid = uuid.uuid4()
     persona = DummyPersona(valid_uuid, email="user@example.com")
@@ -148,7 +150,7 @@ async def test_messaging_gateway_send_email_outcomes():
     # 1. SMTP NOT configured
     settings_no_smtp = DummySettings(smtp_host=None)
     gw_no_smtp = MessagingGateway(settings=settings_no_smtp)
-    log1 = await gw_no_smtp.send_email(db, str(valid_uuid), "Text content", None)
+    log1 = asyncio.run(gw_no_smtp.send_email(db, str(valid_uuid), "Text content", None))
     assert log1.outcome == CommunicationOutcome.PENDING_SMTP_CONFIG.value
 
     # 2. SMTP configured, send_message succeeds (with html)
@@ -160,8 +162,10 @@ async def test_messaging_gateway_send_email_outcomes():
     mock_smtp_class.return_value.__enter__.return_value = mock_smtp_instance
 
     with patch("smtplib.SMTP", mock_smtp_class):
-        log2 = await gw_smtp.send_email(
-            db, str(valid_uuid), "Text content", None, campaign_name="Email Camp", html="<p>HTML</p>"
+        log2 = asyncio.run(
+            gw_smtp.send_email(
+                db, str(valid_uuid), "Text content", None, campaign_name="Email Camp", html="<p>HTML</p>"
+            )
         )
         assert log2.outcome == CommunicationOutcome.SENT_REAL.value
         mock_smtp_instance.starttls.assert_called_once()
@@ -170,12 +174,11 @@ async def test_messaging_gateway_send_email_outcomes():
 
     # 3. SMTP configured, raises Exception (SMTP failure)
     with patch("smtplib.SMTP", side_effect=Exception("Connection error")):
-        log3 = await gw_smtp.send_email(db, str(valid_uuid), "Text content", None)
+        log3 = asyncio.run(gw_smtp.send_email(db, str(valid_uuid), "Text content", None))
         assert log3.outcome == CommunicationOutcome.SMTP_FAILED.value
 
 
-@pytest.mark.asyncio
-async def test_stub_messaging_gateway():
+def test_stub_messaging_gateway():
     settings = DummySettings(stub_comms=True)
     stub_gw = StubMessagingGateway(settings=settings)
     db = MagicMock()
@@ -184,19 +187,19 @@ async def test_stub_messaging_gateway():
     # 1. send_whatsapp (persona found with phone)
     persona = DummyPersona(valid_uuid, phone="987654321", email="stub@example.com")
     db.query.return_value.filter.return_value.first.return_value = persona
-    log_wa = await stub_gw.send_whatsapp(db, str(valid_uuid), "WA test", None)
+    log_wa = asyncio.run(stub_gw.send_whatsapp(db, str(valid_uuid), "WA test", None))
     assert log_wa.outcome == CommunicationOutcome.STUB.value
     assert log_wa.recipient_phone == "987654321"
 
     # 2. send_sms (persona not found -> phone is None)
     db.query.return_value.filter.return_value.first.return_value = None
-    log_sms = await stub_gw.send_sms(db, str(valid_uuid), "SMS test", None)
+    log_sms = asyncio.run(stub_gw.send_sms(db, str(valid_uuid), "SMS test", None))
     assert log_sms.outcome == CommunicationOutcome.STUB.value
     assert log_sms.recipient_phone is None
 
     # 3. send_email (no override match)
     db.query.return_value.filter.return_value.first.return_value = persona
-    log_em = await stub_gw.send_email(db, str(valid_uuid), "Email test", None)
+    log_em = asyncio.run(stub_gw.send_email(db, str(valid_uuid), "Email test", None))
     assert log_em.outcome == CommunicationOutcome.STUB.value
 
     # 4. send_email WITH TEST_EMAIL_OVERRIDE matching email
@@ -204,7 +207,7 @@ async def test_stub_messaging_gateway():
     stub_gw_override = StubMessagingGateway(settings=settings_override)
     with patch.object(MessagingGateway, "send_email") as mock_super_email:
         mock_super_email.return_value = "super_result"
-        res = await stub_gw_override.send_email(db, str(valid_uuid), "Override email", None)
+        res = asyncio.run(stub_gw_override.send_email(db, str(valid_uuid), "Override email", None))
         assert res == "super_result"
         mock_super_email.assert_called_once()
 
