@@ -1,5 +1,5 @@
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ProjectContextPanel from "./ProjectContextPanel";
@@ -12,6 +12,23 @@ vi.mock("@/components/projects/ProjectChatPanel", () => ({
 
 vi.mock("@/components/projects/ProjectActivityFeed", () => ({
   default: ({ activities }: { activities: unknown[] }) => <div>Actividad del proyecto ({activities.length})</div>,
+}));
+
+vi.mock("@/context/AuthContext", () => ({
+  useAuth: () => ({ token: "token-1" }),
+}));
+
+const socketMock = vi.hoisted(() => ({
+  onEvent: null as ((payload: unknown) => void) | null,
+  calls: [] as Array<{ enabled?: boolean; rooms?: string[] }>,
+}));
+
+vi.mock("@/hooks/useWorkspaceSocket", () => ({
+  useWorkspaceSocket: (options: { enabled?: boolean; rooms?: string[]; onEvent?: (payload: unknown) => void }) => {
+    socketMock.onEvent = options.onEvent ?? null;
+    socketMock.calls.push({ enabled: options.enabled, rooms: options.rooms });
+    return { status: options.enabled ? "open" : "idle" };
+  },
 }));
 
 const projectInboxMock = vi.hoisted(() => ({
@@ -30,6 +47,7 @@ const projectInboxMock = vi.hoisted(() => ({
     },
   ],
   markAsRead: vi.fn(async () => undefined),
+  refresh: vi.fn(async () => undefined),
 }));
 
 vi.mock("@/hooks/useProjectInbox", () => ({
@@ -38,7 +56,7 @@ vi.mock("@/hooks/useProjectInbox", () => ({
     unreadCount: projectInboxMock.items.filter((item) => !item.is_read).length,
     loading: false,
     error: null,
-    refresh: vi.fn(async () => undefined),
+    refresh: projectInboxMock.refresh,
     markAsRead: projectInboxMock.markAsRead,
   }),
 }));
@@ -90,9 +108,17 @@ function renderPanel(overrides: Partial<ProjectUpdateContextValue> = {}) {
 }
 
 describe("ProjectContextPanel", () => {
-  it("renders the default chat tab and exposes the project summary", () => {
+  beforeEach(() => {
+    socketMock.onEvent = null;
+    socketMock.calls = [];
+    projectInboxMock.refresh.mockClear();
+    projectInboxMock.markAsRead.mockClear();
+  });
+
+  it("renders the default chat tab and keeps the inbox socket disabled in Chat", () => {
     renderPanel();
 
+    expect(socketMock.calls.at(-1)).toEqual({ enabled: false, rooms: ["project_project-1"] });
     expect(screen.getByRole("complementary", { name: "Contexto del proyecto" })).toBeInTheDocument();
     expect(screen.getByText("Proyecto CCF")).toBeInTheDocument();
     expect(screen.getByText("1 abiertas")).toBeInTheDocument();
@@ -145,6 +171,27 @@ describe("ProjectContextPanel", () => {
     await user.click(screen.getByRole("button", { name: "Abrir tarea" }));
     expect(projectInboxMock.markAsRead).toHaveBeenCalledWith("task-task-open");
     expect(onOpenTask).toHaveBeenCalledWith(expect.objectContaining({ id: "task-open" }));
+  });
+
+  it("refreshes the project inbox for realtime events from the active project", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    await user.click(screen.getByRole("tab", { name: /Inbox/ }));
+    expect(socketMock.calls.at(-1)).toEqual({ enabled: true, rooms: ["project_project-1"] });
+
+    socketMock.onEvent?.({
+      event: "project_message",
+      project_id: "project-1",
+      message: { id: "message-1" },
+    });
+    expect(projectInboxMock.refresh).toHaveBeenCalledTimes(1);
+
+    socketMock.onEvent?.({
+      event: "notification:new",
+      body: { project_id: "other-project" },
+    });
+    expect(projectInboxMock.refresh).toHaveBeenCalledTimes(1);
   });
 
   it("shows the global unread notification count as a workspace link", () => {

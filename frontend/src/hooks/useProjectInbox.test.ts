@@ -106,6 +106,40 @@ describe("useProjectInbox", () => {
     expect(result.current.error).toBe("No se pudo marcar el elemento como leído.");
   });
 
+  it("preserves optimistic read state when a stale refresh resolves during a pending mutation", async () => {
+    const { result } = renderHook(() => useProjectInbox("project-1"));
+    await waitFor(() => expect(result.current.items).toHaveLength(2));
+
+    let resolveMutation: (() => void) | undefined;
+    vi.mocked(apiFetch).mockImplementation((path) => {
+      if (String(path).endsWith("/read")) {
+        return new Promise((resolve) => {
+          resolveMutation = () => resolve({});
+        });
+      }
+      return Promise.resolve([
+        { ...inboxRows[0], is_read: false },
+        { ...inboxRows[2], is_read: true },
+      ]);
+    });
+
+    act(() => {
+      void result.current.markAsRead("task-task-1");
+    });
+    await waitFor(() => {
+      expect(result.current.items.find((item) => item.id === "task-task-1")?.is_read).toBe(true);
+    });
+
+    await act(async () => {
+      await result.current.refresh();
+    });
+    expect(result.current.items.find((item) => item.id === "task-task-1")?.is_read).toBe(true);
+
+    await act(async () => {
+      resolveMutation?.();
+    });
+  });
+
   it("does not fetch without an authenticated project context", async () => {
     mockAuth.token = null;
     const { result } = renderHook(() => useProjectInbox("project-1"));

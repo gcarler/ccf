@@ -50,7 +50,11 @@ export function useProjectInbox(projectId?: string | null): UseProjectInboxResul
       });
       if (requestId !== requestIdRef.current) return;
       const projectItems = Array.isArray(data)
-        ? data.filter((item) => item.project_id === projectId)
+        ? data
+            .filter((item) => item.project_id === projectId)
+            .map((item) => (
+              readMutationRef.current.has(item.id) ? { ...item, is_read: true } : item
+            ))
         : [];
       setItems(projectItems);
     } catch {
@@ -76,6 +80,14 @@ export function useProjectInbox(projectId?: string | null): UseProjectInboxResul
 
     const current = items.find((item) => item.id === itemId);
     if (!current || current.is_read) return;
+
+    // A pending REST refresh may contain the pre-mutation server state.
+    // Invalidate it before applying the optimistic read marker so an older
+    // response cannot overwrite the user's action.
+    requestIdRef.current += 1;
+    controllerRef.current?.abort();
+    controllerRef.current = null;
+    setLoading(false);
 
     const mutationId = Date.now() + Math.random();
     const previousRead = current.is_read;
