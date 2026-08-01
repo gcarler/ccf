@@ -241,7 +241,15 @@ async def get_room_presence(
     tabla ``Personas``. Client IDs no-UUID o inexistentes retornan
     ``persona_id: null``. Non-UUID client IDs (ej. ``"client-a"``) se
     retornan sin resolver.
+
+    Private DM rooms are subject to the same participant and tenant guard as
+    the WebSocket handshake. A room UUID is an address, never an authorization
+    primitive; unauthorized callers receive a neutral 404.
     """
+    room = room.strip()
+    if room.lower().startswith("dm_") and not _authorize_requested_rooms(db, current_user, [room]):
+        raise HTTPException(status_code=404, detail="Room not found")
+
     # A-01: Return enriched client list with persona_id when resolvable.
     # client_id in mesh_websockets is an opaque UUID string provided by
     # the frontend — it does NOT correspond to a User/Usuario column.
