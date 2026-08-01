@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Activity, Bell, CheckCircle2, ExternalLink, Inbox, MessageSquare, Users, X } from "lucide-react";
 import clsx from "clsx";
 import { useProjectUpdate } from "@/context/ProjectUpdateContext";
+import { useAuth } from "@/context/AuthContext";
 import ProjectActivityFeed from "@/components/projects/ProjectActivityFeed";
 import ProjectChatPanel from "@/components/projects/ProjectChatPanel";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useProjectInbox } from "@/hooks/useProjectInbox";
+import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
+import type { WsEvent } from "@/types/directMessages";
 import type { ProjectTaskRecord } from "@/types/projects";
 
 type ContextTab = "chat" | "activity" | "details" | "inbox";
@@ -28,10 +31,22 @@ const TABS: Array<{ id: ContextTab; label: string; icon: typeof MessageSquare }>
 
 export default function ProjectContextPanel({ className, defaultTab = "chat", onOpenTask }: ProjectContextPanelProps) {
   const { project, tasks, activities } = useProjectUpdate();
+  const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<ContextTab>(defaultTab);
   const tabRefs = useRef<Partial<Record<ContextTab, HTMLButtonElement | null>>>({});
-  const { items: projectInbox, unreadCount: projectInboxUnread, loading: inboxLoading, error: inboxError, markAsRead } = useProjectInbox(project?.id);
+  const { items: projectInbox, unreadCount: projectInboxUnread, loading: inboxLoading, error: inboxError, refresh: refreshProjectInbox, markAsRead } = useProjectInbox(project?.id);
   const { notifications } = useNotifications();
+  const handleInboxSocketEvent = useCallback((payload: WsEvent) => {
+    if (project?.id && isProjectInboxEvent(payload, project.id)) {
+      void refreshProjectInbox();
+    }
+  }, [project?.id, refreshProjectInbox]);
+
+  useWorkspaceSocket({
+    rooms: project?.id ? [`project_${project.id}`] : [],
+    enabled: Boolean(token && project?.id && activeTab === "inbox"),
+    onEvent: handleInboxSocketEvent,
+  });
   const globalUnread = notifications.filter((notification) => !notification.read).length;
 
   const focusTab = (tab: ContextTab) => {
@@ -190,6 +205,19 @@ export default function ProjectContextPanel({ className, defaultTab = "chat", on
       </div>
     </aside>
   );
+}
+
+function isProjectInboxEvent(payload: WsEvent, projectId: string): boolean {
+  if (payload.event === "project_message") {
+    return "project_id" in payload && String(payload.project_id) === projectId;
+  }
+
+  if (payload.event !== "notification:new" || !("body" in payload) || typeof payload.body !== "object" || payload.body === null) {
+    return false;
+  }
+
+  const body = payload.body as Record<string, unknown>;
+  return "project_id" in body && String(body.project_id) === projectId;
 }
 
 function ProjectInboxContent({
