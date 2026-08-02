@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
+import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 import {
     LayoutDashboard,
     Calendar,
@@ -122,7 +123,7 @@ export default function ProjectDetailPage() {
                 try {
                     await apiFetch(`/projects/${id}`, { method: 'DELETE', token });
                     toast.success('Proyecto eliminado');
-                    router.push('/plataforma/projects?view=list#projects-dashboard');
+                    router.push(PROJECTS_LIST_ROUTE);
                 } catch {
                     toast.error('Error al eliminar proyecto');
                 }
@@ -182,7 +183,7 @@ export default function ProjectDetailPage() {
             <div className="flex flex-col h-full bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
                 <WorkspaceToolbar
                     breadcrumbs={[
-                        { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects?view=list#projects-dashboard' },
+                        { label: 'Proyectos', icon: LayoutDashboard, href: PROJECTS_LIST_ROUTE },
                         { label: project?.title || 'Cargando...', icon: Calendar },
                     ]}
                     viewType={viewType}

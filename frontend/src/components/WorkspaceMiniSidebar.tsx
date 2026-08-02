@@ -29,6 +29,7 @@ import { useCreation } from '@/context/CreationContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { useAuth } from '@/context/AuthContext';
 import { canAccessWorkspaceHref } from '@/lib/workspaceAccess';
+import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 
 interface NavItemProps {
     id: string;
@@ -73,7 +74,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
 
     const primaryItems = [
         { id: 'dashboard',  icon: LayoutDashboard, href: '/plataforma',  label: 'Inicio' },
-        { id: 'projects', icon: Target,       href: '/plataforma/projects?view=list#projects-list',  label: 'Proyectos' },
+        { id: 'projects', icon: Target,       href: PROJECTS_LIST_ROUTE,  label: 'Proyectos' },
         { id: 'tasks',    icon: Layout,        href: '/plataforma/tasks',     label: 'Mis Tareas' },
         { id: 'calendar', icon: CalendarDays,  href: '/plataforma/calendar',  label: 'Calendario' },
     ];

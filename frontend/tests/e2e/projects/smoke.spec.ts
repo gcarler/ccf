@@ -3,7 +3,7 @@ import { defineAuthenticatedModuleRouteSmoke } from '../helpers/moduleRouteSmoke
 const PROJECTS_ROUTES = [
   {
     id: 'projects-list',
-    path: '/plataforma/projects?view=list#projects-list',
+    path: '/plataforma/projects?view=list#projects-dashboard',
     expectedText: /proyectos|centro de comando|nuevo proyecto|no hay proyectos/i,
   },
   {

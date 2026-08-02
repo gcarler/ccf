@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { SITE_NAME } from '@/lib/site-config';
+import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 
 export default function UnifiedSidebar({
     title,
@@ -54,7 +55,7 @@ export default function UnifiedSidebar({
         { id: 'inbox', label: 'Bandeja de Entrada', href: '/plataforma/inbox', icon: Inbox },
         { id: 'crm', label: 'CRM / Equipos', href: '/plataforma/crm', icon: Users },
         { id: 'academy', label: 'Academia', href: '/plataforma/academy', icon: GraduationCap },
-        { id: 'projects', label: 'Proyectos', href: '/plataforma/projects?view=list#projects-list', icon: Layout },
+        { id: 'projects', label: 'Proyectos', href: PROJECTS_LIST_ROUTE, icon: Layout },
         { id: 'agents', label: 'Agentes IA', href: '/plataforma/agents', icon: BrainCircuit },
     ];
 

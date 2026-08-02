@@ -38,6 +38,7 @@ import {
   Plus,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 
 interface ModuleNavItem {
   id: string;
@@ -66,7 +67,7 @@ export const MODULE_CONFIGS: Record<string, ModuleConfig> = {
           {
             id: 'projects-home',
             label: 'Portfolio',
-            href: '/plataforma/projects?view=list#projects-list',
+            href: PROJECTS_LIST_ROUTE,
             icon: Layout,
           },
           {

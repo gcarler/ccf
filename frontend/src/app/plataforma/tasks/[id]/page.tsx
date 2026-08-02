@@ -15,6 +15,7 @@ import {
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
+import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 import { DSCard } from '@/design';
 import { DSBadge } from '@/design';
 import { toast } from 'sonner';
@@ -70,7 +71,7 @@ export default function TaskDetailPage() {
             <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
-                    { label: 'Proyectos', icon: LayoutDashboard, href: '/plataforma/projects?view=list#projects-list' },
+                    { label: 'Proyectos', icon: LayoutDashboard, href: PROJECTS_LIST_ROUTE },
                     { label: 'Tareas', icon: CheckCircle2, href: '/plataforma/tasks' },
                     { label: `Task-${id}`, icon: CheckCircle2 },
                 ]}

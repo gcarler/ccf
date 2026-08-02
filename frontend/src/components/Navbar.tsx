@@ -15,6 +15,7 @@ import {
     ChevronDown
 } from 'lucide-react';
 import { SITE_NAME } from '@/lib/site-config';
+import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 
 export default function Navbar() {
     const { isAuthenticated, logout } = useAuth();
@@ -24,7 +25,7 @@ export default function Navbar() {
     const navItems = [
         { label: 'Inicio', href: '/' },
         { label: 'Academia', href: '/plataforma/academy' },
-        { label: 'Proyectos', href: '/plataforma/projects?view=list#projects-list' },
+        { label: 'Proyectos', href: PROJECTS_LIST_ROUTE },
         { label: 'Prédicas', href: '/predicas' },
         { label: 'Libros', href: '/books' },
         { label: 'Testimonios', href: '/testimonios' },
