@@ -58,6 +58,10 @@ Módulo de espacio de trabajo transversal. Proporciona pizarra (whiteboard), tar
 
 ## Pendientes
 
+### DONE-WORKSPACE-001 (2026-08-02) — Cierre: mover snapshots de feature flags fuera del árbol de git
+
+> CERRADO el 2026-08-02 con `git rm --cached backend/data/feature_flags_*.ndjson` (commit del cierre): los tres `feature_flags_*.ndjson` quedan des-trackeados y el `.gitignore` existente (`backend/data/feature_flags*.ndjson`) ya los excluye; se regeneran bajo demanda sin ensuciar el working tree. Los archivos siguen en disco. Nota residual: `feature_flags.json` y `feature_flags_incidents.json` quedan trackeados y también reciben diffs de runtime (newline) — si reaparecen, des-trackearlos con el mismo criterio.
+
 ### PEND-WORKSPACE-001 — Mover snapshots de feature flags fuera del árbol de git
 
 **Problema.** La suite de tests del módulo regenera en runtime los archivos `backend/data/feature_flags_*.ndjson` (audit, notifications, snapshot_history) en cada corrida. Al quedar trackeados en git, cada ejecución ensucia el working tree y obliga a revertir manualmente (p. ej. `feature_flags_notifications.ndjson` reverted tras el commit de tests de la sesión 2026-08-02).
