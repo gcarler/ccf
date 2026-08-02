@@ -296,22 +296,46 @@ export default function WhiteboardEditor({
             setTextFontFamily(textObj.fontFamily || "Manrope");
             setTextFontSize(textObj.fontSize || 24);
             setTextBold(textObj.fontWeight === "bold");
-            setTextItalic(!!textObj.fontStyle);
+            // fabric 7 defaults IText.fontStyle to "normal" (not ""), so a
+            // truthiness check would treat a plain text as already-italic and
+            // the first click would toggle it OFF. Compare against "italic".
+            setTextItalic(textObj.fontStyle === "italic");
         }
     }, []);
 
-    const applyProperty = useCallback((key: string, value: unknown) => {
-        const canvas = fabricCanvas.current;
-        const active = canvas?.getActiveObject();
-        if (!active) return;
-        // Cast is needed because Fabric exposes many optional properties
-        // on subclasses (IText, Rect, Circle, etc.).
-        active.set(key as keyof fabric.FabricObject, value as fabric.FabricObject[keyof fabric.FabricObject]);
-        active.setCoords();
-        canvas?.renderAll();
-        // trigger save via the existing change handler
-        canvas?.fire("object:modified", { target: active } as unknown as fabric.ModifiedEvent<fabric.TPointerEvent>);
-    }, []);
+    const applyProperty = useCallback(
+        (key: string, value: unknown) => {
+            const canvas = fabricCanvas.current;
+            let active = canvas?.getActiveObject();
+            if (!active) return;
+            // IText in editing mode owns its text styles through a hidden
+            // textarea; mutating the object while editing is active lets the
+            // textarea's style-sync on blur overwrite the change (fontStyle/
+            // fontWeight used to require two clicks to stick). Commit the
+            // edit first so the property lands on the object.
+            if ((active as fabric.IText).isEditing) {
+                // exitEditing() fires fabric's own object:modified internally;
+                // suppress it so the manual fire below records a single
+                // history entry (otherwise undo would need two presses).
+                historyRef.current.restoringRef.current = true;
+                (active as fabric.IText).exitEditing();
+                historyRef.current.restoringRef.current = false;
+                active = canvas?.getActiveObject();
+                if (!active) return;
+            }
+            // Cast is needed because Fabric exposes many optional properties
+            // on subclasses (IText, Rect, Circle, etc.).
+            active.set(key as keyof fabric.FabricObject, value as fabric.FabricObject[keyof fabric.FabricObject]);
+            active.setCoords();
+            canvas?.renderAll();
+            // Re-sync the property panel state from the object so buttons like
+            // Negrita/Cursiva reflect the applied value on the first click.
+            updateSelectedProps();
+            // trigger save via the existing change handler
+            canvas?.fire("object:modified", { target: active } as unknown as fabric.ModifiedEvent<fabric.TPointerEvent>);
+        },
+        [updateSelectedProps]
+    );
 
     // ── Load board metadata ──
     useEffect(() => {
@@ -356,7 +380,7 @@ export default function WhiteboardEditor({
         if (!canvasRef.current || typeof window === "undefined" || !projectId || !token) return;
 
         const canvas = new fabric.Canvas(canvasRef.current, {
-            backgroundColor: WHITEBOARD_COLORS.canvasDark,
+            backgroundColor: "transparent",
             preserveObjectStacking: true,
             selection: true,
             selectionColor: "rgba(37, 99, 235, 0.1)",
@@ -383,6 +407,11 @@ export default function WhiteboardEditor({
                 if (board?.elements_json && board.elements_json !== "[]") {
                     historyRef.current.restoringRef.current = true;
                     await canvas.loadFromJSON(JSON.parse(board.elements_json));
+                    // Override any saved background — the canvas must stay
+                    // transparent so the CSS grid background on the wrapper
+                    // div shows through. Previously this was #ffffff which
+                    // hid the grid dots/lines completely.
+                    canvas.backgroundColor = "transparent";
                     canvas.renderAll();
                     syncLayers();
                 } else {
@@ -644,11 +673,19 @@ export default function WhiteboardEditor({
         if (now - lastThumbAtRef.current < 30000) return;
         lastThumbAtRef.current = now;
         try {
+            // Temporarily set a solid background so the JPEG thumbnail
+            // is not black (JPEG does not support transparency).
+            const savedBg = canvas.backgroundColor;
+            canvas.backgroundColor = "#ffffff";
+            canvas.renderAll();
             const dataUrl = canvas.toDataURL({
                 format: "jpeg",
                 quality: 0.6,
                 multiplier: 0.2,
             });
+            // Restore the transparent background
+            canvas.backgroundColor = savedBg;
+            canvas.renderAll();
             const blob = dataUrlToBlob(dataUrl);
             if (!blob) return;
             uploadProjectWhiteboardThumbnail(projectId, blob, token).catch(() => {
@@ -1103,11 +1140,12 @@ export default function WhiteboardEditor({
                             active={showShapePicker}
                             onClick={() => setShowShapePicker(p => !p)}
                             label="Formas"
+                            data-testid="whiteboard-open-shapes"
                         />
                         {showShapePicker && (
                             <div className="absolute left-full ml-3 top-0 z-30 grid grid-cols-3 gap-1.5 rounded-xl border border-[hsl(var(--border))] bg-white/95 p-3 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95" style={{ minWidth: '220px' }}>
-                                <ShapePickerItem icon={Square} label="Rect" shortcut="R" onClick={() => { addRect(); setShowShapePicker(false); }} />
-                                <ShapePickerItem icon={Circle} label="Círculo" shortcut="C" onClick={() => { addCircle(); setShowShapePicker(false); }} />
+                                <ShapePickerItem icon={Square} label="Rect" shortcut="R" onClick={() => { addRect(); setShowShapePicker(false); }} data-testid="whiteboard-add-rect" />
+                                <ShapePickerItem icon={Circle} label="Círculo" shortcut="C" onClick={() => { addCircle(); setShowShapePicker(false); }} data-testid="whiteboard-add-circle" />
                                 <ShapePickerItem icon={Diamond} label="Decisión" shortcut="D" onClick={() => { addDiamondShape(); setShowShapePicker(false); }} />
                                 <ShapePickerItem icon={Pill} label="Terminal" shortcut="S" onClick={() => { addPillShape(); setShowShapePicker(false); }} />
                                 <ShapePickerItem icon={Hexagon} label="Datos" shortcut="I" onClick={() => { addDataShape(); setShowShapePicker(false); }} />
@@ -1302,14 +1340,19 @@ export default function WhiteboardEditor({
                     className="flex-1 overflow-auto p-4 pl-24"
                     onClick={() => setShowShapePicker(false)}
                     style={{
-                        background: gridStyle === "none"
-                            ? "hsl(var(--bg-primary))"
-                            : `${getGridBackground(gridStyle, gridSize, isDark)}`,
-                        backgroundSize: gridStyle === "dots" ? `${gridSize}px ${gridSize}px` : `${gridSize}px ${gridSize}px`,
                         backgroundColor: "hsl(var(--bg-primary))",
                     }}
                 >
-                    <div className="inline-block overflow-hidden rounded-xl border-8 border-white bg-[hsl(var(--bg-primary))] shadow-[0_48px_96px_-32px_rgba(15,23,42,0.4)] dark:border-[hsl(var(--surface-1))]">
+                    <div
+                        className="inline-block overflow-hidden rounded-xl border-8 border-white shadow-[0_48px_96px_-32px_rgba(15,23,42,0.4)] dark:border-[hsl(var(--surface-1))]"
+                        style={{
+                            background: gridStyle === "none"
+                                ? (isDark ? WHITEBOARD_COLORS.gridDark : "#ffffff")
+                                : `${getGridBackground(gridStyle, gridSize, isDark)}`,
+                            backgroundSize: `${gridSize}px ${gridSize}px`,
+                            backgroundColor: isDark ? WHITEBOARD_COLORS.gridDark : "#ffffff",
+                        }}
+                    >
                         <canvas ref={canvasRef} className="whiteboard-canvas" />
                     </div>
                 </main>
@@ -1712,10 +1755,11 @@ function ToolbarButton({
     );
 }
 
-function ShapePickerItem({ icon: Icon, label, shortcut, onClick }: { icon: React.ElementType; label: string; shortcut?: string; onClick: () => void }) {
+function ShapePickerItem({ icon: Icon, label, shortcut, onClick, "data-testid": dataTestId }: { icon: React.ElementType; label: string; shortcut?: string; onClick: () => void; "data-testid"?: string }) {
     return (
         <button
             onClick={onClick}
+            data-testid={dataTestId}
             className="flex flex-col items-center gap-1 rounded-lg p-2 text-xs transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10"
             title={shortcut ? `${label} (${shortcut})` : label}
         >
