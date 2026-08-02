@@ -91,7 +91,7 @@ export function createTimerWidget(opts: { left: number; top: number; minutes?: n
     const group = new fabric.Group([bg, time, hint, ring], {
         left, top, subTargetCheck: true, interactive: true,
     });
-    group.data = { shapeType: "timer-widget", minutes };
+    group.data = { shapeId: newShapeId(), shapeType: "timer-widget", minutes };
     return group;
 }
 
@@ -121,6 +121,6 @@ export function createReactionWidget(opts: { left: number; top: number; emoji?: 
     const group = new fabric.Group([bg, stamp, text], {
         left, top, subTargetCheck: true, interactive: true,
     });
-    group.data = { shapeType: "reaction-widget", emoji };
+    group.data = { shapeId: newShapeId(), shapeType: "reaction-widget", emoji };
     return group;
 }
