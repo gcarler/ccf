@@ -35,14 +35,6 @@ class TestNormalizeRoleScopePayload:
         assert isinstance(shared.normalize_role_scope_payload({}), dict)
 
 
-class TestChannelLabel:
-    def test_whatsapp(self):
-        assert shared._channel_label("whatsapp") == "WhatsApp"
-
-    def test_email(self):
-        assert shared._channel_label("email") == "Email"
-
-
 class TestExpectedGroupRows:
     def test_no_group(self, db_session):
         assert shared.expected_group_rows(db_session, uuid.uuid4()) == []

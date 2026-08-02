@@ -1,7 +1,7 @@
 """
 Service Layer Unit Tests — Pure logic testing without DB or network.
 
-Tests: calculo_sesiones, automation_engine, evangelism_projection, scheduler.
+Tests: calculo_sesiones, automation_engine, scheduler.
 """
 
 from datetime import datetime, timedelta, timezone
