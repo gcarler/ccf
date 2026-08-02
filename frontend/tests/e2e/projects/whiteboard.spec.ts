@@ -131,11 +131,16 @@ test.describe('whiteboard editor e2e', () => {
     // Capture the initial layer labels so we can isolate the newly added ones.
     const initialLabels = await getLayerLabels(page);
 
+    // Rect/Circle live inside the "Formas" submenu (v3 toolbar) — open it first.
+    await page.getByTestId('whiteboard-open-shapes').click();
     await page.getByTestId('whiteboard-add-rect').click();
-    await expect(layersPanel.getByText(/Rectángulo \d+/)).toBeVisible({ timeout: 5_000 });
+    // The demo board ships with starter objects (incl. a rect), so the regex
+    // may match several layer rows — any match proves the new shape is there.
+    await expect(layersPanel.getByText(/Rectángulo \d+/).first()).toBeVisible({ timeout: 5_000 });
 
+    await page.getByTestId('whiteboard-open-shapes').click();
     await page.getByTestId('whiteboard-add-circle').click();
-    await expect(layersPanel.getByText(/Círculo \d+/)).toBeVisible({ timeout: 5_000 });
+    await expect(layersPanel.getByText(/Círculo \d+/).first()).toBeVisible({ timeout: 5_000 });
 
     await page.getByTestId('whiteboard-add-text').click();
     await expect(layersPanel.getByText('Nuevo texto', { exact: false })).toBeVisible({ timeout: 5_000 });
@@ -170,9 +175,10 @@ test.describe('whiteboard editor e2e', () => {
     // Capture the initial layer count after the starter objects are loaded.
     const initialLayerCount = await getLayerCount(page);
 
-    // Add a new shape and confirm it appears.
+    // Add a new shape (open the "Formas" submenu first) and confirm it appears.
+    await page.getByTestId('whiteboard-open-shapes').click();
     await page.getByTestId('whiteboard-add-rect').click();
-    await expect(layersPanel.getByText(/Rectángulo \d+/)).toBeVisible({ timeout: 5_000 });
+    await expect(layersPanel.getByText(/Rectángulo \d+/).first()).toBeVisible({ timeout: 5_000 });
     expect(await getLayerCount(page)).toBe(initialLayerCount + 1);
 
     // Undo should remove the newly added rectangle.
