@@ -296,6 +296,8 @@ export default function WhiteboardEditor({
     const [textBold, setTextBold] = useState(false);
     const [textItalic, setTextItalic] = useState(false);
     const [textUnderline, setTextUnderline] = useState(false);
+    const [textBulletList, setTextBulletList] = useState(false);
+    const [textNumberList, setTextNumberList] = useState(false);
 
     // Stroke width & opacity
     const [strokeWidth, setStrokeWidth] = useState(2);
@@ -405,6 +407,11 @@ export default function WhiteboardEditor({
             // the first click would toggle it OFF. Compare against "italic".
             setTextItalic(textObj.fontStyle === "italic");
             setTextUnderline(textObj.underline === true);
+            // Detect bullet / numbered list state (PZ-17)
+            const raw = textObj.text ?? "";
+            const lines = raw.split("\n").filter((l) => l.length > 0);
+            setTextBulletList(lines.length > 0 && lines.every((l) => l.startsWith("• ")));
+            setTextNumberList(lines.length > 0 && lines.every((l, i) => l.startsWith(`${i + 1}. `)));
         }
     }, []);
 
@@ -2311,14 +2318,14 @@ export default function WhiteboardEditor({
                                     {/* List bullets / numbering (PZ-17) */}
                                     <div className="flex gap-2">
                                         <button
-                                            onClick={() => { toggleTextList("•"); }}
-                                            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"
+                                            onClick={() => { toggleTextList("•"); setTextBulletList(!textBulletList); setTextNumberList(false); }}
+                                            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${textBulletList ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"}`}
                                         >
                                             • Lista
                                         </button>
                                         <button
-                                            onClick={() => { toggleTextList("1."); }}
-                                            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"
+                                            onClick={() => { toggleTextList("1."); setTextNumberList(!textNumberList); setTextBulletList(false); }}
+                                            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${textNumberList ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"}`}
                                         >
                                             1. Números
                                         </button>
