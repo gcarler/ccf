@@ -59,6 +59,17 @@ vi.mock('@/lib/cms/v2', () => ({
   deleteCmsPostByCategory: (...args: any[]) => mockDeleteCmsPostByCategory(...args),
   saveTestimonial: (...args: any[]) => mockSaveTestimonialV2(...args),
   postToTestimonial: (post: any) => post,
+  // ⚠️ SUPUESTO DE FIXTURE PLANO (2026-08-02): postToAnnouncement se mockea
+  // como identity (devuelve el post tal cual) para que los fixtures de
+  // `listCmsPostsByCategory` (ver beforeEach) lleguen directo a
+  // `normalizeAnnouncement`. Por eso los fixtures de announcements exponen
+  // `title`/`category`/`status`/`is_featured` a nivel raíz. El
+  // `postToAnnouncement` REAL (lib/cms/v2.ts) lee `category` de `seo.category`
+  // y `status` de `post.status` (shape `CmsPostWithTaxonomies` con `seo_json`).
+  // Si este mock se reemplaza por la función real, los fixtures cambiarían de
+  // comportamiento EN SILENCIO: `category` caería al fallback "announcements"
+  // y los campos shape-específicos de `seo_json` se perderían — habría que
+  // darles `seo_json` y el contrato completo para mantener el comportamiento.
   postToAnnouncement: (post: any) => post,
   listCmsSites: vi.fn().mockResolvedValue([
     { site_key: 'ccf', name: 'Centro Cristiano' },
@@ -96,32 +107,68 @@ import CmsHomePage from '../page';
 describe('Adversarial Verification & Edge Cases (R1-R6)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockListCmsPostsByCategory.mockResolvedValue([
-      {
-        id: 'test-1',
-        slug: 'testimonio-1',
-        content: 'Dios hizo un milagro en mi vida',
-        emotion: 'Sanidad',
-        created_at: '2026-07-30T10:00:00Z',
-        published: true,
-        status: 'approved',
-        is_approved: true,
-        media_type: 'text',
-        author_persona_id: 'persona-123',
-      },
-      {
-        id: 'test-2',
-        slug: 'testimonio-2',
-        content: 'Gratitud por la provision',
-        emotion: 'Provisión',
-        created_at: '2026-07-30T11:00:00Z',
-        published: false,
-        status: 'pending',
-        is_approved: false,
-        media_type: 'image',
-        author_persona_id: null,
-      },
-    ]);
+    // R3 (fix 2026-08-02): el mock de listCmsPostsByCategory ahora es
+    // category-aware. Antes devolvía SIEMPRE posts de testimonios (sin
+    // `title`) también para la categoría `announcements` — postToAnnouncement
+    // mapea `title: post.title ?? ""` y normalizeAnnouncement cae en
+    // `title || 'Comunicado'`, así que todos los comunicados renderizaban
+    // "Comunicado" y los tests R3 ("Aviso sobre Cursos" / "Gran Evento de
+    // Sanidad") fallaban con "Unable to find an element". Los posts de
+    // announcements necesitan `title` (y `is_featured` para el featured).
+    mockListCmsPostsByCategory.mockImplementation((_siteKey: string, category: string) => {
+      if (category === 'announcements') {
+        return Promise.resolve([
+          {
+            id: 'ann-1',
+            slug: 'aviso-cursos',
+            title: 'Aviso sobre Cursos',
+            content: 'Informacion sobre los nuevos cursos del semestre.',
+            category: 'General',
+            status: 'published',
+            is_featured: false,
+            created_at: '2026-07-30T10:00:00Z',
+            published_at: '2026-07-30T10:00:00Z',
+          },
+          {
+            id: 'ann-2',
+            slug: 'gran-evento-sanidad',
+            title: 'Gran Evento de Sanidad',
+            content: 'Gran evento de sanidad este sabado a las 5pm.',
+            category: 'Eventos',
+            status: 'published',
+            is_featured: true,
+            created_at: '2026-07-30T11:00:00Z',
+            published_at: '2026-07-30T11:00:00Z',
+          },
+        ]);
+      }
+      return Promise.resolve([
+        {
+          id: 'test-1',
+          slug: 'testimonio-1',
+          content: 'Dios hizo un milagro en mi vida',
+          emotion: 'Sanidad',
+          created_at: '2026-07-30T10:00:00Z',
+          published: true,
+          status: 'approved',
+          is_approved: true,
+          media_type: 'text',
+          author_persona_id: 'persona-123',
+        },
+        {
+          id: 'test-2',
+          slug: 'testimonio-2',
+          content: 'Gratitud por la provision',
+          emotion: 'Provisión',
+          created_at: '2026-07-30T11:00:00Z',
+          published: false,
+          status: 'pending',
+          is_approved: false,
+          media_type: 'image',
+          author_persona_id: null,
+        },
+      ]);
+    });
 
     mockApiFetch.mockImplementation((url: string) => {
       if (url.includes('/cms/v2/redirects')) {
@@ -229,6 +276,27 @@ describe('Adversarial Verification & Edge Cases (R1-R6)', () => {
       const cancelBtn = screen.getByText('Cancelar');
       fireEvent.click(cancelBtn);
       expect(screen.queryByText('¿Archivar testimonio?')).not.toBeInTheDocument();
+    });
+
+    it('keeps testimonial posts for the testimonials category (category-aware mock guard)', async () => {
+      // Guardia de regresión (2026-08-02, T-01): el mock de listCmsPostsByCategory
+      // es category-aware. Esta aserción fija el contrato para que un futuro revert
+      // del fix falle de forma VISIBLE (no silenciosa):
+      //   - categoría `testimonials`  -> posts con `content` (forma de testimonio),
+      //     SIN `title` (si se les añadiera `title`, AnnouncementsAdmin mapearía
+      //     esos posts con postToAnnouncement y normalizaría títulos reales en vez
+      //     de "Comunicado" — silencioso);
+      //   - categoría `announcements` -> posts con `title` (los únicos que la
+      //     página de comunicados puede renderizar como títulos reales).
+      const testimonials = await mockListCmsPostsByCategory('ccf', 'testimonials', undefined, 'test-token');
+      expect(testimonials).toHaveLength(2);
+      expect(testimonials[0].content).toBe('Dios hizo un milagro en mi vida');
+      expect(testimonials[0].title).toBeUndefined();
+
+      const announcements = await mockListCmsPostsByCategory('ccf', 'announcements', undefined, 'test-token');
+      expect(announcements).toHaveLength(2);
+      expect(announcements[0].title).toBe('Aviso sobre Cursos');
+      expect(announcements[1].title).toBe('Gran Evento de Sanidad');
     });
   });
 

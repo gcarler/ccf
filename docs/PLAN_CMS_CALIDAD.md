@@ -68,7 +68,9 @@ Criterio de salida:
 
 ## 4. Fase 2 — Admin, builder y workflow editorial
 
-**IDs:** `DONE-BUILDER-CMS-001`, `DONE-PREVIEW-PUBLIC-CMS-001`, `DONE-DASHBOARD-CMS-001`, `DONE-BUILDER-CMS-POPUP-001`, `DONE-BRANDING-CMS-001`, `PEND-CMS-BUILDER-001`
+**IDs:** `DONE-BUILDER-CMS-001`, `DONE-BUILDER-CMS-002`, `DONE-PREVIEW-PUBLIC-CMS-001`, `DONE-DASHBOARD-CMS-001`, `DONE-BUILDER-CMS-POPUP-001`, `DONE-BRANDING-CMS-001`
+
+> **Nota 2026-08-01:** `PEND-CMS-BUILDER-001` quedó cerrado como `DONE-BUILDER-CMS-002`; el builder ya no depende de tolerancias silenciosas y está cubierto por `builder-flow.spec.ts`, `builder-puck-flow.spec.ts` y `pages-preview.spec.ts`.
 
 Orden:
 

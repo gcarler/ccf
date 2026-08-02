@@ -95,9 +95,16 @@ def migrate_image(db, user: models.Usuario, rel_path: str, section: str) -> tupl
     else:
         storage_path = storage_service.save_file(content, filename, subfolder=f"cms/{section}")
 
-    # StorageService returns /static/..., but the public frontend serves
-    # CMS assets from /api/static/...
-    public_url = f"/api/static{storage_path}"
+    # StorageService returns the canonical public URL already
+    # (/api/static/...). Legacy callers used to assume a bare /static/...
+    # return and prepended the mount again, which produced
+    # /api/static/api/static/... (DOUBLE static) and 404s. Normalize.
+    if storage_path.startswith("/api/static/"):
+        public_url = storage_path
+    elif storage_path.startswith("/static/"):
+        public_url = f"/api/static/{storage_path[len('/static/'):]}"
+    else:
+        public_url = f"/api/static/{storage_path.lstrip('/')}"
 
     if _url_already_registered(db, public_url):
         print(f"  SKIP (already registered): {public_url}")
