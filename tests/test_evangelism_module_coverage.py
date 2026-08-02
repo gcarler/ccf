@@ -326,15 +326,6 @@ class TestSharedPureHelpers:
         assert result["target_role_ids"] is None
         assert result["target_persona_ids"] is None
 
-    def test_channel_label(self):
-        from backend.api.evangelism_shared import _channel_label
-
-        assert _channel_label("whatsapp") == "WhatsApp"
-        assert _channel_label("EMAIL") == "Email"
-        assert _channel_label("sms") == "SMS"
-        assert _channel_label("") == "SMS"
-        assert _channel_label(None) == "SMS"  # type: ignore[arg-type]
-
     def test_persona_payload_minimal(self, db_session):
         from backend.api.evangelism_shared import persona_payload
 

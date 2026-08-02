@@ -44,7 +44,7 @@ wc -l /root/ccf/frontend/src/components/evangelism/*.tsx /root/ccf/frontend/src/
 
 Conteo actual:
 
-- Backend evangelismo directo: **10 823 LOC**
+- Backend evangelismo directo: **~11 300 LOC** (limpieza de deuda tecnica 2026-08-01)
 - Frontend evangelismo directo: **4 215 LOC**
 
 ## 4. Listar backlog completo (Parcial + Pendiente) por ID
@@ -100,13 +100,15 @@ npm run test:e2e:evangelism:deep
 | API analitica | `backend/api/evangelism_analytics.py`, `evangelism_reports.py`, `evangelism_rankings.py`, `evangelism_multiplication.py`, `evangelism_notifications.py` | Reportes, rankings, multiplicacion, recordatorios |
 | Schemas | `backend/schemas/evangelism.py` | Contratos Pydantic del modulo |
 | CRUD | `backend/crud/evangelism.py` | Acceso directo compartido |
-| Servicios | `backend/services/evangelism_crm_bridge.py`, `evangelism_projection.py`, `calculo_sesiones.py` | CRM bridge, proyeccion temporal, generacion de sesiones |
+| Servicios | `backend/services/evangelism_crm_bridge.py`, `calculo_sesiones.py` | CRM bridge, generacion de sesiones |
 | UI shell | `frontend/src/components/evangelism/EvangelismShell.tsx` | Shell compartido |
 | UI principal | `frontend/src/app/plataforma/evangelism/**` | Dashboard, estrategias, grupos, eventos, rankings, scanner, multiplicacion |
 | Tests backend | `tests/test_evangelism_*.py`, `tests/test_calculo_sesiones.py` | Regresion y cobertura |
 | Tests e2e | `frontend/tests/e2e/evangelism/` | Sesiones, rankings, multiplicacion |
 
 **Estado global:** **Certificado internamente — 100% del plan maestro.** La certificación cubre seguridad por sede/RBAC, contratos por vertical, UI tipada, flujos de negocio y gates reproducibles. El despliegue productivo continúa por su pipeline normal y reversible; no es parte de esta certificación de código.
+
+**Actualizacion QA 2026-08-01 (revision 100% — limpieza deuda tecnica):** Revisión completa del módulo para llevarlo al 100%. Suite completa: **1291 passed, 0 failed** (x2 xfailed, x1 xpassed). Limpieza realizada: (1) eliminados 13 artefactos `,cover` residuales en `evangelism_main/`, `evangelism_grupos/`, `evangelism_events/`; (2) eliminadas 5 funciones helper muertas duplicadas de `evangelism_shared.py` (`_channel_label`, `_persona_matches_segment`, `_resolve_campaign_personas`, `_serialize_message_group`, `_serialize_crm_task` — ~128 LOC) cuyas copias canónicas viven en `backend/api/crm/_shared.py` y `backend/api/evangelism_main/main_utils.py`; (3) eliminado `backend/services/evangelism_projection.py` (wrapper muerto sin importadores, 0% cobertura); (4) eliminados directorios backup no trackeados (`evangelism_disabled_backup/`, `evangelism_components_disabled_backup/`); (5) 117 tests nuevos en `tests/test_evangelism_coverage_gaps.py` que suben cobertura: `events_main.py` 76→95%, `main_estrategias.py` 83→90%, `grupos_main.py` 87→93%. Cobertura por archivo: evangelism.py 99%, analytics 96%, multiplication 98%, notifications 98%, rankings 99%, reports 100%, shared 73%→sube al eliminar codigo muerto, crud 82%, models 99%, schemas 97%, crm_bridge 89%.
 **Actualización de certificación 2026-07-18:** las fases 0 a 6 del plan maestro quedaron ejecutadas. Evidencia final: backend profundo/expandido, matriz de permisos de dos sedes, typecheck, Playwright administrado en `passed`, `git diff --check` y commit atómico de Evangelismo.
 **Actualizacion QA 2026-07-16:** la cobertura profunda frontend ya no depende de arrancar Next manualmente. `npm run test:e2e:evangelism` y `npm run test:e2e:evangelism:deep` usan `frontend/scripts/run-managed-playwright.mjs` para levantar `webServer` administrado y ejecutar las suites profundas de sesiones, rankings y multiplication de forma repetible.
 **Actualizacion QA 2026-07-16 (events/scanner):** la cobertura profunda frontend ahora tambien cubre `/plataforma/evangelism/events`, `/plataforma/evangelism/events/[id]` y `/plataforma/evangelism/scanner` con `frontend/tests/e2e/evangelism/events-scanner.spec.ts`. La validacion ejecutada fue `npm run test:e2e:evangelism:deep` (`13 passed`) y `npm run test:e2e:evangelism` (`13 passed, 3 skipped`).
