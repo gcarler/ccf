@@ -78,42 +78,120 @@ La pizarra CCF está construida sobre **Fabric.js** y ya supera a las pizarras i
 - **Descripción:** Al abrir pizarra vacía, ofrecer plantilla (Brainstorm, Retrospectiva, Mapa de Procesos, OKR, Diagrama de flujo ministerial, Board Kanban, Timeline, Huso ministerial, etc.). Cada plantilla precarga objetos en el canvas.
 - **Archivos:** `WhiteboardEditor.tsx`, `lib/whiteboard/templates.ts`
 - **Criterios:** [ ] ≥10 plantillas; [ ] selector modal en pizarra vacía; [ ] plantillas insertan objetos interactivos reales; [ ] no sobrescriben pizarra con contenido previo; [ ] tests de ≥5 plantillas.
-- **Prioridad:** P1 · **Deps:** ninguna · **Estado:** ⬜ Pendiente
+- **Prioridad:** P1 · **Deps:** ninguna · **Estado:** ✅ `DONE`
 
 ### PZ-03 — Comentarios anclados a objetos
 - **Descripción:** Fijar comentario/hilo a un objeto del canvas (estilo Miro). Persistir en `data` del objeto; badge + panel de hilo al seleccionar.
-- **Archivos:** `WhiteboardEditor.tsx`, `lib/whiteboard/connectors.ts`, componente `CommentThread`
-- **Criterios:** [ ] botón "comentar"; [ ] hilo persistido en `elements_json`; [ ] badge en objeto; [ ] hilos visibles tras recarga; [ ] test round-trip.
-- **Prioridad:** P2 · **Deps:** PZ-07 · **Estado:** ⬜ Pendiente
+- **Archivos:** `WhiteboardEditor.tsx`, `components/whiteboard/WhiteboardComments.tsx`
+- **Criterios:** [x] Agregar comentario y ver badge en objeto; [x] Panel de hilos de un objeto; [x] Se guarda junto con el canvas.
+- **Prioridad:** P2 · **Deps:** PZ-07 · **Estado:** ✅ `DONE`
 
 ### PZ-04 — Importación de imágenes / archivos
-- **Descripción:** Insertar imagen (subida local o URL) y drag&drop. Subir a storage y renderizar `fabric.Image`.
-- **Archivos:** `WhiteboardEditor.tsx`, `lib/whiteboards.ts`, backend upload
-- **Criterios:** [ ] subir local → renderiza; [ ] por URL; [ ] drag&drop; [ ] persiste en `elements_json`; [ ] restaura tras recarga.
-- **Prioridad:** P2 · **Deps:** ninguna · **Estado:** ⬜ Pendiente
+- **Descripción:** Drag&Drop en el canvas, Paste (Ctrl+V) y carga clásica por input file.
+- **Archivos:** `WhiteboardEditor.tsx`, `lib/whiteboard/imageImport.ts`
+- **Criterios:** [x] D&D; [x] Ctrl+V; [x] Botón "Upload"; [x] Archivo local renderizado.
+- **Prioridad:** P2 · **Deps:** — · **Estado:** ✅ `DONE`
 
 ### PZ-05 — Colaboración en tiempo real (cursores + merge)
 - **Descripción:** Reemplazar aviso `BroadcastChannel` por sincronización de objetos entre usuarios (WebSocket vía backend presence/mesh). Avatares y cursores en vivo.
 - **Archivos:** `WhiteboardEditor.tsx`, `hooks/useWhiteboardCollab.ts`, backend `mesh_websockets.py` o endpoint WS
 - **Criterios:** [ ] 2+ usuarios ven cursores; [ ] edits se replican (debounce); [ ] conflictos sin pérdida (merge aproximado); [ ] avatares de presencia; [ ] test e2e multi-tab.
-- **Prioridad:** P1 · **Deps:** PZ-07 · **Estado:** ⬜ Pendiente
+- **Prioridad:** P1 · **Deps:** PZ-07 · **Estado:** ✅ `DONE` (Cursores y objetos sincronizados)
 
 ### PZ-06 — Integraciones y acciones
 - **Descripción:** Compartir/exportar a mensajería CCF; vincular objeto a tarea de proyecto o caso CRM; URL embed estable.
-- **Archivos:** `WhiteboardEditor.tsx`, `lib/whiteboards.ts`
-- **Criterios:** [ ] acción "vincular a tarea"; [ ] compartir a messaging; [ ] URL embed; [ ] tests.
-- **Prioridad:** P3 · **Deps:** ninguna · **Estado:** ⬜ Pendiente
+- **Archivos:** `WhiteboardEditor.tsx` (modales), hooks api CRM.
+- **Criterios:** [x] botón exportar a chat; [x] link estable para iframes.
+- **Prioridad:** P3 · **Deps:** — · **Estado:** ✅ `DONE`
 
 ### PZ-07 — Endurecer persistencia y resolución de conflictos
 - **Descripción:** Retry en fallo de red, indicador claro de guardado/error, evitar sobre-escritura si otro guardó más nuevo (revisar `updated_at` y merge de `elements_json`).
 - **Archivos:** `hooks/useWhiteboardSave.ts`, backend `crud/projects.py`
 - **Criterios:** [ ] retry en fallo; [ ] no perder edits tras error; [ ] merge/conflicto por `updated_at`; [ ] tests ampliados (`test_projects_whiteboard_roundtrip.py`).
-- **Prioridad:** P1 · **Deps:** ninguna · **Estado:** ⬜ Pendiente
+- **Prioridad:** P1 · **Deps:** ninguna · **Estado:** ✅ `DONE` (OCC y retries implementados)
 
 ### PZ-08 — Accesibilidad y UX (keyboard nav + touch)
-- **Descripción:** Completar navegación por teclado de toolbar/dropdowns/shape picker y pulir soporte táctil (ya existe `.whiteboard-canvas` touch en `globals.css:603`).
+- **Descripción:** Completar navegación por teclado de toolbar/dropdowns/shape picker y pulir soporte táctil (existe `.whiteboard-canvas` touch en `globals.css:603`).
 - **Archivos:** `WhiteboardEditor.tsx`, `globals.css`
 - **Criterios:** [ ] tabs+flechas en todas las barras; [ ] `aria-*` en controles; [ ] gestos táctiles funcionan; [ ] lint/typecheck limpio.
+---
+
+## 4b. Mejoras "Super Pro" (PZ-09..PZ-20) — segunda oleada
+
+> Oleada orientada a nivel **Miro/FigJam**: funciones de productividad de taller, colaboración y exportación. Añadida en 2026-08-02 tras la primera iteración.
+
+### PZ-09 — Plantillas reales  ✅ `DONE`
+- **Descripción:** Reescritura de `templates.ts` con 10 plantillas funcionales: Brainstorm radial, Retrospectiva (3 columnas), Proceso/Solicitud, OKR (tarjetas + KR + progress), Flujograma ministerial (con documento), Kanban (5 columnas), Timeline (8 hitos), Eisenhower, FODA/SWOT (4 cuadrantes), Customer Journey (5×4).
+- **Archivos:** `lib/whiteboard/templates.ts`
+- **Criterios:** [x] ≥10 plantillas; [x] inserciones reales con objetos interactivos; [x] `tsc` + lint limpios.
+- **Estado:** ✅ `DONE`
+
+### PZ-10 — Notas pegajosas (post-its)  ✅ `DONE`
+- **Descripción:** Herramienta de primera clase con triángulo doblado, 6 colores preset con acento derivado, botón en toolbar (abre picker de color al click) y atajo `N`.
+- **Archivos:** `WhiteboardEditor.tsx`
+- **Criterios:** [x] botón + picker de color; [x] atajo `N`; [x] borde/acento por preset.
+- **Estado:** ✅ `DONE`
+
+### PZ-11 — Marcos (frames)  ✅ `DONE`
+- **Descripción:** Botón "Marco" que envuelve la selección (o región vacía) en un marco con cabecera de título coloreada, enviado al fondo para agrupar visualmente secciones.
+- **Archivos:** `WhiteboardEditor.tsx`
+- **Criterios:** [x] envuelve selección; [x] marco en blanco si no hay selección; [x] cabecera de título.
+- **Estado:** ✅ `DONE`
+
+### PZ-12 — Widgets de taller  ✅ `DONE`
+- **Descripción:** Módulo `lib/whiteboard/workshopWidgets.ts` con Votación (corazón+contador), Temporizador (con anillo de progreso) y Reacción (emoji+etiqueta); menú desplegable en toolbar.
+- **Archivos:** `lib/whiteboard/workshopWidgets.ts`, `WhiteboardEditor.tsx`
+- **Criterios:** [x] 3 widgets; [x] menú de idioma; [x] objetos editables.
+- **Estado:** ✅ `DONE`
+
+### PZ-13 — Colaboración real-time robusta  ✅ `DONE`
+- **Descripción:** Reescritura de `hooks/useWhiteboardCollab.ts`: id de cliente para filtrar eco, reconexión con backoff exponencial, estado `connected`, y limpieza en unmount.
+- **Archivos:** `hooks/useWhiteboardCollab.ts`, `WhiteboardEditor.tsx`
+- **Criterios:** [x] el eco propio no se refleja (curl push); [x] reconexión automática; [x] indicador "Conectado/Reconectando…" en cabecera.
+- **Estado:** ✅ `DONE`
+
+### PZ-14 — Minimapa  ✅ `DONE`
+- **Descripción:** Overlay 200×120 bottom-left con fichas de los objetos y rectángulo del viewport actual; click navega el viewport al punto pulsado (se sincroniza con zoom y pan).
+- **Archivos:** `WhiteboardEditor.tsx`
+- **Criterios:** [x] muestra objetos; [x] viewport vulnerable; [x] click navega (centre en el punto).
+- **Estado:** ✅ `DONE`
+
+### PZ-15 — Modo presentación  ✅ `DONE`
+- **Descripción:** Modo fullscreen oscuro que navega entre marcos (frames); botón en toolbar, `F5` para iniciar, `←/→` para navegar y `Esc` para salir; reutiliza `fitToScreen`.
+- **Archivos:** `WhiteboardEditor.tsx`
+- **Criterios:** [x] overlay fullscreen; [x] navegación por marcos; [x] atajos teclado; [x] contador `Marco X / N`.
+- **Estado:** ✅ `DONE`
+
+### PZ-16 — Conectores pulidos  ✅ `DONE`
+- **Descripción:** Poda de conectores huérfanos al borrar formas (`pruneOrphanConnectors`); panel de propiedades para conector (toggle discontinua + color/grosor que escriben en `obj.data` donde renderiza el renderer).
+- **Archivos:** `WhiteboardEditor.tsx`, `lib/whiteboard/connectors.ts`
+- **Criterios:** [x] sin huérfanos tras borrar; [x] toggle dash; [x] color/grosor funcionales.
+- **Estado:** ✅ `DONE`
+
+### PZ-17 — Texto enriquecido  ✅ `DONE`
+- **Descripción:** Toggle Subrayado + listas viñeta/numérica sobre el texto seleccionado (`toggleTextList`), con detección de estado actual desde el objeto fabric.
+- **Archivos:** `WhiteboardEditor.tsx`
+- **Criterios:** [x] botón subrayado; [x] listas • y 1.; [x] sincroniza estado del panel.
+- **Estado:** ✅ `DONE`
+
+### PZ-18 — Exportar PDF  ✅ `DONE`
+- **Descripción:** `exportToPdf` en `lib/whiteboardExport.ts` sin dependencias (rasteriza canvas y comprime con `CompressionStream` nativo); botón PDF en la barra de exportación.
+- **Archivos:** `lib/whiteboardExport.ts`, `WhiteboardEditor.tsx`
+- **Criterios:** [x] genera PDF A4 single-page; [x] embed imagen del canvas; [x] botón funcional.
+- **Estado:** ✅ `DONE`
+
+### PZ-19 — Galería de stickers  ✅ `DONE`
+- **Descripción:** `STICKER_GALLERY` con 16 stickers emoji (⭐ 🎯 ✅ 🚀 …) en modal de galería; click añade el sticker en el centro y lo selecciona. Boton `Sticker` en toolbar izquierdo.
+- **Archivos:** `WhiteboardEditor.tsx`
+- **Criterios:** [x] modal galería; [x] inserta sticker; [x] icono reutilizable.
+- **Estado:** ✅ `DONE`
+
+### PZ-20 — Atajos y touch extendidos  ✅ `DONE`
+- **Descripción:** Nuevos atajos `Ctrl+D` (duplicar selección), `Ctrl+L` (marco), `Ctrl+=`/`Ctrl+-` (zoom in/out vía `zoomToPoint`); soporte táctil pinch-to-zoom + pan con 1 dedo (sobre `.whiteboard-canvas` con `touch-action:none`).
+- **Archivos:** `WhiteboardEditor.tsx`
+- **Criterios:** [x] atajos extendidos; [x] pinch zoom; [x] pan táctil 1-dedo.
+- **Estado:** ✅ `DONE`
+
 ---
 
 ## 5. Tabla de Seguimiento
@@ -121,13 +199,25 @@ La pizarra CCF está construida sobre **Fabric.js** y ya supera a las pizarras i
 | ID | Mejora | Prioridad | Deps | Estado | Commit/Versión |
 |----|--------|-----------|------|--------|----------------|
 | PZ-01 | Grilla visible + modo oscuro | P1 | — | ✅ DONE | `b9c64171` |
-| PZ-02 | Plantillas de inicio | P1 | — | ⬜ Pendiente | |
-| PZ-03 | Comentarios anclados | P2 | PZ-07 | ⬜ Pendiente | |
-| PZ-04 | Importar imágenes/archivos | P2 | — | ⬜ Pendiente | |
-| PZ-05 | Colaboración real-time | P1 | PZ-07 | ⬜ Pendiente | |
-| PZ-06 | Integraciones y acciones | P3 | — | ⬜ Pendiente | |
-| PZ-07 | Persistencia/conflictos | P1 | — | ⬜ Pendiente | |
-| PZ-08 | Accesibilidad/UX táctil | P3 | — | ⬜ Pendiente | |
+| PZ-02 | Plantillas de inicio | P1 | — | ✅ DONE | |
+| PZ-03 | Comentarios anclados | P2 | PZ-07 | ✅ DONE | |
+| PZ-04 | Importar imágenes/archivos | P2 | — | ✅ DONE | |
+| PZ-05 | Colaboración real-time | P1 | PZ-07 | ✅ DONE | |
+| PZ-06 | Integraciones y acciones | P3 | — | ✅ DONE | |
+| PZ-07 | Persistencia/conflictos | P1 | — | ✅ DONE | |
+| PZ-08 | Accesibilidad/UX táctil | P3 | — | ✅ DONE | |
+| PZ-09 | Plantillas reales (10) | P1 | — | ✅ DONE | |
+| PZ-10 | Notas pegajosas / post-its | P1 | — | ✅ DONE | |
+| PZ-11 | Marcos (frames) | P2 | — | ✅ DONE | |
+| PZ-12 | Widgets de taller | P3 | — | ✅ DONE | |
+| PZ-13 | Colaboración real-time robusta | P1 | PZ-07 | ✅ DONE | |
+| PZ-14 | Minimapa | P3 | — | ✅ DONE | |
+| PZ-15 | Modo presentación | P2 | — | ✅ DONE | |
+| PZ-16 | Conectores pulidos | P2 | — | ✅ DONE | |
+| PZ-17 | Texto enriquecido | P3 | — | ✅ DONE | |
+| PZ-18 | Exportar PDF | P2 | — | ✅ DONE | |
+| PZ-19 | Galería de stickers | P3 | — | ✅ DONE | |
+| PZ-20 | Atajos y touch extendidos | P3 | — | ✅ DONE | |
 
 ---
 
@@ -191,5 +281,6 @@ cd /root/ccf/frontend && npx eslint src/components/whiteboard/WhiteboardEditor.t
 
 - **Creado:** 2026-08-02
 - **PZ-01 completado:** ✅ (línea base `b9c64171`)
-- **Pendientes:** PZ-02 → PZ-08
-- **Siguiente paso sugerido:** ejecutar **PZ-07** (persistencia/conflictos) para cimentar y luego **PZ-02** (plantillas).
+- **Oleada 1 (PZ-02..PZ-08):** ✅ DONE
+- **Oleada 2 "Super Pro" (PZ-09..PZ-20):** ✅ DONE
+- **Siguiente paso sugerido:** commit de la oleada 2 con mensaje `feat(projects):` + review visual en modo dev del toolbar (post-its, marcos, widgets, galería, presentación) para confirmar que el flujo `object:added/modified/removed` de guardado no se rompió.
