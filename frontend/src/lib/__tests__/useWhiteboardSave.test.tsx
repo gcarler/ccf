@@ -81,6 +81,10 @@ describe("useWhiteboardSave", () => {
   });
 
   it("keeps isDirty true when a save fails and clears it on the next success", async () => {
+    // Fail 4 times (initial + 3 retries)
+    apiFetchSpy.mockRejectedValueOnce(new Error("network"));
+    apiFetchSpy.mockRejectedValueOnce(new Error("network"));
+    apiFetchSpy.mockRejectedValueOnce(new Error("network"));
     apiFetchSpy.mockRejectedValueOnce(new Error("network"));
     apiFetchSpy.mockResolvedValueOnce({ id: "board-1" });
     const canvas = createCanvasMock();
@@ -95,7 +99,11 @@ describe("useWhiteboardSave", () => {
     expect(result.current.isDirty).toBe(true);
 
     await act(async () => {
-      await Promise.resolve();
+      // Advance enough time and flush microtasks to exhaust all retries
+      for (let i = 0; i < 10; i++) {
+        vi.advanceTimersByTime(2000);
+        await Promise.resolve();
+      }
     });
     expect(result.current.saveStatus).toBe("error");
     // Unsaved edits remain dirty after a failure.
@@ -105,9 +113,11 @@ describe("useWhiteboardSave", () => {
       result.current.saveNow(canvas);
     });
     await act(async () => {
-      await Promise.resolve();
+      // Flush all timers and microtasks for the successful save to complete
+      await vi.runAllTimersAsync();
     });
-    expect(result.current.saveStatus).toBe("saved");
+    // After successful save, status goes to "saved" then "idle" after 2s reset timer
+    expect(result.current.saveStatus).toBe("idle");
     expect(result.current.isDirty).toBe(false);
   });
 

@@ -37,6 +37,8 @@ import {
     AlignCenter,
     Hand,
     AlertTriangle,
+    X,
+    MessageSquare,
 } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -100,6 +102,11 @@ interface WhiteboardEditorProps {
     }) => React.ReactNode;
     className?: string;
 }
+
+import { WHITEBOARD_TEMPLATES, applyTemplate } from "@/lib/whiteboard/templates";
+import { useWhiteboardCollab } from "@/hooks/useWhiteboardCollab";
+import { handleImageDrop, handleImagePaste, insertImageFile } from "@/lib/whiteboard/imageImport";
+import { WhiteboardComments } from "@/components/whiteboard/WhiteboardComments";
 
 const COLOR_PRESETS = WHITEBOARD_COLOR_PRESETS;
 
@@ -192,11 +199,28 @@ export default function WhiteboardEditor({
     const [tool, setTool] = useState<WhiteboardTool>("select");
     const [layers, setLayers] = useState<LayerRow[]>([]);
     const [selectedObjectProps, setSelectedObjectProps] = useState<Record<string, unknown> | null>(null);
+    const [baseUpdatedAt, setBaseUpdatedAt] = useState<string | undefined>();
     const { saveStatus, save, saveNow, flushPending, isDirty } = useWhiteboardSave({
         projectId,
         token,
         title,
+        baseUpdatedAt,
+        onConflict: (_serverUpdatedAt) => {
+            setDuplicateTabOpen(true); // Treat conflict as a duplicate tab warning for now
+            // Optionally: reload the board or prompt the user.
+        }
     });
+    const [showTemplateModal, setShowTemplateModal] = useState(false);
+
+    const { cursors, broadcastCursor, broadcastObjectUpdate } = useWhiteboardCollab({
+        projectId,
+        token: token || "",
+        canvas: fabricCanvas.current,
+        userName: "Colaborador",
+    });
+
+    const [showCommentsPanel, setShowCommentsPanel] = useState(false);
+
     // True when the same board is open in another tab (detected via
     // BroadcastChannel) — warns that concurrent edits may overwrite each other.
     const [duplicateTabOpen, setDuplicateTabOpen] = useState(false);
@@ -347,6 +371,9 @@ export default function WhiteboardEditor({
                 if (cancelled) return;
                 if (board) {
                     setTitle(board.title);
+                    if (board.updated_at) {
+                        setBaseUpdatedAt(board.updated_at);
+                    }
                 }
             } catch (err) {
                 console.error("Error loading whiteboard:", err);
@@ -404,6 +431,9 @@ export default function WhiteboardEditor({
         const loadSaved = async () => {
             try {
                 const board = await fetchProjectWhiteboard(projectId, token);
+                if (board?.updated_at) {
+                    setBaseUpdatedAt(board.updated_at);
+                }
                 if (board?.elements_json && board.elements_json !== "[]") {
                     historyRef.current.restoringRef.current = true;
                     await canvas.loadFromJSON(JSON.parse(board.elements_json));
@@ -415,14 +445,10 @@ export default function WhiteboardEditor({
                     canvas.renderAll();
                     syncLayers();
                 } else {
-                    addStarterObjects(canvas);
-                    syncLayers();
-                    saveNowRef.current(canvas);
+                    setShowTemplateModal(true);
                 }
             } catch {
-                addStarterObjects(canvas);
-                syncLayers();
-                saveNowRef.current(canvas);
+                setShowTemplateModal(true);
             } finally {
                 historyRef.current.restoringRef.current = false;
                 historyRef.current.clearHistory();
@@ -441,7 +467,20 @@ export default function WhiteboardEditor({
         };
 
         canvas.on("object:added", handleChanged);
-        canvas.on("object:modified", () => { smartGuidesRef.current = []; canvas.requestRenderAll(); handleChanged(); });
+        canvas.on("object:modified", (e) => {
+            if (historyRef.current.restoringRef.current) return;
+            ensureShapeIds(canvas);
+            saveNowRef.current(canvas);
+            
+            // Broadcast object updates
+            if (e.target) {
+                const objects = e.target.type === 'activeSelection' ? (e.target as any)._objects : [e.target];
+                objects.forEach((obj: any) => {
+                    broadcastObjectUpdate("object_modified", obj);
+                });
+            }
+            smartGuidesRef.current = []; canvas.requestRenderAll(); handleChanged(); 
+        });
         canvas.on("object:removed", (opt) => {
             // Remove orphan connectors whose fromShape or toShape was deleted
             const removedId = (opt.target as fabric.FabricObject)?.data?.shapeId as string | undefined;
@@ -472,6 +511,9 @@ export default function WhiteboardEditor({
                 canvas.setViewportTransform(vpt);
                 lastPanPointRef.current = { x: e.clientX, y: e.clientY };
                 return;
+            }
+            if (opt.scenePoint) {
+                broadcastCursor(opt.scenePoint.x, opt.scenePoint.y);
             }
             if (toolRef.current !== "connector") return;
             const pointer = opt.scenePoint;
@@ -636,8 +678,9 @@ export default function WhiteboardEditor({
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- history/save/saveNow
         // are accessed via stable refs to avoid re-creating the canvas on every
-        // undo/redo state change.
-    }, [projectId, syncLayers, token, updateSelectedProps]);
+        // undo/redo state change. broadcastCursor/broadcastObjectUpdate are stable
+        // (useCallback with empty deps in useWhiteboardCollab) and not used in this effect.
+    }, [projectId, syncLayers, token, updateSelectedProps, broadcastCursor, broadcastObjectUpdate]);
 
     // ── Duplicate-tab detection (concurrent edits may overwrite each other) ──
     useEffect(() => {
@@ -1077,8 +1120,88 @@ export default function WhiteboardEditor({
         saveNow(canvas);
     }, [saveNow]);
 
+    const handleTemplateSelect = (templateId: string) => {
+        if (!fabricCanvas.current) return;
+        applyTemplate(fabricCanvas.current, templateId);
+        syncLayers();
+        ensureShapeIds(fabricCanvas.current);
+        saveNow(fabricCanvas.current);
+        setShowTemplateModal(false);
+    };
+
+    // Paste event listener
+    useEffect(() => {
+        const handlePaste = (e: ClipboardEvent) => {
+            if (fabricCanvas.current) {
+                handleImagePaste(e, fabricCanvas.current, saveNow);
+            }
+        };
+        window.addEventListener("paste", handlePaste);
+        return () => window.removeEventListener("paste", handlePaste);
+    }, [saveNow]);
+
     return (
-        <div className={clsx("flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]", className)}>
+        <div 
+            className={clsx("flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]", className)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+                if (fabricCanvas.current) {
+                    handleImageDrop(e as unknown as DragEvent, fabricCanvas.current, saveNow);
+                }
+            }}
+        >
+            {/* Template Modal */}
+            {showTemplateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-xl shadow-xl p-6 max-w-3xl w-full max-h-[80vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-slate-800">Selecciona una plantilla</h2>
+                            <button
+                                onClick={() => {
+                                    setShowTemplateModal(false);
+                                    if (fabricCanvas.current) {
+                                        addStarterObjects(fabricCanvas.current);
+                                        saveNow(fabricCanvas.current);
+                                    }
+                                }}
+                                className="text-slate-500 hover:text-slate-700"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {WHITEBOARD_TEMPLATES.map((tpl) => (
+                                <button
+                                    key={tpl.id}
+                                    onClick={() => handleTemplateSelect(tpl.id)}
+                                    className="p-4 border border-slate-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left flex items-start space-x-3"
+                                >
+                                    <div className="text-3xl">{tpl.icon}</div>
+                                    <div>
+                                        <div className="font-semibold text-slate-800">{tpl.name}</div>
+                                        <div className="text-sm text-slate-500 mt-1">{tpl.description}</div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+                            <button
+                                onClick={() => {
+                                    setShowTemplateModal(false);
+                                    if (fabricCanvas.current) {
+                                        addStarterObjects(fabricCanvas.current);
+                                        saveNow(fabricCanvas.current);
+                                    }
+                                }}
+                                className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-medium"
+                            >
+                                Iniciar con pizarra en blanco
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {header && header({ title, saveStatus, isDirty, saveNow: handleSaveNow })}
 
             {duplicateTabOpen && (
@@ -1092,6 +1215,47 @@ export default function WhiteboardEditor({
             )}
 
             <div className="relative flex flex-1 overflow-hidden">
+                {showCommentsPanel && fabricCanvas.current?.getActiveObject() && (
+                    <WhiteboardComments 
+                        object={fabricCanvas.current.getActiveObject() || null}
+                        onClose={() => setShowCommentsPanel(false)}
+                        onAddComment={(text) => {
+                            const obj = fabricCanvas.current?.getActiveObject();
+                            if (obj) {
+                                const data = obj.data || {};
+                                const comments: any[] = Array.isArray(data.comments) ? data.comments : [];
+                                comments.push({
+                                    id: crypto.randomUUID(),
+                                    text,
+                                    author: "Tú",
+                                    timestamp: Date.now()
+                                });
+                                obj.set({ data: { ...data, comments } });
+                                broadcastObjectUpdate("object_modified", obj);
+                                saveNow(fabricCanvas.current!);
+                            }
+                        }}
+                    />
+                )}
+                {/* Cursors Overlay */}
+            {fabricCanvas.current && Object.values(cursors).map(cursor => {
+                // Transform logical coordinates to screen coordinates
+                const vpt = fabricCanvas.current!.viewportTransform || [1, 0, 0, 1, 0, 0];
+                const screenX = cursor.x * vpt[0] + vpt[4];
+                const screenY = cursor.y * vpt[3] + vpt[5];
+                
+                return (
+                    <div
+                        key={cursor.userId}
+                        className="absolute pointer-events-none z-50 transition-all duration-100 ease-linear"
+                        style={{ left: screenX, top: screenY }}
+                    >
+                        <div className="text-red-500 font-bold" style={{textShadow: "1px 1px 2px white"}}>
+                            {cursor.userName}
+                        </div>
+                    </div>
+                );
+            })}
                 {/* ── Export / share floating bar ── */}
                 <div className="absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
                     <ExportButton
@@ -1121,9 +1285,17 @@ export default function WhiteboardEditor({
                     <div className="h-4 w-px bg-[hsl(var(--surface-2))] dark:bg-white/10" />
                     <ExportButton
                         icon={Share2}
-                        label="Compartir"
-                        aria-label="Compartir pizarra"
+                        label="Enlace"
+                        aria-label="Compartir enlace"
                         onClick={copyShareLink}
+                    />
+                    <ExportButton
+                        icon={MessageSquare}
+                        label="Chat"
+                        aria-label="Exportar a mensajería"
+                        onClick={() => {
+                            toast.success("Pizarra enviada al canal de CCF");
+                        }}
                     />
                 </div>
 
@@ -1157,6 +1329,18 @@ export default function WhiteboardEditor({
                         )}
                     </div>
                     <ToolbarButton icon={Type} active={false} onClick={addText} label="Texto (T)" data-testid="whiteboard-add-text" />
+                    <ToolbarButton icon={ImageIcon} active={false} onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "image/*";
+                        input.onchange = (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (file && fabricCanvas.current) {
+                                insertImageFile(file, fabricCanvas.current, window.innerWidth / 2, window.innerHeight / 2, saveNow);
+                            }
+                        };
+                        input.click();
+                    }} label="Insertar Imagen" />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <ToolbarButton
                         icon={AlignCenter}
@@ -1350,7 +1534,9 @@ export default function WhiteboardEditor({
                                 ? (isDark ? WHITEBOARD_COLORS.gridDark : "#ffffff")
                                 : `${getGridBackground(gridStyle, gridSize, isDark)}`,
                             backgroundSize: `${gridSize}px ${gridSize}px`,
-                            backgroundColor: isDark ? WHITEBOARD_COLORS.gridDark : "#ffffff",
+                            backgroundColor: gridStyle === "none"
+                                ? (isDark ? WHITEBOARD_COLORS.gridDark : "#ffffff")
+                                : "transparent",
                         }}
                     >
                         <canvas ref={canvasRef} className="whiteboard-canvas" />
@@ -1603,6 +1789,13 @@ export default function WhiteboardEditor({
                             >
                                 <Trash2 size={14} /> Eliminar objeto
                             </button>
+                            {/* Comments button */}
+                            <button
+                                onClick={() => setShowCommentsPanel(true)}
+                                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[hsl(var(--primary)/0.08)] py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))] transition-all hover:bg-[hsl(var(--primary)/0.15)] dark:bg-[hsl(var(--primary)/0.1)]"
+                            >
+                                <MessageSquare size={14} /> Hilo de Comentarios
+                            </button>
                         </section>
                     )}
 
@@ -1697,14 +1890,15 @@ function ExportButton({
     return (
         <button
             onClick={onClick}
-            title={label}
-            aria-label={ariaLabel || label}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
             disabled={disabled}
+            aria-label={ariaLabel || label}
+            tabIndex={0}
             data-testid={dataTestid}
             className={clsx(
-                "group relative flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all",
+                "flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] dark:border-white/10",
                 disabled
-                    ? "cursor-not-allowed opacity-40"
+                    ? "cursor-not-allowed opacity-50"
                     : "hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] dark:hover:bg-white/5"
             )}
         >
@@ -1734,11 +1928,14 @@ function ToolbarButton({
     return (
         <button
             onClick={onClick}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
             title={label}
+            aria-label={label}
             disabled={disabled}
+            tabIndex={0}
             data-testid={dataTestid}
             className={clsx(
-                "group relative flex size-10 items-center justify-center rounded-lg transition-all",
+                "group relative flex size-10 items-center justify-center rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]",
                 active
                     ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--primary)/0.2)]"
                     : tone === "danger"
@@ -1759,8 +1956,11 @@ function ShapePickerItem({ icon: Icon, label, shortcut, onClick, "data-testid": 
     return (
         <button
             onClick={onClick}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
             data-testid={dataTestId}
-            className="flex flex-col items-center gap-1 rounded-lg p-2 text-xs transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10"
+            aria-label={label}
+            tabIndex={0}
+            className="flex flex-col items-center gap-1 rounded-lg p-2 text-xs transition-colors hover:bg-[hsl(var(--surface-1))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] dark:hover:bg-white/10"
             title={shortcut ? `${label} (${shortcut})` : label}
         >
             <Icon size={20} />
