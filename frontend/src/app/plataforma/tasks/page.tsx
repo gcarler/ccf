@@ -11,6 +11,7 @@ import TaskEditDrawer, { TaskDetail } from "@/components/ui/TaskEditDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
+import { PROJECTS_LIST_ROUTE } from "@/app/plataforma/projects/projectsLinks";
 import type { ViewType } from "@/components/ViewSwitcher";
 
 interface Task {
@@ -287,7 +288,7 @@ export default function UserTasksPage() {
                   {query || filterPriority !== "all" ? "Ajusta los filtros para ver otras tareas." : "No tienes tareas activas asignadas en este momento."}
                 </p>
               </div>
-              <Link href="/plataforma/projects?view=list#projects-list" className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-white">
+              <Link href={PROJECTS_LIST_ROUTE} className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-white">
                 <FolderOpen size={13} /> Ver proyectos
               </Link>
             </div>
