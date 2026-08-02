@@ -89,22 +89,14 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
         }
     }, [searchParams]);
 
-    // Scroll del listado al entrar en la vista list. Disparado por
-    // `onAnimationComplete` del motion.div (no por un setTimeout fijo):
-    // AnimatePresence mode="wait" completa la animación de salida (~300ms)
-    // ANTES de montar la vista nueva, así que un timer de 100ms disparaba con
-    // `projectsListRef` aún null y el scroll se saltaba en silencio
-    // (fix 2026-08-02, carrera 100ms vs ~300ms).
-    const scrollTriggeredViewRef = useRef<ViewType | null>(null);
-    const handleListViewAnimationComplete = useCallback(() => {
-        if (viewType !== 'list') {
-            scrollTriggeredViewRef.current = null;
-            return;
-        }
-        // Scroll una sola vez por transición a la vista list (no en cada re-render).
-        if (scrollTriggeredViewRef.current === viewType) return;
-        scrollTriggeredViewRef.current = viewType;
-        projectsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    useEffect(() => {
+        if (viewType !== 'list') return;
+
+        const timer = setTimeout(() => {
+            projectsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+
+        return () => clearTimeout(timer);
     }, [viewType]);
 
     // Quality filter: hide projects with nonsensical/test names
@@ -287,9 +279,9 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                                     : undefined
                             }
                             tone={card.color as 'blue' | 'emerald' | 'amber' | undefined}
-                            href={getProjectMetricHref(label)}
                             onClick={() => {
                                 const targetUrl = getProjectMetricHref(label);
+                                router.push(targetUrl);
                                 if (targetUrl.includes('view=list')) {
                                     setViewType('list');
                                 }
@@ -351,7 +343,6 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        onAnimationComplete={handleListViewAnimationComplete}
                         className="pb-4"
                     >
                         {renderView()}
