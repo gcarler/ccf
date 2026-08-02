@@ -199,7 +199,7 @@ class SlugMismatchError(CmsValidationError):
     detail: str = "New slug must differ from source slug"
 
 
-class SectionTypeAlreadyExistsError(CmsValidationError):
+class SectionTypeAlreadyExistsError(CmsConflictError):
     detail: str = "Section type already exists"
 
 

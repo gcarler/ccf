@@ -26,6 +26,7 @@ from sqlalchemy.exc import IntegrityError
 
 from backend import models
 from backend.api.cms_v2 import _commit_or_raise_conflict
+from backend.exceptions.cms import CmsConflictError
 from backend.models_cms import Base
 
 
@@ -71,7 +72,7 @@ def test_commit_or_raise_unique_conflict_returns_409(db_session):
         is_active=True,
     )
     db_session.add(st2)
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(CmsConflictError) as exc_info:
         _commit_or_raise_conflict(db_session)
     assert exc_info.value.status_code == 409
 
