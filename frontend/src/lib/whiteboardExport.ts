@@ -9,7 +9,16 @@ export function exportToPng(
   filename: string,
   multiplier = 2
 ): void {
+  // Temporarily set a solid background so the exported PNG is not
+  // transparent (the live canvas uses a transparent background so the
+  // CSS grid pattern shows through).
+  const savedBg = canvas.backgroundColor;
+  canvas.backgroundColor = "#ffffff";
+  canvas.renderAll();
   const dataUrl = canvas.toDataURL({ format: "png", multiplier });
+  // Restore the transparent background for the live canvas
+  canvas.backgroundColor = savedBg;
+  canvas.renderAll();
   const link = document.createElement("a");
   link.download = `${filename}.png`;
   link.href = dataUrl;
@@ -21,7 +30,14 @@ export function exportToPng(
  * Export whiteboard canvas as SVG image
  */
 export function exportToSvg(canvas: Canvas, filename: string): void {
+  // Temporarily set a solid background for the SVG export
+  const savedBg = canvas.backgroundColor;
+  canvas.backgroundColor = "#ffffff";
+  canvas.renderAll();
   const svg = canvas.toSVG();
+  // Restore the transparent background
+  canvas.backgroundColor = savedBg;
+  canvas.renderAll();
   const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -61,7 +77,14 @@ export function exportToJson(
  */
 export async function copyToClipboard(canvas: Canvas): Promise<boolean> {
   try {
+    // Temporarily set a solid background for the clipboard image
+    const savedBg = canvas.backgroundColor;
+    canvas.backgroundColor = "#ffffff";
+    canvas.renderAll();
     const dataUrl = canvas.toDataURL({ format: "png", multiplier: 2 });
+    // Restore the transparent background
+    canvas.backgroundColor = savedBg;
+    canvas.renderAll();
     const response = await fetch(dataUrl);
     const blob = await response.blob();
     await navigator.clipboard.write([
