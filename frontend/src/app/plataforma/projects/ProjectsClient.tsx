@@ -92,11 +92,11 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     useEffect(() => {
         if (viewType !== 'list') return;
 
-        const raf = window.requestAnimationFrame(() => {
-            projectsListRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
-        });
+        const timer = setTimeout(() => {
+            projectsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
 
-        return () => window.cancelAnimationFrame(raf);
+        return () => clearTimeout(timer);
     }, [viewType]);
 
     // Quality filter: hide projects with nonsensical/test names
@@ -279,7 +279,13 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                                     : undefined
                             }
                             tone={card.color as 'blue' | 'emerald' | 'amber' | undefined}
-                            href={getProjectMetricHref(label)}
+                            onClick={() => {
+                                const targetUrl = getProjectMetricHref(label);
+                                router.push(targetUrl);
+                                if (targetUrl.includes('view=list')) {
+                                    setViewType('list');
+                                }
+                            }}
                         />
                     );
                 })}
