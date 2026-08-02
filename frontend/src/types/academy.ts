@@ -158,9 +158,12 @@ export interface CourseDetail {
   lesson_count?: number;
   total_minutes?: number;
   lessons?: LessonRecord[];
-  // H-11 (cierre 2026-07-24): campos opcionales del frontend que algunos
-  // consumidores referencia (``students_count`` no proviene del serializador
-  // ``_serialize_course`` pero es tolerado como 0 por fallback ``|| 0``).
+  // H-11 (cierre 2026-07-24) + F-02bis (cierre 2026-08-02):
+  // ``students_count`` SÍ es emitido por ``_serialize_course`` en list/detail
+  // (count bulk Axioma-3, sin N+1; 0 para cursos globales en un Manager con
+  // sede — scope admin estricto F-02). ``lesson_count`` (singular) es el
+  // campo real de lecciones. ``lessons_count`` es legacy muerto (el backend
+  // nunca lo emite) y se conserva por tolerancia, sin renderizarse.
   students_count?: number;
   lessons_count?: number;
 }

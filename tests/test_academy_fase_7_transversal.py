@@ -339,49 +339,38 @@ def test_acad_tkt_200_429_response_includes_retry_after_header(client, force_lim
         app.dependency_overrides.pop(dep_key, None)
 
 
-@pytest.mark.skip(
-    reason="slowapi 0.1.10 pathology: ``__limit_decorator`` captura "
-    "``self._key_func`` como variable local en decoration-time (closure). "
-    "``setattr(academy_limiter, '_key_func', ...)`` aplicado POST-module-load "
-    "no afecta a los decoradores ``@academy_limiter.limit(...)`` ya aplicados. "
-    "El contrato de bypass al nivel más bajo posible está verificado en "
-    "``test_acad_tkt_200_key_func_returns_none_for_unlimited_user_with_force``. "
-    "Refactor pendiente Fase 7+: ``SlowAPIMiddleware`` o ``_make_key_func(is_unlimited_predicate)`` "
-    "que NO capture en closure (factory pattern)."
-)
-def test_acad_tkt_200_unlimited_user_is_not_rate_limited(client, force_limiter) -> None:
-    """Manager / admin bypass NUNCA recibe 429 — placeholder, ver skip arriba.
+def test_acad_tkt_200_unlimited_user_is_not_rate_limited(client, force_limiter, db_session) -> None:
+    """Manager/admin bypass NUNCA recibe 429 — runtime real (F-08).
 
-    Estrategia intentada: monkey-patch directo de ``academy_limiter._key_func``
-    para retornar ``None``. NO FUNCIONA en slowapi 0.1.10 porque captura
-    la referencia en decoration-time, no request-time.
+    El test previo (skip) intentaba monkey-patch directo de
+    ``academy_limiter._key_func``, que slowapi 0.1.10 captura en
+    decoration-time (closure). El bypass REAL no requiere tocar el limiter:
+    ``require_permission`` (dependencia de cada endpoint) setea
+    ``request.state.is_unlimited_user=True`` en request-time para rol
+    admin/manage, y ``_academy_key_func`` lo lee del MISMO request cuando
+    slowapi evalúa el límite. Este test lo verifica end-to-end con un admin
+    autenticado de verdad (seed_admin + auth_headers) bajo
+    ``FORCE_RATE_LIMIT=1``: 15 hits al endpoint rate-limited → 0 × 429.
     """
 
-    original_key_func = academy_limiter._key_func
+    from tests.conftest import auth_headers, seed_admin
 
-    def _bypass_key_func(_request) -> None:
-        return None
-
-    academy_limiter._key_func = _bypass_key_func
-    try:
-        dep_key = _student_dep_key()
-        app.dependency_overrides[dep_key] = lambda: _fake_student_user()
-        try:
-            fake_id = str(uuid.uuid4())
-            seen_429 = 0
-            for _ in range(25):
-                r = client.post(
-                    f"/api/academy/assessments/{fake_id}/submit",
-                    json={"answers": []},
-                    headers={"Authorization": "Bearer fake"},
-                )
-                if r.status_code == 429:
-                    seen_429 += 1
-            assert seen_429 == 0, f"Manager bypass roto: {seen_429} hits dispararon 429 con key_func=None'bypass"
-        finally:
-            app.dependency_overrides.pop(dep_key, None)
-    finally:
-        academy_limiter._key_func = original_key_func
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    fake_id = str(uuid.uuid4())
+    statuses: list[int] = []
+    for _ in range(15):
+        r = client.post(
+            f"/api/academy/assessments/{fake_id}/submit",
+            json={"answers": []},
+            headers=headers,
+        )
+        statuses.append(r.status_code)
+    # Fuerte: TODOS deben ser 404 (assessment inexistente). Si el bypass no
+    # aplicara, los hits 11+ devolverían 429 y el assert fallaría. Si el
+    # endpoint fallara con 500 (sin llegar al handler), también fallaría —
+    # evita el falso positivo del "429 not in statuses" vacuo.
+    assert statuses == [404] * 15, f"Manager bypass roto: esperaba 15×404, obtuve {statuses}"
 
 
 # ── CI guard: regression check on version pin ────────────────────────────────
@@ -697,7 +686,6 @@ def test_acad_tkt_203_sql_gate_n1_consolidation(db_session) -> None:
     contaminar otros tests.
     """
     from sqlalchemy import event
-    from sqlalchemy.exc import OperationalError
 
     from backend import models  # local import para el test fixture
     from backend.api.academy_cache import _fetch_dashboard_metrics_cached
@@ -724,16 +712,13 @@ def test_acad_tkt_203_sql_gate_n1_consolidation(db_session) -> None:
     db_engine = db_session.get_bind()
     event.listen(db_engine, "before_cursor_execute", _capture)
 
-    # SQLite no soporta ``func.date_trunc`` (usada en enrollment_trends —
-    # pre-existente a TKT-203). La query consolidada N+1 se emite ANTES de
-    # llegar a date_trunc, así que swallow este OperationalError específico
-    # sólo en SQLite preservando las queries capturadas. Postgres propaga
-    # date_trunc sin error (no necesita swallow).
+    # F-07 (cierre 2026-08-02): ya NO hay que tragar ``OperationalError`` —
+    # ``date_trunc`` (PostgreSQL-only) fue reemplazada por una expression
+    # dialect-aware (strftime en SQLite) en academy_cache.py, así que el
+    # dashboard corre en ambos dialectos sin excepción. Cualquier otro error
+    # SQL aquí debe fallar ruidosamente (la firma N+1 es el punto del gate).
     try:
         _fetch_dashboard_metrics_cached(test_sede, db_session)
-    except OperationalError as exc:
-        if db_engine.dialect.name != "sqlite" or "date_trunc" not in str(exc).lower():
-            raise
     finally:
         event.remove(db_engine, "before_cursor_execute", _capture)
 
