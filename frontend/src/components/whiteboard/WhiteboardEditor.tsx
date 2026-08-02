@@ -37,16 +37,6 @@ import {
     AlignCenter,
     Hand,
     AlertTriangle,
-    X,
-    MessageSquare,
-    Heart,
-    Clock,
-    Smile,
-    MonitorPlay,
-    Presentation,
-    ChevronLeft,
-    ChevronRight,
-    Sticker,
 } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -59,7 +49,7 @@ import {
     uploadProjectWhiteboardThumbnail,
     dataUrlToBlob,
 } from "@/lib/whiteboards";
-import { exportToPng, exportToSvg, exportToJson, exportToPdf } from "@/lib/whiteboardExport";
+import { exportToPng, exportToSvg, exportToJson } from "@/lib/whiteboardExport";
 import { useWhiteboardHistory } from "@/hooks/useWhiteboardHistory";
 import { useWhiteboardSave } from "@/hooks/useWhiteboardSave";
 import {
@@ -90,7 +80,7 @@ import {
 } from "@/lib/whiteboard/snapGuides";
 
 
-type WhiteboardTool = "select" | "draw" | "connector" | "pan" | "sticky";
+type WhiteboardTool = "select" | "draw" | "connector" | "pan";
 
 interface LayerRow {
     index: number;
@@ -110,12 +100,6 @@ interface WhiteboardEditorProps {
     }) => React.ReactNode;
     className?: string;
 }
-
-import { WHITEBOARD_TEMPLATES, applyTemplate } from "@/lib/whiteboard/templates";
-import { createVoteWidget, createTimerWidget, createReactionWidget } from "@/lib/whiteboard/workshopWidgets";
-import { useWhiteboardCollab } from "@/hooks/useWhiteboardCollab";
-import { handleImageDrop, handleImagePaste, insertImageFile } from "@/lib/whiteboard/imageImport";
-import { WhiteboardComments } from "@/components/whiteboard/WhiteboardComments";
 
 const COLOR_PRESETS = WHITEBOARD_COLOR_PRESETS;
 
@@ -140,37 +124,6 @@ const GRID_SIZES: { label: string; value: GridSize }[] = [
     { label: "16px", value: 16 },
     { label: "24px", value: 24 },
     { label: "32px", value: 32 },
-];
-
-// Preset colors for post-it / sticky notes (name + background fill). The
-// picking accent (fold triangle, border) is derived per swatch.
-const STICKY_PRESETS: { name: string; fill: string; accent: string }[] = [
-    { name: "Amarillo", fill: "#fef3c7", accent: "#f59e0b" },
-    { name: "Azul", fill: "#dbeafe", accent: "#3b82f6" },
-    { name: "Verde", fill: "#dcfce7", accent: "#22c55e" },
-    { name: "Rosa", fill: "#fce7f3", accent: "#ec4899" },
-    { name: "Menta", fill: "#fffbeb", accent: "#eab308" },
-    { name: "Lavanda", fill: "#ede9fe", accent: "#8b5cf6" },
-];
-
-// PZ-19: quick sticker/stamp library (emoji + label)
-const STICKER_GALLERY: { emoji: string; label: string }[] = [
-    { emoji: "⭐", label: "Star" },
-    { emoji: "🎯", label: "Objetivo" },
-    { emoji: "🔥", label: "Caliente" },
-    { emoji: "✅", label: "Hecho" },
-    { emoji: "❌", label: "Bloqueado" },
-    { emoji: "⚠️", label: "Atención" },
-    { emoji: "🚀", label: "Lanzamiento" },
-    { emoji: "💡", label: "Idea" },
-    { emoji: "👍", label: "De acuerdo" },
-    { emoji: "👎", label: "En contra" },
-    { emoji: "📌", label: "Pinned" },
-    { emoji: "🔒", label: "Bloqueado" },
-    { emoji: "🧪", label: "Pruebas" },
-    { emoji: "🤔", label: "Duda" },
-    { emoji: "🎉", label: "Éxito" },
-    { emoji: "🔮", label: "Visión" },
 ];
 
 /**
@@ -239,28 +192,11 @@ export default function WhiteboardEditor({
     const [tool, setTool] = useState<WhiteboardTool>("select");
     const [layers, setLayers] = useState<LayerRow[]>([]);
     const [selectedObjectProps, setSelectedObjectProps] = useState<Record<string, unknown> | null>(null);
-    const [baseUpdatedAt, setBaseUpdatedAt] = useState<string | undefined>();
     const { saveStatus, save, saveNow, flushPending, isDirty } = useWhiteboardSave({
         projectId,
         token,
         title,
-        baseUpdatedAt,
-        onConflict: (_serverUpdatedAt) => {
-            setDuplicateTabOpen(true); // Treat conflict as a duplicate tab warning for now
-            // Optionally: reload the board or prompt the user.
-        }
     });
-    const [showTemplateModal, setShowTemplateModal] = useState(false);
-
-    const { cursors, connected, broadcastCursor, broadcastObjectUpdate } = useWhiteboardCollab({
-        projectId,
-        token: token || "",
-        canvas: fabricCanvas.current,
-        userName: "Colaborador",
-    });
-
-    const [showCommentsPanel, setShowCommentsPanel] = useState(false);
-
     // True when the same board is open in another tab (detected via
     // BroadcastChannel) — warns that concurrent edits may overwrite each other.
     const [duplicateTabOpen, setDuplicateTabOpen] = useState(false);
@@ -275,27 +211,11 @@ export default function WhiteboardEditor({
     const [strokeColor, setStrokeColor] = useState<string>(WHITEBOARD_COLORS.primary);
     const [textColor, setTextColor] = useState<string>(WHITEBOARD_COLORS.textPrimary);
 
-    // Sticky note color (PZ-10) — user picks a preset before adding
-    const [stickyColor, setStickyColor] = useState<string>("#fef3c7");
-    const [showStickyMenu, setShowStickyMenu] = useState(false);
-
-    // Workshop widgets (PZ-12)
-    const [showWidgetsMenu, setShowWidgetsMenu] = useState(false);
-
-    // Sticker gallery (PZ-19)
-    const [showGallery, setShowGallery] = useState(false);
-
-    // Presentation mode (PZ-15)
-    const [presentMode, setPresentMode] = useState(false);
-    const [presentIndex, setPresentIndex] = useState(0);
-    const presentToIndexRef = useRef<((i: number) => void) | null>(null);
-
     // Text properties
     const [textFontFamily, setTextFontFamily] = useState("Manrope");
     const [textFontSize, setTextFontSize] = useState(24);
     const [textBold, setTextBold] = useState(false);
     const [textItalic, setTextItalic] = useState(false);
-    const [textUnderline, setTextUnderline] = useState(false);
 
     // Stroke width & opacity
     const [strokeWidth, setStrokeWidth] = useState(2);
@@ -320,10 +240,6 @@ export default function WhiteboardEditor({
     const lastPanPointRef = useRef<{ x: number; y: number } | null>(null);
     const spaceDownRef = useRef(false);
     const [zoomLevel, setZoomLevel] = useState(100);
-    // PZ-20: touch pinch/pan tracking
-    const touchStartDistRef = useRef<number>(0);
-    const touchStartZoomRef = useRef<number>(1);
-    const touchPanRef = useRef<{ x: number; y: number } | null>(null);
     // Inline connector label editor
     const [connectorLabelState, setConnectorLabelState] = useState<{ obj: fabric.Line; value: string; x: number; y: number } | null>(null);
 
@@ -347,24 +263,6 @@ export default function WhiteboardEditor({
         return () => cancelAnimationFrame(raf);
     }, [showGridMenu]);
 
-    // Close sticky color menu on outside click
-    useEffect(() => {
-        if (!showStickyMenu) return;
-        const raf = requestAnimationFrame(() => {
-            window.addEventListener("click", () => setShowStickyMenu(false), { once: true });
-        });
-        return () => cancelAnimationFrame(raf);
-    }, [showStickyMenu]);
-
-    // Close widgets menu on outside click
-    useEffect(() => {
-        if (!showWidgetsMenu) return;
-        const raf = requestAnimationFrame(() => {
-            window.addEventListener("click", () => setShowWidgetsMenu(false), { once: true });
-        });
-        return () => cancelAnimationFrame(raf);
-    }, [showWidgetsMenu]);
-
     const syncLayers = useCallback(() => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
@@ -385,10 +283,8 @@ export default function WhiteboardEditor({
         }
         setSelectedObjectProps({ type: active.type });
         setFillColor(toHex((active.fill as string) || WHITEBOARD_COLORS.primary));
-        // Connectors render from obj.data — reflect that in the panel
-        const isConn = active.data?.type === "connector";
-        setStrokeColor(toHex((isConn ? active.data?.color : active.stroke) as string || WHITEBOARD_COLORS.primary));
-        setStrokeWidth((isConn ? active.data?.lineWidth : active.strokeWidth) as number || 2);
+        setStrokeColor(toHex((active.stroke as string) || WHITEBOARD_COLORS.primary));
+        setStrokeWidth((active.strokeWidth as number) || 2);
         setOpacity(Math.round(((active.opacity as number) ?? 1) * 100));
         setObjLeft(Math.round((active.left as number) || 0));
         setObjTop(Math.round((active.top as number) || 0));
@@ -404,7 +300,6 @@ export default function WhiteboardEditor({
             // truthiness check would treat a plain text as already-italic and
             // the first click would toggle it OFF. Compare against "italic".
             setTextItalic(textObj.fontStyle === "italic");
-            setTextUnderline(textObj.underline === true);
         }
     }, []);
 
@@ -430,15 +325,7 @@ export default function WhiteboardEditor({
             }
             // Cast is needed because Fabric exposes many optional properties
             // on subclasses (IText, Rect, Circle, etc.).
-            // Connectors render their color/width from obj.data, not the line's
-            // native stroke — route the generic "stroke" edit into data.color.
-            if (active.data?.type === "connector") {
-                if (key === "stroke") key = "dataColor";
-                else if (key === "strokeWidth") key = "dataLineWidth";
-            }
-            if (key === "dataColor") active.set("data", { ...active.data, color: value });
-            else if (key === "dataLineWidth") active.set("data", { ...active.data, lineWidth: value });
-            else active.set(key as keyof fabric.FabricObject, value as fabric.FabricObject[keyof fabric.FabricObject]);
+            active.set(key as keyof fabric.FabricObject, value as fabric.FabricObject[keyof fabric.FabricObject]);
             active.setCoords();
             canvas?.renderAll();
             // Re-sync the property panel state from the object so buttons like
@@ -460,9 +347,6 @@ export default function WhiteboardEditor({
                 if (cancelled) return;
                 if (board) {
                     setTitle(board.title);
-                    if (board.updated_at) {
-                        setBaseUpdatedAt(board.updated_at);
-                    }
                 }
             } catch (err) {
                 console.error("Error loading whiteboard:", err);
@@ -520,9 +404,6 @@ export default function WhiteboardEditor({
         const loadSaved = async () => {
             try {
                 const board = await fetchProjectWhiteboard(projectId, token);
-                if (board?.updated_at) {
-                    setBaseUpdatedAt(board.updated_at);
-                }
                 if (board?.elements_json && board.elements_json !== "[]") {
                     historyRef.current.restoringRef.current = true;
                     await canvas.loadFromJSON(JSON.parse(board.elements_json));
@@ -534,10 +415,14 @@ export default function WhiteboardEditor({
                     canvas.renderAll();
                     syncLayers();
                 } else {
-                    setShowTemplateModal(true);
+                    addStarterObjects(canvas);
+                    syncLayers();
+                    saveNowRef.current(canvas);
                 }
             } catch {
-                setShowTemplateModal(true);
+                addStarterObjects(canvas);
+                syncLayers();
+                saveNowRef.current(canvas);
             } finally {
                 historyRef.current.restoringRef.current = false;
                 historyRef.current.clearHistory();
@@ -556,20 +441,7 @@ export default function WhiteboardEditor({
         };
 
         canvas.on("object:added", handleChanged);
-        canvas.on("object:modified", (e) => {
-            if (historyRef.current.restoringRef.current) return;
-            ensureShapeIds(canvas);
-            saveNowRef.current(canvas);
-            
-            // Broadcast object updates
-            if (e.target) {
-                const objects = e.target.type === 'activeSelection' ? (e.target as any)._objects : [e.target];
-                objects.forEach((obj: any) => {
-                    broadcastObjectUpdate("object_modified", obj);
-                });
-            }
-            smartGuidesRef.current = []; canvas.requestRenderAll(); handleChanged(); 
-        });
+        canvas.on("object:modified", () => { smartGuidesRef.current = []; canvas.requestRenderAll(); handleChanged(); });
         canvas.on("object:removed", (opt) => {
             // Remove orphan connectors whose fromShape or toShape was deleted
             const removedId = (opt.target as fabric.FabricObject)?.data?.shapeId as string | undefined;
@@ -600,9 +472,6 @@ export default function WhiteboardEditor({
                 canvas.setViewportTransform(vpt);
                 lastPanPointRef.current = { x: e.clientX, y: e.clientY };
                 return;
-            }
-            if (opt.scenePoint) {
-                broadcastCursor(opt.scenePoint.x, opt.scenePoint.y);
             }
             if (toolRef.current !== "connector") return;
             const pointer = opt.scenePoint;
@@ -767,72 +636,8 @@ export default function WhiteboardEditor({
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- history/save/saveNow
         // are accessed via stable refs to avoid re-creating the canvas on every
-        // undo/redo state change. broadcastCursor/broadcastObjectUpdate are stable
-        // (useCallback with empty deps in useWhiteboardCollab) and not used in this effect.
-    }, [projectId, syncLayers, token, updateSelectedProps, broadcastCursor, broadcastObjectUpdate]);
-
-    // ── PZ-20: touch pinch-to-zoom + one-finger pan (robust on touch devices) ──
-    useEffect(() => {
-        const el = canvasRef.current;
-        if (!el) return;
-        const onTouchStart = (e: TouchEvent) => {
-            const canvas = fabricCanvas.current;
-            if (!canvas) return;
-            const touches = e.touches;
-            if (touches.length === 2) {
-                e.preventDefault();
-                const dx = touches[0].clientX - touches[1].clientX;
-                const dy = touches[0].clientY - touches[1].clientY;
-                touchStartDistRef.current = Math.hypot(dx, dy);
-                touchStartZoomRef.current = canvas.getZoom();
-            } else if (touches.length === 1 && toolRef.current !== "select") {
-                // Pan with one finger when not in the plain select tool
-                touchPanRef.current = { x: touches[0].clientX, y: touches[0].clientY };
-            }
-        };
-        const onTouchMove = (e: TouchEvent) => {
-            const canvas = fabricCanvas.current;
-            if (!canvas) return;
-            const touches = e.touches;
-            // Pinch zoom
-            if (touches.length === 2 && touchStartDistRef.current > 0) {
-                e.preventDefault();
-                const dx = touches[0].clientX - touches[1].clientX;
-                const dy = touches[0].clientY - touches[1].clientY;
-                const dist = Math.hypot(dx, dy);
-                if (dist > 0 && touchStartDistRef.current > 0) {
-                    const zoom = Math.min(4, Math.max(0.1, touchStartZoomRef.current * (dist / touchStartDistRef.current)));
-                    canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
-                    canvas.renderAll();
-                    requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
-                }
-            } else if (touches.length === 1 && touchPanRef.current) {
-                e.preventDefault();
-                const vpt = canvas.viewportTransform;
-                if (!vpt) return;
-                const x = touches[0].clientX;
-                const y = touches[0].clientY;
-                vpt[4] += x - touchPanRef.current.x;
-                vpt[5] += y - touchPanRef.current.y;
-                touchPanRef.current = { x, y };
-                canvas.setViewportTransform(vpt);
-                canvas.renderAll();
-            }
-        };
-        const onTouchEnd = () => {
-            touchStartDistRef.current = 0;
-            touchPanRef.current = null;
-        };
-
-        el.addEventListener("touchstart", onTouchStart, { passive: false });
-        el.addEventListener("touchmove", onTouchMove, { passive: false });
-        el.addEventListener("touchend", onTouchEnd);
-        return () => {
-            el.removeEventListener("touchstart", onTouchStart);
-            el.removeEventListener("touchmove", onTouchMove);
-            el.removeEventListener("touchend", onTouchEnd);
-        };
-    }, []);
+        // undo/redo state change.
+    }, [projectId, syncLayers, token, updateSelectedProps]);
 
     // ── Duplicate-tab detection (concurrent edits may overwrite each other) ──
     useEffect(() => {
@@ -901,7 +706,7 @@ export default function WhiteboardEditor({
             const canvas = fabricCanvas.current;
             if (!canvas) return;
 
-            const { activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, addStickyNote, removeSelection, history, duplicateSelection, zoomIn, zoomOut, addFrame } = keyboardActionsRef.current;
+            const { activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, removeSelection, history } = keyboardActionsRef.current;
 
             if (e.key === "v" || e.key === "V") activateTool("select");
             else if (e.key === "p" || e.key === "P") activateTool("draw");
@@ -931,7 +736,6 @@ export default function WhiteboardEditor({
             else if (e.key === "r" || e.key === "R") addRect();
             else if (e.key === "c" || e.key === "C") addCircle();
             else if (e.key === "t" || e.key === "T") addText();
-            else if (e.key === "n" || e.key === "N") addStickyNote();
             else if (e.key === "Delete" || e.key === "Backspace") {
                 removeSelection();
                 e.preventDefault();
@@ -944,23 +748,6 @@ export default function WhiteboardEditor({
             else if ((e.ctrlKey || e.metaKey) && e.key === "y") {
                 e.preventDefault();
                 history.redo(canvas);
-            }
-            // PZ-20: more shortcuts
-            else if ((e.ctrlKey || e.metaKey) && (e.key === "d" || e.key === "D")) {
-                e.preventDefault();
-                duplicateSelection();
-            }
-            else if ((e.ctrlKey || e.metaKey) && (e.key === "l" || e.key === "L")) {
-                e.preventDefault();
-                addFrame();
-            }
-            else if ((e.ctrlKey || e.metaKey) && (e.key === "=" || e.key === "+")) {
-                e.preventDefault();
-                zoomIn();
-            }
-            else if ((e.ctrlKey || e.metaKey) && (e.key === "-" || e.key === "_")) {
-                e.preventDefault();
-                zoomOut();
             }
         };
 
@@ -1135,49 +922,6 @@ export default function WhiteboardEditor({
         activateTool("select");
     };
 
-    const addStickyNote = (color?: string) => {
-        const canvas = fabricCanvas.current;
-        if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
-        // Use the chosen preset (default: currently selected sticky color)
-        const fill = color ?? stickyColor;
-        const preset = STICKY_PRESETS.find((p) => p.fill === fill) ?? STICKY_PRESETS[0];
-        const accent = preset.accent;
-
-        // Create sticky note using the same approach as templates
-        const w = 180, h = 140, fold = 20;
-        const body = new fabric.Polygon(
-            [
-                { x: 0, y: 0 }, { x: w - fold, y: 0 },
-                { x: w, y: fold }, { x: w, y: h },
-                { x: 0, y: h },
-            ],
-            { fill: fill, stroke: accent, strokeWidth: 2, originX: "center", originY: "center" }
-        );
-        const foldLine = new fabric.Polygon(
-            [{ x: w - fold, y: 0 }, { x: w - fold, y: fold }, { x: w, y: fold }],
-            { fill: "rgba(0,0,0,0.06)", stroke: accent, strokeWidth: 1, originX: "center", originY: "center", evented: false }
-        );
-        const label = new fabric.IText("Escribe aquí…", {
-            fontSize: 13,
-            fill: "#374151",
-            fontFamily: "Inter, sans-serif",
-            textAlign: "center",
-            originX: "center", originY: "center",
-            width: w - 28,
-        });
-        const group = new fabric.Group([body, foldLine, label], {
-            left: cx, top: cy,
-            subTargetCheck: true,
-            interactive: true,
-        });
-        group.data = { shapeId: generateShapeId(), shapeType: "sticky", stickyColor: fill };
-        canvas.add(group);
-        canvas.setActiveObject(group);
-        canvas.requestRenderAll();
-        activateTool("select");
-    };
-
 
     const addSubprocessShape = () => {
         const canvas = fabricCanvas.current;
@@ -1187,90 +931,6 @@ export default function WhiteboardEditor({
         canvas.add(group);
         canvas.setActiveObject(group);
         canvas.requestRenderAll();
-        activateTool("select");
-    };
-
-    /** PZ-11: Wrap the current selection (or a blank region) in a titled frame. */
-    const addFrame = () => {
-        const canvas = fabricCanvas.current;
-        if (!canvas) return;
-        const active = canvas.getActiveObjects();
-        const pad = 40, headerH = 34;
-        let left: number, top: number, width: number, height: number;
-
-        if (active.length > 0) {
-            const bounds = active.reduce((acc, o) => {
-                const br = o.getBoundingRect();
-                acc.minX = Math.min(acc.minX, br.left);
-                acc.minY = Math.min(acc.minY, br.top);
-                acc.maxX = Math.max(acc.maxX, br.left + br.width);
-                acc.maxY = Math.max(acc.maxY, br.top + br.height);
-                return acc;
-            }, { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
-            left = bounds.minX - pad;
-            top = bounds.minY - pad;
-            width = bounds.maxX - bounds.minX + pad * 2 - headerH;
-            height = Math.max(bounds.maxY - bounds.minY + pad * 2, 180);
-        } else {
-            const { cx, cy } = getViewportCenter();
-            left = cx - 220;
-            top = cy - 130;
-            width = 440;
-            height = 300;
-        }
-
-        const frameRect = new fabric.Rect({
-            left, top,
-            width, height: height + headerH,
-            rx: 14, ry: 14,
-            fill: "rgba(37,99,235,0.04)",
-            stroke: WHITEBOARD_COLORS.primary,
-            strokeWidth: 2,
-            strokeDashArray: [8, 6],
-            opacity: 0.9,
-            selectable: false,
-            evented: true,
-            data: { shapeId: generateShapeId(), shapeType: "frame" },
-            originX: "left", originY: "top",
-        } as unknown as fabric.Rect);
-
-        const header = new fabric.Rect({
-            left, top,
-            width, height: headerH,
-            rx: 14, ry: 14,
-            fill: WHITEBOARD_COLORS.primary,
-            selectable: false,
-            evented: false,
-            opacity: 0.9,
-            data: { shapeId: generateShapeId(), shapeType: "frame-header" },
-            originX: "left", originY: "top",
-        } as unknown as fabric.Rect);
-
-        const title = new fabric.IText("Marco", {
-            left: left + 12,
-            top: top + 6,
-            fontSize: 14,
-            fontWeight: "700",
-            fill: "#ffffff",
-            fontFamily: "Inter, sans-serif",
-            selectable: false,
-            evented: false,
-            originX: "left", originY: "top",
-        } as unknown as fabric.IText);
-
-        canvas.add(header);
-        canvas.add(title);
-        canvas.add(frameRect);
-        // Frame sits behind the selected content
-        if (active.length > 0) {
-            canvas.sendObjectToBack(frameRect);
-            canvas.sendObjectToBack(title);
-            canvas.sendObjectToBack(header);
-        }
-        canvas.discardActiveObject();
-        canvas.requestRenderAll();
-        syncLayers();
-        ensureShapeIds(canvas);
         activateTool("select");
     };
 
@@ -1318,43 +978,6 @@ export default function WhiteboardEditor({
         activateTool("select");
     };
 
-    const addWidget = (kind: "vote" | "timer" | "reaction") => {
-        const canvas = fabricCanvas.current;
-        if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
-        let group: fabric.FabricObject;
-        if (kind === "vote") group = createVoteWidget({ left: cx - 75, top: cy - 28 });
-        else if (kind === "timer") group = createTimerWidget({ left: cx - 75, top: cy - 31 });
-        else group = createReactionWidget({ left: cx - 65, top: cy - 28 });
-        canvas.add(group);
-        canvas.setActiveObject(group);
-        canvas.requestRenderAll();
-        activateTool("select");
-    };
-
-    const addVoteWidget = () => addWidget("vote");
-    const addTimerWidget = () => addWidget("timer");
-    const addReactionWidget = () => addWidget("reaction");
-
-    /** PZ-19: add an emoji sticker to the canvas center. */
-    const addSticker = (emoji: string) => {
-        const canvas = fabricCanvas.current;
-        if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
-        const sticker = new fabric.Text(emoji, {
-            left: cx - 30,
-            top: cy - 30,
-            fontSize: 72,
-            originX: "center",
-            originY: "center",
-            data: { shapeId: generateShapeId(), shapeType: "sticker" },
-        } as unknown as fabric.Text);
-        canvas.add(sticker);
-        canvas.setActiveObject(sticker);
-        canvas.requestRenderAll();
-        activateTool("select");
-    };
-
     const removeSelection = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
@@ -1362,8 +985,6 @@ export default function WhiteboardEditor({
         if (active.length === 0) return;
         canvas.remove(...active);
         canvas.discardActiveObject();
-        // PZ-16: prune connectors whose endpoints no longer exist (orphans)
-        pruneOrphanConnectors(canvas);
         canvas.requestRenderAll();
     };
 
@@ -1397,39 +1018,6 @@ export default function WhiteboardEditor({
         if (!canvas || !active) return;
         canvas.bringObjectForward(active);
         canvas.renderAll();
-    };
-
-    /** PZ-16: toggle dashed style on the selected connector (stored in obj.data). */
-    const toggleConnectorDash = () => {
-        const canvas = fabricCanvas.current;
-        const active = canvas?.getActiveObject();
-        if (!canvas || !active || active.data?.type !== "connector") return;
-        active.set("data", { ...active.data, dash: !active.data.dash });
-        canvas.renderAll();
-        canvas.fire("object:modified", { target: active } as unknown as fabric.ModifiedEvent<fabric.TPointerEvent>);
-    };
-
-    /** PZ-17: prefix each line of the selected text with a bullet or number. */
-    const toggleTextList = (marker: "•" | "1.") => {
-        const canvas = fabricCanvas.current;
-        const active = canvas?.getActiveObject();
-        if (!canvas || !active || (active.type !== "i-text" && active.type !== "textbox")) return;
-        const textObj = active as fabric.IText;
-        const raw = textObj.text ?? "";
-        const lines = raw.split("\n");
-        if (marker === "•") {
-            const already = lines.every((l) => l.startsWith("• "));
-            const next = already ? lines.map((l) => l.replace(/^• /, "")) : lines.map((l) => l ? `• ${l}` : l);
-            textObj.set("text", next.join("\n"));
-        } else {
-            const already = lines.every((l, i) => l.startsWith(`${i + 1}. `));
-            const next = already
-                ? lines.map((l) => l.replace(/^\d+\. /, ""))
-                : lines.map((l, i) => (l ? `${i + 1}. ${l}` : l));
-            textObj.set("text", next.join("\n"));
-        }
-        canvas.renderAll();
-        canvas.fire("object:modified", { target: textObj } as unknown as fabric.ModifiedEvent<fabric.TPointerEvent>);
     };
 
     const sendBackward = () => {
@@ -1477,8 +1065,11 @@ export default function WhiteboardEditor({
 
     const isTextSelected = selectedObjectProps?.type === "i-text" || selectedObjectProps?.type === "textbox";
     const isObjectSelected = selectedObjectProps !== null;
-    const isConnectorSelected = (selectedObjectProps?.type as string) === "line"
-        && (fabricCanvas.current?.getActiveObject()?.data?.type === "connector");
+
+    // Keep a live ref to canvas actions so the keyboard shortcut handler
+    // always invokes the latest functions without re-attaching the listener.
+    const keyboardActionsRef = useRef({ activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, addSubprocessShape, addDatabaseShape, addDocumentShape, addHexagonShape, addNoteShape, removeSelection, history });
+    keyboardActionsRef.current = { activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, addSubprocessShape, addDatabaseShape, addDocumentShape, addHexagonShape, addNoteShape, removeSelection, history };
 
     const handleSaveNow = useCallback(() => {
         const canvas = fabricCanvas.current;
@@ -1486,250 +1077,9 @@ export default function WhiteboardEditor({
         saveNow(canvas);
     }, [saveNow]);
 
-    const handleNavigatorCenter = (centerX: number, centerY: number) => {
-        const canvas = fabricCanvas.current;
-        if (!canvas) return;
-        const zoom = canvas.getZoom() || 1;
-        const vw = canvas.width ?? 800;
-        const vh = canvas.height ?? 600;
-        const vpt = canvas.viewportTransform;
-        if (!vpt) return;
-        vpt[4] = vw / 2 - centerX * zoom;
-        vpt[5] = vh / 2 - centerY * zoom;
-        canvas.setViewportTransform(vpt);
-        canvas.requestRenderAll();
-        requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
-    };
-
-    const zoomIn = () => {
-        const canvas = fabricCanvas.current;
-        if (!canvas) return;
-        const zoom = Math.min(4, canvas.getZoom() + 0.15);
-        canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
-        requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
-    };
-
-    const zoomOut = () => {
-        const canvas = fabricCanvas.current;
-        if (!canvas) return;
-        const zoom = Math.max(0.1, canvas.getZoom() - 0.15);
-        canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
-        requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
-    };
-
-    const fitToScreen = () => {
-        const canvas = fabricCanvas.current;
-        if (!canvas) return;
-        const objects = canvas.getObjects().filter(o => o.data?.type !== 'connector');
-        if (objects.length === 0) {
-            canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-            requestAnimationFrame(() => setZoomLevel(100));
-            return;
-        }
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        objects.forEach(o => {
-            const br = o.getBoundingRect();
-            minX = Math.min(minX, br.left); minY = Math.min(minY, br.top);
-            maxX = Math.max(maxX, br.left + br.width); maxY = Math.max(maxY, br.top + br.height);
-        });
-        const pad = 60;
-        const scaleX = (canvas.width || 800) / (maxX - minX + pad * 2);
-        const scaleY = (canvas.height || 600) / (maxY - minY + pad * 2);
-        const scale = Math.min(scaleX, scaleY, 2);
-        const cx = ((canvas.width || 800) - (maxX - minX) * scale) / 2 - minX * scale + pad * scale;
-        const cy = ((canvas.height || 600) - (maxY - minY) * scale) / 2 - minY * scale + pad * scale;
-        canvas.setViewportTransform([scale, 0, 0, scale, cx, cy]);
-        requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
-    };
-
-    // Keep a live ref to canvas actions so the keyboard shortcut handler
-    // always invokes the latest functions without re-attaching the listener.
-    const keyboardActionsRef = useRef({ activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, addStickyNote, addSubprocessShape, addDatabaseShape, addDocumentShape, addHexagonShape, addNoteShape, removeSelection, history, duplicateSelection, zoomIn, zoomOut, addFrame });
-    keyboardActionsRef.current = { activateTool, addRect, addCircle, addText, addDiamondShape, addPillShape, addDataShape, addStickyNote, addSubprocessShape, addDatabaseShape, addDocumentShape, addHexagonShape, addNoteShape, removeSelection, history, duplicateSelection, zoomIn, zoomOut, addFrame };
-
-    const handleTemplateSelect = (templateId: string) => {
-        if (!fabricCanvas.current) return;
-        applyTemplate(fabricCanvas.current, templateId);
-        syncLayers();
-        ensureShapeIds(fabricCanvas.current);
-        saveNow(fabricCanvas.current);
-        setShowTemplateModal(false);
-    };
-
-    /** PZ-15: entry points to enter presentation mode. */
-    const presentFrames =
-        (fabricCanvas.current?.getObjects().filter((o) => o.data?.shapeType === "frame").map((o) => {
-            const br = o.getBoundingRect();
-            return { left: br.left, top: br.top, width: br.width, height: br.height };
-        }) ?? []);
-
-    const startPresentation = useCallback(() => {
-        // Start at the fit-to-screen view (frame 0) or a given frame
-        setPresentIndex(0);
-        setPresentMode(true);
-        // A frame nav uses index -1 initially meaning "overview"; here we jump to first frame if any
-        requestAnimationFrame(() => presentToIndexRef.current?.(0));
-    }, []);
-
-    const presentToIndex = (i: number) => {
-        const frames = presentFrames;
-        const canvas = fabricCanvas.current;
-        if (!canvas) return;
-        if (frames.length === 0) {
-            // No frames — just fit to screen
-            fitToScreen();
-            return;
-        }
-        const idx = ((i % frames.length) + frames.length) % frames.length;
-        setPresentIndex(idx);
-        const f = frames[idx];
-        const zoom = Math.min((canvas.width ?? 800) / f.width, (canvas.height ?? 600) / f.height);
-        const cx = f.left + f.width / 2;
-        const cy = f.top + f.height / 2;
-        const vpt = canvas.viewportTransform;
-        if (!vpt) return;
-        vpt[0] = zoom; vpt[3] = zoom;
-        vpt[4] = (canvas.width ?? 800) / 2 - cx * zoom;
-        vpt[5] = (canvas.height ?? 600) / 2 - cy * zoom;
-        canvas.setViewportTransform(vpt);
-        canvas.requestRenderAll();
-        requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
-    };
-    presentToIndexRef.current = presentToIndex;
-
-    const presentNext = () => presentToIndex(presentIndex + 1);
-    const presentPrev = () => presentToIndex(presentIndex - 1);
-    const exitPresentation = () => setPresentMode(false);
-
-    // PZ-15: presentation-mode navigation keys (F5 to start, arrows/Esc to control)
-    useEffect(() => {
-        if (!presentMode) return;
-        const presentHandler = (e: KeyboardEvent) => {
-            if (e.key === "Escape") { e.preventDefault(); exitPresentation(); }
-            else if (e.key === "ArrowRight") presentNext();
-            else if (e.key === "ArrowLeft") presentPrev();
-        };
-        window.addEventListener("keydown", presentHandler);
-        return () => window.removeEventListener("keydown", presentHandler);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [presentMode, presentIndex, presentFrames.length]);
-
-    // F5 to start presentation (works regardless of mode)
-    useEffect(() => {
-        const handler = (e: KeyboardEvent) => {
-            if (e.key === "F5") { e.preventDefault(); startPresentation(); }
-        };
-        window.addEventListener("keydown", handler);
-        return () => window.removeEventListener("keydown", handler);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [startPresentation]);
-
-    // Paste event listener
-    useEffect(() => {
-        const handlePaste = (e: ClipboardEvent) => {
-            if (fabricCanvas.current) {
-                handleImagePaste(e, fabricCanvas.current, saveNow);
-            }
-        };
-        window.addEventListener("paste", handlePaste);
-        return () => window.removeEventListener("paste", handlePaste);
-    }, [saveNow]);
-
     return (
-        <div 
-            className={clsx("flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]", className)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-                if (fabricCanvas.current) {
-                    handleImageDrop(e as unknown as DragEvent, fabricCanvas.current, saveNow);
-                }
-            }}
-        >
-            {/* Template Modal */}
-            {showTemplateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-xl shadow-xl p-6 max-w-3xl w-full max-h-[80vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-slate-800">Selecciona una plantilla</h2>
-                            <button
-                                onClick={() => {
-                                    setShowTemplateModal(false);
-                                    if (fabricCanvas.current) {
-                                        addStarterObjects(fabricCanvas.current);
-                                        saveNow(fabricCanvas.current);
-                                    }
-                                }}
-                                className="text-slate-500 hover:text-slate-700"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {WHITEBOARD_TEMPLATES.map((tpl) => (
-                                <button
-                                    key={tpl.id}
-                                    onClick={() => handleTemplateSelect(tpl.id)}
-                                    className="p-4 border border-slate-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left flex items-start space-x-3"
-                                >
-                                    <div className="text-3xl">{tpl.icon}</div>
-                                    <div>
-                                        <div className="font-semibold text-slate-800">{tpl.name}</div>
-                                        <div className="text-sm text-slate-500 mt-1">{tpl.description}</div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
-                            <button
-                                onClick={() => {
-                                    setShowTemplateModal(false);
-                                    if (fabricCanvas.current) {
-                                        addStarterObjects(fabricCanvas.current);
-                                        saveNow(fabricCanvas.current);
-                                    }
-                                }}
-                                className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-medium"
-                            >
-                                Iniciar con pizarra en blanco
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
+        <div className={clsx("flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]", className)}>
             {header && header({ title, saveStatus, isDirty, saveNow: handleSaveNow })}
-
-            {/* PZ-19: Sticker gallery modal */}
-            {showGallery && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowGallery(false)}>
-                    <div className="max-w-2xl w-full max-h-[80vh] overflow-y-auto rounded-xl bg-[hsl(var(--bg-primary))] p-6 shadow-2xl dark:bg-[hsl(var(--bg-muted))]" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-5">
-                            <h2 className="text-xl font-bold text-[hsl(var(--text-primary))]">Galería de stickers</h2>
-                            <button onClick={() => setShowGallery(false)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]" aria-label="Cerrar">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-                            {STICKER_GALLERY.map((s) => (
-                                <button
-                                    key={s.emoji}
-                                    onClick={() => { addSticker(s.emoji); setShowGallery(false); }}
-                                    className="flex flex-col items-center gap-1 rounded-xl border border-[hsl(var(--border))] p-3 transition-all hover:scale-105 hover:border-[hsl(var(--primary))] dark:border-white/10"
-                                    title={s.label}
-                                >
-                                    <span className="text-3xl">{s.emoji}</span>
-                                    <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">{s.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            <div className="pointer-events-none absolute top-4 right-4 z-30 flex items-center gap-1.5 rounded-full border border-[hsl(var(--border))] bg-white/90 px-3 py-1 text-[11px] font-semibold text-[hsl(var(--text-secondary))] shadow-sm backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
-                <span className={clsx("h-2 w-2 rounded-full", connected ? "bg-emerald-500" : "bg-amber-400 animate-pulse")} />
-                {connected ? "Conectado" : "Reconectando…"}
-            </div>
 
             {duplicateTabOpen && (
                 <div
@@ -1742,48 +1092,6 @@ export default function WhiteboardEditor({
             )}
 
             <div className="relative flex flex-1 overflow-hidden">
-                <Minimap canvas={fabricCanvas.current} onNavigate={handleNavigatorCenter} />
-                {showCommentsPanel && fabricCanvas.current?.getActiveObject() && (
-                    <WhiteboardComments 
-                        object={fabricCanvas.current.getActiveObject() || null}
-                        onClose={() => setShowCommentsPanel(false)}
-                        onAddComment={(text) => {
-                            const obj = fabricCanvas.current?.getActiveObject();
-                            if (obj) {
-                                const data = obj.data || {};
-                                const comments: any[] = Array.isArray(data.comments) ? data.comments : [];
-                                comments.push({
-                                    id: crypto.randomUUID(),
-                                    text,
-                                    author: "Tú",
-                                    timestamp: Date.now()
-                                });
-                                obj.set({ data: { ...data, comments } });
-                                broadcastObjectUpdate("object_modified", obj);
-                                saveNow(fabricCanvas.current!);
-                            }
-                        }}
-                    />
-                )}
-                {/* Cursors Overlay */}
-            {fabricCanvas.current && Object.values(cursors).map(cursor => {
-                // Transform logical coordinates to screen coordinates
-                const vpt = fabricCanvas.current!.viewportTransform || [1, 0, 0, 1, 0, 0];
-                const screenX = cursor.x * vpt[0] + vpt[4];
-                const screenY = cursor.y * vpt[3] + vpt[5];
-                
-                return (
-                    <div
-                        key={cursor.userId}
-                        className="absolute pointer-events-none z-50 transition-all duration-100 ease-linear"
-                        style={{ left: screenX, top: screenY }}
-                    >
-                        <div className="text-red-500 font-bold" style={{textShadow: "1px 1px 2px white"}}>
-                            {cursor.userName}
-                        </div>
-                    </div>
-                );
-            })}
                 {/* ── Export / share floating bar ── */}
                 <div className="absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
                     <ExportButton
@@ -1810,28 +1118,12 @@ export default function WhiteboardEditor({
                         onClick={() => exportToJson(fabricCanvas.current!, title)}
                         data-testid="whiteboard-export-json"
                     />
-                    <ExportButton
-                        icon={FileText}
-                        label="PDF"
-                        aria-label="Exportar como PDF"
-                        disabled={!isCanvasReady}
-                        onClick={() => exportToPdf(fabricCanvas.current!, title)}
-                        data-testid="whiteboard-export-pdf"
-                    />
                     <div className="h-4 w-px bg-[hsl(var(--surface-2))] dark:bg-white/10" />
                     <ExportButton
                         icon={Share2}
-                        label="Enlace"
-                        aria-label="Compartir enlace"
+                        label="Compartir"
+                        aria-label="Compartir pizarra"
                         onClick={copyShareLink}
-                    />
-                    <ExportButton
-                        icon={MessageSquare}
-                        label="Chat"
-                        aria-label="Exportar a mensajería"
-                        onClick={() => {
-                            toast.success("Pizarra enviada al canal de CCF");
-                        }}
                     />
                 </div>
 
@@ -1841,7 +1133,6 @@ export default function WhiteboardEditor({
                     <ToolbarButton icon={Pencil} active={tool === "draw"} onClick={() => activateTool("draw")} label="Dibujo libre (P)" />
                     <ToolbarButton icon={ArrowUpRight} active={tool === "connector"} onClick={() => activateTool("connector")} label="Conector (A)" />
                     <ToolbarButton icon={Hand} active={tool === "pan"} onClick={() => activateTool("pan")} label="Mover lienzo (H)" />
-                    <ToolbarButton icon={MonitorPlay} active={false} onClick={startPresentation} label="Presentación (F5)" data-testid="whiteboard-presentation" />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <div className="relative">
                         <ToolbarButton
@@ -1866,74 +1157,6 @@ export default function WhiteboardEditor({
                         )}
                     </div>
                     <ToolbarButton icon={Type} active={false} onClick={addText} label="Texto (T)" data-testid="whiteboard-add-text" />
-                    <div className="relative">
-                        <ToolbarButton icon={StickyNote} active={showStickyMenu} onClick={() => setShowStickyMenu((prev) => !prev)} label="Post-it (N)" data-testid="whiteboard-add-sticky" />
-                        {showStickyMenu && (
-                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))] min-w-[120px]">
-                                <p className="px-2 pb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Color</p>
-                                <div className="grid grid-cols-2 gap-1.5">
-                                    {STICKY_PRESETS.map((preset) => (
-                                        <button
-                                            key={preset.name}
-                                            title={preset.name}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setStickyColor(preset.fill);
-                                                addStickyNote(preset.fill);
-                                                setShowStickyMenu(false);
-                                            }}
-                                            className="flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-2 py-1.5 text-xs font-semibold transition-all hover:scale-105 dark:border-white/10"
-                                            style={{ background: preset.fill, color: "#374151" }}
-                                        >
-                                            <span className="h-3 w-3 shrink-0 rounded-full ring-1 ring-black/10" style={{ background: preset.fill }} />
-                                            <span className="truncate">{preset.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                                <p className="mt-1 px-2 pb-1 text-2xs font-semibold text-[hsl(var(--text-muted))]">Nuevo post-it en el centro</p>
-                            </div>
-                        )}
-                    </div>
-                    <ToolbarButton icon={LayoutGrid} active={false} onClick={addFrame} label="Marco (agrupa selección)" data-testid="whiteboard-add-frame" />
-                    <div className="relative">
-                        <ToolbarButton icon={Smile} active={showWidgetsMenu} onClick={() => setShowWidgetsMenu((prev) => !prev)} label="Widgets de taller" data-testid="whiteboard-widgets" />
-                        {showWidgetsMenu && (
-                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))] min-w-[180px]">
-                                <p className="px-2 pb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Widgets</p>
-                                <button
-                                    onClick={() => { addVoteWidget(); setShowWidgetsMenu(false); }}
-                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
-                                >
-                                    <Heart size={14} className="text-rose-500" /> Votación
-                                </button>
-                                <button
-                                    onClick={() => { addTimerWidget(); setShowWidgetsMenu(false); }}
-                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
-                                >
-                                    <Clock size={14} className="text-blue-500" /> Temporizador
-                                </button>
-                                <button
-                                    onClick={() => { addReactionWidget(); setShowWidgetsMenu(false); }}
-                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
-                                >
-                                    <Smile size={14} className="text-emerald-500" /> Reacción
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                    <ToolbarButton icon={Sticker} active={showGallery} onClick={() => setShowGallery((prev) => !prev)} label="Galería de stickers" data-testid="whiteboard-gallery" />
-                    <ToolbarButton icon={ImageIcon} active={false} onClick={() => {
-                        const input = document.createElement("input");
-                        input.type = "file";
-                        input.accept = "image/*";
-                        input.onchange = (e) => {
-                            const file = (e.target as HTMLInputElement).files?.[0];
-                            if (file && fabricCanvas.current) {
-                                insertImageFile(file, fabricCanvas.current, window.innerWidth / 2, window.innerHeight / 2, saveNow);
-                            }
-                        };
-                        input.click();
-                    }} label="Insertar Imagen" />
                     <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
                     <ToolbarButton
                         icon={AlignCenter}
@@ -2014,12 +1237,42 @@ export default function WhiteboardEditor({
                     <button
                         className="rounded-md px-2 py-1 text-xs font-medium hover:bg-[hsl(var(--surface-1))] transition-colors"
                         title="Ajustar a pantalla"
-                        onClick={fitToScreen}
+                        onClick={() => {
+                            const canvas = fabricCanvas.current;
+                            if (!canvas) return;
+                            const objects = canvas.getObjects().filter(o => o.data?.type !== 'connector');
+                            if (objects.length === 0) {
+                                canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+                                requestAnimationFrame(() => setZoomLevel(100));
+                                return;
+                            }
+                            // Get bounding box of all objects
+                            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                            objects.forEach(o => {
+                                const br = o.getBoundingRect();
+                                minX = Math.min(minX, br.left); minY = Math.min(minY, br.top);
+                                maxX = Math.max(maxX, br.left + br.width); maxY = Math.max(maxY, br.top + br.height);
+                            });
+                            const pad = 60;
+                            const scaleX = (canvas.width || 800) / (maxX - minX + pad * 2);
+                            const scaleY = (canvas.height || 600) / (maxY - minY + pad * 2);
+                            const scale = Math.min(scaleX, scaleY, 2);
+                            const cx = ((canvas.width || 800) - (maxX - minX) * scale) / 2 - minX * scale + pad * scale;
+                            const cy = ((canvas.height || 600) - (maxY - minY) * scale) / 2 - minY * scale + pad * scale;
+                            canvas.setViewportTransform([scale, 0, 0, scale, cx, cy]);
+                            requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
+                        }}
                     >⊡</button>
                     <div className="h-4 w-px bg-[hsl(var(--surface-2))]" />
                     <button
                         className="rounded-md px-2 py-1 text-xs font-medium hover:bg-[hsl(var(--surface-1))] transition-colors"
-                        onClick={zoomOut}
+                        onClick={() => {
+                            const canvas = fabricCanvas.current;
+                            if (!canvas) return;
+                            const zoom = Math.max(0.2, canvas.getZoom() - 0.15);
+                            canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
+                            requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
+                        }}
                     >−</button>
                     <span
                         className="min-w-[50px] text-center text-xs font-mono cursor-pointer select-none"
@@ -2033,7 +1286,13 @@ export default function WhiteboardEditor({
                     >{zoomLevel}%</span>
                     <button
                         className="rounded-md px-2 py-1 text-xs font-medium hover:bg-[hsl(var(--surface-1))] transition-colors"
-                        onClick={zoomIn}
+                        onClick={() => {
+                            const canvas = fabricCanvas.current;
+                            if (!canvas) return;
+                            const zoom = Math.min(5, canvas.getZoom() + 0.15);
+                            canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
+                            requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
+                        }}
                     >+</button>
                 </div>
 
@@ -2091,9 +1350,7 @@ export default function WhiteboardEditor({
                                 ? (isDark ? WHITEBOARD_COLORS.gridDark : "#ffffff")
                                 : `${getGridBackground(gridStyle, gridSize, isDark)}`,
                             backgroundSize: `${gridSize}px ${gridSize}px`,
-                            backgroundColor: gridStyle === "none"
-                                ? (isDark ? WHITEBOARD_COLORS.gridDark : "#ffffff")
-                                : "transparent",
+                            backgroundColor: isDark ? WHITEBOARD_COLORS.gridDark : "#ffffff",
                         }}
                     >
                         <canvas ref={canvasRef} className="whiteboard-canvas" />
@@ -2115,19 +1372,6 @@ export default function WhiteboardEditor({
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 Propiedades — {String(selectedObjectProps?.type || "objeto")}
                             </p>
-
-                            {/* Connector-specific controls */}
-                            {isConnectorSelected && (
-                                <button
-                                    onClick={toggleConnectorDash}
-                                    className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))] dark:border-white/10 dark:hover:bg-white/5"
-                                >
-                                    <span>Línea discontinua</span>
-                                    <span className={clsx("relative h-5 w-9 rounded-full transition-colors", ((fabricCanvas.current?.getActiveObject()?.data?.dash) as boolean) ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--surface-3))] dark:bg-white/10")}>
-                                        <span className={clsx("absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all", ((fabricCanvas.current?.getActiveObject()?.data?.dash) as boolean) ? "left-4" : "left-0.5")} />
-                                    </span>
-                                </button>
-                            )}
 
                             {/* Fill color */}
                             <div className="space-y-1.5">
@@ -2295,31 +1539,6 @@ export default function WhiteboardEditor({
                                         >
                                             <Italic size={14} /> Cursiva
                                         </button>
-                                        <button
-                                            onClick={() => { setTextUnderline(!textUnderline); applyProperty("underline", !textUnderline); }}
-                                            className={clsx(
-                                                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
-                                                textUnderline ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5"
-                                            )}
-                                        >
-                                            Subrayado
-                                        </button>
-                                    </div>
-
-                                    {/* List bullets / numbering (PZ-17) */}
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => { toggleTextList("•"); }}
-                                            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"
-                                        >
-                                            • Lista
-                                        </button>
-                                        <button
-                                            onClick={() => { toggleTextList("1."); }}
-                                            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"
-                                        >
-                                            1. Números
-                                        </button>
                                     </div>
                                 </>
                             )}
@@ -2384,13 +1603,6 @@ export default function WhiteboardEditor({
                             >
                                 <Trash2 size={14} /> Eliminar objeto
                             </button>
-                            {/* Comments button */}
-                            <button
-                                onClick={() => setShowCommentsPanel(true)}
-                                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[hsl(var(--primary)/0.08)] py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))] transition-all hover:bg-[hsl(var(--primary)/0.15)] dark:bg-[hsl(var(--primary)/0.1)]"
-                            >
-                                <MessageSquare size={14} /> Hilo de Comentarios
-                            </button>
                         </section>
                     )}
 
@@ -2421,159 +1633,8 @@ export default function WhiteboardEditor({
                     </section>
                 </aside>
             </div>
-
-            {presentMode && (
-                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95" data-testid="whiteboard-presentation-overlay" onClick={presentNext}>
-                    <div className="mb-4 flex items-center gap-3">
-                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/70">
-                            {presentFrames.length > 0 ? `Marco ${presentIndex + 1} / ${presentFrames.length}` : "Vista general"}
-                        </span>
-                    </div>
-                    <div className="pointer-events-none absolute left-6 top-1/2 -translate-y-1/2">
-                        <button onClick={(e) => { e.stopPropagation(); presentPrev(); }} className="pointer-events-auto rounded-full bg-white/10 p-3 text-white transition-all hover:bg-white/20" aria-label="Anterior">
-                            <ChevronLeft size={24} />
-                        </button>
-                    </div>
-                    <div className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2">
-                        <button onClick={(e) => { e.stopPropagation(); presentNext(); }} className="pointer-events-auto rounded-full bg-white/10 p-3 text-white transition-all hover:bg-white/20" aria-label="Siguiente">
-                            <ChevronRight size={24} />
-                        </button>
-                    </div>
-                    <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3">
-                        <span className="text-xs text-white/50">Usa ← → para navegar · Esc para salir</span>
-                        <button onClick={(e) => { e.stopPropagation(); exitPresentation(); }} className="rounded-lg bg-white/10 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-white/20" data-testid="whiteboard-presentation-exit">
-                            <Presentation size={14} className="mr-2 inline" /> Salir de presentación
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
-}
-
-/**
- * PZ-14: Minimap — a small overview of all sticky/shape objects plus the
- * current camera viewport. Clicking/dragging jumps the viewport.
- */
-function Minimap({
-    canvas,
-    onNavigate,
-}: {
-    canvas: fabric.Canvas | null;
-    onNavigate: (centerX: number, centerY: number) => void;
-}) {
-    const [frame, setFrame] = useState(0);
-    const [hovering, setHovering] = useState(false);
-
-    // Re-render the minimap whenever the main canvas re-paints
-    useEffect(() => {
-        if (!canvas) return;
-        const refresh = () => setFrame((f) => f + 1);
-        canvas.on("after:render", refresh);
-        canvas.on("object:added", refresh);
-        canvas.on("object:removed", refresh);
-        canvas.on("object:modified", refresh);
-        return () => {
-            canvas.off("after:render", refresh);
-            canvas.off("object:added", refresh);
-            canvas.off("object:removed", refresh);
-            canvas.off("object:modified", refresh);
-        };
-    }, [canvas]);
-
-    // Derive the full bounding box of all content
-    const objects = canvas?.getObjects().filter((o) => o.data?.shapeType !== "connector") ?? [];
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    objects.forEach((o) => {
-        const br = o.getBoundingRect();
-        minX = Math.min(minX, br.left); minY = Math.min(minY, br.top);
-        maxX = Math.max(maxX, br.left + br.width); maxY = Math.max(maxY, br.top + br.height);
-    });
-    if (objects.length === 0) { minX = minY = 0; maxX = maxY = 1200; }
-
-    const contentW = Math.max(maxX - minX, 10);
-    const contentH = Math.max(maxY - minY, 10);
-    const pad = 16;
-    const WIDTH = 200, HEIGHT = 120;
-    const scale = Math.min((WIDTH - pad * 2) / contentW, (HEIGHT - pad * 2) / contentH);
-    const ox = pad - minX * scale;
-    const oy = pad - minY * scale;
-
-    // Viewport box in content coordinates
-    let vpt = [1, 0, 0, 1, 0, 0];
-    let zoom = 1, vw = 800, vh = 600;
-    if (canvas && canvas.viewportTransform) {
-        vpt = canvas.viewportTransform;
-        zoom = canvas.getZoom();
-        vw = canvas.width ?? 0;
-        vh = canvas.height ?? 0;
-    }
-    const vx = (-vpt[4]) / zoom, vy = (-vpt[5]) / zoom;
-    const vwScaled = vw / zoom, vhScaled = vh / zoom;
-
-    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const px = (e.clientX - rect.left) / WIDTH;
-        const py = (e.clientY - rect.top) / HEIGHT;
-        // Map minimap fraction back to content coordinates (content origin = minX,minY)
-        const contentX = minX + (px * (WIDTH - pad * 2) - pad) / scale;
-        const contentY = minY + (py * (HEIGHT - pad * 2) - pad) / scale;
-        onNavigate(contentX, contentY);
-    };
-
-    return (
-        <div className="pointer-events-auto absolute left-4 bottom-4 z-30 overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95"
-            onMouseEnter={() => setHovering(true)}
-            onMouseLeave={() => setHovering(false)}
-            onClick={handleClick}
-            data-testid="whiteboard-minimap"
-        >
-            <div className="relative h-[120px] w-[200px] overflow-hidden rounded-lg bg-[#f8fafc] dark:bg-black/30">
-                {objects.map((o, i) => {
-                    const br = o.getBoundingRect();
-                    const l = ox + br.left * scale;
-                    const t = oy + br.top * scale;
-                    const w = Math.max(br.width * scale, 2);
-                    const h = Math.max(br.height * scale, 2);
-                    return (
-                        <div
-                            key={i}
-                            className="absolute rounded-sm"
-                            style={{ left: l, top: t, width: w, height: h, background: o.type === "i-text" || o.type === "textbox" ? "rgba(37,99,235,0.35)" : "rgba(99,102,241,0.55)" }}
-                        />
-                    );
-                })}
-                {/* Viewport indicator */}
-                <div
-                    className="absolute border-2 border-blue-600 bg-blue-500/10"
-                    style={{
-                        left: ox + vx * scale,
-                        top: oy + vy * scale,
-                        width: Math.max(vwScaled * scale, 6),
-                        height: Math.max(vhScaled * scale, 6),
-                    }}
-                />
-            </div>
-            <div className={clsx("mt-1 text-center text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-opacity", hovering ? "opacity-100" : "opacity-40")} data-frame={frame}>
-                Minimapa
-            </div>
-        </div>
-    );
-}
-
-/** PZ-16: remove connectors whose from/to shape no longer exists on canvas. */
-function pruneOrphanConnectors(canvas: fabric.Canvas) {
-    const ids = new Set<string>();
-    canvas.getObjects().forEach((o) => {
-        const sid = (o.data as { shapeId?: string } | undefined)?.shapeId;
-        if (o.data?.type !== "connector" && sid) ids.add(sid as string);
-    });
-    const toRemove = canvas.getObjects().filter((o) => {
-        if (o.data?.type !== "connector") return false;
-        const { fromShapeId, toShapeId } = o.data as { fromShapeId?: string; toShapeId?: string };
-        return !!fromShapeId && !!toShapeId && (!ids.has(fromShapeId) || !ids.has(toShapeId));
-    });
-    if (toRemove.length) canvas.remove(...toRemove);
 }
 
 function addStarterObjects(canvas: fabric.Canvas) {
@@ -2636,15 +1697,14 @@ function ExportButton({
     return (
         <button
             onClick={onClick}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-            disabled={disabled}
+            title={label}
             aria-label={ariaLabel || label}
-            tabIndex={0}
+            disabled={disabled}
             data-testid={dataTestid}
             className={clsx(
-                "flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] dark:border-white/10",
+                "group relative flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all",
                 disabled
-                    ? "cursor-not-allowed opacity-50"
+                    ? "cursor-not-allowed opacity-40"
                     : "hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] dark:hover:bg-white/5"
             )}
         >
@@ -2674,14 +1734,11 @@ function ToolbarButton({
     return (
         <button
             onClick={onClick}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
             title={label}
-            aria-label={label}
             disabled={disabled}
-            tabIndex={0}
             data-testid={dataTestid}
             className={clsx(
-                "group relative flex size-10 items-center justify-center rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]",
+                "group relative flex size-10 items-center justify-center rounded-lg transition-all",
                 active
                     ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--primary)/0.2)]"
                     : tone === "danger"
@@ -2702,11 +1759,8 @@ function ShapePickerItem({ icon: Icon, label, shortcut, onClick, "data-testid": 
     return (
         <button
             onClick={onClick}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
             data-testid={dataTestId}
-            aria-label={label}
-            tabIndex={0}
-            className="flex flex-col items-center gap-1 rounded-lg p-2 text-xs transition-colors hover:bg-[hsl(var(--surface-1))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] dark:hover:bg-white/10"
+            className="flex flex-col items-center gap-1 rounded-lg p-2 text-xs transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10"
             title={shortcut ? `${label} (${shortcut})` : label}
         >
             <Icon size={20} />
