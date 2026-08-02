@@ -1,5 +1,18 @@
 import type { Canvas } from "fabric";
 import * as fabric from "fabric";
+import type { LucideIcon } from "lucide-react";
+import {
+  Brain,
+  CalendarRange,
+  ClipboardList,
+  Footprints,
+  Grid3x3,
+  RefreshCcw,
+  ShieldCheck,
+  Target,
+  Wrench,
+  Workflow,
+} from "lucide-react";
 import { WHITEBOARD_COLORS } from "@/lib/whiteboards";
 import { generateShapeId } from "./connectors";
 
@@ -7,21 +20,21 @@ export interface TemplateInfo {
   id: string;
   name: string;
   description: string;
-  icon: string;
+  icon: LucideIcon;
   category: "brainstorm" | "planning" | "process" | "strategy" | "meeting";
 }
 
 export const WHITEBOARD_TEMPLATES: TemplateInfo[] = [
-  { id: "brainstorm", name: "Brainstorming", description: "Lluvia de ideas libre", icon: "🧠", category: "brainstorm" },
-  { id: "retro", name: "Retrospectiva", description: "Qué fue bien, qué mejorar, acciones", icon: "🔄", category: "meeting" },
-  { id: "process", name: "Mapa de Procesos", description: "Flujo paso a paso con decisiones", icon: "⚙️", category: "process" },
-  { id: "okr", name: "OKR", description: "Objetivos y Resultados Clave", icon: "🎯", category: "strategy" },
-  { id: "flowchart", name: "Diagrama de Flujo", description: "Flujo ministerial estándar", icon: "🔀", category: "process" },
-  { id: "kanban", name: "Board Kanban", description: "Por hacer, En curso, Hecho", icon: "📋", category: "planning" },
-  { id: "timeline", name: "Timeline", description: "Línea de tiempo del proyecto", icon: "⏳", category: "planning" },
-  { id: "matrix", name: "Matriz Eisenhower", description: "Importante vs Urgente", icon: "📊", category: "planning" },
-  { id: "swot", name: "Análisis FODA", description: "Fortalezas, Oportunidades, Debilidades, Amenazas", icon: "🛡️", category: "strategy" },
-  { id: "customer_journey", name: "Customer Journey", description: "Mapa de jornada del usuario", icon: "🚶", category: "strategy" },
+  { id: "brainstorm", name: "Brainstorming", description: "Lluvia de ideas libre", icon: Brain, category: "brainstorm" },
+  { id: "retro", name: "Retrospectiva", description: "Qué fue bien, qué mejorar, acciones", icon: RefreshCcw, category: "meeting" },
+  { id: "process", name: "Mapa de Procesos", description: "Flujo paso a paso con decisiones", icon: Wrench, category: "process" },
+  { id: "okr", name: "OKR", description: "Objetivos y Resultados Clave", icon: Target, category: "strategy" },
+  { id: "flowchart", name: "Diagrama de Flujo", description: "Flujo ministerial estándar", icon: Workflow, category: "process" },
+  { id: "kanban", name: "Board Kanban", description: "Por hacer, En curso, Hecho", icon: ClipboardList, category: "planning" },
+  { id: "timeline", name: "Timeline", description: "Línea de tiempo del proyecto", icon: CalendarRange, category: "planning" },
+  { id: "matrix", name: "Matriz Eisenhower", description: "Importante vs Urgente", icon: Grid3x3, category: "planning" },
+  { id: "swot", name: "Análisis FODA", description: "Fortalezas, Oportunidades, Debilidades, Amenazas", icon: ShieldCheck, category: "strategy" },
+  { id: "customer_journey", name: "Customer Journey", description: "Mapa de jornada del usuario", icon: Footprints, category: "strategy" },
 ];
 
 function makeText(text: string, opts: { left: number; top: number; fontSize?: number; fill?: string; fontWeight?: string; width?: number; textAlign?: "left" | "center" | "right"; fontFamily?: string; angle?: number; originX?: "left" | "center" | "right"; originY?: "top" | "center" | "bottom" } = { left: 0, top: 0 }): fabric.IText {

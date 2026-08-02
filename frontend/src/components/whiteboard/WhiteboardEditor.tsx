@@ -1671,8 +1671,10 @@ export default function WhiteboardEditor({
                                     onClick={() => handleTemplateSelect(tpl.id)}
                                     className="p-4 border border-slate-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left flex items-start space-x-3"
                                 >
-                                    <div className="text-3xl">{tpl.icon}</div>
-                                    <div>
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100 text-slate-500 shrink-0">
+                                        <tpl.icon className="h-6 w-6" strokeWidth={1.75} />
+                                    </div>
+                                    <div className="min-w-0">
                                         <div className="font-semibold text-slate-800">{tpl.name}</div>
                                         <div className="text-sm text-slate-500 mt-1">{tpl.description}</div>
                                     </div>
