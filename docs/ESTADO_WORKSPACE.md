@@ -53,3 +53,24 @@ Módulo de espacio de trabajo transversal. Proporciona pizarra (whiteboard), tar
 | Archivo | `tests/test_workspace_api.py` |
 | Tests | 4 (1 xfailed, 3 xpassed) |
 | Smoke script | `scripts/test_workspace_quality.py` |
+
+---
+
+## Pendientes
+
+### PEND-WORKSPACE-001 — Mover snapshots de feature flags fuera del árbol de git
+
+**Problema.** La suite de tests del módulo regenera en runtime los archivos `backend/data/feature_flags_*.ndjson` (audit, notifications, snapshot_history) en cada corrida. Al quedar trackeados en git, cada ejecución ensucia el working tree y obliga a revertir manualmente (p. ej. `feature_flags_notifications.ndjson` reverted tras el commit de tests de la sesión 2026-08-02).
+
+**Causa raíz.** `backend/data/feature_flags*.ndjson` ya está en `.gitignore` como *snapshot regenerado bajo demanda*, pero los archivos actuales fueron trackeados antes de esa entrada (git no aplica ignore a archivos ya versionados).
+
+**Fix propuesto.**
+
+- Mover los snapshots de runtime a un directorio fuera del árbol versionado (p. ej. `backend/data/runtime/` o `storage/`) y apuntar el módulo workspace a esa ruta, **o**
+- `git rm --cached backend/data/feature_flags_*.ndjson` para des-trackearlos y dejar que el `.gitignore` existente los excluya, regenerándose bajo demanda.
+
+**Gate mínimo para cerrar.**
+
+- `./venv/bin/python -m pytest tests/test_workspace_*.py tests/test_system_final.py`
+- `git status --short` limpio después de la corrida (sin modificaciones de runtime).
+- `scripts/test_workspace_quality.py` (smoke del módulo).
