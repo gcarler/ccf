@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
 import { apiFetch } from '@/lib/http';
+import { studentsEmptyMessage, type CourseDetails } from '@/lib/academy/courseStudents';
 import {
     Users,
     Calendar,
@@ -34,16 +35,6 @@ interface Student {
     average_grade: number;
 }
 
-interface CourseDetails {
-    id: string;
-    title: string;
-    code: string;
-    modality: string;
-    cohort_name: string;
-    lessons_count: number;
-    students_count: number;
-}
-
 export default function CourseManagementPage() {
     const params = useParams();
     const id = params ? (params.id as string) : null;
@@ -53,6 +44,12 @@ export default function CourseManagementPage() {
     const [course, setCourse] = useState<CourseDetails | null>(null);
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
+    // F-02 (2026-08-02): distingue un error real (500/timeout) del 200+[] legítimo
+    // de un curso global excluido para el Manager con sede (Axioma-3 admin estricto).
+    // Sin esto, un fallo de red se vería idéntico al empty-state y se confundiría.
+    const [studentsError, setStudentsError] = useState(false);
+    // Re-trigger del fetch desde el botón "Reintentar" del estado de error.
+    const [reloadKey, setReloadKey] = useState(0);
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState<'students' | 'attendance' | 'content'>('students');
     const [viewType, setViewType] = useState<ViewType>('grid');
@@ -68,8 +65,14 @@ export default function CourseManagementPage() {
         const loadData = async () => {
             try {
                 setLoading(true);
+                setStudentsError(false);
                 const courseReq = apiFetch<CourseDetails>(`/academy/courses/${id}`, { token, signal: ctrl.signal }).catch(() => null);
-                const studentsReq = apiFetch<Student[]>(`/academy/admin/courses/${id}/students`, { token, signal: ctrl.signal }).catch(() => []);
+                const studentsReq = apiFetch<Student[]>(`/academy/admin/courses/${id}/students`, { token, signal: ctrl.signal }).catch(() => {
+                    // Un 500/timeout NO es un 200+[]: se marca error para renderizar
+                    // un estado distinto al empty-state legítimo (F-02).
+                    setStudentsError(true);
+                    return [];
+                });
                 const [courseData, studentsData] = await Promise.all([courseReq, studentsReq]);
                 setCourse(courseData);
                 setStudents(Array.isArray(studentsData) ? studentsData : []);
@@ -82,7 +85,7 @@ export default function CourseManagementPage() {
         };
         loadData();
         return () => ctrl.abort();
-    }, [id, token, isAuthenticated]);
+    }, [id, token, isAuthenticated, reloadKey]);
 
     const filteredStudents = useMemo(() => {
         return students.filter(s =>
@@ -90,6 +93,8 @@ export default function CourseManagementPage() {
             s.email.toLowerCase().includes(search.toLowerCase())
         );
     }, [students, search]);
+
+    const studentsEmpty = studentsEmptyMessage(search, course, studentsError);
 
     if (!isStaff) {
         return (
@@ -152,6 +157,9 @@ export default function CourseManagementPage() {
                                 </div>
                             </article>
                         ))}
+                        {!loading && filteredStudents.length === 0 && (
+                            <p className="py-8 text-center text-sm font-semibold text-[hsl(var(--text-secondary))]">{studentsEmpty.description}</p>
+                        )}
                     </div>
                 )}
 
@@ -172,6 +180,9 @@ export default function CourseManagementPage() {
                                 ))}
                             </tbody>
                         </table>
+                        {!loading && filteredStudents.length === 0 && (
+                            <p className="py-8 text-center text-sm font-semibold text-[hsl(var(--text-secondary))]">{studentsEmpty.description}</p>
+                        )}
                     </div>
                 )}
 
@@ -197,7 +208,7 @@ export default function CourseManagementPage() {
                                     {course ? course.title : (loading ? 'Sincronizando...' : 'Datos del Curso (No Disponible)')}
                                 </h1>
                                 <div className="flex items-center gap-4 text-[hsl(var(--text-secondary))] font-bold text-sm">
-                                    <span className="flex items-center gap-2"><Users size={16} className="text-[hsl(var(--primary))]" /> {course?.students_count ?? 0} Alumnos</span>
+                                    <span className="flex items-center gap-2"><Users size={16} className="text-[hsl(var(--primary))]" /> {/* F-02: el backend no emite students_count en el detalle; el header refleja la lista admin-scoped real (0 para cursos globales en un Manager con sede). */} {students.length} Alumnos</span>
                                     <span className="flex items-center gap-2"><Clock size={16} className="text-[hsl(var(--primary))]" /> {course?.cohort_name || 'Cohorte 2026-I'}</span>
                                 </div>
                             </div>
@@ -264,6 +275,45 @@ export default function CourseManagementPage() {
                                         Array(6).fill(0).map((_, i) => (
                                             <div key={i} className="h-48 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg animate-pulse" />
                                         ))
+                                    ) : studentsError && course ? (
+                                        // Error real (500/timeout): el curso cargó pero el
+                                        // listado no — retry tiene sentido.
+                                        <div className="col-span-full py-1.5 text-center space-y-3">
+                                            <div className="size-10 bg-[hsl(var(--destructive)/0.1)] rounded-lg flex items-center justify-center mx-auto text-[hsl(var(--destructive))] shadow-inner">
+                                                <XCircle size={48} strokeWidth={1.5} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{studentsEmpty.title}</p>
+                                                <p className="text-[hsl(var(--text-secondary))] font-medium">{studentsEmpty.description}</p>
+                                                <button
+                                                    onClick={() => setReloadKey(k => k + 1)}
+                                                    className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-[hsl(var(--info)/30%)] hover:scale-105 active:scale-95 transition-all"
+                                                >
+                                                    Reintentar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : !course ? (
+                                        // Curso inaccesible: 404 cross-sede / fuera de sede, o
+                                        // fallo de red transitorio del detalle del curso — el
+                                        // cliente no puede distinguirlos, así que ofrecemos el
+                                        // mismo retry (un 404 persistente sólo re-muestra este
+                                        // estado, sin daño).
+                                        <div className="col-span-full py-1.5 text-center space-y-3">
+                                            <div className="size-10 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))] shadow-inner">
+                                                <XCircle size={48} strokeWidth={1.5} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{studentsEmpty.title}</p>
+                                                <p className="text-[hsl(var(--text-secondary))] font-medium">{studentsEmpty.description}</p>
+                                                <button
+                                                    onClick={() => setReloadKey(k => k + 1)}
+                                                    className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-[hsl(var(--info)/30%)] hover:scale-105 active:scale-95 transition-all"
+                                                >
+                                                    Reintentar
+                                                </button>
+                                            </div>
+                                        </div>
                                     ) : filteredStudents.length > 0 ? (
                                         filteredStudents.map(student => (
                                             <div key={student.id} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-black/10/50 dark:hover:shadow-none transition-all duration-500 group relative overflow-hidden">
@@ -315,11 +365,11 @@ export default function CourseManagementPage() {
                                     ) : (
                                         <div className="col-span-full py-1.5 text-center space-y-3">
                                             <div className="size-10 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))] shadow-inner">
-                                                <Search size={48} strokeWidth={1.5} />
+                                                {search ? <Search size={48} strokeWidth={1.5} /> : <Users size={48} strokeWidth={1.5} />}
                                             </div>
                                             <div className="space-y-2">
-                                                <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Cero coincidencias</p>
-                                                <p className="text-[hsl(var(--text-secondary))] font-medium">Prueba con otros terminos de busqueda.</p>
+                                                <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{studentsEmpty.title}</p>
+                                                <p className="text-[hsl(var(--text-secondary))] font-medium">{studentsEmpty.description}</p>
                                             </div>
                                         </div>
                                     )}

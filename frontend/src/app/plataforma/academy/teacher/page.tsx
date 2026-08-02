@@ -229,11 +229,16 @@ export default function TeacherWorkspace() {
                                                 </div>
                                                 <h4 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mb-4 tracking-tight leading-none">{course.title}</h4>
                                                 <div className="flex items-center gap-4 mb-3">
+                                                    {/* F-02bis (2026-08-02): el serializador del backend ahora emite
+                                                        students_count real (count bulk Axioma-3, sin N+1) y lesson_count
+                                                        (singular). Para un curso global (sede_id NULL) un Manager con
+                                                        sede ve 0 — scope admin estricto, no es un 0 silencioso: es la
+                                                        semántica F-02 (el curso global es legible, su UGC no). */}
                                                     <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide">
-                                                        <Users size={14} className="text-[hsl(var(--primary))]" /> {course.students_count || 0} Alumnos
+                                                        <Users size={14} className="text-[hsl(var(--primary))]" /> {course.students_count ?? 0} Alumnos
                                                     </div>
                                                     <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide">
-                                                        <BookOpen size={14} className="text-[hsl(var(--primary))]" /> {course.lessons_count || 0} Lecciones
+                                                        <BookOpen size={14} className="text-[hsl(var(--primary))]" /> {course.lesson_count || 0} Lecciones
                                                     </div>
                                                 </div>
                                                 <button

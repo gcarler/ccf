@@ -133,9 +133,19 @@ def _fetch_dashboard_metrics_cached(
     enrollment_trends: list[dict[str, Any]] = []
     if course_ids:
         cutoff = datetime.now(timezone.utc) - timedelta(days=365)
+        # F-07 (cierre 2026-08-02): ``func.date_trunc`` es PostgreSQL-only y
+        # producía 500 en SQLite (test con skip silencioso). Expression
+        # dialect-aware: SQLite → strftime("%Y-%m") (string), Postgres →
+        # date_trunc("month") (datetime). Ambos se normalizan a "YYYY-MM".
+        is_sqlite = db.get_bind().dialect.name == "sqlite"
+        month_expr = (
+            func.strftime("%Y-%m", models.Enrollment.created_at).label("month")
+            if is_sqlite
+            else func.date_trunc("month", models.Enrollment.created_at).label("month")
+        )
         monthly_rows = (
             db.query(
-                func.date_trunc("month", models.Enrollment.created_at).label("month"),
+                month_expr,
                 func.count(models.Enrollment.id).label("count"),
             )
             .filter(
@@ -148,7 +158,11 @@ def _fetch_dashboard_metrics_cached(
             .all()
         )
         for month_value, count_value in monthly_rows:
-            enrollment_trends.append({"label": month_value.strftime("%Y-%m"), "value": int(count_value or 0)})
+            if isinstance(month_value, str):
+                label = month_value
+            else:
+                label = month_value.strftime("%Y-%m")
+            enrollment_trends.append({"label": label, "value": int(count_value or 0)})
 
     # ----- Top 5 cursos con más matrículas -----
     top_courses: list[dict[str, Any]] = []

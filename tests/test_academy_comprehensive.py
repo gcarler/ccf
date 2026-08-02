@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import uuid as _uuid
 
-import pytest
-
 from backend import models
 from backend.models_shared import _utcnow
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
@@ -533,8 +531,9 @@ def test_dashboard_metrics(client, db_session):
     admin, _, sede = seed_admin(db_session)
     headers = auth_headers(client, email=admin.email)
     resp = client.get("/api/academy/dashboard/metrics", headers=headers)
-    if resp.status_code == 500:
-        pytest.skip("SQLite does not support date_trunc (PostgreSQL-only)")
+    # F-07 (cierre 2026-08-02): ya NO hay skip silencioso — ``date_trunc`` se
+    # hizo dialect-aware en academy_cache.py (SQLite usa strftime). El 500 de
+    # SQLite era la causa raíz del skip.
     assert resp.status_code == 200
     data = resp.json()
     assert "active_students" in data
@@ -542,6 +541,8 @@ def test_dashboard_metrics(client, db_session):
     assert "certificates_issued" in data
     assert "total_courses" in data
     assert "cards" in data
+    assert isinstance(data["enrollment_trends"], list)
+    assert isinstance(data["top_courses"], list)
 
 
 def test_create_course_admin(client, db_session):
@@ -1259,6 +1260,79 @@ def test_h01_course_payload_forbids_sede_id(client, db_session):
     assert resp.status_code == 422, (
         f"H-01: CoursePayload debe rechazar sede_id con 422 (extra=forbid), got {resp.status_code}"
     )
+
+
+# ── F-02bis (2026-08-02): students_count real en el contract read (Axioma-3) ──
+
+
+def test_f02bis_students_count_in_list_for_sede_course(client, db_session):
+    """F-02bis → ``GET /api/academy/courses`` emite ``students_count`` real
+    para un curso de la sede del Manager (count bulk, sin N+1)."""
+    admin, _, sede = seed_admin(db_session)
+    course = _create_course(db_session, sede_id=sede.id, is_published=True)
+    for i in range(2):
+        _, persona_st, _ = seed_user_with_role(
+            db_session,
+            role_name="LECTOR",
+            email=f"scount.list{i}@example.com",
+            permisos={"academy:study": "allow"},
+        )
+        _create_enrollment(db_session, persona_st.id, course.id)
+    headers = auth_headers(client, email=admin.email)
+    resp = client.get("/api/academy/courses", headers=headers)
+    assert resp.status_code == 200
+    matched = [c for c in resp.json() if c["id"] == str(course.id)]
+    assert matched, "F-02bis: curso no aparece en list"
+    assert matched[0]["students_count"] == 2, (
+        f"F-02bis: students_count esperado 2, got {matched[0].get('students_count')}"
+    )
+
+
+def test_f02bis_students_count_in_detail_includes_auto_enroll(client, db_session):
+    """F-02bis → ``GET /api/academy/courses/{id}`` emite ``students_count`` y,
+    como el endpoint auto-inscribe al viewer (comportamiento preexistente), el
+    admin que consulta suma su propia inscripción: 1 estudiante + 1 admin = 2."""
+    admin, _, sede = seed_admin(db_session)
+    course = _create_course(db_session, sede_id=sede.id, is_published=True)
+    _, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="scount.detail@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    _create_enrollment(db_session, persona_st.id, course.id)
+    headers = auth_headers(client, email=admin.email)
+    resp = client.get(f"/api/academy/courses/{course.id}", headers=headers)
+    assert resp.status_code == 200
+    assert resp.json()["students_count"] == 2, (
+        "F-02bis: detalle debe contar 1 estudiante + auto-enroll del admin"
+    )
+
+
+def test_f02bis_students_count_zero_for_global_course_sede_manager(client, db_session):
+    """F-02bis → Axioma-3 estricto: un Manager con sede NO ve UGC de cursos
+    globales (sede_id IS NULL) — ``students_count`` debe ser 0 aunque el curso
+    global tenga estudiantes inscritos (homólogo de course_students)."""
+    admin, _, sede = seed_admin(db_session)
+    global_course = _create_course(db_session, sede_id=None, is_published=True)
+    _, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="scount.global@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    _create_enrollment(db_session, persona_st.id, global_course.id)
+    headers = auth_headers(client, email=admin.email)
+    # List: el curso global es legible (OR global) pero el count es 0.
+    resp_list = client.get("/api/academy/courses", headers=headers)
+    matched = [c for c in resp_list.json() if c["id"] == str(global_course.id)]
+    assert matched, "F-02bis: curso global debe ser visible en list (lectura captación)"
+    assert matched[0]["students_count"] == 0, "F-02bis: global → count 0 para Manager con sede"
+    # Detail: get_course auto-inscribe al admin, pero el scope Axioma-3 sigue
+    # excluyendo el curso global del count.
+    resp_detail = client.get(f"/api/academy/courses/{global_course.id}", headers=headers)
+    assert resp_detail.status_code == 200
+    assert resp_detail.json()["students_count"] == 0, "F-02bis: detalle global → count 0"
 
 
 # ── H-02: LessonProgressResponse contract tipado ────────────────────────────

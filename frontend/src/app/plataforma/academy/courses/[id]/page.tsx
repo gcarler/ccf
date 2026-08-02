@@ -32,6 +32,8 @@ interface CourseDetail {
     cohort_name?: string | null;
     lesson_count: number;
     is_published: boolean;
+    // H-01 (cierre 2026-07-24): sede_id NULL = curso global legítimo.
+    sede_id?: string | null;
 }
 
 interface CourseStudent {
@@ -48,6 +50,10 @@ export default function CourseCoordinationPage() {
     const [course, setCourse] = useState<CourseDetail | null>(null);
     const [stats, setStats] = useState<CourseStats | null>(null);
     const [loading, setLoading] = useState(true);
+    // F-02 (2026-08-02): si el endpoint de estudiantes falla (500/timeout) no
+    // tumbamos la página, pero marcamos que los contadores quedaron sin datos
+    // para mostrar una nota en vez de un 0 silencioso y confuso.
+    const [studentsFailed, setStudentsFailed] = useState(false);
 
     useEffect(() => {
         if (!token || !isAuthenticated || !id) return;
@@ -56,9 +62,20 @@ export default function CourseCoordinationPage() {
         const loadData = async () => {
             try {
                 setLoading(true);
+                setStudentsFailed(false);
                 const [courseData, students] = await Promise.all([
                     apiFetch<CourseDetail>(`/academy/courses/${id}`, { token, signal: ctrl.signal }),
-                    apiFetch<CourseStudent[]>(`/academy/admin/courses/${id}/students`, { token, signal: ctrl.signal }),
+                    // F-02 (2026-08-02): el fetch de estudiantes se desacopla con
+                    // .catch(() => []) — un fallo de ese endpoint NO debe tumbar la
+                    // página a "Programa no encontrado" (confundiría un error de API
+                    // con un curso inexistente). Para un curso global + Manager con
+                    // sede el endpoint responde 200+[] legítimamente (scope admin
+                    // estricto, Axioma-3) y los contadores quedan en 0 con la nota
+                    // de curso global debajo de las métricas.
+                    apiFetch<CourseStudent[]>(`/academy/admin/courses/${id}/students`, { token, signal: ctrl.signal }).catch(() => {
+                        setStudentsFailed(true);
+                        return [];
+                    }),
                 ]);
                 const totalEnrolled = students.length;
                 const completed = students.filter((student) => student.progress_percent >= 100).length;
@@ -136,6 +153,21 @@ export default function CourseCoordinationPage() {
                     <DSMetric label="Promedio" value={String(stats?.average_grade ?? 0)} trend="Sobre 100" tone="amber" />
                     <DSMetric label="Lecciones" value={String(course.lesson_count)} trend="Publicadas" tone="blue" />
                 </section>
+
+                {course.sede_id == null ? (
+                    <p className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-2 text-xs font-semibold text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                        <ShieldCheck size={16} className="shrink-0 text-[hsl(var(--primary))]" />
+                        {/* F-02 (2026-08-02): curso global (sede_id NULL) + gestor con sede →
+                            200+[] legítimo (scope admin estricto). Los contadores en 0 son
+                            intencionales, no un error. */}
+                        Curso global: para gestores con sede asignada, los estudiantes de este curso no se listan en esta consola — los contadores en 0 son intencionales, no un error.
+                    </p>
+                ) : studentsFailed ? (
+                    <p className="rounded-md border border-dashed border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.05)] px-3 py-2 text-xs font-semibold text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                        <ShieldCheck size={16} className="shrink-0 text-[hsl(var(--destructive))]" />
+                        No se pudieron cargar los contadores de estudiantes en este momento. La página del curso sigue disponible.
+                    </p>
+                ) : null}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">

@@ -9,6 +9,7 @@
 - `crm/persona-detail.spec.ts`: cobertura profunda mockeada del detalle `/plataforma/crm/personas/[id]`; valida MESH insight, tabs de historial/contribuciones y mentoría; requiere runtime Next vivo.
 - `academy/smoke.spec.ts`: smoke dedicado de Academy (`/plataforma/academy`, `/plataforma/academy/forum`, `/plataforma/academy/coordination`) con bloqueo de consola/API/assets.
 - `academy/profile-detail.spec.ts`: cobertura profunda mockeada de `/plataforma/academy/profile` y `/plataforma/academy/profile/progress`; valida ownership visible, cursos activos, certificados y cambios de vista; requiere runtime Next vivo.
+- `academy/course-global-empty-state.spec.ts`: cobertura mockeada (F-02) de un Manager con sede abriendo un curso global (`sede_id NULL`) en `/plataforma/academy/courses/[id]/manage`; verifica el empty-state explicativo ("Este curso es global…") en lugar de un error; requiere runtime Next vivo.
 - `messaging/smoke.spec.ts`: smoke dedicado de Messaging / Community (`/plataforma/inbox/messages`, `/plataforma/messages`, `/plataforma/community`, `/plataforma/community/events`) con bloqueo de consola/API/assets.
 - `messaging/direct-messages.spec.ts`: cobertura profunda mockeada de `/plataforma/messages`; valida listado, apertura de hilo, búsqueda de usuario, creación de conversación y envío de mensaje con runner administrado.
 - `agenda/smoke.spec.ts`: smoke dedicado de Agenda / Calendar (`/plataforma/calendar`, `/plataforma/agenda/events`) con bloqueo de consola/API/assets.
