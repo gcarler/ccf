@@ -140,7 +140,7 @@ const nextConfig = {
             },
             {
                 source: '/plataforma/projects/list',
-                destination: '/plataforma/projects?view=list#projects-list',
+                destination: '/plataforma/projects?view=list#projects-dashboard',
                 permanent: true,
             },
         ];
