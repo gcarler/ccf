@@ -11,6 +11,8 @@ interface UseWhiteboardSaveOptions {
   projectId: string;
   token: string | null;
   title?: string;
+  baseUpdatedAt?: string;
+  onConflict?: (serverUpdatedAt: string) => void;
   debounceMs?: number;
 }
 
@@ -30,7 +32,7 @@ interface UseWhiteboardSaveReturn {
 export function useWhiteboardSave(
   options: UseWhiteboardSaveOptions
 ): UseWhiteboardSaveReturn {
-  const { projectId, token, title = "Pizarra Estrategica", debounceMs = 1000 } =
+  const { projectId, token, title = "Pizarra Estrategica", debounceMs = 1000, baseUpdatedAt, onConflict } =
     options;
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,6 +56,16 @@ export function useWhiteboardSave(
   const titleRef = useRef(title);
   useEffect(() => {
     titleRef.current = title;
+  }, [title]);
+
+  const baseUpdatedAtRef = useRef(baseUpdatedAt);
+  useEffect(() => {
+    baseUpdatedAtRef.current = baseUpdatedAt;
+  }, [baseUpdatedAt]);
+
+  const onConflictRef = useRef(onConflict);
+  useEffect(() => {
+    onConflictRef.current = onConflict;
   }, [title]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isDirty, setIsDirty] = useState(false);
@@ -79,24 +91,52 @@ export function useWhiteboardSave(
         statusResetTimerRef.current = null;
       }
 
-      try {
-        await apiFetch(`/projects/${projectId}/whiteboard`, {
-          method: "POST",
-          token,
-          body: {
-            title: titleRef.current,
-            elements_json: JSON.stringify(canvas.toJSON()),
-          },
-        });
-        if (canceledRef.current) return;
-        setIsDirty(false);
-        setSaveStatus("saved");
-        statusResetTimerRef.current = setTimeout(() => {
+      let retries = 3;
+      let lastErr: any;
+      while (retries > 0) {
+        try {
+          await apiFetch(`/projects/${projectId}/whiteboard`, {
+            method: "POST",
+            token,
+            body: {
+              title: titleRef.current,
+              elements_json: JSON.stringify(canvas.toJSON()),
+              ...(baseUpdatedAtRef.current ? { base_updated_at: baseUpdatedAtRef.current } : {}),
+            },
+          });
           if (canceledRef.current) return;
-          setSaveStatus("idle");
-          statusResetTimerRef.current = null;
-        }, 2000);
-      } catch {
+          setIsDirty(false);
+          setSaveStatus("saved");
+          statusResetTimerRef.current = setTimeout(() => {
+            if (canceledRef.current) return;
+            setSaveStatus("idle");
+            statusResetTimerRef.current = null;
+          }, 2000);
+          return;
+        } catch (err: any) {
+          lastErr = err;
+          // Don't retry on 409 conflict
+          if (err.status === 409 || err.response?.status === 409) {
+              break;
+          }
+          // Retry on network errors
+          retries--;
+          if (retries > 0) {
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+          }
+        }
+      }
+
+      // If we reach here, it means we failed after retries or hit a 409
+      const err = lastErr;
+      if (err?.status === 409 || err?.response?.status === 409) {
+          // PZ-07 Conflict
+          const serverUpdatedAt = err.response?.data?.detail?.current_updated_at || err.data?.detail?.current_updated_at;
+          if (onConflictRef.current && serverUpdatedAt) {
+            onConflictRef.current(serverUpdatedAt);
+          }
+      }
+
         // Suppress error feedback while the panel is being torn down or the
         // tab is hidden (requests may be throttled/aborted by the browser).
         if (canceledRef.current) return;
@@ -107,7 +147,6 @@ export function useWhiteboardSave(
           setSaveStatus("idle");
           statusResetTimerRef.current = null;
         }, 3000);
-      }
     },
     [projectId, token]
   );
