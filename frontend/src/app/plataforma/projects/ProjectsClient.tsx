@@ -279,9 +279,9 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                                     : undefined
                             }
                             tone={card.color as 'blue' | 'emerald' | 'amber' | undefined}
+                            href={getProjectMetricHref(label)}
                             onClick={() => {
                                 const targetUrl = getProjectMetricHref(label);
-                                router.push(targetUrl);
                                 if (targetUrl.includes('view=list')) {
                                     setViewType('list');
                                 }

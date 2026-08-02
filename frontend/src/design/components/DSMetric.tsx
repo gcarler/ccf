@@ -14,6 +14,8 @@ interface DSMetricProps {
     href?: string;
 }
 
+import Link from 'next/link';
+
 export function DSMetric({ label, value, trend, tone = 'blue', icon: Icon, onClick, href }: DSMetricProps) {
     const tones: Record<typeof tone, { bg: string; text: string; iconBg: string }> = {
         blue: { bg: 'bg-[hsl(var(--info-muted))]', text: 'text-[hsl(var(--info))]', iconBg: 'bg-[hsl(var(--info-muted))]' },
@@ -21,11 +23,13 @@ export function DSMetric({ label, value, trend, tone = 'blue', icon: Icon, onCli
         amber: { bg: 'bg-[hsl(var(--warning-muted))]', text: 'text-[hsl(var(--warning-text))]', iconBg: 'bg-[hsl(var(--warning-muted))]' },
     };
 
-    const Tag = href ? 'a' : 'div';
-    const extraProps = href ? { href } : onClick ? { onClick, role: 'button' as const } : {};
+    const containerClasses = clsx(
+        "bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 shadow-sm hover:shadow-md transition-all flex flex-col justify-between",
+        (onClick || href) && "cursor-pointer hover:border-[hsl(var(--primary))]/30"
+    );
 
-    return (
-        <Tag className={clsx("bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 shadow-sm hover:shadow-md transition-all flex flex-col justify-between", onClick && "cursor-pointer hover:border-[hsl(var(--primary))]/30")} {...extraProps}>
+    const content = (
+        <>
             <div className="flex items-center justify-between gap-2">
                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</p>
                 {Icon && <Icon className={clsx("size-4", tones[tone].text)} />}
@@ -38,6 +42,20 @@ export function DSMetric({ label, value, trend, tone = 'blue', icon: Icon, onCli
                     </span>
                 </div>
             )}
-        </Tag>
+        </>
+    );
+
+    if (href) {
+        return (
+            <Link href={href} className={containerClasses} onClick={onClick}>
+                {content}
+            </Link>
+        );
+    }
+
+    return (
+        <div className={containerClasses} onClick={onClick} role={onClick ? "button" : undefined}>
+            {content}
+        </div>
     );
 }
