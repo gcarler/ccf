@@ -335,7 +335,6 @@ export type CmsFormFieldType =
   | "divider"
   | "captcha";
 
-/** Condición de visibilidad (``visible_if``) — espejo de ``_OPERATORS``. */
 export type CmsFormConditionOperator =
   | "eq"
   | "neq"
