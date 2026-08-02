@@ -2,7 +2,7 @@
 
 > **Objetivo:** mantener evangelismo como módulo aislado, con validación repetible y backlog realista.
 >
-> **Actualizado:** 2026-07-21
+> **Actualizado:** 2026-08-02
 > **Complementa:** `docs/ESTADO_EVANGELISMO.md`
 
 ## 1. Estado operativo actual
@@ -160,7 +160,27 @@ Criterio de salida:
 ### Disciplina operativa continua (no reactivar como backlog)
 
 - Vigilancia de pobreza estructural en `strategies/[id]/page.tsx`: si vuelve a crecer sobre 2005 LOC o re-concentra fetches, extraer hooks/paneles adicionales. La lectura por rol queda alineada al guard real (ver RBAC_MATRIX seccion 3).
-- `NUEVO-FOLLOWUP-PENDING-FIXES` (cola de calidad): 7 brechas menores pendientes identificadas en auditoria follow-up que requieren migracion DB o cambio con masaje (ver `notes.md` ses_06be8d107ffe): #4 default `estado_completado=True→False`, #5 enum CHECK en `tipo`, #6 indices FK, #7 `extra="forbid"` en `RegistroSeguimientoResponse`, #10 UI scoping por estrategia del panel de seguimiento, #12 tests cross-sede/update-sobre-soft-deleted, #3 endpoint DELETE via API. No forman backlog activo — ejecutar en proxima sesión con migración agrupada.
+
+### Cerrado — `NUEVO-FOLLOWUP-PENDING-FIXES` (7 brechas, 2026-07-24 a 2026-07-29)
+
+Las 7 brechas de calidad follow-up que requerian migracion DB agrupada estan **cerradas en commits**. No reabrir salvo nueva evidencia.
+
+- **#3 endpoint DELETE via API (soft-delete)** — cerrada `b1f32287` "feat(evangelism): endpoint DELETE /follow-up/{id} (soft-delete) (Axioma 3)". Endpoint `DELETE /follow-up/{seguimiento_id}` con `require_evangelism_manage`, retorna `{"ok": True}`.
+- **#4 default `estado_completado=True→False`** — cerrada `75ce8544` "fix(evangelism): seguimiento integrity (default pendiente, CHECK enum, indices FK)". Migration `alembic/canonical_versions/20260724_0001_seguimiento_integrity.py`.
+- **#5 enum CHECK en `tipo`** — cerrada `75ce8544` (misma migracion). `TipoSeguimientoEnum` con CHECK constraint.
+- **#6 indices FK en seguimiento** — cerrada `75ce8544` (misma migracion). Indices en FKs `asistencia_id`/`lider_id` aceleran joins `seguimiento → asistencia → sesion → grupo → sede`.
+- **#7 `extra="forbid"` en `RegistroSeguimientoResponse`** — cerrada `c7458733` "fix(evangelism): RegistroSeguimientoResponse con extra=forbid".
+- **#10 UI scoping del panel de seguimientos por estrategia** — cerrada `530d6892` "fix(evangelism): scoping UI del panel de seguimientos por estrategia (brecha #10)". Panel en `strategies/[id]/page.tsx` ahora filtra seguimientos por estrategia.
+- **#12 tests cross-sede + update-sobre-soft-deleted** — cerrada `1c26c739` "test(evangelism): regression tests cross-sede + soft-deleted follow-up". 6 tests en `tests/test_evangelism_followup_sede_regression.py`.
+
+**Suite evangelismo end-to-end re-ejecutada 2026-08-02:** `1177 passed, 0 failed, 2 xfailed, 1 xpassed` en 12:33 (1180 colectados). Backlog activo del modulo: vacio.
+
+### Adeuda tecnica eliminada (sesion `ses_0442c5c6effeUqcqRILFB1Augx`, commit `f75753c7`)
+
+- 5 funciones helper muertas duplicadas eliminadas de `evangelism_shared.py` (~128 LOC): `_channel_label`, `_persona_matches_segment`, `_resolve_campaign_personas`, `_serialize_message_group`, `_serialize_crm_task` — copias canonicas en `crm/_shared.py` y `evangelism_main/main_utils.py`.
+- `backend/services/evangelism_projection.py` eliminado (21 LOC, wrapper muerto re-exportando `calcular_sesiones`, 0% cobertura, sin importadores).
+- 117 tests nuevos en `tests/test_evangelism_coverage_gaps.py`: `events_main.py` 76→95%, `main_estrategias.py` 83→90%, `grupos_main.py` 87→93%.
+- 13 artefactos `*,cover` eliminados de subdirectorios evangelism. 2 directorios backup no trackeados eliminados.
 
 ### Cerrado y no reabrir salvo nueva evidencia
 
