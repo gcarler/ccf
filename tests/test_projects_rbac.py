@@ -105,7 +105,12 @@ def _seed_role_user(db_session, role_canonical: str, email: str):
 # UUID sintácticamente válido pero inexistente. Garantiza que el RBAC se evalúa
 # antes que cualquier búsqueda en BD, así nunca obtendremos 404 sin haber
 # pasado por ``require_module_access``.
-FAKE = str(_uuid.uuid4())
+# UUID FIJO (no uuid4()): pytest-xdist lanza un proceso por worker y cada uno
+# generaría un valor distinto en los parametrize de módulo → "Different tests
+# were collected between gwN and gwM". Valor constante ⇒ colección idéntica.
+FAKE = "00000000-0000-4000-8000-0000000000fa"
+FAKE_COMMENT = "00000000-0000-4000-8000-0000000000fc"
+FAKE_TASK = "00000000-0000-4000-8000-0000000000fd"
 
 # (method, path)
 _READ_ENDPOINTS = [
@@ -171,13 +176,13 @@ _EDIT_ENDPOINTS = [
     # ``/comments`` (sub-rutas PATCH/DELETE operan sobre ``cid``).
     ("POST", "/api/projects/comments", {"project_id": FAKE, "content": "c"}),
     ("POST", f"/api/projects/{FAKE}/comments", {"content": "c"}),
-    ("PATCH", f"/api/projects/comments/{_uuid.uuid4()}", {"content": "u"}),
-    ("DELETE", f"/api/projects/comments/{_uuid.uuid4()}", None),
+    ("PATCH", f"/api/projects/comments/{FAKE_COMMENT}", {"content": "u"}),
+    ("DELETE", f"/api/projects/comments/{FAKE_COMMENT}", None),
     # DELETE de proyecto (note: usa ``academy:manage``, NO ``projects:edit``
     # — asimetría documentada en ``TestPermissionHierarchy``).
     ("DELETE", f"/api/projects/{FAKE}", None),
     ("POST", f"/api/projects/{FAKE}/messages", {"content": "msg"}),
-    ("DELETE", f"/api/projects/{FAKE}/tasks/{_uuid.uuid4()}", None),
+    ("DELETE", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}", None),
 ]
 
 # Endpoints where Miembro should receive 403 (module-level access denied)
@@ -185,11 +190,11 @@ _EDIT_ENDPOINTS_MIEMBRO_403 = [
     ("POST", "/api/projects", {"title": "Test", "description": "desc"}),
     ("POST", f"/api/projects/inbox/{FAKE}/read", None),
     ("POST", "/api/projects/comments", {"project_id": FAKE, "content": "c"}),
-    ("PATCH", f"/api/projects/comments/{_uuid.uuid4()}", {"content": "u"}),
-    ("DELETE", f"/api/projects/comments/{_uuid.uuid4()}", None),
+    ("PATCH", f"/api/projects/comments/{FAKE_COMMENT}", {"content": "u"}),
+    ("DELETE", f"/api/projects/comments/{FAKE_COMMENT}", None),
     ("DELETE", f"/api/projects/{FAKE}", None),
     ("POST", f"/api/projects/{FAKE}/messages", {"content": "msg"}),
-    ("DELETE", f"/api/projects/{FAKE}/tasks/{_uuid.uuid4()}", None),
+    ("DELETE", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}", None),
 ]
 
 # Endpoints protected by require_project_access with a project/task ID:

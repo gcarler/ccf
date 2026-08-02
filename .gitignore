@@ -97,3 +97,12 @@ frontend/tsconfig.tsbuildinfo
 # Runtime feature flags snapshot (regenerated on demand)
 backend/data/feature_flags*.ndjson
 static/chat_attachments/
+
+# CCF: one-off import scratch scripts (contain hardcoded DB credentials — never commit)
+backend/scratch/
+
+# CCF: one-off media download scripts (hardcoded credentials/absolute paths — never commit)
+download_pastors.py
+download_photos.py
+update_photos_db.py
+update_photos_raw.py
