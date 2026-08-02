@@ -387,6 +387,11 @@ class ProjectWhiteboardUpdate(BaseModel):
     title: Optional[str] = None
     elements_json: Optional[str] = None
     thumbnail_url: Optional[str] = None
+    # Control de concurrencia optimista (PZ-07): el cliente envía el
+    # `updated_at` que tenía al cargar la pizarra. Si el servidor detecta
+    # que hubo una escritura más nueva, responde 409 para que el cliente
+    # re-concilie en lugar de sobrescribir silenciosamente (last-writer-wins).
+    base_updated_at: Optional[datetime] = None
 
 
 class ProjectPortfolioSummaryRow(BaseModel):

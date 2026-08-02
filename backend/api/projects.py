@@ -8,7 +8,18 @@ from datetime import datetime, timezone
 from typing import Any, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from sqlalchemy import Integer, and_, cast, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -1896,6 +1907,29 @@ def update_project_whiteboard(
         board = models.ProjectWhiteboard(project_id=_to_uuid(project_id), title=title, elements_json=elements)
         db.add(board)
     else:
+        # ── PZ-07: control de concurrencia optimista (OCC) ──
+        # Si el cliente mandó la versión base que tenía al cargar y el
+        # servidor ya tiene una escritura posterior, NO sobrescribir en silencio.
+        # Respondemos 409 con el `updated_at` actual para que el cliente
+        # re-fetchee y haga merge por objeto (evita lost-update entre usuarios).
+        base_ts = payload.base_updated_at
+        if base_ts is not None and board.updated_at is not None:
+            # Normalizar ambos a UTC-naive comparable
+            current_ts = board.updated_at
+            if getattr(current_ts, "tzinfo", None) is not None:
+                current_ts = current_ts.replace(tzinfo=None)
+            base_naive = base_ts
+            if getattr(base_naive, "tzinfo", None) is not None:
+                base_naive = base_naive.replace(tzinfo=None)
+            if current_ts > base_naive:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error": "whiteboard_conflict",
+                        "message": "La pizarra fue actualizada por otra persona. Se debe reconciliar.",
+                        "current_updated_at": board.updated_at.isoformat() if board.updated_at else None,
+                    },
+                )
         board.elements_json = elements
         board.deleted_at = None
         board.updated_at = datetime.now(timezone.utc)
@@ -1967,6 +2001,33 @@ async def upload_project_whiteboard_thumbnail(
     board.thumbnail_url = url
     db.commit()
     return {"thumbnail_url": url}
+
+
+@router.websocket("/{project_id}/whiteboard/ws")
+async def project_whiteboard_websocket(
+    websocket: WebSocket,
+    project_id: str,
+):
+    """WebSocket endpoint for real-time whiteboard collaboration."""
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4001, reason="Missing token")
+        return
+    
+    # We generate a client_id for this connection
+    client_id = str(uuid.uuid4())
+    room = f"whiteboard_{project_id}"
+    
+    await manager.connect(client_id, websocket, rooms=[room])
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Broadcast to everyone in the room except the sender
+            parsed = json.loads(data)
+            parsed["sender_id"] = client_id
+            await manager.broadcast_event(parsed, room=room)
+    except WebSocketDisconnect:
+        await manager.disconnect(client_id)
 
 
 # --- ATTACHMENTS & SUPPLIES ---
