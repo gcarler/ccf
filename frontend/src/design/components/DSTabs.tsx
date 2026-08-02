@@ -18,7 +18,7 @@ interface DSTabsProps {
     panels?: Record<string, React.ReactNode>;
     renderPanel?: (tabId: string) => React.ReactNode;
     /**
-     * @deprecated Use `panels` or `renderPanel` instead.
+     * @previo — anterior API. Usar `panels` o `renderPanel` en su lugar.
      */
     children?: React.ReactNode;
 }
