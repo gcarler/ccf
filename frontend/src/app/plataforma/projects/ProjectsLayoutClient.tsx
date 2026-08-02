@@ -8,7 +8,6 @@ import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
 import { LayoutDashboard, CheckCircle2, Home, Circle, ChevronLeft } from 'lucide-react';
 import { useParams, usePathname } from 'next/navigation';
 import { GLOBAL_PROJECT_ROUTES } from '@/lib/projects/routes';
-import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 import { toast } from "sonner";
 
 export default function ProjectsLayoutClient({ children, initialProjects }: { children: React.ReactNode, initialProjects: Array<{ id: string; title: string; status?: string; color?: string | null }> }) {
@@ -76,7 +75,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                         id: 'all-projects',
                         label: 'Todos los Proyectos',
                         icon: ChevronLeft,
-                        href: PROJECTS_LIST_ROUTE
+                        href: '/plataforma/projects?view=list#projects-dashboard'
                     },
                 ]
             },
@@ -102,7 +101,7 @@ export default function ProjectsLayoutClient({ children, initialProjects }: { ch
                 id: 'global',
                 title: 'Global',
                 items: [
-                    { id: 'all-projects', label: 'Todos los Proyectos', icon: LayoutDashboard, href: PROJECTS_LIST_ROUTE },
+                    { id: 'all-projects', label: 'Todos los Proyectos', icon: LayoutDashboard, href: '/plataforma/projects?view=list#projects-dashboard' },
                     { id: 'my-tasks', label: 'Mis Tareas', icon: CheckCircle2, href: '/plataforma/projects/tasks' },
                 ]
             },
