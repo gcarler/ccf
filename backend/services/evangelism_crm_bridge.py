@@ -89,6 +89,7 @@ def _build_transient_caso(
     origen_grupo_id: Optional[uuid.UUID],
     origen_estrategia_id: Optional[UUID],
     origen_sesion_id: Optional[UUID],
+    origen_evento_id: Optional[UUID],
     sla_vencimiento_contacto: datetime,
 ) -> CasoCRM:
     caso = CasoCRM(
@@ -104,6 +105,7 @@ def _build_transient_caso(
         origen_grupo_id=origen_grupo_id,
         origen_estrategia_id=origen_estrategia_id,
         origen_sesion_id=origen_sesion_id,
+        origen_evento_id=origen_evento_id,
         sla_vencimiento_contacto=sla_vencimiento_contacto,
     )
     caso.etapa_actual = etapa
@@ -120,6 +122,7 @@ def _insert_caso_nuevo_visitante(
     origen_grupo_id: Optional[uuid.UUID] = None,
     origen_estrategia_id: Optional[UUID] = None,
     origen_sesion_id: Optional[UUID] = None,
+    origen_evento_id: Optional[UUID] = None,
 ) -> Optional[CasoCRM]:
     caso_id = uuid.uuid4()
     bind = db.get_bind()
@@ -134,6 +137,7 @@ def _insert_caso_nuevo_visitante(
             origen_grupo_id=origen_grupo_id,
             origen_estrategia_id=origen_estrategia_id,
             origen_sesion_id=origen_sesion_id,
+            origen_evento_id=origen_evento_id,
             sla_vencimiento_contacto=datetime.now(timezone.utc) + timedelta(hours=48),
         )
         db.add(caso)
@@ -154,6 +158,7 @@ def _insert_caso_nuevo_visitante(
         "origen_grupo_id": origen_grupo_id,
         "origen_estrategia_id": origen_estrategia_id,
         "origen_sesion_id": origen_sesion_id,
+        "origen_evento_id": origen_evento_id,
         "sla_vencimiento_contacto": datetime.now(timezone.utc) + timedelta(hours=48),
         "fecha_creacion": datetime.now(timezone.utc),
         "fecha_cierre": None,
@@ -161,6 +166,8 @@ def _insert_caso_nuevo_visitante(
         "payload_web": None,
         "asignado_a_id": None,
     }
+    if "origen_evento_id" not in live_cols:
+        caso_data.pop("origen_evento_id", None)
     if "sort_order" in live_cols:
         caso_data["sort_order"] = 0
     if "drag_source_etapa_id" in live_cols:
@@ -191,6 +198,7 @@ def _insert_caso_nuevo_visitante(
         origen_grupo_id=origen_grupo_id,
         origen_estrategia_id=origen_estrategia_id,
         origen_sesion_id=origen_sesion_id,
+        origen_evento_id=origen_evento_id,
         sla_vencimiento_contacto=caso_data["sla_vencimiento_contacto"],
     )
 
@@ -403,9 +411,15 @@ def crear_caso_nuevo_visitante(
     origen_grupo_id: Optional[uuid.UUID] = None,
     origen_estrategia_id: Optional[UUID] = None,
     origen_sesion_id: Optional[UUID] = None,
+    origen_evento_id: Optional[UUID] = None,
+    *,
+    commit: bool = True,
 ) -> Optional[CasoCRM]:
-    """Crea un caso CRM de nuevos visitantes usando el pipeline canonico por sede.
-    Hace el db.commit() final — debe llamarse al final de la transacción del caller.
+    """Crea un caso CRM de nuevos visitantes usando el pipeline canónico por sede.
+
+    ``commit=True`` conserva el contrato histórico de los callers existentes.
+    Los flujos compuestos (registro/check-in/cierre de evento) pasan
+    ``commit=False`` para que el caller controle una única transacción.
     """
     pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db, sede_id)
     if pipeline is None:
@@ -427,6 +441,9 @@ def crear_caso_nuevo_visitante(
         origen_grupo_id=origen_grupo_id,
         origen_estrategia_id=origen_estrategia_id,
         origen_sesion_id=origen_sesion_id,
+        origen_evento_id=origen_evento_id,
     )
-    db.commit()  # commit único: persona + participante + pipeline nuevo (si aplica) + caso
+    db.flush()
+    if commit:
+        db.commit()  # contrato histórico; los callers compuestos usan commit=False
     return caso

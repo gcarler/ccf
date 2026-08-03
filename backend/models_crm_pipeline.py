@@ -128,6 +128,9 @@ class CasoCRM(Base):
     estado = Column(SAEnum(EstadoCasoEnum), default=EstadoCasoEnum.ABIERTO, index=True)
     origen_canal = Column(SAEnum(CanalOrigenEnum), nullable=False, index=True)
     origen_detalle_id = Column(String(200), nullable=True, index=True)
+    origen_evento_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     origen_sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
     origen_grupo_id = Column(
         UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True
@@ -357,6 +360,8 @@ class CasoCRM(Base):
     asignado_a = relationship("Persona", foreign_keys=[asignado_a_id])
     pipeline = relationship("PipelineCRM", back_populates="casos")
     etapa_actual = relationship("EtapaPipeline", back_populates="casos")
+    origen_evento = relationship("CrmEvent", foreign_keys=[origen_evento_id])
+    event_registrations = relationship("EventRegistration", back_populates="crm_case", foreign_keys="EventRegistration.crm_case_id")
     interacciones = relationship("InteraccionCRM", back_populates="caso", cascade="all, delete-orphan")
     tareas = relationship("TareaCRM", back_populates="caso", cascade="all, delete-orphan")
 

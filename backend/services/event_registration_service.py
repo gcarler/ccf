@@ -4,17 +4,8 @@ Centraliza la lógica de negocio de EventRegistration: validaciones de aforo,
 lista de espera, generación de QR/verify tokens, promoción automática de
 waitlist al cancelar, envío de email de confirmación con QR.
 
-Reusos intencionales:
-    - Patrón de scanner token (``Persona.scanner_token_hash`` en
-      ``models_crm.py:452``): mismo formato ``CCF-<scope>-<uuid>-<secret>``
-      con hash sha256 y expiry 365 días.
-    - ``services/email.send_email`` para salida SMTP.
-    - ``secrets.token_hex`` + ``hashlib.sha256`` para tokens.
-
 Axioma 3 (Multi-Tenant): no añade ``sede_id`` a ``EventRegistration`` — el
 scope se hereda vía JOIN ``event_registrations.event_id → crm_events.sede_id``.
-Las funciones aceptan ``event`` ya cargado y validado por el caller (que
-ejecuta ``require_event_access`` en el router admin).
 """
 
 from __future__ import annotations
@@ -34,9 +25,6 @@ from backend import models, schemas
 
 log = logging.getLogger(__name__)
 
-
-# ── Constantes ───────────────────────────────────────────────────────────────
-
 QR_PREFIX = "CCF-EVT-"
 VERIFY_PREFIX = "CCF-VER-"
 CANCEL_PREFIX = "CCF-CXL-"
@@ -53,21 +41,11 @@ REGISTRATION_STATUS = {
 }
 
 
-# ── Generadores de token ─────────────────────────────────────────────────────
-
-
 def _utcnow() -> _dt.datetime:
     return _dt.datetime.now(_dt.timezone.utc)
 
 
 def _as_utc(value) -> _dt.datetime:
-    """Axioma — atacha UTC a datetimes naive (REGLAS.md §6).
-
-    SQLite persiste ``DateTime(timezone=True)`` como datetimes NAIVE aunque el
-    ORM declare timezone-aware, lo que rompe comparaciones contra
-    ``_utcnow()`` (aware). Mismo patrón que ``AwareDateTime`` en
-    ``backend/schemas/_common.py``.
-    """
     if value is None:
         return value
     if value.tzinfo is None:
@@ -76,46 +54,27 @@ def _as_utc(value) -> _dt.datetime:
 
 
 def generate_qr_token(event_id, persona_id) -> Tuple[str, str]:
-    """Genera (token_plano, hash) para el QR de una inscripción.
-
-    Returns:
-        (qr_token, qr_token_hash) — el token plano se guarda SOLO en
-        ``qr_token`` (para debug/display), el hash en ``qr_token_hash``
-        se usa para todas las búsquedas de check-in.
-    """
     secret = secrets.token_hex(16)
     token = f"{QR_PREFIX}{event_id}-{persona_id}-{secret}"
-    token_hash = hashlib.sha256(secret.encode()).hexdigest()
-    return token, token_hash
+    return token, hashlib.sha256(secret.encode()).hexdigest()
 
 
 def generate_verify_token(registration_id) -> Tuple[str, str]:
-    """Genera token de verificación de email (24h de validez por convención)."""
     secret = secrets.token_hex(16)
     token = f"{VERIFY_PREFIX}{registration_id}-{secret}"
-    token_hash = hashlib.sha256(secret.encode()).hexdigest()
-    return token, token_hash
+    return token, hashlib.sha256(secret.encode()).hexdigest()
 
 
 def hash_token(token: str) -> str:
-    """Extrae el secret del token (último segmento tras '-') y lo hashea."""
     if "-" not in token:
         return ""
-    secret = token.rsplit("-", 1)[1]
-    return hashlib.sha256(secret.encode()).hexdigest()
+    return hashlib.sha256(token.rsplit("-", 1)[1].encode()).hexdigest()
 
 
 def is_qr_token_expired(reg: models.EventRegistration) -> bool:
-    """Un QR se considera expirado a los QR_EXPIRY_DAYS desde generación."""
     if not reg.qr_generated_at:
         return True
-    expires_at = reg.qr_generated_at + _dt.timedelta(days=QR_EXPIRY_DAYS)
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=_dt.timezone.utc)
-    return expires_at < _utcnow()
-
-
-# ── Resolución de Persona (upsert) ────────────────────────────────────────────
+    return _as_utc(reg.qr_generated_at) + _dt.timedelta(days=QR_EXPIRY_DAYS) < _utcnow()
 
 
 def upsert_persona(
@@ -127,11 +86,6 @@ def upsert_persona(
     phone: Optional[str] = None,
     sede_id=None,
 ) -> models.Persona:
-    """Busca o crea una Persona. Alineado con ``api/public.py:35``.
-
-    Busca primero por email; si no, por phone. Si no existe, crea una nueva
-    Persona con ``church_role='Visitante'`` y ``spiritual_status='Nuevo'``.
-    """
     from sqlalchemy import or_
 
     persona = None
@@ -142,7 +96,6 @@ def upsert_persona(
         conditions.append(models.Persona.phone == phone)
     if conditions:
         persona = db.query(models.Persona).filter(or_(*conditions)).first()
-
     if persona is None:
         persona = models.Persona(
             first_name=first_name,
@@ -155,16 +108,10 @@ def upsert_persona(
         )
         db.add(persona)
         db.flush()
-        log.info("Persona creada desde pre-registro: %s %s", first_name, last_name)
     return persona
 
 
-# ── Validaciones de pre-registro ─────────────────────────────────────────────
-
-
 class RegistrationError(Exception):
-    """Error de negocio de pre-registro (409 / 403 / 410)."""
-
     def __init__(self, code: str, detail: str, status_code: int = 409):
         self.code = code
         self.detail = detail
@@ -173,7 +120,6 @@ class RegistrationError(Exception):
 
 
 def assert_registration_window_open(event: models.CrmEvent, now=None):
-    """Valida que el evento permita inscripción en este momento."""
     now = now or _utcnow()
     if not event.requires_registration:
         return
@@ -188,11 +134,6 @@ def assert_registration_window_open(event: models.CrmEvent, now=None):
 
 
 def count_active_registrations(db: Session, event_id) -> Tuple[int, int]:
-    """Retorna (confirmadas_o_checked_in, waitlist_count) para el evento.
-
-    El aforo se calcula solo sobre estados que ocupan slot:
-    CONFIRMED y CHECKED_IN. WAITLIST no ocupa slot.
-    """
     counts = (
         db.query(models.EventRegistration.registration_status, func.count().label("n"))
         .filter(
@@ -203,20 +144,180 @@ def count_active_registrations(db: Session, event_id) -> Tuple[int, int]:
         .all()
     )
     by_status = {row[0]: row[1] for row in counts}
-    slots_taken = int(by_status.get("CONFIRMED", 0)) + int(by_status.get("CHECKED_IN", 0))
-    waitlist = int(by_status.get("WAITLIST", 0))
-    return slots_taken, waitlist
+    return (
+        int(by_status.get("CONFIRMED", 0)) + int(by_status.get("CHECKED_IN", 0)),
+        int(by_status.get("WAITLIST", 0)),
+    )
 
 
 def capacity_remaining(db: Session, event: models.CrmEvent) -> Optional[int]:
-    """Devuelve cuántos slots quedan. None si capacity_max es NULL (ilimitado)."""
     if event.capacity_max is None:
         return None
     slots_taken, _ = count_active_registrations(db, event.id)
     return max(0, event.capacity_max - slots_taken)
 
 
-# ── Flujo principal de pre-registro ──────────────────────────────────────────
+def _event_row_lock(db: Session, event: models.CrmEvent):
+    return (
+        db.query(models.CrmEvent)
+        .with_for_update()
+        .filter(models.CrmEvent.id == event.id)
+        .first()
+    )
+
+
+def _set_event_persona_origin(persona: models.Persona, event: models.CrmEvent) -> None:
+    """Conserva el primer origen y añade una etiqueta idempotente por evento."""
+    if persona.origen_evento_id is None:
+        persona.origen_evento_id = event.id
+        persona.origen_fecha = _utcnow()
+    tags = list(persona.tags or [])
+    event_tag = f"evento:{event.id}"
+    if event_tag not in tags:
+        tags.append(event_tag)
+    if "nuevo_evento" not in tags and persona.origen_evento_id == event.id:
+        tags.append("nuevo_evento")
+    persona.tags = tags
+
+
+def _followup_task(db: Session, case, persona: models.Persona, *, attended: bool):
+    from backend.models_crm_pipeline import TareaCRM
+
+    title = (
+        f"Seguimiento post-evento: {persona.first_name} {persona.last_name}"
+        if attended
+        else f"Contactar ausente de evento: {persona.first_name} {persona.last_name}"
+    )
+    existing = (
+        db.query(TareaCRM)
+        .filter(
+            TareaCRM.caso_id == case.id,
+            TareaCRM.categoria == "EVENTO",
+            TareaCRM.titulo == title,
+            TareaCRM.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if existing:
+        return existing
+    task = TareaCRM(
+        caso_id=case.id,
+        persona_id=persona.id,
+        titulo=title,
+        descripcion=(
+            "Agradecer la asistencia y registrar el siguiente paso pastoral."
+            if attended
+            else "Contactar para conocer la razón de la ausencia y ofrecer seguimiento."
+        ),
+        categoria="EVENTO",
+        estado="pending",
+        prioridad="high" if not attended else "medium",
+        fecha_vencimiento=_utcnow() + _dt.timedelta(days=2 if attended else 1),
+    )
+    db.add(task)
+    return task
+
+
+def ensure_event_crm_followup(
+    db: Session,
+    event: models.CrmEvent,
+    persona: models.Persona,
+    registration: Optional[models.EventRegistration] = None,
+    *,
+    attended: bool = False,
+    commit: bool = True,
+):
+    """Asegura origen, caso y tarea de seguimiento para una inscripción.
+
+    La consulta previa + índice único de migración serializa el caso por
+    persona/evento. ``commit=False`` permite usarlo dentro del cierre atómico.
+    """
+    from backend.models_crm_pipeline import CasoCRM
+    from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
+
+    _set_event_persona_origin(persona, event)
+    case = None
+    if registration and registration.crm_case_id:
+        case = db.query(CasoCRM).filter(CasoCRM.id == registration.crm_case_id).first()
+    if case is None:
+        case = (
+            db.query(CasoCRM)
+            .filter(
+                CasoCRM.persona_id == persona.id,
+                CasoCRM.origen_evento_id == event.id,
+                CasoCRM.deleted_at.is_(None),
+            )
+            .with_for_update()
+            .first()
+        )
+    if case is None:
+        case = crear_caso_nuevo_visitante(
+            db,
+            persona,
+            event.sede_id,
+            titulo_prefix=f"Evento: {event.name}",
+            origen_evento_id=event.id,
+            commit=False,
+        )
+    if case is not None:
+        if registration:
+            registration.crm_case_id = case.id
+        _followup_task(db, case, persona, attended=attended)
+    db.flush()
+    if commit:
+        db.commit()
+        if registration:
+            db.refresh(registration)
+    return case
+
+
+def admit_walk_in(
+    db: Session,
+    event: models.CrmEvent,
+    persona: models.Persona,
+    *,
+    source: str = "walk_in",
+) -> models.EventRegistration | None:
+    """Admite un walk-in respetando aforo bajo el lock del evento.
+
+    Los eventos ilimitados y sin pre-registro pueden seguir usando solamente
+    ``EventAttendance``; cuando hay aforo o pre-registro se crea la inscripción
+    CHECKED_IN para que la taquilla y los KPIs compartan la misma fuente.
+    """
+    if event.capacity_max is None and not event.requires_registration:
+        return None
+    _event_row_lock(db, event)
+    existing = (
+        db.query(models.EventRegistration)
+        .filter(
+            models.EventRegistration.event_id == event.id,
+            models.EventRegistration.persona_id == persona.id,
+            models.EventRegistration.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if existing:
+        if existing.registration_status in {"CONFIRMED", "CHECKED_IN"}:
+            return existing
+        raise RegistrationError(
+            "REGISTRATION_NOT_ADMISSIBLE",
+            f"La inscripción no puede admitir a la persona (estado: {existing.registration_status})",
+            409,
+        )
+    slots_taken, _ = count_active_registrations(db, event.id)
+    if event.capacity_max is not None and slots_taken >= event.capacity_max:
+        raise RegistrationError("EVENT_FULL", "El evento alcanzó su aforo máximo", 409)
+    registration = models.EventRegistration(
+        event_id=event.id,
+        persona_id=persona.id,
+        registration_status="CHECKED_IN",
+        source=source,
+        confirmed_at=_utcnow(),
+        check_in_at=_utcnow(),
+    )
+    db.add(registration)
+    db.flush()
+    return registration
 
 
 def register(
@@ -226,28 +327,10 @@ def register(
     *,
     public_base_url: str = "",
 ) -> models.EventRegistration:
-    """Crea o actualiza una EventRegistration.
-
-    Lanza ``RegistrationError`` si:
-        - Evento sin ``requires_registration`` (403 NOT_REGISTRATION_EVENT)
-        - Fuera de ventana (409/410)
-        - Aforo lleno sin waitlist (409 EVENT_FULL)
-        - Ya existe una inscripción CANCELLED (reactivable)
-    """
     if not event.requires_registration:
-        raise RegistrationError(
-            "NOT_REGISTRATION_EVENT",
-            "Este evento no requiere pre-inscripción",
-            status_code=403,
-        )
-
+        raise RegistrationError("NOT_REGISTRATION_EVENT", "Este evento no requiere pre-inscripción", 403)
     assert_registration_window_open(event)
-
-    # Race de aforo (plan §7): serializa conteo+insert por evento bloqueando la
-    # fila del CrmEvent (no-op en SQLite; efectivo en Postgres). Sin este lock,
-    # dos peticiones concurrentes podrían leer slots_taken=0 y sobrevender.
-    db.query(models.CrmEvent).with_for_update().filter(models.CrmEvent.id == event.id).first()
-
+    _event_row_lock(db, event)
     persona = upsert_persona(
         db,
         first_name=payload.first_name,
@@ -256,30 +339,19 @@ def register(
         phone=payload.phone,
         sede_id=event.sede_id,
     )
-
-    # ¿Ya existe una inscripción activa para esta persona en este evento?
     existing = (
         db.query(models.EventRegistration)
-        .filter(
-            models.EventRegistration.event_id == event.id,
-            models.EventRegistration.persona_id == persona.id,
-        )
+        .filter(models.EventRegistration.event_id == event.id, models.EventRegistration.persona_id == persona.id)
         .order_by(models.EventRegistration.created_at.desc())
         .first()
     )
-    # Si ya está CONFIRMED/CHECKED_IN/WAITLIST,regresamos esa fila (idempotente).
     if existing and existing.registration_status in {"CONFIRMED", "CHECKED_IN", "WAITLIST"}:
         return existing
-
     slots_taken, waitlist_count = count_active_registrations(db, event.id)
     capacity_full = event.capacity_max is not None and slots_taken >= event.capacity_max
-
     if capacity_full and not event.waiting_list_enabled:
         raise RegistrationError("EVENT_FULL", "El evento alcanzó su aforo máximo", 409)
-
     if existing and existing.registration_status == "CANCELLED":
-        # Reactivación: la fila existe pero estaba cancelada. Se resetea el
-        # ciclo de vida para emitir un QR/cancel token frescos.
         existing.deleted_at = None
         existing.cancelled_at = None
         existing.qr_token = None
@@ -288,325 +360,176 @@ def register(
         existing.confirmed_at = None
         existing.check_in_at = None
         existing.check_out_at = None
-        existing.registration_status = (
-            "WAITLIST" if capacity_full else
-            ("PENDING" if event.requires_email_verification else "CONFIRMED")
-        )
+        existing.registration_status = "WAITLIST" if capacity_full else ("PENDING" if event.requires_email_verification else "CONFIRMED")
         existing.waiting_list_position = waitlist_count + 1 if capacity_full else None
-        # Limpia tokens internos previos (verify/cancel) para emitir otros nuevos.
-        _extras = dict(existing.extras or {})
-        for _k in [k for k in _extras if k.startswith("_")]:
-            _extras.pop(_k)
-        existing.extras = _extras
+        extras = dict(existing.extras or {})
+        for key in [key for key in extras if key.startswith("_")]:
+            extras.pop(key)
+        existing.extras = extras
         db.flush()
         reg = existing
     else:
         reg = models.EventRegistration(
             event_id=event.id,
             persona_id=persona.id,
-            registration_status=(
-                "WAITLIST" if capacity_full else
-                ("PENDING" if event.requires_email_verification else "CONFIRMED")
-            ),
+            registration_status="WAITLIST" if capacity_full else ("PENDING" if event.requires_email_verification else "CONFIRMED"),
             waiting_list_position=waitlist_count + 1 if capacity_full else None,
             extras=payload.extras or {},
             source="public_form",
         )
         db.add(reg)
         db.flush()
-
-    # Generar QR solo si está CONFIRMED (no WAITLIST ni PENDING sin verificar).
-    qr_token_plain = None
-    cancel_token_plain = None
     if reg.registration_status == "CONFIRMED":
         reg.confirmed_at = _utcnow()
         qr_token_plain = _issue_qr(db, reg)
         cancel_token_plain = _issue_cancel_token(db, reg)
-
+    else:
+        qr_token_plain = cancel_token_plain = None
     db.commit()
     db.refresh(reg)
-
-    # Email de confirmación (siempre).
+    try:
+        ensure_event_crm_followup(db, event, persona, reg)
+    except Exception:
+        db.rollback()
+        log.exception("CRM follow-up failed for event registration %s", reg.id)
     if reg.registration_status == "CONFIRMED":
-        _send_confirmation_email(
-            db, event, reg, persona, public_base_url,
-            qr_token_plain=qr_token_plain,
-            cancel_token_plain=cancel_token_plain,
-        )
+        _send_confirmation_email(db, event, reg, persona, public_base_url, qr_token_plain=qr_token_plain, cancel_token_plain=cancel_token_plain)
     elif reg.registration_status == "PENDING":
         verify_token, _ = generate_verify_token(reg.id)
         extras = dict(reg.extras or {})
         extras["_verify_token_hash"] = hash_token(verify_token)
-        extras["_verify_expires_at"] = (
-            _utcnow() + _dt.timedelta(hours=VERIFY_EXPIRY_HOURS)
-        ).isoformat()
+        extras["_verify_expires_at"] = (_utcnow() + _dt.timedelta(hours=VERIFY_EXPIRY_HOURS)).isoformat()
         reg.extras = extras
-        # Persiste el hash ANTES del envío: un flush sin commit se pierde al
-        # cerrar la sesión del request y la verificación nunca podría resolverse.
         db.commit()
         db.refresh(reg)
         _send_verification_email(db, event, reg, persona, public_base_url, verify_token)
-
     return reg
 
 
 def _issue_qr(db: Session, reg: models.EventRegistration) -> str:
-    """Genera QR token + hash + marca qr_generated_at. Idempotente.
-
-    Por seguridad (regla de "no persistir secrets planos en DB"):
-    - persiste ``qr_token_hash`` (sha256 del secret) — usado por check-in.
-    - NO persiste ``qr_token`` plano en la columna DB.
-    - ``qr_token`` en DB queda ``None`` permanentemente; el check-in
-      valida solo el ``qr_token_hash`` (con ``secrets.compare_digest``).
-
-    El token plano se retorna al caller para el email de confirmación.
-    Además se guarda en ``reg._qr_token_transient`` (atributo Python no
-    persistido) para que tests / helpers de la misma sesión puedan
-    recuperarlo sin reproducir el envío — útil para verificar el flujo
-    end-to-end sin exponer el token en disco.
-
-    Retorna el token plano (volatile, never persisted).
-    """
     token, token_hash = generate_qr_token(reg.event_id, reg.persona_id)
     reg.qr_token_hash = token_hash
     reg.qr_generated_at = _utcnow()
-    reg._qr_token_transient = token  # transient — nunca persistido en DB
+    reg._qr_token_transient = token
     db.flush()
     return token
 
 
 def _issue_cancel_token(db: Session, reg: models.EventRegistration) -> str:
-    """Genera token de cancelación embebido en el QR link. Idempotente.
-
-    Persiste solo ``_cancel_token_hash`` (regex sha256 del secret) en
-    ``reg.extras``; el token plano se retorna al caller para el email.
-    Nunca se persiste el token plano en DB.
-    """
     secret = secrets.token_hex(16)
     cancel_token = f"{CANCEL_PREFIX}{reg.id}-{secret}"
-    cancel_hash = hashlib.sha256(secret.encode()).hexdigest()
     extras = dict(reg.extras or {})
-    extras["_cancel_token_hash"] = cancel_hash
+    extras["_cancel_token_hash"] = hashlib.sha256(secret.encode()).hexdigest()
     reg.extras = extras
-    reg._cancel_token_transient = cancel_token  # transient — nunca persistido
+    reg._cancel_token_transient = cancel_token
     db.flush()
     return cancel_token
 
 
-def _send_confirmation_email(
-    db: Session,
-    event: models.CrmEvent,
-    reg: models.EventRegistration,
-    persona: models.Persona,
-    public_base_url: str,
-    *,
-    qr_token_plain: str | None = None,
-    cancel_token_plain: str | None = None,
-) -> None:
-    """Envía el email de confirmación con el QR (visible inline via token).
-
-    Los tokens se inyectan desde el caller como kwargs (volatile, nunca leídos
-    de DB) — el email se construye con el token plano del momento, no persistido.
-    """
+def _send_confirmation_email(db, event, reg, persona, public_base_url, *, qr_token_plain=None, cancel_token_plain=None):
     if not persona.email:
         return
     try:
         from html import escape
-
         from backend.services.email import send_email
-
-        qr_link = ""
-        cancel_link = ""
-        if qr_token_plain:
-            # El token de cancelación va embebido en el QR link (plan §4.1):
-            # la página pública de ticket lo usa para la auto-cancelación.
-            cancel_param = f"&cancel={cancel_token_plain}" if cancel_token_plain else ""
-            qr_link = f"{public_base_url}/public/events/{event.id}/qr?token={qr_token_plain}{cancel_param}".strip()
-            if cancel_token_plain:
-                cancel_link = f"{public_base_url}/public/events/{event.id}/cancel?token={cancel_token_plain}".strip()
-
+        cancel_param = f"&cancel={cancel_token_plain}" if cancel_token_plain else ""
+        qr_link = f"{public_base_url}/public/events/{event.id}/qr?token={qr_token_plain}{cancel_param}" if qr_token_plain else ""
+        cancel_link = f"{public_base_url}/public/events/{event.id}/cancel?token={cancel_token_plain}" if cancel_token_plain else ""
         event_date_str = event.event_date.strftime("%d/%m/%Y %H:%M") if event.event_date else "Por confirmar"
-        location_str = event.location or "Por confirmar"
-        html = f"""
-        <h2>¡Inscripción confirmada: {escape(event.name)}!</h2>
-        <p>Hola <strong>{escape(persona.first_name or "")}</strong>,</p>
-        <p>Tu inscripción al evento fue confirmada. Guarda este QR para el día del evento:</p>
-        <ul>
-            <li><strong>Fecha:</strong> {escape(event_date_str)}</li>
-            <li><strong>Lugar:</strong> {escape(location_str)}</li>
-        </ul>
-        {f'<p>Tu QR: <a href="{escape(qr_link)}">descargar</a></p>' if qr_link else ''}
-        {f'<p style="font-size:12px;color:#9ca3af;">¿No podrás asistir? <a href="{escape(cancel_link)}">Cancela tu inscripción</a>.</p>' if cancel_link else ''}
-        <p>¡Te esperamos!</p>
-        """
+        html = f"<h2>¡Inscripción confirmada: {escape(event.name)}!</h2><p>Hola <strong>{escape(persona.first_name or '')}</strong>,</p><p>Fecha: {escape(event_date_str)}</p>{f'<p>Tu QR: <a href=\"{escape(qr_link)}\">ver ticket</a></p>' if qr_link else ''}{f'<p><a href=\"{escape(cancel_link)}\">Cancelar inscripción</a></p>' if cancel_link else ''}"
         send_email(to=persona.email, subject=f"Confirmación: {event.name}", html=html)
     except Exception as exc:
         log.warning("Failed to send confirmation email for registration %s: %s", reg.id, exc)
 
 
-def _send_verification_email(
-    db: Session,
-    event: models.CrmEvent,
-    reg: models.EventRegistration,
-    persona: models.Persona,
-    public_base_url: str,
-    verify_token: str,
-) -> None:
-    """Envía el email con el link de verificación (24h de validez)."""
+def _send_verification_email(db, event, reg, persona, public_base_url, verify_token):
     if not persona.email:
         return
     try:
         from html import escape
-
         from backend.services.email import send_email
-
-        verify_url = f"{public_base_url}/public/events/{event.id}/verify?token={verify_token}".strip()
-        event_date_str = event.event_date.strftime("%d/%m/%Y %H:%M") if event.event_date else "Por confirmar"
-        html = f"""
-        <h2>Verifica tu inscripción: {escape(event.name)}</h2>
-        <p>Hola <strong>{escape(persona.first_name or "")}</strong>,</p>
-        <p>Para confirmar tu inscripción al evento del <strong>{escape(event_date_str)}</strong>,
-        haz clic en el siguiente enlace (válido por {VERIFY_EXPIRY_HOURS}h):</p>
-        <p><a href="{escape(verify_url)}">{escape(verify_url)}</a></p>
-        """
+        verify_url = f"{public_base_url}/public/events/{event.id}/verify?token={verify_token}"
+        html = f"<h2>Verifica tu inscripción: {escape(event.name)}</h2><p><a href=\"{escape(verify_url)}\">Verificar inscripción</a></p>"
         send_email(to=persona.email, subject=f"Verifica tu inscripción: {event.name}", html=html)
     except Exception as exc:
         log.warning("Failed to send verification email for registration %s: %s", reg.id, exc)
 
 
-# ── Verificación de email ────────────────────────────────────────────────────
-
-
-def verify(
-    db: Session,
-    event: models.CrmEvent,
-    token: str,
-    *,
-    public_base_url: str = "",
-) -> models.EventRegistration:
-    """Verifica una inscripción con el token enviado por email.
-
-    Lanza RegistrationError si token inválido/expirado. Al confirmar envía el
-    email con el QR (si hay email en la persona).
-    """
+def verify(db: Session, event: models.CrmEvent, token: str, *, public_base_url: str = "") -> models.EventRegistration:
     if not token.startswith(VERIFY_PREFIX):
         raise RegistrationError("INVALID_TOKEN", "Token de verificación inválido", 400)
     payload = token.removeprefix(VERIFY_PREFIX)
-    # El secret es el ÚLTIMO segmento; el id es todo lo anterior. Los UUID
-    # contienen guiones, así que NO se puede split por el primer '-'
-    # (truncaría el UUID a su primer bloque y la búsqueda fallaría).
     if "-" not in payload:
         raise RegistrationError("INVALID_TOKEN", "Token malformado", 400)
     try:
         reg_id = uuid.UUID(payload.rsplit("-", 1)[0])
     except (ValueError, TypeError):
         raise RegistrationError("INVALID_TOKEN", "Token malformado", 400) from None
-
     reg = db.query(models.EventRegistration).filter(models.EventRegistration.id == reg_id).first()
     if not reg or reg.event_id != event.id or reg.deleted_at is not None:
         raise RegistrationError("NOT_FOUND", "Inscripción no encontrada", 404)
-
     stored_hash = (reg.extras or {}).get("_verify_token_hash")
     if not stored_hash or not secrets.compare_digest(hash_token(token), stored_hash):
         raise RegistrationError("INVALID_TOKEN", "Token inválido", 403)
-
     expires_at_str = (reg.extras or {}).get("_verify_expires_at")
     if not expires_at_str:
         raise RegistrationError("INVALID_TOKEN", "Token sin expiración", 403)
     try:
-        expires_at = _dt.datetime.fromisoformat(expires_at_str)
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=_dt.timezone.utc)
-        if expires_at < _utcnow():
-            raise RegistrationError("TOKEN_EXPIRED", "Token expirado", 403)
-    except (ValueError, TypeError) as exc:
-        raise RegistrationError("INVALID_TOKEN", "Expiración malformada", 403) from exc
-
+        expires_at = _as_utc(_dt.datetime.fromisoformat(expires_at_str))
+    except (ValueError, TypeError):
+        raise RegistrationError("INVALID_TOKEN", "Expiración malformada", 403) from None
+    if expires_at < _utcnow():
+        raise RegistrationError("TOKEN_EXPIRED", "Token expirado", 403)
     if reg.registration_status != "PENDING":
-        # ya verificada o cancelada
         return reg
-
-    # Race de aforo (plan §7, fix #3): serializa conteo+update por evento
-    # bloqueando la fila del CrmEvent (no-op en SQLite; efectivo en Postgres).
-    # Sin este lock, dos verificaciones concurrentes pueden leer
-    # slots_taken < capacity y sobrevender el aforo.
-    db.query(models.CrmEvent).with_for_update().filter(models.CrmEvent.id == event.id).first()
-
+    _event_row_lock(db, event)
     slots_taken, _ = count_active_registrations(db, event.id)
     capacity_full = event.capacity_max is not None and slots_taken >= event.capacity_max
-
     if capacity_full and not event.waiting_list_enabled:
-        # El slot se llenó mientras esperaba verificación — waitlist forzado.
         raise RegistrationError("EVENT_FULL", "El evento se llenó antes de tu verificación", 409)
-
-    qr_token_plain = None
-    cancel_token_plain = None
-    if capacity_full and event.waiting_list_enabled:
+    qr_token_plain = cancel_token_plain = None
+    if capacity_full:
         reg.registration_status = "WAITLIST"
-        reg.waiting_list_position = (reg.waiting_list_position or 0)
+        reg.waiting_list_position = reg.waiting_list_position or 0
     else:
         reg.registration_status = "CONFIRMED"
         reg.confirmed_at = _utcnow()
         qr_token_plain = _issue_qr(db, reg)
         cancel_token_plain = _issue_cancel_token(db, reg)
-
-    # Limpieza de campos de verificación usados.
     extras = dict(reg.extras or {})
     extras.pop("_verify_token_hash", None)
     extras.pop("_verify_expires_at", None)
     reg.extras = extras
-
     db.commit()
     db.refresh(reg)
-
-    # Email con el QR tras verificar (best-effort), igual que el path auto-confirmado.
     if reg.registration_status == "CONFIRMED":
-        _send_confirmation_email(
-            db, event, reg, reg.persona, public_base_url,
-            qr_token_plain=qr_token_plain,
-            cancel_token_plain=cancel_token_plain,
-        )
+        try:
+            ensure_event_crm_followup(db, event, reg.persona, reg)
+        except Exception:
+            db.rollback()
+            log.exception("CRM follow-up failed while verifying registration %s", reg.id)
+        _send_confirmation_email(db, event, reg, reg.persona, public_base_url, qr_token_plain=qr_token_plain, cancel_token_plain=cancel_token_plain)
     return reg
 
 
-# ── Cancelación (con promoción automática de waitlist) ──────────────────────
-
-
 def cancel(db: Session, event: models.CrmEvent, reg: models.EventRegistration) -> models.EventRegistration:
-    """Marca una inscripción como CANCELLED (soft-delete).
-
-    Si el evento tenía aforo lleno y existe waitlist, promueve
-    automáticamente al primero de la cola a CONFIRMED + genera QR + email.
-    """
     if reg.registration_status == "CANCELLED":
         return reg
-
-    # Race de aforo (plan §7, fix #3): bloquear la fila del evento para
-    # serializar la promoción del waitlist — sin lock, dos cancelaciones
-    # concurrentes podrían promover al mismo waitlister dos veces.
-    db.query(models.CrmEvent).with_for_update().filter(models.CrmEvent.id == event.id).first()
-
+    _event_row_lock(db, event)
     was_confirmed_or_checked_in = reg.registration_status in {"CONFIRMED", "CHECKED_IN"}
     reg.registration_status = "CANCELLED"
     reg.cancelled_at = _utcnow()
     reg.deleted_at = _utcnow()
     reg.waiting_list_position = None
     db.flush()
-
     if was_confirmed_or_checked_in:
         _promote_first_waitlist(db, event)
-
     db.commit()
     db.refresh(reg)
     return reg
 
 
 def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
-    """Promueve al primer inscrito en WAITLIST (menor waiting_list_position).
-
-    Caller ya debe haber tomado ``with_for_update`` sobre el CrmEvent
-    (ver ``cancel``) para evitar races entre dos promociones concurrentes.
-    """
     next_in_line = (
         db.query(models.EventRegistration)
         .filter(
@@ -619,15 +542,11 @@ def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
     )
     if not next_in_line:
         return
-
     next_in_line.registration_status = "CONFIRMED"
     next_in_line.confirmed_at = _utcnow()
     next_in_line.waiting_list_position = None
     qr_token_plain = _issue_qr(db, next_in_line)
     cancel_token_plain = _issue_cancel_token(db, next_in_line)
-    db.flush()
-
-    # Re-numerar la cola restante (mantener positions consecutivos).
     remaining = (
         db.query(models.EventRegistration)
         .filter(
@@ -638,49 +557,31 @@ def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
         .order_by(models.EventRegistration.waiting_list_position.asc())
         .all()
     )
-    for idx, r in enumerate(remaining, start=1):
-        r.waiting_list_position = idx
-
-    # Email al promovido (best-effort) — incluye el QR para que el usuario
-    # pueda presentarlo al evento.
+    for idx, row in enumerate(remaining, start=1):
+        row.waiting_list_position = idx
     try:
         if next_in_line.persona and next_in_line.persona.email:
             from html import escape
-
             from backend.services.email import send_email
             public_base_url = os.environ.get("CCF_PUBLIC_BASE_URL", "https://ccf.co")
             qr_link = f"{public_base_url}/public/events/{event.id}/qr?token={qr_token_plain}"
             if cancel_token_plain:
                 qr_link += f"&cancel={cancel_token_plain}"
-            html = f"""
-            <h2>¡Tu inscripción a {escape(event.name)} fue confirmada!</h2>
-            <p>Hola <strong>{escape(next_in_line.persona.first_name or '')}</strong>,</p>
-            <p>Se liberó un cupo. Ya estás confirmado para el evento.</p>
-            <p>Tu QR: <a href="{escape(qr_link)}">ver ticket</a></p>
-            """
+            html = f"<h2>¡Tu inscripción a {escape(event.name)} fue confirmada!</h2><p>Tu QR: <a href=\"{escape(qr_link)}\">ver ticket</a></p>"
             send_email(to=next_in_line.persona.email, subject=f"Cupo confirmado: {event.name}", html=html)
     except Exception as exc:
         log.warning("Failed to send promotion email for reg %s: %s", next_in_line.id, exc)
 
 
-# ── Consulta pública de estado ───────────────────────────────────────────────
-
-
-def find_by_email_or_phone(
-    db: Session, event_id, email: Optional[str] = None, phone: Optional[str] = None
-) -> Optional[models.EventRegistration]:
-    """Encuentra la inscripción activa más reciente por email o phone."""
+def find_by_email_or_phone(db: Session, event_id, email: Optional[str] = None, phone: Optional[str] = None) -> Optional[models.EventRegistration]:
     if not email and not phone:
         return None
+    from sqlalchemy import or_
     q = (
         db.query(models.EventRegistration)
         .join(models.Persona, models.EventRegistration.persona_id == models.Persona.id)
-        .filter(
-            models.EventRegistration.event_id == event_id,
-            models.EventRegistration.deleted_at.is_(None),
-        )
+        .filter(models.EventRegistration.event_id == event_id, models.EventRegistration.deleted_at.is_(None))
     )
-    from sqlalchemy import or_
     conditions = []
     if email:
         conditions.append(models.Persona.email == email)
@@ -690,7 +591,6 @@ def find_by_email_or_phone(
 
 
 def is_event_open_for_registration(event: models.CrmEvent, now=None) -> bool:
-    """Indica window abierta al público. False si evento no requiere registration."""
     now = now or _utcnow()
     if not event.requires_registration:
         return False
@@ -703,3 +603,54 @@ def is_event_open_for_registration(event: models.CrmEvent, now=None) -> bool:
     if closes and now > closes:
         return False
     return True
+
+
+def close_event_attendance(
+    db: Session,
+    event: models.CrmEvent,
+    *,
+    session_date: Optional[_dt.date] = None,
+    closed_by=None,
+):
+    """Cierra una vez la taquilla lógica y marca ausentes de forma atómica."""
+    _event_row_lock(db, event)
+    if event.attendance_closed_at is not None:
+        return {"closed": True, "idempotent": True, "absent": 0, "event_id": str(event.id)}
+    session_date = session_date or (_as_utc(event.event_date).date() if event.event_date else _utcnow().date())
+    registrations = (
+        db.query(models.EventRegistration)
+        .filter(
+            models.EventRegistration.event_id == event.id,
+            models.EventRegistration.registration_status == "CONFIRMED",
+            models.EventRegistration.deleted_at.is_(None),
+        )
+        .with_for_update()
+        .all()
+    )
+    absent = 0
+    for registration in registrations:
+        if registration.check_in_at is not None:
+            continue
+        registration.registration_status = "ABSENT"
+        extras = dict(registration.extras or {})
+        extras["_last_status_change"] = {
+            "from": "CONFIRMED",
+            "to": "ABSENT",
+            "at": _utcnow().isoformat(),
+            "reason": "attendance_closed",
+        }
+        registration.extras = extras
+        ensure_event_crm_followup(
+            db,
+            event,
+            registration.persona,
+            registration,
+            attended=False,
+            commit=False,
+        )
+        absent += 1
+    event.attendance_closed_at = _utcnow()
+    event.attendance_closed_by = closed_by
+    db.flush()
+    db.commit()
+    return {"closed": True, "idempotent": False, "absent": absent, "event_id": str(event.id), "session_date": session_date.isoformat()}
