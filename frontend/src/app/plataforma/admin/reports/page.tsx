@@ -37,8 +37,8 @@ interface AcademyMetrics {
     completion_rate?: number;
     certificates_issued?: number;
     top_courses?: { title?: string; count?: number }[];
-    formal_stats?: Record<string, unknown>;
-    no_formal_stats?: Record<string, unknown>;
+    formal_stats?: { rate?: number; total?: number; completed?: number };
+    no_formal_stats?: { rate?: number; total?: number; completed?: number };
 }
 
 interface BiData {
@@ -57,28 +57,30 @@ function csvCell(value: string | number): string {
 function exportReportsCsv(bi: BiData, activeTab: ReportTab): void {
     const lines: string[] = [];
     const push = (row: (string | number)[]) => lines.push(row.map(csvCell).join(','));
-    const stamp = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     push(['CCF - Reporte BI', activeTab, stamp]);
 
     if (activeTab === 'academic') {
         push([]);
         push(['Curso', 'Inscripciones', 'Certificados', 'Aprobaciones']);
-        const rows = bi.courses.length > 0
-            ? bi.courses
-            : [{ course_id: null, enrollments: bi.academy?.active_students ?? 0, certificates: bi.academy?.certificates_issued ?? 0, approvals: 0 }];
-        rows.forEach((c) => push([String(c.course_id ?? '-'), c.enrollments, c.certificates, c.approvals]));
-    } else {
+        bi.courses.forEach((c) => push([String(c.course_id ?? '-'), c.enrollments, c.certificates, c.approvals]));
+    } else if (activeTab === 'operational') {
         push([]);
         push(['Tipo de Evento', 'Conteo']);
         (bi.warehouse?.by_event ?? []).forEach((ev) => push([ev.event_name, ev.count]));
         push(['TOTAL', bi.warehouse?.total_events ?? 0]);
+    } else {
+        push([]);
+        push(['Estado', 'Detalle']);
+        push(['Perspectiva financiera', 'No conectada al warehouse — consultar módulo de finanzas']);
     }
 
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `bi-reporte-${activeTab}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `bi-reporte-${activeTab}-${stamp}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -91,24 +93,37 @@ export default function AdvancedBIReports() {
     const [activeTab, setActiveTab] = useState<ReportTab>('academic');
     const [bi, setBi] = useState<BiData>(EMPTY_BI);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [retryKey, setRetryKey] = useState(0);
+    const [loadedAt, setLoadedAt] = useState<number | null>(null);
 
     useEffect(() => {
         const controller = new AbortController();
         const fetchAnalytics = async () => {
             if (!token) return;
             setLoading(true);
+            setError(null);
             try {
                 const [warehouse, courses, academy] = await Promise.allSettled([
-                    apiFetch<WarehouseSummary>('/analytics/events/summary/warehouse', { token, signal: controller.signal }),
-                    apiFetch<{ courses: CoursePerfRow[] }>('/analytics/academy/performance', { token, signal: controller.signal }),
-                    apiFetch<AcademyMetrics>('/analytics/dashboard-metrics', { token, signal: controller.signal }),
+                    apiFetch<WarehouseSummary>('/analytics/events/summary/warehouse', { token, cache: 'no-store', signal: controller.signal }),
+                    apiFetch<{ courses: CoursePerfRow[] }>('/analytics/academy/performance', { token, cache: 'no-store', signal: controller.signal }),
+                    apiFetch<AcademyMetrics>('/analytics/dashboard-metrics', { token, cache: 'no-store', signal: controller.signal }),
                 ]);
                 setBi({
                     warehouse: warehouse.status === 'fulfilled' ? warehouse.value : null,
                     courses: courses.status === 'fulfilled' ? (courses.value?.courses ?? []) : [],
                     academy: academy.status === 'fulfilled' ? academy.value : null,
                 });
+                const rejected = [warehouse, courses, academy].filter((r) => r.status === 'rejected');
+                if (rejected.length === 3) {
+                    setError('No se pudieron cargar las métricas del warehouse. Verifica que el servicio de analítica esté disponible.');
+                } else if (rejected.length > 0) {
+                    setError('Algunas métricas no se pudieron cargar. Los datos mostrados pueden estar incompletos.');
+                } else {
+                    setLoadedAt(Date.now());
+                }
             } catch (e) {
+                setError('Error inesperado al cargar el dashboard de analítica.');
                 console.error('BI Analytics fetch failed', e);
             } finally {
                 setLoading(false);
@@ -116,11 +131,11 @@ export default function AdvancedBIReports() {
         };
         fetchAnalytics();
         return () => controller.abort();
-    }, [token]);
+    }, [token, retryKey]);
 
     const academyCompletion = bi.academy?.completion_rate ?? 0;
-    const formalCompletion = typeof bi.academy?.formal_stats?.completion_rate === 'number' ? bi.academy.formal_stats.completion_rate : (bi.academy?.completion_rate ?? 0);
-    const noFormalCompletion = typeof bi.academy?.no_formal_stats?.completion_rate === 'number' ? bi.academy.no_formal_stats.completion_rate : 0;
+    const formalCompletion = bi.academy?.formal_stats?.rate ?? bi.academy?.completion_rate ?? 0;
+    const noFormalCompletion = bi.academy?.no_formal_stats?.rate ?? 0;
     const activeStudents = bi.academy?.active_students ?? 0;
     const certificates = bi.academy?.certificates_issued ?? 0;
     const totalEvents = bi.warehouse?.total_events ?? 0;
@@ -155,11 +170,25 @@ export default function AdvancedBIReports() {
                 secondaryAction={{ label: 'Configurar Alertas', icon: Zap, onClick: () => router.push('/plataforma/admin/settings/system') }}
             />
 
+            {error && (
+                <div role="alert" className="mb-3 flex items-center justify-between gap-4 rounded-lg border border-[hsl(var(--warning)/30%)] bg-warning-soft dark:bg-[hsl(var(--warning))]/15 p-3">
+                    <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{error}</p>
+                    <button
+                        onClick={() => setRetryKey((k) => k + 1)}
+                        className="shrink-0 rounded-md bg-[hsl(var(--primary))] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition-all active:scale-95"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            )}
+
             {/* Sub-navigation Tabs */}
-            <div className="flex flex-wrap items-center gap-4 mb-3 bg-[hsl(var(--surface-2))]/50 dark:bg-white/5 p-2 rounded-lg w-fit border border-[hsl(var(--border))] dark:border-white/10">
+            <div className="flex flex-wrap items-center gap-4 mb-3 bg-[hsl(var(--surface-2))]/50 dark:bg-white/5 p-2 rounded-lg w-fit border border-[hsl(var(--border))] dark:border-white/10" role="tablist">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
                         onClick={() => setActiveTab(tab.id as ReportTab)}
                         className={clsx(
                             "flex items-center gap-3 px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all active:scale-95",
@@ -177,23 +206,24 @@ export default function AdvancedBIReports() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                 {/* Main Insight Card */}
                 <div className="lg:col-span-8 space-y-3">
-                    <section className="relative overflow-hidden rounded-lg bg-[hsl(var(--bg-muted))] border border-white/5 p-4 text-white shadow-2xl group min-h-[400px] flex flex-col justify-between">
+                {activeTab === 'academic' && (<>
+                    <section className="relative overflow-hidden rounded-lg bg-[#0f172a] dark:bg-[hsl(var(--bg-muted))] border border-white/5 p-4 text-white shadow-2xl group min-h-[400px] flex flex-col justify-between">
                         <div className="absolute top-0 right-0 -mr-24 -mt-24 size-96 bg-[hsl(var(--info))]/20 rounded-full blur-[100px] group-hover:bg-[hsl(var(--info))]/30 transition-all duration-1000" />
 
                         <div className="relative z-10 flex justify-between items-start">
                             <div>
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="px-3 py-1 bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] border border-[hsl(var(--info)/100%)]/30 rounded-full text-2xs font-semibold uppercase tracking-wide flex items-center gap-2">
-                                        <Layers size={12} /> Perspectiva de {activeTab}
+                                        <Layers size={12} /> Perspectiva de {tabs.find((t) => t.id === activeTab)?.label ?? activeTab}
                                     </div>
-                                    <span className="text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide">Actulizado hace 2 min</span>
+                                    <span className="text-white/60 text-2xs font-bold uppercase tracking-wide">Actualizado {loadedAt ? new Date(loadedAt).toLocaleTimeString() : '—'}</span>
                                 </div>
                                 <h3 className="text-lg font-bold tracking-tighter leading-none mb-2">Indicador de Eficacia</h3>
-                                <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-md">Análisis predictivo basado en el comportamiento del último trimestre.</p>
+                                <p className="text-white/70 text-sm font-medium max-w-md">Análisis predictivo basado en el comportamiento del último trimestre.</p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
                                 <span className="text-xl font-bold text-white tracking-tighter">
-                                    {loading ? '—' : `${(academyCompletion * 100).toFixed(1)}%`}
+                                    {loading ? '—' : `${academyCompletion.toFixed(1)}%`}
                                 </span>
                                 <div className="flex items-center gap-1.5 text-[hsl(var(--success))] text-2xs font-semibold uppercase tracking-wide">
                                     <TrendingUp size={14} /> Tasa de finalización
@@ -230,7 +260,7 @@ export default function AdvancedBIReports() {
                                 <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] flex items-center justify-center">
                                     <Users size={24} />
                                 </div>
-                                <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"><ChevronDown size={18} /></button>
+                                <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors" aria-label="Opciones de detalle"><ChevronDown size={18} /></button>
                             </div>
                             <div>
                                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Estudiantes Activos</p>
@@ -239,17 +269,17 @@ export default function AdvancedBIReports() {
                             <div className="space-y-3">
                                 <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <span>Formal</span>
-                                    <span>{loading ? '—' : `${Math.round(formalCompletion * 100)}%`} compl.</span>
+                                    <span>{loading ? '—' : `${Math.round(formalCompletion)}%`} compl.</span>
                                 </div>
                                 <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-[hsl(var(--primary))] w-[92%]" />
+                                    <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${Math.min(100, Math.max(0, formalCompletion))}%` }} />
                                 </div>
                                 <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <span>No Formal</span>
-                                    <span>{loading ? '—' : `${Math.round(noFormalCompletion * 100)}%`} compl.</span>
+                                    <span>{loading ? '—' : `${Math.round(noFormalCompletion)}%`} compl.</span>
                                 </div>
                                 <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-[hsl(var(--surface-2))] w-[64%]" />
+                                    <div className="h-full bg-[hsl(var(--surface-2))]" style={{ width: `${Math.min(100, Math.max(0, noFormalCompletion))}%` }} />
                                 </div>
                             </div>
                         </div>
@@ -259,7 +289,7 @@ export default function AdvancedBIReports() {
                                 <div className="size-7 rounded-lg bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] flex items-center justify-center">
                                     <Target size={24} />
                                 </div>
-                                <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"><Filter size={18} /></button>
+                                <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors" aria-label="Filtros de métrica"><Filter size={18} /></button>
                             </div>
                             <div>
                                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Certificados Emitidos</p>
@@ -272,6 +302,50 @@ export default function AdvancedBIReports() {
                             </div>
                         </div>
                     </div>
+                </>)}
+                {activeTab === 'operational' && (
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-xl min-h-[400px]">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-lg font-bold tracking-tighter uppercase dark:text-white">Actividad Operativa</h3>
+                            <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{totalEvents} eventos · últimos 7 días</span>
+                        </div>
+                        {loading ? (
+                            <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando eventos del warehouse…</p>
+                        ) : (bi.warehouse?.by_event?.length ?? 0) === 0 ? (
+                            <p className="text-sm text-[hsl(var(--text-secondary))]">Sin eventos registrados en el warehouse.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {(bi.warehouse?.by_event ?? []).map((ev) => {
+                                    const pct = totalEvents > 0 ? Math.round((ev.count / totalEvents) * 100) : 0;
+                                    return (
+                                        <div key={ev.event_name} className="flex items-center gap-3">
+                                            <span className="w-56 shrink-0 truncate text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{ev.event_name}</span>
+                                            <div className="h-2 flex-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
+                                                <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${pct}%` }} />
+                                            </div>
+                                            <span className="w-16 shrink-0 text-right text-xs font-bold text-[hsl(var(--text-secondary))]">{ev.count}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </section>
+                )}
+                {activeTab === 'financial' && (
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-xl min-h-[400px] flex flex-col items-center justify-center text-center">
+                        <DollarSign size={40} className="mb-3 text-[hsl(var(--text-secondary))]" />
+                        <h3 className="text-lg font-bold tracking-tighter uppercase dark:text-white">Perspectiva Financiera</h3>
+                        <p className="mt-2 max-w-sm text-sm text-[hsl(var(--text-secondary))]">
+                            La agregación financiera por sede aún no está conectada al warehouse. Mientras tanto, consulta el módulo de finanzas.
+                        </p>
+                        <button
+                            onClick={() => router.push('/plataforma/finances')}
+                            className="mt-4 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-all active:scale-95"
+                        >
+                            Ir a Finanzas
+                        </button>
+                    </section>
+                )}
                 </div>
 
                 {/* Sidebar BI Tools */}
@@ -283,7 +357,10 @@ export default function AdvancedBIReports() {
                         </div>
 
                         <div className="space-y-4">
-                            <button className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent hover:border-[hsl(var(--info)/100%)]/30 transition-all group">
+                            <button
+                                onClick={() => setRetryKey((k) => k + 1)}
+                                className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent hover:border-[hsl(var(--info)/100%)]/30 transition-all group"
+                            >
                                 <div className="flex items-center gap-4 text-left">
                                     <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-sm group-hover:scale-110 transition-transform">
                                         <Calendar size={18} />
@@ -296,9 +373,9 @@ export default function AdvancedBIReports() {
                                 <ArrowUpRight size={16} className="text-[hsl(var(--text-secondary))]" />
                             </button>
 
-                            <button className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent hover:border-[hsl(var(--info)/100%)]/30 transition-all group">
+                            <div className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-transparent">
                                 <div className="flex items-center gap-4 text-left">
-                                    <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-sm group-hover:scale-110 transition-transform">
+                                    <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-sm">
                                         <BookOpen size={18} />
                                     </div>
                                     <div>
@@ -306,8 +383,7 @@ export default function AdvancedBIReports() {
                                         <p className="text-2xs font-bold text-[hsl(var(--text-secondary))]">Modalidad Formal</p>
                                     </div>
                                 </div>
-                                <ArrowUpRight size={16} className="text-[hsl(var(--text-secondary))]" />
-                            </button>
+                            </div>
                         </div>
 
                         <div className="pt-8 border-t border-[hsl(var(--border))] dark:border-white/5">
@@ -316,11 +392,23 @@ export default function AdvancedBIReports() {
                                 <PieChart size={14} className="text-[hsl(var(--text-secondary))]" />
                             </div>
                             <div className="relative size-10 mx-auto mb-3">
-                                <svg className="size-full -rotate-90 drop-shadow-2xl" viewBox="0 0 36 36">
-                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="rgba(59,130,246,0.1)" strokeWidth="4" />
-                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--info))" strokeWidth="4" strokeDasharray="65 100" />
-                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--text-primary))" strokeWidth="4" strokeDasharray="35 100" strokeDashoffset="-65" />
-                                </svg>
+                                {(() => {
+                                    const top = (bi.warehouse?.by_event ?? []);
+                                    const seg1 = top[0]?.count ?? 0;
+                                    const seg2 = top[1]?.count ?? 0;
+                                    const total = Math.max(1, totalEvents);
+                                    const p1 = Math.round((seg1 / total) * 100);
+                                    const p2 = Math.round((seg2 / total) * 100);
+                                    const p3 = Math.max(0, 100 - p1 - p2);
+                                    return (
+                                        <svg className="size-full -rotate-90 drop-shadow-2xl" viewBox="0 0 36 36">
+                                            <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="rgba(59,130,246,0.1)" strokeWidth="4" />
+                                            {p1 > 0 && <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--info))" strokeWidth="4" strokeDasharray={`${p1} 100`} />}
+                                            {p2 > 0 && <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--primary))" strokeWidth="4" strokeDasharray={`${p2} 100`} strokeDashoffset={`-${p1}`} />}
+                                            {p3 > 0 && <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--text-primary))" strokeWidth="4" strokeDasharray={`${p3} 100`} strokeDashoffset={`-${p1 + p2}`} />}
+                                        </svg>
+                                    );
+                                })()}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                                     <span className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">{loading ? '—' : totalEvents}</span>
                                     <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Eventos</span>
