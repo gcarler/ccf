@@ -148,16 +148,18 @@ cd /root/ccf && source venv/bin/activate
 python scripts/test_workspace_quality.py
 ```
 
-### 6.2 Suite de workspace (246 tests)
+### 6.2 Suite de workspace (246 tests validados)
 
 ```bash
 cd /root/ccf && source venv/bin/activate
 python -m pytest -q --no-header -o addopts= -p no:cacheprovider --no-cov \
   tests/test_workspace_audit.py tests/test_workspace_flags.py \
   tests/test_workspace_incidents.py tests/test_workspace_snapshots.py \
-  tests/test_workspace_storage.py tests/test_workspace_storage_extended.py \
-  tests/test_system_final.py tests/test_workspace_api.py
+  tests/test_workspace_storage.py tests/test_system_final.py \
+  tests/test_workspace_api.py
 ```
+
+> `test_workspace_storage_extended.py` (cobertura extra de storage) no estaba en la corrida validada de 246; añadirlo suma más tests.
 
 ### 6.3 Gate de clone fresco (imprescindible tras cambios de storage)
 
