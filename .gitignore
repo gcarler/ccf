@@ -97,3 +97,7 @@ frontend/tsconfig.tsbuildinfo
 # Runtime feature flags snapshot (regenerated on demand)
 backend/data/feature_flags*.ndjson
 static/chat_attachments/
+
+# CCF: scratch QA/ops scripts — contain hardcoded production credentials
+# (admin login in regen_thumbnail.mjs/verify_thumbnail.py). NEVER commit these.
+backend/scratch/
