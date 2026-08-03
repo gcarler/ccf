@@ -61,7 +61,12 @@ export function useWhiteboardCollab({ projectId, token, canvasRef, userName, can
     let socket: WebSocket | null = null;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const url = `${protocol}//${window.location.host}/api/v1/projects/${projectId}/whiteboard/ws?token=${token}`;
+    // PZ-05/PZ-13: el endpoint real vive en /api/projects (mismo router que
+    // el resto del módulo), no en /api/v1/projects (404). clientId permite
+    // al backend ecoar sender_id para que esta pestaña filtre su propio eco.
+    const url =
+      `${protocol}//${window.location.host}/api/projects/${projectId}/whiteboard/ws` +
+      `?token=${encodeURIComponent(token)}&clientId=${encodeURIComponent(clientId.current)}`;
 
     const connect = () => {
       if (!shouldRun.current) return;
@@ -71,7 +76,7 @@ export function useWhiteboardCollab({ projectId, token, canvasRef, userName, can
       socket.onopen = () => {
         setConnected(true);
         reconnectAttempt.current = 0;
-        socket?.send(JSON.stringify({ type: "join", name: userName }));
+        socket?.send(JSON.stringify({ type: "join", name: userName, clientId: clientId.current }));
       };
 
       socket.onmessage = (event) => {

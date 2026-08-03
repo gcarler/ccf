@@ -64,7 +64,8 @@ class RedisPubSubManager:
                     continue
                 await self._dispatch(payload)
         except asyncio.CancelledError:  # pragma: no cover
-            subscription.unsubscribe()
+            if hasattr(subscription, "unsubscribe"):
+                subscription.unsubscribe()
             raise
 
     async def _dispatch(self, payload: dict) -> None:
@@ -119,14 +120,21 @@ class RedisPubSubManager:
             await connection.send_text(message)
 
     async def broadcast(self, message: str, room: Optional[str] = None) -> None:
+        # Entrega ÚNICA: el listener local (_listen_for_events) re-despacha el
+        # mensaje publicado a las conexiones de esta instancia. No llamar
+        # también a _send_local aquí: duplicaría la entrega local (cada
+        # broadcast llegaría 2 veces a cada cliente).
+        # _ensure_listener() es idempotente: garantiza que la entrega local
+        # nunca quede huérfana si la tarea del listener se detuvo.
+        await self._ensure_listener()
         payload = {"type": "broadcast", "room": room, "data": message}
         await self._publish(payload)
-        await self._send_local(message, room)
 
     async def broadcast_event(self, event: dict, room: Optional[str] = None) -> None:
+        # Ídem broadcast(): única entrega vía el listener pub/sub.
+        await self._ensure_listener()
         payload = {"type": "notify", "room": room, "data": event}
         await self._publish(payload)
-        await self._send_local(event, room)
 
     async def _send_local(self, data, room: Optional[str] = None) -> None:
         message = data if isinstance(data, str) else json.dumps(data)
