@@ -58,6 +58,10 @@ Módulo de espacio de trabajo transversal. Proporciona pizarra (whiteboard), tar
 
 ## Pendientes
 
+### DONE-WORKSPACE-002 (2026-08-02) — Cierre: des-trackear los logs legacy de `logs/`
+
+> CERRADO el 2026-08-02 con `git rm --cached` de los cinco logs legacy de `logs/` (`frontend-dev-4123.log`, `frontend-dev-4123.err.log`, `frontend-dev-4124.log`, `frontend-dev-4124.err.log`, `server.log`), trackeados desde el commit inicial `3e41ed9f` (mayo 2026). Mismo criterio de DONE-WORKSPACE-001: archivos regenerables/legacy no se versionan. El patrón `*.log` del `.gitignore` (línea 23) ya los excluye, y los archivos siguen en disco (solo fuera del index). El scheduler solo emite a stdout redirigido a `logs/scheduler.log` (ya ignorado); los 5 logs des-trackeados no tienen diffs de runtime activos (mtime mayo 2026), por lo que no ensucian el árbol.
+
 ### DONE-WORKSPACE-001 (2026-08-02) — Cierre: mover snapshots de feature flags fuera del árbol de git
 
 > CERRADO el 2026-08-02 con `git rm --cached` de los cinco snapshots de feature flags (commits del cierre): los tres `feature_flags_*.ndjson` (audit/notifications/snapshot_history) + `feature_flags.json` y `feature_flags_incidents.json` quedan des-trackeados y el `.gitignore` los excluye (`backend/data/feature_flags*.ndjson` y `backend/data/feature_flags*.json`); se regeneran bajo demanda sin ensuciar el working tree. Los archivos siguen en disco. Nota de diseño: `feature_flags.json` es la configuracion activa del workspace (features/reglas); en un clone fresco arranca del `DEFAULT_WORKSPACE_CONFIG` en codigo (fallback ya probado por los 246 tests verdes sin los archivos).
