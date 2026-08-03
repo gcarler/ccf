@@ -1288,10 +1288,13 @@ def test_f02bis_students_count_in_list_for_sede_course(client, db_session):
     )
 
 
-def test_f02bis_students_count_in_detail_includes_auto_enroll(client, db_session):
-    """F-02bis → ``GET /api/academy/courses/{id}`` emite ``students_count`` y,
-    como el endpoint auto-inscribe al viewer (comportamiento preexistente), el
-    admin que consulta suma su propia inscripción: 1 estudiante + 1 admin = 2."""
+def test_f02bis_students_count_in_detail_excludes_viewer(client, db_session):
+    """F-02bis → ``GET /api/academy/courses/{id}`` expone ``students_count``
+    con scope Axioma-3 estricto. El detalle es de sólo lectura y NO auto-inscribe
+    al viewer (corrección 2026-08-03 del auto-enroll introducido en 922282e0):
+    el admin que consulta el detalle sólo ve el 1 estudiante inscrito previamente,
+    sin sumar su propia inscripción. Para auto-inscribirse, el actor debe usar
+    POST /enrollments (rate-limit + scope + reactivación soft-delete alineados)."""
     admin, _, sede = seed_admin(db_session)
     course = _create_course(db_session, sede_id=sede.id, is_published=True)
     _, persona_st, _ = seed_user_with_role(
@@ -1304,8 +1307,8 @@ def test_f02bis_students_count_in_detail_includes_auto_enroll(client, db_session
     headers = auth_headers(client, email=admin.email)
     resp = client.get(f"/api/academy/courses/{course.id}", headers=headers)
     assert resp.status_code == 200
-    assert resp.json()["students_count"] == 2, (
-        "F-02bis: detalle debe contar 1 estudiante + auto-enroll del admin"
+    assert resp.json()["students_count"] == 1, (
+        "F-02bis: detalle cuenta 1 estudiante inscrito; el admin viewer no se auto-inscribe"
     )
 
 
@@ -1328,8 +1331,8 @@ def test_f02bis_students_count_zero_for_global_course_sede_manager(client, db_se
     matched = [c for c in resp_list.json() if c["id"] == str(global_course.id)]
     assert matched, "F-02bis: curso global debe ser visible en list (lectura captación)"
     assert matched[0]["students_count"] == 0, "F-02bis: global → count 0 para Manager con sede"
-    # Detail: get_course auto-inscribe al admin, pero el scope Axioma-3 sigue
-    # excluyendo el curso global del count.
+    # Detail: get_course ya NO auto-inscribe al admin (corrección 2026-08-03),
+    # y el scope Axioma-3 sigue excluyendo el curso global del count.
     resp_detail = client.get(f"/api/academy/courses/{global_course.id}", headers=headers)
     assert resp_detail.status_code == 200
     assert resp_detail.json()["students_count"] == 0, "F-02bis: detalle global → count 0"
