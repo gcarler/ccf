@@ -1150,12 +1150,46 @@ class CasoCreate(BaseModel):
 
 
 class MessagingSend(BaseModel):
+    """Payload for CRM outbound messaging.
+
+    The CRM UI sends a channel/content plus either a direct persona target or
+    one or more supported segments. ``template_id`` remains optional for
+    callers that only use the free-form message flow.
+    """
+
     model_config = ConfigDict(extra="forbid")
 
-    template_id: UUID
+    channel: str = Field(..., min_length=1, max_length=30)
+    content: str = Field(..., min_length=1, max_length=10000)
+    template_id: Optional[UUID] = None
+    persona_id: Optional[UUID] = None
+    target_segments: list[str] = Field(default_factory=list)
+    campaign_name: Optional[str] = Field(default=None, max_length=120)
     recipient_ids: list[UUID] = Field(default_factory=list)
     recipient_role: Optional[str] = None
     variables: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("channel")
+    @classmethod
+    def normalize_channel(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if normalized not in {"whatsapp", "sms", "email"}:
+            raise ValueError("channel must be whatsapp, sms, or email")
+        return normalized
+
+    @field_validator("content")
+    @classmethod
+    def validate_content(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("content must not be blank")
+        return normalized
+
+    @model_validator(mode="after")
+    def require_target(self) -> "MessagingSend":
+        if self.persona_id is None and not self.target_segments:
+            raise ValueError("persona_id or target_segments is required")
+        return self
 
 
 class GrupoUpdate(BaseModel):
