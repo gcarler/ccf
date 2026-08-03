@@ -116,6 +116,10 @@ class CrmEvent(Base):
     target_role_ids = Column(JSON, nullable=True)
     target_persona_ids = Column(JSON, nullable=True)
     fixed_date = Column(DateTime(timezone=True), nullable=True)
+    attendance_closed_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    attendance_closed_by = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+    )
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
@@ -269,10 +273,14 @@ class EventRegistration(Base):
     updated_at = Column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
     )
+    crm_case_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     event = relationship("CrmEvent", back_populates="registrations")
     persona = relationship("Persona", foreign_keys=[persona_id])
     checked_in_by_persona = relationship("Persona", foreign_keys=[checked_in_by])
+    crm_case = relationship("CasoCRM", foreign_keys=[crm_case_id], back_populates="event_registrations")
 
 
 class EventCampaign(Base):
@@ -591,6 +599,9 @@ class Persona(Base):
         UUID(as_uuid=True), ForeignKey("grupos_evangelismo.id", ondelete="SET NULL"), nullable=True, index=True
     )
     origen_sesion_id = Column(UUID(as_uuid=True), ForeignKey("sesiones_grupo.id", ondelete="SET NULL"), nullable=True)
+    origen_evento_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     origen_fecha = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -641,6 +652,7 @@ class Persona(Base):
     colombian_department = relationship("ColombianDepartment", foreign_keys=[colombian_department_id])
     origen_estrategia = relationship("EstrategiaEvangelismo", foreign_keys=[origen_estrategia_id])
     origen_grupo = relationship("GrupoEvangelismo", foreign_keys=[origen_grupo_id])
+    origen_evento = relationship("CrmEvent", foreign_keys=[origen_evento_id])
 
     positions = relationship("PersonaPosition", back_populates="persona")
     donations = relationship("Donation", foreign_keys="Donation.persona_id", back_populates="persona")
