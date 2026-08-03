@@ -142,9 +142,13 @@ export default function CandidatesDashboard() {
         {
             id: 'actions',
             header: '',
-            cell: () => <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all hover:bg-info-soft dark:hover:bg-white/5 rounded-md"><ChevronRight size={18} /></button>
+            cell: ({ row }) => <button
+                onClick={() => addToast(`Detalle de ${row.original.username} próximamente`, 'info')}
+                className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all hover:bg-info-soft dark:hover:bg-white/5 rounded-md"
+                aria-label={`Ver detalle de ${row.original.username}`}
+            ><ChevronRight size={18} /></button>
         }
-    ], []);
+    ], [addToast]);
 
     if (!isAuthenticated) return null;
 
@@ -162,7 +166,7 @@ export default function CandidatesDashboard() {
                 tags={['Automated Screening', 'Real-time', 'Hitos']}
                 watchers={['Coordinación Académica', 'Pastoral']}
                 primaryAction={{ label: 'Aprobar Masivamente', icon: CheckCircle2, onClick: handleApproveReady }}
-                secondaryAction={{ label: 'Refrescar Lista', icon: Clock, onClick: fetchCandidates }}
+                secondaryAction={{ label: 'Refrescar Lista', icon: Clock, onClick: () => fetchCandidates() }}
             />
 
             <div className="space-y-3 pb-4">
