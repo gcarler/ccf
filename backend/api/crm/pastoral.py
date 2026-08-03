@@ -654,6 +654,8 @@ async def send_crm_message(
     target_segments = getattr(payload, "target_segments", None) or []
 
     if persona_id:
+        # C-05: Validar sede del destinatario cuando se pasa persona_id directo.
+        _get_scoped_persona(db, current_user, persona_id)
         target_personas = [{"id": persona_id}]
     else:
         persona_map: dict[str, models.Persona] = {}

@@ -137,7 +137,9 @@ def get_communication_logs(
     (API) deben pasar explícitamente su ``user_sede`` recibido desde JWT vía
     ``get_user_sede_id``.
     """
-    query = db.query(models.CommunicationLog)
+    query = db.query(models.CommunicationLog).filter(
+        models.CommunicationLog.deleted_at.is_(None)
+    )
     if sede_id is not None:
         sede_uuid = sede_id if isinstance(sede_id, uuid.UUID) else _coerce_sede_uuid(sede_id)
         if sede_uuid is not None:
@@ -161,7 +163,10 @@ def _coerce_sede_uuid(value) -> "uuid.UUID | None":
 
 
 def get_communication_log(db: Session, log_id: str) -> Optional[models.CommunicationLog]:
-    return db.query(models.CommunicationLog).filter(models.CommunicationLog.id == log_id).first()
+    return db.query(models.CommunicationLog).filter(
+        models.CommunicationLog.id == log_id,
+        models.CommunicationLog.deleted_at.is_(None),
+    ).first()
 
 
 def update_communication_log(
