@@ -27,12 +27,14 @@ function MessagesPage() {
         conversations,
         filteredConversations,
         loading: loadingConversations,
+        error: conversationsError,
         filter,
         setFilter,
         addConversation,
         updateConversationFromMessage,
         getOtherParticipant,
         totalUnread,
+        loadConversations,
     } = useConversations({ token, userPersonaId: userId });
 
     const searchParams = useSearchParams();
@@ -65,6 +67,15 @@ function MessagesPage() {
         onMessage: (convId, msg) => {
             const isActive = activeConv?.id === convId;
             updateConversationFromMessage(convId, msg, isActive);
+        },
+        onError: (context) => {
+            const label =
+                context === 'load'
+                    ? 'No se pudieron cargar los mensajes'
+                    : context === 'load_older'
+                    ? 'No se pudieron cargar mensajes anteriores'
+                    : 'No se pudo actualizar la conversación';
+            addToast(label, 'error');
         },
     });
 
@@ -118,6 +129,8 @@ function MessagesPage() {
             conversations={conversations}
             filteredConversations={filteredConversations}
             loading={loadingConversations}
+            error={conversationsError}
+            onRetry={loadConversations}
             filter={filter}
             onFilterChange={setFilter}
             activeConvId={activeConv?.id ?? null}
