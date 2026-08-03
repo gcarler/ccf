@@ -5,6 +5,7 @@ import { Church, Heart, Mail, Globe } from 'lucide-react';
 import { SITE_NAME, SITE_URL, SITE_EMAIL } from '@/lib/site-config';
 import { useSiteBranding } from '@/lib/site-branding';
 import OptimizedImage from '@/components/ui/OptimizedImage';
+import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 
 type FooterLink = {
     label: string;
@@ -31,7 +32,7 @@ const footerLinks: FooterGroup[] = [
         links: [
             { label: 'CRM Pastoral', href: '/plataforma/crm' },
             { label: 'Academia', href: '/plataforma/academy' },
-            { label: 'Proyectos', href: '/plataforma/projects?view=list#projects-list' },
+            { label: 'Proyectos', href: PROJECTS_LIST_ROUTE },
         ],
     },
     {

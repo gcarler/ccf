@@ -30,7 +30,12 @@ module.exports = {
       instances: 1,
       exec_mode: "fork",
       autorestart: true,
-      max_memory_restart: "500M",
+      // Restart ceiling: the CMS gate (smoke + preview + public contract
+      // back-to-back) spikes the backend RSS to ~1.2GB (PM2 daemon log:
+      // current_memory=1217822720 on 2026-08-02). At 500M/1G PM2 killed the
+      // process mid-run, causing intermittent 500s via the Next.js proxy.
+      // 2G keeps the gate green on this 32GB host.
+      max_memory_restart: "2G",
       max_restarts: 10,
       min_uptime: "10s",
       restart_delay: 1000,

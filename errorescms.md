@@ -622,7 +622,13 @@ tags, menus, sites) mantienen su patrón que es semanticamente distinto
 - Info: 18/18 cerrados (I-01/I-03/I-07/I-16/I-18 fix, I-02/I-04..I-06/I-08..I-15/I-17 deuda aceptada)
 - Pendientes: **0 hallazgos** — auditoría forense del módulo CMS 100% cerrada.
 
+### Fallo de test preexistente resuelto (2026-08-02)
+
+| ID | Estado | Detalle | Commit |
+|---|---|---|---|
+| T-01 | ✅ CERRADO | Los 2 tests R3 de `frontend/src/app/plataforma/cms/__tests__/pages_r1_r6_verification.test.tsx` ('Aviso sobre Cursos' / 'Gran Evento de Sanidad' en `AnnouncementsAdmin`) fallaban de forma **estable y preexistente** (git-clean, reproducible en aislamiento — no flaky). Causa raíz: el `beforeEach` global mockeaba `mockListCmsPostsByCategory` con posts de testimonios (sin `title`) para **todas** las categorías; la página de comunicados mapea `postToAnnouncement` → `normalizeAnnouncement` → `title: item.title || 'Comunicado'`, así que todos los anuncios se renderizaban como "Comunicado" y los tests no encontraban los títulos esperados. El componente es correcto con datos reales (el backend emite `title`). Fix (test-only): el mock ahora es category-aware — devuelve fixtures de anuncios (`title`/`slug`/`content`/`category`/`is_featured`/`status`) cuando `category === 'announcements'` y los posts de testimonios originales para el resto (R1 testimonials preservado). Validado: vitest 11/11, eslint 0 errores (11 warnings `no-explicit-any` preexistentes), tsc limpio. | (pendiente commit) |
+
 ---
 
 *Documento generado por auditoría forense línea por línea del código fuente del módulo CMS.*
-*Total: 49 hallazgos (6 críticos, 11 altos, 14 medios, 18 informativos) + 10 funcionalidades faltantes.*
+*Total: 49 hallazgos (6 críticos, 11 altos, 14 medios, 18 informativos) + 10 funcionalidades faltantes. + 1 hallazgo de infraestructura de tests resuelto (T-01, 2026-08-02).*

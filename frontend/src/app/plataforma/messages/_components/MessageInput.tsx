@@ -142,9 +142,15 @@ export function MessageInput({
             'audio/ogg',
             'audio/wav',
         ];
-        const isAllowed = allowedTypes.some((t) => file.type.startsWith(t) || file.type.includes(t));
-        if (!isAllowed) return;
-        if (file.size > 25 * 1024 * 1024) return;
+        const isAllowed = allowedTypes.some((t) => file.type.startsWith(t) || file.type.includes(t)) || file.type === '';
+        if (!isAllowed) {
+            alert('Tipo de archivo no permitido. Solo se aceptan imágenes, PDFs, documentos, videos y audios básicos.');
+            return;
+        }
+        if (file.size > 25 * 1024 * 1024) {
+            alert('El archivo es demasiado grande. El límite máximo es 25 MB.');
+            return;
+        }
         setAttachment(file);
         setAttachmentPreviewUrl(URL.createObjectURL(file));
     };

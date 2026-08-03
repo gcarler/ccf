@@ -124,13 +124,41 @@ if (authEnabled) {
 
 const startBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const startServer = spawn(startBin, ['run', 'start', '--', '-p', port], {
+  // npm launches `next start` as a child. On Unix, a detached process group
+  // lets cleanup terminate both the npm wrapper and its Next descendant when
+  // Playwright or this runner is interrupted. Windows uses taskkill /T below.
+  detached: process.platform !== 'win32',
   stdio: 'inherit',
   env,
 });
 
+let serverStopRequested = false;
+
 const stopServer = () => {
-  if (!startServer.killed) {
-    startServer.kill('SIGTERM');
+  if (serverStopRequested || !startServer.pid) {
+    return;
+  }
+  serverStopRequested = true;
+
+  if (process.platform === 'win32') {
+    // npm.cmd may have spawned several descendants; /T terminates the full
+    // tree and /F prevents a stuck Next child from surviving the runner.
+    spawnSync('taskkill', ['/pid', String(startServer.pid), '/T', '/F'], {
+      stdio: 'ignore',
+    });
+    return;
+  }
+
+  try {
+    // Negative PIDs address the detached process group, not an unrelated
+    // service that happens to use another port.
+    process.kill(-startServer.pid, 'SIGTERM');
+  } catch (error) {
+    // The group may already have exited. Preserve the runner's original
+    // result for that expected case, while surfacing unexpected failures.
+    if (error?.code !== 'ESRCH') {
+      throw error;
+    }
   }
 };
 

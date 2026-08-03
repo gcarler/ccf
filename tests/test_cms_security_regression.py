@@ -21,6 +21,7 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from backend.core.sanitize_html import sanitize_html
+from backend.exceptions.cms import SiteNotFoundError, CmsConflictError
 from backend.schemas.cms_v2_sections import validate_section_props
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
@@ -46,7 +47,7 @@ class TestTenantIsolation:
         site.sede_id = uuid.uuid4()
         user = _FakeUser(role_name="pastor")  # rol pastoral sin sede -> no global
 
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(SiteNotFoundError) as exc:
             _assert_site_sede_scope(site, actor_sede=None, current_user=user)
         assert exc.value.status_code == 404
 
@@ -58,7 +59,7 @@ class TestTenantIsolation:
         site.sede_id = uuid.uuid4()
         user = _FakeUser(role_name="pastor")
 
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(SiteNotFoundError) as exc:
             _assert_site_sede_scope(site, actor_sede=actor_sede, current_user=user)
         assert exc.value.status_code == 404
 
@@ -83,7 +84,7 @@ class TestTenantIsolation:
         site.sede_id = None
         user = _FakeUser(role_name="pastor")
 
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(SiteNotFoundError) as exc:
             _assert_site_sede_scope(site, actor_sede=actor_sede, current_user=user)
         assert exc.value.status_code == 404
 

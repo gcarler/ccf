@@ -78,6 +78,9 @@ def main() -> int:
         "1. Inbox y notificaciones",
         "tests/test_messaging.py",
         "tests/test_messaging_api.py",
+        "tests/test_messaging_security_gaps.py",
+        "tests/test_messaging_audit_phase1.py",
+        "tests/test_messaging_100pct.py",
     )
 
     hardening_ok = run_pytest(
@@ -89,6 +92,10 @@ def main() -> int:
     chat_ok = run_pytest(
         "3. Chat directo",
         "tests/test_chat_sede_isolation.py",
+        "tests/test_chat_100pct_coverage.py",
+        "tests/test_chat_api.py",
+        "tests/test_chat_gap.py",
+        "tests/test_chat_extended.py",
     )
 
     section("RESUMEN")
