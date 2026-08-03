@@ -36,49 +36,80 @@ const VALOR_ICONS: Record<string, React.ReactNode> = {
 
 export default function NosotrosPage() {
     const heroPage = useCmsV2Page('about');
-    const heroCms = heroPage?.blocks?.hero;
-    const aboutCms = heroPage?.blocks?.about;
+
+    /* ── Section resolution: modern simple keys + legacy prefixed keys ── */
+    const heroCms = heroPage?.blocks?.hero ?? heroPage?.blocks?.ccf_about_hero;
+    const aboutCms = heroPage?.blocks?.about ?? heroPage?.blocks?.feed ?? heroPage?.blocks?.ccf_about_feed;
 
     /* ── Hero ── */
-    const hero = (heroCms?.parsed && typeof heroCms.parsed === "object" && !Array.isArray(heroCms.parsed))
-        ? heroCms.parsed as Record<string, unknown>
+    const hero = (heroCms && typeof heroCms === "object" && !Array.isArray(heroCms))
+        ? heroCms as Record<string, unknown>
         : null;
 
-    const heroEyebrow    = (hero?.eyebrow    as string) || "Nuestra Identidad";
-    const heroTitleLead  = (hero?.title_lead as string) || "Iluminando el";
-    const heroTitleAccent = (hero?.title_accent as string) || "camino juntos.";
-    const heroDescription = (hero?.description as string) || "Una iglesia viva y en crecimiento que existe para conectar corazones con Dios y entre sí, fundamentada en la Palabra y movida por el amor.";
+    const heroEyebrow       = (hero?.eyebrow       as string) || "Nuestra Identidad";
+    const heroTitleLead     = (hero?.title_lead    as string) || "Iluminando el";
+    const heroTitleAccent   = (hero?.title_accent  as string) || "camino juntos.";
+    const heroDescription   = (hero?.description   as string) || "Una iglesia viva y en crecimiento que existe para conectar corazones con Dios y entre sí, fundamentada en la Palabra y movida por el amor.";
+    const heroBgImage       = (hero?.bg_image      as string) || null;
 
     /* ── Feed / About ── */
-    const about = (aboutCms?.parsed && typeof aboutCms.parsed === "object" && !Array.isArray(aboutCms.parsed))
-        ? aboutCms.parsed as Record<string, unknown>
+    const about = (aboutCms && typeof aboutCms === "object" && !Array.isArray(aboutCms))
+        ? aboutCms as Record<string, unknown>
         : null;
 
-    const stats  = (Array.isArray(about?.stats)  ? about!.stats  as typeof DEFAULT_STATS  : DEFAULT_STATS);
-    const valores = (Array.isArray(about?.valores) ? about!.valores as typeof DEFAULT_VALORES : DEFAULT_VALORES);
+    const aboutStats   = about?.stats;
+    const aboutValores = about?.valores;
+    const stats   = Array.isArray(aboutStats)   ? (aboutStats   as typeof DEFAULT_STATS)   : DEFAULT_STATS;
+    const valores = Array.isArray(aboutValores) ? (aboutValores as typeof DEFAULT_VALORES) : DEFAULT_VALORES;
 
-    const visionText  = (about?.vision_text  as string) || "Ser una comunidad de fe que <strong>transforma vidas, familias y ciudades</strong> a través del poder del Evangelio, levantando discípulos que reflejen el carácter de Cristo en cada esfera de la sociedad.";
-    const misionText  = (about?.mision_text  as string) || "Guiar, equipar y movilizar a cada persona de nuestra comunidad mediante la <strong>enseñanza bíblica profunda</strong>, el compañerismo genuino y el servicio desinteresado — llevando la luz de Cristo a donde haya oscuridad.";
+    const visionTitle       = (about?.vision_title       as string) || "¿A dónde vamos?";
+    const visionText        = (about?.vision_text        as string) || "Ser una comunidad de fe que <strong>transforma vidas, familias y ciudades</strong> a través del poder del Evangelio, levantando discípulos que reflejen el carácter de Cristo en cada esfera de la sociedad.";
+    const misionTitle       = (about?.mision_title       as string) || "¿Por qué existimos?";
+    const misionText        = (about?.mision_text        as string) || "Guiar, equipar y movilizar a cada persona de nuestra comunidad mediante la <strong>enseñanza bíblica profunda</strong>, el compañerismo genuino y el servicio desinteresado — llevando la luz de Cristo a donde haya oscuridad.";
 
-    const founderBio  = (about?.founder_bio  as string) || "";
-    const founderBio2 = (about?.founder_bio2 as string) || "";
-    const founderCtaTeam = (about?.founder_cta_team as string) || "Conoce al equipo";
-    const founderCtaVisit = (about?.founder_cta_visit as string) || "Visítanos";
-    const valuesEyebrow = (about?.values_eyebrow as string) || "Lo que nos define";
+    const founderLabel      = (about?.founder_label      as string) || "Nuestros Pastores Principales";
+    const founderTitle      = (about?.founder_title      as string) || "Un llamado a construir";
+    const founderTitleAccent = (about?.founder_title_accent as string) || "una familia de fe";
+    const founderBio        = (about?.founder_bio        as string) || "";
+    const founderBio2       = (about?.founder_bio2       as string) || "";
+    const founder1Name      = (about?.founder1_name      as string) || "Luis Ricardo Meza G.";
+    const founder1Role      = (about?.founder1_role      as string) || "Pastor Principal";
+    const founder1Image     = (about?.founder1_image     as string) || "";
+    const founder2Name      = (about?.founder2_name      as string) || "Histar Ariza Herrera";
+    const founder2Role      = (about?.founder2_role      as string) || "Pastor Principal";
+    const founder2Image     = (about?.founder2_image     as string) || "";
+    const founderCtaTeam    = (about?.founder_cta_team   as string) || "Conoce al equipo";
+    const founderCtaVisit   = (about?.founder_cta_visit  as string) || "Visítanos";
 
-    const quoteText   = (about?.quote_text   as string) || "";
-    const quoteAuthor = (about?.quote_author as string) || "";
+    const valuesEyebrow     = (about?.values_eyebrow     as string) || "Lo que nos define";
+    const valoresTitle      = (about?.valores_title      as string) || "Valores que nos Guían";
 
-    const ctaViewSedes = (about?.cta_view_sedes as string) || "Ver sedes";
-    const ctaViewEvents = (about?.cta_view_events as string) || "Próximos eventos";
-    const breadcrumbInicio = (about?.breadcrumbInicio as string) || "Inicio";
-    const breadcrumbPage = (about?.breadcrumbPage as string) || "Quiénes Somos";
+    const quoteText         = (about?.quote_text         as string) || "";
+    const quoteAuthor       = (about?.quote_author       as string) || "";
+    const quoteSubtitle     = (about?.quote_subtitle     as string) || "";
+
+    const ctaTitle          = (about?.cta_title          as string) || "¿Listo para ser parte?";
+    const ctaDesc           = (about?.cta_desc           as string) || "Ven a conocernos. Tenemos puertas abiertas y un lugar reservado para ti y tu familia.";
+    const ctaViewSedes      = (about?.cta_view_sedes     as string) || "Ver sedes";
+    const ctaViewEvents     = (about?.cta_view_events    as string) || "Próximos eventos";
+    const breadcrumbInicio  = (about?.breadcrumbInicio   as string) || "Inicio";
+    const breadcrumbPage    = (about?.breadcrumbPage     as string) || "Quiénes Somos";
 
     return (
         <main className="min-h-screen bg-site-background pt-[88px] overflow-hidden">
 
                 {/* ── HERO ── */}
                 <section className="relative ccf-section overflow-hidden">
+                    {/* Background image */}
+                    {heroBgImage && (
+                        <div
+                            className="absolute inset-0 bg-cover bg-center"
+                            style={{
+                                backgroundImage: `url('${heroBgImage}')`,
+                                filter: "brightness(0.25) saturate(0.5)",
+                            }}
+                        />
+                    )}
                     <div className="absolute inset-0 pointer-events-none">
                         <div
                             className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full blur-3xl"
@@ -144,7 +175,7 @@ export default function NosotrosPage() {
                                 <Target size={11} /> Visión
                             </div>
                             <h2 className="ccf-headline text-2xl md:text-3xl font-black text-site-on-surface mb-4">
-                                {(about?.vision_title as string) || "¿A dónde vamos?"}
+                                {visionTitle}
                             </h2>
                             <RichText
                                 html={visionText}
@@ -167,7 +198,7 @@ export default function NosotrosPage() {
                                 <Sparkles size={11} /> Misión
                             </div>
                             <h2 className="ccf-headline text-2xl md:text-3xl font-black text-white mb-4">
-                                {(about?.mision_title as string) || "¿Por qué existimos?"}
+                                {misionTitle}
                             </h2>
                             <RichText
                                 html={misionText}
@@ -184,52 +215,52 @@ export default function NosotrosPage() {
                         <div className="w-full lg:w-5/12 relative shrink-0">
                             <div className="relative h-[340px] sm:h-[420px] md:h-[520px] overflow-hidden ccf-image">
                                 <div className="absolute left-0 top-0 w-[58%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-site-outline-variant/20 z-10">
-                                    {about?.founder1_image ? (
+                                    {founder1Image ? (
                                         <Image
-                                            src={about.founder1_image as string}
-                                            alt={(about?.founder1_name as string) || "Pastor Luis Ricardo Meza Gutiérrez"}
+                                            src={founder1Image}
+                                            alt={founder1Name}
                                             fill
                                             className="object-cover object-top"
                                         />
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary))/0.18] to-[hsl(var(--surface-2))/0.35]">
                                             <span className="text-4xl font-black text-[hsl(var(--primary))/0.35]">
-                                                {((about?.founder1_name as string) || "L").charAt(0)}
+                                                {founder1Name.charAt(0)}
                                             </span>
                                         </div>
                                     )}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                                     <div className="absolute bottom-3 left-3 right-3">
                                         <p className="text-white text-xs font-bold drop-shadow-sm">
-                                            {(about?.founder1_name as string) || "Luis Ricardo Meza G."}
+                                            {founder1Name}
                                         </p>
                                         <p className="text-white/70 text-[10px] font-medium uppercase tracking-wider drop-shadow-sm">
-                                            {(about?.founder1_role as string) || "Pastor Principal"}
+                                            {founder1Role}
                                         </p>
                                     </div>
                                 </div>
                                 <div className="absolute right-0 bottom-0 w-[55%] aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-site-outline-variant/20 z-20">
-                                    {about?.founder2_image ? (
+                                    {founder2Image ? (
                                         <Image
-                                            src={about.founder2_image as string}
-                                            alt={(about?.founder2_name as string) || "Pastor Histar Ariza Herrera"}
+                                            src={founder2Image}
+                                            alt={founder2Name}
                                             fill
                                             className="object-cover object-top"
                                         />
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary))/0.18] to-[hsl(var(--surface-2))/0.35]">
                                             <span className="text-4xl font-black text-[hsl(var(--primary))/0.35]">
-                                                {((about?.founder2_name as string) || "H").charAt(0)}
+                                                {founder2Name.charAt(0)}
                                             </span>
                                         </div>
                                     )}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                                     <div className="absolute bottom-3 left-3 right-3">
                                         <p className="text-white text-xs font-bold drop-shadow-sm">
-                                            {(about?.founder2_name as string) || "Histar Ariza Herrera"}
+                                            {founder2Name}
                                         </p>
                                         <p className="text-white/70 text-[10px] font-medium uppercase tracking-wider drop-shadow-sm">
-                                            {(about?.founder2_role as string) || "Pastor Principal"}
+                                            {founder2Role}
                                         </p>
                                     </div>
                                 </div>
@@ -243,13 +274,13 @@ export default function NosotrosPage() {
                         {/* Texto */}
                         <div className="w-full lg:w-7/12">
                             <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-site-primary mb-4">
-                                <Heart size={12} /> {(about?.founder_label as string) || "Nuestros Pastores Principales"}
+                                <Heart size={12} /> {founderLabel}
                             </span>
                             <h2 className="ccf-headline text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface mb-5">
-                                {(about?.founder_title as string) || "Un llamado a construir"}
+                                {founderTitle}
                                 <br />
                                 <span className="text-site-primary">
-                                    {(about?.founder_title_accent as string) || "una familia de fe"}
+                                    {founderTitleAccent}
                                 </span>
                             </h2>
                             <div className="ccf-body space-y-4 text-base md:text-lg text-site-on-surface-variant [&_strong]:text-site-on-surface [&_em]:text-site-outline">
@@ -287,13 +318,13 @@ export default function NosotrosPage() {
                                 <Sparkles size={12} /> {valuesEyebrow}
                             </span>
                             <h2 className="ccf-headline text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface mb-4">
-                                {(about?.valores_title as string) || "Valores que nos Guían"}
+                                {valoresTitle}
                             </h2>
                             <div className="h-1 w-16 rounded-full bg-site-primary mx-auto" />
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                            {valores.map((v: any, idx: number) => (
+                            {valores.map((v: typeof DEFAULT_VALORES[number], idx: number) => (
                                 <div
                                     key={v.key || v.num || idx}
                                     className="ccf-card group p-6 md:p-8 bg-site-surface"
@@ -327,7 +358,7 @@ export default function NosotrosPage() {
                             <div>
                                 <p className="font-bold text-site-on-surface">{quoteAuthor}</p>
                                 <p className="text-xs font-bold uppercase tracking-widest text-site-primary mt-0.5">
-                                    {(about?.quote_subtitle as string) || ""}
+                                    {quoteSubtitle}
                                 </p>
                             </div>
                             <div className="h-px w-12 bg-gradient-to-l from-transparent to-site-primary/30" />
@@ -348,10 +379,10 @@ export default function NosotrosPage() {
                             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.12),transparent_60%)] pointer-events-none" />
                             <div className="relative z-10">
                                 <h2 className="ccf-headline text-3xl md:text-4xl font-black text-white mb-4">
-                                    {(about?.cta_title as string) || "¿Listo para ser parte?"}
+                                    {ctaTitle}
                                 </h2>
                                 <RichText
-                                    html={(about?.cta_desc as string) || "Ven a conocernos. Tenemos puertas abiertas y un lugar reservado para ti y tu familia."}
+                                    html={ctaDesc}
                                     className="ccf-body text-base md:text-lg text-white/80 max-w-xl mx-auto mb-8"
                                 />
                                 <div className="flex flex-wrap items-center justify-center gap-4">

@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!slugValue) return {};
 
   try {
-    const page = await getCmsPublicPage("default", slugValue);
+    const page = await getCmsPublicPage("ccf", slugValue);
     if (!page) return {};
     const seo = page.seo_json || {};
     const metaTitle = typeof seo.meta_title === "string" && seo.meta_title.trim() ? seo.meta_title : page.title;
@@ -65,7 +65,7 @@ export default async function CcfDynamicPage({ params }: { params: Promise<{ slu
 
   let page: CmsPublicPage | null = null;
   try {
-    page = await getCmsPublicPage("default", slugValue);
+    page = await getCmsPublicPage("ccf", slugValue);
   } catch {
     notFound();
   }

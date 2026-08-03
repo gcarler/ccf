@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Archive, Copy, Eye, EyeOff, ImageIcon, RotateCcw } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Archive, ArrowDown, ArrowUp, Copy, Eye, EyeOff, ImageIcon, RotateCcw, Check } from "lucide-react";
 import { safeString, asObject } from "@/components/cms/builder/utils";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import type { PageBuilderState } from "@/hooks/usePageBuilder";
@@ -23,10 +23,54 @@ export default function BuilderSectionInspector({
     saving,
     upsertArrayItem,
     addArrayItem,
+    reorderArrayItem,
     setSectionVisibility,
     toggleSectionArchive,
     duplicateSection,
   } = builder;
+
+  const [justSaved, setJustSaved] = useState(false);
+  const wasSavingRef = React.useRef(false);
+
+  useEffect(() => {
+    if (saving) {
+      wasSavingRef.current = true;
+      setJustSaved(false);
+    } else if (wasSavingRef.current) {
+      wasSavingRef.current = false;
+      setJustSaved(true);
+      const t = setTimeout(() => setJustSaved(false), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [saving]);
+
+  const ReorderButtons = ({ index, total }: { index: number; total: number }) => (
+    <div className="flex gap-1">
+      <button
+        onClick={() => {
+          const next = reorderArrayItem("items", index, index - 1);
+          if (next) saveSectionProps(next);
+        }}
+        disabled={index === 0}
+        className="rounded border border-[hsl(var(--border))] dark:border-white/10 p-0.5 disabled:opacity-30 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
+        title="Mover arriba"
+      >
+        <ArrowUp size={10} />
+      </button>
+      <button
+        onClick={() => {
+          const next = reorderArrayItem("items", index, index + 1);
+          if (next) saveSectionProps(next);
+        }}
+        disabled={index === total - 1}
+        className="rounded border border-[hsl(var(--border))] dark:border-white/10 p-0.5 disabled:opacity-30 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
+        title="Mover abajo"
+      >
+        <ArrowDown size={10} />
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-2 pt-4 border-t border-[hsl(var(--border))] dark:border-white/10">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] font-bold">Inspector sección</p>
@@ -132,7 +176,10 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                       <div key={`card-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                        {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                        <div className="flex items-center justify-between">
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          <ReorderButtons index={index} total={(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).length} />
+                        </div>
                         <input
                           value={safeString(itemObject.title)}
                           onChange={(e) => {
@@ -204,7 +251,10 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                       <div key={`faq-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                        {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                        <div className="flex items-center justify-between">
+                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          <ReorderButtons index={index} total={(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).length} />
+                        </div>
                         <input
                           value={safeString(itemObject.q)}
                           onChange={(e) => {
@@ -401,7 +451,10 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`stat-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          <div className="flex items-center justify-between">
+                            {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                            <ReorderButtons index={index} total={(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).length} />
+                          </div>
                           <input value={safeString(itemObject.value)} onChange={(e) => upsertArrayItem("items", index, { value: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { value: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Valor: 10K+" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.label)} onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Etiqueta" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <button onClick={() => { const nextProps = upsertArrayItem("items", index, { status: isItemArchived ? "published" : "archived" }); if (nextProps) saveSectionProps(nextProps); }} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${isItemArchived ? "border-emerald-200 text-emerald-700" : "border-amber-200 text-amber-700"}`}>
@@ -425,7 +478,10 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`team-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          <div className="flex items-center justify-between">
+                            {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                            <ReorderButtons index={index} total={(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).length} />
+                          </div>
                           <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.image)} onChange={(e) => upsertArrayItem("items", index, { image: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { image: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL imagen" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
@@ -450,7 +506,10 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`pricing-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          <div className="flex items-center justify-between">
+                            {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                            <ReorderButtons index={index} total={(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).length} />
+                          </div>
                           <input value={safeString(itemObject.name)} onChange={(e) => upsertArrayItem("items", index, { name: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { name: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Nombre del plan" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.price)} onChange={(e) => upsertArrayItem("items", index, { price: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { price: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Precio" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <textarea value={safeString(itemObject.features)} onChange={(e) => upsertArrayItem("items", index, { features: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { features: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Beneficios, uno por linea" className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
@@ -482,7 +541,10 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`gallery-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          <div className="flex items-center justify-between">
+                            {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                            <ReorderButtons index={index} total={(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).length} />
+                          </div>
                           {safeString(itemObject.url) && <OptimizedImage src={safeString(itemObject.url)} alt={safeString(itemObject.alt)} width={200} height={80} className="w-full h-20 object-cover rounded-md" />}
                           <input value={safeString(itemObject.url)} onChange={(e) => upsertArrayItem("items", index, { url: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { url: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="URL de imagen" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.alt)} onChange={(e) => upsertArrayItem("items", index, { alt: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { alt: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Alt text" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
@@ -529,7 +591,10 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`timeline-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          <div className="flex items-center justify-between">
+                            {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                            <ReorderButtons index={index} total={(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).length} />
+                          </div>
                           <input value={safeString(itemObject.year)} onChange={(e) => upsertArrayItem("items", index, { year: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { year: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Año o etiqueta (ej: 2020)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.title)} onChange={(e) => upsertArrayItem("items", index, { title: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { title: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Título del hito" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <textarea value={safeString(itemObject.body)} onChange={(e) => upsertArrayItem("items", index, { body: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { body: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción" className="w-full min-h-[48px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
@@ -554,7 +619,10 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`icon-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          <div className="flex items-center justify-between">
+                            {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                            <ReorderButtons index={index} total={(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).length} />
+                          </div>
                           <input value={safeString(itemObject.icon)} onChange={(e) => upsertArrayItem("items", index, { icon: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { icon: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Emoji icono (ej: 🎯)" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.title)} onChange={(e) => upsertArrayItem("items", index, { title: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { title: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Título" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <textarea value={safeString(itemObject.body)} onChange={(e) => upsertArrayItem("items", index, { body: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { body: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Descripción breve" className="w-full min-h-[48px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
@@ -612,7 +680,10 @@ export default function BuilderSectionInspector({
                       const isItemArchived = safeString(itemObject.status) === "archived";
                       return (
                         <div key={`manual-testimonial-${index}`} className={`space-y-2 rounded-lg border p-2 ${isItemArchived ? "border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.03]" : "border-[hsl(var(--border))]/70 dark:border-white/10"}`}>
-                          {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                          <div className="flex items-center justify-between">
+                            {isItemArchived && <p className="text-[9px] font-semibold uppercase tracking-wide text-amber-700">Archivado</p>}
+                            <ReorderButtons index={index} total={(Array.isArray(activeSection.props_json?.items) ? activeSection.props_json.items : []).length} />
+                          </div>
                           <input value={safeString(itemObject.author)} onChange={(e) => upsertArrayItem("items", index, { author: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { author: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Autor" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <input value={safeString(itemObject.role)} onChange={(e) => upsertArrayItem("items", index, { role: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { role: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Rol" className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
                           <textarea value={safeString(itemObject.content)} onChange={(e) => upsertArrayItem("items", index, { content: e.target.value })} onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { content: e.target.value }); if (nextProps) saveSectionProps(nextProps); }} placeholder="Contenido" className="w-full min-h-[64px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs" />
@@ -646,7 +717,21 @@ export default function BuilderSectionInspector({
                     {activeSection.status === "archived" ? "Restaurar seccion" : "Archivar seccion"}
                   </button>
                 </div>
-                <p className="text-[10px] text-[hsl(var(--text-secondary))]">{saving ? "Guardando..." : "Cambios guardados al salir del campo"}</p>
+                <div className="flex items-center gap-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/10">
+                  {saving ? (
+                    <>
+                      <div className="size-3 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
+                      <p className="text-[10px] text-[hsl(var(--text-secondary))]">Guardando...</p>
+                    </>
+                  ) : justSaved ? (
+                    <>
+                      <Check size={12} className="text-emerald-500" />
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400">Guardado</p>
+                    </>
+                  ) : (
+                    <p className="text-[10px] text-[hsl(var(--text-secondary))]">Cambios guardados al salir del campo</p>
+                  )}
+                </div>
               </fieldset>
             )}
     </div>

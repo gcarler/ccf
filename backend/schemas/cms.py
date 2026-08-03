@@ -211,7 +211,7 @@ class CmsPageRead(BaseModel):
     slug: str
     title: str
     status: str
-    seo_json: Dict[str, Any] = Field(default_factory=dict)
+    seo_json: Optional[Dict[str, Any]] = Field(default_factory=dict)
     published_version_id: Optional[UUID] = None
     created_by_persona_id: Optional[UUID] = None
     updated_by_persona_id: Optional[UUID] = None

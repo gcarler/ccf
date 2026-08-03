@@ -25,7 +25,7 @@ import { toast } from "sonner";
 
 export type CanvasMode = "esquema" | "render";
 export type PreviewDevice = "desktop" | "mobile";
-export type RightTab = "config" | "seo" | "ai" | "analytics";
+export type RightTab = "page" | "sections" | "workflow" | "seo" | "ai";
 export type Timeframe = "7d" | "30d" | "all";
 export type HeatmapType = "clicks" | "scroll" | "attention";
 export type AiTemplate = "aida" | "pas" | "headlines" | "improve";
@@ -75,7 +75,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
   const [seoRobotsDraft, setSeoRobotsDraft] = useState("");
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [mediaPickerTarget, setMediaPickerTarget] = useState<"section" | "seo">("section");
-  const [activeRightTab, setActiveRightTab] = useState<RightTab>("config");
+  const [activeRightTab, setActiveRightTab] = useState<RightTab>("page");
   const [seoKeyword, setSeoKeyword] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -422,6 +422,18 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     return nextProps;
   }, [activeSection]);
 
+  const reorderArrayItem = useCallback((key: "items", fromIndex: number, toIndex: number) => {
+    if (!activeSection) return;
+    const currentProps = asObject(activeSection.props_json);
+    const currentItems = Array.isArray(currentProps[key]) ? [...(currentProps[key] as Array<Record<string, unknown>>)] : [];
+    if (fromIndex < 0 || fromIndex >= currentItems.length || toIndex < 0 || toIndex >= currentItems.length || fromIndex === toIndex) return;
+    const [moved] = currentItems.splice(fromIndex, 1);
+    currentItems.splice(toIndex, 0, moved);
+    const nextProps = { ...currentProps, [key]: currentItems };
+    setSections((prev) => prev.map((s) => s.id === activeSection.id ? { ...s, props_json: nextProps } : s));
+    return nextProps;
+  }, [activeSection]);
+
   const setSectionVisibility = useCallback(async (visible: boolean) => {
     if (!token || !activeSection || !activeSlug || !canEdit) return;
     await patchCmsSection(siteKey, activeSlug, activeSection.id, { is_visible: visible }, token);
@@ -666,7 +678,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
         props_json: { title: cleanTitle, body: cleanBody, cta_label: "Saber más", cta_href: "/" },
       }, token);
       await loadSectionsAndVersions(activeSlug);
-      setActiveRightTab("config");
+      setActiveRightTab("sections");
     } finally {
       setSaving(false);
     }
@@ -771,6 +783,7 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
     handleReplaceActiveSectionWithAi,
     upsertArrayItem,
     addArrayItem,
+    reorderArrayItem,
     reloadTheme,
 
     // Direct lib access (for advanced use in child components)

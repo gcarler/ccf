@@ -1450,6 +1450,44 @@ def public_robots(site_key: str, db: Session = Depends(get_db)):
     return Response(content=txt, media_type="text/plain")
 
 
+@router.get(
+    "/public/sites/{site_key}/global-blocks",
+    response_model=PaginatedResponse[schemas.CmsSectionRead],
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+)
+@cached_public(ttl=300)
+def public_global_blocks(
+    site_key: str,
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+):
+    """Public endpoint: list active visible global blocks for a site.
+
+    Used by the public frontend to fetch reusable sections (e.g. shared
+    CTAs, testimonials, stats) that can be rendered across multiple pages."""
+    site = _get_public_site_or_404(db, site_key)
+    base = (
+        db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
+        .filter(
+            models.CmsPage.site_id == site.id,
+            models.CmsSection.is_global.is_(True),
+            models.CmsSection.is_visible.is_(True),
+            models.CmsSection.deleted_at.is_(None),
+            models.CmsSection.status == "active",
+        )
+    )
+    total = base.count()
+    blocks = base.order_by(models.CmsSection.global_key).offset(skip).limit(limit).all()
+    return PaginatedResponse(
+        items=[schemas.CmsSectionRead.model_validate(b) for b in blocks],
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
+
+
 # ── Pastoral Team (public + CMS-managed) ───────────────────────────────────
 
 
@@ -1637,6 +1675,35 @@ def list_global_blocks(
     )
 
 
+@router.get("/global-blocks/{section_id}", response_model=schemas.CmsSectionRead)
+def get_global_block(
+    site_key: str,
+    section_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Retrieve a single global block by ID.
+
+    Axioma 3 — Multi-Tenant: scoped by site via JOIN with CmsPage.
+    Cross-sede access returns 404 (existence-leak safe)."""
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_site_or_404(db, site_key)
+    block = (
+        db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
+        .filter(
+            models.CmsPage.site_id == site.id,
+            models.CmsSection.id == section_id,
+            models.CmsSection.is_global,
+            models.CmsSection.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not block:
+        raise HTTPException(status_code=404, detail="Global block not found")
+    return schemas.CmsSectionRead.model_validate(block)
+
+
 @router.post("/global-blocks", response_model=schemas.CmsSectionRead, status_code=201)
 def create_global_block(
     site_key: str,
@@ -1655,6 +1722,19 @@ def create_global_block(
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     site = _get_site_or_404(db, site_key)
+    # Validate global_key uniqueness if provided
+    if payload.global_key:
+        existing = (
+            db.query(models.CmsSection)
+            .filter(
+                models.CmsSection.global_key == payload.global_key.strip(),
+                models.CmsSection.is_global.is_(True),
+                models.CmsSection.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if existing:
+            raise HTTPException(status_code=409, detail="global_key already exists")
     page = db.query(models.CmsPage).filter(
         models.CmsPage.site_id == site.id,
         models.CmsPage.slug == "_global_blocks",
@@ -1675,18 +1755,71 @@ def create_global_block(
 
 @router.patch("/global-blocks/{section_id}", response_model=schemas.CmsSectionRead)
 def patch_global_block(
-    site_key: str, section_id: uuid.UUID, payload: schemas.CmsSectionUpdate,
+    site_key: str,
+    section_id: uuid.UUID,
+    payload: schemas.CmsSectionUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
+    """Update a global block.
+
+    Axioma 3 — Multi-Tenant: scoped by site via JOIN with CmsPage.
+    Re-validates section type and props against the platform catalog."""
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    block = db.query(models.CmsSection).filter(
-        models.CmsSection.id == section_id, models.CmsSection.is_global,
-    ).first()
+    site = _get_site_or_404(db, site_key)
+    block = (
+        db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
+        .filter(
+            models.CmsPage.site_id == site.id,
+            models.CmsSection.id == section_id,
+            models.CmsSection.is_global,
+            models.CmsSection.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not block:
         raise HTTPException(status_code=404, detail="Global block not found")
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        if hasattr(block, key):
+    allowed_types = get_allowed_section_types(db)
+    if payload.type is not None and payload.type not in allowed_types:
+        raise HTTPException(status_code=422, detail="unsupported section type")
+    if payload.props_json is not None:
+        from backend.schemas.cms_v2_sections import validate_section_props
+        try:
+            validated_props = validate_section_props(
+                payload.type or block.type, payload.props_json
+            )
+            payload.props_json = validated_props
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+    # Validate global_key uniqueness if being updated
+    if payload.global_key is not None and payload.global_key != block.global_key:
+        existing = (
+            db.query(models.CmsSection)
+            .filter(
+                models.CmsSection.global_key == payload.global_key.strip(),
+                models.CmsSection.is_global.is_(True),
+                models.CmsSection.deleted_at.is_(None),
+                models.CmsSection.id != block.id,
+            )
+            .first()
+        )
+        if existing:
+            raise HTTPException(status_code=409, detail="global_key already exists")
+    # Whitelist mutable fields (defense against schema drift)
+    _GLOBAL_BLOCK_MUTABLE = {
+        "type",
+        "props_json",
+        "sort_order",
+        "is_visible",
+        "status",
+        "is_global",
+        "global_key",
+        "section_key",
+    }
+    data = payload.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        if key in _GLOBAL_BLOCK_MUTABLE and hasattr(block, key):
             setattr(block, key, value)
     db.commit()
     db.refresh(block)
@@ -1695,19 +1828,32 @@ def patch_global_block(
 
 @router.delete("/global-blocks/{section_id}", response_model=dict)
 def delete_global_block(
-    site_key: str, section_id: uuid.UUID,
+    site_key: str,
+    section_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
+    """Soft-delete a global block.
+
+    Axioma 3 — Multi-Tenant: scoped by site via JOIN with CmsPage."""
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    block = db.query(models.CmsSection).filter(
-        models.CmsSection.id == section_id, models.CmsSection.is_global,
-    ).first()
+    site = _get_site_or_404(db, site_key)
+    block = (
+        db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
+        .filter(
+            models.CmsPage.site_id == site.id,
+            models.CmsSection.id == section_id,
+            models.CmsSection.is_global,
+            models.CmsSection.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not block:
         raise HTTPException(status_code=404, detail="Global block not found")
     block.deleted_at = _utcnow()
     db.commit()
-    return {"ok": True, "deleted": section_id}
+    return {"ok": True, "deleted": str(section_id)}
 
 
 # ── Posts & Taxonomías ─────────────────────────────────────────────────────

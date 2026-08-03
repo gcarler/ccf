@@ -6,7 +6,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ccf.org";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    const page = await getCmsPublicPage("default", "home");
+    const page = await getCmsPublicPage("ccf", "home");
     if (!page) return {};
     const seo = page.seo_json || {};
     const metaTitle = typeof seo.meta_title === "string" && seo.meta_title.trim() ? seo.meta_title : page.title;
