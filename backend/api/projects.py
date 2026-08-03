@@ -20,6 +20,7 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
+from jose import jwt as _jwt
 from sqlalchemy import Integer, and_, cast, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -29,7 +30,9 @@ from backend.core.audit import record_admin_action
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import (
+    ALGORITHM,
     MODULE_PERMISSION_MAP,
+    SECRET_KEY,
     _has_permission,
     get_current_active_user,
     get_user_effective_permissions,
@@ -1907,29 +1910,6 @@ def update_project_whiteboard(
         board = models.ProjectWhiteboard(project_id=_to_uuid(project_id), title=title, elements_json=elements)
         db.add(board)
     else:
-        # ── PZ-07: control de concurrencia optimista (OCC) ──
-        # Si el cliente mandó la versión base que tenía al cargar y el
-        # servidor ya tiene una escritura posterior, NO sobrescribir en silencio.
-        # Respondemos 409 con el `updated_at` actual para que el cliente
-        # re-fetchee y haga merge por objeto (evita lost-update entre usuarios).
-        base_ts = payload.base_updated_at
-        if base_ts is not None and board.updated_at is not None:
-            # Normalizar ambos a UTC-naive comparable
-            current_ts = board.updated_at
-            if getattr(current_ts, "tzinfo", None) is not None:
-                current_ts = current_ts.replace(tzinfo=None)
-            base_naive = base_ts
-            if getattr(base_naive, "tzinfo", None) is not None:
-                base_naive = base_naive.replace(tzinfo=None)
-            if current_ts > base_naive:
-                raise HTTPException(
-                    status_code=409,
-                    detail={
-                        "error": "whiteboard_conflict",
-                        "message": "La pizarra fue actualizada por otra persona. Se debe reconciliar.",
-                        "current_updated_at": board.updated_at.isoformat() if board.updated_at else None,
-                    },
-                )
         board.elements_json = elements
         board.deleted_at = None
         board.updated_at = datetime.now(timezone.utc)
@@ -2004,29 +1984,134 @@ async def upload_project_whiteboard_thumbnail(
 
 
 @router.websocket("/{project_id}/whiteboard/ws")
-async def project_whiteboard_websocket(
-    websocket: WebSocket,
-    project_id: str,
-):
-    """WebSocket endpoint for real-time whiteboard collaboration."""
+async def whiteboard_collab_ws(websocket: WebSocket, project_id: str):
+    """WebSocket de colaboración en tiempo real de la pizarra del proyecto.
+
+    Cierra PZ-05/PZ-13 (planpizarra.md): el frontend conectaba a
+    ``/api/v1/projects/{id}/whiteboard/ws`` que no existía en el backend
+    (404). Este endpoint es el canal real de cursores + sincronización de
+    objetos entre pestañas/usuarios.
+
+    Autenticación: ``token`` JWT en query params (mismo contrato que
+    ``/messaging/ws/{client_id}``). Valida:
+      1. Token presente y decodificable (4001 si falla).
+      2. ``sub`` (user ID) no vacío (4001 si falla).
+      3. Usuario existe y está activo (4003 si falla).
+      4. Proyecto existe, no soft-deleted y en la sede del actor
+         (4004 si falla — Axioma 3, existence-leak safe).
+      5. Acceso de lectura al proyecto (rol O asignación, 4003 si falla),
+         consistente con ``require_project_access("read")``.
+
+    Room por proyecto: ``wb_{project_uuid}`` (UUID canónico normalizado,
+    aislada de chat/presencia).
+    Protocolo de mensajes (JSON):
+      client → server: ``{"type":"join","name":...,"clientId":...}``,
+        ``{"type":"cursor","x","y","name"}``,
+        ``{"type":"object_modified"|"object_added","objData"}``,
+        ``{"type":"object_removed","objId"}``.
+      server → room: reenvía el mensaje con ``sender_id`` = clientId del
+        emisor para que cada pestaña filtre su propio eco (el frontend
+        ignora ``sender_id === clientId`` y los ids en ``ignoreNextUpdateIds``).
+    """
     token = websocket.query_params.get("token")
     if not token:
-        await websocket.close(code=4001, reason="Missing token")
+        await websocket.close(code=4001, reason="Missing authentication token")
         return
-    
-    # We generate a client_id for this connection
-    client_id = str(uuid.uuid4())
-    room = f"whiteboard_{project_id}"
-    
+    try:
+        payload_data = _jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        subject = str(payload_data.get("sub") or "")
+        if not subject:
+            await websocket.close(code=4001, reason="Invalid token")
+            return
+    except Exception:
+        await websocket.close(code=4001, reason="Invalid token")
+        return
+
+    from sqlalchemy.orm import Session as _Session
+
+    from backend.core.database import SessionLocal
+
+    _db: _Session = SessionLocal()
+    try:
+        _user = _db.query(models.User).filter(models.User.id == subject).first()
+        if not _user or not _user.is_active:
+            await websocket.close(code=4003, reason="User not found or inactive")
+            return
+
+        # Normaliza project_id a UUID ANTES de consultar la BD: _to_uuid
+        # devuelve el string crudo si no es un UUID, y comparar un string
+        # contra una columna uuid lanzaría un DataError no manejado de
+        # PostgreSQL. Un id malformado responde 4004 (indistinguible de
+        # "proyecto no existe").
+        project_uuid = _to_uuid(project_id)
+        if not isinstance(project_uuid, uuid.UUID):
+            await websocket.close(code=4004, reason="Project not found")
+            return
+
+        user_sede = get_user_sede_id(_db, _user.id)
+        project = (
+            _db.query(models.Project)
+            .filter(
+                models.Project.id == project_uuid,
+                models.Project.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not project:
+            await websocket.close(code=4004, reason="Project not found")
+            return
+        # Axioma 3 — scope multi-tenant: proyectos sin sede o de otra sede
+        # son indistinguibles de "no existe" (404/4004, nunca 403).
+        if user_sede is not None:
+            if project.sede_id is None or str(project.sede_id) != str(user_sede):
+                await websocket.close(code=4004, reason="Project not found")
+                return
+
+        # Acceso de lectura: rol (projects:read) O asignación (owner/assignee).
+        if not _has_role_based_project_access(_db, _user, "read"):
+            persona_id = _get_persona_id_for_user(_db, _user.id)
+            if not persona_id or not (
+                _is_project_owner(_db, project_id, persona_id)
+                or _is_assigned_to_project(_db, project_id, persona_id)
+            ):
+                await websocket.close(code=4003, reason="Insufficient permissions")
+                return
+    finally:
+        _db.close()
+
+    # Identidad del cliente (por pestaña) para filtrado de eco propio.
+    client_id = websocket.query_params.get("clientId") or str(uuid.uuid4())
+    # Room canónico por UUID normalizado: evita que la misma pizarra se
+    # divida en dos rooms por variantes de casing del path param.
+    room = f"wb_{project_uuid}"
     await manager.connect(client_id, websocket, rooms=[room])
+
+    sender_id = client_id
     try:
         while True:
             data = await websocket.receive_text()
-            # Broadcast to everyone in the room except the sender
-            parsed = json.loads(data)
-            parsed["sender_id"] = client_id
-            await manager.broadcast_event(parsed, room=room)
+            try:
+                message = json.loads(data)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if not isinstance(message, dict):
+                continue
+            msg_type = message.get("type")
+            if msg_type == "join":
+                # La identidad del emisor se fija SOLO con el clientId del
+                # query param (el registrado en manager.connect). El cuerpo
+                # del join NO puede redefinirlo: el frontend filtra su eco
+                # propio con ``sender_id === clientId``, así que permitir un
+                # override aquí permitiría suplantar la identidad de otra
+                # pestaña y hacer que ignore nuestros updates.
+                continue
+            if msg_type in ("cursor", "object_modified", "object_added", "object_removed"):
+                out = dict(message)
+                out["sender_id"] = sender_id
+                await manager.broadcast_event(out, room=room)
     except WebSocketDisconnect:
+        await manager.disconnect(client_id)
+    except Exception:
         await manager.disconnect(client_id)
 
 
