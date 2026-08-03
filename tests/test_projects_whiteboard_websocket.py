@@ -18,6 +18,7 @@ Contratos cubiertos:
 
 from __future__ import annotations
 
+import asyncio
 import uuid as _uuid
 from unittest.mock import patch
 
@@ -39,16 +40,28 @@ def _ws_client() -> TestClient:
 
 @pytest.fixture(autouse=True)
 def _reset_websocket_manager():
-    """Prevent real handshake tests from leaking manager state between cases."""
-    manager.active_connections.clear()
-    manager.rooms.clear()
+    """Prevent global listener/Redis state from leaking between event loops."""
+
+    def reset_manager() -> None:
+        manager.active_connections.clear()
+        manager.rooms.clear()
+        listener_task = manager.listener_task
+        if listener_task and not listener_task.done():
+            listener_task.cancel()
+        manager.listener_task = None
+        # Each Starlette TestClient uses its own event loop. Recreate the
+        # lock so the next test cannot await a lock bound to a closed loop.
+        manager.listener_lock = asyncio.Lock()
+        # MemoryPubSub has no network connection to close; discard its queues
+        # so cancelled listeners cannot receive broadcasts from later tests.
+        redis_client = manager._redis
+        channels = getattr(redis_client, "_pubsub_channels", None)
+        if channels is not None:
+            channels.clear()
+
+    reset_manager()
     yield
-    manager.active_connections.clear()
-    manager.rooms.clear()
-    listener_task = manager.listener_task
-    if listener_task and not listener_task.done():
-        listener_task.cancel()
-    manager.listener_task = None
+    reset_manager()
     assert not manager.active_connections
     assert not manager.rooms
 
