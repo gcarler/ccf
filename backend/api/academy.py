@@ -250,27 +250,14 @@ def get_course(course_id_or_slug: str, current_user: AcademyReader, db: Session 
     )
     if not course or (not course.is_published and not _can_edit_academy(db, current_user)):
         raise HTTPException(status_code=404, detail="Curso no encontrado")
-        
-    # Auto-enroll user if it's a public self-paced course (or just any course for now since it's the public academy)
-    # Check if enrollment exists
-    enrollment = db.query(models.Enrollment).filter(
-        models.Enrollment.persona_id == current_user.id,
-        models.Enrollment.course_id == course.id,
-        models.Enrollment.deleted_at.is_(None)
-    ).first()
-    
-    if not enrollment:
-        enrollment = models.Enrollment(
-            persona_id=current_user.id,
-            course_id=course.id,
-            status="active"
-        )
-        db.add(enrollment)
-        db.commit()
 
-    # F-02 (2026-08-02): students_count real (single, sin N+1) con scope
-    # Axioma-3 — nota: get_course auto-inscribe al viewer, así que el count
-    # incluye la inscripción recién creada (consistente con course_students).
+    # F-02 (2026-08-02): students_count real (single, sin N+1) con scope Axioma-3.
+    # El detalle es de sólo lectura: NO auto-inscribe al viewer (corrección 2026-08-03
+    # del hallazgo post-cierre: el auto-enroll se introdujo en commit 922282e0
+    # 2026-08-01, posterior al cierre formal del audit A-04/H-06/H-08 del 2026-07-24,
+    # y rompía todos esos patrones — sin rate-limit, sin _commit_or_raise_conflict,
+    # creaba duplicado en vez de reactivar el soft-deleted, y mutaba desde AcademyReader).
+    # Quien quiera inscribirse debe usar POST /enrollments, que ya cumple los patrones.
     user_sede = get_user_sede_id(db, current_user.id)
     count = _students_count_map(db, [course.id], user_sede).get(course.id, 0)
     return _serialize_course(course, students_count=count)
