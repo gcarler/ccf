@@ -27,8 +27,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-EMAIL = "admin@ccf.com"
-PASSWORD = "Ccf2026*+"
+# Credenciales desde el entorno (NUNCA hardcodear la password de producción).
+# Uso: ADMIN_EMAIL=... ADMIN_PASSWORD=... python scripts/create_admin_permanent.py
+EMAIL = os.getenv("ADMIN_EMAIL", "admin@ccf.com")
+PASSWORD = os.getenv("ADMIN_PASSWORD", "")
+if not PASSWORD:
+    raise SystemExit(
+        "ERROR: ADMIN_PASSWORD no está definida en el entorno. "
+        "Ejecuta: ADMIN_PASSWORD='...' python scripts/create_admin_permanent.py"
+    )
 FIRST_NAME = "Administrador"
 LAST_NAME = "CCF"
 
