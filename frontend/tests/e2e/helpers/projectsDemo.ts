@@ -16,9 +16,12 @@ export function seedProjectsDemo() {
 }
 
 export async function openSeededProjectDetailPath(page: Page, projectName = 'Demo Proyecto 1') {
-  await page.goto('/plataforma/projects?view=list#projects-list');
+  await page.goto('/plataforma/projects?view=list#projects-dashboard');
   await expect(page.locator('body')).toContainText(projectName, { timeout: 15_000 });
   await page.getByText(projectName, { exact: true }).first().click();
-  await expect(page).toHaveURL(/\/plataforma\/projects\/[0-9a-f-]{36}$/);
+  // The detail view preserves the ?view= query param (ProjectsLayoutClient
+  // links to /plataforma/projects/<uuid>?view=list), so accept an optional
+  // query string after the project id.
+  await expect(page).toHaveURL(/\/plataforma\/projects\/[0-9a-f-]{36}(\?.*)?$/);
   return new URL(page.url()).pathname;
 }

@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
+import { PROJECTS_LIST_ROUTE } from "@/app/plataforma/projects/projectsLinks";
 import clsx from "clsx";
 import { useCommandCenter, type CommandItem } from "@/context/CommandCenterContext";
 import { useCreation } from "@/context/CreationContext";
@@ -51,7 +52,7 @@ export function CommandCenter() {
 
     const defaultCommands = useMemo<CommandItem[]>(() => ([
         { id: "crm", label: "CRM Pastoral", icon: Users, shortcut: "G C", group: "Acceso Rápido", action: () => router.push('/plataforma/crm') },
-        { id: "projects", label: "Gestión de Proyectos", icon: Layers, shortcut: "G P", group: "Acceso Rápido", action: () => router.push('/plataforma/projects?view=list#projects-list') },
+        { id: "projects", label: "Gestión de Proyectos", icon: Layers, shortcut: "G P", group: "Acceso Rápido", action: () => router.push(PROJECTS_LIST_ROUTE) },
         { id: "academy", label: "Academia CCF", icon: GraduationCap, shortcut: "G A", group: "Acceso Rápido", action: () => router.push('/plataforma/academy') },
         { id: "cms", label: "Panel CMS", icon: Globe, group: "Acceso Rápido", action: () => router.push('/plataforma/cms') },
         { id: "new-task", label: "Nueva Tarea...", icon: Plus, shortcut: "N T", group: "Acciones", action: () => openModal('task') },

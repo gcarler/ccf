@@ -118,9 +118,17 @@ def _invalidate_dashboard_for(db: Session, current_user) -> None:
     invalidate_dashboard_metrics(sede_id_str)
 
 
-def _serialize_course(course: models.Course) -> dict[str, Any]:
+def _serialize_course(course: models.Course, students_count: int | None = None) -> dict[str, Any]:
+    """Serializa un curso.
+
+    F-02 (2026-08-02): ``students_count`` es opcional — el caller lo computa
+    (list_courses/get_course vía ``_students_count_map``, bulk sin N+1) y lo
+    pasa aquí; los serializers anidados (enrollment) no lo emiten para no
+    disparar queries por fila. Scope Axioma-3: para un Manager con sede, los
+    cursos globales (sede_id NULL) cuentan 0 (no ve su UGC).
+    """
     lessons = [lesson for lesson in course.lessons if lesson.deleted_at is None]
-    return {
+    data = {
         "id": course.id,
         "code": course.code,
         "slug": course.slug,
@@ -149,6 +157,34 @@ def _serialize_course(course: models.Course) -> dict[str, Any]:
         "total_minutes": sum(lesson.duration_minutes or 0 for lesson in lessons),
         "lessons": lessons,
     }
+    if students_count is not None:
+        data["students_count"] = students_count
+    return data
+
+
+def _students_count_map(db: Session, course_ids: list[UUID], user_sede) -> dict[UUID, int]:
+    """Conteo bulk (sin N+1) de enrollments activos por curso.
+
+    F-02/Axioma-3 (2026-08-02): el conteo usa el scope admin estricto del
+    actor — un Manager con sede NO cuenta UGC de cursos globales
+    (``sede_id IS NULL``), homólogo de course_students/all_enrollments.
+    Para un actor sin sede (guard defensivo) se cuentan todos.
+    """
+    if not course_ids:
+        return {}
+    query = (
+        db.query(models.Enrollment.course_id, func.count(models.Enrollment.id))
+        .join(models.Course, models.Enrollment.course_id == models.Course.id)
+        .filter(
+            models.Enrollment.course_id.in_(course_ids),
+            models.Enrollment.deleted_at.is_(None),
+            models.Course.deleted_at.is_(None),
+        )
+    )
+    if user_sede is not None:
+        query = query.filter(models.Course.sede_id == user_sede)
+    rows = query.group_by(models.Enrollment.course_id).all()
+    return {course_id: count for course_id, count in rows}
 
 
 def _serialize_enrollment(enrollment: models.Enrollment) -> dict[str, Any]:
@@ -188,7 +224,14 @@ def list_courses(
     if published_only or not _can_edit_academy(db, current_user):
         query = query.filter(models.Course.is_published.is_(True))
     # sede_id applied via _course_scope helper (Axioma 3)
-    return [_serialize_course(course) for course in query.offset(skip).limit(limit).all()]
+    courses = query.offset(skip).limit(limit).all()
+    # F-02 (2026-08-02): students_count real vía count bulk por página (sin N+1).
+    user_sede = get_user_sede_id(db, current_user.id)
+    counts = _students_count_map(db, [c.id for c in courses], user_sede)
+    return [
+        _serialize_course(course, students_count=counts.get(course.id, 0))
+        for course in courses
+    ]
 
 
 @router.get("/courses/{course_id_or_slug}")
@@ -225,7 +268,12 @@ def get_course(course_id_or_slug: str, current_user: AcademyReader, db: Session 
         db.add(enrollment)
         db.commit()
 
-    return _serialize_course(course)
+    # F-02 (2026-08-02): students_count real (single, sin N+1) con scope
+    # Axioma-3 — nota: get_course auto-inscribe al viewer, así que el count
+    # incluye la inscripción recién creada (consistente con course_students).
+    user_sede = get_user_sede_id(db, current_user.id)
+    count = _students_count_map(db, [course.id], user_sede).get(course.id, 0)
+    return _serialize_course(course, students_count=count)
 
 
 @router.get("/courses/{course_id}/lessons")
@@ -465,6 +513,21 @@ def update_lesson_progress(
     if enrollment.progress_percent >= 100:
         enrollment.status = "completed"
         enrollment.completed_at = _utcnow()
+        # Auto-generate certificate
+        existing_cert = db.query(models.Certificate).filter(models.Certificate.enrollment_id == enrollment.id).first()
+        if not existing_cert:
+            import secrets
+            import string
+            import uuid
+            code = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
+            cert = models.Certificate(
+                id=uuid.uuid4(),
+                enrollment_id=enrollment.id,
+                certificate_type=lesson.course.certificate_type or "Formación Básica",
+                certificate_code=code,
+                issued_at=_utcnow()
+            )
+            db.add(cert)
     db.commit()
     db.refresh(progress)
     return progress
@@ -554,10 +617,12 @@ def all_enrollments(
         .filter(models.Enrollment.deleted_at.is_(None), models.Course.deleted_at.is_(None))
     )
     # A-03 (cierre 2026-07-24): admin listings estrictos por sede — un Manager de
-    # sede A NO ve enrollments de cursos globales (sede_id IS NULL) salvo que sea
-    # superadmin (sede_id is None). El catálogo público (_course_scope, línea 53)
-    # sigue incluyendo los globales (lectura captación); las operaciones admin son
-    # Axioma 3 estricto.
+    # sede A NO ve enrollments de cursos globales (sede_id IS NULL). El catálogo
+    # público (_course_scope, línea 53) sigue incluyendo los globales (lectura
+    # captación); las operaciones admin son Axioma 3 estricto. Nota (2026-08-02,
+    # consistente con course_students): no existe hoy un "superadmin sin sede" —
+    # auth_users.sede_id es NOT NULL (models_auth.py:49) — el guard ``if sede_id``
+    # queda como defensa.
     if sede_id:
         query = query.filter(models.Course.sede_id == sede_id)
     return [_serialize_enrollment(enrollment) for enrollment in query.offset(skip).limit(limit).all()]
@@ -1196,10 +1261,12 @@ def academy_personas(
     # M-06 (cierre 2026-07-24): la persona no persiste ``is_active``; el
     # estado activo vive en ``auth_users.is_active``. Hacemos outerjoin
     # para reflejar el valor real (antes hardcodeado ``True``).
-    query = (
-        db.query(models.Persona, models.Usuario)
-        .outerjoin(models.Usuario, models.Usuario.id == models.Persona.id)
-        .filter(models.Persona.deleted_at.is_(None))
+    # F-03 (cierre 2026-08-02): Persona NO tiene columna ``deleted_at``
+    # (models_crm.py:362) — no filtrar por soft-delete aquí (causaba
+    # AttributeError → 500). El M-06 outerjoin contra auth_users para
+    # ``is_active`` se conserva.
+    query = db.query(models.Persona, models.Usuario).outerjoin(
+        models.Usuario, models.Usuario.id == models.Persona.id
     )
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
@@ -1281,9 +1348,11 @@ def list_submissions(
     # Axioma 3 — Multi-Tenant: las entregas SOLO se listan para cursos del scope del editor.
     # A-03 (cierre 2026-07-24): scope admin estricto por sede. Un editor/manager con
     # sede NO ve entregas de cursos globales (sede_id IS NULL) — ésas son UGC de otros
-    # tenants o metadatos globales no atribuibles al actor. Sólo superadmin (sede_id is
-    # None) ve todo lo no borrado. Listado público (_course_scope) sigue incluyendo
-    # globales para captación; el escrutinio admin es Axioma 3.
+    # tenants o metadatos globales no atribuibles al actor. Listado público
+    # (_course_scope) sigue incluyendo globales para captación; el escrutinio admin es
+    # Axioma 3. Nota (2026-08-02, consistente con course_students): no existe hoy un
+    # "superadmin sin sede" — auth_users.sede_id es NOT NULL (models_auth.py:49) — el
+    # branch de sede None queda como defensa.
     # ACAD-MED-003-FOLLOWUP: ocultamos entregas archivadas (soft-deleted) para que
     # el archivado desde ``delete_submission_admin`` se refleje en la lista.
     rows = (
@@ -1436,15 +1505,31 @@ def course_students(course_id: UUID, current_user: AcademyEditor, db: Session = 
     query = (
         db.query(models.Enrollment)
         .options(joinedload(models.Enrollment.persona))
+        .join(models.Course, models.Enrollment.course_id == models.Course.id)
         .filter(
             models.Enrollment.course_id == course_id,
             models.Enrollment.deleted_at.is_(None),
+            models.Course.deleted_at.is_(None),
         )
     )
     if user_sede is not None:
-        # ``Enrollment`` no tiene ``sede_id`` propio; la sede vive en ``Course``
-        # (ya joined arriba). Filtramos a través de la relación para mantener
-        # el aislamiento por sede sin romper la query.
+        # F-02 (cierre 2026-08-02): JOIN explícito a Course (antes el filtro
+        # ``Course.sede_id`` sin join producía cartesian product — SAWarning —
+        # y el aislamiento por sede quedaba implícito. Ahora el scope Axioma-3
+        # es estructural: la sede vive en Course y el JOIN la fija.
+        #
+        # Decisión I-03/A-03 (cierre 2026-07-24, confirmada por F-02 2026-08-02):
+        # admin estricto. Un Manager con sede NO ve enrollments de cursos
+        # globales (``sede_id IS NULL``) — el curso global es legible
+        # (``_get_scoped_course`` usa ``OR global`` para captación/lectura) pero
+        # su UGC (estudiantes) queda fuera del scope admin del tenant. Esto NO
+        # es un bug: es la semántica documentada en erroresacademia.md I-02/I-03
+        # (homologada con all_enrollments). ``auth_users.sede_id`` es NOT NULL
+        # (models_auth.py:49), así que todo usuario admin tiene sede: la
+        # exclusión de globales aplica a todos los Managers por igual.
+        # El guard ``if user_sede is not None`` se conserva por defensa
+        # (p.ej. fila de usuario ausente): con el esquema actual siempre
+        # toma este branch.
         query = query.filter(models.Course.sede_id == user_sede)
     enrollments = query.all()
     enrollment_ids = [e.id for e in enrollments]

@@ -122,7 +122,10 @@ def _curso_to_public(curso: Course, lesson_count: int = 0) -> PublicCursoRespons
 def public_list_courses(db: Session = Depends(get_db)):
     """Lista de cursos publicados para la landing page /cursos."""
     cursos = (
-        db.query(Course).filter(Course.is_published.is_(True), Course.deleted_at.is_(None)).order_by(Course.id).all()
+        db.query(Course)
+        .filter(Course.is_published.is_(True), Course.deleted_at.is_(None), Course.access_level == "persona")
+        .order_by(Course.id)
+        .all()
     )
     result = []
     for c in cursos:

@@ -106,19 +106,17 @@ def _download_drive_file(file_id: str) -> tuple[bytes, str]:
 def _ensure_cms_media(db, user: models.Usuario, slug: str, content: bytes, original_name: str) -> str:
     """Save image via StorageService and register/return the public CMS URL."""
     public_path = storage_service.save_file(content, original_name, subfolder=UPLOAD_SUBDIR)
-    # StorageService returns ``/static/{subfolder}/{name}`` \u2014 the path
-    # WITHIN the static mount. The app mounts StaticFiles at
-    # ``/api/static`` (see ``backend/app.py``: ``app.mount("/api/static", ...)``),
-    # so the public URL is the mount path + the storage path's tail. A naive
-    # ``f"/api/static{public_path}"`` would produce
-    # ``/api/static/static/cms/pastores/<uuid>.webp`` (DOUBLE static) and
-    # the live endpoint would 500 on the wrong URL. Strip the leading
-    # ``/static/`` so the public URL is canonical.
-    if public_path.startswith("/static/"):
-        relative = public_path[len("/static/") :]
+    # ``StorageService.save_file`` returns the canonical public URL already
+    # (``/api/static/{subfolder}/{name}``). Legacy callers used to assume a
+    # bare ``/static/...`` return and prepend the mount again, which produced
+    # ``/api/static/api/static/...`` (DOUBLE static) and 404s on the media
+    # library. Normalize either form to the canonical public URL.
+    if public_path.startswith("/api/static/"):
+        public_url = public_path
+    elif public_path.startswith("/static/"):
+        public_url = f"/api/static/{public_path[len('/static/') :]}"
     else:
-        relative = public_path.lstrip("/")
-    public_url = f"/api/static/{relative}"
+        public_url = f"/api/static/{public_path.lstrip('/')}"
 
     existing = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.url == public_url).first()
     if existing is None:

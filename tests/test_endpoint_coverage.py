@@ -6,7 +6,6 @@ as many code paths as possible, even if they return errors.
 """
 
 import re
-import uuid
 
 import pytest
 
@@ -25,7 +24,10 @@ def get_all_endpoints():
     from backend.app import ROUTER_REGISTRY
 
     endpoints = []
-    dummy_uuid = str(uuid.uuid4())
+    # UUID fijo (no uuid4()): xdist usa un proceso por worker; un valor
+    # aleatorio generaría colecciones distintas → "Different tests were
+    # collected between gwN and gwM". Constante ⇒ colección idéntica.
+    dummy_uuid = "00000000-0000-4000-8000-000000000001"
     for r in ROUTER_REGISTRY:
         prefix = r[1]
         router = r[0]

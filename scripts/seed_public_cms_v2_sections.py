@@ -692,11 +692,11 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
     return {
         "home": [
             {"key": "hero", "type": "hero", "props": home_hero, "sort": 0},
-            {"key": "feed", "type": "feed", "props": _parsed(home_feed), "sort": 1},
+            {"key": "feed", "type": "feed", "props": home_feed, "sort": 1},
         ],
         "about": [
-            {"key": "hero", "type": "hero", "props": _parsed(about_hero), "sort": 0},
-            {"key": "about", "type": "rich_text", "props": _parsed(about_content), "sort": 1},
+            {"key": "hero", "type": "hero", "props": about_hero, "sort": 0},
+            {"key": "about", "type": "rich_text", "props": about_content, "sort": 1},
         ],
         "pastors": [
             {"key": "hero", "type": "hero", "props": _content_json(pastors_hero_obj), "sort": 0},
@@ -706,7 +706,7 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "events": [
             {"key": "hero", "type": "hero", "props": events_hero, "sort": 0},
             {"key": "feed", "type": "feed", "props": _content_json(events_feed), "sort": 1},
-            {"key": "events", "type": "events_calendar", "props": _parsed(events_parsed), "sort": 2},
+            {"key": "events", "type": "events_calendar", "props": events_parsed, "sort": 2},
         ],
         "sermons": [
             {"key": "hero", "type": "hero", "props": sermons_hero, "sort": 0},
@@ -714,15 +714,15 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         ],
         "discover": [
             {"key": "hero", "type": "hero", "props": discover_hero, "sort": 0},
-            {"key": "feed", "type": "feed", "props": _parsed(discover_feed), "sort": 1},
+            {"key": "feed", "type": "feed", "props": discover_feed, "sort": 1},
         ],
         "courses": [
             {"key": "hero", "type": "hero", "props": courses_hero, "sort": 0},
-            {"key": "feed", "type": "feed", "props": _parsed(courses_feed), "sort": 1},
+            {"key": "feed", "type": "feed", "props": courses_feed, "sort": 1},
         ],
         "locations": [
             {"key": "hero", "type": "hero", "props": locations_hero, "sort": 0},
-            {"key": "feed", "type": "feed", "props": _parsed(locations_feed), "sort": 1},
+            {"key": "feed", "type": "feed", "props": locations_feed, "sort": 1},
         ],
         "testimonials": [
             {"key": "hero", "type": "hero", "props": testimonials_hero, "sort": 0},
@@ -732,10 +732,10 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
             {"key": "hero", "type": "hero", "props": _content_json(boletin_hero), "sort": 0},
         ],
         "welcome": [
-            {"key": "welcome", "type": "welcome", "props": _parsed(welcome_content), "sort": 0},
+            {"key": "welcome", "type": "welcome", "props": welcome_content, "sort": 0},
         ],
         "privacy": [
-            {"key": "privacy", "type": "policy_document", "props": _parsed(privacy_content), "sort": 0},
+            {"key": "privacy", "type": "policy_document", "props": privacy_content, "sort": 0},
         ],
         "_global": [
             {"key": "nav_items", "type": "feed", "props": nav_items, "sort": 0},

@@ -124,6 +124,8 @@ Una tarea de CMS queda cerrada cuando:
 
 ## 10. Cerrado recientemente
 
+- `DONE-BUILDER-CMS-002` cerrado el 2026-08-01 con `frontend/tests/e2e/cms/builder-flow.spec.ts` (6 tests), `builder-puck-flow.spec.ts` (3 tests) y `pages-preview.spec.ts` (3 tests) pasando; cierra el residual `PEND-CMS-BUILDER-001` del builder.
+
 - `DONE-RBAC-V1-HARDENING-CMS-001` cerrado el 2026-07-16 con endurecimiento de mutaciones CMS v1 a `cms:edit` y cobertura focal para `LECTOR`
 - `DONE-RBAC-ENTERPRISE-CMS-001` cerrado el 2026-07-16 con guards `cms:read` / `cms:manage` en `backend/api/enterprise_cms.py`
 - `DONE-CMS-E2E-AUTH-GATE-001` cerrado el 2026-07-16 con el runner administrado y el bootstrap corregido
@@ -135,7 +137,7 @@ Una tarea de CMS queda cerrada cuando:
 
 ## 11. Pendientes QA / backlog
 
-- `PEND-CMS-BUILDER-001` — `/plataforma/cms/builder` reportado como no funcional; revisar sections/global blocks, estado de editor y contratos compartidos del builder.
+No hay pendientes abiertos en el módulo CMS al momento de esta lectura (`PEND-CMS-BUILDER-001` cerrado como `DONE-BUILDER-CMS-002`).
 
 ## 12. Estado operativo
 

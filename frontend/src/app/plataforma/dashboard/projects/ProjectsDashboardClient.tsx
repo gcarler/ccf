@@ -4,11 +4,12 @@ import React from 'react';
 import DashboardShell from '@/components/DashboardShell';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { FolderKanban, LayoutDashboard } from 'lucide-react';
+import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 
 const SIDEBAR_SECTIONS = [
     { title: 'Dashboards', items: [
         { id: 'dash-overview', label: 'Centro de Dashboards', href: '/plataforma/dashboard', icon: LayoutDashboard },
-        { id: 'dash-projects', label: 'Proyectos', href: '/plataforma/projects?view=list#projects-list', icon: FolderKanban },
+        { id: 'dash-projects', label: 'Proyectos', href: PROJECTS_LIST_ROUTE, icon: FolderKanban },
     ]},
 ];
 

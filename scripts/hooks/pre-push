@@ -52,9 +52,12 @@ echo -e "  ${BLUE}Diff base/head:${NC} $BASE_REF..$HEAD_REF"
 echo ""
 
 # Archivos modificados respecto a la base configurada
-PY_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" 2>/dev/null | grep '\.py$' || true)
-FRONTEND_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" 2>/dev/null | grep '^frontend/' || true)
-ALEMBIC_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" 2>/dev/null | grep 'alembic/versions/' || true)
+# Only validate files that exist in the pushed snapshot. Deleted paths must not
+# be handed to py_compile/Ruff from the dirty working tree.
+CHANGED_FILES=$(git diff --diff-filter=ACMRTUXB --name-only "$BASE_REF" "$HEAD_REF" 2>/dev/null || true)
+PY_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep '\.py$' | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done || true)
+FRONTEND_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep '^frontend/' | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done || true)
+ALEMBIC_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep '^alembic/canonical_versions/.*\.py$' || true)
 QUALITY_SELECTOR="$VENV/python /root/ccf/scripts/select_quality_checks.py --base $BASE_REF --head $HEAD_REF"
 QUALITY_SUMMARY=$($QUALITY_SELECTOR --summary 2>/dev/null || echo "No quality selector summary available.")
 mapfile -t QUALITY_CHECKS < <($QUALITY_SELECTOR 2>/dev/null || true)
@@ -125,31 +128,23 @@ fi
 
 # ─── 3. ALEMBIC MIGRATION CHAIN ──────────────────────────────────────────────
 if [ -n "$ALEMBIC_FILES" ]; then
-    echo "  [Migraciones] Cadena Alembic..."
-    # Verificar que no haya referencias rotas en la cadena
+    echo "  [Migraciones] Cadena Alembic..."    # Validate the active canonical chain through Alembic itself. The legacy
+    # alembic/versions directory is archived and is not version_location.
     cd /root/ccf
     MIGRATION_CHECK=$($VENV/python -c "
-import os, sys, re
-versions_dir = 'alembic/versions'
-revisions = {}
-down_refs = set()
-for f in os.listdir(versions_dir):
-    if not f.endswith('.py') or f == '__init__.py': continue
-    path = os.path.join(versions_dir, f)
-    with open(path) as fh:
-        content = fh.read()
-    rev_match = re.search(r\"^revision\\s*(?::\\s*\\w+\\s*)?[:=]\\s*['\\\"]([^'\\\"]+)['\\\"]\", content, re.MULTILINE)
-    down_match = re.search(r\"^down_revision\\s*(?::\\s*[\\w\\[\\], ]+\\s*)?[:=]\\s*['\\\"]([^'\\\"]+)['\\\"]\", content, re.MULTILINE)
-    if rev_match:
-        revisions[rev_match.group(1)] = f
-    if down_match and down_match.group(1) != 'None':
-        down_refs.add(down_match.group(1))
-broken = down_refs - set(revisions.keys())
-if broken:
-    print(f'BROKEN: {broken}')
-    sys.exit(1)
-print('OK')
-" 2>&1) || MIGRATION_CHECK="BROKEN: unknown"
+from alembic.config import Config
+from alembic.script import ScriptDirectory
+
+config = Config('alembic.ini')
+script = ScriptDirectory.from_config(config)
+heads = script.get_heads()
+if not heads:
+    raise RuntimeError('no canonical Alembic heads found')
+for revision in script.walk_revisions():
+    if revision.revision is None:
+        raise RuntimeError('revision without id')
+print('OK:' + ','.join(sorted(heads)))
+" 2>&1) || MIGRATION_CHECK="BROKEN: $MIGRATION_CHECK"
     cd - > /dev/null
 
     if echo "$MIGRATION_CHECK" | grep -q "^BROKEN"; then
@@ -193,7 +188,11 @@ else
                 run_quality_check "$check_id" "Academy quality" "$VENV/python /root/ccf/scripts/test_academy_quality.py"
                 ;;
             cms_quality)
-                run_quality_check "$check_id" "CMS quality" "$VENV/python /root/ccf/scripts/test_cms_quality.py"
+                if [ "$MODE" = "fast" ] && { [ -z "${E2E_EMAIL:-}" ] || [ -z "${E2E_PASSWORD:-}" ]; }; then
+                    echo -e "        ${YELLOW}⚠ cms_quality omitido en modo fast: faltan E2E_EMAIL/E2E_PASSWORD${NC}"
+                else
+                    run_quality_check "$check_id" "CMS quality" "$VENV/python /root/ccf/scripts/test_cms_quality.py"
+                fi
                 ;;
             crm_quality)
                 run_quality_check "$check_id" "CRM quality" "$VENV/python /root/ccf/scripts/test_crm_quality.py"

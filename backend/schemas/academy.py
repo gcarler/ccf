@@ -326,6 +326,49 @@ class FormalActa(BaseModel):
     model_config = orm_config
 
 
+class AcademyActivityLog(BaseModel):
+    """F-10 (cierre 2026-08-02): schema read dedicado para ``AcademyActivityLog``.
+
+    El modelo ``models_academy_core.AcademyActivityLog`` (tabla
+    ``academy_activity_logs``) se persiste en mutaciones del módulo
+    (enrollment, forum_resolved, course_archived, submission_graded) pero no
+    tenía schema dedicado en ``schemas/academy.py`` — cualquier
+    serialización futura caería a dict ad-hoc. ``payload_json`` (JSON) se
+    expone como ``dict | None`` y ``value`` (Numeric) como ``float``.
+    """
+
+    id: UUID
+    event_type: str
+    course_id: UUID | None = None
+    persona_id: UUID | None = None
+    modality: str | None = None
+    value: float = 1.0
+    payload_json: dict | None = None
+    created_at: datetime | None = None
+    model_config = orm_config
+
+    # M-09 — tz-aware normalización (SQLite read-back pierde tzinfo).
+    _ensure_tz_created = field_validator("created_at", mode="before")(classmethod(lambda cls, v: _ensure_utc(v)))
+
+
+class FormalActaEntry(BaseModel):
+    """F-10 (cierre 2026-08-02): schema read dedicado para ``FormalActaEntry``.
+
+    Modelo ``models_academy_core.FormalActaEntry`` (tabla
+    ``academy_formal_acta_entries``). ``final_grade`` es nullable y
+    ``attendance_percent``/``approved`` reflejan el cierre del acta.
+    """
+
+    id: UUID
+    acta_id: UUID
+    enrollment_id: UUID
+    final_grade: float | None = None
+    attendance_percent: float = 0.0
+    approved: bool = False
+    notes: str | None = None
+    model_config = orm_config
+
+
 class Resource(BaseModel):
     id: UUID
     lesson_id: UUID

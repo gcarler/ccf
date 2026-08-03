@@ -1,6 +1,6 @@
 # Estado del Módulo Workspace
 
-**Actualizado:** 2026-07-18
+**Actualizado:** 2026-08-02
 
 ---
 
@@ -53,3 +53,32 @@ Módulo de espacio de trabajo transversal. Proporciona pizarra (whiteboard), tar
 | Archivo | `tests/test_workspace_api.py` |
 | Tests | 4 (1 xfailed, 3 xpassed) |
 | Smoke script | `scripts/test_workspace_quality.py` |
+
+---
+
+## Pendientes
+
+### DONE-WORKSPACE-002 (2026-08-02) — Cierre: des-trackear los logs legacy de `logs/`
+
+> CERRADO el 2026-08-02 con `git rm --cached` de los cinco logs legacy de `logs/` (`frontend-dev-4123.log`, `frontend-dev-4123.err.log`, `frontend-dev-4124.log`, `frontend-dev-4124.err.log`, `server.log`), trackeados desde el commit inicial `3e41ed9f` (mayo 2026). Mismo criterio de DONE-WORKSPACE-001: archivos regenerables/legacy no se versionan. El patrón `*.log` del `.gitignore` (línea 23) ya los excluye, y los archivos siguen en disco (solo fuera del index). El scheduler solo emite a stdout redirigido a `logs/scheduler.log` (ya ignorado); los 5 logs des-trackeados no tienen diffs de runtime activos (mtime mayo 2026), por lo que no ensucian el árbol. Nota de merge: el branch paralelo `feature/whiteboard-superpro` aún trackea estos 5 logs (además de los 5 feature_flags de DONE-WORKSPACE-001); al mergear, resolver aceptando la eliminación (`git rm --cached`) y conservando el `.gitignore` de `main`.
+
+### DONE-WORKSPACE-001 (2026-08-02) — Cierre: mover snapshots de feature flags fuera del árbol de git
+
+> CERRADO el 2026-08-02 con `git rm --cached` de los cinco snapshots de feature flags (commits del cierre): los tres `feature_flags_*.ndjson` (audit/notifications/snapshot_history) + `feature_flags.json` y `feature_flags_incidents.json` quedan des-trackeados y el `.gitignore` los excluye (`backend/data/feature_flags*.ndjson` y `backend/data/feature_flags*.json`); se regeneran bajo demanda sin ensuciar el working tree. Los archivos siguen en disco. Nota de diseño: `feature_flags.json` es la configuracion activa del workspace (features/reglas); en un clone fresco arranca del `DEFAULT_WORKSPACE_CONFIG` en codigo (fallback ya probado por los 246 tests verdes sin los archivos).
+
+### PEND-WORKSPACE-001 (CERRADO 2026-08-02 → DONE-WORKSPACE-001) — Mover snapshots de feature flags fuera del árbol de git
+
+**Problema.** La suite de tests del módulo regenera en runtime los archivos `backend/data/feature_flags_*.ndjson` (audit, notifications, snapshot_history) en cada corrida. Al quedar trackeados en git, cada ejecución ensucia el working tree y obliga a revertir manualmente (p. ej. `feature_flags_notifications.ndjson` reverted tras el commit de tests de la sesión 2026-08-02).
+
+**Causa raíz.** `backend/data/feature_flags*.ndjson` ya está en `.gitignore` como *snapshot regenerado bajo demanda*, pero los archivos actuales fueron trackeados antes de esa entrada (git no aplica ignore a archivos ya versionados).
+
+**Fix propuesto.**
+
+- Mover los snapshots de runtime a un directorio fuera del árbol versionado (p. ej. `backend/data/runtime/` o `storage/`) y apuntar el módulo workspace a esa ruta, **o**
+- `git rm --cached backend/data/feature_flags_*.ndjson` para des-trackearlos y dejar que el `.gitignore` existente los excluya, regenerándose bajo demanda.
+
+**Gate mínimo para cerrar.**
+
+- `./venv/bin/python -m pytest tests/test_workspace_*.py tests/test_system_final.py`
+- `git status --short` limpio después de la corrida (sin modificaciones de runtime).
+- `scripts/test_workspace_quality.py` (smoke del módulo).

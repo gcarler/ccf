@@ -20,7 +20,7 @@ test.describe('projects demo roundtrip', () => {
   });
 
   test('muestra los proyectos demo y navega al detalle correcto', async ({ page }) => {
-    await page.goto('/plataforma/projects?view=list#projects-list');
+    await page.goto('/plataforma/projects?view=list#projects-dashboard');
     await expect(page.locator('body')).toContainText('Demo Proyecto 1');
     await expect(page.locator('body')).toContainText('Demo Proyecto 2');
     await expect(page.locator('body')).toContainText('Demo Proyecto 3');

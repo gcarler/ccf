@@ -736,6 +736,30 @@ producto.
 - Lotes compartidos activos: **2** (TKT-070..083 frontend cleanup, TKT-100..121 low cleanup).
 - Cierre total: 49 IDs cerrados de 95 = **51.6 %**.
 
+> **Cierre cobertura de tests F-01..F-10 (2026-08-02):** las 10 brechas de
+> cobertura funcional del audit forense (`erroresacademia.md` §Funcionalidades)
+> quedaron cerradas en `tests/test_academy_gaps_f01_f10.py` (**24 verificaciones
+> runtime**) + fixes en `backend/api/academy.py`, `backend/api/academy_cache.py`
+> y `backend/schemas/academy.py`. La suite completa Academy valida el cierre:
+> **299 passed / 1 skipped / EXIT 0** (ruff limpio en los 6 archivos tocados).
+> **3 bugs reales destapados por los tests** (no eran solo brechas de coverage):
+> F-03 (`Persona.deleted_at` no existe → HTTP 500 en `/academy/personas`),
+> F-07 (`date_trunc` es PostgreSQL-only → 500 en SQLite, silenciado por skip)
+> y F-02 (cartesian product en `course_students` por filtro de sede sin JOIN).
+
+| Brecha | Verificación cerrada | Bugs reales encontrados y corregidos |
+|---|---|---|
+| F-01 | Upload de tareas `POST /lessons/{id}/submit-assignment`: happy path + persistencia DB, MIME no permitido, tamaño >10MB, enrollment ajeno → 404 | — |
+| F-02 | `GET /admin/courses/{id}/students`: cross-sede → 404 / sede propia → 200 / **curso global → 200 + lista vacía para Manager con sede** (I-03/A-03 estricto, homologado con `all_enrollments`) — el caso usuario-sin-sede no aplica: `auth_users.sede_id` es NOT NULL (models_auth.py:49) | **Cartesian product**: el filtro `Course.sede_id` se aplicaba sin JOIN (SAWarning + aislamiento implícito). Fix: JOIN explícito a `Course` + `Course.deleted_at IS NULL`. **Decisión confirmada 2026-08-02**: el Manager con sede NO ve UGC de cursos globales (semántica I-02/I-03, no es bug) — ver comentario en `course_students` + tests F-02. |
+| F-03 | `GET /academy/personas`: scope por sede, filtro role, `is_active` real | **HTTP 500 en producción**: el endpoint filtraba `Persona.deleted_at` pero el modelo (models_crm.py:362) NO tiene esa columna → AttributeError. Fix: filtro inválido eliminado (se conserva outerjoin M-06). |
+| F-04 | Foro cross-sede: resolve/comment/thread → 404; thread global por estudiante → 403 | — |
+| F-05 | RBAC negativo: reader no crea curso, editor no archiva, student no califica | — |
+| F-06 | IDOR: progreso requiere inscripción, lectura solo-propia, submit con enrollment ajeno → 404 | — |
+| F-07 | `dashboard_metrics` sin skip silencioso; `enrollment_trends`/`top_courses` como listas | **`func.date_trunc("month", ...)` es PostgreSQL-only** → 500 en SQLite (el test lo ocultaba con skip). Fix: expresión dialect-aware (`strftime('%Y-%m')` SQLite / `date_trunc` Postgres) + normalización de label. |
+| F-08 | Bypass 429 de manager testeado runtime: admin autenticado + `FORCE_RATE_LIMIT=1` → 15 hits → `[404]*15` (0×429, no-vacuo) | El test estaba `@pytest.mark.skip` (monkeypatch de `_key_func` no funciona en slowapi 0.1.10). Reemplazado por test real autenticado. |
+| F-09 | Soft-delete oculto: `me/enrollments`, `enrollments`, `me/progress` excluyen `deleted_at IS NOT NULL` | — |
+| F-10 | Schemas read `AcademyActivityLog` + `FormalActaEntry` validan ORM (orm_config + `created_at` tz-aware) | Faltaban schemas read dedicados (payload dict raw / JSON libre). |
+
 > El módulo Academy no está en 100 %. La consolidación eliminó 3 fuentes paralelas (PLAN, ESTADO §15, QA_CHECKLIST §10), pero el trabajo de implementación sigue siendo el mismo. El progreso REAL será 100 % solo cuando los **88 IDs únicos** ⬜ pasen a ✅/📜 y los **2 lotes** se desglosen en gates individuales. Cada commit de cierre debe especificar a cuál TKT-NNN pertenece; los lotes NO deben cerrarse sin enumerar ticket por ticket.
 
 ---

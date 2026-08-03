@@ -331,19 +331,17 @@ def fix_one_pastor(db, slug: str, jpg_filename: str, admin, dry_run: bool):
     # Now we are committed to writing. Allocate the new optimized .webp.
     content = file_path.read_bytes()
     storage_path = storage_service.save_file(content, jpg_filename, subfolder=UPLOAD_SUBDIR)
-    # ``storage_service.save_file`` returns ``/static/{subfolder}/{name}`` \u2014
-    # the path WITHIN the static mount. The app mounts StaticFiles at
-    # ``/api/static`` (see backend/app.py: ``app.mount("/api/static", ...)``),
-    # so the public URL is the mount path + the storage path's tail. A naive
-    # ``f"/api/static{storage_path}"`` would produce
-    # ``/api/static/static/cms/pastores/<uuid>.webp`` (DOUBLE static) and
-    # the live endpoint would 500 on the wrong URL. Strip the leading
-    # ``/static/`` so the public URL is canonical.
-    if storage_path.startswith("/static/"):
-        relative = storage_path[len("/static/") :]
+    # ``StorageService.save_file`` returns the canonical public URL already
+    # (``/api/static/{subfolder}/{name}``). Legacy callers used to assume a
+    # bare ``/static/...`` return and prepend the mount again, which produced
+    # ``/api/static/api/static/...`` (DOUBLE static) and 404s on the media
+    # library. Normalize either form to the canonical public URL.
+    if storage_path.startswith("/api/static/"):
+        new_public_url = storage_path
+    elif storage_path.startswith("/static/"):
+        new_public_url = f"/api/static/{storage_path[len('/static/') :]}"
     else:
-        relative = storage_path.lstrip("/")
-    new_public_url = f"/api/static/{relative}"
+        new_public_url = f"/api/static/{storage_path.lstrip('/')}"
 
     # CmsMediaItem.url is unique per row. storage_service generates random
     # UUIDs so collisions are statistically zero, but guard anyway.
