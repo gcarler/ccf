@@ -120,10 +120,25 @@ def _curso_to_public(curso: Course, lesson_count: int = 0) -> PublicCursoRespons
 
 @router.get("/courses", response_model=list[PublicCursoResponse])
 def public_list_courses(db: Session = Depends(get_db)):
-    """Lista de cursos publicados para la landing page /cursos."""
+    """Lista de cursos publicados para la landing page /cursos.
+
+    Filtra por ``access_level`` IN ('open', 'persona') — ambos son valores del
+    enum canónico ``Literal["open", "persona", "advanced"]`` en
+    ``backend/schemas/academy.py`` que representan catálogo de captación
+    pública. ``"advanced"`` queda fuera (curso avanzado para personas ya
+    inscritas, no captación pública). ``"privado"`` nunca fue legítimo (no
+    está en el enum); la migración ``20260803_0005_academy_normalize_privado_to_persona``
+    lo normaliza a ``"persona"`` para que los cursos生产 legacy vuelvan a ser
+    visibles. Sin este ajuste, un curso ``open`` publicado tampoco aparecería
+    en la landing (contradictorio — ``open`` es más "público" que ``persona``).
+    """
     cursos = (
         db.query(Course)
-        .filter(Course.is_published.is_(True), Course.deleted_at.is_(None), Course.access_level == "persona")
+        .filter(
+            Course.is_published.is_(True),
+            Course.deleted_at.is_(None),
+            Course.access_level.in_(["open", "persona"]),
+        )
         .order_by(Course.id)
         .all()
     )
