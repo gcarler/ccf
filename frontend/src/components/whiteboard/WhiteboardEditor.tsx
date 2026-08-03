@@ -119,6 +119,11 @@ import { WhiteboardComments } from "@/components/whiteboard/WhiteboardComments";
 
 const COLOR_PRESETS = WHITEBOARD_COLOR_PRESETS;
 
+// Shared zoom bounds (MED-5 audit: single source of truth for wheel,
+// toolbar buttons and touch pinch so every control clamps consistently).
+const ZOOM_MIN = 0.1;
+const ZOOM_MAX = 5;
+
 const FONT_FAMILIES = [
     { label: "Manrope", value: "Manrope" },
     { label: "Inter", value: "Inter" },
@@ -252,11 +257,14 @@ export default function WhiteboardEditor({
     });
     const [showTemplateModal, setShowTemplateModal] = useState(false);
 
+    const [isCanvasReady, setIsCanvasReady] = useState(false);
+
     const { cursors, connected, broadcastCursor, broadcastObjectUpdate } = useWhiteboardCollab({
         projectId,
         token: token || "",
-        canvas: fabricCanvas.current,
+        canvasRef: fabricCanvas,
         userName: "Colaborador",
+        canvasReady: isCanvasReady,
     });
 
     const [showCommentsPanel, setShowCommentsPanel] = useState(false);
@@ -309,7 +317,6 @@ export default function WhiteboardEditor({
     const [objWidth, setObjWidth] = useState(0);
     const [objHeight, setObjHeight] = useState(0);
 
-    const [isCanvasReady, setIsCanvasReady] = useState(false);
     const [isDark, setIsDark] = useState(false);
 
     // Connector tool state
@@ -343,28 +350,40 @@ export default function WhiteboardEditor({
     // Close grid menu on outside click
     useEffect(() => {
         if (!showGridMenu) return;
+        const handler = () => setShowGridMenu(false);
         const raf = requestAnimationFrame(() => {
-            window.addEventListener("click", () => setShowGridMenu(false), { once: true });
+            window.addEventListener("click", handler, { once: true });
         });
-        return () => cancelAnimationFrame(raf);
+        return () => {
+            cancelAnimationFrame(raf);
+            window.removeEventListener("click", handler);
+        };
     }, [showGridMenu]);
 
     // Close sticky color menu on outside click
     useEffect(() => {
         if (!showStickyMenu) return;
+        const handler = () => setShowStickyMenu(false);
         const raf = requestAnimationFrame(() => {
-            window.addEventListener("click", () => setShowStickyMenu(false), { once: true });
+            window.addEventListener("click", handler, { once: true });
         });
-        return () => cancelAnimationFrame(raf);
+        return () => {
+            cancelAnimationFrame(raf);
+            window.removeEventListener("click", handler);
+        };
     }, [showStickyMenu]);
 
     // Close widgets menu on outside click
     useEffect(() => {
         if (!showWidgetsMenu) return;
+        const handler = () => setShowWidgetsMenu(false);
         const raf = requestAnimationFrame(() => {
-            window.addEventListener("click", () => setShowWidgetsMenu(false), { once: true });
+            window.addEventListener("click", handler, { once: true });
         });
-        return () => cancelAnimationFrame(raf);
+        return () => {
+            cancelAnimationFrame(raf);
+            window.removeEventListener("click", handler);
+        };
     }, [showWidgetsMenu]);
 
     const syncLayers = useCallback(() => {
@@ -522,6 +541,16 @@ export default function WhiteboardEditor({
         };
         resizeCanvas();
         window.addEventListener("resize", resizeCanvas);
+
+        // Resize when the wrapper changes (flex/split/route) even without a
+        // window resize event — otherwise the canvas stagnates in a resized
+        // container (CRIT-6 audit).
+        let resizeObserver: ResizeObserver | null = null;
+        const wrapper = canvasRef.current.parentElement;
+        if (wrapper && typeof ResizeObserver !== "undefined") {
+            resizeObserver = new ResizeObserver(() => resizeCanvas());
+            resizeObserver.observe(wrapper);
+        }
 
         // Load saved data from backend
         const loadSaved = async () => {
@@ -693,7 +722,7 @@ export default function WhiteboardEditor({
             const delta = opt.e.deltaY;
             let zoom = canvas.getZoom();
             zoom *= 0.999 ** delta;
-            zoom = Math.min(Math.max(0.2, zoom), 5);
+            zoom = Math.min(Math.max(ZOOM_MIN, zoom), ZOOM_MAX);
             canvas.zoomToPoint(new fabric.Point(opt.e.offsetX, opt.e.offsetY), zoom);
             // Use rAF so getZoom() reflects the updated value
             requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
@@ -765,6 +794,7 @@ export default function WhiteboardEditor({
 
         return () => {
             window.removeEventListener("resize", resizeCanvas);
+            resizeObserver?.disconnect();
             // Flush any debounced/queued save BEFORE disposing the canvas so
             // the last edit is not lost when the panel closes.
             flushPendingRef.current();
@@ -808,7 +838,7 @@ export default function WhiteboardEditor({
                 const dy = touches[0].clientY - touches[1].clientY;
                 const dist = Math.hypot(dx, dy);
                 if (dist > 0 && touchStartDistRef.current > 0) {
-                    const zoom = Math.min(4, Math.max(0.1, touchStartZoomRef.current * (dist / touchStartDistRef.current)));
+                    const zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, touchStartZoomRef.current * (dist / touchStartDistRef.current)));
                     canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
                     canvas.renderAll();
                     requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
@@ -1511,7 +1541,7 @@ export default function WhiteboardEditor({
     const zoomIn = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const zoom = Math.min(4, canvas.getZoom() + 0.15);
+        const zoom = Math.min(ZOOM_MAX, canvas.getZoom() + 0.15);
         canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
         requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
     };
@@ -1519,7 +1549,7 @@ export default function WhiteboardEditor({
     const zoomOut = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const zoom = Math.max(0.1, canvas.getZoom() - 0.15);
+        const zoom = Math.max(ZOOM_MIN, canvas.getZoom() - 0.15);
         canvas.zoomToPoint(new fabric.Point((canvas.width || 0) / 2, (canvas.height || 0) / 2), zoom);
         requestAnimationFrame(() => setZoomLevel(Math.round(canvas.getZoom() * 100)));
     };
@@ -1654,10 +1684,10 @@ export default function WhiteboardEditor({
         >
             {/* Template Modal */}
             {showTemplateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-xl shadow-xl p-6 max-w-3xl w-full max-h-[80vh] overflow-y-auto">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+                    <div className="rounded-xl bg-[hsl(var(--bg-primary))] p-6 shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto dark:bg-[hsl(var(--bg-muted))]">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-slate-800">Selecciona una plantilla</h2>
+                            <h2 className="text-2xl font-bold text-[hsl(var(--text-primary))]">Selecciona una plantilla</h2>
                             <button
                                 onClick={() => {
                                     setShowTemplateModal(false);
@@ -1666,7 +1696,8 @@ export default function WhiteboardEditor({
                                         saveNow(fabricCanvas.current);
                                     }
                                 }}
-                                className="text-slate-500 hover:text-slate-700"
+                                className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+                                aria-label="Cerrar plantilla"
                             >
                                 <X className="w-6 h-6" />
                             </button>
@@ -1676,19 +1707,19 @@ export default function WhiteboardEditor({
                                 <button
                                     key={tpl.id}
                                     onClick={() => handleTemplateSelect(tpl.id)}
-                                    className="p-4 border border-slate-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left flex items-start space-x-3"
+                                    className="p-4 border border-[hsl(var(--border))] rounded-lg hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-muted))] transition-colors text-left flex items-start space-x-3"
                                 >
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100 text-slate-500 shrink-0">
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] shrink-0">
                                         <tpl.icon className="h-6 w-6" strokeWidth={1.75} />
                                     </div>
                                     <div className="min-w-0">
-                                        <div className="font-semibold text-slate-800">{tpl.name}</div>
-                                        <div className="text-sm text-slate-500 mt-1">{tpl.description}</div>
+                                        <div className="font-semibold text-[hsl(var(--text-primary))]">{tpl.name}</div>
+                                        <div className="text-sm text-[hsl(var(--text-secondary))] mt-1">{tpl.description}</div>
                                     </div>
                                 </button>
                             ))}
                         </div>
-                        <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+                        <div className="mt-6 pt-4 border-t border-[hsl(var(--border))] flex justify-end">
                             <button
                                 onClick={() => {
                                     setShowTemplateModal(false);
@@ -1697,7 +1728,7 @@ export default function WhiteboardEditor({
                                         saveNow(fabricCanvas.current);
                                     }
                                 }}
-                                className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-medium"
+                                className="px-4 py-2 text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-muted))] rounded-lg font-medium"
                             >
                                 Iniciar con pizarra en blanco
                             </button>
@@ -1710,7 +1741,7 @@ export default function WhiteboardEditor({
 
             {/* PZ-19: Sticker gallery modal */}
             {showGallery && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowGallery(false)}>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={() => setShowGallery(false)}>
                     <div className="max-w-2xl w-full max-h-[80vh] overflow-y-auto rounded-xl bg-[hsl(var(--bg-primary))] p-6 shadow-2xl dark:bg-[hsl(var(--bg-muted))]" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-5">
                             <h2 className="text-xl font-bold text-[hsl(var(--text-primary))]">Galería de stickers</h2>
@@ -1784,8 +1815,9 @@ export default function WhiteboardEditor({
                 return (
                     <div
                         key={cursor.userId}
-                        className="absolute pointer-events-none z-50 transition-all duration-100 ease-linear"
+                        className="absolute pointer-events-none z-40 transition-all duration-100 ease-linear"
                         style={{ left: screenX, top: screenY }}
+                        aria-hidden="true"
                     >
                         <div className="text-red-500 font-bold" style={{textShadow: "1px 1px 2px white"}}>
                             {cursor.userName}
@@ -2060,9 +2092,16 @@ export default function WhiteboardEditor({
                                 onChange={e => setConnectorLabelState(s => s ? { ...s, value: e.target.value } : null)}
                                 onKeyDown={e => {
                                     if (e.key === 'Enter') {
-                                        if (connectorLabelState.obj.data) {
-                                            connectorLabelState.obj.data.label = connectorLabelState.value;
+                                        const obj = connectorLabelState.obj;
+                                        if (obj.data) {
+                                            obj.data.label = connectorLabelState.value;
                                             fabricCanvas.current?.requestRenderAll();
+                                            const canvas = fabricCanvas.current;
+                                            if (canvas) {
+                                                const event = { target: obj } as unknown as fabric.ModifiedEvent<fabric.TPointerEvent>;
+                                                canvas.fire("object:modified", event);
+                                                saveRef.current(canvas);
+                                            }
                                         }
                                         setConnectorLabelState(null);
                                     } else if (e.key === 'Escape') {
@@ -2071,9 +2110,16 @@ export default function WhiteboardEditor({
                                     e.stopPropagation();
                                 }}
                                 onBlur={() => {
-                                    if (connectorLabelState.obj.data) {
-                                        connectorLabelState.obj.data.label = connectorLabelState.value;
+                                    const obj = connectorLabelState.obj;
+                                    if (obj.data) {
+                                        obj.data.label = connectorLabelState.value;
                                         fabricCanvas.current?.requestRenderAll();
+                                        const canvas = fabricCanvas.current;
+                                        if (canvas) {
+                                            const event = { target: obj } as unknown as fabric.ModifiedEvent<fabric.TPointerEvent>;
+                                            canvas.fire("object:modified", event);
+                                            saveNowRef.current(canvas);
+                                        }
                                     }
                                     setConnectorLabelState(null);
                                 }}
@@ -2432,7 +2478,7 @@ export default function WhiteboardEditor({
             </div>
 
             {presentMode && (
-                <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/95" data-testid="whiteboard-presentation-overlay" onClick={presentNext}>
+                <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/95" data-testid="whiteboard-presentation-overlay" onClick={presentNext}>
                     <div className="mb-4 flex items-center gap-3">
                         <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/70">
                             {presentFrames.length > 0 ? `Marco ${presentIndex + 1} / ${presentFrames.length}` : "Vista general"}

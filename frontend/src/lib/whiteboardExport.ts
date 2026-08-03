@@ -41,7 +41,7 @@ export function exportToSvg(canvas: Canvas, filename: string): void {
   link.download = `${filename}.svg`;
   link.href = url;
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
   toast.success("Exportado como SVG");
 }
 
@@ -65,7 +65,7 @@ export function exportToJson(
     filename || `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "whiteboard"}.json`;
   link.href = url;
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
   toast.success("Exportado como JSON");
 }
 
@@ -113,90 +113,96 @@ export async function exportToPdf(
   const savedBg = canvas.backgroundColor;
   canvas.backgroundColor = "#ffffff";
   canvas.renderAll();
-  const dataUrl = canvas.toDataURL({ format: "png", multiplier });
-  canvas.backgroundColor = savedBg;
-  canvas.renderAll();
-
-  const img = new Image();
-  img.src = dataUrl;
-  await img.decode();
-  const dw = img.naturalWidth;
-  const dh = img.naturalHeight;
-
-  // Scale to fit an A4 portrait page while preserving aspect ratio.
-  const A4W = 595;
-  const A4H = 842;
-  const M = 24;
-  const availW = A4W - M * 2;
-  const availH = A4H - M * 2;
-  const scale = Math.min(availW / dw, availH / dh, 1);
-  const pw = Math.max(1, Math.round(dw * scale));
-  const ph = Math.max(1, Math.round(dh * scale));
-
-  // Rasterise into RGB byte array (top-down, PDF expects bottom-up).
-  const buf = document.createElement("canvas");
-  buf.width = dw;
-  buf.height = dh;
-  const bctx = buf.getContext("2d");
-  if (!bctx) {
-    toast.error("No se pudo exportar como PDF");
-    return;
-  }
-  bctx.drawImage(img, 0, 0);
-  const px = bctx.getImageData(0, 0, dw, dh).data;
-  const rgb = new Uint8Array(dw * dh * 3);
-  for (let i = 0; i < dw * dh; i++) {
-    rgb[i * 3] = px[i * 4];
-    rgb[i * 3 + 1] = px[i * 4 + 1];
-    rgb[i * 3 + 2] = px[i * 4 + 2];
-  }
-
-  // Compress with CompressionStream 'deflate' (RFC1950 zlib). PDF uses
-  // /FlateDecode which accepts zlib-wrapped streams.
-  let compressed: Uint8Array;
   try {
-    compressed = await compressRaw(rgb);
-  } catch {
-    compressed = rgb; // fallback: store uncompressed
+    const dataUrl = canvas.toDataURL({ format: "png", multiplier });
+
+    const img = new Image();
+    img.src = dataUrl;
+    await img.decode();
+    const dw = img.naturalWidth;
+    const dh = img.naturalHeight;
+
+    // Scale to fit an A4 portrait page while preserving aspect ratio.
+    const A4W = 595;
+    const A4H = 842;
+    const M = 24;
+    const availW = A4W - M * 2;
+    const availH = A4H - M * 2;
+    const scale = Math.min(availW / dw, availH / dh, 1);
+    const pw = Math.max(1, Math.round(dw * scale));
+    const ph = Math.max(1, Math.round(dh * scale));
+
+    // Rasterise into RGB byte array (top-down, PDF expects bottom-up).
+    const buf = document.createElement("canvas");
+    buf.width = dw;
+    buf.height = dh;
+    const bctx = buf.getContext("2d");
+    if (!bctx) {
+      toast.error("No se pudo exportar como PDF");
+      return;
+    }
+    bctx.drawImage(img, 0, 0);
+    const px = bctx.getImageData(0, 0, dw, dh).data;
+    const rgb = new Uint8Array(dw * dh * 3);
+    for (let i = 0; i < dw * dh; i++) {
+      rgb[i * 3] = px[i * 4];
+      rgb[i * 3 + 1] = px[i * 4 + 1];
+      rgb[i * 3 + 2] = px[i * 4 + 2];
+    }
+
+    // Compress with CompressionStream 'deflate' (RFC1950 zlib). PDF uses
+    // /FlateDecode which accepts zlib-wrapped streams.
+    let compressed: Uint8Array;
+    let isCompressed = true;
+    try {
+      compressed = await compressRaw(rgb);
+    } catch {
+      compressed = rgb; // fallback: store uncompressed
+      isCompressed = false;
+    }
+
+    const content = `q\n${pw} 0 0 ${ph} ${M} ${M} cm\n/Im0 Do\nQ`;
+
+    const finalParts: (string | Uint8Array)[] = [];
+    const offs: number[] = [];
+    let c = 0;
+    const tick = (b: Uint8Array) => { offs.push(c); c += b.byteLength; finalParts.push(b); };
+    const tickStr = (s: string) => tick(new TextEncoder().encode(s));
+
+    const filterStr = isCompressed ? "/Filter /FlateDecode " : "";
+    const imgHeader = `4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${dw} /Height ${dh} /ColorSpace /DeviceRGB /BitsPerComponent 8 ${filterStr}/Length ${compressed.byteLength} >>\nstream\n`;
+    const contentHeader = `5 0 obj\n<< /Length ${new TextEncoder().encode(content).byteLength} >>\nstream\n`;
+
+    tickStr("%PDF-1.4\n%\u00E2\u00E3\u00CF\u00D3\n");
+    tickStr("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+    tickStr("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+    tickStr(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${A4W} ${A4H}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`);
+    tickStr(imgHeader);
+    tick(compressed);
+    tickStr("\nendstream\nendobj\n");
+    tickStr(contentHeader);
+    tickStr(content);
+    tickStr("\nendstream\nendobj\n");
+
+    const xrefOffsets = c;
+    let xref = `xref\n0 ${offs.length + 1}\n0000000000 65535 f \n`;
+    for (const o of offs) xref += `${String(o).padStart(10, "0")} 00000 n \n`;
+    const trailer = `trailer\n<< /Size ${offs.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffsets}\n%%EOF\n`;
+    finalParts.push(new TextEncoder().encode(xref));
+    finalParts.push(new TextEncoder().encode(trailer));
+
+    const blob = new Blob(finalParts as BlobPart[], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = `${filename}.pdf`;
+    link.href = url;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast.success("Exportado como PDF");
+  } finally {
+    canvas.backgroundColor = savedBg;
+    canvas.renderAll();
   }
-
-  const content = `q\n${pw} 0 0 ${ph} ${M} ${M} cm\n/Im0 Do\nQ`;
-
-  const finalParts: (string | Uint8Array)[] = [];
-  const offs: number[] = [];
-  let c = 0;
-  const tick = (b: Uint8Array) => { offs.push(c); c += b.byteLength; finalParts.push(b); };
-  const tickStr = (s: string) => tick(new TextEncoder().encode(s));
-
-  const imgHeader = `4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${dw} /Height ${dh} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length ${compressed.byteLength} >>\nstream\n`;
-  const contentHeader = `5 0 obj\n<< /Length ${new TextEncoder().encode(content).byteLength} >>\nstream\n`;
-
-  tickStr("%PDF-1.4\n%\u00E2\u00E3\u00CF\u00D3\n");
-  tickStr("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
-  tickStr("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
-  tickStr(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${A4W} ${A4H}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`);
-  tickStr(imgHeader);
-  tick(compressed);
-  tickStr("\nendstream\nendobj\n");
-  tickStr(contentHeader);
-  tickStr(content);
-  tickStr("\nendstream\nendobj\n");
-
-  const xrefOffsets = c;
-  let xref = `xref\n0 ${offs.length + 1}\n0000000000 65535 f \n`;
-  for (const o of offs) xref += `${String(o).padStart(10, "0")} 00000 n \n`;
-  const trailer = `trailer\n<< /Size ${offs.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffsets}\n%%EOF\n`;
-  finalParts.push(new TextEncoder().encode(xref));
-  finalParts.push(new TextEncoder().encode(trailer));
-
-  const blob = new Blob(finalParts as BlobPart[], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.download = `${filename}.pdf`;
-  link.href = url;
-  link.click();
-  URL.revokeObjectURL(url);
-  toast.success("Exportado como PDF");
 }
 
 /** Compress a Uint8Array using the platform CompressionStream (deflate). */
