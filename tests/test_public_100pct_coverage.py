@@ -169,7 +169,7 @@ class TestPublicApi100PctCoverage:
     # huérfano del enum canónico Literal["open","persona","advanced"]).+Ajuste: el filtro ahora admite ['open','persona'] y excluye 'advanced'
     # (curso avanzado para inscritos, no captación pública) y cualquier
     # valor fuera del enum ('privado' o futuro). La migración
-    # 20260803_0005 normaliza los 4 cursos 'privado' (valor pre-enum) a 'persona'.
+    # 20260803_0005 normaliza los 4 cursos legacy 'privado' a 'persona'.
 
     def test_public_list_courses_admits_open_and_persona_excludes_advanced(self, client, db_session):
         """public_list_courses admite access_level en {'open','persona'},
@@ -204,14 +204,14 @@ class TestPublicApi100PctCoverage:
         (valor huérfano heredado de inserciones pre-enum) NO aparece en
         /cursos hasta que la migración 20260803_0005 lo normalice a 'persona'.
         El test consagra el contrato: el filtro por sí solo NO restaura la
-        visibilidad de los 4 cursos preexistentes — la migración es necesaria.
+        visibilidad de los 4 cursos legacy — la migración es necesaria.
         """
 
         c_privado = Course(
             id=uuid.uuid4(),
             code="LID-REG-PRIVADO",
-            title="Curso Privado Pre-enum",
-            slug="curso-privado-pre-enum",
+            title="Curso Privado Legacy",
+            slug="curso-privado-legacy",
             modality="online",
             is_published=True,
             access_level="privado",  # bypass del validator Pydantic (inserción directa ORM)
