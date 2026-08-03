@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { Canvas } from "fabric";
+import type { RefObject } from "react";
 
 export interface CursorPosition {
   x: number;
@@ -13,8 +14,9 @@ export interface CursorPosition {
 export interface UseWhiteboardCollabOptions {
   projectId: string;
   token: string | null;
-  canvas: Canvas | null;
+  canvasRef: RefObject<Canvas | null>;
   userName: string;
+  canvasReady: boolean;
 }
 
 /** Random per-tab identity so we can ignore our own echoed broadcasts. */
@@ -26,7 +28,10 @@ function makeClientId(): string {
 const RECONNECT_BASE_MS = 1200;
 const RECONNECT_MAX_MS = 12000;
 
-export function useWhiteboardCollab({ projectId, token, canvas, userName }: UseWhiteboardCollabOptions) {
+/** Max frequency for cursor broadcasts (MED-4 audit throttle). */
+const CURSOR_THROTTLE_MS = 100;
+
+export function useWhiteboardCollab({ projectId, token, canvasRef, userName, canvasReady }: UseWhiteboardCollabOptions) {
   const [cursors, setCursors] = useState<Record<string, CursorPosition>>({});
   const [connected, setConnected] = useState(false);
   const ws = useRef<WebSocket | null>(null);
@@ -34,6 +39,11 @@ export function useWhiteboardCollab({ projectId, token, canvas, userName }: UseW
   const reconnectAttempt = useRef(0);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shouldRun = useRef(true);
+
+  // Cursor-throttle state (MED-4 audit)
+  const lastCursorSend = useRef(0);
+  const pendingCursor = useRef<{ x: number; y: number } | null>(null);
+  const cursorFlushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Buffer to prevent echo on our own updates (keyed by object id)
   const ignoreNextUpdateIds = useRef<Set<string>>(new Set());
@@ -43,7 +53,9 @@ export function useWhiteboardCollab({ projectId, token, canvas, userName }: UseW
   }, []);
 
   useEffect(() => {
-    if (!projectId || !token || !canvas) return;
+    if (!projectId || !token || !canvasReady) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
     shouldRun.current = true;
     let socket: WebSocket | null = null;
@@ -129,17 +141,36 @@ export function useWhiteboardCollab({ projectId, token, canvas, userName }: UseW
     return () => {
       shouldRun.current = false;
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (cursorFlushTimer.current) clearTimeout(cursorFlushTimer.current);
       socket?.close();
       ws.current = null;
       setConnected(false);
       setCursors({});
     };
-  }, [projectId, token, canvas, userName, isSelf]);
+  }, [projectId, token, canvasRef, canvasReady, userName, isSelf]);
 
   const broadcastCursor = useCallback((x: number, y: number) => {
+    // Throttle cursor broadcasts (MED-4 audit) to avoid flooding the socket
+    // with a message per mousemove. Send up to ~10/s and always flush the
+    // latest position after the throttle window.
+    const now = Date.now();
+    if (now - lastCursorSend.current < CURSOR_THROTTLE_MS) {
+      pendingCursor.current = { x, y };
+      return;
+    }
+    lastCursorSend.current = now;
+    pendingCursor.current = null;
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify({ type: "cursor", x, y, name: userName }));
     }
+    if (cursorFlushTimer.current) clearTimeout(cursorFlushTimer.current);
+    cursorFlushTimer.current = setTimeout(() => {
+      const p = pendingCursor.current;
+      pendingCursor.current = null;
+      if (p && ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify({ type: "cursor", x: p.x, y: p.y, name: userName }));
+      }
+    }, CURSOR_THROTTLE_MS);
   }, [userName]);
 
   const broadcastObjectUpdate = useCallback((type: "object_modified" | "object_added" | "object_removed", obj: any) => {
