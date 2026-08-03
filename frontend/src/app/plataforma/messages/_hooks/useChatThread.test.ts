@@ -42,6 +42,9 @@ function makeMessage(id: string, content: string, createdAt = '2026-07-30T10:00:
 describe('useChatThread', () => {
   beforeEach(() => {
     vi.mocked(apiFetch).mockReset();
+    // Default resolve so fire-and-forget calls (e.g. the WS mark-read) don't
+    // blow up on an undefined return value.
+    vi.mocked(apiFetch).mockResolvedValue(undefined as never);
     capturedOnEvent = null;
   });
 

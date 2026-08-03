@@ -53,7 +53,7 @@ import uuid as _uuid
 from collections import defaultdict
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from jose import jwt as _jwt
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -68,15 +68,23 @@ from backend.core.permissions import (
     require_module_access,
     require_staff_or_admin,
 )
+from backend.crud._utils import _coerce_uuid_or_404
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_for_user
 from backend.mesh_websockets import manager
+from backend.schemas.notifications import MessagingChannel
 from backend.services.messaging import CommunicationOutcome
 
 # M-04: Allowlist de patrones de room name válidos.
+# ``room_*`` fue removido de la allowlist (fail-closed): ningún endpoint lo
+# emite hoy y no tiene un guard de participación, por lo que hubiera sido un
+# canal cross-sede sin autorización.
 _VALID_ROOM_RE = re.compile(
-    r"^(global|project_[0-9a-f-]{36}|dm_[0-9a-f-]{36}|room_[0-9a-f-]{36}|general|staff)$",
+    r"^(global|project_[0-9a-f-]{36}|dm_[0-9a-f-]{36}|general|staff)$",
     re.IGNORECASE,
 )
+
+# Límite de tamaño por frame de texto enviado por el cliente WS (bytes).
+_WS_MAX_TEXT_BYTES = 64 * 1024
 
 # M-05: Rate limit en memoria por usuario (broadcast notifications).
 _broadcast_rate: dict[str, list[float]] = defaultdict(list)
@@ -92,11 +100,49 @@ class NotificationPayload(BaseModel):
 
 class MessageSendPayload(BaseModel):
     persona_id: str
-    channel: str
+    channel: MessagingChannel
     content: str
 
 
 router = APIRouter()
+
+
+def _resolve_project_access(db: Session, current_user: models.User, actor_sede: object | None, project_id: _uuid.UUID) -> bool:
+    """Return True if the actor may access the project room (Axioma 3).
+
+    Mirrors ``projects._ensure_project`` + ``_is_assigned_to_project`` so the
+    realtime channel cannot bypass the sede/assignment guards enforced by the
+    HTTP project routes. The actor must be the project owner or the assignee
+    of at least one non-deleted task, and the project must belong to the
+    actor's sede (superadmin with no sede bypasses scope).
+    """
+    project = (
+        db.query(models.Project)
+        .filter(models.Project.id == project_id, models.Project.deleted_at.is_(None))
+        .first()
+    )
+    if project is None:
+        return False
+    # Axioma 3 strict scope: projects with NULL sede_id are hidden from
+    # seated actors, mirroring ``_ensure_project``.
+    if actor_sede is not None:
+        if project.sede_id is None or str(project.sede_id) != str(actor_sede):
+            return False
+    persona_id = resolve_persona_id_for_user(db, current_user.id)
+    if persona_id is None:
+        return False
+    if project.owner_id is not None and str(project.owner_id) == str(persona_id):
+        return True
+    task = (
+        db.query(models.ProjectTask.id)
+        .filter(
+            models.ProjectTask.project_id == project_id,
+            models.ProjectTask.assignee_id == persona_id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .first()
+    )
+    return task is not None
 
 
 def _authorize_requested_rooms(db: Session, current_user: models.User, raw_rooms: list[str]) -> list[str]:
@@ -105,12 +151,25 @@ def _authorize_requested_rooms(db: Session, current_user: models.User, raw_rooms
     Generic workspace rooms remain governed by the module permission checked by
     the WebSocket handler. Direct-message rooms require an explicit
     ``ConversationParticipant`` row so knowing a conversation UUID is never
-    enough to receive its events.
+    enough to receive its events. Project rooms require project ownership or
+    task assignment within the actor's sede (same guard as the HTTP project
+    routes), so an editor from sede A cannot subscribe to a ``project_*`` room
+    of sede B.
     """
     authorized: list[str] = []
+    actor_sede = get_user_sede_id(db, current_user.id)
     for raw_room in raw_rooms:
         room = raw_room.strip()
         if not room or not _VALID_ROOM_RE.match(room):
+            continue
+        if room.lower().startswith("project_"):
+            try:
+                project_id = _uuid.UUID(room[len("project_") :])
+            except (TypeError, ValueError):
+                continue
+            if not _resolve_project_access(db, current_user, actor_sede, project_id):
+                continue
+            authorized.append(room)
             continue
         if room.lower().startswith("dm_"):
             try:
@@ -131,7 +190,6 @@ def _authorize_requested_rooms(db: Session, current_user: models.User, raw_rooms
             # Keep realtime isolation consistent with the HTTP chat guards:
             # inherited conversations containing participants from another
             # sede must not become reachable through the room transport.
-            actor_sede = get_user_sede_id(db, current_user.id)
             if actor_sede is not None:
                 participant_user_ids = [
                     user_id
@@ -208,24 +266,37 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
         rooms_param = websocket.query_params.get("rooms")
         raw_rooms = rooms_param.split(",") if rooms_param is not None else None
-        # M-04 + BOLA defense: validate names and authorize every private DM room.
-        rooms = None
-        if raw_rooms is not None:
-            rooms = _authorize_requested_rooms(_db, _user, raw_rooms)
-            if not rooms:
-                await websocket.close(code=4003, reason="No authorized rooms")
-                return
+        # M-04 + BOLA defense: validate names and authorize every private DM
+        # and project room. A connection without an explicit room is rejected:
+        # broadcasting with ``room=None`` would fan out to EVERY client of ALL
+        # instances (mesh_websockets._send_local), a cross-tenant amplifier.
+        if not raw_rooms:
+            await websocket.close(code=4003, reason="No rooms requested")
+            return
+        rooms = _authorize_requested_rooms(_db, _user, raw_rooms)
+        if not rooms:
+            await websocket.close(code=4003, reason="No authorized rooms")
+            return
     finally:
         _db.close()
     await manager.connect(client_id, websocket, rooms=rooms)
     try:
         while True:
             data = await websocket.receive_text()
+            if len(data.encode("utf-8")) > _WS_MAX_TEXT_BYTES:
+                await websocket.close(code=1009, reason="Message too large")
+                return
             await manager.broadcast_event(
                 {"event": "message", "client": client_id, "data": data},
-                room=rooms[0] if rooms else None,
+                room=rooms[0],
             )
     except WebSocketDisconnect:
+        pass
+    except Exception:  # pragma: no cover - defensive cleanup for any receive error
+        pass
+    finally:
+        # Single cleanup path: also covers timeouts/protocol errors so stale
+        # connections never linger in active_connections/rooms (presence).
         await manager.disconnect(client_id)
 
 
@@ -247,8 +318,11 @@ async def get_room_presence(
     primitive; unauthorized callers receive a neutral 404.
     """
     room = room.strip()
-    if room.lower().startswith("dm_") and not _authorize_requested_rooms(db, current_user, [room]):
+    if not _VALID_ROOM_RE.match(room):
         raise HTTPException(status_code=404, detail="Room not found")
+    if room.startswith("dm_") or room.startswith("project_"):
+        if not _authorize_requested_rooms(db, current_user, [room]):
+            raise HTTPException(status_code=404, detail="Room not found")
 
     # A-01: Return enriched client list with persona_id when resolvable.
     # client_id in mesh_websockets is an opaque UUID string provided by
@@ -278,13 +352,33 @@ async def get_room_presence(
 @router.post("/messaging/notifications")
 async def send_notification(
     payload: NotificationPayload,
+    db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
-    """Broadcast de evento en tiempo real a una room (o todas las rooms).
+    """Broadcast de evento en tiempo real a una room autorizada.
 
     M-05: rate limit de 10 eventos/minuto/usuario. Exceso → 429.
     El evento se publica vía Redis pub/sub a todas las instancias.
+
+    Seguridad (broadcast hardening):
+      - ``payload.room`` es obligatorio (se rechaza el broadcast global
+        implícito con ``room=None`` que llegaba a TODOS los clientes de todas
+        las instancias).
+      - El room debe pasar la allowlist (M-04) y, si es privado
+        (``dm_*``/``project_*``), la misma autorización de participación que el
+        handshake WS. Así un usuario con ``messaging:read`` no puede inyectar
+        eventos falsos en conversaciones o proyectos ajenos (spoofing
+        realtime cross-sede).
     """
+    if not payload.room:
+        raise HTTPException(status_code=422, detail="room is required")
+    room = payload.room.strip()
+    if not _VALID_ROOM_RE.match(room):
+        raise HTTPException(status_code=422, detail="Invalid room")
+    authorized = _authorize_requested_rooms(db, current_user, [room])
+    if room not in authorized:
+        raise HTTPException(status_code=404, detail="Room not found")
+
     # M-05: Rate limit por usuario para broadcast.
     user_id = str(getattr(current_user, "id", ""))
     now = time.time()
@@ -296,14 +390,14 @@ async def send_notification(
             detail="Rate limit exceeded for broadcast notifications",
         )
     _broadcast_rate[user_id].append(now)
-    await manager.broadcast_event({"event": payload.event, "body": payload.body}, room=payload.room)
+    await manager.broadcast_event({"event": payload.event, "body": payload.body}, room=room)
     return {"status": "queued"}
 
 
 @router.get("/messaging/notifications", response_model=List[schemas.Notification])
 def get_notifications(
-    limit: int = 20,
-    offset: int = 0,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),
 ):
@@ -337,6 +431,9 @@ def update_notification(
     # podría PATCH notifications ajenas adivinando UUIDs. 404 (no 403,
     # no 200) para evitar existence leaks. Notification.user_id == Persona.id
     # (via Usuario), por eso resolvemos persona_id del current_user.
+    # Un ``notification_id`` malformado se rechaza antes de tocar la DB
+    # (evita un 500 por DataError de UUID en PostgreSQL).
+    _coerce_uuid_or_404(notification_id, detail="Notification not found")
     current_persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
     updated = crud.mark_notification_as_read(
         db,
@@ -368,8 +465,8 @@ def mark_all_read(
 
 @router.get("/messaging/history", response_model=List[schemas.CommunicationLog])
 def messaging_history(
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
