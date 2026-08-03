@@ -60,7 +60,7 @@ Módulo de espacio de trabajo transversal. Proporciona pizarra (whiteboard), tar
 
 ### DONE-WORKSPACE-001 (2026-08-02) — Cierre: mover snapshots de feature flags fuera del árbol de git
 
-> CERRADO el 2026-08-02 con `git rm --cached backend/data/feature_flags_*.ndjson` (commit del cierre): los tres `feature_flags_*.ndjson` quedan des-trackeados y el `.gitignore` existente (`backend/data/feature_flags*.ndjson`) ya los excluye; se regeneran bajo demanda sin ensuciar el working tree. Los archivos siguen en disco. Nota residual: `feature_flags.json` y `feature_flags_incidents.json` quedan trackeados y también reciben diffs de runtime (newline) — si reaparecen, des-trackearlos con el mismo criterio.
+> CERRADO el 2026-08-02 con `git rm --cached` de los cinco snapshots de feature flags (commits del cierre): los tres `feature_flags_*.ndjson` (audit/notifications/snapshot_history) + `feature_flags.json` y `feature_flags_incidents.json` quedan des-trackeados y el `.gitignore` los excluye (`backend/data/feature_flags*.ndjson` y `backend/data/feature_flags*.json`); se regeneran bajo demanda sin ensuciar el working tree. Los archivos siguen en disco. Nota de diseño: `feature_flags.json` es la configuracion activa del workspace (features/reglas); en un clone fresco arranca del `DEFAULT_WORKSPACE_CONFIG` en codigo (fallback ya probado por los 246 tests verdes sin los archivos).
 
 ### PEND-WORKSPACE-001 (CERRADO 2026-08-02 → DONE-WORKSPACE-001) — Mover snapshots de feature flags fuera del árbol de git
 
