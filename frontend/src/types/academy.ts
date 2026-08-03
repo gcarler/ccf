@@ -162,8 +162,8 @@ export interface CourseDetail {
   // ``students_count`` SÍ es emitido por ``_serialize_course`` en list/detail
   // (count bulk Axioma-3, sin N+1; 0 para cursos globales en un Manager con
   // sede — scope admin estricto F-02). ``lesson_count`` (singular) es el
-  // campo real de lecciones. ``lessons_count`` es legacy muerto (el backend
-  // nunca lo emite) y se conserva por tolerancia, sin renderizarse.
+  // campo real de lecciones. ``lessons_count`` es un campo obsoleto (el backend
+  // nunca lo emite) y se conserva por compatibilidad, sin renderizarse.
   students_count?: number;
   lessons_count?: number;
 }
