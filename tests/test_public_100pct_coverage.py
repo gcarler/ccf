@@ -137,3 +137,75 @@ class TestPublicApi100PctCoverage:
         data = res_ok.json()
         assert data["filename"] == "manual.pdf"
         assert data["mime_type"] == "application/pdf"
+
+    # Hallazgo 2 (ses_03767db76ffee 2026-08-03): public_list_courses admitía
+    # sólo access_level=='persona' tras c1d923c0, excluyendo 'open' (más
+    # público que 'persona'), 'advanced' (no público) y 'privado' (valor
+    # huérfano del enum canónico Literal["open","persona","advanced"]).+Ajuste: el filtro ahora admite ['open','persona'] y excluye 'advanced'
+    # (curso avanzado para inscritos, no captación pública) y cualquier
+    # valor fuera del enum ('privado' o futuro). La migración
+    # 20260803_0005 normaliza los 4 cursos legacy 'privado' a 'persona'.
+
+    def test_public_list_courses_admits_open_and_persona_excludes_advanced(self, client, db_session):
+        """public_list_courses admite access_level en {'open','persona'},
+        excluye 'advanced' (no público)."""
+
+        def _course(slug: str, access_level: str) -> Course:
+            return Course(
+                id=uuid.uuid4(),
+                code=f"LID-{slug.upper()}-{access_level}",
+                title=f"Curso {slug}",
+                slug=slug,
+                modality="online",
+                is_published=True,
+                access_level=access_level,
+            )
+
+        c_open = _course("curso-open", "open")
+        c_persona = _course("curso-persona", "persona")
+        c_advanced = _course("curso-advanced", "advanced")
+        db_session.add_all([c_open, c_persona, c_advanced])
+        db_session.commit()
+
+        res = client.get("/api/public/courses")
+        assert res.status_code == 200
+        ids = {c["id"] for c in res.json()}
+        assert c_open.slug in ids, "open debe ser visible (captación pública)"
+        assert c_persona.slug in ids, "persona debe ser visible (captación pública)"
+        assert c_advanced.slug not in ids, "advanced NO es captación pública"
+
+    def test_public_list_courses_regression_privado_excluded_unnormalized(self, client, db_session):
+        """Regresión del hallazgo 2: un curso con access_level='privado'
+        (valor huérfano heredado de inserciones pre-enum) NO aparece en
+        /cursos hasta que la migración 20260803_0005 lo normalice a 'persona'.
+        El test consagra el contrato: el filtro por sí solo NO restaura la
+        visibilidad de los 4 cursos legacy — la migración es necesaria.
+        """
+
+        c_privado = Course(
+            id=uuid.uuid4(),
+            code="LID-REG-PRIVADO",
+            title="Curso Privado Legacy",
+            slug="curso-privado-legacy",
+            modality="online",
+            is_published=True,
+            access_level="privado",  # bypass del validator Pydantic (inserción directa ORM)
+        )
+        db_session.add(c_privado)
+        db_session.commit()
+
+        res = client.get("/api/public/courses")
+        assert res.status_code == 200
+        ids = {c["id"] for c in res.json()}
+        assert c_privado.slug not in ids, (
+            "Un curso 'privado' (no normalizado) debe SIGO fuera de /cursos — "
+            "la migración 20260803_0005 es la que restaura la visibilidad, no el filtro"
+        )
+
+        # Detalle por slug sigue disponible (public_get_course no filtra access_level
+        # — sólo published+deleted_at), así que mientras se normaliza, el curso
+        # sigue siendo accesible vía /api/public/courses/{slug}, incluso si no aparece
+        # en el listado. Verificamos que el detalle no rompe con el valor huérfano.
+        res_detail = client.get(f"/api/public/courses/{c_privado.slug}")
+        assert res_detail.status_code == 200
+        assert res_detail.json()["id"] == c_privado.slug
