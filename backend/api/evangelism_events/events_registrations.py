@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import csv
 import io
-import uuid
 from typing import List, Optional
 from uuid import UUID
 
@@ -32,15 +31,14 @@ from backend.core.permissions import (
     require_evangelism_read,
 )
 from backend.services.event_registration_service import (
-    RegistrationError,
     _issue_cancel_token,
     _issue_qr,
-    _promote_first_waitlist,
     _utcnow,
-    cancel as cancel_registration,
     count_active_registrations,
-    generate_qr_token,
     upsert_persona,
+)
+from backend.services.event_registration_service import (
+    cancel as cancel_registration,
 )
 
 router = APIRouter()
@@ -59,7 +57,9 @@ def _serialize(reg: models.EventRegistration, persona: Optional[models.Persona])
         persona_email=(persona.email if persona else None),
         persona_phone=(persona.phone if persona else None),
         registration_status=reg.registration_status,
-        qr_token=reg.qr_token if reg.registration_status in {"CONFIRMED", "CHECKED_IN"} else None,
+        # qr_token nunca se persiste (fix seguridad #2): se emite por email
+        # al usuario, no se devuelve en la API admin ni pública.
+        qr_token=None,
         qr_generated_at=reg.qr_generated_at,
         registered_at=reg.registered_at,
         confirmed_at=reg.confirmed_at,
@@ -131,7 +131,6 @@ def list_registrations(
             )
         )
 
-    total = q.count()
     rows = (
         q.order_by(models.EventRegistration.registered_at.desc())
         .offset((page - 1) * page_size)
@@ -214,7 +213,7 @@ def export_registrations_csv(
 
     output = io.StringIO()
     writer = csv.writer(output, delimiter=",", quoting=csv.QUOTE_MINIMAL)
-    writer.writerow(["Nombre", "Email", "Teléfono", "Estado", "QR", "Registrado el", "Check-in"])
+    writer.writerow(["Nombre", "Email", "Teléfono", "Estado", "Registrado el", "Check-in"])
     for r in rows:
         p = r.persona
         writer.writerow([
@@ -222,7 +221,6 @@ def export_registrations_csv(
             (p.email if p else ""),
             (p.phone if p else ""),
             r.registration_status,
-            (r.qr_token or ""),
             r.registered_at.isoformat() if r.registered_at else "",
             r.check_in_at.isoformat() if r.check_in_at else "",
         ])
@@ -386,12 +384,19 @@ def resend_confirmation(
     reg = _get_or_404(db, event.id, reg_id)
     if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
         raise HTTPException(status_code=409, detail="La inscripción no está CONFIRMED")
-    if not reg.qr_token:
-        _issue_qr(db, reg)
-        db.flush()
+
+    # Regenerar tokens (volatile, nunca persistidos): al reemitir el QR,
+    # invalidamos cualquier token anterior (el hash se reescribe).
+    qr_token_plain = _issue_qr(db, reg)
+    cancel_token_plain = _issue_cancel_token(db, reg)
+    db.flush()
 
     from backend.services.event_registration_service import _send_confirmation_email
-    _send_confirmation_email(db, event, reg, reg.persona, public_base_url="")
+    _send_confirmation_email(
+        db, event, reg, reg.persona, public_base_url="",
+        qr_token_plain=qr_token_plain,
+        cancel_token_plain=cancel_token_plain,
+    )
 
     db.commit()
     return {"status": "ok", "message": "Email reenviado"}
@@ -542,8 +547,6 @@ def create_campaign(
     if plantilla.sede_id and str(plantilla.sede_id) != str(event.sede_id):
         raise HTTPException(status_code=403, detail="Plantilla no pertenece a la sede del evento")
 
-    from backend.core.tenant import require_user_sede_id
-    user_sede = require_user_sede_id(db, current_user)
     persona = db.query(models.Persona).filter(models.Persona.id == current_user.id).first()
 
     campaign = models.EventCampaign(
