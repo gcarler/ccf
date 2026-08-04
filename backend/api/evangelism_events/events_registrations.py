@@ -412,9 +412,27 @@ def bulk_import(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_manage),
 ):
-    """Importa una lista de inscripciones (upsert Persona + EventRegistration)."""
+    """Importa una lista de inscripciones (upsert Persona + EventRegistration).
+
+    Respeta ``capacity_max`` y ``waiting_list_enabled`` como el path público:
+    - Si el evento tiene ``capacity_max`` y se supera, las filas extra se
+      derivan a WAITLIST (si ``waiting_list_enabled``) o se omiten con error.
+    - Toma ``with_for_update`` sobre CrmEvent para serializar el conteo+
+      insert (fix #4) y no sobrevender el aforo en cargas masivas paralelas.
+    - Los tokens QR/cancel emitidos a CONFIRMED son volatile (no persistidos).
+    """
     event = require_event_access(db, current_user, event_id)
-    created, skipped, errors = 0, 0, []
+    # Race de aforo (fix #4): bloquear la fila del evento para que el
+    # bulk import vea un conteo estable y no sobrevenda capacity_max.
+    db.query(models.CrmEvent).with_for_update().filter(models.CrmEvent.id == event.id).first()
+
+    # Slots activos al iniciar el bulk — contamos una sola vez para todo el lote.
+    slots_taken, _ = count_active_registrations(db, event.id)
+    capacity_max = event.capacity_max
+    waiting_list_enabled = bool(event.waiting_list_enabled)
+
+    created, skipped = 0, 0
+    errors: list[dict] = []
     for idx, row in enumerate(payload.rows):
         try:
             persona = upsert_persona(
@@ -433,23 +451,54 @@ def bulk_import(
                 )
                 .first()
             )
-            if existing and existing.registration_status in {"CONFIRMED", "CHECKED_IN", "WAITLIST", "PENDING"}:
+            if existing and existing.registration_status in {
+                "CONFIRMED", "CHECKED_IN", "WAITLIST", "PENDING"
+            }:
                 skipped += 1
                 continue
+
+            # Si el admin pidió CONFIRMED pero el aforo está lleno, derivar a
+            # WAITLIST (siempre que el evento lo permita) o rechazar la fila.
+            target_status = row.registration_status
+            if (
+                target_status == "CONFIRMED"
+                and capacity_max is not None
+                and slots_taken >= capacity_max
+            ):
+                if waiting_list_enabled:
+                    target_status = "WAITLIST"
+                else:
+                    errors.append(
+                        {"row": idx, "error": "Aforo lleno y evento sin lista de espera"}
+                    )
+                    continue
 
             reg = models.EventRegistration(
                 event_id=event.id,
                 persona_id=persona.id,
-                registration_status=row.registration_status,
+                registration_status=target_status,
                 source=row.source or "admin_import",
                 extras=row.extras or {},
             )
+            if target_status == "WAITLIST":
+                # Adjuntar al final de la cola: position = (slotsTaken en cola) + 1.
+                wl_count = (
+                    db.query(models.EventRegistration)
+                    .filter(
+                        models.EventRegistration.event_id == event.id,
+                        models.EventRegistration.registration_status == "WAITLIST",
+                        models.EventRegistration.deleted_at.is_(None),
+                    )
+                    .count()
+                )
+                reg.waiting_list_position = wl_count + 1
             db.add(reg)
             db.flush()
             if reg.registration_status == "CONFIRMED":
                 _issue_qr(db, reg)
                 _issue_cancel_token(db, reg)
                 reg.confirmed_at = _utcnow()
+                slots_taken += 1
             created += 1
         except Exception as exc:
             errors.append({"row": idx, "error": str(exc)})
