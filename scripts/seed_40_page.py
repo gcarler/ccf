@@ -64,6 +64,15 @@ def seed_40_page():
                 }
             },
             {
+                "section_key": "agenda",
+                "type": "rich_text",
+                "sort_order": 1,
+                "props_json": {
+                    "vision_title": "Agenda de Celebración",
+                    "vision_text": "Todo el mes de agosto estaremos conmemorando nuestros 40 años, pero los eventos principales se llevarán a cabo en 3 días clave. ¡Acompáñanos!\n\n**21 de Agosto:** Servicio de Milagros (7:00 PM)\n**22 de Agosto:** Conferencia para Líderes y Servidores (8:00 AM a 12:00 PM)\n**23 de Agosto:** Servicio Dominical de Aniversario (9:00 AM)",
+                }
+            },
+            {
                 "section_key": "timeline",
                 "type": "timeline",
                 "sort_order": 1,
