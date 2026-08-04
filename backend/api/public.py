@@ -29,6 +29,13 @@ from backend.services.event_registration_service import (
 from backend.services.event_registration_service import (
     verify as verify_registration,
 )
+
+# plan_de_form_builder: validación server-side de campos dinámicos
+from backend.services.form_validation import (
+    ValidationError,
+    validate_submission,
+    verify_hcaptcha,
+)
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
 logger = logging.getLogger(__name__)
@@ -462,6 +469,111 @@ def public_get_event(event_id: uuid.UUID, db: Session = Depends(get_db)):
     )
 
 
+def _validate_event_form_data(db: Session, event: models.CrmEvent, payload: schemas.PublicEventRegister) -> None:
+    """Valida ``payload.form_data`` + ``captcha_token`` contra el ``CmsForm``
+    vinculado al evento (``event.form_id``).
+
+    Plan Form Builder Dinámico §5.4: el pre-registro sigue yendo a
+    ``/public/events/{event_id}/register`` (para crear ``EventRegistration`` +
+    QR) pero el backend valida ``form_data`` contra el ``CmsForm`` y persiste
+    los datos limpios en ``payload.extras["_form_data"]`` — así el servicio
+    de preinscripción los captura sin tocar código.
+
+    Flujo:
+      1. Cargar el ``CmsForm`` (404 si fue eliminado o está inactivo).
+      2. hCaptcha si ``form.captcha_enabled`` (raise 400 si falta/falla).
+      3. ``validate_submission(form.fields, payload.form_data)`` → 422 si
+         algún campo falla (required, tipo, regex, opciones, condicional).
+      4. Persistir el dict limpio en ``payload.extras["_form_data"]`` para
+         que ``register_persona`` lo capture en ``extras``.
+
+    Lanza ``HTTPException`` en fallos (404 form, 400 captcha, 422 validación).
+
+    Nota: el honeypot NO se aplica a pre-registro de eventos. ``PublicEventRegister``
+    no expone un campo trampa ``_hp`` (esencial para formularios genéricos pero
+    impropio para preregistro, donde el plan §5.4 solo valida ``form_data``).
+    La protección anti-bot del preregistro es captcha + rate-limit por IP.
+    """
+    form = db.query(models.CmsForm).filter(models.CmsForm.id == event.form_id).first()
+    if not form or not form.is_active:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "FORM_NOT_FOUND", "detail": "El formulario asociado al evento ya no está disponible."},
+        )
+
+    # hCaptcha — el token llega en ``payload.captcha_token``. La verificación
+    # se corre con remote_ip=None (este helper no recibe ``request``).
+    if form.captcha_enabled:
+        token = (payload.captcha_token or "").strip()
+        if not token:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "CAPTCHA_REQUIRED", "detail": "Captcha requerido para este formulario."},
+            )
+
+        # ``verify_hcaptcha`` es async; este endpoint es síncrono. Reuso el
+        # patrón ``_run_hcaptcha_sync`` (thread con event loop propio) que
+        # ``cms_v2/forms.py`` ya estableció para endpoints no-async — evita
+        # ``asyncio.run`` cuando ya hay un event loop activo (p.ej. tests).
+        ok = _run_hcaptcha_sync(token, remote_ip=None)
+        if not ok:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "CAPTCHA_FAILED", "detail": "Captcha inválido."},
+            )
+
+    # Validación server-side de campos dinámicos.
+    try:
+        clean = validate_submission(
+            form.fields or [],
+            payload.form_data or {},
+            honeypot_enabled=False,  # honeypot no aplica en preregistro (ver docstring)
+        )
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": exc.code, "detail": exc.detail, "field_id": exc.field_id},
+        ) from None
+
+    # Persistir los datos limpios en ``extras._form_data`` — el servicio
+    # de preinscripción guarda ``extras`` en ``event_registrations.extras``.
+    extras = dict(payload.extras or {})
+    extras["_form_data"] = clean
+    payload.extras = extras
+
+
+def _run_hcaptcha_sync(token: str, *, remote_ip: str | None = None) -> bool:
+    """Wrapper síncrono sobre ``verify_hcaptcha`` para endpoints no-async.
+
+    Si ya hay un event loop activo (p.ej. dentro de un runner de tests o un
+    request async), ejecuta la corrutina en un thread con su propio loop —
+    el mismo patrón que ``cms_v2/forms.py:_run_hcaptcha_sync``.
+    """
+    import asyncio as _asyncio
+
+    try:
+        loop = _asyncio.get_event_loop()
+        if loop.is_running():
+            import threading
+
+            result: list[bool] = []
+
+            def _runner() -> None:
+                new_loop = _asyncio.new_event_loop()
+                try:
+                    result.append(new_loop.run_until_complete(verify_hcaptcha(token, remote_ip=remote_ip)))
+                finally:
+                    new_loop.close()
+
+            t = threading.Thread(target=_runner, daemon=True)
+            t.start()
+            t.join(timeout=15)
+            return bool(result[0]) if result else False
+        return loop.run_until_complete(verify_hcaptcha(token, remote_ip=remote_ip))
+    except RuntimeError:
+        return _asyncio.run(verify_hcaptcha(token, remote_ip=remote_ip))
+
+
 @router.post(
     "/events/{event_id}/register",
     response_model=schemas.EventRegistrationRead,
@@ -478,6 +590,12 @@ def public_register_for_event(
     retorna la inscripción existente sin crear duplicados.
     """
     event = _public_event_or_404(db, event_id)
+
+    # plan_de_form_builder: si el evento tiene un CmsForm vinculado, validar
+    # form_data + captcha server-side contra el contrato del formulario.
+    if event.form_id:
+        _validate_event_form_data(db, event, payload)
+
     try:
         reg = register_persona(
             db,
@@ -667,3 +785,4 @@ def _serialize_registration(
         reminder_sent_count=reg.reminder_sent_count,
         last_reminder_sent_at=reg.last_reminder_sent_at,
     )
+

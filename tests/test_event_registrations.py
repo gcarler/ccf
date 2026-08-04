@@ -505,3 +505,181 @@ class TestUnifiedCheckin:
         fake_qr = f"CCF-EVT-{evt.id}-{reg.persona_id}-{'f' * 32}"
         resp = self._checkin(checkin_ctx, evt.id, {"qr_token": fake_qr})
         assert resp.status_code == 403
+
+
+# ── Form Builder dinámico (plan §5.4) ────────────────────────────────────────
+
+
+class TestPublicRegisterFormBuilder:
+    """Tests del pre-registro cuando el evento tiene un ``CmsForm`` vinculado.
+
+    Cubre ``backend/api/public.py:_validate_event_form_data``: valida
+    ``form_data`` + ``captcha_token`` server-side y persiste los datos
+    limpios en ``event_registrations.extras._form_data``.
+
+    Nota: estos tests cubren el bug ``_validate_event_form_data`` no
+    definida introducido en la iteración previa y resuelto ahora.
+    """
+
+    def _make_form(self, db_session, sede, *, fields=None, captcha_enabled=False, is_active=True):
+        """Crea un ``CmsSite`` y un ``CmsForm`` vinculado a la sede del evento.
+
+        ``CmsForm.site_id`` es NOT NULL — requerimos un ``CmsSite`` con
+        ``sede_id`` igual al del evento (Axioma 3 multi-tenant).
+        """
+        site = models.CmsSite(
+            id=uuid.uuid4(),
+            site_key=f"test-{uuid.uuid4().hex[:8]}",
+            name=f"Sitio Test {sede.nombre}",
+            sede_id=sede.id,
+            is_active=True,
+        )
+        db_session.add(site)
+        db_session.flush()
+        form = models.CmsForm(
+            id=uuid.uuid4(),
+            site_id=site.id,
+            name="Form Preinscripción Concierto",
+            fields=fields or [
+                {"id": "iglesia", "type": "text", "label": "Iglesia de procedencia", "required": True},
+                {"id": "alergias", "type": "textarea", "label": "Alergias", "required": False},
+            ],
+            is_active=is_active,
+            captcha_enabled=captcha_enabled,
+            honeypot_enabled=True,
+        )
+        db_session.add(form)
+        db_session.flush()
+        return form
+
+    def test_register_with_form_id_validates_and_persists_form_data(self, client, db_session, sede):
+        """Evento con ``form_id`` seteado → form_data se valida y persiste en extras._form_data."""
+        form = self._make_form(db_session, sede)
+        evt = _make_event(db_session, sede, requires_registration=True, form_id=form.id)
+        db_session.commit()
+
+        resp = client.post(
+            f"{BASE}/{evt.id}/register",
+            json={
+                "first_name": "Ana",
+                "last_name": "Pérez",
+                "email": "ana@example.com",
+                "phone": "3001234567",
+                "accept_contact": True,
+                "form_data": {"iglesia": "Emmanuel Boquilla", "alergias": ""},
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        reg_id = resp.json()["id"]
+        reg = _reg_row(db_session, reg_id)
+        # El dato limpio quedó persistido en extras._form_data. ``alergias``
+        # (opcional + vacío) no se persiste — ``validate_submission`` omite
+        # los campos opcionales vacíos para ahorrar espacio; solo guarda
+        # los campos requeridos con valor real.
+        assert reg.extras.get("_form_data") == {"iglesia": "Emmanuel Boquilla"}
+
+    def test_register_with_form_id_required_field_missing_returns_422(self, client, db_session, sede):
+        """Campo required faltante en form_data → 422 (no se crea la inscripción)."""
+        form = self._make_form(db_session, sede)
+        evt = _make_event(db_session, sede, requires_registration=True, form_id=form.id)
+        db_session.commit()
+
+        resp = client.post(
+            f"{BASE}/{evt.id}/register",
+            json={
+                "first_name": "Ana",
+                "last_name": "Pérez",
+                "email": "ana@example.com",
+                "phone": "3001234567",
+                "accept_contact": True,
+                "form_data": {"alergias": "Mariscos"},  # falta iglesia (required)
+            },
+        )
+        assert resp.status_code == 422, resp.text
+        assert resp.json()["detail"]["code"] == "REQUIRED_FIELD"
+        assert resp.json()["detail"]["field_id"] == "iglesia"
+
+        # No se creó la inscripción
+        count = db_session.query(models.EventRegistration).filter(
+            models.EventRegistration.event_id == evt.id
+        ).count()
+        assert count == 0
+
+    def test_register_with_form_id_form_not_found_returns_404(self, client, db_session, sede):
+        """``form_id`` apunta a un ``CmsForm`` eliminado → 404 FORM_NOT_FOUND."""
+        evt = _make_event(
+            db_session, sede,
+            requires_registration=True,
+            form_id=uuid.uuid4(),  # form_id no resolvable
+        )
+        db_session.commit()
+
+        resp = client.post(
+            f"{BASE}/{evt.id}/register",
+            json={
+                "first_name": "Ana",
+                "last_name": "Pérez",
+                "email": "ana@example.com",
+                "form_data": {},
+            },
+        )
+        assert resp.status_code == 404, resp.text
+        assert resp.json()["detail"]["code"] == "FORM_NOT_FOUND"
+
+    def test_register_with_form_id_form_inactive_returns_404(self, client, db_session, sede):
+        """``CmsForm`` inactivo (is_active=False) → 404 FORM_NOT_FOUND."""
+        form = self._make_form(db_session, sede, is_active=False)
+        evt = _make_event(db_session, sede, requires_registration=True, form_id=form.id)
+        db_session.commit()
+
+        resp = client.post(
+            f"{BASE}/{evt.id}/register",
+            json={
+                "first_name": "Ana",
+                "last_name": "Pérez",
+                "email": "ana@example.com",
+                "form_data": {"iglesia": "x", "alergias": ""},
+            },
+        )
+        assert resp.status_code == 404, resp.text
+        assert resp.json()["detail"]["code"] == "FORM_NOT_FOUND"
+
+    def test_register_with_form_id_captcha_enabled_no_token_returns_400(self, client, db_session, sede):
+        """Form con captcha_enabled=True y sin captcha_token → 400 CAPTCHA_REQUIRED."""
+        form = self._make_form(db_session, sede, captcha_enabled=True)
+        evt = _make_event(db_session, sede, requires_registration=True, form_id=form.id)
+        db_session.commit()
+
+        resp = client.post(
+            f"{BASE}/{evt.id}/register",
+            json={
+                "first_name": "Ana",
+                "last_name": "Pérez",
+                "email": "ana@example.com",
+                "form_data": {"iglesia": "x", "alergias": ""},
+                # sin captcha_token
+            },
+        )
+        assert resp.status_code == 400, resp.text
+        assert resp.json()["detail"]["code"] == "CAPTCHA_REQUIRED"
+
+    def test_register_without_form_id_ignores_form_data(self, client, db_session, sede):
+        """Evento sin ``form_id`` → ``form_data`` se ignora (backward-compat con preregistro fijo)."""
+        evt = _make_event(db_session, sede, requires_registration=True)  # form_id=None
+        db_session.commit()
+
+        resp = client.post(
+            f"{BASE}/{evt.id}/register",
+            json={
+                "first_name": "Ana",
+                "last_name": "Pérez",
+                "email": "ana@example.com",
+                "phone": "3001234567",
+                "form_data": {"random_field": "no valida nada"},
+            },
+        )
+        # El form_data se ignora — el pre-registro se hace con campos top-level
+        assert resp.status_code == 200, resp.text
+        reg = _reg_row(db_session, resp.json()["id"])
+        # No se persistió _form_data porque el evento no tiene form_id
+        assert "_form_data" not in (reg.extras or {})
