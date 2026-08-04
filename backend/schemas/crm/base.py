@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from enum import Enum
-from typing import List, Optional
+from typing import List, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
@@ -1247,3 +1247,279 @@ class VolunteerUpdate(BaseModel):
     role_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
     team_name: Optional[str] = None
     status: Optional[str] = None
+
+
+# =============================================================================
+# PRE-REGISTRO A EVENTOS MASIVOS (plan_de_preregistro, Fase 2)
+# =============================================================================
+
+REGISTRATION_STATUS_LITERAL = Literal[
+    "PENDING", "CONFIRMED", "CHECKED_IN", "ABSENT", "WAITLIST", "CANCELLED"
+]
+QR_MODE_LITERAL = Literal["PER_REGISTRANT", "PER_EVENT"]
+CANAL_LITERAL = Literal["WHATSAPP", "EMAIL", "SMS"]
+TRIGGER_TYPE_LITERAL = Literal["MANUAL", "RELATIVE_TO_EVENT", "RELATIVE_TO_REGISTRATION"]
+
+
+# ── Extensión de CrmEvent (campos de pre-registro) ─────────────────────────
+
+class CrmEventPreregistrationConfig(BaseModel):
+    """Config de pre-registro de un evento (campos añadidos por plan_de_preregistro)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    requires_registration: bool = False
+    requires_email_verification: bool = False
+    registration_opens_at: Optional[AwareDateTime] = None
+    registration_closes_at: Optional[AwareDateTime] = None
+    capacity_max: Optional[int] = Field(default=None, ge=1)
+    waiting_list_enabled: bool = False
+    qr_mode: QR_MODE_LITERAL = "PER_REGISTRANT"
+    contact_person: Optional[str] = None
+    settings_json: dict = {}
+
+
+# ── Pre-registro público ─────────────────────────────────────────────────────
+
+
+class PublicEventRegister(BaseModel):
+    """Payload de inscripción pública a un evento.
+
+    Axioma 3: el backend resuelve ``sede_id`` desde el evento, imposibilitando
+    scope leaks cross-sede desde el endpoint público.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    first_name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    extras: dict = {}
+    accept_contact: bool = True
+
+
+class PublicEventVerify(BaseModel):
+    """Payload de verificación de email por token."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    token: str = Field(..., min_length=10, max_length=200)
+
+
+class PublicEventCancel(BaseModel):
+    """Auto-cancelación con token de cancelación embebido en el QR link."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    cancel_token: str = Field(..., min_length=10, max_length=200)
+
+
+class PublicEventStatusQuery(BaseModel):
+    """Consulta de estado por email/phone."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+
+
+class PublicEventRead(BaseModel):
+    """Metadata pública del evento para la landing de pre-registro."""
+
+    id: UUID
+    name: str
+    description: Optional[str] = None
+    event_date: Optional[AwareDateTime] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    location: Optional[str] = None
+    event_type: str
+    requires_registration: bool
+    requires_email_verification: bool
+    capacity_max: Optional[int] = None
+    waiting_list_enabled: bool
+    registration_opens_at: Optional[AwareDateTime] = None
+    registration_closes_at: Optional[AwareDateTime] = None
+    contact_person: Optional[str] = None
+    is_open: bool
+    capacity_remaining: Optional[int] = None
+    model_config = orm_config
+
+
+# ── Admin registrations ─────────────────────────────────────────────────────
+
+
+class EventRegistrationCreate(BaseModel):
+    """Alta manual de una inscripción por un admin."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    persona_id: Optional[UUID] = None  # si existe ya
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    extras: dict = {}
+    registration_status: REGISTRATION_STATUS_LITERAL = "CONFIRMED"
+    source: str = "admin"
+
+
+class EventRegistrationUpdate(BaseModel):
+    """Edición de estado manual (transiciones legales)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    registration_status: Optional[REGISTRATION_STATUS_LITERAL] = None
+    extras: Optional[dict] = None
+
+
+class EventRegistrationRead(BaseModel):
+    """Representación de una inscripción para listado admin."""
+
+    id: UUID
+    event_id: UUID
+    persona_id: UUID
+    persona_name: Optional[str] = None
+    persona_email: Optional[str] = None
+    persona_phone: Optional[str] = None
+    registration_status: REGISTRATION_STATUS_LITERAL
+    qr_token: Optional[str] = None
+    qr_generated_at: Optional[AwareDateTime] = None
+    registered_at: AwareDateTime
+    confirmed_at: Optional[AwareDateTime] = None
+    cancelled_at: Optional[AwareDateTime] = None
+    check_in_at: Optional[AwareDateTime] = None
+    check_out_at: Optional[AwareDateTime] = None
+    checked_in_by: Optional[UUID] = None
+    source: str
+    extras: dict = {}
+    waiting_list_position: Optional[int] = None
+    reminder_sent_count: int = 0
+    last_reminder_sent_at: Optional[AwareDateTime] = None
+    model_config = orm_config
+
+
+class EventRegistrationStats(BaseModel):
+    """KPIs de pre-registro de un evento."""
+
+    total: int
+    pending: int
+    confirmed: int
+    checked_in: int
+    absent: int
+    waitlist: int
+    cancelled: int
+    capacity_max: Optional[int] = None
+    capacity_remaining: Optional[int] = None
+    attendance_rate: Optional[float] = None
+
+
+class EventRegistrationBulkImport(BaseModel):
+    """Import CSV de inscripciones.
+
+    ``rows``: lista de dicts con first_name/last_name/email/phone/extras.
+    El backend hace upsert de Persona y crea EventRegistration por fila.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    rows: list[EventRegistrationCreate] = Field(..., min_length=1, max_length=5000)
+
+
+class EventRegistrationBroadcast(BaseModel):
+    """Disparar una campaña a los inscritos filtrados por status."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    campaign_id: UUID
+    target_status: Optional[list[REGISTRATION_STATUS_LITERAL]] = None
+
+
+# ── Campañas ─────────────────────────────────────────────────────────────────
+
+
+class EventCampaignCreate(BaseModel):
+    """Crear campaña ligada a un evento."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., min_length=1, max_length=200)
+    plantilla_id: UUID
+    canal: CANAL_LITERAL = "EMAIL"
+    trigger_type: TRIGGER_TYPE_LITERAL = "MANUAL"
+    trigger_offset_minutes: Optional[int] = None
+    target_status: list[REGISTRATION_STATUS_LITERAL] = ["CONFIRMED"]
+    is_active: bool = True
+
+
+class EventCampaignUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    plantilla_id: Optional[UUID] = None
+    canal: Optional[CANAL_LITERAL] = None
+    trigger_type: Optional[TRIGGER_TYPE_LITERAL] = None
+    trigger_offset_minutes: Optional[int] = None
+    target_status: Optional[list[REGISTRATION_STATUS_LITERAL]] = None
+    is_active: Optional[bool] = None
+
+
+class EventCampaignRead(BaseModel):
+    id: UUID
+    event_id: UUID
+    name: str
+    plantilla_id: Optional[UUID] = None
+    canal: CANAL_LITERAL
+    trigger_type: TRIGGER_TYPE_LITERAL
+    trigger_offset_minutes: Optional[int] = None
+    target_status: list = []
+    sent_count: int = 0
+    last_sent_at: Optional[AwareDateTime] = None
+    created_by_id: Optional[UUID] = None
+    is_active: bool
+    created_at: AwareDateTime
+    updated_at: AwareDateTime
+    model_config = orm_config
+
+
+# ── Check-in unificado ──────────────────────────────────────────────────────
+
+
+class CheckinPayload(BaseModel):
+    """Cuerpo del endpoint de check-in del día del evento.
+
+    Acepta tres modos mutuamente compatibles:
+        1. ``qr_token`` con prefijo ``CCF-EVT-`` (EventRegistration QR) o
+           ``CCF-PER-`` (scanner persona existente en ``backend/api/evangelism.py``).
+        2. ``persona_id`` para constatación manual.
+        3. ``first_name`` + ``last_name`` (+ opcional ``phone``) para walk-in.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    qr_token: Optional[str] = None
+    persona_id: Optional[UUID] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _require_at_least_one_id_mode(self):
+        has_qr = bool(self.qr_token and self.qr_token.strip())
+        has_persona = self.persona_id is not None
+        has_walkin = bool(self.first_name and self.last_name)
+        if not (has_qr or has_persona or has_walkin):
+            raise ValueError(
+                "Se requiere qr_token, persona_id, o (first_name + last_name)"
+            )
+        return self
+
+
+class CheckoutPayload(BaseModel):
+    """Cuerpo del endpoint de checkout (marcar salida)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    qr_token: Optional[str] = None
+    persona_id: Optional[UUID] = None

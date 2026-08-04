@@ -973,3 +973,65 @@ def test_protected_route_permissions_stay_canonical_in_platform_routes():
             platform_route_violations.append(rel)
 
     assert platform_route_violations == []
+
+
+def test_event_preregistration_contracts():
+    """plan_de_preregistro — contratos estructurales del pre-registro masivo.
+
+    Valida:
+      1. Existe la migración canónica ``20260804_0001_event_registration_features``.
+      2. Los endpoints públicos/admin de pre-registro existen en la app.
+      3. Las tablas hijas no declaran ``sede_id`` propio (Axioma 3: scope vía
+         ``event_id → crm_events.sede_id``).
+      4. Los modelos de pre-registro usan JSON (no JSONB) — REGLAS §2.8.
+    """
+    root = Path(__file__).resolve().parents[1]
+    migration = root / "alembic" / "canonical_versions" / "20260804_0001_event_registration_features.py"
+    assert migration.exists(), "Falta la migración de pre-registro (plan Fase 1)"
+
+    spec = app.openapi()
+    paths = set(spec.get("paths", {}))
+
+    public_expected = {
+        "/api/public/events/{event_id}",
+        "/api/public/events/{event_id}/register",
+        "/api/public/events/{event_id}/verify",
+        "/api/public/events/{event_id}/status",
+        "/api/public/events/{event_id}/cancel",
+    }
+    assert public_expected <= paths, f"Faltan endpoints públicos: {public_expected - paths}"
+
+    admin_expected = {
+        "/api/evangelism/events/{event_id}/registrations",
+        "/api/evangelism/events/{event_id}/registrations/stats",
+        "/api/evangelism/events/{event_id}/registrations/export.csv",
+        "/api/evangelism/events/{event_id}/registrations/{reg_id}",
+        "/api/evangelism/events/{event_id}/preregistration-config",
+        "/api/evangelism/events/{event_id}/campaigns",
+        "/api/evangelism/events/{event_id}/campaigns/{campaign_id}/send",
+        "/api/evangelism/events/{event_id}/sessions/{session_date}/checkin",
+        "/api/evangelism/events/{event_id}/sessions/{session_date}/checkout",
+    }
+    missing = admin_expected - paths
+    assert not missing, f"Faltan endpoints admin: {missing}"
+
+    # Axioma 3: las tablas hijas NO llevan sede_id propio.
+    migration_text = migration.read_text(encoding="utf-8")
+    reg_table = migration_text.split("def _upgrade_create_event_registrations()")[1].split("def ")[0]
+    camp_table = migration_text.split("def _upgrade_create_event_campaigns()")[1]
+    assert "sede_id" not in reg_table, "event_registrations no debe tener sede_id propio"
+    assert "sede_id" not in camp_table, "event_campaigns no debe tener sede_id propio"
+
+    # REGLAS §2.8: JSON, no JSONB.
+    assert "JSONB" not in reg_table
+    assert "JSONB" not in camp_table
+
+
+def test_event_preregistration_models_use_json_not_jsonb():
+    """REGLAS §2.8 — los campos JSON de pre-registro no usan JSONB."""
+    root = Path(__file__).resolve().parents[1]
+    models_text = (root / "backend" / "models_crm.py").read_text(encoding="utf-8")
+
+    assert "extras = Column(JSON" in models_text
+    assert "target_status = Column(JSON" in models_text
+    assert "settings_json = Column(JSON" in models_text

@@ -97,6 +97,18 @@ class CrmEvent(Base):
     status = Column(String(20), default="SCHEDULED", index=True)
     cancellation_reason = Column(Text, nullable=True)
     target_audience = Column(String(50), default="ALL")
+    # ── Pre-registration features (plan_de_preregistro, migration 20260804_0001)
+    # Defaults seguros (FALSE / NULL) → los eventos existentes siguen funcionando
+    # como eventos abiertos sin pre-inscripción (backward-compatible).
+    requires_registration = Column(Boolean, nullable=False, default=False, server_default="0")
+    requires_email_verification = Column(Boolean, nullable=False, default=False, server_default="0")
+    registration_opens_at = Column(DateTime(timezone=True), nullable=True)
+    registration_closes_at = Column(DateTime(timezone=True), nullable=True)
+    capacity_max = Column(Integer, nullable=True)
+    waiting_list_enabled = Column(Boolean, nullable=False, default=False, server_default="0")
+    qr_mode = Column(String(20), nullable=False, default="PER_REGISTRANT", server_default="PER_REGISTRANT")
+    contact_person = Column(String(255), nullable=True)
+    settings_json = Column(JSON, default=dict)
     target_role_id = Column(UUID(as_uuid=True), ForeignKey("role_definitions.id"), nullable=True)
     target_role_ids = Column(JSON, nullable=True)
     target_persona_ids = Column(JSON, nullable=True)
@@ -112,6 +124,12 @@ class CrmEvent(Base):
 
     attendances = relationship("EventAttendance", back_populates="event")
     assignments = relationship("EventAssignment", back_populates="event")
+    registrations = relationship(
+        "EventRegistration", back_populates="event", cascade="all, delete-orphan"
+    )
+    campaigns = relationship(
+        "EventCampaign", back_populates="event", cascade="all, delete-orphan"
+    )
 
 
 class EventAssignment(Base):
@@ -173,6 +191,120 @@ class EventAttendance(Base):
 
     event = relationship("CrmEvent", back_populates="attendances")
     persona = relationship("Persona")
+
+
+# ==============================================================================
+# PRE-REGISTRO A EVENTOS MASIVOS (plan_de_preregistro, migración 20260804_0001)
+# ==============================================================================
+
+
+class EventRegistration(Base):
+    """Pre-inscripción de una Persona a un CrmEvent con ciclo de vida propio.
+
+    Estados (``registration_status``):
+        PENDING   → registrada, esperando verificación email (opcional)
+        CONFIRMED → verificada / auto-confirmada (QR generado)
+        CHECKED_IN→ asistió al evento el día D (check-in QR/manual)
+        ABSENT    → no asistió al cierre del evento
+        WAITLIST  → en lista de espera (aforo lleno)
+        CANCELLED → cancelada por el usuario o el admin (soft, deleted_at set)
+
+    QR: ``qr_token`` = ``CCF-EVT-{event_id}-{persona_id}-{secret}`` y
+    ``qr_token_hash`` = sha256 del secret (patrón alineado con
+    ``Persona.scanner_token_hash`` en ``models_crm.py:452``).
+
+    Axioma 3: el scope por sede se hereda vía ``event_id → crm_events.sede_id``
+    (no hay ``sede_id`` propio — single source of truth en el evento).
+    """
+
+    __tablename__ = "event_registrations"
+    __table_args__ = (
+        UniqueConstraint("event_id", "persona_id", name="uq_event_reg_persona"),
+        Index("ix_reg_event_status", "event_id", "registration_status"),
+        Index("ix_reg_qr", "qr_token_hash"),
+        Index("ix_reg_deleted_at", "deleted_at"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    event_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False
+    )
+    persona_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False
+    )
+    registration_status = Column(String(20), nullable=False, default="PENDING")
+    qr_token = Column(String(128), nullable=True, unique=True, index=True)
+    qr_token_hash = Column(String(128), nullable=True, index=True)
+    qr_generated_at = Column(DateTime(timezone=True), nullable=True)
+    registered_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    confirmed_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    check_in_at = Column(DateTime(timezone=True), nullable=True)
+    check_out_at = Column(DateTime(timezone=True), nullable=True)
+    checked_in_by = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+    )
+    source = Column(String(30), nullable=False, default="public_form")
+    extras = Column(JSON, default=dict)
+    waiting_list_position = Column(Integer, nullable=True)
+    reminder_sent_count = Column(Integer, nullable=False, default=0)
+    last_reminder_sent_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
+    )
+
+    event = relationship("CrmEvent", back_populates="registrations")
+    persona = relationship("Persona", foreign_keys=[persona_id])
+    checked_in_by_persona = relationship("Persona", foreign_keys=[checked_in_by])
+
+
+class EventCampaign(Base):
+    """Campaña de mensajería ligada a un evento (plan_de_preregistro).
+
+    Reusa ``PlantillaMensaje`` (CRM) para el contenido + variables ``{{var}}``,
+    y ``services/messaging.py`` (gateway WhatsApp/Email/SMS) para el envío.
+    El scheduler (``backend/scheduler.py``) procesa las campañas con
+    ``trigger_type`` RELATIVE_TO_EVENT / RELATIVE_TO_REGISTRATION.
+    """
+
+    __tablename__ = "event_campaigns"
+    __table_args__ = (
+        Index("ix_campaign_event", "event_id"),
+        Index("ix_campaign_active", "is_active"),
+        Index("ix_campaign_deleted_at", "deleted_at"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    event_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False
+    )
+    name = Column(String(200), nullable=False)
+    plantilla_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("crm_plantillas_mensaje.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    canal = Column(String(20), nullable=False, default="EMAIL")
+    trigger_type = Column(String(50), nullable=False, default="MANUAL")
+    trigger_offset_minutes = Column(Integer, nullable=True)
+    target_status = Column(JSON, default=list)
+    sent_count = Column(Integer, nullable=False, default=0)
+    last_sent_at = Column(DateTime(timezone=True), nullable=True)
+    created_by_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
+    )
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
+    )
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    event = relationship("CrmEvent", back_populates="campaigns")
+    plantilla = relationship("PlantillaMensaje")
+    created_by = relationship("Persona", foreign_keys=[created_by_id])
 
 
 class CounselingTicket(Base):
@@ -516,6 +648,9 @@ class Persona(Base):
     )
     participaciones_grupo = relationship("ParticipanteGrupo", back_populates="persona")
     asistencias = relationship("Asistencia", back_populates="persona")
+    event_registrations = relationship(
+        "EventRegistration", foreign_keys="EventRegistration.persona_id", back_populates="persona"
+    )
     seguimientos_realizados = relationship(
         "RegistroSeguimiento", foreign_keys="RegistroSeguimiento.responsable_id", back_populates="responsable"
     )

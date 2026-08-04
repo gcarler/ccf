@@ -12,6 +12,7 @@ import clsx from "clsx";
 
 const SessionTab = dynamic(() => import("./tabs/SessionTab"), { ssr: false });
 const AnalyticsTab = dynamic(() => import("./tabs/AnalyticsTab"), { ssr: false });
+const PreregistrationTab = dynamic(() => import("./tabs/PreregistrationTab"), { ssr: false });
 
 type MinistryEventDetail = {
   id: string;
@@ -36,7 +37,7 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'session' | 'analytics'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'session' | 'analytics' | 'preregistration'>('details');
 
   useEffect(() => {
     if (!token || !id) return;
@@ -154,6 +155,12 @@ export default function EventDetailPage() {
                   onClick={() => setActiveTab('analytics')}
                   className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'analytics' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
                 >Analítica</button>
+                {canOperateEvents && (
+                  <button
+                    onClick={() => setActiveTab('preregistration')}
+                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'preregistration' ? "bg-[hsl(var(--bg-primary))] dark:bg-[#252528] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
+                  >Pre-registro</button>
+                )}
               </div>
             </div>
           </div>
@@ -180,6 +187,8 @@ export default function EventDetailPage() {
           {activeTab === 'analytics' && <AnalyticsTab eventId={id} token={token} />}
 
           {activeTab === 'session' && canOperateEvents && <SessionTab eventId={id} token={token} eventName={event.name} />}
+
+          {activeTab === 'preregistration' && canOperateEvents && <PreregistrationTab eventId={id} token={token} />}
         </div>
       </main>
     </EvangelismShell>
