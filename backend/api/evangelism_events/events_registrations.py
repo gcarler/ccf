@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 from typing import List, Optional
 from uuid import UUID
 
@@ -24,6 +25,7 @@ from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.api.evangelism_events._shared import require_event_access
+from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import (
     require_evangelism_edit,
@@ -45,6 +47,20 @@ router = APIRouter()
 
 
 # ── Serialización ────────────────────────────────────────────────────────────
+
+
+def _settings_public_base_url() -> str:
+    """Resuelve la URL pública base (configurable via settings.public_base_url).
+
+    Fix #11: usado por send_campaign_now/broadcast en lugar del query param
+    ``public_base_url`` que se eliminó — previene que un admin inyecte dominios
+    arbitrarios para phishing via plantillas ``{{qr_url}}``.
+    """
+    try:
+        s = get_settings()
+        return getattr(s, "public_base_url", None) or "https://ccf.co"
+    except Exception:
+        return "https://ccf.co"
 
 
 def _serialize(reg: models.EventRegistration, persona: Optional[models.Persona]) -> schemas.EventRegistrationRead:
@@ -225,7 +241,12 @@ def export_registrations_csv(
             r.check_in_at.isoformat() if r.check_in_at else "",
         ])
 
-    filename = f"inscripciones_{event.name}_{_utcnow().strftime('%Y%m%d')}.csv".replace(" ", "_")
+    # Fix #10: sanitizar el filename del CSV — event.name puede contener
+    # caracteres peligrosos para Content-Disposition (/, \, ", ;, \r, \n).
+    # Solo permitimos alphanumerics, guiones y guiones bajos; lo demás
+    # se reemplaza por _ (espacios incluidos).
+    safe_name = re.sub(r"[^A-Za-z0-9_-]+", "_", event.name or "").strip("_") or "evento"
+    filename = f"inscripciones_{safe_name}_{_utcnow().strftime('%Y%m%d')}.csv"
     return Response(
         content=output.getvalue(),
         media_type="text/csv",
@@ -711,11 +732,15 @@ def send_campaign_now(
     current_user: models.User = Depends(require_evangelism_edit),
     dry_run: bool = Query(False),
     limit: Optional[int] = Query(None, ge=1, le=10000),
-    public_base_url: str = Query(""),
 ):
     """Dispara la campaña inmediatamente (manual).
 
     ``dry_run=True`` no envía, sólo retorna preview del primer mensaje.
+
+    Fix #11: ``public_base_url`` ya no se acepta como query — se usa el
+    setting canónico ``settings.public_base_url`` (default ``https://ccf.co``)
+    para hidratar ``{{qr_url}}``/``{{qr_link}}``. Antes, un admin podía
+    inyectar dominios arbitrarios → fishing a los inscritos.
     """
     event = require_event_access(db, current_user, event_id)
     campaign = (
@@ -731,7 +756,7 @@ def send_campaign_now(
         raise HTTPException(status_code=404, detail="Campaña no encontrada")
 
     from backend.services.event_campaign_service import send_campaign
-    return send_campaign(db, campaign, public_base_url=public_base_url, dry_run=dry_run, limit=limit)
+    return send_campaign(db, campaign, public_base_url=_settings_public_base_url(), dry_run=dry_run, limit=limit)
 
 
 @router.post("/events/{event_id}/registrations/broadcast", response_model=dict)
@@ -740,9 +765,12 @@ def broadcast_campaign(
     payload: schemas.EventRegistrationBroadcast,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_edit),
-    public_base_url: str = Query(""),
 ):
-    """Dispara una campaña a las inscripciones filtradas por status."""
+    """Dispara una campaña a las inscripciones filtradas por status.
+
+    Fix #11: ``public_base_url`` se eliminó como query param (pishing risk).
+    Se usa el setting can \u00f3nico ``settings.public_base_url``.
+    """
     event = require_event_access(db, current_user, event_id)
     campaign = (
         db.query(models.EventCampaign)
@@ -761,4 +789,4 @@ def broadcast_campaign(
         db.flush()
 
     from backend.services.event_campaign_service import send_campaign
-    return send_campaign(db, campaign, public_base_url=public_base_url)
+    return send_campaign(db, campaign, public_base_url=_settings_public_base_url())
