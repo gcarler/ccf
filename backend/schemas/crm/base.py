@@ -1299,6 +1299,9 @@ class PublicEventRegister(BaseModel):
     phone: Optional[str] = None
     extras: dict = {}
     accept_contact: bool = True
+    # plan_de_form_builder: datos del CmsForm vinculado al evento (opcional)
+    form_data: Optional[dict] = None
+    captcha_token: Optional[str] = None
 
 
 class PublicEventVerify(BaseModel):
@@ -1346,6 +1349,8 @@ class PublicEventRead(BaseModel):
     contact_person: Optional[str] = None
     is_open: bool
     capacity_remaining: Optional[int] = None
+    # plan_de_form_builder: form dinámico vinculado (NULL = form fijo)
+    form_id: Optional[UUID] = None
     model_config = orm_config
 
 

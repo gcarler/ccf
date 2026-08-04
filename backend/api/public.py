@@ -458,6 +458,7 @@ def public_get_event(event_id: uuid.UUID, db: Session = Depends(get_db)):
         contact_person=event.contact_person,
         is_open=is_event_open_for_registration(event),
         capacity_remaining=remaining,
+        form_id=event.form_id,
     )
 
 
