@@ -758,6 +758,11 @@ class CmsFormCreate(BaseModel):
     success_message: str = Field(default="¡Gracias por tu mensaje!", max_length=255)
     notify_emails: List[str] = Field(default_factory=list)
     is_active: bool = Field(default=True)
+    # plan_de_form_builder
+    settings_json: Dict[str, Any] = Field(default_factory=dict)
+    captcha_enabled: bool = False
+    captcha_provider: str = Field(default="hcaptcha", max_length=20)
+    honeypot_enabled: bool = True
 
 
 class CmsFormUpdate(BaseModel):
@@ -768,6 +773,11 @@ class CmsFormUpdate(BaseModel):
     success_message: Optional[str] = Field(default=None, max_length=255)
     notify_emails: Optional[List[str]] = None
     is_active: Optional[bool] = None
+    # plan_de_form_builder
+    settings_json: Optional[Dict[str, Any]] = None
+    captcha_enabled: Optional[bool] = None
+    captcha_provider: Optional[str] = Field(default=None, max_length=20)
+    honeypot_enabled: Optional[bool] = None
 
 
 class CmsFormRead(BaseModel):
@@ -780,6 +790,11 @@ class CmsFormRead(BaseModel):
     success_message: str = "¡Gracias por tu mensaje!"
     notify_emails: List[str] = Field(default_factory=list)
     is_active: bool = True
+    # plan_de_form_builder
+    settings_json: Dict[str, Any] = Field(default_factory=dict)
+    captcha_enabled: bool = False
+    captcha_provider: str = "hcaptcha"
+    honeypot_enabled: bool = True
     created_at: datetime
     updated_at: datetime
     submission_count: Optional[int] = None
@@ -1011,3 +1026,47 @@ class CmsPostCommentPublicRead(BaseModel):
 
 class CmsPostCommentListResponse(PaginatedResponse[CmsPostCommentRead]):
     pending_count: int = 0
+
+
+# ── Form Builder dinámico (plan_de_form_builder) ────────────────────────────
+# Schemas para el render público: no exponen notify_emails ni otros datos
+# sensibles. Los campos se validan con ``services/form_validation.py``.
+
+
+class CmsFormPublicRead(BaseModel):
+    """Metadatos públicos del formulario para renderizar en el sitio.
+
+    Excluye ``notify_emails`` (dato sensible) y los campos inactivos. El
+    ``captcha_site_key`` se expone para que el frontend renderice el widget
+    de hCaptcha (es una clave pública, por diseño).
+    """
+
+    id: UUID
+    name: str
+    description: Optional[str] = None
+    fields: List[Dict[str, Any]] = Field(default_factory=list)
+    submit_button_text: str = "Enviar"
+    success_message: str = "¡Gracias por tu mensaje!"
+    captcha_enabled: bool = False
+    captcha_provider: str = "hcaptcha"
+    captcha_site_key: Optional[str] = None
+    honeypot_enabled: bool = True
+    settings_json: Dict[str, Any] = Field(default_factory=dict)
+    is_active: bool = True
+
+    model_config = orm_config
+
+
+class CmsFormSubmissionCreateV2(BaseModel):
+    """Submit público con validación server-side de campos dinámicos.
+
+    ``data`` es un dict ``{field_id: value}``. El backend valida cada valor
+    contra el ``fields`` definido en el ``CmsForm``. ``captcha_token`` es
+    obligatorio cuando el formulario tiene ``captcha_enabled=True``.
+    ``_hp`` es el honeypot — debe venir vacío (los bots lo rellenan).
+    """
+
+    data: Dict[str, Any] = Field(default_factory=dict)
+    captcha_token: Optional[str] = None
+    _hp: Optional[str] = None
+

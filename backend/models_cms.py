@@ -664,6 +664,11 @@ class CmsForm(Base):
     success_message = Column(String(255), default="¡Gracias por tu mensaje!")
     notify_emails = Column(JSON, default=list)
     is_active = Column(Boolean, default=True, index=True)
+    # plan_de_form_builder: render dinámico + captcha + honeypot
+    settings_json = Column(JSON, default=dict)
+    captcha_enabled = Column(Boolean, default=False)
+    captcha_provider = Column(String(20), default="hcaptcha")
+    honeypot_enabled = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 

@@ -1277,6 +1277,8 @@ class CrmEventPreregistrationConfig(BaseModel):
     qr_mode: QR_MODE_LITERAL = "PER_REGISTRANT"
     contact_person: Optional[str] = None
     settings_json: dict = {}
+    # plan_de_form_builder: form dinámico vinculado al evento (NULL = form fijo)
+    form_id: Optional[UUID] = None
 
 
 # ── Pre-registro público ─────────────────────────────────────────────────────

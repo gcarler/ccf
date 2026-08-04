@@ -81,6 +81,12 @@ class Settings(BaseSettings):
 
     google_redirect_uri: str = Field(default="http://localhost:8000/api/v3/auth/google/callback")
 
+    # hCaptcha (form builder dinámico — plan_de_form_builder)
+    # site_key es público (lo usa el frontend para renderizar el widget);
+    # secret_key es secreto y se usa solo en siteverify server-side.
+    hcaptcha_site_key: str = Field(default="", description="hCaptcha site key (público, frontend)")
+    hcaptcha_secret_key: str = Field(default="", description="hCaptcha secret key (secreto, siteverify)")
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @model_validator(mode="after")

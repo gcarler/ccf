@@ -6,7 +6,7 @@ import uuid as _uuid
 from datetime import date
 
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy import Index
+from sqlalchemy import Index, text
 from sqlalchemy import func as _func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -109,6 +109,9 @@ class CrmEvent(Base):
     qr_mode = Column(String(20), nullable=False, default="PER_REGISTRANT", server_default="PER_REGISTRANT")
     contact_person = Column(String(255), nullable=True)
     settings_json = Column(JSON, default=dict)
+    # plan_de_form_builder: vinculación con CmsForm para render dinámico de
+    # preinscripción. NULL = form fijo (backward-compat con el flujo actual).
+    form_id = Column(UUID(as_uuid=True), ForeignKey("cms_forms.id", ondelete="SET NULL"), nullable=True)
     target_role_id = Column(UUID(as_uuid=True), ForeignKey("role_definitions.id"), nullable=True)
     target_role_ids = Column(JSON, nullable=True)
     target_persona_ids = Column(JSON, nullable=True)
@@ -220,6 +223,18 @@ class EventRegistration(Base):
     __tablename__ = "event_registrations"
     __table_args__ = (
         UniqueConstraint("event_id", "persona_id", name="uq_event_reg_persona"),
+        # Fix #13: evita duplicados de waiting_list_position por evento en
+        # carreras de cancelación+promote concurrentes. Partial index (WHERE
+        # NOT NULL) porque la mayoría de filas están CONFIRMED/CHECKED_IN/
+        # PENDING con position=None — un UNIQUE total rompería al permitir
+        # varios NULL (en Postgres un UNIQUE estándar deja NULLs múltiples
+        # pero el ORm/test suite con SQLite puede ser más estricto).
+        Index(
+            "uq_event_reg_waitlist_position",
+            "event_id", "waiting_list_position",
+            postgresql_where=text("waiting_list_position IS NOT NULL"),
+            sqlite_where=text("waiting_list_position IS NOT NULL"),
+        ),
         Index("ix_reg_event_status", "event_id", "registration_status"),
         Index("ix_reg_qr", "qr_token_hash"),
         Index("ix_reg_deleted_at", "deleted_at"),
