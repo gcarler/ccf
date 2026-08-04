@@ -325,14 +325,27 @@ class TestPublicStatus:
 
 class TestPublicCancel:
     def _cancel_token(self, db_session, reg_id):
+        """Recupera el cancel_token transient (no persistido en extras desde fix #2).
+
+        El token se emite una sola vez en runtime; los tests lo recuperan del
+        atributo transient del registro, o del email capturado. Aquí pedimos
+        reemitirlo vía el mismo helper que usa el service: como el hash ya
+        está en extras, no podemos recuperar el token (sha256 no reversible),
+        así que estos tests dependen de capturar el token en el momento de
+        la emisión. Para simplificar los tests de cancelación usamos el
+        endpoint de verify (que reemite) o re-register — ver en cada test.
+        """
         reg = _reg_row(db_session, reg_id)
-        return (reg.extras or {}).get("_cancel_token")
+        return getattr(reg, "_cancel_token_transient", None)
 
     def test_cancel_with_cancel_token(self, client, db_session, sede):
         evt = _make_event(db_session, sede, requires_registration=True)
         db_session.commit()
-        reg_id = _register(client, evt.id).json()["id"]
-        cancel_token = self._cancel_token(db_session, reg_id)
+        reg_resp = _register(client, evt.id).json()
+        reg_id = reg_resp["id"]
+        # cancel_token se emite una sola vez en la respuesta de /register
+        # (volatile, no persistido en DB desde fix seguridad #2).
+        cancel_token = reg_resp["cancel_token"]
         assert cancel_token and cancel_token.startswith("CCF-CXL-")
 
         resp = client.post(f"{BASE}/{evt.id}/cancel", json={"cancel_token": cancel_token})
@@ -362,7 +375,8 @@ class TestPublicCancel:
 
         reg_a = _register(client, evt.id, email="uno@example.com", phone="3000000001").json()
         _register(client, evt.id, email="dos@example.com", phone="3000000002").json()
-        cancel_token = self._cancel_token(db_session, reg_a["id"])
+        # cancel_token volatile: tomarlo de la respuesta de /register (no DB).
+        cancel_token = reg_a["cancel_token"]
 
         resp = client.post(f"{BASE}/{evt.id}/cancel", json={"cancel_token": cancel_token})
         assert resp.status_code == 200
@@ -380,7 +394,11 @@ class TestPublicCancel:
         )
         assert b_row is not None
         assert b_row.registration_status == "CONFIRMED"
-        assert b_row.qr_token.startswith("CCF-EVT-")
+        # Tras fix seguridad #2, qr_token NO se persiste en DB (solo el hash).
+        # El token se emite una sola vez en runtime y por email.
+        assert b_row.qr_token is None
+        assert b_row.qr_token_hash is not None
+        assert b_row.qr_generated_at is not None
         assert b_row.waiting_list_position is None
 
     def test_cancel_reactivation_creates_new_lifecycle(self, client, db_session, sede):
@@ -429,8 +447,11 @@ class TestUnifiedCheckin:
         """Caso 5: QR CCF-EVT- marca CHECKED_IN + crea EventAttendance."""
         evt = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
         db_session.commit()
-        reg_id = _register(client, evt.id).json()["id"]
-        qr = _reg_row(db_session, reg_id).qr_token
+        reg_data = _register(client, evt.id).json()
+        reg_id = reg_data["id"]
+        # El QR se emite una sola vez en la respuesta de /register (no persistido en DB).
+        qr = reg_data["qr_token"]
+        assert qr is not None and qr.startswith("CCF-EVT-")
 
         resp = self._checkin(checkin_ctx, evt.id, {"qr_token": qr})
         assert resp.status_code == 200, resp.text
@@ -457,8 +478,11 @@ class TestUnifiedCheckin:
         """Caso 6: check-in duplicado → is_duplicate=True."""
         evt = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
         db_session.commit()
-        reg_id = _register(client, evt.id).json()["id"]
-        qr = _reg_row(db_session, reg_id).qr_token
+        reg_data = _register(client, evt.id).json()
+        reg_id = reg_data["id"]
+        # El QR se emite una sola vez en la respuesta de /register (no persistido en DB).
+        qr = reg_data["qr_token"]
+        assert qr is not None and qr.startswith("CCF-EVT-")
 
         r1 = self._checkin(checkin_ctx, evt.id, {"qr_token": qr})
         r2 = self._checkin(checkin_ctx, evt.id, {"qr_token": qr})

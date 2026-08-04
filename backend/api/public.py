@@ -490,7 +490,15 @@ def public_register_for_event(
     persona = (
         db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
     )
-    return _serialize_registration(reg, persona)
+    # Tras register/verify, exponer el QR al usuario en la respuesta (runtime)
+    # — el token NO está persistido en DB, se emite una sola vez acá y por email.
+    qr_token_plain = getattr(reg, "_qr_token_transient", None)
+    cancel_token_plain = getattr(reg, "_cancel_token_transient", None)
+    return _serialize_registration(
+        reg, persona,
+        qr_token_override=qr_token_plain,
+        cancel_token_override=cancel_token_plain,
+    )
 
 
 @router.get("/events/{event_id}/verify", response_model=schemas.EventRegistrationRead)
@@ -509,7 +517,13 @@ def public_verify_event(
     persona = (
         db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
     )
-    return _serialize_registration(reg, persona)
+    qr_token_plain = getattr(reg, "_qr_token_transient", None)
+    cancel_token_plain = getattr(reg, "_cancel_token_transient", None)
+    return _serialize_registration(
+        reg, persona,
+        qr_token_override=qr_token_plain,
+        cancel_token_override=cancel_token_plain,
+    )
 
 
 @router.get(
@@ -599,14 +613,23 @@ def public_cancel_event(
 def _serialize_registration(
     reg: models.EventRegistration, persona: Optional[models.Persona],
     *, include_pii: bool = True, include_qr: bool = True,
+    qr_token_override: str | None = None,
+    cancel_token_override: str | None = None,
 ) -> schemas.EventRegistrationRead:
     """Construye el schema de respuesta, ocultando hashes internos.
 
     Flags de minimización de datos (defensa en profundidad contra IDOR/PII leak):
       - ``include_pii``: si False, omite ``persona_name/email/phone`` (por defecto
         True para admin, False para ``/status`` público).
-      - ``include_qr``:  si False, omite ``qr_token`` (``/status`` nunca expone
-        el QR — solo el correo de confirmación o ``/verify`` lo emiten).
+      - ``include_qr``:  si False, omite ``qr_token`` y ``cancel_token``
+        (``/status`` nunca expone el QR — solo el correo de confirmación o
+        ``/verify`` lo emiten).
+      - ``qr_token_override`` / ``cancel_token_override``: tokens planos
+        volatile (en runtime, no persistidos). Se usan tras ``/register`` y
+        ``/verify`` para mostrar el QR y el link de auto-cancelación al
+        usuario en la respuesta. Si None, no se emiten.
+
+    Las columnas ``qr_token`` y ``_cancel_token`` nunca se persisten en DB.
     """
     extras_clean = {k: v for k, v in (reg.extras or {}).items() if not k.startswith("_")}
     return schemas.EventRegistrationRead(
@@ -617,8 +640,19 @@ def _serialize_registration(
         persona_email=(persona.email if persona else None) if include_pii else None,
         persona_phone=(persona.phone if persona else None) if include_pii else None,
         registration_status=reg.registration_status,
-        # QR solo si include_qr Y CHECKED_IN/CONFIRMED; nunca el hash.
-        qr_token=(reg.qr_token if include_qr and reg.registration_status in {"CONFIRMED", "CHECKED_IN"} else None),
+        # QR: si hay override volatile (recién emitido), úsalo; si no, None.
+        # El estado debe ser CONFIRMED/CHECKED_IN para exponerlo.
+        qr_token=(
+            qr_token_override
+            if include_qr and qr_token_override and reg.registration_status in {"CONFIRMED", "CHECKED_IN"}
+            else None
+        ),
+        # cancel_token volatile: mismo patrón que qr_token.
+        cancel_token=(
+            cancel_token_override
+            if include_qr and cancel_token_override and reg.registration_status in {"CONFIRMED", "CHECKED_IN"}
+            else None
+        ),
         qr_generated_at=reg.qr_generated_at,
         registered_at=reg.registered_at,
         confirmed_at=reg.confirmed_at,
