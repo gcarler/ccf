@@ -4,15 +4,25 @@ import uuid
 from datetime import datetime
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.core.config import get_settings
 from backend.core.database import get_db
+from backend.core.rate_limit import rate_limiter
 from backend.models_academy_core import Course, Lesson
+from backend.services.event_registration_service import (
+    RegistrationError,
+    cancel as cancel_registration,
+    capacity_remaining,
+    find_by_email_or_phone,
+    is_event_open_for_registration,
+    register as register_persona,
+    verify as verify_registration,
+)
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
 logger = logging.getLogger(__name__)
@@ -120,10 +130,25 @@ def _curso_to_public(curso: Course, lesson_count: int = 0) -> PublicCursoRespons
 
 @router.get("/courses", response_model=list[PublicCursoResponse])
 def public_list_courses(db: Session = Depends(get_db)):
-    """Lista de cursos publicados para la landing page /cursos."""
+    """Lista de cursos publicados para la landing page /cursos.
+
+    Filtra por ``access_level`` IN ('open', 'persona') — ambos son valores del
+    enum canónico ``Literal["open", "persona", "advanced"]`` en
+    ``backend/schemas/academy.py`` que representan catálogo de captación
+    pública. ``"advanced"`` queda fuera (curso avanzado para personas ya
+    inscritas, no captación pública). ``"privado"`` nunca fue legítimo (no
+    está en el enum); la migración ``20260803_0005_academy_normalize_privado_to_persona``
+    lo normaliza a ``"persona"`` para que los cursos生产 preexistentes vuelvan a ser
+    visibles. Sin este ajuste, un curso ``open`` publicado tampoco aparecería
+    en la landing (contradictorio — ``open`` es más "público" que ``persona``).
+    """
     cursos = (
         db.query(Course)
-        .filter(Course.is_published.is_(True), Course.deleted_at.is_(None), Course.access_level == "persona")
+        .filter(
+            Course.is_published.is_(True),
+            Course.deleted_at.is_(None),
+            Course.access_level.in_(["open", "persona"]),
+        )
         .order_by(Course.id)
         .all()
     )
@@ -213,15 +238,19 @@ def public_course_enroll(
 
 
 class PublicContactCreate(BaseModel):
-    full_name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    notes: Optional[str] = None
-    status: Optional[str] = "prospect"
-    source: Optional[str] = "conocer-a-jesus"
+    full_name: str = Field(..., min_length=2, max_length=160)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(default=None, max_length=40)
+    notes: Optional[str] = Field(default=None, max_length=5000)
+    status: Optional[str] = Field(default="prospect", max_length=40)
+    source: Optional[str] = Field(default="conocer-a-jesus", max_length=120)
 
 
-@router.post("/contact", response_model=dict)
+@router.post(
+    "/contact",
+    response_model=dict,
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
 def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
     """Recibe un contacto desde un formulario publico."""
     result = tracker.record_contact(
@@ -370,3 +399,211 @@ async def upload_public_document(
         "size": file_size,
         "mime_type": mime_type,
     }
+
+
+# =============================================================================
+# PRE-REGISTRO PÚBLICO A EVENTOS MASIVOS (plan_de_preregistro, Fase 2)
+# =============================================================================
+
+PUBLIC_EVENT_RATE_LIMIT = 120  # por minuto, por IP
+
+
+def _public_event_or_404(db: Session, event_id):
+    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    if not event or event.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    return event
+
+
+def _settings_public_base_url() -> str:
+    """Resuelve la URL pública base para links de QR/verify (configurable)."""
+    try:
+        s = get_settings()
+        return getattr(s, "public_base_url", None) or "https://ccf.co"
+    except Exception:
+        return "https://ccf.co"
+
+
+def _reg_error_to_http(exc: RegistrationError) -> HTTPException:
+    return HTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail})
+
+
+@router.get("/events/{event_id}", response_model=schemas.PublicEventRead)
+def public_get_event(event_id: uuid.UUID, db: Session = Depends(get_db)):
+    """Metadata pública del evento para la landing de pre-registro."""
+    event = _public_event_or_404(db, event_id)
+    remaining = capacity_remaining(db, event)
+    return schemas.PublicEventRead(
+        id=event.id,
+        name=event.name,
+        description=event.description,
+        event_date=event.event_date,
+        start_time=event.start_time,
+        end_time=event.end_time,
+        location=event.location,
+        event_type=event.event_type,
+        requires_registration=event.requires_registration,
+        requires_email_verification=event.requires_email_verification,
+        capacity_max=event.capacity_max,
+        waiting_list_enabled=event.waiting_list_enabled,
+        registration_opens_at=event.registration_opens_at,
+        registration_closes_at=event.registration_closes_at,
+        contact_person=event.contact_person,
+        is_open=is_event_open_for_registration(event),
+        capacity_remaining=remaining,
+    )
+
+
+@router.post(
+    "/events/{event_id}/register",
+    response_model=schemas.EventRegistrationRead,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
+)
+def public_register_event(
+    event_id: uuid.UUID,
+    payload: schemas.PublicEventRegister,
+    db: Session = Depends(get_db),
+):
+    """Pre-registro público a un evento masivo con QR + (opcional) verify email.
+
+    Rate-limited por IP. Idempotente: si la persona ya está CONFIRMED/WAITLIST,
+    retorna la inscripción existente sin crear duplicados.
+    """
+    event = _public_event_or_404(db, event_id)
+    try:
+        reg = register_persona(
+            db,
+            event,
+            payload,
+            public_base_url=_settings_public_base_url(),
+        )
+    except RegistrationError as exc:
+        raise _reg_error_to_http(exc) from None
+
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
+    )
+    return _serialize_registration(reg, persona)
+
+
+@router.get("/events/{event_id}/verify", response_model=schemas.EventRegistrationRead)
+def public_verify_event(
+    event_id: uuid.UUID,
+    token: str = Query(..., min_length=10, max_length=200),
+    db: Session = Depends(get_db),
+):
+    """Verifica una inscripción con el token enviado por email."""
+    event = _public_event_or_404(db, event_id)
+    try:
+        reg = verify_registration(db, event, token, public_base_url=_settings_public_base_url())
+    except RegistrationError as exc:
+        raise _reg_error_to_http(exc) from None
+
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
+    )
+    return _serialize_registration(reg, persona)
+
+
+@router.get("/events/{event_id}/status", response_model=schemas.EventRegistrationRead)
+def public_status_event(
+    event_id: uuid.UUID,
+    email: Optional[str] = Query(None),
+    phone: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Consulta el estado de una inscripción por email o phone."""
+    event = _public_event_or_404(db, event_id)
+    if not email and not phone:
+        raise HTTPException(status_code=400, detail="email o phone requerido")
+    reg = find_by_email_or_phone(db, event.id, email=email, phone=phone)
+    if not reg:
+        raise HTTPException(status_code=404, detail="No se encontró inscripción con esos datos")
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
+    )
+    return _serialize_registration(reg, persona)
+
+
+@router.post(
+    "/events/{event_id}/cancel",
+    response_model=schemas.EventRegistrationRead,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
+)
+def public_cancel_event(
+    event_id: uuid.UUID,
+    payload: schemas.PublicEventCancel,
+    db: Session = Depends(get_db),
+):
+    """Auto-cancelación con el token embebido en el QR link."""
+    event = _public_event_or_404(db, event_id)
+    token = payload.cancel_token
+    if not token.startswith("CCF-CXL-"):
+        raise HTTPException(status_code=400, detail="Token de cancelación inválido")
+    payload_str = token.removeprefix("CCF-CXL-")
+    if "-" not in payload_str:
+        raise HTTPException(status_code=400, detail="Token malformado")
+    try:
+        # El secret es el último segmento; el id es todo lo anterior (los
+        # UUID contienen guiones, así que split por el primer '-' truncaría).
+        reg_id_str, _secret = payload_str.rsplit("-", 1)
+        reg_id = uuid.UUID(reg_id_str)
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail="Token malformado") from exc
+
+    reg = db.query(models.EventRegistration).filter(
+        models.EventRegistration.id == reg_id,
+        models.EventRegistration.event_id == event.id,
+        models.EventRegistration.deleted_at.is_(None),
+    ).first()
+    if not reg:
+        raise HTTPException(status_code=404, detail="Inscripción no encontrada")
+    if reg.registration_status == "CANCELLED":
+        raise HTTPException(status_code=409, detail="Inscripción ya cancelada")
+
+    import hashlib
+    import secrets
+    stored_hash = (reg.extras or {}).get("_cancel_token_hash")
+    if not stored_hash or not secrets.compare_digest(
+        hashlib.sha256(_secret.encode()).hexdigest(), stored_hash
+    ):
+        raise HTTPException(status_code=403, detail="Token inválido")
+
+    reg = cancel_registration(db, event, reg)
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
+    )
+    return _serialize_registration(reg, persona)
+
+
+# ── Helper de serialización ─────────────────────────────────────────────────
+
+
+def _serialize_registration(
+    reg: models.EventRegistration, persona: Optional[models.Persona]
+) -> schemas.EventRegistrationRead:
+    """Construye el schema de respuesta, ocultando hashes internos."""
+    extras_clean = {k: v for k, v in (reg.extras or {}).items() if not k.startswith("_")}
+    return schemas.EventRegistrationRead(
+        id=reg.id,
+        event_id=reg.event_id,
+        persona_id=reg.persona_id,
+        persona_name=(persona.nombre_completo if persona else None),
+        persona_email=(persona.email if persona else None),
+        persona_phone=(persona.phone if persona else None),
+        registration_status=reg.registration_status,
+        # Solo devolvemos qr_token si CHECKED_IN o CONFIRMED; nunca el hash.
+        qr_token=reg.qr_token if reg.registration_status in {"CONFIRMED", "CHECKED_IN"} else None,
+        qr_generated_at=reg.qr_generated_at,
+        registered_at=reg.registered_at,
+        confirmed_at=reg.confirmed_at,
+        cancelled_at=reg.cancelled_at,
+        check_in_at=reg.check_in_at,
+        check_out_at=reg.check_out_at,
+        checked_in_by=reg.checked_in_by,
+        source=reg.source,
+        extras=extras_clean,
+        waiting_list_position=reg.waiting_list_position,
+        reminder_sent_count=reg.reminder_sent_count,
+        last_reminder_sent_at=reg.last_reminder_sent_at,
+    )
