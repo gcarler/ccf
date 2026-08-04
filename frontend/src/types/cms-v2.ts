@@ -310,27 +310,32 @@ export interface CmsPublicPopup {
   show_on_pages: string[];
 }
 
+/**
+ * Tipos de campo del form builder dinámico (plan_de_form_builder).
+ * Espejo de ``backend.services.form_validation.FIELD_TYPES``.
+ */
 export type CmsFormFieldType =
   | "text"
   | "email"
   | "phone"
   | "textarea"
   | "select"
-  | "radio"
-  | "select_multiple"
   | "checkbox"
   | "number"
-  | "rating"
-  | "slider"
   | "date"
   | "datetime"
   | "url"
+  | "select_multiple"
+  | "radio"
+  | "rating"
+  | "slider"
   | "file"
   | "section"
-  | "divider"
   | "page"
+  | "divider"
   | "captcha";
 
+/** Condición de visibilidad (``visible_if``) — espejo de ``_OPERATORS``. */
 export type CmsFormConditionOperator =
   | "eq"
   | "neq"
@@ -346,12 +351,18 @@ export type CmsFormConditionOperator =
   | "empty"
   | "not_empty";
 
-export interface CmsFormVisibilityCondition {
+export interface CmsFormVisibleIf {
   field_id: string;
   operator: CmsFormConditionOperator;
-  value?: string | number | boolean | string[];
+  value?: unknown;
 }
 
+/**
+ * Contrato de un campo del form builder (superset del schema V1).
+ * Los campos V1 (6 tipos) siguen siendo válidos — ``CmsFormField`` es
+ * retro-compatible con el shape anterior (``id,type,label,placeholder,
+ * required,options``).
+ */
 export interface CmsFormField {
   id: string;
   type: CmsFormFieldType;
@@ -359,33 +370,42 @@ export interface CmsFormField {
   placeholder?: string;
   required: boolean;
   options?: string[];
-  description?: string;
-  default_value?: string | number | boolean | string[];
-  help_text?: string;
-  helper_text?: string;
-  validation_pattern?: string;
-  validation_message?: string;
+  /** select/radio/select_multiple: permitir "Otra opción" libre. */
+  allow_other?: boolean;
+  /** text/textarea/email: límites de longitud. */
+  min_length?: number;
+  max_length?: number;
+  /** text/textarea: patrón de validación + mensaje. */
   regex_pattern?: string;
   regex_message?: string;
-  max_length?: number;
-  min_length?: number;
-  max_value?: number;
+  /** number/rating/slider: rango permitido. */
   min_value?: number;
+  max_value?: number;
+  /** slider: tamaño del paso (solo UI; el backend valida rango). */
   step?: number;
+  /** file: tamaño máximo en MB y MIME permitidos (p.ej. "image/*"). */
   max_file_mb?: number;
   accept?: string;
-  allow_other?: boolean;
-  rating_max?: number;
-  slider_min?: number;
-  slider_max?: number;
-  slider_step?: number;
-  page_break?: boolean;
-  file_accept?: string;
-  file_multiple?: boolean;
-  page?: number;
-  order?: number;
-  validation?: Record<string, unknown>;
-  visible_if?: CmsFormVisibilityCondition;
+  /** helper_text: texto de ayuda bajo el campo. */
+  helper_text?: string;
+  /** Lógica condicional — campo solo visible si se cumple. */
+  visible_if?: CmsFormVisibleIf;
+}
+
+/** Metadatos públicos de un formulario (excluye notify_emails). */
+export interface CmsFormPublicRead {
+  id: string;
+  name: string;
+  description: string | null;
+  fields: CmsFormField[];
+  submit_button_text: string;
+  success_message: string;
+  captcha_enabled: boolean;
+  captcha_provider: string;
+  captcha_site_key: string | null;
+  honeypot_enabled: boolean;
+  settings_json: Record<string, unknown>;
+  is_active: boolean;
 }
 
 export interface CmsForm {
@@ -401,6 +421,10 @@ export interface CmsForm {
   created_at: string;
   updated_at: string;
   submission_count?: number;
+  settings_json?: Record<string, unknown>;
+  captcha_enabled?: boolean;
+  captcha_provider?: string;
+  honeypot_enabled?: boolean;
 }
 
 export interface CmsFormSubmission {

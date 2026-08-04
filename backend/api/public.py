@@ -4,15 +4,38 @@ import uuid
 from datetime import datetime
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.core.config import get_settings
 from backend.core.database import get_db
+from backend.core.rate_limit import rate_limiter
 from backend.models_academy_core import Course, Lesson
+from backend.services.event_registration_service import (
+    RegistrationError,
+    capacity_remaining,
+    find_by_email_or_phone,
+    is_event_open_for_registration,
+)
+from backend.services.event_registration_service import (
+    cancel as cancel_registration,
+)
+from backend.services.event_registration_service import (
+    register as register_persona,
+)
+from backend.services.event_registration_service import (
+    verify as verify_registration,
+)
+
+# plan_de_form_builder: validación server-side de campos dinámicos
+from backend.services.form_validation import (
+    ValidationError,
+    validate_submission,
+    verify_hcaptcha,
+)
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
 logger = logging.getLogger(__name__)
@@ -120,10 +143,25 @@ def _curso_to_public(curso: Course, lesson_count: int = 0) -> PublicCursoRespons
 
 @router.get("/courses", response_model=list[PublicCursoResponse])
 def public_list_courses(db: Session = Depends(get_db)):
-    """Lista de cursos publicados para la landing page /cursos."""
+    """Lista de cursos publicados para la landing page /cursos.
+
+    Filtra por ``access_level`` IN ('open', 'persona') — ambos son valores del
+    enum canónico ``Literal["open", "persona", "advanced"]`` en
+    ``backend/schemas/academy.py`` que representan catálogo de captación
+    pública. ``"advanced"`` queda fuera (curso avanzado para personas ya
+    inscritas, no captación pública). ``"privado"`` nunca fue legítimo (no
+    está en el enum); la migración ``20260803_0005_academy_normalize_privado_to_persona``
+    lo normaliza a ``"persona"`` para que los cursos生产 preexistentes vuelvan a ser
+    visibles. Sin este ajuste, un curso ``open`` publicado tampoco aparecería
+    en la landing (contradictorio — ``open`` es más "público" que ``persona``).
+    """
     cursos = (
         db.query(Course)
-        .filter(Course.is_published.is_(True), Course.deleted_at.is_(None), Course.access_level == "persona")
+        .filter(
+            Course.is_published.is_(True),
+            Course.deleted_at.is_(None),
+            Course.access_level.in_(["open", "persona"]),
+        )
         .order_by(Course.id)
         .all()
     )
@@ -213,15 +251,19 @@ def public_course_enroll(
 
 
 class PublicContactCreate(BaseModel):
-    full_name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    notes: Optional[str] = None
-    status: Optional[str] = "prospect"
-    source: Optional[str] = "conocer-a-jesus"
+    full_name: str = Field(..., min_length=2, max_length=160)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(default=None, max_length=40)
+    notes: Optional[str] = Field(default=None, max_length=5000)
+    status: Optional[str] = Field(default="prospect", max_length=40)
+    source: Optional[str] = Field(default="conocer-a-jesus", max_length=120)
 
 
-@router.post("/contact", response_model=dict)
+@router.post(
+    "/contact",
+    response_model=dict,
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
 def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
     """Recibe un contacto desde un formulario publico."""
     result = tracker.record_contact(
@@ -370,3 +412,377 @@ async def upload_public_document(
         "size": file_size,
         "mime_type": mime_type,
     }
+
+
+# =============================================================================
+# PRE-REGISTRO PÚBLICO A EVENTOS MASIVOS (plan_de_preregistro, Fase 2)
+# =============================================================================
+
+PUBLIC_EVENT_RATE_LIMIT = 120  # por minuto, por IP
+PUBLIC_STATUS_RATE_LIMIT = 10  # por minuto, por IP — más estricto para /status (PII risk)
+
+
+def _public_event_or_404(db: Session, event_id):
+    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    if not event or event.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Evento no encontrado")
+    return event
+
+
+def _settings_public_base_url() -> str:
+    """Resuelve la URL pública base para links de QR/verify (configurable)."""
+    try:
+        s = get_settings()
+        return getattr(s, "public_base_url", None) or "https://ccf.co"
+    except Exception:
+        return "https://ccf.co"
+
+
+def _reg_error_to_http(exc: RegistrationError) -> HTTPException:
+    return HTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail})
+
+
+@router.get("/events/{event_id}", response_model=schemas.PublicEventRead)
+def public_get_event(event_id: uuid.UUID, db: Session = Depends(get_db)):
+    """Metadata pública del evento para la landing de pre-registro."""
+    event = _public_event_or_404(db, event_id)
+    remaining = capacity_remaining(db, event)
+    return schemas.PublicEventRead(
+        id=event.id,
+        name=event.name,
+        description=event.description,
+        event_date=event.event_date,
+        start_time=event.start_time,
+        end_time=event.end_time,
+        location=event.location,
+        event_type=event.event_type,
+        requires_registration=event.requires_registration,
+        requires_email_verification=event.requires_email_verification,
+        capacity_max=event.capacity_max,
+        waiting_list_enabled=event.waiting_list_enabled,
+        registration_opens_at=event.registration_opens_at,
+        registration_closes_at=event.registration_closes_at,
+        contact_person=event.contact_person,
+        is_open=is_event_open_for_registration(event),
+        capacity_remaining=remaining,
+        form_id=event.form_id,
+    )
+
+
+def _validate_event_form_data(db: Session, event: models.CrmEvent, payload: schemas.PublicEventRegister) -> None:
+    """Valida ``payload.form_data`` + ``captcha_token`` contra el ``CmsForm``
+    vinculado al evento (``event.form_id``).
+
+    Plan Form Builder Dinámico §5.4: el pre-registro sigue yendo a
+    ``/public/events/{event_id}/register`` (para crear ``EventRegistration`` +
+    QR) pero el backend valida ``form_data`` contra el ``CmsForm`` y persiste
+    los datos limpios en ``payload.extras["_form_data"]`` — así el servicio
+    de preinscripción los captura sin tocar código.
+
+    Flujo:
+      1. Cargar el ``CmsForm`` (404 si fue eliminado o está inactivo).
+      2. hCaptcha si ``form.captcha_enabled`` (raise 400 si falta/falla).
+      3. ``validate_submission(form.fields, payload.form_data)`` → 422 si
+         algún campo falla (required, tipo, regex, opciones, condicional).
+      4. Persistir el dict limpio en ``payload.extras["_form_data"]`` para
+         que ``register_persona`` lo capture en ``extras``.
+
+    Lanza ``HTTPException`` en fallos (404 form, 400 captcha, 422 validación).
+
+    Nota: el honeypot NO se aplica a pre-registro de eventos. ``PublicEventRegister``
+    no expone un campo trampa ``_hp`` (esencial para formularios genéricos pero
+    impropio para preregistro, donde el plan §5.4 solo valida ``form_data``).
+    La protección anti-bot del preregistro es captcha + rate-limit por IP.
+    """
+    form = db.query(models.CmsForm).filter(models.CmsForm.id == event.form_id).first()
+    if not form or not form.is_active:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "FORM_NOT_FOUND", "detail": "El formulario asociado al evento ya no está disponible."},
+        )
+
+    # hCaptcha — el token llega en ``payload.captcha_token``. La verificación
+    # se corre con remote_ip=None (este helper no recibe ``request``).
+    if form.captcha_enabled:
+        token = (payload.captcha_token or "").strip()
+        if not token:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "CAPTCHA_REQUIRED", "detail": "Captcha requerido para este formulario."},
+            )
+
+        # ``verify_hcaptcha`` es async; este endpoint es síncrono. Reuso el
+        # patrón ``_run_hcaptcha_sync`` (thread con event loop propio) que
+        # ``cms_v2/forms.py`` ya estableció para endpoints no-async — evita
+        # ``asyncio.run`` cuando ya hay un event loop activo (p.ej. tests).
+        ok = _run_hcaptcha_sync(token, remote_ip=None)
+        if not ok:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "CAPTCHA_FAILED", "detail": "Captcha inválido."},
+            )
+
+    # Validación server-side de campos dinámicos.
+    try:
+        clean = validate_submission(
+            form.fields or [],
+            payload.form_data or {},
+            honeypot_enabled=False,  # honeypot no aplica en preregistro (ver docstring)
+        )
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": exc.code, "detail": exc.detail, "field_id": exc.field_id},
+        ) from None
+
+    # Persistir los datos limpios en ``extras._form_data`` — el servicio
+    # de preinscripción guarda ``extras`` en ``event_registrations.extras``.
+    extras = dict(payload.extras or {})
+    extras["_form_data"] = clean
+    payload.extras = extras
+
+
+def _run_hcaptcha_sync(token: str, *, remote_ip: str | None = None) -> bool:
+    """Wrapper síncrono sobre ``verify_hcaptcha`` para endpoints no-async.
+
+    Si ya hay un event loop activo (p.ej. dentro de un runner de tests o un
+    request async), ejecuta la corrutina en un thread con su propio loop —
+    el mismo patrón que ``cms_v2/forms.py:_run_hcaptcha_sync``.
+    """
+    import asyncio as _asyncio
+
+    try:
+        loop = _asyncio.get_event_loop()
+        if loop.is_running():
+            import threading
+
+            result: list[bool] = []
+
+            def _runner() -> None:
+                new_loop = _asyncio.new_event_loop()
+                try:
+                    result.append(new_loop.run_until_complete(verify_hcaptcha(token, remote_ip=remote_ip)))
+                finally:
+                    new_loop.close()
+
+            t = threading.Thread(target=_runner, daemon=True)
+            t.start()
+            t.join(timeout=15)
+            return bool(result[0]) if result else False
+        return loop.run_until_complete(verify_hcaptcha(token, remote_ip=remote_ip))
+    except RuntimeError:
+        return _asyncio.run(verify_hcaptcha(token, remote_ip=remote_ip))
+
+
+@router.post(
+    "/events/{event_id}/register",
+    response_model=schemas.EventRegistrationRead,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
+)
+def public_register_for_event(
+    event_id: uuid.UUID,
+    payload: schemas.PublicEventRegister,
+    db: Session = Depends(get_db),
+):
+    """Pre-registro público a un evento masivo con QR + (opcional) verify email.
+
+    Rate-limited por IP. Idempotente: si la persona ya está CONFIRMED/WAITLIST,
+    retorna la inscripción existente sin crear duplicados.
+    """
+    event = _public_event_or_404(db, event_id)
+
+    # plan_de_form_builder: si el evento tiene un CmsForm vinculado, validar
+    # form_data + captcha server-side contra el contrato del formulario.
+    if event.form_id:
+        _validate_event_form_data(db, event, payload)
+
+    try:
+        reg = register_persona(
+            db,
+            event,
+            payload,
+            public_base_url=_settings_public_base_url(),
+        )
+    except RegistrationError as exc:
+        raise _reg_error_to_http(exc) from None
+
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
+    )
+    # Tras register/verify, exponer el QR al usuario en la respuesta (runtime)
+    # — el token NO está persistido en DB, se emite una sola vez acá y por email.
+    qr_token_plain = getattr(reg, "_qr_token_transient", None)
+    cancel_token_plain = getattr(reg, "_cancel_token_transient", None)
+    return _serialize_registration(
+        reg, persona,
+        qr_token_override=qr_token_plain,
+        cancel_token_override=cancel_token_plain,
+    )
+
+
+@router.get("/events/{event_id}/verify", response_model=schemas.EventRegistrationRead)
+def public_verify_event(
+    event_id: uuid.UUID,
+    token: str = Query(..., min_length=10, max_length=200),
+    db: Session = Depends(get_db),
+):
+    """Verifica una inscripción con el token enviado por email."""
+    event = _public_event_or_404(db, event_id)
+    try:
+        reg = verify_registration(db, event, token, public_base_url=_settings_public_base_url())
+    except RegistrationError as exc:
+        raise _reg_error_to_http(exc) from None
+
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
+    )
+    qr_token_plain = getattr(reg, "_qr_token_transient", None)
+    cancel_token_plain = getattr(reg, "_cancel_token_transient", None)
+    return _serialize_registration(
+        reg, persona,
+        qr_token_override=qr_token_plain,
+        cancel_token_override=cancel_token_plain,
+    )
+
+
+@router.get(
+    "/events/{event_id}/status",
+    response_model=schemas.EventRegistrationRead,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_STATUS_RATE_LIMIT, window_seconds=60))],
+)
+def public_status_event(
+    event_id: uuid.UUID,
+    email: Optional[str] = Query(None),
+    phone: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Consulta el estado de una inscripción por email o phone.
+
+    Por diseño, este endpoint NO devuelve PII (nombre/email/phone) ni
+    ``qr_token`` — solo el estado de la inscripción. Es el canal
+    público de "¿estoy inscrito?"; el QR se obtiene por el correo de
+    confirmación o por el token de verificación (``/verify``).
+    """
+    event = _public_event_or_404(db, event_id)
+    if not email and not phone:
+        raise HTTPException(status_code=400, detail="email o phone requerido")
+    reg = find_by_email_or_phone(db, event.id, email=email, phone=phone)
+    if not reg:
+        raise HTTPException(status_code=404, detail="No se encontró inscripción con esos datos")
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
+    )
+    return _serialize_registration(reg, persona, include_pii=False, include_qr=False)
+
+
+@router.post(
+    "/events/{event_id}/cancel",
+    response_model=schemas.EventRegistrationRead,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
+)
+def public_cancel_event(
+    event_id: uuid.UUID,
+    payload: schemas.PublicEventCancel,
+    db: Session = Depends(get_db),
+):
+    """Auto-cancelación con el token embebido en el QR link."""
+    event = _public_event_or_404(db, event_id)
+    token = payload.cancel_token
+    if not token.startswith("CCF-CXL-"):
+        raise HTTPException(status_code=400, detail="Token de cancelación inválido")
+    payload_str = token.removeprefix("CCF-CXL-")
+    if "-" not in payload_str:
+        raise HTTPException(status_code=400, detail="Token malformado")
+    try:
+        # El secret es el último segmento; el id es todo lo anterior (los
+        # UUID contienen guiones, así que split por el primer '-' truncaría).
+        reg_id_str, _secret = payload_str.rsplit("-", 1)
+        reg_id = uuid.UUID(reg_id_str)
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail="Token malformado") from exc
+
+    reg = db.query(models.EventRegistration).filter(
+        models.EventRegistration.id == reg_id,
+        models.EventRegistration.event_id == event.id,
+        models.EventRegistration.deleted_at.is_(None),
+    ).first()
+    if not reg:
+        raise HTTPException(status_code=404, detail="Inscripción no encontrada")
+    if reg.registration_status == "CANCELLED":
+        raise HTTPException(status_code=409, detail="Inscripción ya cancelada")
+
+    import hashlib
+    import secrets
+    stored_hash = (reg.extras or {}).get("_cancel_token_hash")
+    if not stored_hash or not secrets.compare_digest(
+        hashlib.sha256(_secret.encode()).hexdigest(), stored_hash
+    ):
+        raise HTTPException(status_code=403, detail="Token inválido")
+
+    reg = cancel_registration(db, event, reg)
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
+    )
+    return _serialize_registration(reg, persona)
+
+
+# ── Helper de serialización ─────────────────────────────────────────────────
+
+
+def _serialize_registration(
+    reg: models.EventRegistration, persona: Optional[models.Persona],
+    *, include_pii: bool = True, include_qr: bool = True,
+    qr_token_override: str | None = None,
+    cancel_token_override: str | None = None,
+) -> schemas.EventRegistrationRead:
+    """Construye el schema de respuesta, ocultando hashes internos.
+
+    Flags de minimización de datos (defensa en profundidad contra IDOR/PII leak):
+      - ``include_pii``: si False, omite ``persona_name/email/phone`` (por defecto
+        True para admin, False para ``/status`` público).
+      - ``include_qr``:  si False, omite ``qr_token`` y ``cancel_token``
+        (``/status`` nunca expone el QR — solo el correo de confirmación o
+        ``/verify`` lo emiten).
+      - ``qr_token_override`` / ``cancel_token_override``: tokens planos
+        volatile (en runtime, no persistidos). Se usan tras ``/register`` y
+        ``/verify`` para mostrar el QR y el link de auto-cancelación al
+        usuario en la respuesta. Si None, no se emiten.
+
+    Las columnas ``qr_token`` y ``_cancel_token`` nunca se persisten en DB.
+    """
+    extras_clean = {k: v for k, v in (reg.extras or {}).items() if not k.startswith("_")}
+    return schemas.EventRegistrationRead(
+        id=reg.id,
+        event_id=reg.event_id,
+        persona_id=reg.persona_id,
+        persona_name=(persona.nombre_completo if persona else None) if include_pii else None,
+        persona_email=(persona.email if persona else None) if include_pii else None,
+        persona_phone=(persona.phone if persona else None) if include_pii else None,
+        registration_status=reg.registration_status,
+        # QR: si hay override volatile (recién emitido), úsalo; si no, None.
+        # El estado debe ser CONFIRMED/CHECKED_IN para exponerlo.
+        qr_token=(
+            qr_token_override
+            if include_qr and qr_token_override and reg.registration_status in {"CONFIRMED", "CHECKED_IN"}
+            else None
+        ),
+        # cancel_token volatile: mismo patrón que qr_token.
+        cancel_token=(
+            cancel_token_override
+            if include_qr and cancel_token_override and reg.registration_status in {"CONFIRMED", "CHECKED_IN"}
+            else None
+        ),
+        qr_generated_at=reg.qr_generated_at,
+        registered_at=reg.registered_at,
+        confirmed_at=reg.confirmed_at,
+        cancelled_at=reg.cancelled_at,
+        check_in_at=reg.check_in_at,
+        check_out_at=reg.check_out_at,
+        checked_in_by=reg.checked_in_by,
+        source=reg.source,
+        extras=extras_clean,
+        waiting_list_position=reg.waiting_list_position,
+        reminder_sent_count=reg.reminder_sent_count,
+        last_reminder_sent_at=reg.last_reminder_sent_at,
+    )
+
