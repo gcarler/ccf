@@ -16,11 +16,17 @@ from backend.core.rate_limit import rate_limiter
 from backend.models_academy_core import Course, Lesson
 from backend.services.event_registration_service import (
     RegistrationError,
-    cancel as cancel_registration,
     capacity_remaining,
     find_by_email_or_phone,
     is_event_open_for_registration,
+)
+from backend.services.event_registration_service import (
+    cancel as cancel_registration,
+)
+from backend.services.event_registration_service import (
     register as register_persona,
+)
+from backend.services.event_registration_service import (
     verify as verify_registration,
 )
 from backend.services.public_contact_tracking import ContactRecord, tracker
@@ -406,6 +412,7 @@ async def upload_public_document(
 # =============================================================================
 
 PUBLIC_EVENT_RATE_LIMIT = 120  # por minuto, por IP
+PUBLIC_STATUS_RATE_LIMIT = 10  # por minuto, por IP — más estricto para /status (PII risk)
 
 
 def _public_event_or_404(db: Session, event_id):
@@ -459,7 +466,7 @@ def public_get_event(event_id: uuid.UUID, db: Session = Depends(get_db)):
     response_model=schemas.EventRegistrationRead,
     dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
 )
-def public_register_event(
+def public_register_for_event(
     event_id: uuid.UUID,
     payload: schemas.PublicEventRegister,
     db: Session = Depends(get_db),
@@ -505,14 +512,24 @@ def public_verify_event(
     return _serialize_registration(reg, persona)
 
 
-@router.get("/events/{event_id}/status", response_model=schemas.EventRegistrationRead)
+@router.get(
+    "/events/{event_id}/status",
+    response_model=schemas.EventRegistrationRead,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_STATUS_RATE_LIMIT, window_seconds=60))],
+)
 def public_status_event(
     event_id: uuid.UUID,
     email: Optional[str] = Query(None),
     phone: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
-    """Consulta el estado de una inscripción por email o phone."""
+    """Consulta el estado de una inscripción por email o phone.
+
+    Por diseño, este endpoint NO devuelve PII (nombre/email/phone) ni
+    ``qr_token`` — solo el estado de la inscripción. Es el canal
+    público de "¿estoy inscrito?"; el QR se obtiene por el correo de
+    confirmación o por el token de verificación (``/verify``).
+    """
     event = _public_event_or_404(db, event_id)
     if not email and not phone:
         raise HTTPException(status_code=400, detail="email o phone requerido")
@@ -522,7 +539,7 @@ def public_status_event(
     persona = (
         db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
     )
-    return _serialize_registration(reg, persona)
+    return _serialize_registration(reg, persona, include_pii=False, include_qr=False)
 
 
 @router.post(
@@ -580,20 +597,28 @@ def public_cancel_event(
 
 
 def _serialize_registration(
-    reg: models.EventRegistration, persona: Optional[models.Persona]
+    reg: models.EventRegistration, persona: Optional[models.Persona],
+    *, include_pii: bool = True, include_qr: bool = True,
 ) -> schemas.EventRegistrationRead:
-    """Construye el schema de respuesta, ocultando hashes internos."""
+    """Construye el schema de respuesta, ocultando hashes internos.
+
+    Flags de minimización de datos (defensa en profundidad contra IDOR/PII leak):
+      - ``include_pii``: si False, omite ``persona_name/email/phone`` (por defecto
+        True para admin, False para ``/status`` público).
+      - ``include_qr``:  si False, omite ``qr_token`` (``/status`` nunca expone
+        el QR — solo el correo de confirmación o ``/verify`` lo emiten).
+    """
     extras_clean = {k: v for k, v in (reg.extras or {}).items() if not k.startswith("_")}
     return schemas.EventRegistrationRead(
         id=reg.id,
         event_id=reg.event_id,
         persona_id=reg.persona_id,
-        persona_name=(persona.nombre_completo if persona else None),
-        persona_email=(persona.email if persona else None),
-        persona_phone=(persona.phone if persona else None),
+        persona_name=(persona.nombre_completo if persona else None) if include_pii else None,
+        persona_email=(persona.email if persona else None) if include_pii else None,
+        persona_phone=(persona.phone if persona else None) if include_pii else None,
         registration_status=reg.registration_status,
-        # Solo devolvemos qr_token si CHECKED_IN o CONFIRMED; nunca el hash.
-        qr_token=reg.qr_token if reg.registration_status in {"CONFIRMED", "CHECKED_IN"} else None,
+        # QR solo si include_qr Y CHECKED_IN/CONFIRMED; nunca el hash.
+        qr_token=(reg.qr_token if include_qr and reg.registration_status in {"CONFIRMED", "CHECKED_IN"} else None),
         qr_generated_at=reg.qr_generated_at,
         registered_at=reg.registered_at,
         confirmed_at=reg.confirmed_at,
