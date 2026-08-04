@@ -208,8 +208,15 @@ def send_campaign(
             errors.append({"reg_id": str(reg.id), "error": str(exc)})
             log.warning("Failed to send campaign %s to reg %s: %s", campaign.id, reg.id, exc)
 
+    # Fix #5: solo marcar la campaña como despachada (last_sent_at) si se
+    # envi\u00f3 al menos un mensaje, O si no hab\u00eda audiencia (regs_q vac\u00edo)
+    # para que el scheduler no reintente eternamente cuando no hay nadie a
+    # quien enviar. Si sent==0 Y regs_q no estaba vac\u00edo (todos fallaron),
+    # dejar last_sent_at None para que el scheduler reintente en la siguiente
+    # pasada.
     campaign.sent_count += sent
-    campaign.last_sent_at = now
+    if sent > 0 or not regs_q:
+        campaign.last_sent_at = now
     db.commit()
 
     return {"sent": sent, "skipped": len(regs_q) - sent, "errors": errors, "preview": ""}
