@@ -107,3 +107,11 @@ download_pastors.py
 download_photos.py
 update_photos_db.py
 update_photos_raw.py
+
+# CCF: lock temporal del CLI frontend (artefacto de tooling, no código)
+frontend/.next-command.lock/
+
+# CCF: exportes puntuales de personas — contienen PII (email, teléfono, estado vital).
+# Nunca subir al repo para evitar exposición en el histórico de git.
+personas_por_sede.csv
+personas_por_sede_*.csv
