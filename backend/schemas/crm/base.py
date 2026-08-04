@@ -1351,6 +1351,10 @@ class EventRegistrationRead(BaseModel):
     persona_phone: Optional[str] = None
     registration_status: REGISTRATION_STATUS_LITERAL
     qr_token: Optional[str] = None
+    # cancel_token: volatile (no persistido). Se emite en /register y /verify
+    # junto al qr_token para que el frontend pueda construir el link de
+    # auto-cancelaci\u00f3n embebido en el QR. No se devuelve en /status.
+    cancel_token: Optional[str] = None
     qr_generated_at: Optional[AwareDateTime] = None
     registered_at: AwareDateTime
     confirmed_at: Optional[AwareDateTime] = None

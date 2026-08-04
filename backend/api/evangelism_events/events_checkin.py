@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend.api.evangelism_events._shared import require_event_access
 from backend.core.database import get_db
-from backend.core.permissions import require_evangelism_edit, require_evangelism_manage
+from backend.core.permissions import require_evangelism_edit
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
@@ -207,7 +207,6 @@ def _upsert_attendance(
     )
     now = _utcnow()
     if existing:
-        was_attended = bool(existing.attended)
         existing.attended = True
         existing.status = "present"
         existing.source = source
@@ -279,8 +278,12 @@ def unified_checkin(
             )
             if not reg:
                 raise HTTPException(status_code=404, detail="Inscripción no encontrada")
-            if reg.qr_token != token and reg.qr_token_hash != _qr_token_secret_hash(token):
-                raise HTTPException(status_code=403, detail="QR inválido")
+            # Validar solo contra el hash persistido (fix seguridad #2 + timing attack #12):
+            # el token plano nunca se persiste; comparaci\u00f3n de hashes con
+            # secrets.compare_digest evita timing attacks.
+            token_hash = _qr_token_secret_hash(token)
+            if not token_hash or not secrets.compare_digest(str(reg.qr_token_hash or ""), token_hash):
+                raise HTTPException(status_code=403, detail="QR inv\u00e1lido")
             if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
                 raise HTTPException(
                     status_code=409,

@@ -22,11 +22,12 @@ from __future__ import annotations
 import datetime as _dt
 import hashlib
 import logging
+import os
 import secrets
 import uuid
 from typing import Optional, Tuple
 
-from sqlalchemy import func, select
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
@@ -315,17 +316,23 @@ def register(
         db.flush()
 
     # Generar QR solo si está CONFIRMED (no WAITLIST ni PENDING sin verificar).
+    qr_token_plain = None
+    cancel_token_plain = None
     if reg.registration_status == "CONFIRMED":
         reg.confirmed_at = _utcnow()
-        _issue_qr(db, reg)
-        _issue_cancel_token(db, reg)
+        qr_token_plain = _issue_qr(db, reg)
+        cancel_token_plain = _issue_cancel_token(db, reg)
 
     db.commit()
     db.refresh(reg)
 
     # Email de confirmación (siempre).
     if reg.registration_status == "CONFIRMED":
-        _send_confirmation_email(db, event, reg, persona, public_base_url)
+        _send_confirmation_email(
+            db, event, reg, persona, public_base_url,
+            qr_token_plain=qr_token_plain,
+            cancel_token_plain=cancel_token_plain,
+        )
     elif reg.registration_status == "PENDING":
         verify_token, _ = generate_verify_token(reg.id)
         extras = dict(reg.extras or {})
@@ -343,29 +350,47 @@ def register(
     return reg
 
 
-def _issue_qr(db: Session, reg: models.EventRegistration) -> None:
-    """Genera QR token + hash + marca qr_generated_at. Idempotente."""
-    if reg.qr_token and reg.qr_token_hash:
-        return  # ya tiene QR
+def _issue_qr(db: Session, reg: models.EventRegistration) -> str:
+    """Genera QR token + hash + marca qr_generated_at. Idempotente.
+
+    Por seguridad (regla de "no persistir secrets planos en DB"):
+    - persiste ``qr_token_hash`` (sha256 del secret) — usado por check-in.
+    - NO persiste ``qr_token`` plano en la columna DB.
+    - ``qr_token`` en DB queda ``None`` permanentemente; el check-in
+      valida solo el ``qr_token_hash`` (con ``secrets.compare_digest``).
+
+    El token plano se retorna al caller para el email de confirmación.
+    Además se guarda en ``reg._qr_token_transient`` (atributo Python no
+    persistido) para que tests / helpers de la misma sesión puedan
+    recuperarlo sin reproducir el envío — útil para verificar el flujo
+    end-to-end sin exponer el token en disco.
+
+    Retorna el token plano (volatile, never persisted).
+    """
     token, token_hash = generate_qr_token(reg.event_id, reg.persona_id)
-    reg.qr_token = token
     reg.qr_token_hash = token_hash
     reg.qr_generated_at = _utcnow()
+    reg._qr_token_transient = token  # transient — nunca persistido en DB
     db.flush()
+    return token
 
 
-def _issue_cancel_token(db: Session, reg: models.EventRegistration) -> None:
-    """Genera token de cancelación embebido en el QR link. Idempotente."""
-    if (reg.extras or {}).get("_cancel_token_hash"):
-        return
+def _issue_cancel_token(db: Session, reg: models.EventRegistration) -> str:
+    """Genera token de cancelación embebido en el QR link. Idempotente.
+
+    Persiste solo ``_cancel_token_hash`` (regex sha256 del secret) en
+    ``reg.extras``; el token plano se retorna al caller para el email.
+    Nunca se persiste el token plano en DB.
+    """
     secret = secrets.token_hex(16)
     cancel_token = f"{CANCEL_PREFIX}{reg.id}-{secret}"
     cancel_hash = hashlib.sha256(secret.encode()).hexdigest()
     extras = dict(reg.extras or {})
     extras["_cancel_token_hash"] = cancel_hash
-    extras["_cancel_token"] = cancel_token
     reg.extras = extras
+    reg._cancel_token_transient = cancel_token  # transient — nunca persistido
     db.flush()
+    return cancel_token
 
 
 def _send_confirmation_email(
@@ -374,24 +399,31 @@ def _send_confirmation_email(
     reg: models.EventRegistration,
     persona: models.Persona,
     public_base_url: str,
+    *,
+    qr_token_plain: str | None = None,
+    cancel_token_plain: str | None = None,
 ) -> None:
-    """Envía el email de confirmación con el QR (visible inline via token)."""
+    """Envía el email de confirmación con el QR (visible inline via token).
+
+    Los tokens se inyectan desde el caller como kwargs (volatile, nunca leídos
+    de DB) — el email se construye con el token plano del momento, no persistido.
+    """
     if not persona.email:
         return
     try:
-        from backend.services.email import send_email
         from html import escape
+
+        from backend.services.email import send_email
 
         qr_link = ""
         cancel_link = ""
-        if reg.qr_token:
+        if qr_token_plain:
             # El token de cancelación va embebido en el QR link (plan §4.1):
             # la página pública de ticket lo usa para la auto-cancelación.
-            cancel_token = (reg.extras or {}).get("_cancel_token", "")
-            cancel_param = f"&cancel={cancel_token}" if cancel_token else ""
-            qr_link = f"{public_base_url}/public/events/{event.id}/qr?token={reg.qr_token}{cancel_param}".strip()
-            if cancel_token:
-                cancel_link = f"{public_base_url}/public/events/{event.id}/cancel?token={cancel_token}".strip()
+            cancel_param = f"&cancel={cancel_token_plain}" if cancel_token_plain else ""
+            qr_link = f"{public_base_url}/public/events/{event.id}/qr?token={qr_token_plain}{cancel_param}".strip()
+            if cancel_token_plain:
+                cancel_link = f"{public_base_url}/public/events/{event.id}/cancel?token={cancel_token_plain}".strip()
 
         event_date_str = event.event_date.strftime("%d/%m/%Y %H:%M") if event.event_date else "Por confirmar"
         location_str = event.location or "Por confirmar"
@@ -424,8 +456,9 @@ def _send_verification_email(
     if not persona.email:
         return
     try:
-        from backend.services.email import send_email
         from html import escape
+
+        from backend.services.email import send_email
 
         verify_url = f"{public_base_url}/public/events/{event.id}/verify?token={verify_token}".strip()
         event_date_str = event.event_date.strftime("%d/%m/%Y %H:%M") if event.event_date else "Por confirmar"
@@ -500,14 +533,16 @@ def verify(
         # El slot se llenó mientras esperaba verificación — waitlist forzado.
         raise RegistrationError("EVENT_FULL", "El evento se llenó antes de tu verificación", 409)
 
+    qr_token_plain = None
+    cancel_token_plain = None
     if capacity_full and event.waiting_list_enabled:
         reg.registration_status = "WAITLIST"
         reg.waiting_list_position = (reg.waiting_list_position or 0)
     else:
         reg.registration_status = "CONFIRMED"
         reg.confirmed_at = _utcnow()
-        _issue_qr(db, reg)
-        _issue_cancel_token(db, reg)
+        qr_token_plain = _issue_qr(db, reg)
+        cancel_token_plain = _issue_cancel_token(db, reg)
 
     # Limpieza de campos de verificación usados.
     extras = dict(reg.extras or {})
@@ -520,7 +555,11 @@ def verify(
 
     # Email con el QR tras verificar (best-effort), igual que el path auto-confirmado.
     if reg.registration_status == "CONFIRMED":
-        _send_confirmation_email(db, event, reg, reg.persona, public_base_url)
+        _send_confirmation_email(
+            db, event, reg, reg.persona, public_base_url,
+            qr_token_plain=qr_token_plain,
+            cancel_token_plain=cancel_token_plain,
+        )
     return reg
 
 
@@ -569,8 +608,8 @@ def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
     next_in_line.registration_status = "CONFIRMED"
     next_in_line.confirmed_at = _utcnow()
     next_in_line.waiting_list_position = None
-    _issue_qr(db, next_in_line)
-    _issue_cancel_token(db, next_in_line)
+    qr_token_plain = _issue_qr(db, next_in_line)
+    cancel_token_plain = _issue_cancel_token(db, next_in_line)
     db.flush()
 
     # Re-numerar la cola restante (mantener positions consecutivos).
@@ -587,15 +626,22 @@ def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
     for idx, r in enumerate(remaining, start=1):
         r.waiting_list_position = idx
 
-    # Email al promovido (best-effort).
+    # Email al promovido (best-effort) — incluye el QR para que el usuario
+    # pueda presentarlo al evento.
     try:
         if next_in_line.persona and next_in_line.persona.email:
-            from backend.services.email import send_email
             from html import escape
+
+            from backend.services.email import send_email
+            public_base_url = os.environ.get("CCF_PUBLIC_BASE_URL", "https://ccf.co")
+            qr_link = f"{public_base_url}/public/events/{event.id}/qr?token={qr_token_plain}"
+            if cancel_token_plain:
+                qr_link += f"&cancel={cancel_token_plain}"
             html = f"""
             <h2>¡Tu inscripción a {escape(event.name)} fue confirmada!</h2>
             <p>Hola <strong>{escape(next_in_line.persona.first_name or '')}</strong>,</p>
             <p>Se liberó un cupo. Ya estás confirmado para el evento.</p>
+            <p>Tu QR: <a href="{escape(qr_link)}">ver ticket</a></p>
             """
             send_email(to=next_in_line.persona.email, subject=f"Cupo confirmado: {event.name}", html=html)
     except Exception as exc:
