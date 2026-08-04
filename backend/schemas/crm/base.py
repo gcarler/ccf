@@ -5,7 +5,7 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from backend.core.context import user_role_context
 from backend.schemas._common import AwareDateTime, orm_config
@@ -216,13 +216,13 @@ class PrayerRequestPublicCreate(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    requester_name: str
-    request_text: str
-    category: str = "General"
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    landing_page: Optional[str] = None
-    campaign: Optional[str] = None
+    requester_name: str = Field(..., min_length=2, max_length=160)
+    request_text: str = Field(..., min_length=2, max_length=5000)
+    category: str = Field(default="General", min_length=1, max_length=80)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(default=None, max_length=40)
+    landing_page: Optional[str] = Field(default=None, max_length=500)
+    campaign: Optional[str] = Field(default=None, max_length=120)
 
 
 class PrayerRequest(PrayerRequestBase):

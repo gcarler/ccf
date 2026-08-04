@@ -105,6 +105,17 @@ class TestPublicApi100PctCoverage:
         data = res.json()
         assert data["status"] == "success"
 
+    def test_public_contact_rejects_invalid_email(self, client):
+        response = client.post(
+            "/api/public/contact",
+            json={
+                "full_name": "Correo inválido",
+                "email": "not-an-email",
+                "notes": "Debe rechazarse",
+            },
+        )
+        assert response.status_code == 422
+
     def test_public_wishlist(self, client, db_session):
         res = client.post(
             "/api/public/wishlist",
@@ -118,6 +129,17 @@ class TestPublicApi100PctCoverage:
         data = res.json()
         assert data["status"] == "success"
         assert data["title"] == "Manual de Liderazgo Ministerial"
+
+    def test_public_prayer_rejects_invalid_email(self, client):
+        response = client.post(
+            "/api/crm/prayer-requests/public",
+            json={
+                "requester_name": "Persona de prueba",
+                "request_text": "Petición válida para probar validación",
+                "email": "not-an-email",
+            },
+        )
+        assert response.status_code == 422
 
     def test_upload_public_document(self, client, db_session):
         # Disallowed file type

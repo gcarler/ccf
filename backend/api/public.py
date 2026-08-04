@@ -5,13 +5,14 @@ from datetime import datetime
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.core.config import get_settings
 from backend.core.database import get_db
+from backend.core.rate_limit import rate_limiter
 from backend.models_academy_core import Course, Lesson
 from backend.services.public_contact_tracking import ContactRecord, tracker
 
@@ -213,15 +214,19 @@ def public_course_enroll(
 
 
 class PublicContactCreate(BaseModel):
-    full_name: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    notes: Optional[str] = None
-    status: Optional[str] = "prospect"
-    source: Optional[str] = "conocer-a-jesus"
+    full_name: str = Field(..., min_length=2, max_length=160)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(default=None, max_length=40)
+    notes: Optional[str] = Field(default=None, max_length=5000)
+    status: Optional[str] = Field(default="prospect", max_length=40)
+    source: Optional[str] = Field(default="conocer-a-jesus", max_length=120)
 
 
-@router.post("/contact", response_model=dict)
+@router.post(
+    "/contact",
+    response_model=dict,
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
 def public_contact(payload: PublicContactCreate, db: Session = Depends(get_db)):
     """Recibe un contacto desde un formulario publico."""
     result = tracker.record_contact(
