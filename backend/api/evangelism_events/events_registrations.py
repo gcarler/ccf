@@ -330,8 +330,10 @@ def update_registration(
             "PENDING":     {"CONFIRMED", "CANCELLED"},
             "CONFIRMED":   {"CHECKED_IN", "ABSENT", "CANCELLED"},
             "WAITLIST":    {"CONFIRMED", "CANCELLED"},
-            "CHECKED_IN":  {"CHECKED_IN"},
-            "ABSENT":      {"ABSENT"},
+            # Fix #9: un CHECKED_IN puede revertirse a ABSENT (check-in erróneo)
+            # o CANCELLED (anular inscripción), pero no a CONFIRMED (ya pasó).
+            "CHECKED_IN":  {"CHECKED_IN", "ABSENT", "CANCELLED"},
+            "ABSENT":      {"ABSENT", "CONFIRMED", "CANCELLED"},
             "CANCELLED":   {"CANCELLED"},
         }
         allowed = legal.get(reg.registration_status, set())
@@ -350,10 +352,25 @@ def update_registration(
             cancel_registration(db, event, reg)
         elif new_status == "CHECKED_IN":
             reg.check_in_at = _utcnow()
+            # Fix #8: registrar el actor admin que hizo el check-in manual.
+            # El path de checkin/checkout via QR (events_checkin.py) también
+            # setea este campo desde ``current_user``.
+            reg.checked_in_by = current_user.id
         elif new_status == "ABSENT":
+            # Fix #9: registrar auditoría mínima de quien marcó ausente.
+            # No hay tabla dédiada, pero ``extras["_last_status_change"]``
+            # deja trail sin añadir modelo nuevo (low-overhead audit).
+            _extras = dict(reg.extras or {})
+            _extras["_last_status_change"] = {
+                "from": reg.registration_status,
+                "to": new_status,
+                "by": str(current_user.id),
+                "at": _utcnow().isoformat(),
+            }
+            reg.extras = _extras
             reg.registration_status = "ABSENT"
 
-        if new_status != "CANCELLED":
+        if new_status != "CANCELLED" and new_status != "ABSENT":
             reg.registration_status = new_status
 
     if payload.extras is not None:
