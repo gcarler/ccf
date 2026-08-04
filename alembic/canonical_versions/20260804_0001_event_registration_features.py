@@ -70,7 +70,6 @@ from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
-
 revision: str = "20260804_0001_event_registration_features"
 down_revision: Union[str, None] = "20260803_0005_academy_normalize_privado_to_persona"
 branch_labels: Union[str, Sequence[str], None] = None
