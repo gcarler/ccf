@@ -526,6 +526,12 @@ def verify(
         # ya verificada o cancelada
         return reg
 
+    # Race de aforo (plan §7, fix #3): serializa conteo+update por evento
+    # bloqueando la fila del CrmEvent (no-op en SQLite; efectivo en Postgres).
+    # Sin este lock, dos verificaciones concurrentes pueden leer
+    # slots_taken < capacity y sobrevender el aforo.
+    db.query(models.CrmEvent).with_for_update().filter(models.CrmEvent.id == event.id).first()
+
     slots_taken, _ = count_active_registrations(db, event.id)
     capacity_full = event.capacity_max is not None and slots_taken >= event.capacity_max
 
@@ -575,6 +581,11 @@ def cancel(db: Session, event: models.CrmEvent, reg: models.EventRegistration) -
     if reg.registration_status == "CANCELLED":
         return reg
 
+    # Race de aforo (plan §7, fix #3): bloquear la fila del evento para
+    # serializar la promoción del waitlist — sin lock, dos cancelaciones
+    # concurrentes podrían promover al mismo waitlister dos veces.
+    db.query(models.CrmEvent).with_for_update().filter(models.CrmEvent.id == event.id).first()
+
     was_confirmed_or_checked_in = reg.registration_status in {"CONFIRMED", "CHECKED_IN"}
     reg.registration_status = "CANCELLED"
     reg.cancelled_at = _utcnow()
@@ -591,7 +602,11 @@ def cancel(db: Session, event: models.CrmEvent, reg: models.EventRegistration) -
 
 
 def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
-    """Promueve al primer inscrito en WAITLIST (menor waiting_list_position)."""
+    """Promueve al primer inscrito en WAITLIST (menor waiting_list_position).
+
+    Caller ya debe haber tomado ``with_for_update`` sobre el CrmEvent
+    (ver ``cancel``) para evitar races entre dos promociones concurrentes.
+    """
     next_in_line = (
         db.query(models.EventRegistration)
         .filter(
