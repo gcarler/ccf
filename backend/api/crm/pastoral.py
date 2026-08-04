@@ -31,6 +31,7 @@ from backend.api.crm._shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
+from backend.core.rate_limit import rate_limiter
 from backend.core.tenant import get_user_sede_id
 from backend.crud._utils import _coerce_uuid_or_404, _to_uuid
 from backend.crud.crm_.shared import (
@@ -1892,7 +1893,12 @@ def get_crm_analytics_summary(
 # ── Prayer Requests ──────────────────────────────────────
 
 
-@router.post("/prayer-requests/public", response_model=dict, status_code=201)
+@router.post(
+    "/prayer-requests/public",
+    response_model=dict,
+    status_code=201,
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
 def create_public_prayer_request(
     payload: schemas.PrayerRequestPublicCreate,
     db: Session = Depends(get_db),
