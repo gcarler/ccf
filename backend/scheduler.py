@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -128,6 +129,23 @@ def _run_scheduling_pass(db_session, dry_run: bool) -> dict[str, int | dict]:
     # (``DELETE /cms/media/cleanup``) es la via primaria para limpiar.
     orphan_media_archived = _maybe_run_orphan_media_cleanup(db_session, dry_run=dry_run)
     counts["orphan_media_archived"] = orphan_media_archived
+
+    # plan_de_preregistro (Fase 5): procesar campañas automáticas RELATIVE_TO_EVENT.
+    # Idempotente: ``send_campaign`` marca ``campaign.last_sent_at >= target_moment``
+    # para no reenviar la misma campaña.
+    try:
+        from backend.services.event_campaign_service import run_scheduled_campaigns
+
+        public_base_url = os.environ.get("CCF_PUBLIC_BASE_URL", "https://ccf.co")
+        result = run_scheduled_campaigns(db_session, public_base_url=public_base_url)
+        counts["event_campaigns_triggered"] = len(result.get("triggered", []))
+        if result.get("errors") and not dry_run:
+            log.warning("[scheduler] event_campaigns errors: %s", result["errors"])
+    except Exception as exc:  # pragma: no cover — scheduler nunca crashea por un módulo
+        counts["event_campaigns_triggered"] = 0
+        if not dry_run:
+            log.warning("[scheduler] event_campaigns error: %s", exc)
+
     return counts
 
 

@@ -125,6 +125,8 @@ from backend.models_crm import (  # noqa: F401
     EstadoEnvioPlantilla,
     EventAssignment,
     EventAttendance,
+    EventCampaign,
+    EventRegistration,
     Family,
     Fund,
     Ministry,
