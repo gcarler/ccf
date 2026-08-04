@@ -117,9 +117,32 @@ def test_crm_schema_validation(db_session):
     assert caso.stage == "new"
     assert caso.persona_id is not None
 
-    messaging = MessagingSend(template_id=uuid.uuid4())
+    # MessagingSend requiere channel + content + (persona_id | target_segments)
+    # desde que el commit 5776c158 endureció el contrato de mensajería CRM.
+    messaging = MessagingSend(
+        channel="WHATSAPP",
+        content="Hola desde el test",
+        persona_id=uuid.uuid4(),
+    )
+    # channel se normaliza a minúsculas (field_validator normalize_channel)
+    assert messaging.channel == "whatsapp"
+    assert messaging.content == "Hola desde el test"
+    assert messaging.template_id is None
+    assert messaging.campaign_name is None
+    assert messaging.target_segments == []
     assert len(messaging.recipient_ids) == 0
     assert messaging.variables == {}
+
+    # template_id sigue siendo opcional (regresado de required a optional)
+    messaging_tpl = MessagingSend(
+        channel="sms",
+        content="Cuerpo SMS",
+        persona_id=uuid.uuid4(),
+        template_id=uuid.uuid4(),
+        campaign_name="Campaña 40 años",
+    )
+    assert messaging_tpl.template_id is not None
+    assert messaging_tpl.campaign_name == "Campaña 40 años"
 
 
 def test_crm_pipeline_wiki_page_bootstraps_as_empty_document(client, db_session):
