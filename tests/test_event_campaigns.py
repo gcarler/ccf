@@ -19,7 +19,7 @@ gateways externos. ``hydrate_template`` se valida directamente.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
