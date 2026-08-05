@@ -11,9 +11,9 @@ interface DSButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-    primary: 'bg-[hsl(var(--primary))] text-white shadow-sm hover:opacity-90',
-    secondary: 'bg-white/10 text-white border border-white/20 hover:bg-white/15 shadow-sm',
-    ghost: 'bg-transparent text-white border border-white/30 hover:bg-white/10',
+    primary: 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm hover:brightness-95 dark:hover:brightness-110',
+    secondary: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))] shadow-sm',
+    ghost: 'bg-transparent text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]',
 };
 
 export const DSButton = React.forwardRef<HTMLButtonElement, DSButtonProps>(
@@ -23,14 +23,24 @@ export const DSButton = React.forwardRef<HTMLButtonElement, DSButtonProps>(
                 ref={ref}
                 type={type}
                 className={clsx(
-                    'px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide transition-all active:scale-95 disabled:opacity-50 rounded-md',
+                    'px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed rounded-md',
+                    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]',
                     variantClasses[variant],
                     className
                 )}
                 disabled={loading || props.disabled}
+                aria-busy={loading || undefined}
                 {...props}
             >
-                {loading ? 'Cargando...' : children}
+                {loading ? (
+                    <span className="inline-flex items-center gap-1.5">
+                        <span
+                            className="size-3 border-2 border-current/30 border-t-current rounded-full animate-spin motion-reduce:animate-none"
+                            aria-hidden="true"
+                        />
+                        <span>Cargando…</span>
+                    </span>
+                ) : children}
             </button>
         );
     }

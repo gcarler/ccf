@@ -112,7 +112,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     </div>
                                 </div>
                             </div>
-                            <button aria-label="Cerrar" onClick={onClose} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md transition-all text-[hsl(var(--text-secondary))]">
+                            <button aria-label="Cerrar" onClick={onClose} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] rounded-md transition-all text-[hsl(var(--text-secondary))]">
                                 <X size={20} />
                             </button>
                         </header>
@@ -142,7 +142,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                         <div className={clsx(
                                             "p-4 rounded-lg text-base font-medium leading-relaxed shadow-sm",
                                             msg.role === 'bot'
-                                                ? "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/5"
+                                                ? "bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]"
                                                 : "bg-[hsl(var(--primary))] text-white"
                                         )}>
                                             {msg.content}
@@ -150,7 +150,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                         {msg.sources && msg.sources.length > 0 && (
                                             <div className="flex flex-wrap gap-2 pt-1">
                                                 {msg.sources.map((s, i) => (
-                                                    <span key={i} className="text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] px-2 py-1 rounded-md border border-[hsl(var(--border))] dark:border-white/5">
+                                                    <span key={i} className="text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] px-2 py-1 rounded-md border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
                                                         Source: {s}
                                                     </span>
                                                 ))}
@@ -167,7 +167,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     <div className="size-8 rounded-md bg-info-soft dark:bg-[hsl(var(--info)/0.2)] flex items-center justify-center text-[hsl(var(--info))] shrink-0">
                                         <Loader2 size={16} className="animate-spin" />
                                     </div>
-                                    <div className="bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 rounded-lg flex gap-1 items-center">
+                                    <div className="bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] p-4 rounded-lg flex gap-1 items-center">
                                         <div className="size-1.5 bg-[hsl(var(--surface-2))] rounded-full animate-bounce" />
                                         <div className="size-1.5 bg-[hsl(var(--surface-2))] rounded-full animate-bounce [animation-delay:-0.15s]" />
                                         <div className="size-1.5 bg-[hsl(var(--surface-2))] rounded-full animate-bounce [animation-delay:-0.3s]" />
@@ -178,7 +178,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 border-t border-[hsl(var(--border))] dark:border-white/5 shrink-0">
+                        <div className="p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] dark:border-[hsl(var(--border))] shrink-0">
                             <form onSubmit={handleSend} className="relative">
                                 <input
                                     value={input}

@@ -20,13 +20,13 @@ export function DSSkeleton({ rounded = 'md', className, ...props }: DSSkeletonPr
     return (
         <div
             className={clsx(
-                'relative overflow-hidden bg-[hsl(var(--surface-3))] dark:bg-white/10',
+                'relative overflow-hidden bg-[hsl(var(--surface-3))] dark:bg-[hsl(var(--surface-2))]',
                 roundedClasses[rounded],
                 className
             )}
             {...props}
         >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent animate-[shimmer_1.8s_infinite]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent animate-[shimmer_1.8s_infinite] motion-reduce:animate-none" aria-hidden="true" />
         </div>
     );
 }

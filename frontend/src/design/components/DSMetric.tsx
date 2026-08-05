@@ -24,7 +24,7 @@ export function DSMetric({ label, value, trend, tone = 'blue', icon: Icon, onCli
     };
 
     const containerClasses = clsx(
-        "bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 shadow-sm hover:shadow-md transition-all flex flex-col justify-between",
+        "bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] rounded-lg p-3 shadow-sm hover:shadow-md transition-all flex flex-col justify-between",
         (onClick || href) && "cursor-pointer hover:border-[hsl(var(--primary))]/30"
     );
 
@@ -32,9 +32,9 @@ export function DSMetric({ label, value, trend, tone = 'blue', icon: Icon, onCli
         <>
             <div className="flex items-center justify-between gap-2">
                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</p>
-                {Icon && <Icon className={clsx("size-4", tones[tone].text)} />}
+                {Icon && <Icon className={clsx("size-4", tones[tone].text)} aria-hidden="true" />}
             </div>
-            <p className="text-xl font-bold mt-1.5 text-[hsl(var(--text-primary))] dark:text-white leading-tight">{value}</p>
+            <p className="text-xl font-bold mt-1.5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] leading-tight">{value}</p>
             {trend && (
                 <div className="mt-2">
                     <span className={clsx("inline-flex items-center px-1.5 py-0.5 rounded-md text-2xs font-semibold uppercase tracking-wide", tones[tone].bg, tones[tone].text)}>
@@ -54,7 +54,13 @@ export function DSMetric({ label, value, trend, tone = 'blue', icon: Icon, onCli
     }
 
     return (
-        <div className={containerClasses} onClick={onClick} role={onClick ? "button" : undefined}>
+        <div
+            className={containerClasses}
+            onClick={onClick}
+            role={onClick ? "button" : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
+        >
             {content}
         </div>
     );

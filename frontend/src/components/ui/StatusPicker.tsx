@@ -81,8 +81,8 @@ export default function StatusPicker({
                                     className={clsx(
                                         "w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-bold transition-colors",
                                         currentValue === option.value
-                                            ? "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white"
-                                            : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                                            ? "bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]"
+                                            : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))]"
                                     )}
                                 >
                                     <div className="flex items-center gap-2">
