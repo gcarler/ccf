@@ -165,7 +165,6 @@ async function handleAdminStats(route: Route) {
 
 async function handleAdminRoles(route: Route) {
   const method = route.request().method();
-  const url = route.request().url();
 
   // POST /admin/roles — create role (the access page creates new roles)
   if (method === 'POST') {

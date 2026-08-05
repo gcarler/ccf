@@ -1,7 +1,7 @@
 """Cover _build_compliance_snapshot and remaining edge cases."""
 from __future__ import annotations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 

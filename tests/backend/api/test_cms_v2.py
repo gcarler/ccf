@@ -4,15 +4,16 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
+import backend.api.cms.admin.sites as admin_sites
+import backend.api.cms.admin.themes as admin_themes
+import backend.crud as backend_crud
+
 # Import the router and helper functions
 from backend.api import cms_v2 as cms
-import backend.crud as backend_crud
-from backend.exceptions.cms import CmsPermissionError
-from backend.core.database import get_db
-from backend.core.permissions import require_module_access, get_current_user
 from backend.api.cms_v2._shared import normalize_role
-import backend.api.cms.admin.themes as admin_themes
-import backend.api.cms.admin.sites as admin_sites
+from backend.core.database import get_db
+from backend.core.permissions import get_current_user, require_module_access
+from backend.exceptions.cms import CmsPermissionError
 
 # Helper to create a FastAPI app with the router and overridden deps
 
@@ -109,9 +110,10 @@ def create_app(monkeypatch):
     app.dependency_overrides[require_module_access] = require_module_access_override
     app.dependency_overrides[normalize_role] = lambda r: r.lower().strip() if r else ""
 
-    from backend.exceptions.cms import CmsError
-    from fastapi.responses import JSONResponse
     from fastapi import Request
+    from fastapi.responses import JSONResponse
+
+    from backend.exceptions.cms import CmsError
 
     @app.exception_handler(CmsError)
     async def cms_exception_handler(request: Request, exc: CmsError):

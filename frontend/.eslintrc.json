@@ -8,6 +8,12 @@
   "plugins": [
     "@typescript-eslint"
   ],
+  "ignorePatterns": [
+    "scratch/**",
+    "scripts/**",
+    "server.js",
+    "next.config.mjs"
+  ],
   "extends": [
     "next/core-web-vitals",
     "plugin:storybook/recommended",

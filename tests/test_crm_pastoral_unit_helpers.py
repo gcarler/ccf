@@ -1,41 +1,15 @@
-"""Unit tests for pastoral helper functions — pure logic, no DB."""
+"""Unit tests for pastoral helper functions — pure logic, no DB.
+
+Los helpers ``_seconds_between`` y ``_shape_workload_row`` fueron migrados a
+``backend.api.workspace_shared._incidents`` y ``backend.api.system``
+respectivamente; sus tests viven en ``test_workspace_incidents.py`` y
+``test_system_final.py``.  Aquí solo cubrimos los helpers que SI viven en
+``backend.api.crm.pastoral``: ``_get_user_role`` y ``_stage_to_estado``.
+"""
 from __future__ import annotations
 
-# We import the module-level functions via sys.path trick to avoid
-# conftest's import of backend.models (which has missing models_cms imports)
-import sys
-import types
-
-import pytest
-
-# Create a mock module for backend.models_crm_pipeline
-pipeline_mod = types.ModuleType("backend.models_crm_pipeline")
-
-# Create the enum
-import enum
-
-
-class EstadoCasoEnum(str, enum.Enum):
-    ABIERTO = "abierto"
-    RESUELTO_EXITO = "resuelto_exito"
-    CERRADO_PERDIDO = "cerrado_perdido"
-    ESPERANDO_RESPUESTA = "esperando_respuesta"
-    EN_PROGRESO = "en_progreso"
-
-
-pipeline_mod.EstadoCasoEnum = EstadoCasoEnum
-
-# Register the mock module
-sys.modules["backend.models_crm_pipeline"] = pipeline_mod
-
-
-# Now we can import the functions from pastoral.py
-from backend.api.crm.pastoral import (
-    _get_user_role,
-    _seconds_between,
-    _shape_workload_row,
-    _stage_to_estado,
-)
+from backend.api.crm.pastoral import _get_user_role, _stage_to_estado
+from backend.models_crm_pipeline import EstadoCasoEnum
 
 
 class TestGetUserRole:
@@ -74,26 +48,3 @@ class TestStageToEstado:
     def test_default(self):
         assert _stage_to_estado("") == EstadoCasoEnum.ABIERTO
         assert _stage_to_estado("unknown") == EstadoCasoEnum.ABIERTO
-
-
-class TestSecondsBetween:
-    def test_valid(self):
-        result = _seconds_between("2026-07-01T10:00:00Z", "2026-07-01T11:30:00Z")
-        assert result == pytest.approx(5400, abs=1)
-
-    def test_invalid(self):
-        assert _seconds_between(None, "2026-07-01T10:00:00Z") is None
-
-    def test_reversed(self):
-        assert _seconds_between("2026-07-01T12:00:00Z", "2026-07-01T10:00:00Z") is None
-
-
-class TestShapeWorkloadRow:
-    def test_disponible(self):
-        r = _shape_workload_row("u1", "A", 3, 2, 1, 0)
-        assert r["load_status"] == "disponible"
-        assert r["capacity_percent"] == 20
-
-    def test_sobrecargado(self):
-        r = _shape_workload_row("u1", "B", 20, 10, 4, 0)
-        assert r["load_status"] == "sobrecargado"

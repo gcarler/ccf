@@ -86,9 +86,6 @@ test.describe('Evangelism — Session report route (/sessions/[grupo_id])', () =
             (await presentLabel.locator('..').locator('p.text-lg').first().textContent()) ?? '0',
         );
         const absentLabel = page.getByText(/^Ausentes$/);
-        const absentBefore = Number(
-            (await absentLabel.locator('..').locator('p.text-lg').first().textContent()) ?? '0',
-        );
 
         // Toggle every person: mark them Present so absent count drops.
         const presentButtons = page.locator('button[title="Presente"]');
