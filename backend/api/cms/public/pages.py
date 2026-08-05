@@ -7,7 +7,7 @@ import logging
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session, lazyload
 
-from backend import crud, models, schemas
+from backend import models, schemas
 from backend.api.cms_v2._shared import (
     PUBLIC_CMS_RATE_LIMIT,
     _build_section_defaults,
@@ -63,12 +63,16 @@ def public_pages_list(
 )
 @cached_public(ttl=300)
 def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
-    site = _get_public_site_or_404(db, site_key)
+    # Optimizado N+1: 1 query JOIN CmsPage+CmsSite (evita el site lookup
+    # separado). ``lazyload('*')`` previene el cascade de JOINs de
+    # ``CmsPage.site``/``published_version`` y de los joined de ``CmsSection``.
     page = (
         db.query(models.CmsPage)
         .options(lazyload("*"))
+        .join(models.CmsSite, models.CmsSite.id == models.CmsPage.site_id)
         .filter(
-            models.CmsPage.site_id == site.id,
+            models.CmsSite.site_key == site_key.strip().lower(),
+            models.CmsSite.is_active.is_(True),
             models.CmsPage.slug == _slugify(slug),
             models.CmsPage.status == "published",
         )
@@ -76,6 +80,7 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
     )
     if not page:
         raise PageNotFoundError("Published page not found")
+    site = page.site
 
     published_version = None
     if page.published_version_id:
@@ -147,7 +152,16 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
             breadcrumb_json_ld=breadcrumb_json_ld,
         )
 
-    sections_list, _ = crud.list_cms_sections(db, page.id)
+    sections_list = (
+        db.query(models.CmsSection)
+        .options(lazyload("*"))
+        .filter(
+            models.CmsSection.page_id == page.id,
+            models.CmsSection.deleted_at.is_(None),
+        )
+        .order_by(models.CmsSection.sort_order.asc(), models.CmsSection.id.asc())
+        .all()
+    )
     sections = [
         section
         for section in sections_list
