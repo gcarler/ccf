@@ -73,18 +73,27 @@ class CmsSite(Base):
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")
-    themes = relationship("CmsTheme", back_populates="site", lazy="selectin")
-    menus = relationship("CmsMenu", back_populates="site", lazy="selectin")
-    pages = relationship("CmsPage", back_populates="site", lazy="selectin")
-    categories = relationship("CmsCategory", back_populates="site", lazy="selectin")
-    tags = relationship("CmsTag", back_populates="site", lazy="selectin")
-    posts = relationship("CmsPost", back_populates="site", lazy="selectin")
-    publish_logs = relationship("CmsPublishLog", back_populates="site", lazy="selectin")
-    seo_snapshots = relationship("CmsSeoSnapshot", back_populates="site", lazy="selectin")
-    popups = relationship("CmsPopup", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
-    forms = relationship("CmsForm", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
-    newsletters = relationship("CmsNewsletter", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
-    subscribers = relationship("CmsSubscriber", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
+    # Todas las colecciones hijas usan lazy="select" (default). Antes eran
+    # ``lazy="selectin"`` lo que disparaba 11 SELECTs automáticos cada vez
+    # que se materializaba un ``CmsSite`` en cualquier endpoint público
+    # (themes/menus/pages/posts), incluyendo el JOIN implícito desde
+    # ``CmsTheme.site``/``CmsMenu.site`` (lazy="joined"). Ningún consumidor
+    # lee ``site.<coleccion>`` como atributo ORM (verificado via grep), así
+    # que el eager-load era puro N+1 sin beneficio. Los endpoints que
+    # necesitan una colección la consultan explícitamente con ``db.query``.
+    # Mismo patrón aplicado en e381adbd para ``ab_tests``.
+    themes = relationship("CmsTheme", back_populates="site")
+    menus = relationship("CmsMenu", back_populates="site")
+    pages = relationship("CmsPage", back_populates="site")
+    categories = relationship("CmsCategory", back_populates="site")
+    tags = relationship("CmsTag", back_populates="site")
+    posts = relationship("CmsPost", back_populates="site")
+    publish_logs = relationship("CmsPublishLog", back_populates="site")
+    seo_snapshots = relationship("CmsSeoSnapshot", back_populates="site")
+    popups = relationship("CmsPopup", back_populates="site", cascade="all, delete-orphan")
+    forms = relationship("CmsForm", back_populates="site", cascade="all, delete-orphan")
+    newsletters = relationship("CmsNewsletter", back_populates="site", cascade="all, delete-orphan")
+    subscribers = relationship("CmsSubscriber", back_populates="site", cascade="all, delete-orphan")
     # FIX (2026-07-31, eager-loading cycle): ``lazy="selectin"`` here + the
     # ``CmsAbTest.*`` back-relationships (site/page/section_a/section_b/
     # winner_section all ``lazy="joined"``) form an eager-loading cycle
@@ -423,7 +432,6 @@ class CmsCategory(Base):
         "CmsPost",
         secondary="cms_post_categories",
         back_populates="categories",
-        lazy="selectin",
     )
 
 
@@ -450,7 +458,6 @@ class CmsTag(Base):
         "CmsPost",
         secondary="cms_post_tags",
         back_populates="tags",
-        lazy="selectin",
     )
 
 

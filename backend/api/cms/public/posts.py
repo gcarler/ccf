@@ -5,11 +5,11 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session, lazyload
+from sqlalchemy import func
+from sqlalchemy.orm import Session, lazyload, noload
 
 from backend import crud, models, schemas
 from backend.api.cms_v2._shared import (
-    _get_public_site_or_404,
     _slugify,
     cached_public,
 )
@@ -76,20 +76,50 @@ def public_posts_list(
     category_slug: str | None = Query(None),
     tag_slug: str | None = Query(None),
 ):
-    site = _get_public_site_or_404(db, site_key)
+    # Optimizado N+1: JOIN directo CmsPost+CmsSite evita el site lookup
+    # separado. noload(comments) y lazyload(categories/tags) previenen la
+    # cargas selectin automáticas que disparaban queries de cms_post_comments
+    # y cms_post_categories/tags al materializar CmsPost.
     query = (
         db.query(models.CmsPost)
-        .options(lazyload("*"))
-        .filter(models.CmsPost.site_id == site.id, models.CmsPost.status == "published")
+        .options(
+            lazyload("*"),
+            lazyload(models.CmsPost.categories),
+            lazyload(models.CmsPost.tags),
+            noload(models.CmsPost.comments),
+        )
+        .join(models.CmsSite, models.CmsSite.id == models.CmsPost.site_id)
+        .filter(
+            models.CmsSite.site_key == site_key.strip().lower(),
+            models.CmsSite.is_active.is_(True),
+            models.CmsPost.status == "published",
+        )
     )
+    # Optimizado N+1: en lugar de 2 queries separadas (count + items),
+    # usamos window function ``func.count().over()`` para traer el total
+    # en la misma query de items. ``lazyload('*')`` no se puede combinar
+    # con add_columns directamente en una sola list comprehension, así que
+    # obtenemos las filas con la columna de total agregada y filtramos por
+    # página. Esto reduce el SELECT count(*) separado a 0 (va inline con
+    # items). Total queries: 1 (items+total) + 2 batch (cat, tag) +
+    # 1 batch authors = 4 SELECTs en happy path (sin site lookup separado
+    # porque unimos site en la misma query).
     if category_slug:
         query = (
             query.join(models.CmsPostCategory).join(models.CmsCategory).filter(models.CmsCategory.slug == category_slug)
         )
     if tag_slug:
         query = query.join(models.CmsPostTag).join(models.CmsTag).filter(models.CmsTag.slug == tag_slug)
-    total = query.count()
-    items = query.order_by(models.CmsPost.published_at.desc().nullslast()).offset(skip).limit(limit).all()
+
+    rows = (
+        query.add_columns(func.count().over().label("_total"))
+        .order_by(models.CmsPost.published_at.desc().nullslast())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    total = int(rows[0][1]) if rows else 0
+    items = [row[0] for row in rows]
     enriched = _enrich_public_posts(db, site_key, items)
     return PaginatedResponse[schemas.CmsPublicPostRead](items=enriched, total=total, skip=skip, limit=limit)
 
@@ -101,12 +131,22 @@ def public_posts_list(
 )
 @cached_public(ttl=300)
 def public_post(site_key: str, slug: str, db: Session = Depends(get_db)):
-    site = _get_public_site_or_404(db, site_key)
+    # Optimizado N+1: JOIN directo CmsPost+CmsSite elimina el site lookup
+    # separado. lazyload(categories/tags) + noload(comments) previenen las
+    # selectin automáticas que disparaban queries extra de cms_post_comments
+    # y cms_post_categories/tags.
     post = (
         db.query(models.CmsPost)
-        .options(lazyload("*"))
+        .options(
+            lazyload("*"),
+            lazyload(models.CmsPost.categories),
+            lazyload(models.CmsPost.tags),
+            noload(models.CmsPost.comments),
+        )
+        .join(models.CmsSite, models.CmsSite.id == models.CmsPost.site_id)
         .filter(
-            models.CmsPost.site_id == site.id,
+            models.CmsSite.site_key == site_key.strip().lower(),
+            models.CmsSite.is_active.is_(True),
             models.CmsPost.slug == _slugify(slug),
             models.CmsPost.status == "published",
         )

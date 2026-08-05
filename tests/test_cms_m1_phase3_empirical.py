@@ -12,13 +12,13 @@ Target endpoints:
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy import event
+
+from backend import models
 from backend.api.cms.public.menus import public_menu
 from backend.api.cms.public.pages import public_page
 from backend.api.cms.public.posts import public_post, public_posts_list
 from backend.api.cms.public.themes import public_theme
-from sqlalchemy import event
-
-from backend import models
 from backend.core.cache_v2 import get_redis
 from tests.conftest import seed_admin
 
@@ -156,6 +156,7 @@ def test_empirical_public_page_query_count(db_session):
         sec = models.CmsSection(
             id=uuid.uuid4(),
             page_id=page.id,
+            section_key=f"hero-{i}",
             type="hero",
             sort_order=i,
             is_visible=True,
@@ -211,7 +212,14 @@ def test_empirical_public_posts_list_query_count(db_session):
     _clear_cache()
     engine = db_session.get_bind()
     with QueryCounter(engine) as q:
-        res = public_posts_list(site_key=site.site_key, db=db_session)
+        res = public_posts_list(
+            site_key=site.site_key,
+            db=db_session,
+            skip=0,
+            limit=200,
+            category_slug=None,
+            tag_slug=None,
+        )
     assert res.total == 10
     # Expected <= 5 SELECTs (Site + Count/Posts + Batch categories + Batch tags + Batch authors)
     assert q.select_count <= 5, f"Expected <= 5 SELECTs for 10 posts, got {q.select_count}: {q.statements}"
