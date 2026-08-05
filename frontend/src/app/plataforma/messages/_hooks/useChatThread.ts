@@ -63,6 +63,10 @@ export function useChatThread({ token, activeConv, onMessage, onError }: UseChat
         setMessages([]);
         setLoading(true);
         setHasMoreOlder(true);
+        // A pending "reply to" from the previous conversation must not leak
+        // into the new thread: its reply_to_id would reference another
+        // conversation and the backend would reject it with 422.
+        setReplyTo(null);
         apiFetch<DirectMessageItem[]>(
             `/chat/conversations/${activeConvId}/messages`,
             { token, query: { limit: String(INITIAL_LIMIT) }, signal: controller.signal }
@@ -100,6 +104,10 @@ export function useChatThread({ token, activeConv, onMessage, onError }: UseChat
                 `/chat/conversations/${activeConvId}/messages`,
                 { token, query: { limit: String(OLDER_LIMIT), before: oldest.created_at } }
             );
+            // Guard against conversation switches while the request is in
+            // flight: a stale response must never prepend its messages onto
+            // the (now different) active thread.
+            if (activeConvIdRef.current !== activeConvId) return;
             if (!Array.isArray(older)) return;
             if (older.length < OLDER_LIMIT) {
                 setHasMoreOlder(false);
@@ -114,9 +122,9 @@ export function useChatThread({ token, activeConv, onMessage, onError }: UseChat
                 });
             }
         } catch {
-            onErrorRef.current?.('load_older');
+            if (activeConvIdRef.current === activeConvId) onErrorRef.current?.('load_older');
         } finally {
-            setLoading(false);
+            if (activeConvIdRef.current === activeConvId) setLoading(false);
         }
     }, [activeConvId, loading, token, hasMoreOlder]);
 
@@ -133,14 +141,25 @@ export function useChatThread({ token, activeConv, onMessage, onError }: UseChat
                     if (prev.some((m) => m.id === evt.message.id)) return prev;
                     return [...prev, evt.message];
                 });
+                // Keep server-side unread count in sync: a message received
+                // while the thread is open is read immediately, so it must not
+                // resurface as unread on the next reload. Fire-and-forget; the
+                // initial load effect also marks the thread read on open.
+                if (token) {
+                    apiFetch(`/chat/conversations/${evt.conversation_id}/read`, {
+                        method: 'POST',
+                        token,
+                    }).catch(() => undefined);
+                }
             }
             onMessageRef.current?.(evt.conversation_id, evt.message);
         }
-    }, []);
+    }, [token]);
 
     const { status: wsStatus } = useWorkspaceSocket({
         rooms: activeConvId ? [`dm_${activeConvId}`] : [],
         enabled: !!token && !!activeConvId,
+        token,
         onEvent: handleSocketEvent,
     });
 
@@ -182,6 +201,10 @@ export function useChatThread({ token, activeConv, onMessage, onError }: UseChat
                     `/chat/conversations/${activeConvId}/messages`,
                     { method: 'POST', token, body }
                 );
+                // If the user switched conversations while the POST (with
+                // upload) was in flight, don't append the reply to a thread
+                // it does not belong to.
+                if (activeConvIdRef.current !== activeConvId) return { error: null as null, message: msg };
                 setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
                 setReplyTo(null);
                 return { error: null as null, message: msg };

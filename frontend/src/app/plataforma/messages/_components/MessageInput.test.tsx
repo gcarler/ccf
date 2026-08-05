@@ -84,7 +84,7 @@ describe('MessageInput', () => {
   it('shows attachment preview when a file is selected', () => {
     renderInput();
     const file = new File(['hello'], 'hello.txt', { type: 'text/plain' });
-    const input = screen.getByLabelText('Adjuntar archivo');
+    const input = screen.getByTestId('file-input');
     fireEvent.change(input, { target: { files: [file] } });
     expect(screen.getByText('hello.txt')).toBeInTheDocument();
   });

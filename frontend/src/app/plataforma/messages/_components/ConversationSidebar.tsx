@@ -9,6 +9,8 @@ interface ConversationSidebarProps {
     conversations: ConversationRead[];
     filteredConversations: ConversationRead[];
     loading: boolean;
+    error?: string | null;
+    onRetry?: () => void;
     filter: string;
     onFilterChange: (value: string) => void;
     activeConvId: string | null;
@@ -21,6 +23,8 @@ interface ConversationSidebarProps {
 export function ConversationSidebar({
     loading,
     filteredConversations,
+    error,
+    onRetry,
     filter,
     onFilterChange,
     activeConvId,
@@ -72,6 +76,19 @@ export function ConversationSidebar({
                     <div className="flex flex-col items-center justify-center py-10 gap-2 text-[hsl(var(--text-secondary))]">
                         <Loader2 size={16} className="animate-spin" />
                         <p className="text-xs">Cargando...</p>
+                    </div>
+                ) : error ? (
+                    <div className="flex flex-col items-center justify-center py-10 gap-3 px-3 text-center">
+                        <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">{error}</p>
+                        {onRetry && (
+                            <button
+                                onClick={onRetry}
+                                aria-label="Reintentar cargar conversaciones"
+                                className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+                            >
+                                <Loader2 size={12} /> Reintentar
+                            </button>
+                        )}
                     </div>
                 ) : filteredConversations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 gap-3 px-3 text-center">
