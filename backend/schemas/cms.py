@@ -1063,10 +1063,12 @@ class CmsFormSubmissionCreateV2(BaseModel):
     ``data`` es un dict ``{field_id: value}``. El backend valida cada valor
     contra el ``fields`` definido en el ``CmsForm``. ``captcha_token`` es
     obligatorio cuando el formulario tiene ``captcha_enabled=True``.
-    ``_hp`` es el honeypot — debe venir vacío (los bots lo rellenan).
+    ``hp`` es el honeypot — debe venir vacío (los bots lo rellenan). Se
+    nombra ``hp`` (no ``_hp``) porque Pydantic v2 trata los campos con
+    guion bajo inicial como atributos privados y no los parsea del JSON.
     """
 
     data: Dict[str, Any] = Field(default_factory=dict)
     captcha_token: Optional[str] = None
-    _hp: Optional[str] = None
+    hp: Optional[str] = None
 
