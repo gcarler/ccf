@@ -13,15 +13,35 @@ import {
   Globe,
   Loader2,
   Inbox,
-  ArrowUp,
-  ArrowDown,
   X,
   ChevronLeft,
   ChevronRight,
   Mail,
   ListFilter,
   CheckCircle2,
+  Eye,
+  GripVertical,
+  ShieldCheck,
 } from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  KeyboardSensor,
+} from "@dnd-kit/core";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
 import clsx from "clsx";
@@ -37,19 +57,69 @@ import {
   CmsForm,
   CmsFormField,
   CmsFormFieldType,
+  CmsFormPublicRead,
   CmsFormSubmissionPaginated,
   CmsSite,
 } from "@/types/cms-v2";
 import { canEditCms } from "@/lib/cms/permissions";
+import { FieldEditor, FIELD_TYPES, makeDefaultField } from "@/components/cms/forms/FieldEditor";
+import CmsFormRenderer from "@/components/public/cms/CmsFormRenderer";
 
-const FIELD_TYPES: { type: CmsFormFieldType; label: string; description: string }[] = [
-  { type: "text", label: "Texto corto", description: "Campo de texto de una sola línea" },
-  { type: "email", label: "Correo electrónico", description: "Campo validado para e-mail" },
-  { type: "phone", label: "Teléfono", description: "Campo para número de contacto" },
-  { type: "textarea", label: "Texto largo", description: "Área de texto multilínea" },
-  { type: "select", label: "Lista desplegable", description: "Selección única de opciones" },
-  { type: "checkbox", label: "Casilla de verificación", description: "Casilla de aceptación / confirmación" },
-];
+function SortableField({
+  field,
+  index,
+  total,
+  siblings,
+  onChange,
+  onRemove,
+  onMove,
+}: {
+  field: CmsFormField;
+  index: number;
+  total: number;
+  siblings: CmsFormField[];
+  onChange: (field: CmsFormField) => void;
+  onRemove: (id: string) => void;
+  onMove: (index: number, direction: "up" | "down") => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: field.id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+        position: "relative",
+        zIndex: isDragging ? 10 : 0,
+      }}
+    >
+      <FieldEditor
+        field={field}
+        index={index}
+        total={total}
+        siblings={siblings}
+        onChange={onChange}
+        onRemove={() => onRemove(field.id)}
+        onMove={(dir) => onMove(index, dir)}
+        dragHandle={
+          <button
+            type="button"
+            className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-grab active:cursor-grabbing touch-none"
+            title="Arrastrar para reordenar"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </button>
+        }
+      />
+    </div>
+  );
+}
 
 export default function CmsFormsManagement() {
   const { token, user } = useAuth();
@@ -75,6 +145,16 @@ export default function CmsFormsManagement() {
   const [formFields, setFormFields] = useState<CmsFormField[]>([]);
   const [formNotifyEmails, setFormNotifyEmails] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState("");
+  // plan_de_form_builder: protección anti-spam a nivel de formulario.
+  const [formCaptchaEnabled, setFormCaptchaEnabled] = useState(false);
+  const [formHoneypotEnabled, setFormHoneypotEnabled] = useState(true);
+  const [drawerView, setDrawerView] = useState<"edit" | "preview">("edit");
+
+  // DnD (@dnd-kit) para reordenar campos del constructor.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   // Submissions Tab / View State
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
@@ -87,6 +167,25 @@ export default function CmsFormsManagement() {
   const [deleting, setDeleting] = useState(false);
 
   const canEdit = canEditCms(user?.role);
+
+  // Vista previa en vivo: el renderer público consume un objeto ``CmsFormPublicRead``.
+  const previewForm: CmsFormPublicRead = useMemo(
+    () => ({
+      id: editingForm?.id ?? "preview",
+      name: formName || "Formulario sin nombre",
+      description: formDescription || null,
+      fields: formFields,
+      submit_button_text: formSubmitButtonText || "Enviar",
+      success_message: formSuccessMessage || "¡Gracias por tu mensaje!",
+      captcha_enabled: formCaptchaEnabled,
+      captcha_provider: "hcaptcha",
+      captcha_site_key: null,
+      honeypot_enabled: formHoneypotEnabled,
+      settings_json: {},
+      is_active: true,
+    }),
+    [editingForm, formName, formDescription, formFields, formSubmitButtonText, formSuccessMessage, formCaptchaEnabled, formHoneypotEnabled]
+  );
 
   const fetchData = useCallback(async (targetSite: string) => {
     if (!token) {
@@ -171,6 +270,9 @@ export default function CmsFormsManagement() {
     ]);
     setFormNotifyEmails([]);
     setEmailInput("");
+    setFormCaptchaEnabled(false);
+    setFormHoneypotEnabled(true);
+    setDrawerView("edit");
     setIsDrawerOpen(true);
   };
 
@@ -184,19 +286,14 @@ export default function CmsFormsManagement() {
     setFormFields(form.fields || []);
     setFormNotifyEmails(form.notify_emails || []);
     setEmailInput("");
+    setFormCaptchaEnabled(form.captcha_enabled ?? false);
+    setFormHoneypotEnabled(form.honeypot_enabled ?? true);
+    setDrawerView("edit");
     setIsDrawerOpen(true);
   };
 
   const handleAddField = (type: CmsFormFieldType) => {
-    const newField: CmsFormField = {
-      id: `f_${Date.now()}`,
-      type,
-      label: type === "email" ? "Correo electrónico" : type === "phone" ? "Teléfono de contacto" : type === "textarea" ? "Mensaje" : type === "checkbox" ? "Acepto los términos y condiciones" : "Nuevo campo",
-      placeholder: "",
-      required: true,
-      options: type === "select" ? ["Opción 1", "Opción 2"] : undefined,
-    };
-    setFormFields((prev) => [...prev, newField]);
+    setFormFields((prev) => [...prev, makeDefaultField(type, prev.length)]);
   };
 
   const handleUpdateField = (id: string, updates: Partial<CmsFormField>) => {
@@ -217,6 +314,17 @@ export default function CmsFormsManagement() {
     nextFields[index] = nextFields[targetIndex];
     nextFields[targetIndex] = temp;
     setFormFields(nextFields);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setFormFields((prev) => {
+      const oldIndex = prev.findIndex((f) => f.id === active.id);
+      const newIndex = prev.findIndex((f) => f.id === over.id);
+      if (oldIndex < 0 || newIndex < 0) return prev;
+      return arrayMove(prev, oldIndex, newIndex);
+    });
   };
 
   const handleAddEmail = () => {
@@ -276,6 +384,10 @@ export default function CmsFormsManagement() {
         success_message: formSuccessMessage.trim() || "¡Gracias por tu mensaje!",
         notify_emails: formNotifyEmails,
         is_active: formIsActive,
+        captcha_enabled: formCaptchaEnabled,
+        captcha_provider: formCaptchaEnabled ? "hcaptcha" : "hcaptcha",
+        honeypot_enabled: formHoneypotEnabled,
+        settings_json: {},
       };
 
       if (editingForm) {
@@ -658,8 +770,51 @@ export default function CmsFormsManagement() {
         onClose={() => setIsDrawerOpen(false)}
         title={editingForm ? "Editar Formulario" : "Nuevo Formulario"}
         subtitle="Construye los campos y configura mensajes"
-        width="w-[640px]"
+        width="w-[720px]"
       >
+        <div className="px-6 pt-5">
+          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1 text-xs font-semibold w-fit">
+            <button
+              type="button"
+              onClick={() => setDrawerView("edit")}
+              className={clsx(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors",
+                drawerView === "edit"
+                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+              )}
+            >
+              <ClipboardList className="w-3.5 h-3.5" /> Editar
+            </button>
+            <button
+              type="button"
+              onClick={() => setDrawerView("preview")}
+              className={clsx(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors",
+                drawerView === "preview"
+                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                  : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+              )}
+            >
+              <Eye className="w-3.5 h-3.5" /> Vista previa
+            </button>
+          </div>
+        </div>
+
+        {drawerView === "preview" ? (
+          <div className="p-6">
+            {formFields.length === 0 ? (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                Aún no hay campos. Agrega campos para ver la vista previa.
+              </p>
+            ) : (
+              <div className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
+                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 mb-1">{previewForm.name}</h3>
+                <CmsFormRenderer form={previewForm} preview />
+              </div>
+            )}
+          </div>
+        ) : (
         <form onSubmit={handleSave} className="p-6 space-y-6">
           {/* General Config */}
           <div className="space-y-4">
@@ -739,6 +894,63 @@ export default function CmsFormsManagement() {
                 onChange={(e) => setFormSuccessMessage(e.target.value)}
                 className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
+            </div>
+          </div>
+
+          {/* Anti-spam: captcha + honeypot (plan_de_form_builder) */}
+          <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4" /> Protección Anti-Spam
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-center justify-between gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/40 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <div>
+                  <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Captcha (hCaptcha)</div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    Requiere verificación humana antes de enviar.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormCaptchaEnabled((v) => !v)}
+                  className={clsx(
+                    "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors",
+                    formCaptchaEnabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"
+                  )}
+                  aria-pressed={formCaptchaEnabled}
+                >
+                  <span
+                    className={clsx(
+                      "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform",
+                      formCaptchaEnabled ? "translate-x-5" : "translate-x-0"
+                    )}
+                  />
+                </button>
+              </div>
+              <div className="flex items-center justify-between gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/40 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <div>
+                  <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Campo trampa (Honeypot)</div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    Atrapa bots que rellenan campos ocultos.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormHoneypotEnabled((v) => !v)}
+                  className={clsx(
+                    "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors",
+                    formHoneypotEnabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"
+                  )}
+                  aria-pressed={formHoneypotEnabled}
+                >
+                  <span
+                    className={clsx(
+                      "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform",
+                      formHoneypotEnabled ? "translate-x-5" : "translate-x-0"
+                    )}
+                  />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -827,105 +1039,24 @@ export default function CmsFormsManagement() {
             </div>
 
             {/* Field List */}
-            <div className="space-y-3">
-              {formFields.map((field, idx) => (
-                <div
-                  key={field.id}
-                  className="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3 relative group"
-                >
-                  <div className="flex items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                      Campo #{idx + 1} — {FIELD_TYPES.find((t) => t.type === field.type)?.label || field.type}
-                    </span>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => handleMoveField(idx, "up")}
-                        disabled={idx === 0}
-                        className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30"
-                        title="Mover arriba"
-                      >
-                        <ArrowUp className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMoveField(idx, "down")}
-                        disabled={idx === formFields.length - 1}
-                        className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30"
-                        title="Mover abajo"
-                      >
-                        <ArrowDown className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveField(field.id)}
-                        className="p-1 text-zinc-400 hover:text-red-600 transition-colors ml-1"
-                        title="Eliminar campo"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Etiqueta / Título *</label>
-                      <input
-                        type="text"
-                        required
-                        value={field.label}
-                        onChange={(e) => handleUpdateField(field.id, { label: e.target.value })}
-                        className="w-full px-2.5 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                      />
-                    </div>
-
-                    {field.type !== "checkbox" && (
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Texto de marca de agua (Placeholder)</label>
-                        <input
-                          type="text"
-                          value={field.placeholder || ""}
-                          onChange={(e) => handleUpdateField(field.id, { placeholder: e.target.value })}
-                          className="w-full px-2.5 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Select Options Config */}
-                  {field.type === "select" && (
-                    <div className="space-y-1.5 pt-1">
-                      <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Opciones (separadas por coma) *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Opción 1, Opción 2, Opción 3"
-                        value={field.options?.join(", ") || ""}
-                        onChange={(e) =>
-                          handleUpdateField(field.id, {
-                            options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                          })
-                        }
-                        className="w-full px-2.5 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex items-center pt-1">
-                    <label className="flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={field.required}
-                        onChange={(e) => handleUpdateField(field.id, { required: e.target.checked })}
-                        className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500"
-                      />
-                      Campo obligatorio
-                    </label>
-                  </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={formFields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3">
+                  {formFields.map((field, idx) => (
+                    <SortableField
+                      key={field.id}
+                      field={field}
+                      index={idx}
+                      total={formFields.length}
+                      siblings={formFields}
+                      onChange={(field) => handleUpdateField(field.id, field)}
+                      onRemove={handleRemoveField}
+                      onMove={handleMoveField}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           </div>
 
           {/* Form Drawer Footer Actions */}
@@ -947,6 +1078,7 @@ export default function CmsFormsManagement() {
             </button>
           </div>
         </form>
+        )}
       </SidePanel>
 
       {/* Delete Confirmation Modal */}

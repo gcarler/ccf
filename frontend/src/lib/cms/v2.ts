@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/http";
-import { CmsAbTest, CmsAbTestEvent, CmsAbTestResults, CmsAbTestStatus, CmsCategory, CmsCommentStatus, CmsForm, CmsFormSubmissionPaginated, CmsMenu, CmsMenuItem, CmsNewsletter, CmsPage, CmsPageVersion, CmsPopup, CmsPublicPopup, CmsPostComment, CmsPostCommentsPaginated, CmsPostWithTaxonomies, CmsPublicPost, CmsPublicPostComment, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsSubscriber, CmsTag, CmsTheme, PopupTriggerType } from "@/types/cms-v2";
+import { CmsAbTest, CmsAbTestEvent, CmsAbTestResults, CmsAbTestStatus, CmsCategory, CmsCommentStatus, CmsForm, CmsFormPublicRead, CmsFormSubmissionPaginated, CmsMenu, CmsMenuItem, CmsNewsletter, CmsPage, CmsPageVersion, CmsPopup, CmsPublicPopup, CmsPostComment, CmsPostCommentsPaginated, CmsPostWithTaxonomies, CmsPublicPost, CmsPublicPostComment, CmsPublishLog, CmsPublicMenu, CmsPublicPage, CmsSection, CmsSectionType, CmsSite, CmsSubscriber, CmsTag, CmsTheme, PopupTriggerType } from "@/types/cms-v2";
 
 
 
@@ -1181,6 +1181,32 @@ export async function listPublicPopups(siteKey: string = "default"): Promise<Cms
     query: { site_key: siteKey },
   });
 }
+
+// ── Public Form Builder (plan_de_form_builder) ───────────────────────────────
+
+export async function getPublicCmsForm(formId: string, token?: string | null): Promise<CmsFormPublicRead> {
+  return apiFetch<CmsFormPublicRead>(`/cms/v2/public/forms/${formId}`, { token });
+}
+
+export interface CmsFormSubmissionV2 {
+  data: Record<string, unknown>;
+  captcha_token?: string | null;
+  /** Honeypot: campo trampa oculto — los bots lo rellenan, los humanos no. */
+  hp?: string | null;
+}
+
+export async function submitPublicCmsFormV2(
+  formId: string,
+  payload: CmsFormSubmissionV2,
+  token?: string | null,
+): Promise<{ success: boolean; message: string; submission_id?: string | null; spam?: boolean }> {
+  return apiFetch(`/cms/v2/public/forms/${formId}/submit/v2`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
 
 // ── Contact Forms (R1-FE) ───────────────────────────────────────────────────
 

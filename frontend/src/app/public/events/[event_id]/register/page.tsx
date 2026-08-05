@@ -5,6 +5,9 @@ import { useParams } from 'next/navigation';
 import { Calendar, MapPin, Clock, Check, X, QrCode, Mail, Loader2, ShieldCheck, ArrowRight, Users, AlertTriangle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { apiFetch, ApiError } from '@/lib/http';
+import { getPublicCmsForm } from '@/lib/cms/v2';
+import CmsFormRenderer, { type CmsFormRendererApi } from '@/components/public/cms/CmsFormRenderer';
+import type { CmsFormPublicRead } from '@/types/cms-v2';
 
 type PublicEventInfo = {
     id: string;
@@ -24,6 +27,7 @@ type PublicEventInfo = {
     contact_person: string | null;
     is_open: boolean;
     capacity_remaining: number | null;
+    form_id: string | null;
 };
 
 type RegistrationStatus =
@@ -187,11 +191,48 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
     const [checkResult, setCheckResult] = useState<RegistrationResult | null>(null);
     const [checkError, setCheckError] = useState<string | null>(null);
 
+    // plan_de_form_builder: formulario dinámico vinculado al evento (si existe).
+    const [publicForm, setPublicForm] = useState<CmsFormPublicRead | null>(null);
+    const [formLoading, setFormLoading] = useState(false);
+    const [formApi, setFormApi] = useState<CmsFormRendererApi | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        if (!event.form_id) {
+            setPublicForm(null);
+            return;
+        }
+        setFormLoading(true);
+        getPublicCmsForm(event.form_id)
+            .then((data) => {
+                if (!cancelled) setPublicForm(data);
+            })
+            .catch(() => {
+                // Fallback: el evento sigue registrando con el formulario fijo.
+                if (!cancelled) setPublicForm(null);
+            })
+            .finally(() => {
+                if (!cancelled) setFormLoading(false);
+            });
+        return () => { cancelled = true; };
+    }, [event.form_id]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setStatus('loading');
         setErrorDetail(null);
+
+        if (publicForm && formApi) {
+            const valid = formApi.validateAll();
+            if (!valid) {
+                setStatus('idle');
+                setErrorDetail('Revisa los campos del formulario y completa los datos requeridos.');
+                return;
+            }
+        }
+
         try {
+            const dynamic = publicForm && formApi ? formApi.getData() : null;
             const data = await apiFetch<RegistrationResult>(`/public/events/${event.id}/register`, {
                 method: 'POST',
                 body: {
@@ -200,6 +241,8 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
                     email: form.email || null,
                     phone: form.phone || null,
                     accept_contact: form.accept_contact,
+                    form_data: dynamic?.data ?? undefined,
+                    captcha_token: dynamic?.captchaToken ?? undefined,
                     extras: {},
                 },
                 silent: true,
@@ -363,6 +406,22 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
                         </span>
                     </label>
                 </div>
+
+                {formLoading && (
+                    <div className="p-4 rounded-lg border border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--text-secondary))] flex items-center gap-2 animate-pulse">
+                        <Loader2 size={15} className="animate-spin" /> Cargando preguntas adicionales...
+                    </div>
+                )}
+
+                {publicForm && (
+                    <div className="pt-2 border-t border-[hsl(var(--border))]">
+                        <div className="mb-3">
+                            <h2 className="text-sm font-bold text-[hsl(var(--text-primary))] uppercase tracking-wide">Preguntas adicionales</h2>
+                            <p className="text-xs font-medium text-[hsl(var(--text-secondary))] mt-0.5">{publicForm.name}</p>
+                        </div>
+                        <CmsFormRenderer form={publicForm} showSubmit={false} onReady={setFormApi} />
+                    </div>
+                )}
 
                 {status === 'error' && errorDetail && (
                     <div className="p-4 bg-danger-soft text-danger-text rounded-lg text-sm font-bold flex items-start gap-3">

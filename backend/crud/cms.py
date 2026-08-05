@@ -17,7 +17,7 @@ import uuid
 
 from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, lazyload
 
 from backend import models, schemas
 from backend.crud._utils import _utcnow
@@ -982,7 +982,16 @@ def list_cms_sections(
     limit: int = 100,
     section_type: str | None = None,
 ):
-    query = db.query(models.CmsSection).filter(models.CmsSection.page_id == page_id)
+    # lazyload('*') evita el cascade de JOINs ``CmsSection.page`` (lazy joined)
+    # → ``CmsPage.site`` → ``cms_sites.sede`` → ``personas`` + ``page_versions``
+    # que inflaba cada query de secciones a ~10 JOINs. El consumidor
+    # (public_page) solo serializa columnas planas de ``CmsSection`` (type,
+    # props_json, sort_order, is_visible, status) — no toca relaciones.
+    query = (
+        db.query(models.CmsSection)
+        .options(lazyload("*"))
+        .filter(models.CmsSection.page_id == page_id)
+    )
     if section_type:
         query = query.filter(models.CmsSection.type == section_type)
     total = query.count()
@@ -2581,6 +2590,11 @@ def create_cms_form(db: Session, site_id: uuid.UUID, payload: schemas.CmsFormCre
         success_message=payload.success_message,
         notify_emails=payload.notify_emails,
         is_active=payload.is_active,
+        # plan_de_form_builder
+        settings_json=payload.settings_json,
+        captcha_enabled=payload.captcha_enabled,
+        captcha_provider=payload.captcha_provider,
+        honeypot_enabled=payload.honeypot_enabled,
     )
     db.add(row)
     db.commit()
