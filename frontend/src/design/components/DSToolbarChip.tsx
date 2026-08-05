@@ -16,12 +16,12 @@ interface DSToolbarChipProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     tone?: Tone;
 }
 
-const baseStyle = 'inline-flex items-center justify-center font-semibold uppercase tracking-wide transition-all duration-150 active:scale-95 whitespace-nowrap gap-1.5';
+const baseStyle = 'inline-flex items-center justify-center font-semibold uppercase tracking-wide transition-all duration-150 active:scale-95 whitespace-nowrap gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]';
 
 const variantClasses: Record<Variant, string> = {
-    solid: 'text-white border border-transparent shadow-sm',
-    soft: 'text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] bg-white/70 dark:bg-white/5 dark:text-white/70',
-    outline: 'text-[hsl(var(--text-secondary))] border border-white/20 bg-transparent',
+    solid: 'text-[hsl(var(--primary-foreground))] border-transparent shadow-sm',
+    soft: 'text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))]',
+    outline: 'text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] bg-transparent hover:bg-[hsl(var(--surface-2))]',
 };
 
 const sizeClasses = {
@@ -44,7 +44,7 @@ export function DSToolbarChip({ label, active, variant = 'soft', size = 'md', ic
             )}
             {...props}
         >
-            {Icon && <Icon size={size === 'sm' ? 11 : 12} className={clsx('transition-colors', active ? 'text-white' : 'text-[hsl(var(--text-secondary))]')} />}
+            {Icon && <Icon size={size === 'sm' ? 11 : 12} className={clsx('transition-colors', active ? 'text-[hsl(var(--primary-foreground))]' : 'text-[hsl(var(--text-secondary))]')} />}
             <span>{label}</span>
         </button>
     );

@@ -60,7 +60,7 @@ export function InlineTextInput({
         placeholder={placeholder}
         aria-label={ariaLabel}
         className={clsx(
-          "w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1 text-sm font-bold outline-none transition-all focus:border-[hsl(var(--primary))] focus:ring-1 focus:ring-[hsl(var(--primary))] dark:border-white/10 dark:bg-white/5",
+          "w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1 text-sm font-bold outline-none transition-all focus:border-[hsl(var(--primary))] focus:ring-1 focus:ring-[hsl(var(--primary))] dark:border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-2))]",
           inputClassName
         )}
       />
@@ -72,7 +72,7 @@ export function InlineTextInput({
       onClick={() => setIsEditing(true)}
       disabled={disabled}
       className={clsx(
-        "w-full text-left rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5",
+        "w-full text-left rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))]",
         className
       )}
       aria-label={ariaLabel}

@@ -20,7 +20,7 @@ export function DSSectionHeader({ eyebrow, title, description, actions, align = 
                         {eyebrow}
                     </p>
                 )}
-                <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{title}</h3>
+                <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] tracking-tight">{title}</h3>
                 {description && <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-2xl">{description}</p>}
             </div>
             {actions && (

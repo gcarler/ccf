@@ -120,9 +120,9 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
           onClick={(e) => e.stopPropagation()}
           className={clsx(
             "group flex items-center gap-1.5 px-2 py-1 rounded-lg text-sm font-medium whitespace-nowrap transition-all",
-            "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5",
-            open && "bg-[hsl(var(--surface-1))] dark:bg-white/5 ring-1 ring-[hsl(var(--border))] dark:ring-white/10",
-            isOverdue ? "text-danger" : isToday2 ? "text-warning" : label ? "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" : "text-[hsl(var(--text-secondary))] dark:text-white/20",
+            "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))]",
+            open && "bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] ring-1 ring-[hsl(var(--border))] dark:ring-white/10",
+            isOverdue ? "text-danger" : isToday2 ? "text-warning" : label ? "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]" : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]",
             disabled && "opacity-50 cursor-not-allowed"
           )}
           aria-label="Seleccionar fecha límite"
@@ -134,7 +134,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
-          className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-3 select-none"
+          className="z-[500] w-[248px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-[hsl(var(--border))] p-3 select-none"
           sideOffset={6}
           align="start"
           onOpenAutoFocus={(e) => e.preventDefault()}
@@ -142,7 +142,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={() => stepMonth(-1)}
-              className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))]"
+              className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
             >
               <ChevronLeft size={14} />
             </button>
@@ -151,7 +151,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
             </span>
             <button
               onClick={() => stepMonth(1)}
-              className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))]"
+              className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
             >
               <ChevronDown size={14} />
             </button>
@@ -181,8 +181,8 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
                       : isTodayCell
                       ? "bg-info-soft text-info-text font-bold ring-1 ring-info/30"
                       : isPast
-                      ? "text-[hsl(var(--text-secondary))] dark:text-white/20 hover:bg-[hsl(var(--surface-1))]"
-                      : "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
+                      ? "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))]"
+                      : "text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))]"
                   )}
                 >
                   {day}
@@ -190,7 +190,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
               );
             })}
           </div>
-          <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
+          <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
             <button
               onClick={() => {
                 setViewYear(today.getFullYear());

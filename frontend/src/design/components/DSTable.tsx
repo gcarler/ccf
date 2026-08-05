@@ -150,10 +150,10 @@ export function DSTable<T>({
                             className={clsx(
                                 'inline-flex items-center gap-1.5 text-xs font-medium',
                                 'px-2.5 py-1.5 rounded-md border',
-                                'border-[hsl(var(--border))] dark:border-white/10',
-                                'bg-[hsl(var(--surface-1))] dark:bg-black/20',
-                                'text-[hsl(var(--text-primary))] dark:text-white',
-                                'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
+                                'border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
+                                'bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))]',
+                                'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]',
+                                'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))]',
                                 'transition-colors',
                             )}
                             aria-haspopup="menu"
@@ -173,8 +173,8 @@ export function DSTable<T>({
                                 className={clsx(
                                     'absolute right-0 z-20 mt-1 w-56 max-h-72 overflow-y-auto',
                                     'rounded-md border shadow-lg',
-                                    'border-[hsl(var(--border))] dark:border-white/10',
-                                    'bg-[hsl(var(--surface-1))] dark:bg-black/40',
+                                    'border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
+                                    'bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))]',
                                     'py-1',
                                 )}
                             >
@@ -196,8 +196,8 @@ export function DSTable<T>({
                                             }}
                                             className={clsx(
                                                 'flex w-full items-center gap-2 px-3 py-1.5 text-xs text-left',
-                                                'text-[hsl(var(--text-primary))] dark:text-white',
-                                                'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
+                                                'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]',
+                                                'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))]',
                                                 'transition-colors',
                                             )}
                                         >
@@ -206,7 +206,7 @@ export function DSTable<T>({
                                                     'flex size-4 items-center justify-center rounded border',
                                                     visible
                                                         ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]'
-                                                        : 'border-[hsl(var(--border))] dark:border-white/20',
+                                                        : 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
                                                 )}
                                             >
                                                 {visible && <Check size={11} className="text-[hsl(var(--primary-foreground))]" />}
@@ -238,13 +238,14 @@ export function DSTable<T>({
                                     <th
                                         key={header.id}
                                         onClick={header.column.getToggleSortingHandler()}
+                                        aria-sort={isSorted === 'asc' ? 'ascending' : isSorted === 'desc' ? 'descending' : canSort ? 'none' : undefined}
                                         className={clsx(
                                             'text-2xs font-semibold uppercase tracking-wide',
                                             'text-[hsl(var(--text-secondary))]',
-                                            'border-b border-[hsl(var(--border))] dark:border-white/5',
-                                            'bg-[hsl(var(--surface-1))] dark:bg-black/20',
+                                            'border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
+                                            'bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))]',
                                             compact ? 'px-2 py-1.5' : 'px-3 py-2',
-                                            canSort && 'cursor-pointer hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 select-none transition-colors'
+                                            canSort && 'cursor-pointer hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] select-none transition-colors'
                                         )}
                                         style={{ width: header.getSize() !== TANSTACK_DEFAULT_WIDTH ? header.getSize() : 'auto' }}
                                     >
@@ -279,23 +280,29 @@ export function DSTable<T>({
                             </td>
                         </tr>
                     ) : (
-                        table.getRowModel().rows.map((row) => (
+                        table.getRowModel().rows.map((row) => {
+                            const rowIsClickable = !!onRowClick;
+                            return (
                             <tr
                                 key={row.id}
                                 onClick={() => onRowClick?.(row.original)}
+                                tabIndex={rowIsClickable ? 0 : undefined}
+                                role={rowIsClickable ? 'button' : undefined}
+                                onKeyDown={rowIsClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick?.(row.original); } } : undefined}
                                 className={clsx(
-                                    'border-b border-[hsl(var(--border))] dark:border-white/5 last:border-0',
-                                    'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
+                                    'border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] last:border-0',
+                                    'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))]',
                                     'transition-colors',
                                     (onRowClick || cursorPointer) && 'cursor-pointer',
-                                    enableRowSelection && row.getIsSelected() && 'bg-[hsl(var(--surface-2))] dark:bg-white/5',
+                                    rowIsClickable && 'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[hsl(var(--primary))]',
+                                    enableRowSelection && row.getIsSelected() && 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]',
                                 )}
                             >
                                 {row.getVisibleCells().map((cell) => (
                                     <td
                                         key={cell.id}
                                         className={clsx(
-                                            'text-xs text-[hsl(var(--text-primary))] dark:text-white',
+                                            'text-xs text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]',
                                             compact ? 'px-2 py-1.5' : 'px-3 py-2'
                                         )}
                                     >
@@ -303,7 +310,8 @@ export function DSTable<T>({
                                     </td>
                                 ))}
                             </tr>
-                        ))
+                            );
+                        })
                     )}
                 </tbody>
             </table>

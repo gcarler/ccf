@@ -85,7 +85,7 @@ export default function SplitDropdownButton({ onMainClick, onOptionClick, mainLa
                         transition={{ duration: 0.15, ease: "easeOut" }}
                         className="absolute top-9 right-0 w-64 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] py-2 z-[100] origin-top-right overflow-hidden"
                     >
-                        <div className="px-3 pb-2 pt-1 mb-1 flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-white/5">
+                        <div className="px-3 pb-2 pt-1 mb-1 flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
                             <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Crear</span>
                             <span className="text-2xs font-bold text-[hsl(var(--primary))] cursor-pointer hover:underline">Gestionar</span>
                         </div>
@@ -114,8 +114,8 @@ function DropdownItem({ icon: Icon, label, selected, onClick }: any) {
             onClick={onClick}
             className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-base text-left transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))] ${
                 selected
-                    ? 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white font-bold'
-                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
+                    ? 'bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] font-bold'
+                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))]'
             }`}
         >
             {selected && <div className="absolute left-1.5 size-1.5 rounded-full bg-[hsl(var(--primary))]" />}

@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import type { AppIcon } from '@/types/icons';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
@@ -22,30 +22,35 @@ const typeConfig: Record<ToastType, {
     bgColor: string;
     borderColor: string;
     iconColor: string;
+    role: 'alert' | 'status';
 }> = {
     success: {
         icon: CheckCircle,
         bgColor: 'bg-[hsl(var(--success-muted))]',
         borderColor: 'border-[hsl(var(--success))]/30',
         iconColor: 'text-[hsl(var(--success))]',
+        role: 'status',
     },
     error: {
         icon: AlertCircle,
         bgColor: 'bg-[hsl(var(--danger-muted))]',
         borderColor: 'border-[hsl(var(--danger))]/30',
         iconColor: 'text-[hsl(var(--danger))]',
+        role: 'alert',
     },
     warning: {
         icon: AlertTriangle,
         bgColor: 'bg-[hsl(var(--warning-muted))]',
         borderColor: 'border-[hsl(var(--warning))]/30',
         iconColor: 'text-[hsl(var(--warning))]',
+        role: 'status',
     },
     info: {
         icon: Info,
         bgColor: 'bg-[hsl(var(--info-muted))]',
         borderColor: 'border-[hsl(var(--info))]/30',
         iconColor: 'text-[hsl(var(--info))]',
+        role: 'status',
     },
 };
 
@@ -61,20 +66,20 @@ export function DSToast({
     return (
         <div
             className={clsx(
-                'flex items-start gap-3 p-3 min-w-[280px] max-w-[400px]',
+                'flex items-start gap-3 p-3 min-w-[280px] max-w-[400px] w-[calc(100vw-2rem)]',
                 'rounded-md font-sans',
                 'border',
                 config.bgColor,
                 config.borderColor,
                 'shadow-lg'
             )}
-            role="alert"
-            aria-live="polite"
+            role={config.role}
+            aria-live={config.role === 'alert' ? 'assertive' : 'polite'}
         >
             <Icon className={clsx('size-4 mt-0.5 shrink-0', config.iconColor)} />
 
             <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                <p className="text-xs font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">
                     {message}
                 </p>
                 {action && (
@@ -100,8 +105,7 @@ export function DSToast({
     );
 }
 
-// Toast container and functions for programmatic usage
-let toastId = 0;
+// ── Programmatic toast API ─────────────────────────────────────────────────────
 
 interface ToastItem {
     id: number;
@@ -110,29 +114,35 @@ interface ToastItem {
     onClose?: () => void;
 }
 
+let toastId = 0;
+
 let toasts: ToastItem[] = [];
 let listeners: Array<(toasts: ToastItem[]) => void> = [];
 
+function emit() {
+    const snapshot = [...toasts];
+    listeners.forEach((l) => l(snapshot));
+}
+
 const notify = (type: ToastType, message: string, duration = 5000) => {
+    if (typeof window === 'undefined') return -1;
     const id = ++toastId;
+    const remove = () => {
+        toasts = toasts.filter((t) => t.id !== id);
+        emit();
+    };
     const toast: ToastItem = {
         id,
         type,
         message,
-        onClose: () => {
-            toasts = toasts.filter((t) => t.id !== id);
-            listeners.forEach((l) => l(toasts));
-        },
+        onClose: remove,
     };
 
     toasts = [...toasts, toast];
-    listeners.forEach((l) => l(toasts));
+    emit();
 
     if (duration > 0) {
-        setTimeout(() => {
-            toasts = toasts.filter((t) => t.id !== id);
-            listeners.forEach((l) => l(toasts));
-        }, duration);
+        setTimeout(remove, duration);
     }
 
     return id;
@@ -144,14 +154,26 @@ export const toast = {
     warning: (message: string, duration?: number) => notify('warning', message, duration),
     info: (message: string, duration?: number) => notify('info', message, duration),
     dismiss: (id: number) => {
+        if (typeof window === 'undefined') return;
         toasts = toasts.filter((t) => t.id !== id);
-        listeners.forEach((l) => l(toasts));
+        emit();
     },
     subscribe: (listener: (toasts: ToastItem[]) => void) => {
+        if (typeof window === 'undefined') return () => {};
         listeners.push(listener);
         return () => {
             listeners = listeners.filter((l) => l !== listener);
         };
     },
-    getToasts: () => toasts,
+    getToasts: () => (typeof window === 'undefined' ? [] : [...toasts]),
 };
+
+export function useToasts(): ToastItem[] {
+    const [items, setItems] = useState<ToastItem[]>(() => toast.getToasts());
+    useEffect(() => {
+        const unsubscribe = toast.subscribe(setItems);
+        setItems(toast.getToasts());
+        return unsubscribe;
+    }, []);
+    return items;
+}
