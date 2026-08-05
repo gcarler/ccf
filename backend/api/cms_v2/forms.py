@@ -150,7 +150,7 @@ def submit_public_form_v2(
             raise HTTPException(status_code=400, detail={"code": "CAPTCHA_FAILED", "detail": "Captcha inválido"})
 
     # 2. Honeypot — los bots lo rellenan. Manny: responder 200 para no delatar.
-    if bool(form.honeypot_enabled) and payload._hp:
+    if bool(form.honeypot_enabled) and payload.hp:
         logger.info("Honeypot triggered on form %s (ip=%s)", form.id, request.client.host if request.client else "?")
         return {"success": True, "message": form.success_message, "submission_id": None, "spam": True}
 

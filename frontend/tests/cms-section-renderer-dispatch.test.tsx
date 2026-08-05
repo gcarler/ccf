@@ -24,8 +24,8 @@ import { createMockCmsSection } from "@/test-utils/factories";
 // data-testid="section:{section.type}" so we can verify the dispatch
 // selected the correct component for each type.
 
-vi.mock("@/components/public/cms/sections", () => {
-  const React = require("react");
+vi.mock("@/components/public/cms/sections", async () => {
+  const React = await vi.importActual<typeof import("react")>("react");
   // List of all 47 component names exported by the barrel.
   // Must match sections/index.ts exports.
   const componentNames = [

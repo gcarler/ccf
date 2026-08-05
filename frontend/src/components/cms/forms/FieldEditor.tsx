@@ -119,7 +119,7 @@ export function makeDefaultField(type: CmsFormFieldType, seq: number): CmsFormFi
 }
 
 const inputCls =
-  "w-full rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-2 text-xs text-zinc-900 outline-none transition-all placeholder:text-zinc-400 hover:border-zinc-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500";
+  "w-full px-2.5 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none";
 
 interface FieldEditorProps {
   field: CmsFormField;
@@ -159,7 +159,7 @@ export function FieldEditor({
   const needsConditionList = !!field.visible_if && (field.visible_if.operator === "in" || field.visible_if.operator === "not_in");
 
   return (
-    <div className="group relative space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition-all hover:border-blue-200 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-900/60">
+    <div className="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3 relative group">
       <div className="flex items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
           Campo #{index + 1} — {typeLabel}
@@ -171,9 +171,8 @@ export function FieldEditor({
             type="button"
             onClick={() => onMove("up")}
             disabled={index === 0}
-            className="flex min-h-10 min-w-10 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-30 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30"
             title="Mover arriba"
-            aria-label={`Mover campo ${index + 1} arriba`}
           >
             <ArrowUp className="w-3.5 h-3.5" />
           </button>
@@ -181,18 +180,16 @@ export function FieldEditor({
             type="button"
             onClick={() => onMove("down")}
             disabled={index === total - 1}
-            className="flex min-h-10 min-w-10 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-30 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30"
             title="Mover abajo"
-            aria-label={`Mover campo ${index + 1} abajo`}
           >
             <ArrowDown className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={onRemove}
-            className="ml-1 flex min-h-10 min-w-10 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:hover:bg-red-950/30"
+            className="p-1 text-zinc-400 hover:text-red-600 transition-colors ml-1"
             title="Eliminar campo"
-            aria-label={`Eliminar campo ${index + 1}`}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
