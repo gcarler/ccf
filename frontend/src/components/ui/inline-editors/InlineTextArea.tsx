@@ -63,7 +63,7 @@ export function InlineTextArea({
         aria-label={ariaLabel}
         rows={rows}
         className={clsx(
-          "w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1 text-sm outline-none transition-all focus:border-[hsl(var(--primary))] focus:ring-1 focus:ring-[hsl(var(--primary))] dark:border-white/10 dark:bg-white/5",
+          "w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1 text-sm outline-none transition-all focus:border-[hsl(var(--primary))] focus:ring-1 focus:ring-[hsl(var(--primary))] dark:border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-2))]",
           inputClassName
         )}
       />
@@ -75,7 +75,7 @@ export function InlineTextArea({
       onClick={() => setIsEditing(true)}
       disabled={disabled}
       className={clsx(
-        "w-full text-left rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5",
+        "w-full text-left rounded-md px-2 py-1 -ml-2 transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))]",
         className
       )}
       aria-label={ariaLabel}

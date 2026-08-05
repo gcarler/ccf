@@ -87,24 +87,38 @@ export const WithDisabledTab: Story = {
 export const FullExample: Story = {
     render: () => (
         <div className="w-96">
-            <DSTabs tabs={tabsWithIcons} defaultTab="profile">
-                <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">
-                        Configuración de Perfil
-                    </h3>
-                    <p className="text-xs text-[hsl(var(--text-secondary))]">
-                        Administra tu información personal y preferencias de cuenta.
-                    </p>
-                    <div className="flex gap-2">
-                        <button className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-white rounded-md">
-                            Guardar
-                        </button>
-                        <button className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide border border-white/20 text-white rounded-md">
-                            Cancelar
-                        </button>
+            <DSTabs tabs={tabsWithIcons} defaultTab="profile" panels={{
+                home: (
+                    <div className="space-y-2">
+                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">Inicio</h3>
+                        <p className="text-xs text-[hsl(var(--text-secondary))]">Resumen general de tu actividad.</p>
                     </div>
-                </div>
-            </DSTabs>
+                ),
+                profile: (
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">
+                            Configuración de Perfil
+                        </h3>
+                        <p className="text-xs text-[hsl(var(--text-secondary))]">
+                            Administra tu información personal y preferencias de cuenta.
+                        </p>
+                        <div className="flex gap-2">
+                            <button className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md">
+                                Guardar
+                            </button>
+                            <button className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-md">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                ),
+                settings: (
+                    <p className="text-xs text-[hsl(var(--text-secondary))]">Ajustes globales del sistema.</p>
+                ),
+                notifications: (
+                    <p className="text-xs text-[hsl(var(--text-secondary))]">Tus alertas pendientes.</p>
+                ),
+            }} />
         </div>
     ),
 };

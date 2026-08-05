@@ -19,18 +19,24 @@ describe('DSButton', () => {
   it('applies secondary variant', () => {
     render(<DSButton variant="secondary">Button</DSButton>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('border-white/20');
+    expect(button.className).toContain('border-[hsl(var(--border))]');
   });
 
   it('applies ghost variant', () => {
     render(<DSButton variant="ghost">Button</DSButton>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('border-white/30');
+    expect(button.className).toContain('border-[hsl(var(--border))]');
   });
 
   it('shows loading state', () => {
     render(<DSButton loading>Loading</DSButton>);
-    expect(screen.getByText('Cargando...')).toBeInTheDocument();
+    expect(screen.getByText('Cargando…')).toBeInTheDocument();
+  });
+
+  it('marks the button as busy while loading (a11y)', () => {
+    render(<DSButton loading>Loading</DSButton>);
+    const button = screen.getByRole('button');
+    expect(button).toHaveAttribute('aria-busy', 'true');
   });
 
   it('is disabled when loading', () => {

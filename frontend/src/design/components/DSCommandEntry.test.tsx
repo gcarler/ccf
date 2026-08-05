@@ -24,7 +24,7 @@ describe('DSCommandEntry', () => {
     it('applies active state', () => {
         const { container } = render(<DSCommandEntry label="Command" active />);
         const root = container.firstChild as HTMLElement;
-        expect(root.className).toContain('border-[hsl(var(--primary)_/_0.4)]');
+        expect(root.className).toContain('border-[hsl(var(--primary))]/40');
     });
 
     it('applies inactive state', () => {

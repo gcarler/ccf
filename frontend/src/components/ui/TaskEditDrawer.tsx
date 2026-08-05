@@ -65,7 +65,7 @@ const PRIORITY_OPTIONS = [
     {
         value: 'low', label: PRIORITY_LABELS.low,
         color: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]',
-        border: 'border-[hsl(var(--border))] dark:border-white/10',
+        border: 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
         dot: 'bg-[hsl(var(--text-secondary))]', bar: 'bg-[hsl(var(--text-secondary))]',
         glow: 'shadow-[hsl(var(--text-secondary))]/20',
     },
@@ -239,14 +239,14 @@ export default function TaskEditDrawer({
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: '100%', opacity: 0 }}
                         transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-                        className="fixed right-0 top-10 bottom-0 w-full max-w-[460px] z-[101] flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-[-32px_0_80px_rgba(0,0,0,0.14)] dark:shadow-[-32px_0_80px_rgba(0,0,0,0.5)]"
+                        className="fixed right-0 top-10 bottom-0 w-full max-w-[460px] z-[101] flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-[-32px_0_80px_hsl(var(--shadow-floating))] dark:shadow-[-32px_0_80px_hsl(var(--shadow-floating))]"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Priority accent bar — top */}
                         <div className={clsx('h-[3px] w-full shrink-0', cp.bar)} />
 
                         {/* ── HEADER ── */}
-                        <header className="shrink-0 px-3 pt-3.5 pb-3 border-b border-[hsl(var(--border))] dark:border-white/[0.06]">
+                        <header className="shrink-0 px-3 pt-3.5 pb-3 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
                             <div className="flex items-center justify-between mb-3">
 
                                 {/* Left: status + xp */}
@@ -273,7 +273,7 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {STATUS_OPTIONS.map(opt => (
                                                         <button key={opt.value}
@@ -282,7 +282,7 @@ export default function TaskEditDrawer({
                                                                 'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold transition-colors',
                                                                 form.status === opt.value
                                                                     ? `${opt.color} ${opt.bg}`
-                                                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
+                                                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-1))]'
                                                             )}
                                                         >
                                                             <opt.icon size={13} strokeWidth={2} />
@@ -322,11 +322,11 @@ export default function TaskEditDrawer({
                                             </motion.button>
                                         ) : null}
                                     </AnimatePresence>
-                                    <button aria-label="Más opciones" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all ml-0.5">
+                                    <button aria-label="Más opciones" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-all ml-0.5">
                                         <MoreHorizontal size={15} />
                                     </button>
                                     <button onClick={onClose} aria-label="Cerrar"
-                                        className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all">
+                                        className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-all">
                                         <X size={15} />
                                     </button>
                                 </div>
@@ -339,7 +339,7 @@ export default function TaskEditDrawer({
                                 onChange={e => updateField('title', e.target.value)}
                                 rows={1}
                                 placeholder="Nombre de la tarea..."
-                                className="w-full text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-0 -mx-0.5"
+                                className="w-full text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-0 -mx-0.5"
                             />
                         </header>
 
@@ -347,7 +347,7 @@ export default function TaskEditDrawer({
                         <div className="flex-1 overflow-y-auto scrollbar-thin">
 
                             {/* ─ META FIELDS ─ */}
-                            <div className="px-3 py-1.5 space-y-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
+                            <div className="px-3 py-1.5 space-y-3 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
 
                                 {/* Priority row */}
                                 <MetaRow label="Prioridad">
@@ -370,16 +370,16 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {PRIORITY_OPTIONS.map(opt => (
                                                         <button key={opt.value}
                                                             onClick={() => { updateField('priority', opt.value); setShowPriorityPicker(false); }}
                                                             className={clsx(
                                                                 'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold transition-colors',
-                                                                form.priority === opt.value
-                                                                    ? `${opt.color} ${opt.bg}`
-                                                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
+form.priority === opt.value
+                                                                     ? `${opt.color} ${opt.bg}`
+                                                                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-1))]'
                                                             )}
                                                         >
                                                             <span className={clsx('size-2 rounded-full shrink-0', opt.dot)} />
@@ -401,14 +401,14 @@ export default function TaskEditDrawer({
                                             aria-label="Fecha límite"
                                             value={form.due_date ? form.due_date.split('T')[0] : ''}
                                             onChange={e => updateField('due_date', e.target.value || null)}
-                                            className="h-8 px-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.08] text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                            className="h-8 px-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                                         />
                                     </div>
                                 </MetaRow>
 
                                 {/* Project row */}
                                 <MetaRow label="Proyecto" icon={<FolderOpen size={13} className="text-[hsl(var(--text-secondary))]" />}>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/[0.08] max-w-[220px]">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] max-w-[220px]">
                                         <span className="text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate">
                                             {form.project_title || `Proyecto #${form.project_id}`}
                                         </span>
@@ -418,7 +418,7 @@ export default function TaskEditDrawer({
                             </div>
 
                             {/* ─ DESCRIPTION ─ */}
-                            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
+                            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
                                 <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1.5">
                                     <AlignLeft size={11} /> Descripción
                                 </p>
@@ -427,12 +427,12 @@ export default function TaskEditDrawer({
                                     onChange={e => updateField('description', e.target.value || null)}
                                     rows={3}
                                     placeholder="Añade contexto o detalles sobre esta tarea..."
-                                    className="w-full px-3 py-2.5 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.07] text-base font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 resize-none transition-all leading-relaxed"
+                                    className="w-full px-3 py-2.5 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] text-base font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 resize-none transition-all leading-relaxed"
                                 />
                             </div>
 
                             {/* ─ MESH AI ─ */}
-                            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
+                            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
                                 <div className="rounded-lg bg-gradient-to-br from-info-muted/80 via-info-muted/40 to-info-muted/20 dark:from-info/10 dark:via-info/5 dark:to-transparent border border-info-muted dark:border-info/20 overflow-hidden">
                                     {/* AI header */}
                                     <div className="flex items-center justify-between px-4 py-3 border-b border-primary/20 dark:border-primary/20">
@@ -509,7 +509,7 @@ export default function TaskEditDrawer({
                                                         Sí, eliminar
                                                     </button>
                                                     <button onClick={() => setShowDeleteConfirm(false)}
-                                                        className="flex-1 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-xs font-bold hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/8 transition-all">
+                                                        className="flex-1 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] rounded-md text-xs font-bold hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-1))] transition-all">
                                                         Cancelar
                                                     </button>
                                                 </div>
@@ -522,19 +522,19 @@ export default function TaskEditDrawer({
                         </div>
 
                         {/* ── FOOTER ── */}
-                        <footer className="shrink-0 px-3 py-3 border-t border-[hsl(var(--border))] dark:border-white/[0.06] bg-[hsl(var(--surface-1))]/70 dark:bg-white/[0.02] flex items-center justify-between">
+                        <footer className="shrink-0 px-3 py-3 border-t border-[hsl(var(--border))] dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/70 dark:bg-[hsl(var(--surface-1))]/70 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className={clsx('size-2 rounded-full shrink-0', cp.dot)} />
                                 <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                     {cp.label}
                                 </span>
-                                <span className="text-[hsl(var(--text-secondary))] dark:text-white/10">·</span>
+                                <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-tertiary))]">·</span>
                                 <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                     {cs.label}
                                 </span>
                                 {form.due_date && (
                                     <>
-                                        <span className="text-[hsl(var(--text-secondary))] dark:text-white/10">·</span>
+                                        <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">·</span>
                                         <span className="flex items-center gap-1 text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
                                             <CalendarDays size={10} />
                                             {new Date(form.due_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
@@ -576,7 +576,7 @@ export default function TaskEditDrawer({
 // ─────────────────────────────────────────────────────────────────
 function MetaRow({ label, icon, children }: { label: string; icon?: React.ReactNode; children: React.ReactNode }) {
     return (
-        <div className="flex items-center gap-0">
+        <div className="flex items-center gap-2">
             <div className="w-[110px] shrink-0 flex items-center gap-1.5">
                 {icon}
                 <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
@@ -594,7 +594,7 @@ function QuickBtn({ icon: Icon, label, onClick, danger = false }: { icon: any; l
                 'flex items-center gap-2 px-3 py-2.5 rounded-md text-xs font-semibold border transition-all group hover:-translate-y-[1px] hover:shadow-sm active:scale-95',
                 danger
                     ? 'text-danger bg-transparent border-danger-muted dark:border-danger/30 hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger)/0.1)]'
-                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border-[hsl(var(--border))] dark:border-white/[0.07] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.06] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]'
+                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-1))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))]'
             )}
         >
             <Icon size={13} className="transition-transform group-hover:scale-110" />

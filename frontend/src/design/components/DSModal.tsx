@@ -53,7 +53,7 @@ export function DSModal({
                 tabIndex={-1}
                 className={clsx(
                     'relative w-full mx-4 bg-[hsl(var(--bg-primary))] rounded-lg',
-                    'border border-[hsl(var(--border))] dark:border-white/10',
+                    'border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
                     'shadow-2xl',
                     sizeClasses[size]
                 )}
@@ -63,11 +63,11 @@ export function DSModal({
             >
                 {/* Header */}
                 {(title || showClose) && (
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/5">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
                         {title && (
                             <h2
                                 id="modal-title"
-                                className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white"
+                                className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]"
                             >
                                 {title}
                             </h2>

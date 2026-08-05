@@ -7,7 +7,7 @@ const meta: Meta<typeof DSCard> = {
     args: {
         children: (
             <div>
-                <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">Tarjeta premium</h3>
+                <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">Tarjeta premium</h3>
                 <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-2">Usa este contenedor para métricas, formularios o listas dentro del Workspace.</p>
             </div>
         ),

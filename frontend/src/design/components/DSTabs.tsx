@@ -15,30 +15,37 @@ interface DSTabsProps {
     tabs: Tab[];
     defaultTab?: string;
     onChange?: (tabId: string) => void;
-    children: React.ReactNode;
+    panels?: Record<string, React.ReactNode>;
+    renderPanel?: (tabId: string) => React.ReactNode;
+    /**
+     * @deprecated Use `panels` or `renderPanel` instead.
+     */
+    children?: React.ReactNode;
 }
 
 export function DSTabs({
     tabs,
     defaultTab,
     onChange,
+    panels,
+    renderPanel,
     children,
 }: DSTabsProps) {
     const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
     const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
-    const setTabRef = (id: string) => (el: HTMLButtonElement | null) => {
+    const setTabRef = useCallback((id: string) => (el: HTMLButtonElement | null) => {
         if (el) {
             tabRefs.current.set(id, el);
         } else {
             tabRefs.current.delete(id);
         }
-    };
+    }, []);
 
-    const focusTab = (tabId: string) => {
+    const focusTab = useCallback((tabId: string) => {
         const tab = tabRefs.current.get(tabId);
         tab?.focus();
-    };
+    }, []);
 
     const activateTab = useCallback((tabId: string) => {
         setActiveTab(tabId);
@@ -84,11 +91,16 @@ export function DSTabs({
         }
     };
 
+    const resolvePanel = (tabId: string): React.ReactNode => {
+        if (panels && panels[tabId] !== undefined) return panels[tabId];
+        if (renderPanel) return renderPanel(tabId);
+        return children;
+    };
+
     return (
         <div className="flex flex-col">
-            {/* Tab List */}
             <div
-                className="flex items-center gap-1 border-b border-[hsl(var(--border))] dark:border-white/5"
+                className="flex items-center gap-1 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]"
                 role="tablist"
                 aria-orientation="horizontal"
                 onKeyDown={handleKeyDown}
@@ -117,30 +129,33 @@ export function DSTabs({
                                 tab.disabled && 'opacity-50 cursor-not-allowed'
                             )}
                         >
-                            {Icon && <Icon className="size-3.5" />}
+                            {Icon && <Icon className="size-3.5" aria-hidden="true" />}
                             {tab.label}
                         </button>
                     );
                 })}
             </div>
 
-            {/* Tab Panels */}
+            {/* Tab Panels — only the active tab's content is rendered */}
             <div className="py-3">
-                {tabs.map((tab) => (
-                    <div
-                        key={tab.id}
-                        role="tabpanel"
-                        id={`panel-${tab.id}`}
-                        aria-labelledby={`tab-${tab.id}`}
-                        hidden={activeTab !== tab.id}
-                        className={clsx(
-                            'focus:outline-none',
-                            activeTab === tab.id ? 'block' : 'hidden'
-                        )}
-                    >
-                        {activeTab === tab.id && children}
-                    </div>
-                ))}
+                {tabs.map((tab) => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                        <div
+                            key={tab.id}
+                            role="tabpanel"
+                            id={`panel-${tab.id}`}
+                            aria-labelledby={`tab-${tab.id}`}
+                            hidden={!isActive}
+                            className={clsx(
+                                'focus:outline-none',
+                                isActive ? 'block' : 'hidden'
+                            )}
+                        >
+                            {isActive && resolvePanel(tab.id)}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

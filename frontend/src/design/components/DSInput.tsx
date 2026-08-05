@@ -23,7 +23,11 @@ export const DSInput = React.forwardRef<HTMLInputElement, DSInputProps>(
         id,
         ...props
     }, ref) => {
-        const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+        const autoId = React.useId();
+        const inputId = id || (label ? `${autoId}-${label.toLowerCase().replace(/\s+/g, '-')}` : autoId);
+        const errorId = `${inputId}-error`;
+        const helperId = `${inputId}-helper`;
+        const describedBy = error ? errorId : helperText ? helperId : undefined;
 
         return (
             <div className="flex flex-col gap-1.5">
@@ -45,9 +49,9 @@ export const DSInput = React.forwardRef<HTMLInputElement, DSInputProps>(
                         ref={ref}
                         id={inputId}
                     className={clsx(
-                        'w-full px-2.5 py-1.5 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e]',
-                        'border border-[hsl(var(--border))] dark:border-white/10',
-                        'text-[hsl(var(--text-primary))] dark:text-white',
+                        'w-full px-2.5 py-1.5 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))]',
+                        'border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
+                        'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]',
                         'placeholder:text-[hsl(var(--text-secondary))]/50',
                         'focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] focus:border-[hsl(var(--primary))]',
                         'disabled:opacity-50 disabled:cursor-not-allowed',
@@ -59,7 +63,7 @@ export const DSInput = React.forwardRef<HTMLInputElement, DSInputProps>(
                     )}
                         disabled={loading || props.disabled}
                         aria-invalid={error ? 'true' : undefined}
-                        aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
+                        aria-describedby={describedBy}
                         {...props}
                     />
                     {loading && (
@@ -69,12 +73,12 @@ export const DSInput = React.forwardRef<HTMLInputElement, DSInputProps>(
                     )}
                 </div>
                 {error && (
-                    <p id={`${inputId}-error`} className="text-2xs text-[hsl(var(--danger))]" role="alert">
+                    <p id={errorId} className="text-2xs text-[hsl(var(--danger))]" role="alert">
                         {error}
                     </p>
                 )}
                 {!error && helperText && (
-                    <p id={`${inputId}-helper`} className="text-2xs text-[hsl(var(--text-secondary))]">
+                    <p id={helperId} className="text-2xs text-[hsl(var(--text-secondary))]">
                         {helperText}
                     </p>
                 )}

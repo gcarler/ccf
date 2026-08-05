@@ -122,4 +122,35 @@ describe('DSTabs', () => {
         );
         expect(await axe(container)).toHaveNoViolations();
     });
+
+    it('renders distinct content per tab when panels prop is provided', () => {
+        render(
+            <DSTabs tabs={sampleTabs} panels={{ tab1: <div>Tab 1 Content</div>, tab2: <div>Tab 2 Content</div>, tab3: <div>Tab 3 Content</div> }} />
+        );
+        expect(screen.getByText('Tab 1 Content')).toBeInTheDocument();
+        expect(screen.queryByText('Tab 2 Content')).not.toBeInTheDocument();
+        expect(screen.queryByText('Tab 3 Content')).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByText('Tab 2'));
+        expect(screen.getByText('Tab 2 Content')).toBeInTheDocument();
+    });
+
+    it('uses renderPanel to compute panel content on the fly', () => {
+        render(
+            <DSTabs tabs={sampleTabs} renderPanel={(id) => <div>Rendered: {id}</div>} />
+        );
+        expect(screen.getByText('Rendered: tab1')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByText('Tab 3'));
+        expect(screen.getByText('Rendered: tab3')).toBeInTheDocument();
+    });
+
+    it('falls back to children (legacy) when neither panels nor renderPanel are passed', () => {
+        render(
+            <DSTabs tabs={sampleTabs}>
+                <div>Shared Content</div>
+            </DSTabs>
+        );
+        expect(screen.getByText('Shared Content')).toBeInTheDocument();
+    });
 });

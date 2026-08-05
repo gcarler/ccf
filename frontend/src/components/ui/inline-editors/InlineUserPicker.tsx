@@ -104,7 +104,7 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
           onClick={(e) => e.stopPropagation()}
           className={clsx(
             "group flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg transition-all",
-            "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5",
+            "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))]",
             open && "bg-info-soft ring-1 ring-info/30",
             disabled && "opacity-50 cursor-not-allowed"
           )}
@@ -116,7 +116,7 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
               {initials}
             </div>
           ) : (
-            <div className="size-6 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--info-muted))] dark:group-hover:bg-[hsl(var(--info)/0.2)] group-hover:text-[hsl(var(--primary))] transition-colors">
+            <div className="size-6 rounded-full bg-[hsl(var(--surface-3))] dark:bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--info-muted))] dark:group-hover:bg-[hsl(var(--info)/0.2)] group-hover:text-[hsl(var(--primary))] transition-colors">
               <User size={12} />
             </div>
           )}
@@ -124,12 +124,12 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
-          className="z-[500] w-[240px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 overflow-hidden"
+          className="z-[500] w-[240px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-[hsl(var(--border))] overflow-hidden"
           sideOffset={6}
           align="start"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
             <Search size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />
             <input
               autoFocus
@@ -178,7 +178,7 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
                       "w-full flex items-center gap-2.5 px-3 py-2 transition-colors",
                       u.id === value
                         ? "bg-info-soft text-info-text"
-                        : "hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                        : "hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))]"
                     )}
                   >
                     <div className="size-6 rounded-full bg-info-soft flex items-center justify-center font-semibold text-info-text shrink-0 text-2xs">

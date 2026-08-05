@@ -64,10 +64,11 @@ describe('DSSelect', () => {
         expect(select.className).toContain('border-[hsl(var(--danger))]');
     });
 
-    it('generates id from label', () => {
+    it('generates id from label when no id provided', () => {
         render(<DSSelect label="Country" options={sampleOptions} />);
         const select = screen.getByRole('combobox');
-        expect(select.id).toBe('country');
+        expect(select.id).toMatch(/-country$/);
+        expect(select.id.length).toBeGreaterThan(0);
     });
 
     it('uses custom id when provided', () => {

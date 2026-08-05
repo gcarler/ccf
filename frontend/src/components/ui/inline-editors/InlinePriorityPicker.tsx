@@ -40,7 +40,7 @@ export function InlinePriorityPicker({ value, onChange, disabled, size = "md" }:
           className={clsx(
             "flex items-center gap-1.5 rounded-lg font-semibold transition-all",
             size === "sm" ? "px-2 py-0.5 text-2xs" : "px-2.5 py-1 text-xs",
-            "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5",
+            "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))]",
             disabled && "opacity-50 cursor-not-allowed"
           )}
           aria-label="Cambiar prioridad"
@@ -52,7 +52,7 @@ export function InlinePriorityPicker({ value, onChange, disabled, size = "md" }:
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
-          className="z-[500] min-w-[160px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1.5"
+          className="z-[500] min-w-[160px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-[hsl(var(--border))] p-1.5"
           sideOffset={6}
           align="start"
           onOpenAutoFocus={(e) => e.preventDefault()}
@@ -67,7 +67,7 @@ export function InlinePriorityPicker({ value, onChange, disabled, size = "md" }:
                 onChange(p.value);
                 setOpen(false);
               }}
-              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))] transition-colors"
             >
               <FlagIcon fill={p.fill} size={12} />
               <span className={clsx("text-sm font-semibold flex-1 text-left", p.color)}>{p.label}</span>
