@@ -10,8 +10,6 @@ from sqlalchemy.orm import Session, lazyload
 from backend import models
 from backend.api.cms_v2._shared import (
     PUBLIC_CMS_RATE_LIMIT,
-    _get_menu_or_404,
-    _get_public_site_or_404,
 )
 from backend.core.cache_v2 import cached_public
 from backend.core.database import get_db
@@ -29,9 +27,22 @@ router = APIRouter(tags=["cms_v2_public_menus"])
 )
 @cached_public(ttl=300)
 def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
-    site = _get_public_site_or_404(db, site_key)
-    menu = _get_menu_or_404(db, site.id, menu_key)
-    if not menu.is_active:
+    # Optimizado N+1: 1 query JOIN CmsMenu+CmsSite (evita el site lookup
+    # separado de ``_get_public_site_or_404``). ``lazyload('*')`` previene el
+    # selectin automático de ``CmsMenu.items`` y de las 11 relaciones hijas
+    # de ``CmsSite`` — los items se cargan abajo en su propia query controlada.
+    menu = (
+        db.query(models.CmsMenu)
+        .options(lazyload("*"))
+        .join(models.CmsSite, models.CmsSite.id == models.CmsMenu.site_id)
+        .filter(
+            models.CmsSite.site_key == site_key.strip().lower(),
+            models.CmsSite.is_active.is_(True),
+            models.CmsMenu.menu_key == menu_key.strip().lower(),
+        )
+        .first()
+    )
+    if not menu:
         raise MenuNotFoundError()
     all_items = (
         db.query(models.CmsMenuItem)
@@ -61,4 +72,4 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
         }
         for item in items
     ]
-    return {"site_key": site.site_key, "menu_key": menu.menu_key, "items": serialized}
+    return {"site_key": site_key, "menu_key": menu.menu_key, "items": serialized}
