@@ -132,7 +132,7 @@ async function installEvangelismEventsMocks(
   let statsState: EventDashboardStat[] = [
     { event_id: 'event-1', latest_session: TODAY, attended: 1, expected: 1, rate: 100 },
   ];
-  let sessionState: Record<string, SessionData> = {
+  const sessionState: Record<string, SessionData> = {
     [`event-1:${TODAY}`]: {
       event_id: 'event-1',
       session_date: TODAY,

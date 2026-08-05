@@ -17,11 +17,10 @@ import uuid
 from unittest.mock import MagicMock
 
 import pytest
-from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from backend.core.sanitize_html import sanitize_html
-from backend.exceptions.cms import SiteNotFoundError, CmsConflictError
+from backend.exceptions.cms import SiteNotFoundError
 from backend.schemas.cms_v2_sections import validate_section_props
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 

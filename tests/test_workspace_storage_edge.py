@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
 from backend.api.workspace_shared._storage import (
-    _load_workspace_config,
     _load_incidents,
+    _load_workspace_config,
     _read_notifications,
     _read_snapshot_history,
 )

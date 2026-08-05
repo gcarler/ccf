@@ -1,15 +1,16 @@
 """Remaining edge cases for _snapshots.py — suppression, notification, weekly."""
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 from backend.api.workspace_shared._snapshots import (
     _assess_config_drift,
     _maybe_emit_snapshot_drift_alert,
-    _weekly_snapshot_summary,
     _normalize_compliance_policy_update,
+    _weekly_snapshot_summary,
 )
-from unittest.mock import patch
 
 
 class TestAssessConfigDriftSuppressed:
