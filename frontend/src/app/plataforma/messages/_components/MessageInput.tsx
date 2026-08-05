@@ -47,6 +47,7 @@ export function MessageInput({
     const [mentionResults, setMentionResults] = useState<SearchedUser[]>([]);
     const [attachment, setAttachment] = useState<File | null>(null);
     const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<string | null>(null);
+    const [attachmentError, setAttachmentError] = useState<string | null>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,7 +67,9 @@ export function MessageInput({
             return;
         }
         const { query } = mentionState;
-        if (query.length < 1) {
+        // Backend requires q with min_length=2; searching on 1 char would
+        // produce silent 422s, so only start once a real query exists.
+        if (query.trim().length < 2) {
             setMentionResults([]);
             return;
         }
@@ -144,13 +147,14 @@ export function MessageInput({
         ];
         const isAllowed = allowedTypes.some((t) => file.type.startsWith(t) || file.type.includes(t)) || file.type === '';
         if (!isAllowed) {
-            alert('Tipo de archivo no permitido. Solo se aceptan imágenes, PDFs, documentos, videos y audios básicos.');
+            setAttachmentError('Tipo de archivo no permitido. Solo se aceptan imágenes, PDFs, documentos, videos y audios básicos.');
             return;
         }
         if (file.size > 25 * 1024 * 1024) {
-            alert('El archivo es demasiado grande. El límite máximo es 25 MB.');
+            setAttachmentError('El archivo es demasiado grande. El límite máximo es 25 MB.');
             return;
         }
+        setAttachmentError(null);
         setAttachment(file);
         setAttachmentPreviewUrl(URL.createObjectURL(file));
     };
@@ -213,6 +217,12 @@ export function MessageInput({
                 </div>
             )}
 
+            {attachmentError && (
+                <div className="mx-2 mb-1 px-3 py-1.5 text-2xs text-[hsl(var(--danger))] bg-[hsl(var(--danger))]/10 rounded-lg">
+                    {attachmentError}
+                </div>
+            )}
+
             {mentionResults.length > 0 && mentionState && (
                 <div className="absolute bottom-[calc(100%+0.5rem)] left-2 right-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1d] shadow-2xl overflow-hidden z-50">
                     {mentionResults.map((u) => (
@@ -229,8 +239,12 @@ export function MessageInput({
 
             <div className="flex items-end gap-2">
                 <button
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => {
+                        setAttachmentError(null);
+                        fileInputRef.current?.click();
+                    }}
                     disabled={disabled || sending}
+                    aria-label="Adjuntar archivo"
                     title="Adjuntar archivo"
                     className="size-9 rounded-xl flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all shrink-0"
                 >
@@ -239,7 +253,9 @@ export function MessageInput({
                 <input
                     ref={fileInputRef}
                     type="file"
-                    aria-label="Adjuntar archivo"
+                    data-testid="file-input"
+                    aria-hidden="true"
+                    tabIndex={-1}
                     className="hidden"
                     onChange={handleFileSelect}
                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,video/mp4,video/webm,audio/mpeg,audio/ogg,audio/wav"

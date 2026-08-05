@@ -28,6 +28,13 @@ export function MessageList({ messages, loading, currentUserId, onLoadOlder, onR
         if (!scrollRef.current) return;
         const prev = lastMessageIdRef.current;
         lastMessageIdRef.current = last?.id ?? null;
+        // When the conversation switches, useChatThread clears messages to [].
+        // Reset sticky scroll suppression so the new thread lands at the bottom
+        // instead of honoring a "user scrolled up" flag from the prior conv.
+        if (messages.length === 0) {
+            shouldAutoScroll.current = true;
+            return;
+        }
         if (prev === last?.id) return;
         if (!shouldAutoScroll.current) return;
         const el = scrollRef.current;

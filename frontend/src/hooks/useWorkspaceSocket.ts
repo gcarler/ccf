@@ -10,6 +10,9 @@ interface UseWorkspaceSocketOptions {
     clientId?: string;
     rooms?: string[];
     enabled?: boolean;
+    // JWT required by the WS handshake (backend/api/messaging.py closes with
+    // 4001 without it). Without a token the realtime channel never connects.
+    token?: string | null;
     onEvent?: (payload: WsEvent) => void;
 }
 
@@ -20,7 +23,7 @@ interface WorkspaceSocketResult {
 export const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_DELAY_MS = 1000;
 
-export function useWorkspaceSocket({ clientId, rooms = [], enabled = true, onEvent }: UseWorkspaceSocketOptions): WorkspaceSocketResult {
+export function useWorkspaceSocket({ clientId, rooms = [], enabled = true, token, onEvent }: UseWorkspaceSocketOptions): WorkspaceSocketResult {
     const [status, setStatus] = useState<SocketStatus>('idle');
     const fallbackIdRef = useRef(resolveClientId());
     const socketRef = useRef<WebSocket | null>(null);
@@ -45,8 +48,13 @@ export function useWorkspaceSocket({ clientId, rooms = [], enabled = true, onEve
         }
 
         function connect() {
-            const roomQuery = roomsKey ? `?rooms=${encodeURIComponent(roomsKey)}` : '';
-            const socket = new WebSocket(buildWsUrl(`/messaging/ws/${encodeURIComponent(resolvedClientId)}${roomQuery}`));
+            const params = new URLSearchParams();
+            if (roomsKey) params.set('rooms', roomsKey);
+            if (token) params.set('token', token);
+            const query = params.toString();
+            const socket = new WebSocket(
+                buildWsUrl(`/messaging/ws/${encodeURIComponent(resolvedClientId)}${query ? `?${query}` : ''}`)
+            );
             socketRef.current = socket;
             setStatus('connecting');
 
@@ -97,7 +105,7 @@ export function useWorkspaceSocket({ clientId, rooms = [], enabled = true, onEve
                 socketRef.current = null;
             }
         };
-    }, [enabled, resolvedClientId, roomsKey]);
+    }, [enabled, resolvedClientId, roomsKey, token]);
 
     return { status };
 }
