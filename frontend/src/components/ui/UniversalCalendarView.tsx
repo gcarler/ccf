@@ -75,16 +75,16 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] overflow-hidden shadow-sm">
 
             {/* ─── Control Header ─── */}
-            <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="p-4 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                     <div className="size-8 rounded-lg bg-info-soft dark:bg-[hsl(var(--info)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] border border-[hsl(var(--info)/0.2)] dark:border-[hsl(var(--info)/0.2)]">
                         <CalendarIcon size={28} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase italic leading-none">{title}</h2>
+                        <h2 className="text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] uppercase italic leading-none">{title}</h2>
                         <div className="flex items-center gap-2 mt-2">
                             <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}</span>
                             <Sparkles size={12} className="text-[hsl(var(--warning))]" />
@@ -93,16 +93,16 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1.5 rounded-lg gap-1">
-                        <button onClick={prevMonth} aria-label="Mes anterior" className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={18} /></button>
+                    <div className="flex bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] p-1.5 rounded-lg gap-1">
+                        <button onClick={prevMonth} aria-label="Mes anterior" className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={18} /></button>
                         <button onClick={() => setCurrentDate(new Date())} className="px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors">Hoy</button>
-                        <button onClick={nextMonth} aria-label="Mes siguiente" className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={18} /></button>
+                        <button onClick={nextMonth} aria-label="Mes siguiente" className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={18} /></button>
                     </div>
                     {onCreate && (
                         <button
                             aria-label="Crear nuevo"
                             onClick={onCreate}
-                            className="p-4 bg-[hsl(var(--bg-muted))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg shadow-xl shadow-black/20 hover:scale-105 transition-all"
+                            className="p-4 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] rounded-lg shadow-xl shadow-black/20 hover:scale-105 transition-all"
                         >
                             <Plus size={20} />
                         </button>
@@ -120,9 +120,9 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                 </div>
 
                 {/* Days Grid */}
-                <div className="flex-1 grid grid-cols-7 gap-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg p-1 overflow-hidden border border-[hsl(var(--border))] dark:border-white/5">
+                <div className="flex-1 grid grid-cols-7 gap-1 bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] rounded-lg p-1 overflow-hidden border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
                     {days.map((day, idx) => {
-                        if (!day) return <div key={`empty-${idx}`} className="bg-white/40 dark:bg-black/20" />;
+                        if (!day) return <div key={`empty-${idx}`} className="bg-white/40 dark:bg-[hsl(var(--surface-1))]" />;
 
                         const dayEvents = getEventsForDay(day);
                         const isToday = day.toDateString() === new Date().toDateString();
@@ -161,7 +161,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                                 data-testid={`calendar-day-${day.getDate()}`}
                                 className={clsx(
                                     "min-h-[140px] p-4 flex flex-col gap-3 transition-all cursor-pointer group relative overflow-hidden",
-                                    isToday ? "bg-info-soft dark:bg-[hsl(var(--primary))]/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]",
+                                    isToday ? "bg-info-soft dark:bg-[hsl(var(--primary))]/10" : "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-1))]",
                                     dragOverDay?.toDateString() === day.toDateString() && "ring-2 ring-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--primary))]/10"
                                 )}
                             >
@@ -215,7 +215,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
             </div>
 
             {/* ─── Summary Footer ─── */}
-            <div className="px-4 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
+            <div className="px-4 py-1.5 border-t border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-center justify-between">
                 <div className="flex gap-3">
                     <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />

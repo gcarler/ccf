@@ -31,8 +31,8 @@ export function DSTooltip({
                             'z-[10000] select-none px-2.5 py-1.5 rounded font-sans',
                             'bg-[hsl(var(--bg-muted))]',
                             'text-2xs font-semibold uppercase tracking-wide',
-                            'text-[hsl(var(--text-primary))] dark:text-white',
-                            'border border-white/10',
+                            'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]',
+                            'border border-[hsl(var(--border))]',
                             'shadow-xl',
                             'animate-in fade-in zoom-in-95 duration-200'
                         )}

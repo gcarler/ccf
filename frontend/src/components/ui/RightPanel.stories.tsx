@@ -29,16 +29,16 @@ export const Default: Story = {
     width: 320,
     children: (
       <div className="p-4 space-y-3">
-        <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
-          <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Juan Pérez</p>
+        <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
+          <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">Juan Pérez</p>
           <p className="text-2xs text-[hsl(var(--text-secondary))]">Se unió al grupo &quot;Jóvenes&quot;</p>
         </div>
-        <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
-          <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">María González</p>
+        <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
+          <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">María González</p>
           <p className="text-2xs text-[hsl(var(--text-secondary))]">Completó la lección 5</p>
         </div>
-        <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
-          <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Carlos López</p>
+        <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
+          <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">Carlos López</p>
           <p className="text-2xs text-[hsl(var(--text-secondary))]">Actualizó su perfil</p>
         </div>
       </div>
@@ -54,8 +54,8 @@ export const WidePanel: Story = {
     width: 480,
     children: (
       <div className="p-4 space-y-3">
-        <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
-          <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Cambio reciente</p>
+        <div className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
+          <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">Cambio reciente</p>
           <p className="text-2xs text-[hsl(var(--text-secondary))]">Detalles adicionales del cambio realizado en el sistema</p>
         </div>
       </div>

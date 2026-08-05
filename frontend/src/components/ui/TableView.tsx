@@ -376,7 +376,7 @@ export default function TableView<T extends Record<string, any>>({
                 }
               }}
               placeholder="Buscar…"
-              className="w-full pl-7 pr-7 py-1.5 text-xs border border-[hsl(var(--border))] dark:border-white/10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-1 focus:ring-[hsl(var(--info))]"
+              className="w-full pl-7 pr-7 py-1.5 text-xs border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-1 focus:ring-[hsl(var(--info))]"
             />
             {quickFilter && (
               <button onClick={() => {
@@ -406,7 +406,7 @@ export default function TableView<T extends Record<string, any>>({
               )}
             </>
           )}
-          <button onClick={handleExport} title="Exportar CSV" className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors">
+          <button onClick={handleExport} title="Exportar CSV" className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-colors">
             <Download size={14} />
           </button>
           {onAddRow && (
@@ -418,7 +418,7 @@ export default function TableView<T extends Record<string, any>>({
       </div>
 
       {/* Grid */}
-      <div className="flex-1 min-w-0 min-h-[300px] rounded-xl overflow-hidden border border-[hsl(var(--border))] dark:border-white/10">
+      <div className="flex-1 min-w-0 min-h-[300px] rounded-xl overflow-hidden border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
         {!serverSide && data.length === 0 ? (
           <div className="flex items-center justify-center h-full text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))]">
             {emptyMessage}

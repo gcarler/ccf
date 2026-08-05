@@ -20,7 +20,7 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
         return (
             <button
                 onClick={toggleTheme}
-                className={`w-full flex items-center justify-between px-3 py-2 mx-2 rounded-md transition-all group cursor-pointer mb-0.5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))] ${className}`}
+                className={`w-full flex items-center justify-between px-3 py-2 mx-2 rounded-md transition-all group cursor-pointer mb-0.5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))] ${className}`}
                 title={isNight ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
             >
                 <div className="flex items-center gap-3">

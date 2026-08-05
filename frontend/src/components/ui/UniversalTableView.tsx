@@ -147,16 +147,16 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string; dot:
   realizada:     { label: 'Realizada',   bg: 'bg-success-soft',  text: 'text-success-text',  dot: 'bg-success'  },
   blocked:       { label: 'Bloqueado',   bg: 'bg-danger-soft',   text: 'text-danger-text',   dot: 'bg-danger'   },
   activo:        { label: 'Activo',      bg: 'bg-success-soft',  text: 'text-success-text',  dot: 'bg-success'  },
-  inactivo:      { label: 'Inactivo',    bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',         text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',     dot: 'bg-[hsl(var(--surface-2))]'    },
+  inactivo:      { label: 'Inactivo',    bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]',         text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',     dot: 'bg-[hsl(var(--surface-2))]'    },
   habilitado:    { label: 'Abierta',     bg: 'bg-success-soft',  text: 'text-success-text',  dot: 'bg-success'  },
   deshabilitado: { label: 'Bloqueada',   bg: 'bg-warning-soft',  text: 'text-warning-text',  dot: 'bg-warning'  },
-  cerrado:       { label: 'Cerrada',     bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',         text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',     dot: 'bg-[hsl(var(--surface-2))]'    },
+  cerrado:       { label: 'Cerrada',     bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]',         text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',     dot: 'bg-[hsl(var(--surface-2))]'    },
   cancelada:     { label: 'Cancelada',   bg: 'bg-danger-soft',   text: 'text-danger-text',   dot: 'bg-danger'   },
 };
 function getStatus(v: string) {
   return STATUS_MAP[String(v ?? '').toLowerCase()] ?? {
     label: String(v ?? '—'),
-    bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',
+    bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]',
     text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',
     dot: 'bg-[hsl(var(--surface-2))]',
   };
@@ -236,7 +236,7 @@ function ProgressCell({ value }: { value: unknown }) {
       aria-valuetext={`${pct}%`}
       aria-label={`Progreso: ${pct}%`}
     >
-      <div className="flex-1 h-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
+      <div className="flex-1 h-1.5 bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
         <div className={clsx('h-full rounded-full transition-all', color)} style={{ width: `${pct}%` }} />
       </div>
       <span className="font-semibold text-[hsl(var(--text-secondary))] tabular-nums text-xs w-7 text-right shrink-0">{pct}%</span>
@@ -312,7 +312,7 @@ function SkeletonRow({ cols }: { cols: number }) {
   return (
     <div className="flex items-center gap-4 px-4 py-2.5 border-b border-[hsl(var(--border-primary))] last:border-0">
       {Array.from({ length: cols }).map((_, i) => (
-        <div key={i} className="h-4 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse flex-1"
+        <div key={i} className="h-4 rounded-md bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] animate-pulse flex-1"
           style={{ maxWidth: i === 0 ? 200 : 100, opacity: Math.max(1 - i * 0.12, 0.2) }} />
       ))}
     </div>
@@ -507,10 +507,10 @@ export default function UniversalTableView<T extends { id: string | number }>({
     !!params.rowNode.data?.__isGroup, []);
 
   const fullWidthCellRenderer = useCallback(({ data: row }: { data: { __groupKey: string; __groupCount: number } }) => (
-    <div className="flex items-center gap-2.5 px-4 h-full border-b border-[hsl(var(--border-primary))] bg-[hsl(var(--surface-1))]/80 dark:bg-white/[0.02]">
-      <div className="w-1 h-4 rounded-full bg-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.06)]0 shrink-0" />
+    <div className="flex items-center gap-2.5 px-4 h-full border-b border-[hsl(var(--border-primary))] bg-[hsl(var(--surface-1))]/80 dark:bg-[hsl(var(--surface-1))]/80">
+      <div className="w-1 h-4 rounded-full bg-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.06)] shrink-0" />
       <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{row.__groupKey}</span>
-      <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full px-2 py-0.5 ml-0.5">
+      <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] dark:bg-[hsl(var(--surface-3))] rounded-full px-2 py-0.5 ml-0.5">
         {row.__groupCount}
       </span>
       {onAddItem && (
@@ -602,7 +602,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.97 }}
                   transition={{ duration: 0.12 }}
-                  className="absolute top-full left-0 mt-1.5 z-50 w-48 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 py-1.5 overflow-hidden"
+                  className="absolute top-full left-0 mt-1.5 z-50 w-48 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl shadow-2xl shadow-[hsl(var(--shadow-floating))] py-1.5 overflow-hidden"
                 >
                   <p className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] px-3 py-1.5">Agrupar por</p>
                   {[{ key: null, label: 'Sin agrupar' }, ...groupableCols.map(c => ({ key: String(c.key), label: c.label }))].map(opt => (
@@ -650,7 +650,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.97 }}
                   transition={{ duration: 0.12 }}
-                  className="absolute top-full right-0 mt-1.5 z-50 w-52 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 p-2"
+                  className="absolute top-full right-0 mt-1.5 z-50 w-52 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl shadow-2xl shadow-[hsl(var(--shadow-floating))] p-2"
                 >
                   <div className="flex items-center justify-between px-1.5 pb-1.5">
                     <p className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">Columnas visibles</p>
@@ -672,7 +672,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
                       >
                         <span className="text-sm font-medium text-[hsl(var(--text-primary))]">{col.label || key}</span>
                         <div className={clsx('size-4 rounded-md border-2 flex items-center justify-center transition-colors',
-                          !isHidden ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]' : 'border-[hsl(var(--border))] dark:border-white/20')}>
+                          !isHidden ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]' : 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))]')}>
                           {!isHidden && <span className="text-white text-2xs font-bold leading-none">✓</span>}
                         </div>
                       </button>
@@ -758,7 +758,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
           <div className="bg-[hsl(var(--bg-primary))] h-full">
             <div className="flex items-center px-4 border-b border-[hsl(var(--border-primary))] h-10 gap-4">
               {[200, 120, 90, 110, 80].map((w, i) => (
-                <div key={i} className="h-3 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse" style={{ width: w }} />
+                <div key={i} className="h-3 rounded-md bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] animate-pulse" style={{ width: w }} />
               ))}
             </div>
             {Array.from({ length: 8 }).map((_, i) => (
@@ -768,7 +768,7 @@ export default function UniversalTableView<T extends { id: string | number }>({
         ) : !hasData ? (
           /* Genuinely empty — no data at all */
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[hsl(var(--bg-primary))]">
-            <div className="w-12 h-12 rounded-xl bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] flex items-center justify-center">
               <TableIcon size={22} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
             </div>
             <div className="text-center">

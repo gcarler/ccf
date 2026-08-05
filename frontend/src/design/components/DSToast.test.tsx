@@ -6,7 +6,6 @@ import { DSToast, toast } from './DSToast';
 
 describe('DSToast', () => {
   beforeEach(() => {
-    // Clear all toasts before each test
     toast.getToasts().forEach((t) => toast.dismiss(t.id));
   });
 
@@ -58,9 +57,15 @@ describe('DSToast', () => {
     expect(handleAction).toHaveBeenCalledTimes(1);
   });
 
-  it('has correct aria attributes', () => {
-    render(<DSToast type="success" message="Message" />);
+  it('error toast has alert role with assertive live region', () => {
+    render(<DSToast type="error" message="Error" />);
     const toastEl = screen.getByRole('alert');
+    expect(toastEl).toHaveAttribute('aria-live', 'assertive');
+  });
+
+  it('success toast uses status role with polite live region', () => {
+    render(<DSToast type="success" message="Saved" />);
+    const toastEl = screen.getByRole('status');
     expect(toastEl).toHaveAttribute('aria-live', 'polite');
   });
 
@@ -72,7 +77,6 @@ describe('DSToast', () => {
 
 describe('toast function', () => {
   beforeEach(() => {
-    // Clear all toasts before each test
     toast.getToasts().forEach((t) => toast.dismiss(t.id));
   });
 

@@ -82,8 +82,6 @@ export default function RootLayout({
                             (function() {
                                 try {
                                     var theme = localStorage.getItem('theme-mode');
-                                    var supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
-                                    if (!theme && supportDarkMode) theme = 'night';
                                     if (theme === 'night') {
                                         document.documentElement.classList.add('dark');
                                         document.documentElement.setAttribute('data-theme', 'night');

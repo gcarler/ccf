@@ -29,19 +29,19 @@ export const Default: Story = {
     subtitle: 'Información completa de la persona',
     children: (
       <div className="space-y-3 p-1">
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]">
           <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] w-24">Nombre:</span>
-          <span className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Juan Pérez</span>
+          <span className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">Juan Pérez</span>
         </div>
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]">
           <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] w-24">Email:</span>
-          <span className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">juan@ejemplo.com</span>
+          <span className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">juan@ejemplo.com</span>
         </div>
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]">
           <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] w-24">Rol:</span>
-          <span className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Líder de Jóvenes</span>
+          <span className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">Líder de Jóvenes</span>
         </div>
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]">
           <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] w-24">Estado:</span>
           <span className="text-xs font-semibold text-[hsl(var(--success))]">Activo</span>
         </div>
@@ -105,8 +105,8 @@ export const LongContent: Story = {
     children: (
       <div className="space-y-2 p-1">
         {Array.from({ length: 15 }, (_, i) => (
-          <div key={i} className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5">
-            <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">Cambio #{i + 1}</p>
+          <div key={i} className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]">
+            <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">Cambio #{i + 1}</p>
             <p className="text-2xs text-[hsl(var(--text-secondary))]">Descripción del cambio realizado en el sistema.</p>
           </div>
         ))}
