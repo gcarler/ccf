@@ -127,10 +127,10 @@ export function CommandCenter() {
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                        className="relative w-full max-w-2xl overflow-hidden rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-white/80 dark:bg-[hsl(var(--surface-2))]/80 backdrop-blur-xl shadow-2xl shadow-black/50"
+                        className="relative w-full max-w-2xl overflow-hidden rounded-lg border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] bg-white/80 dark:bg-[hsl(var(--surface-2))]/80 backdrop-blur-xl shadow-2xl shadow-black/50"
                     >
                         <Command label="Command Menu" className="flex h-full w-full flex-col" shouldFilter={false}>
-                            <div className="flex items-center border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-1.5">
+                            <div className="flex items-center border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] px-3 py-1.5">
                                 <Search className={clsx("mr-3 h-5 w-5 shrink-0 transition-colors", isSearching ? "text-[hsl(var(--primary))] animate-pulse" : "text-[hsl(var(--text-secondary))]")} />
                                 <Command.Input
                                     value={search}
@@ -138,7 +138,7 @@ export function CommandCenter() {
                                     placeholder="Buscar proyectos, personas o tareas..."
                                     className="flex h-8 w-full bg-transparent text-lg font-bold outline-none placeholder:text-[hsl(var(--text-secondary))] placeholder:font-medium disabled:cursor-not-allowed disabled:opacity-50"
                                 />
-                                <div className="ml-auto hidden items-center gap-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-2))] dark:bg-black/20 px-2 py-1 font-semibold text-[hsl(var(--text-secondary))] md:flex">
+                                <div className="ml-auto hidden items-center gap-1 rounded-lg border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-1))] px-2 py-1 font-semibold text-[hsl(var(--text-secondary))] md:flex">
                                     ESC
                                 </div>
                             </div>
@@ -148,10 +148,10 @@ export function CommandCenter() {
 
                                 {!isSearching && search.length > 0 && results.length === 0 && visibleCommands.length === 0 && (
                                     <Command.Empty className="py-14 text-center">
-                                        <div className="size-7 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center mx-auto mb-4">
+                                        <div className="size-7 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] flex items-center justify-center mx-auto mb-4">
                                             <Search className="text-[hsl(var(--text-secondary))]" />
                                         </div>
-                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Sin resultados para &quot;{search}&quot;</p>
+                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">Sin resultados para &quot;{search}&quot;</p>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Intenta con otros términos o filtros.</p>
                                     </Command.Empty>
                                 )}
@@ -199,7 +199,7 @@ function Item({ icon: Icon, label, shortcut, description, onSelect }: { icon?: R
                 {description && <span className="text-xs font-normal text-[hsl(var(--text-secondary))] group-data-[selected='true']:text-white/80">{description}</span>}
             </div>
             {shortcut && (
-                <div className="flex items-center gap-1 rounded bg-[hsl(var(--surface-2))] dark:bg-black/20 px-1.5 py-0.5 font-semibold text-[hsl(var(--text-secondary))] group-data-[selected='true']:bg-white/20 group-data-[selected='true']:text-white">
+                <div className="flex items-center gap-1 rounded bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-1))] px-1.5 py-0.5 font-semibold text-[hsl(var(--text-secondary))] group-data-[selected='true']:bg-white/20 group-data-[selected='true']:text-white">
                     {shortcut.split(' ').map((s, i) => (
                         <span key={i}>{s}</span>
                     ))}
@@ -225,11 +225,11 @@ function ShortcutSheet({ onClose }: { onClose: () => void }) {
                 initial={{ opacity: 0, y: 12, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 12, scale: 0.98 }}
-                className="relative w-full max-w-lg rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--surface-2))]"
+                className="relative w-full max-w-lg rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-2xl dark:border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-2))]"
             >
                 <div className="mb-5">
                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Atajos</p>
-                    <h2 className="mt-1 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">Productividad global</h2>
+                    <h2 className="mt-1 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">Productividad global</h2>
                 </div>
                 <div className="space-y-2">
                     {[
@@ -237,9 +237,9 @@ function ShortcutSheet({ onClose }: { onClose: () => void }) {
                         ["Esc", "Cerrar panel o volver un nivel"],
                         ["Modo enfoque", "Disponible desde la barra superior o el centro de comandos"],
                     ].map(([shortcut, label]) => (
-                        <div key={shortcut} className="flex items-center justify-between gap-4 rounded-lg bg-[hsl(var(--surface-1))] px-4 py-3 dark:bg-white/5">
+                        <div key={shortcut} className="flex items-center justify-between gap-4 rounded-lg bg-[hsl(var(--surface-1))] px-4 py-3 dark:bg-[hsl(var(--surface-2))]">
                             <span className="text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
-                            <span className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1 font-semibold text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-black/20 dark:text-[hsl(var(--text-secondary))]">
+                            <span className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1 font-semibold text-[hsl(var(--text-secondary))] dark:border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))]">
                                 {shortcut}
                             </span>
                         </div>

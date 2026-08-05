@@ -52,13 +52,14 @@ interface GanttBarItemProps {
     item: GanttItem;
     pos: number;
     width: number;
+    pxPerDay: number;
     idx: number;
     onClick?: (item: GanttItem) => void;
     onMove?: (item: GanttItem, start: string, end: string) => void;
     onResize?: (item: GanttItem, end: string) => void;
 }
 
-function GanttBarItem({ item, pos, width, idx, onClick, onMove, onResize }: GanttBarItemProps) {
+function GanttBarItem({ item, pos, width, pxPerDay, idx, onClick, onMove, onResize }: GanttBarItemProps) {
     const [dragState, setDragState] = useState<{type: 'move'|'resize'; startX: number; currentX: number} | null>(null);
 
     const handlePointerDown = (e: React.PointerEvent, type: 'move'|'resize') => {
@@ -78,7 +79,7 @@ function GanttBarItem({ item, pos, width, idx, onClick, onMove, onResize }: Gant
         if (!dragState) return;
         (e.target as Element).releasePointerCapture(e.pointerId);
         const rawDeltaX = dragState.currentX - dragState.startX;
-        const deltaDays = Math.round(rawDeltaX / 160);
+        const deltaDays = Math.round(rawDeltaX / pxPerDay);
 
         if (deltaDays !== 0) {
             if (dragState.type === 'move' && onMove) {
@@ -155,13 +156,17 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [zoom, setZoom] = useState<'day' | 'week' | 'month'>('week');
 
+    const pxPerDay = zoom === 'day' ? 220 : zoom === 'week' ? 160 : 70;
+    const totalDays = zoom === 'day' ? 21 : zoom === 'week' ? 30 : 90;
+
     // Generate scale (current month as default)
     const today = new Date();
-    const days = Array.from({ length: 30 }, (_, i) => {
+    const days = React.useMemo(() => Array.from({ length: totalDays }, (_, i) => {
         const d = new Date(today);
         d.setDate(today.getDate() + i - 5); // Start 5 days ago
         return d;
-    });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }), [totalDays]);
 
     const scroll = (direction: 'left' | 'right') => {
         if (!scrollContainerRef.current) return;
@@ -175,42 +180,42 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
         if (startIndex === -1) {
             // Check if before or after
             if (date < days[0]) return -100;
-            return days.length * 160;
+            return days.length * pxPerDay;
         }
-        return startIndex * 160; // 160px per day
+        return startIndex * pxPerDay;
     };
 
     const getWidth = (start: string, end: string) => {
         const s = new Date(`${start}T12:00:00`);
         const e = new Date(`${end}T12:00:00`);
         const diff = Math.max(1, Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)));
-        return (diff + 1) * 160 - 20; // gap handling
+        return (diff + 1) * pxPerDay - 20; // gap handling
     };
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] overflow-hidden shadow-sm">
 
             {/* ─── Header de Controles ─── */}
-            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--surface-1))]/50">
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-1 shadow-sm">
+                    <div className="flex bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] p-1 shadow-sm">
                         <button
                             onClick={() => setZoom('day')}
                             aria-pressed={zoom === 'day'}
-                            className={clsx("px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'day' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
+                            className={clsx("px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'day' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] dark:bg-[hsl(var(--surface-2))]" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Día</button>
                         <button
                             onClick={() => setZoom('week')}
                             aria-pressed={zoom === 'week'}
-                            className={clsx("px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'week' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
+                            className={clsx("px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'week' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] dark:bg-[hsl(var(--surface-2))]" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Semana</button>
                         <button
                             onClick={() => setZoom('month')}
                             aria-pressed={zoom === 'month'}
-                            className={clsx("px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'month' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white dark:bg-white/10" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
+                            className={clsx("px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all", zoom === 'month' ? "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] dark:bg-[hsl(var(--surface-2))]" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]")}
                         >Mes</button>
                     </div>
-                    <div className="h-6 w-px bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                    <div className="h-6 w-px bg-[hsl(var(--surface-3))] dark:bg-[hsl(var(--surface-3))]" />
                     <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <Layout size={14} className="text-[hsl(var(--primary))]" /> {moduleName}
                     </p>
@@ -218,13 +223,13 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
 
                 <div className="flex items-center gap-2">
                     <div className="flex gap-1.5 mr-4">
-                        <button aria-label="Desplazar izquierda" onClick={() => scroll('left')} className="p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={16} /></button>
-                        <button aria-label="Desplazar derecha" onClick={() => scroll('right')} className="p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={16} /></button>
+                        <button aria-label="Desplazar izquierda" onClick={() => scroll('left')} className="p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={16} /></button>
+                        <button aria-label="Desplazar derecha" onClick={() => scroll('right')} className="p-2.5 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={16} /></button>
                     </div>
                     {onOptimize && (
                         <button
                             onClick={onOptimize}
-                            className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white rounded-md text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 shadow-xl shadow-[hsl(var(--info)/10%)] hover:scale-105 transition-all"
+                            className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 shadow-xl shadow-[hsl(var(--info)/10%)] hover:scale-105 transition-all"
                         >
                             <Zap size={14} /> Optimus Brain
                         </button>
@@ -244,9 +249,9 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                         <div className="flex border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] sticky top-0 z-20">
                             {days.map((day, i) => (
                                 <div key={i} className={clsx(
-                                    "w-[160px] p-3 flex flex-col gap-1 border-r border-[hsl(var(--border))] dark:border-white/5",
+                                    "p-3 flex flex-col gap-1 border-r border-[hsl(var(--border))] dark:border-[hsl(var(--border))]",
                                     day.toDateString() === today.toDateString() ? "bg-info-soft dark:bg-[hsl(var(--info)/0.05)] text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"
-                                )}>
+                                )} style={{ width: pxPerDay }}>
                                     <span className="text-2xs font-semibold uppercase tracking-tighter opacity-60">
                                         {day.toLocaleDateString('es-ES', { weekday: 'long' })}
                                     </span>
@@ -262,7 +267,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                             {/* Vertical Grid Lines */}
                             <div className="absolute inset-0 flex">
                                 {days.map((_, i) => (
-                                    <div key={i} className="w-[160px] h-full border-r border-[hsl(var(--border))] dark:border-white/5 pointer-events-none" />
+                                    <div key={i} className="h-full border-r border-[hsl(var(--border))] dark:border-[hsl(var(--border))] pointer-events-none" style={{ width: pxPerDay }} />
                                 ))}
                             </div>
 
@@ -286,6 +291,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                                                     item={item}
                                                     pos={pos}
                                                     width={width}
+                                                    pxPerDay={pxPerDay}
                                                     idx={idx}
                                                     onClick={onItemClick}
                                                     onMove={onItemMove}
@@ -302,7 +308,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
             </div>
 
             {/* ─── Footer Informativo ─── */}
-            <div className="px-4 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] flex items-center justify-between">
+            <div className="px-4 py-1.5 border-t border-[hsl(var(--border))] dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] flex items-center justify-between">
                 <div className="flex gap-3">
                     <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />

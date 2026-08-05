@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -50,7 +50,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
     const editor = useEditor({
         extensions: [
             StarterKit,
-            Placeholder.configure({ placeholder: "Comienza a redactar la documentacion oficial para este espacio de trabajo..." }),
+            Placeholder.configure({ placeholder: "Comienza a redactar la documentación oficial para este espacio de trabajo..." }),
             TaskList,
             TaskItem.configure({ nested: true }),
         ],
@@ -65,16 +65,21 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
         },
     });
 
+    useEffect(() => {
+        if (editor && content && !editor.isDestroyed && editor.getHTML() !== content) {
+            editor.commands.setContent(content, { emitUpdate: false });
+        }
+    }, [editor, content]);
+
     const handleSave = useCallback(async () => {
-        // Sync editor content before saving
+        const freshContent = editor ? editor.getHTML() : content;
         if (editor) {
-            setContent(editor.getHTML());
+            setContent(freshContent);
         }
         try {
             await saveNow();
-            onSave?.(content);
+            onSave?.(freshContent);
         } catch {
-            // error handled in hook
         }
     }, [editor, saveNow, onSave, content, setContent]);
 
@@ -109,20 +114,20 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
     }, [editor, content, moduleName]);
 
     return (
-        <div className="flex min-h-[400px] flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm">
-            <aside className="w-80 border-r border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] flex flex-col">
-                <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center gap-4">
+        <div className="flex min-h-[400px] flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] overflow-hidden shadow-sm">
+            <aside className="w-80 border-r border-[hsl(var(--border))] dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] flex flex-col">
+                <div className="p-4 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-center gap-4">
                     <div className="size-10 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-[hsl(var(--primary)/0.2)]">
                         <BookOpen size={20} />
                     </div>
                     <div>
-                        <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Wiki {moduleName}</h4>
+                        <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]">Wiki {moduleName}</h4>
                         <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{moduleName}</p>
                     </div>
                 </div>
 
                 <div className="p-4 space-y-2 flex-1 overflow-y-auto">
-                    <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--info)/0.2)] dark:border-[hsl(var(--info)/0.2)] rounded-lg shadow-sm">
+                    <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--info)/0.2)] dark:border-[hsl(var(--info)/0.2)] rounded-lg shadow-sm">
                         <div className="flex items-center gap-3 text-[hsl(var(--primary))] mb-1">
                             <FileText size={16} />
                             <span className="text-xs font-semibold uppercase tracking-wide">General</span>
@@ -136,9 +141,9 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                             role="button"
                             tabIndex={0}
                             aria-label={`Ir a ${item.label}`}
-                            className="p-4 flex items-center justify-between group hover:bg-[hsl(var(--surface-3))]/50 dark:hover:bg-white/5 rounded-lg transition-all cursor-pointer"
+                            className="p-4 flex items-center justify-between group hover:bg-[hsl(var(--surface-3))]/50 dark:hover:bg-[hsl(var(--surface-2))] rounded-lg transition-all cursor-pointer"
                             onClick={() => {/* future: navigate to section */}}
-                            onKeyDown={(e) => { if (e.key === 'Enter') {/* future */} }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); /* future */ } }}
                         >
                             <div className="flex items-center gap-3">
                                 <FileText size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
@@ -149,10 +154,10 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                     ))}
                 </div>
 
-                <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-2))]/50 dark:bg-black/20">
+                <div className="p-3 border-t border-[hsl(var(--border))] dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/50 dark:bg-[hsl(var(--surface-1))]">
                     <button
                         aria-label="Vincular recursos"
-                        className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:opacity-80 transition-all"
+                        className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:opacity-80 transition-all"
                         onClick={() => {/* future: open resource linker */}}
                     >
                         <Link2 size={14} /> Vincular Recursos
@@ -161,10 +166,10 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
             </aside>
 
             <main className="flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
-                <header className="px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between gap-2 flex-wrap">
+                <header className="px-4 py-2 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-4">
                         <ShieldCheck size={18} className="text-[hsl(var(--primary))]" />
-                        <h2 className="text-xl font-bold italic tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none">Wiki {moduleName}</h2>
+                        <h2 className="text-xl font-bold italic tracking-tighter text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] uppercase leading-none">Wiki {moduleName}</h2>
                     </div>
                     <div className="flex items-center gap-3">
                         {lastSaved && (
@@ -177,7 +182,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                             aria-label="Vista previa"
                             title={viewMode === 'edit' ? 'Vista previa' : 'Editar'}
                             onClick={() => setViewMode(m => m === 'edit' ? 'preview' : 'edit')}
-                            className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 hover:opacity-80 transition-all"
+                            className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 hover:opacity-80 transition-all"
                         >
                             <Eye size={14} />
                             {viewMode === 'edit' ? 'Vista previa' : 'Editar'}
@@ -186,7 +191,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                             aria-label="Exportar"
                             title="Exportar documento"
                             onClick={handleExportHtml}
-                            className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 hover:opacity-80 transition-all"
+                            className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 hover:opacity-80 transition-all"
                         >
                             <Download size={14} />
                             Exportar
@@ -204,7 +209,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
 
                 <div className="flex-1 p-4 relative overflow-y-auto">
                     <div className="absolute top-10 right-10 opacity-5 pointer-events-none">
-                        <Zap size={200} fill="currentColor" className="text-[hsl(var(--primary))]" />
+                        <Zap size={200} fill="currentColor" className="text-[hsl(var(--primary))]" aria-hidden="true" focusable="false" />
                     </div>
                     {isLoading ? (
                         <div className="flex h-full items-center justify-center gap-2 text-sm font-bold text-[hsl(var(--text-secondary))]">
@@ -226,7 +231,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                     )}
                 </div>
 
-                <footer className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-transparent flex items-center justify-between">
+                <footer className="p-3 border-t border-[hsl(var(--border))] dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:bg-transparent flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
                             <Clock size={14} className="text-[hsl(var(--text-secondary))]" />

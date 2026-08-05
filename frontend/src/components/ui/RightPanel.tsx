@@ -71,10 +71,10 @@ function RightPanel({
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
             style={{ width: `min(${width}px, 100vw)`, minWidth: 0, maxWidth: '100vw' }}
             className={clsx(
-                'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] border-l border-[hsl(var(--border))] dark:border-white/5',
+                'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] border-l border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
                 isControlled || rightMode === 'overlay'
-                    ? 'fixed right-0 top-10 h-[calc(100vh-2.5rem)] z-[35] shadow-[-24px_0_60px_rgba(0,0,0,0.12)]'
-                    : 'relative h-full z-[25] shadow-[-8px_0_24px_rgba(0,0,0,0.06)]'
+                    ? 'fixed right-0 top-10 h-[calc(100vh-2.5rem)] z-[35] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]'
+                    : 'relative h-full z-[25] shadow-[-8px_0_24px_hsl(var(--shadow-floating))]'
             )}
             tabIndex={-1}
             role={isOverlay ? 'dialog' : 'complementary'}
@@ -82,7 +82,7 @@ function RightPanel({
             aria-label={title}
         >
             {/* Panel header */}
-            <div className="h-10 flex items-center justify-between px-4 border-b border-[hsl(var(--border))] dark:border-white/5 shrink-0">
+            <div className="h-10 flex items-center justify-between px-4 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] shrink-0">
                 <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     {title}
                 </span>
@@ -90,7 +90,7 @@ function RightPanel({
                     <button
                         onClick={handleClose}
                         aria-label="Cerrar panel"
-                        className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+                        className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
                     >
                         <X size={14} />
                     </button>

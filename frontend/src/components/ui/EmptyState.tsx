@@ -21,12 +21,12 @@ export default function EmptyState({
 }: EmptyStateProps) {
     return (
         <div className="flex flex-col items-center justify-center p-4 text-center space-y-3">
-            <div aria-hidden="true" className="size-8 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-primary))]">
+            <div aria-hidden="true" className="size-8 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-primary))]">
                 <Icon size={40} strokeWidth={1.5} />
             </div>
 
             <div className="space-y-2 max-w-xs">
-                <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{title}</h3>
+                <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] tracking-tight">{title}</h3>
                 <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">{description}</p>
             </div>
 

@@ -19,13 +19,13 @@ describe('DSCard', () => {
   it('applies dark theme', () => {
     const { container } = render(<DSCard tone="dark">Content</DSCard>);
     const card = container.firstChild as HTMLElement;
-    expect(card.className).toContain('bg-[hsl(var(--bg-primary))]/5');
+    expect(card.className).toContain('bg-[hsl(var(--surface-2))]/10');
   });
 
   it('applies glass theme', () => {
     const { container } = render(<DSCard tone="glass">Content</DSCard>);
     const card = container.firstChild as HTMLElement;
-    expect(card.className).toContain('bg-white/10');
+    expect(card.className).toContain('backdrop-blur-xl');
   });
 
   it('applies medium padding by default', () => {

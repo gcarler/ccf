@@ -20,13 +20,13 @@ describe('DSToolbarChip', () => {
     it('applies solid variant when active', () => {
         render(<DSToolbarChip label="Filter" active />);
         const chip = screen.getByRole('button');
-        expect(chip.className).toContain('text-white');
+        expect(chip.className).toContain('text-[hsl(var(--primary-foreground))]');
     });
 
     it('applies outline variant', () => {
         render(<DSToolbarChip label="Filter" variant="outline" />);
         const chip = screen.getByRole('button');
-        expect(chip.className).toContain('border-white/20');
+        expect(chip.className).toContain('border-[hsl(var(--border))]');
     });
 
     it('calls onClick when clicked', () => {

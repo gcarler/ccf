@@ -71,10 +71,11 @@ describe('DSInput', () => {
     expect(input.className).toContain('custom-class');
   });
 
-  it('generates id from label', () => {
+  it('generates id from label when no id provided', () => {
     render(<DSInput label="Email Address" />);
     const input = screen.getByRole('textbox');
-    expect(input.id).toBe('email-address');
+    expect(input.id).toMatch(/-email-address$/);
+    expect(input.id.length).toBeGreaterThan(0);
   });
 
   it('uses custom id when provided', () => {

@@ -49,8 +49,6 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         const saved = localStorage.getItem('theme-mode') as ThemeMode | null;
         if (saved && themeTokens[saved]) {
             setThemeState(saved);
-        } else if (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            setThemeState('night');
         }
         // Mark as mounted on next render cycle with the correct initial theme
         setIsMounted(true);
