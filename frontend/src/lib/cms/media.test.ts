@@ -12,7 +12,7 @@ describe("getCmsMediaUrl", () => {
     expect(getCmsMediaUrl(url)).toBe(url);
   });
 
-  it("normalises the legacy /static/ form to /api/static/", () => {
+  it("normalises the anterior /static/ form to /api/static/", () => {
     expect(getCmsMediaUrl("/static/cms/pastores/abc.webp")).toBe("/api/static/cms/pastores/abc.webp");
   });
 
