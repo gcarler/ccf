@@ -263,9 +263,9 @@ def resolve_participant_role(
     if requested is not None:
         return normalize_participant_role(requested)
     if reg is not None and reg.participant_role_code:
-        return reg.participant_role_code
+        return normalize_participant_role(reg.participant_role_code)
     if event.participant_role_code:
-        return event.participant_role_code
+        return normalize_participant_role(event.participant_role_code)
     return DEFAULT_PARTICIPANT_ROLE
 
 
