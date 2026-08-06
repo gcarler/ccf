@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { QrCode, Check, X, Loader2, Calendar, ShieldCheck } from 'lucide-react';
+import { QrCode, Check, X, Loader2, Calendar, ShieldCheck, Users } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { apiFetch, ApiError } from '@/lib/http';
+import { participantRoleLabel } from '@/app/plataforma/evangelism/types';
 
 type RegistrationStatus =
     | 'PENDING'
@@ -16,15 +17,32 @@ type RegistrationStatus =
 
 type RegistrationResult = {
     id: string;
+    persona_name: string | null;
     registration_status: RegistrationStatus;
     qr_token: string | null;
     waiting_list_position: number | null;
     cancelled_at: string | null;
     confirmed_at: string | null;
     check_in_at: string | null;
+    // plan_clasificador_contextual: rol efectivo de la inscripción.
+    participant_role_code: string | null;
 };
 
-function QrTicket({ token, eventId, cancelToken }: { token: string; eventId: string; cancelToken: string }) {
+function QrTicket({
+    token,
+    eventId,
+    cancelToken,
+    participantRoleCode,
+    registrationStatus,
+    personName,
+}: {
+    token: string;
+    eventId: string;
+    cancelToken: string;
+    participantRoleCode: string | null;
+    registrationStatus: RegistrationStatus | null;
+    personName: string | null;
+}) {
     const [error, setError] = useState<string | null>(null);
     const [cancelling, setCancelling] = useState(false);
     const [cancelled, setCancelled] = useState(false);
@@ -83,6 +101,25 @@ function QrTicket({ token, eventId, cancelToken }: { token: string; eventId: str
                 <QrCode size={14} /> Presenta este código en el ingreso
             </div>
 
+            {personName && (
+                <p className="text-sm font-bold text-[hsl(var(--text-primary))] -mt-2">{personName}</p>
+            )}
+            {registrationStatus && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide"
+                    style={
+                        registrationStatus === 'CONFIRMED' || registrationStatus === 'CHECKED_IN'
+                            ? { background: 'hsl(var(--success-muted))', color: 'hsl(var(--success-text))' }
+                            : { background: 'hsl(var(--warning-muted))', color: 'hsl(var(--warning-text))' }
+                    }>
+                    {registrationStatus === 'CONFIRMED' ? 'Confirmado' : registrationStatus === 'CHECKED_IN' ? 'Check-in realizado' : registrationStatus}
+                </span>
+            )}
+            {participantRoleCode && (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--info))]/30 bg-[hsl(var(--info-muted))] text-[hsl(var(--info-text))] text-2xs font-bold uppercase tracking-wide">
+                    <Users size={13} /> Rol: {participantRoleLabel(participantRoleCode)}
+                </div>
+            )}
+
             {error && (
                 <div className="p-4 bg-danger-soft text-danger-text rounded-lg text-sm font-bold w-full">{error}</div>
             )}
@@ -132,6 +169,37 @@ export default function PublicEventQrPage() {
     const token = searchParams?.get('token') ?? '';
     const cancelToken = searchParams?.get('cancel') ?? '';
 
+    // plan_clasificador_contextual §7: el ticket se valida contra el endpoint
+    // público /ticket (hash-bound) para confirmar que el QR es válido y
+    // mostrar el rol contextual de la inscripción.
+    const [ticket, setTicket] = useState<RegistrationResult | null>(null);
+    const [ticketLoading, setTicketLoading] = useState(true);
+    const [ticketError, setTicketError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!token) return;
+        let cancelled = false;
+        setTicketLoading(true);
+        setTicketError(null);
+        apiFetch<RegistrationResult>(`/public/events/${eventId}/ticket?token=${encodeURIComponent(token)}`, { silent: true })
+            .then((data) => {
+                if (!cancelled) setTicket(data);
+            })
+            .catch((err: unknown) => {
+                if (cancelled) return;
+                if (err instanceof ApiError) {
+                    const detail = err.detail as { code?: string; detail?: string } | undefined;
+                    setTicketError(detail?.detail || 'El código QR no es válido o ya no está activo.');
+                } else {
+                    setTicketError('No pudimos validar el código QR.');
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setTicketLoading(false);
+            });
+        return () => { cancelled = true; };
+    }, [eventId, token]);
+
     if (!token) {
         return (
             <div className="min-h-screen bg-[hsl(var(--surface-1))] flex items-center justify-center p-4">
@@ -164,7 +232,29 @@ export default function PublicEventQrPage() {
                     </p>
                 </div>
 
-                <QrTicket token={token} eventId={eventId} cancelToken={cancelToken} />
+                {ticketLoading ? (
+                    <div className="flex flex-col items-center justify-center text-center space-y-3 py-10">
+                        <Loader2 size={28} className="animate-spin text-[hsl(var(--primary))]" />
+                        <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">Validando tu código...</p>
+                    </div>
+                ) : ticketError ? (
+                    <div className="flex flex-col items-center justify-center text-center space-y-3 py-6">
+                        <div className="w-16 h-16 rounded-full bg-danger-soft text-danger-text flex items-center justify-center">
+                            <X size={28} />
+                        </div>
+                        <p className="text-sm font-bold text-[hsl(var(--text-primary))]">Código no válido</p>
+                        <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">{ticketError}</p>
+                    </div>
+                ) : (
+                    <QrTicket
+                        token={token}
+                        eventId={eventId}
+                        cancelToken={cancelToken}
+                        participantRoleCode={ticket?.participant_role_code ?? null}
+                        registrationStatus={ticket?.registration_status ?? null}
+                        personName={ticket?.persona_name ?? null}
+                    />
+                )}
             </div>
         </div>
     );

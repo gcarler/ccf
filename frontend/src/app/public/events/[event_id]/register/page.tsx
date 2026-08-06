@@ -8,6 +8,7 @@ import { apiFetch, ApiError } from '@/lib/http';
 import { getPublicCmsForm } from '@/lib/cms/v2';
 import CmsFormRenderer, { type CmsFormRendererApi } from '@/components/public/cms/CmsFormRenderer';
 import type { CmsFormPublicRead } from '@/types/cms-v2';
+import { participantRoleLabel } from '@/app/plataforma/evangelism/types';
 
 type PublicEventInfo = {
     id: string;
@@ -28,6 +29,8 @@ type PublicEventInfo = {
     is_open: boolean;
     capacity_remaining: number | null;
     form_id: string | null;
+    // plan_clasificador_contextual: rol por defecto del evento.
+    participant_role_code: string | null;
 };
 
 type RegistrationStatus =
@@ -59,6 +62,8 @@ type RegistrationResult = {
     waiting_list_position: number | null;
     reminder_sent_count: number;
     last_reminder_sent_at: string | null;
+    // plan_clasificador_contextual: rol efectivo de la inscripción.
+    participant_role_code: string | null;
 };
 
 const STATUS_LABEL: Record<RegistrationStatus, string> = {
@@ -141,6 +146,11 @@ function RegisterSuccess({ result, event, baseUrl }: { result: RegistrationResul
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                         <QrCode size={14} /> Presenta este código en el ingreso
                     </div>
+                    {result.participant_role_code && (
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--info))]/30 bg-[hsl(var(--info-muted))] text-[hsl(var(--info-text))] text-2xs font-bold uppercase tracking-wide">
+                            <Users size={13} /> Rol en el evento: {participantRoleLabel(result.participant_role_code)}
+                        </div>
+                    )}
                 </>
             )}
 
@@ -566,6 +576,11 @@ export default function PublicEventRegistrationPage() {
                         <h1 className="text-lg sm:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">{event.name}</h1>
                         {event.description && (
                             <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-2 max-w-md mx-auto">{event.description}</p>
+                        )}
+                        {event.participant_role_code && (
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[hsl(var(--info))]/30 bg-[hsl(var(--info-muted))] text-[hsl(var(--info-text))] text-2xs font-bold uppercase tracking-wide mt-3">
+                                <Users size={12} /> Participación: {participantRoleLabel(event.participant_role_code)}
+                            </div>
                         )}
                     </div>
                 </div>
