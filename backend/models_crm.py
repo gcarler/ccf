@@ -6,7 +6,7 @@ import uuid as _uuid
 from datetime import date
 
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy import Index
+from sqlalchemy import Index, text
 from sqlalchemy import func as _func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -101,6 +101,21 @@ class CrmEvent(Base):
     target_role_ids = Column(JSON, nullable=True)
     target_persona_ids = Column(JSON, nullable=True)
     fixed_date = Column(DateTime(timezone=True), nullable=True)
+
+    # Pre-registro de eventos masivos. Los defaults mantienen el comportamiento
+    # anterior para eventos que no usan inscripción.
+    requires_registration = Column(Boolean, nullable=False, default=False, server_default="false")
+    requires_email_verification = Column(Boolean, nullable=False, default=False, server_default="false")
+    registration_opens_at = Column(DateTime(timezone=True), nullable=True)
+    registration_closes_at = Column(DateTime(timezone=True), nullable=True)
+    capacity_max = Column(Integer, nullable=True)
+    waiting_list_enabled = Column(Boolean, nullable=False, default=False, server_default="false")
+    qr_mode = Column(String(20), nullable=False, default="PER_REGISTRANT", server_default="PER_REGISTRANT")
+    contact_person = Column(String(255), nullable=True)
+    settings_json = Column(JSON, default=dict)
+    form_id = Column(UUID(as_uuid=True), ForeignKey("cms_forms.id", ondelete="SET NULL"), nullable=True)
+    participant_role_code = Column(String(40), nullable=True, index=True)
+
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
@@ -112,6 +127,8 @@ class CrmEvent(Base):
 
     attendances = relationship("EventAttendance", back_populates="event")
     assignments = relationship("EventAssignment", back_populates="event")
+    registrations = relationship("EventRegistration", back_populates="event", cascade="all, delete-orphan")
+    campaigns = relationship("EventCampaign", back_populates="event", cascade="all, delete-orphan")
 
 
 class EventAssignment(Base):
@@ -173,6 +190,83 @@ class EventAttendance(Base):
 
     event = relationship("CrmEvent", back_populates="attendances")
     persona = relationship("Persona")
+
+
+class EventRegistration(Base):
+    """Inscripción de una Persona a un evento, con ciclo de vida y QR."""
+
+    __tablename__ = "event_registrations"
+    __table_args__ = (
+        UniqueConstraint("event_id", "persona_id", name="uq_event_reg_persona"),
+        Index("ix_reg_event_status", "event_id", "registration_status"),
+        Index("ix_reg_qr", "qr_token_hash"),
+        Index("ix_reg_deleted_at", "deleted_at"),
+        Index(
+            "uq_event_reg_waitlist_position",
+            "event_id",
+            "waiting_list_position",
+            postgresql_where=text("waiting_list_position IS NOT NULL"),
+            sqlite_where=text("waiting_list_position IS NOT NULL"),
+        ),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    event_id = Column(UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
+    participant_role_code = Column(String(40), nullable=True, index=True)
+    registration_status = Column(String(20), nullable=False, default="PENDING")
+    qr_token = Column(String(128), nullable=True, unique=True, index=True)
+    qr_token_hash = Column(String(128), nullable=True, index=True)
+    qr_generated_at = Column(DateTime(timezone=True), nullable=True)
+    registered_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    confirmed_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+    check_in_at = Column(DateTime(timezone=True), nullable=True)
+    check_out_at = Column(DateTime(timezone=True), nullable=True)
+    checked_in_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    source = Column(String(30), nullable=False, default="public_form")
+    extras = Column(JSON, default=dict)
+    waiting_list_position = Column(Integer, nullable=True)
+    reminder_sent_count = Column(Integer, nullable=False, default=0)
+    last_reminder_sent_at = Column(DateTime(timezone=True), nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+
+    event = relationship("CrmEvent", back_populates="registrations")
+    persona = relationship("Persona", foreign_keys=[persona_id])
+    checked_in_by_persona = relationship("Persona", foreign_keys=[checked_in_by])
+
+
+class EventCampaign(Base):
+    """Campaña de comunicación ligada a un evento."""
+
+    __tablename__ = "event_campaigns"
+    __table_args__ = (
+        Index("ix_campaign_event", "event_id"),
+        Index("ix_campaign_active", "is_active"),
+        Index("ix_campaign_deleted_at", "deleted_at"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    event_id = Column(UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(200), nullable=False)
+    plantilla_id = Column(UUID(as_uuid=True), ForeignKey("crm_plantillas_mensaje.id", ondelete="SET NULL"), nullable=True)
+    canal = Column(String(20), nullable=False, default="EMAIL")
+    trigger_type = Column(String(50), nullable=False, default="MANUAL")
+    trigger_offset_minutes = Column(Integer, nullable=True)
+    target_status = Column(JSON, default=list)
+    sent_count = Column(Integer, nullable=False, default=0)
+    last_sent_at = Column(DateTime(timezone=True), nullable=True)
+    created_by_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    event = relationship("CrmEvent", back_populates="campaigns")
+    plantilla = relationship("PlantillaMensaje")
+    created_by = relationship("Persona", foreign_keys=[created_by_id])
 
 
 class CounselingTicket(Base):

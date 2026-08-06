@@ -25,6 +25,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, lazyload
 
 from backend import crud, models, schemas
+from backend.api.cms_v2 import _defaults as _D
 from backend.core.cache_v2 import cached_public  # noqa: F401
 from backend.core.permissions import normalize_role
 from backend.exceptions.cms import (
@@ -69,24 +70,20 @@ def _commit_or_raise_conflict(db: Session, detail: str = "resource already exist
     re-raise post-rollback para que salga como 500 (no como falso 409).
     Antes de este fix, el helper tragaba TODA ``IntegrityError`` como 409
     — enmascaraba bugs.
+
+    Unique-violation detection delegated to
+    ``backend.crud._utils._is_unique_violation`` — single source of truth
+    compartido con ``crud/cms.py`` y ``crud/academy.py`` (consolidación
+    de las 3 copias, 2026-08-05). Esta capa CMS preserva el raise de
+    ``CmsConflictError`` (dominio CMS) en vez de ``HTTPException``.
     """
     try:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        # Only swallow unique-key violations (Postgres 23505 / SQLite
-        # "UNIQUE constraint failed"). Everything else is a genuine bug
-        # that should not be masked as a conflict.
-        is_unique_violation = False
-        orig = getattr(exc, "orig", None)
-        if orig is not None:
-            pgcode = getattr(orig, "pgcode", None)
-            if pgcode == "23505":
-                is_unique_violation = True
-            # SQLite exposes unique violations via IntegrityError message
-            elif "UNIQUE constraint failed" in str(orig):
-                is_unique_violation = True
-        if not is_unique_violation:
+        from backend.crud._utils import _is_unique_violation
+
+        if not _is_unique_violation(exc):
             raise
         logger.debug("Swallowed concurrent create unique-key conflict: %s", exc)
         raise CmsConflictError(detail=detail)
@@ -378,10 +375,75 @@ def _get_system_vars_batch(db: Session, site_key: str, var_keys: tuple[str, ...]
     return cached
 
 
+def _hydrate_testimonials_section(db: Session, props: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Hidrata la sección ``testimonials`` desde los ``CmsPost`` publicados.
+
+    Fase 2 (muro de gratitud): la sección se hidrata SIEMPRE desde los
+    ``CmsPost`` publicados de la categoría canónica ``testimonials`` a
+    menos que el editor haya guardado items manuales explícitos en
+    ``props``.
+
+    Extraído de ``_build_section_defaults`` (consolidación de deuda técnica
+    🟠#3, 2026-08-05): el bloque inline acoplaba serialización de autores
+    con la lógica de defaults del router. Ahora el helper es responsable
+    de (a) la query con ``joinedload`` + categoría canónica, (b) el
+    mapa CmsPost → dict público (``content``, ``author``, ``emotion``,
+    ``image_url``).
+
+    El frontend ``TestimonialsSection`` lee ``props.items`` (vía
+    ``cmsItems``); antes del fix se devolvía ``testimonials`` y la sección
+    quedaba vacía en el render público.
+    """
+    base = dict(props or {})
+    manual = base.get("items") or base.get("testimonials")
+    if isinstance(manual, list) and manual:
+        return base
+
+    from sqlalchemy.orm import joinedload
+
+    rows = (
+        db.query(models.CmsPost)
+        .options(lazyload("*"))
+        .options(joinedload(models.CmsPost.author_persona))
+        .join(models.CmsPost.categories)
+        .filter(models.CmsCategory.slug == "testimonials", models.CmsPost.status == "published")
+        .order_by(models.CmsPost.published_at.desc(), models.CmsPost.created_at.desc())
+        .limit(6)
+        .all()
+    )
+    testimonials = []
+    for post in rows:
+        author_name = (
+            post.author_persona.nombre_completo
+            if post.author_persona
+            else _D.TESTIMONIALS_FALLBACK_AUTHOR
+        )
+        testimonials.append(
+            {
+                "content": post.content or "",
+                "author": author_name,
+                "emotion": (post.seo_json or {}).get("emotion", _D.TESTIMONIALS_FALLBACK_EMOTION),
+                "image_url": post.featured_image_url or "",
+            }
+        )
+    if testimonials:
+        base["items"] = testimonials
+    base.setdefault("title", _D.TESTIMONIALS_TITLE)
+    return base
+
+
 def _build_section_defaults(
     db: Session, site_key: str, section_type: str, props: dict[str, Any] | None = None
 ) -> dict[str, Any]:
     """Fill empty section props with data from SystemVariable / DB / hardcoded."""
+    # Fase 2 (muro de gratitud): la sección ``testimonials`` se hidrata SIEMPRE
+    # desde los ``CmsPost`` publicados de la categoría canónica ``testimonials``
+    # a menos que el editor haya guardado items manuales explícitos. Debe ir
+    # ANTES del early-return genérico: una sección con ``title`` pero sin items
+    # debe hidratarse igual (antes se cortaba y quedaba vacía).
+    if section_type == "testimonials":
+        return _hydrate_testimonials_section(db, props)
+
     if props and any(
         key in props
         for key in (
@@ -421,28 +483,28 @@ def _build_section_defaults(
             "cta_description",
         ),
     )
-    church_name = _get_system_var(db, site_key, "church_name", "Nuestra Iglesia")
-    mission = _get_system_var(db, site_key, "mission_statement", "Compartir el amor de Dios y hacer discípulos")
-    service_time = _get_system_var(db, site_key, "service_time", "Domingos 10:00 AM")
-    address = _get_system_var(db, site_key, "address", "Ciudad, País")
-    map_embed = _get_system_var(db, site_key, "map_embed_url", "")
+    church_name = _get_system_var(db, site_key, "church_name", _D.CHURCH_NAME)
+    mission = _get_system_var(db, site_key, "mission_statement", _D.MISSION_STATEMENT)
+    service_time = _get_system_var(db, site_key, "service_time", _D.SERVICE_TIME)
+    address = _get_system_var(db, site_key, "address", _D.ADDRESS)
+    map_embed = _get_system_var(db, site_key, "map_embed_url", _D.MAP_EMBED_URL)
 
     if section_type == "hero":
-        welcome = _get_system_var(db, site_key, "welcome_title", "Bienvenidos a {church_name}")
+        welcome = _get_system_var(db, site_key, "welcome_title", _D.WELCOME_TITLE)
         return {
             "title": welcome.replace("{church_name}", church_name),
             "subtitle": mission,
-            "cta_text": _get_system_var(db, site_key, "cta_text", "Conócenos"),
-            "cta_link": _get_system_var(db, site_key, "cta_link", "/pastores"),
+            "cta_text": _get_system_var(db, site_key, "cta_text", _D.CTA_TEXT),
+            "cta_link": _get_system_var(db, site_key, "cta_link", _D.CTA_LINK),
         }
     if section_type == "cta_banner":
         return {
-            "title": _get_system_var(db, site_key, "cta_title", "Únete a nuestra comunidad"),
+            "title": _get_system_var(db, site_key, "cta_title", _D.CTA_TITLE),
             "description": _get_system_var(
-                db, site_key, "cta_description", "Te invitamos a ser parte de nuestra familia. Todos son bienvenidos."
+                db, site_key, "cta_description", _D.CTA_DESCRIPTION
             ),
-            "button_text": "Visítanos",
-            "button_link": "/contacto",
+            "button_text": _D.CTA_BANNER_BUTTON_TEXT,
+            "button_link": _D.CTA_BANNER_BUTTON_LINK,
         }
     if section_type == "stats":
         if props and isinstance(props, dict) and ("stats" in props or "items" in props):
@@ -451,9 +513,9 @@ def _build_section_defaults(
         group_count = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.status == "Activo").count()
         return {
             "stats": [
-                {"label": "Miembros Activos", "value": str(active_personas or 0)},
-                {"label": "Grupos de Casa", "value": str(group_count or 0)},
-                {"label": "Años de Ministerio", "value": "25+"},
+                {"label": _D.STAT_MEMBERS_LABEL, "value": str(active_personas or 0)},
+                {"label": _D.STAT_GROUPS_LABEL, "value": str(group_count or 0)},
+                {"label": "Años de Ministerio", "value": _D.STAT_YEARS_OF_MINISTRY},
             ]
         }
     if section_type == "team":
@@ -481,45 +543,9 @@ def _build_section_defaults(
             )
         if not personas:
             personas = [
-                {"name": "Pastor", "role": "Pastor Principal", "photo_url": "", "slug": "pastor", "bio_short": ""}
+                {"name": _D.TEAM_FALLBACK_NAME, "role": _D.TEAM_FALLBACK_ROLE, "photo_url": "", "slug": "pastor", "bio_short": ""}
             ]
-        return {"personas": personas, "title": "Nuestro Equipo Pastoral"}
-    if section_type == "testimonials":
-        if props and isinstance(props, dict) and ("testimonials" in props or "items" in props):
-            return props
-        from sqlalchemy.orm import joinedload
-
-        rows = (
-            db.query(models.CmsPost)
-            .options(lazyload("*"))
-            .options(joinedload(models.CmsPost.author_persona))
-            .join(models.CmsPost.categories)
-            .filter(models.CmsCategory.slug == "testimonials", models.CmsPost.status == "published")
-            .order_by(models.CmsPost.published_at.desc(), models.CmsPost.created_at.desc())
-            .limit(6)
-            .all()
-        )
-        testimonials = []
-        for post in rows:
-            author_name = post.author_persona.nombre_completo if post.author_persona else "Anónimo"
-            testimonials.append(
-                {
-                    "content": post.content or "",
-                    "author": author_name,
-                    "emotion": (post.seo_json or {}).get("emotion", "Gratitud"),
-                    "image_url": post.featured_image_url or "",
-                }
-            )
-        if not testimonials:
-            testimonials = [
-                {
-                    "content": "Dios ha sido fiel en cada etapa. Bendigo a esta iglesia por su amor y apoyo.",
-                    "author": "Miembro de la Iglesia",
-                    "emotion": "Gratitud",
-                    "image_url": "",
-                }
-            ]
-        return {"testimonials": testimonials, "title": "Testimonios"}
+        return {"personas": personas, "title": _D.TEAM_TITLE}
     if section_type == "faq":
         if props and isinstance(props, dict) and ("faqs" in props or "items" in props):
             return props
@@ -529,14 +555,14 @@ def _build_section_defaults(
                 {"question": "¿Dónde están ubicados?", "answer": address},
                 {
                     "question": "¿Qué debo esperar en mi primera visita?",
-                    "answer": "Una comunidad cálida que te recibirá con los brazos abiertos. Ven tal como eres.",
+                    "answer": _D.FAQ_FIRST_VISIT_ANSWER,
                 },
                 {
                     "question": "¿Tienen grupos de estudio?",
-                    "answer": "Sí, tenemos grupos de casa que se reúnen durante la semana. Contáctanos para más información.",
+                    "answer": _D.FAQ_GROUP_STUDY_ANSWER,
                 },
             ],
-            "title": "Preguntas Frecuentes",
+            "title": _D.FAQ_TITLE,
         }
     if section_type == "embed":
         if props and isinstance(props, dict) and "embed_url" in props:

@@ -323,7 +323,7 @@ def test_coverage_surface_checks() -> list[Check]:
     required_files = {
         "Backend smoke tests": ROOT / "tests/test_smoke.py",
         "Auth tests": ROOT / "tests/test_auth.py",
-        "CMS domain tests": ROOT / "tests/test_cms_domain.py",
+        "CMS domain tests": ROOT / "tests/cms/test_cms_domain.py",
         "CRM domain tests": ROOT / "tests/test_crm_domain.py",
         "Academy domain tests": ROOT / "tests/test_academy_domain.py",
         "Security config tests": ROOT / "tests/test_security_config.py",

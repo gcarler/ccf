@@ -347,7 +347,7 @@ class CmsRedirect(Base):
     status_code = Column(Integer, default=301)
     # 301 permanent, 302 temporary
     is_active = Column(Boolean, default=True, index=True)
-    # F-04: tipo de matching + prioridad dentro del tipo
+    # AUDITORIA_FORENSE_CMS.md F-04 (cerrado): tipo de matching + prioridad dentro del tipo
     match_type = Column(String(20), nullable=False, default="exact", index=True)
     priority = Column(Integer, nullable=False, default=0)
     hit_count = Column(Integer, default=0)

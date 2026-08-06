@@ -34,6 +34,43 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def resolve_system_persona_and_sede(db: "Session") -> tuple["models.Persona", "models.Sede | None"]:
+    """Resuelve una Persona + Sede canónica para UGC proveniente de flujos
+    públicos (sin actor autenticado).
+
+    Antes de este helper, los endpoints públicos como ``POST /public/documents``
+    fabricaban on-demand una ``Persona(first_name="Sistema", last_name="Público")``
+    por cada request — side effect indeseado (deuda estructural 🟠#7 en
+    ``docs/ESTADO_DEUDA_TECNICA_BACKEND_CMS.md``). Esto violaba además el
+    Axioma REGLAS.md §4.1 (no existe bypass ``actor_user_id=None``): la
+    UGC terminaba atribuida a una persona sintética sin sede real.
+
+    Single source of truth: el helper reúsa la primera ``Persona`` CANÓNICA
+    existente (sembrada por el bootstrap de la plataforma) y la sede activa
+    del dominio, sin crear entidades nuevas por request. Si la BD está sin
+    seed, levanta ``HTTPException(409)`` — la garantía la provee el seed
+    inicial de la plataforma, no el endpoint público.
+
+    Usado por:
+      - ``backend/api/public.py::upload_public_document`` (UGC público).
+      - ``scripts/migrate_external_images_to_cms.py::_get_system_persona_and_sede``.
+    """
+    from fastapi import HTTPException
+
+    sede = db.query(models.Sede).filter(models.Sede.es_activa.is_(True)).first()
+    if sede is None:
+        sede = db.query(models.Sede).first()
+
+    persona = db.query(models.Persona).first()
+    if persona is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Bootstrap incompleto: no existe una Persona canónica para atribuir UGC público. "
+            "Ejecutar el seed inicial de la plataforma antes de usar endpoints públicos de UGC.",
+        )
+    return persona, sede
+
+
 def _uploads_root() -> str:
     """Return the absolute upload root from settings.
 

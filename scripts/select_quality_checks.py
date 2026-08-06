@@ -124,8 +124,8 @@ MODULE_RULES: tuple[Rule, ...] = (
             "frontend/tests/e2e/cms-",
             "frontend/tests/e2e/cms/",
             "scripts/test_cms_quality.py",
-            "tests/test_cms_",
-            "tests/test_enterprise_cms.py",
+            "tests/cms/test_cms_",
+            "tests/cms/test_enterprise_cms.py",
         ),
     ),
     Rule(

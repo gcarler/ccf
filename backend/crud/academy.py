@@ -48,23 +48,15 @@ def _commit_or_raise_conflict(db: Session, detail: str = "resource already exist
     (M-12 defensivo) — reusar para cualquier mutador Academy que pueda
     chocar contra una constraint UNIQUE (course.code, enrollment por
     (persona_id, course_id), etc.).
+
+    Unique-violation detection y contrato 409 delegados a
+    ``backend.crud._utils._commit_or_raise_409`` — single source of truth
+    compartido con ``crud/cms.py`` y ``api/cms_v2/_shared.py`` (consolidación
+    de las 3 copias, 2026-08-05).
     """
-    try:
-        db.commit()
-    except IntegrityError as exc:
-        db.rollback()
-        is_unique_violation = False
-        orig = getattr(exc, "orig", None)
-        if orig is not None:
-            pgcode = getattr(orig, "pgcode", None)
-            if pgcode == "23505":
-                is_unique_violation = True
-            elif "UNIQUE constraint failed" in str(orig):
-                is_unique_violation = True
-        if not is_unique_violation:
-            raise
-        logger.debug("Swallowed concurrent create unique-key conflict: %s", exc)
-        raise HTTPException(status_code=409, detail=detail)
+    from backend.crud._utils import _commit_or_raise_409
+
+    _commit_or_raise_409(db, detail=detail)
 
 
 def list_courses(

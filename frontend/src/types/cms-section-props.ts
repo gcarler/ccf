@@ -509,6 +509,8 @@ export interface ContactFormProps {
   submit_label?: string;
   success_message?: string;
   action_url?: string;
+  /** Fase 2 (muro de gratitud): el envío crea un testimonio moderable (draft) en CMS. */
+  testimonial?: boolean;
 }
 
 export interface PrayerFormProps {

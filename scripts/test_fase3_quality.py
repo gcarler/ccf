@@ -19,7 +19,7 @@ MODULES = {
     "Donations": "tests/test_donations_api.py",
     "Agents": "tests/test_agents.py",
     "Graph": "tests/test_graph_api.py",
-    "Enterprise CMS": "tests/test_enterprise_cms.py",
+    "Enterprise CMS": "tests/cms/test_enterprise_cms.py",
 }
 
 

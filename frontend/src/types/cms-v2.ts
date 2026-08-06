@@ -310,7 +310,47 @@ export interface CmsPublicPopup {
   show_on_pages: string[];
 }
 
-export type CmsFormFieldType = "text" | "email" | "phone" | "textarea" | "select" | "checkbox";
+export type CmsFormFieldType =
+  | "text"
+  | "email"
+  | "phone"
+  | "textarea"
+  | "select"
+  | "radio"
+  | "select_multiple"
+  | "checkbox"
+  | "number"
+  | "rating"
+  | "slider"
+  | "date"
+  | "datetime"
+  | "url"
+  | "file"
+  | "section"
+  | "divider"
+  | "page"
+  | "captcha";
+
+export type CmsFormConditionOperator =
+  | "eq"
+  | "neq"
+  | "in"
+  | "not_in"
+  | "contains"
+  | "gt"
+  | "lt"
+  | "gte"
+  | "lte"
+  | "checked"
+  | "not_checked"
+  | "empty"
+  | "not_empty";
+
+export interface CmsFormVisibilityCondition {
+  field_id: string;
+  operator: CmsFormConditionOperator;
+  value?: string | number | boolean | string[];
+}
 
 export interface CmsFormField {
   id: string;
@@ -319,6 +359,33 @@ export interface CmsFormField {
   placeholder?: string;
   required: boolean;
   options?: string[];
+  description?: string;
+  default_value?: string | number | boolean | string[];
+  help_text?: string;
+  helper_text?: string;
+  validation_pattern?: string;
+  validation_message?: string;
+  regex_pattern?: string;
+  regex_message?: string;
+  max_length?: number;
+  min_length?: number;
+  max_value?: number;
+  min_value?: number;
+  step?: number;
+  max_file_mb?: number;
+  accept?: string;
+  allow_other?: boolean;
+  rating_max?: number;
+  slider_min?: number;
+  slider_max?: number;
+  slider_step?: number;
+  page_break?: boolean;
+  file_accept?: string;
+  file_multiple?: boolean;
+  page?: number;
+  order?: number;
+  validation?: Record<string, unknown>;
+  visible_if?: CmsFormVisibilityCondition;
 }
 
 export interface CmsForm {

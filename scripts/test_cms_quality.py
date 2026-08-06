@@ -212,10 +212,10 @@ def main() -> int:
             "-q",
             "-o",
             "addopts=",
-            "tests/test_cms_domain.py",
-            "tests/test_cms_sede_isolation.py",
-            "tests/test_cms_upload_and_image_hardening.py",
-            "tests/test_cms_metrics_sede_isolation.py",
+            "tests/cms/test_cms_domain.py",
+            "tests/cms/test_cms_sede_isolation.py",
+            "tests/cms/test_cms_upload_and_image_hardening.py",
+            "tests/cms/test_cms_metrics_sede_isolation.py",
         ],
     )
 

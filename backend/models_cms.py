@@ -1,3 +1,20 @@
+"""CMS CCF — modelos de contenido editorial.
+
+Relación con ``backend/models_enterprise.py``: el dominio CMS vive en dos
+archivos por razones históricas (deuda estructural baja, ver
+``docs/ESTADO_DEUDA_TECNICA_BACKEND_CMS.md`` hallazgo #8):
+
+- ``models_cms.py`` (este archivo): contenido editorial — sites, themes,
+  menus, pages, sections, media, posts, taxonomías, analytics, pastoral.
+- ``models_enterprise.py``: features enterprise CMS — audit log, content
+  permissions, notifications, webhooks, custom types/entries, search
+  index, user sessions, redirect, broken links, media folders.
+
+La separación se mantiene temporalmente por evitar migraciones que toquen
+ambos dominios a la vez; futura consolidación en ``models/cms.py`` es
+opcional (recomendación del doc de deuda, no blocker).
+"""
+
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
@@ -7,10 +24,11 @@ class CmsMediaItem(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     url = Column(String(500), nullable=False)
     alt_text = Column(String(255), nullable=True)
-    # F-03 (errorescms.md): width/height como Integer separados para que
-    # las queries puedan filtrar/ordenar por dimensiones sin parsear el
-    # string ``dimensions``.  ``dimensions`` se mantiene como string humano
-    # ``"1920x1080"`` por compatibilidad hacia atrás (frontend, seeds, logs).
+    # AUDITORIA_FORENSE_CMS.md F-03 (cerrado): width/height como Integer
+    # separados para que las queries puedan filtrar/ordenar por dimensiones
+    # sin parsear el string ``dimensions``.  ``dimensions`` se mantiene
+    # como string humano ``"1920x1080"`` por compatibilidad hacia atrás
+    # (frontend, seeds, logs).
     width = Column(Integer, nullable=True)
     height = Column(Integer, nullable=True)
     dimensions = Column(String(50), nullable=True)

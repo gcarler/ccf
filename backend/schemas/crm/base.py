@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from enum import Enum
-from typing import List, Optional
+from typing import List, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -74,6 +74,14 @@ class CrmTaskPriority(str, Enum):
     urgent = "urgent"
 
 
+REGISTRATION_STATUS_LITERAL = Literal[
+    "PENDING", "CONFIRMED", "CHECKED_IN", "ABSENT", "WAITLIST", "CANCELLED"
+]
+QR_MODE_LITERAL = Literal["PER_REGISTRANT", "PER_EVENT"]
+CANAL_LITERAL = Literal["WHATSAPP", "EMAIL", "SMS"]
+TRIGGER_TYPE_LITERAL = Literal["MANUAL", "RELATIVE_TO_EVENT", "RELATIVE_TO_REGISTRATION"]
+
+
 class CrmEventBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -91,6 +99,17 @@ class CrmEventBase(BaseModel):
     location: Optional[str] = None
     status: str = "SCHEDULED"
     cancellation_reason: Optional[str] = None
+    requires_registration: bool = False
+    requires_email_verification: bool = False
+    registration_opens_at: Optional[AwareDateTime] = None
+    registration_closes_at: Optional[AwareDateTime] = None
+    capacity_max: Optional[int] = None
+    waiting_list_enabled: bool = False
+    qr_mode: QR_MODE_LITERAL = "PER_REGISTRANT"
+    contact_person: Optional[str] = None
+    settings_json: dict = Field(default_factory=dict)
+    form_id: Optional[UUID] = None
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
 
 
 class CrmEventCreate(CrmEventBase):
@@ -110,6 +129,17 @@ class CrmEventUpdate(BaseModel):
     location: Optional[str] = None
     status: Optional[str] = None
     cancellation_reason: Optional[str] = None
+    requires_registration: Optional[bool] = None
+    requires_email_verification: Optional[bool] = None
+    registration_opens_at: Optional[AwareDateTime] = None
+    registration_closes_at: Optional[AwareDateTime] = None
+    capacity_max: Optional[int] = None
+    waiting_list_enabled: Optional[bool] = None
+    qr_mode: Optional[QR_MODE_LITERAL] = None
+    contact_person: Optional[str] = None
+    settings_json: Optional[dict] = None
+    form_id: Optional[UUID] = None
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
 
 
 class CrmEvent(CrmEventBase):
@@ -118,8 +148,172 @@ class CrmEvent(CrmEventBase):
     model_config = orm_config
 
 
+class EventRegistrationCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    persona_id: Optional[UUID] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    extras: dict = Field(default_factory=dict)
+    registration_status: REGISTRATION_STATUS_LITERAL = "CONFIRMED"
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
+    source: str = "admin"
+
+
+class EventRegistrationUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    registration_status: Optional[REGISTRATION_STATUS_LITERAL] = None
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
+    extras: Optional[dict] = None
+
+
+class EventRegistrationRead(BaseModel):
+    id: UUID
+    event_id: UUID
+    persona_id: UUID
+    persona_name: Optional[str] = None
+    persona_email: Optional[str] = None
+    persona_phone: Optional[str] = None
+    registration_status: REGISTRATION_STATUS_LITERAL
+    participant_role_code: Optional[str] = None
+    qr_token: Optional[str] = None
+    cancel_token: Optional[str] = None
+    qr_generated_at: Optional[AwareDateTime] = None
+    registered_at: AwareDateTime
+    confirmed_at: Optional[AwareDateTime] = None
+    cancelled_at: Optional[AwareDateTime] = None
+    check_in_at: Optional[AwareDateTime] = None
+    check_out_at: Optional[AwareDateTime] = None
+    checked_in_by: Optional[UUID] = None
+    source: str
+    extras: dict = Field(default_factory=dict)
+    waiting_list_position: Optional[int] = None
+    reminder_sent_count: int = 0
+    last_reminder_sent_at: Optional[AwareDateTime] = None
+    model_config = orm_config
+
+
+class EventRegistrationStats(BaseModel):
+    total: int
+    pending: int
+    confirmed: int
+    checked_in: int
+    absent: int
+    waitlist: int
+    cancelled: int
+    capacity_max: Optional[int] = None
+    capacity_remaining: Optional[int] = None
+    attendance_rate: Optional[float] = None
+
+
+class EventRegistrationBulkImport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    rows: list[EventRegistrationCreate] = Field(..., min_length=1, max_length=5000)
+
+
+class EventRegistrationBroadcast(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    campaign_id: UUID
+    target_status: Optional[list[REGISTRATION_STATUS_LITERAL]] = None
+
+
+class EventCampaignCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(..., min_length=1, max_length=200)
+    plantilla_id: Optional[UUID] = None
+    canal: CANAL_LITERAL = "EMAIL"
+    trigger_type: TRIGGER_TYPE_LITERAL = "MANUAL"
+    trigger_offset_minutes: Optional[int] = None
+    target_status: list[REGISTRATION_STATUS_LITERAL] = Field(default_factory=lambda: ["CONFIRMED"])
+    is_active: bool = True
+
+
+class EventCampaignUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    plantilla_id: Optional[UUID] = None
+    canal: Optional[CANAL_LITERAL] = None
+    trigger_type: Optional[TRIGGER_TYPE_LITERAL] = None
+    trigger_offset_minutes: Optional[int] = None
+    target_status: Optional[list[REGISTRATION_STATUS_LITERAL]] = None
+    is_active: Optional[bool] = None
+
+
+class EventCampaignRead(BaseModel):
+    id: UUID
+    event_id: UUID
+    name: str
+    plantilla_id: Optional[UUID] = None
+    canal: CANAL_LITERAL
+    trigger_type: TRIGGER_TYPE_LITERAL
+    trigger_offset_minutes: Optional[int] = None
+    target_status: list = Field(default_factory=list)
+    sent_count: int = 0
+    last_sent_at: Optional[AwareDateTime] = None
+    created_by_id: Optional[UUID] = None
+    is_active: bool
+    created_at: AwareDateTime
+    updated_at: AwareDateTime
+    model_config = orm_config
+
+
+class PublicEventRegister(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    first_name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    extras: dict = Field(default_factory=dict)
+    accept_contact: bool = True
+
+
+class PublicEventRead(BaseModel):
+    id: UUID
+    name: str
+    description: Optional[str] = None
+    event_date: Optional[AwareDateTime] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    location: Optional[str] = None
+    event_type: str
+    participant_role_code: Optional[str] = None
+    requires_registration: bool
+    requires_email_verification: bool
+    capacity_max: Optional[int] = None
+    waiting_list_enabled: bool
+    registration_opens_at: Optional[AwareDateTime] = None
+    registration_closes_at: Optional[AwareDateTime] = None
+    contact_person: Optional[str] = None
+    is_open: bool
+    capacity_remaining: Optional[int] = None
+    model_config = orm_config
+
+
+class PublicEventCancel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    cancel_token: str = Field(..., min_length=10, max_length=200)
+
+
+class CrmEventPreregistrationConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    requires_registration: bool
+    requires_email_verification: bool = False
+    registration_opens_at: Optional[AwareDateTime] = None
+    registration_closes_at: Optional[AwareDateTime] = None
+    capacity_max: Optional[int] = Field(default=None, ge=1)
+    waiting_list_enabled: bool = False
+    qr_mode: QR_MODE_LITERAL = "PER_REGISTRANT"
+    contact_person: Optional[str] = Field(default=None, max_length=255)
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
+    settings_json: dict = Field(default_factory=dict)
+
+
 class EventAttendanceBase(BaseModel):
     event_id: UUID
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
     persona_id: UUID
     session_date: date = Field(default_factory=date.today)
     attended: bool = True

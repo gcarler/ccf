@@ -34,7 +34,7 @@ describe("CmsFormsManagement Component", () => {
 
     render(<CmsFormsManagement />);
 
-    expect(screen.getByText(/Módulo de Formularios de Contacto/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Formularios que convierten/i })).toBeInTheDocument();
     expect(screen.getByText(/Formularios \(0\)/i)).toBeInTheDocument();
 
     await act(async () => {
@@ -87,7 +87,7 @@ describe("CmsFormsManagement Component", () => {
     expect(screen.getByText(/5 respuestas/i)).toBeInTheDocument();
 
     // Click "Respuestas" tab
-    const respuestasTab = screen.getByRole("button", { name: /^Respuestas$/i });
+    const respuestasTab = screen.getByRole("tab", { name: /^Respuestas$/i });
     fireEvent.click(respuestasTab);
 
     await act(async () => {

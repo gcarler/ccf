@@ -1,5 +1,7 @@
 # Estado del Modulo de CMS — CCF
 
+**Actualizado:** 2026-08-04
+
 > **TL;DR (una linea):** CMS es el sistema editorial y de contenido público/administrativo de CCF: sites, páginas, versiones, secciones, temas, menús, media, recursos, SEO, redirects, search, webhooks y auditoría. Vive repartido entre `/api/cms`, `/api/cms/v2`, `/api/cms/v2` enterprise y `/plataforma/cms`.
 
 **Proposito.** Handover canónico para trabajar CMS como módulo propio dentro del monolito modular, sin mezclar bugs del editor, del render público y de multi-tenant como si fueran la misma clase de problema.
@@ -39,7 +41,7 @@ Versiones verificadas en este host el **2026-07-16**:
 ## 3. Recontar superficie vigente (por si drift)
 
 ```bash
-wc -l /root/ccf/backend/api/cms.py /root/ccf/backend/api/cms_v2.py /root/ccf/backend/api/enterprise_cms.py /root/ccf/backend/crud/cms.py /root/ccf/backend/crud/cms_pastors_sync.py /root/ccf/backend/models_cms.py /root/ccf/backend/schemas/cms.py /root/ccf/backend/schemas/cms_v2_sections.py 2>/dev/null | tail -1
+wc -l /root/ccf/backend/api/cms/*.py /root/ccf/backend/api/cms/admin/*.py /root/ccf/backend/api/cms/public/*.py /root/ccf/backend/api/cms_v2/*.py /root/ccf/backend/api/enterprise_cms.py /root/ccf/backend/crud/cms.py /root/ccf/backend/crud/cms_pastors_sync.py /root/ccf/backend/models_cms.py /root/ccf/backend/schemas/cms.py /root/ccf/backend/schemas/cms_v2_sections.py 2>/dev/null | tail -1
 wc -l /root/ccf/frontend/src/app/plataforma/cms/**/*.tsx /root/ccf/frontend/src/app/plataforma/cms/*.tsx 2>/dev/null | tail -1
 ```
 
@@ -93,8 +95,8 @@ Plan operativo vigente:
 
 | Capa | Ubicacion | Tamano |
 |---|---|---:|
-| CMS v1 | `backend/api/cms.py` | testimonios, announcements, media, métricas |
-| CMS v2 | `backend/api/cms_v2.py` | sites, themes, menus, pages, sections, preview, workflow, categories, tags, posts, analytics |
+| CMS v1 | `backend/api/cms/` (`v1.py`, `admin/`, `public/`, `seo.py`, `workflow.py`, `section_types.py`) | media, métricas (testimonios/announcements vía `CmsPost` por categoría) |
+| CMS v2 | `backend/api/cms_v2/` (`sites.py`, `pages.py`, `posts.py`, `themes_menus.py`, `forms.py`, `global_blocks.py`, …) | sites, themes, menus, pages, sections, preview, workflow, categories, tags, posts, analytics |
 | Enterprise CMS | `backend/api/enterprise_cms.py` | audit logs, content permissions, notifications, webhooks, custom types, search, redirects, sessions, folders |
 | Helpers | `backend/api/_cms_helpers/` | scope helpers y auditorías compartidas |
 | CRUD | `backend/crud/cms.py`, `backend/crud/cms_pastors_sync.py` | escritura/lectura real del dominio |
@@ -136,14 +138,14 @@ CmsSite
     -> CmsPublishLog
   -> CmsCategory
   -> CmsTag
-  -> CmsPost
+  -> CmsPost   # testimonios y announcements = CmsPost por categoría ('testimonials' / 'announcements')
 CmsMediaItem
-Testimonial
-Announcement
-Enterprise CMS:
+Enterprise CMS (backend/models_enterprise.py):
   AuditLog / ContentPermission / CmsNotification / Webhook / CmsCustomType /
   CmsCustomEntry / SearchIndex / UserSession / MediaFolder / CmsRedirect / BrokenLinkCheck
 ```
+
+> **Nota (2026-08-04):** `Testimonial` y `Announcement` **no son clases de modelo** (verificado pasada 2 — 0 hits en `models_*.py`). Son **`CmsPost` filtrados por categoría** (`_cms_posts_by_category("testimonials"|"announcements")` en `api/cms/v1.py`).
 
 Puntos sensibles:
 
@@ -155,14 +157,15 @@ Puntos sensibles:
 
 ## 9. Backend — API surface
 
-### CMS v1 — `backend/api/cms.py`
+### CMS v1 — `backend/api/cms/` (router `v1.py` dentro del directorio)
 
-- `/cms/testimonials`, `/admin/testimonials`
-- `/cms/announcements`, `/admin/announcements`
-- `/cms/media`, `/cms/media/upload`, `/cms/media/{id}/optimize`
+- `/cms/media`, `/cms/media/{item_id}`, `/cms/media/upload`, `/cms/media/{item_id}/optimize`, `/cms/media/{item_id}/edit`, `DELETE /cms/media/{item_id}`
 - `/cms/metrics`
+- `/cms/media/cleanup`
 
-### CMS v2 — `backend/api/cms_v2.py`
+> **Nota (2026-08-04):** ya **no existen** endpoints dedicados `/cms/testimonials`, `/admin/testimonials`, `/cms/announcements`, `/admin/announcements` (verificado pasada 2). Testimonials y announcements son **`CmsPost` por categoría** (`_cms_posts_by_category("testimonials"|"announcements")` — ver `/cms/metrics`). Las páginas frontend `/plataforma/cms/testimonials` y `/plataforma/cms/announcements` consumen posts v2 por categoría.
+
+### CMS v2 — `backend/api/cms_v2/` (directorio; surface principal en `sites.py`, `pages.py`, `posts.py`, `themes_menus.py`)
 
 - `/cms/v2/section-types`
 - `/cms/v2/sites`
@@ -278,7 +281,7 @@ Frontend test existente:
 2. **Matriz RBAC CMS** `[DONE-RBAC-CMS-001]` — cerrada el 2026-07-16 en `CMS_RBAC_MATRIX.md`; documenta v1, v2 y enterprise por separado, incluyendo la subprotección actual de CMS v1.
 3. **Smoke frontend CMS** `[DONE-FRONTEND-E2E-CMS-001]` — cerrado el 2026-07-16 con `frontend/tests/e2e/cms/smoke.spec.ts`; cubre dashboard, pages y media con guard de consola/API/assets.
 4. **Smoke profundo CMS pages/preview** `[DONE-FRONTEND-DEEP-CMS-001]` — cerrado el 2026-07-16 con `frontend/tests/e2e/cms/pages-preview.spec.ts`; valida gestión de páginas, archivado, schedule views y preview draft con runner administrado.
-5. **Hardening RBAC CMS v1** `[DONE-RBAC-V1-HARDENING-CMS-001]` — cerrado el 2026-07-16; las mutaciones administrativas de `backend/api/cms.py` ahora exigen `cms:edit`, mientras las lecturas administrativas permanecen en `cms:read`. Cobertura focal agregada para bloquear creación de testimonials, announcements y uploads de media por `LECTOR`.
+5. **Hardening RBAC CMS v1** `[DONE-RBAC-V1-HARDENING-CMS-001]` — cerrado el 2026-07-16; las mutaciones administrativas de CMS v1 (`backend/api/cms/v1.py`, `backend/api/cms/admin/`) ahora exigen `cms:edit`, mientras las lecturas administrativas permanecen en `cms:read`. Cobertura focal agregada para bloquear creación de testimonials, announcements y uploads de media por `LECTOR`.
 6. **Builder/editor CMS** `[DONE-BUILDER-CMS-001]` — cerrado el 2026-07-16; el constructor quedó cubierto por smoke y deep suite sin regresiones de consola.
 7. **Dashboard CMS** `[DONE-DASHBOARD-CMS-001]` — cerrado el 2026-07-16; el panel principal quedó validado con el smoke autenticado.
 8. **Preview vs publicado vs público** `[DONE-PREVIEW-PUBLIC-CMS-001]` — cerrado el 2026-07-16; `pages-preview.spec.ts` y `cms-public-contract.spec.ts` cierran la validación reproducible.
@@ -302,8 +305,8 @@ Frontend test existente:
 5. `docs/PLAN_CMS_CALIDAD.md`
 6. `docs/PLAN_CMS_100.md`
 7. `docs/AUDITORIA_FORENSE_CMS.md`
-8. `backend/api/cms.py`
-9. `backend/api/cms_v2.py`
+8. `backend/api/cms/` (directorio: `v1.py`, `admin/`, `public/`)
+9. `backend/api/cms_v2/` (directorio)
 10. `backend/api/enterprise_cms.py`
 11. `backend/api/_cms_helpers/_shared.py`
 12. `backend/crud/cms.py`
@@ -331,7 +334,7 @@ Frontend test existente:
 |---|---|---|
 | `DONE-PLAN-CMS-LINK-001` | ✅ **Hecho 2026-07-16** — `PLAN_CMS_CALIDAD.md` queda alineado como subplan oficial del módulo dentro del esquema modular; `PLAN_CMS_100.md` queda como referencia complementaria profunda. | `docs/PLAN_CMS_CALIDAD.md` |
 | `DONE-RBAC-CMS-001` | ✅ **Hecho 2026-07-16** — matriz RBAC CMS documentada separando v1, v2 y enterprise; deja explícita la subprotección actual de CMS v1 y la autorización difusa de enterprise. | `docs/CMS_RBAC_MATRIX.md` |
-| `DONE-RBAC-V1-HARDENING-CMS-001` | ✅ **Hecho 2026-07-16** — mutaciones administrativas de CMS v1 endurecidas a `cms:edit`; lecturas administrativas preservadas en `cms:read`; pruebas focalizadas cubren `LECTOR` en testimonials, announcements y media upload. | `backend/api/cms.py`, `tests/test_cms_sede_isolation.py`, `tests/test_cms_upload_and_image_hardening.py` |
+| `DONE-RBAC-V1-HARDENING-CMS-001` | ✅ **Hecho 2026-07-16** — mutaciones administrativas de CMS v1 endurecidas a `cms:edit`; lecturas administrativas preservadas en `cms:read`; pruebas focalizadas cubren `LECTOR` en testimonials, announcements y media upload. | `backend/api/cms/` (`v1.py`, `admin/`), `tests/test_cms_sede_isolation.py`, `tests/test_cms_upload_and_image_hardening.py` |
 | `DONE-FRONTEND-E2E-CMS-001` | ✅ **Hecho 2026-07-16** — smoke frontend CMS base para dashboard, pages y media. | `frontend/tests/e2e/cms/smoke.spec.ts` |
 | `DONE-FRONTEND-DEEP-CMS-001` | ✅ **Hecho 2026-07-16** — coverage profunda mockeada para pages + preview con workflow editorial y render draft. | `frontend/tests/e2e/cms/pages-preview.spec.ts` |
 | `DONE-BUILDER-CMS-001` | ✅ **Hecho 2026-07-16** — builder cubierto por smoke y deep suite sin regresiones de consola. | `frontend/src/app/plataforma/cms/builder/page.tsx` |
@@ -372,3 +375,35 @@ Frontend test existente:
 - ✅ 10 funcionalidades CERRADAS (F-01..F-10, incluye F-08 publish log retention, F-10 orphan media cleanup)
 - Commits clave: `e8912c54`, `6a83dd87`, `5b0a6e7c`, `b347f787`, `bd28cfe4`, `b522c372`, `5ea3cfab`, `82d9ffdd`, `afdafa89`, `3f7a0c7e`, `accb7b34`, `fc80da41`, `4d1ba06a`, `94f97d4a`, `8396e74f` (canonización migraciones)
 - Cobertura: 194+ tests pasan sin skips (domain + sede isolation + upload hardening + security regression + v2 coverage + schedule + SEO audit)
+
+---
+
+## 16. Cierre estructural 2026-08-05 (deuda técnica `ESTADO_DEUDA_TECNICA_BACKEND_CMS.md`)
+
+Mientras `errorescms.md` (auditoría forense) está 100% cerrado desde hace ciclos (48/48 findings + 10/10 funcionalidades), la **deuda estructural** — distinta de la de auditoría — se cerró este ciclo. Sesión `ses_02d3e21b9ffe8On3QkULQEnJkO`, árbol `T1` con 14 sub-tareas.
+
+| Hallazgo | Estado | Detalle |
+|---|---|---|
+| 🔴 #1 Monolito `crud/cms.py` (3.107 LOC) | ⏸ pospuesto | Ya segmentado por 21 `# ──` headers; split completo expone 61 callers a regresión, requiere sesión dedicada. Pure leaf data layer confirmado. |
+| 🔴 #2 Duplicación helpers v1↔v2 | ✅ cerrado | `_commit_or_conflict` / `_commit_or_raise_conflict` (3 copias: `crud/cms.py`, `cms_v2/_shared.py`, `crud/academy.py`) consolidados en `crud/_utils._is_unique_violation` + 2 contracts. |
+| 🟠 #3 Carga de autores acoplada | ✅ cerrado | `_hydrate_testimonials_section` extraído de `_build_section_defaults` (`_shared.py`); `joinedload` inline movido a helper. |
+| 🟠 #4 `enterprise_cms.py` monolito 1.669 LOC | ✅ cerrado | Split en paquete `backend/api/enterprise_cms/` (12 sub-routers por dominio + `__common.py`). 39 endpoints preservados, re-exports `router`/`resolve_redirect`/`execute_search`. |
+| 🟠 #4b Defaults hardcodeados | ✅ cerrado | Extraídos a módulo declarativo `backend/api/cms_v2/_defaults.py`. Comportamiento fallback preservado. |
+| 🟠 #5 Solapamiento de esquemas | ✅ cerrado (falso positivo) | Verificado in-situ: 0 overlap literal, 0 validación duplicada. |
+| 🟠 #6 `public.py` side effects | ✅ cerrado | `resolve_system_persona_and_sede` en `services/cms_media_service.py`; elimina Persona "Sistema Público" sintética on-demand. |
+| 🟠 #7 Tests backend fragmentados | ⏸ pospuesto | Consolidar 39 `test_cms_*.py` a `tests/cms/` es wide migration (REGLAS.md prohíbe mezclar con cambios funcionales). |
+| 🟢 #8 (#9) Comentarios #F-XX dispersos | ✅ cerrado | 4 referencias convertidas a `AUDITORIA_FORENSE_CMS.md F-XX (cerrado)` vinculantes. |
+| 🟢 #9 (#10) Models divididos `models_cms.py`/`models_enterprise.py` | ✅ cerrado | Header educativo en `models_cms.py` documentando relación + racional de separación temporal. |
+
+**Gate post-ciclo (verificado 2026-08-05):**
+
+- `scripts/test_cms_quality.py` → **2 passed, 0 failed** (44 backend + 24 frontend unit, CMS E2E omitido por falta de `E2E_EMAIL`/`E2E_PASSWORD`).
+- Gate exhaustivo (`test_enterprise_cms.py` + `test_cms_v2_coverage.py` + `test_cms_v2_deep_coverage.py` + `test_cms_schedule.py` + `test_cms_seo_audit.py` + `test_cms_v2_commit_helper.py`) → **154 passed in 118s**.
+- `ruff check` sobre archivos nuevos/modificados → All checks passed.
+
+**Pendiente para ciclo siguiente:**
+- 🔴 #1 Split `crud/cms.py` en paquete `crud/cms/` con 15+ sub-módulos por dominio.
+- 🟠 #7 Consolidación de 39 tests CMS en `tests/cms/` con naming por dominio + deprecación de archivos "coverage masiva".
+- 🟠 #12 (opcional) Gate E2E CMS con credenciales (`E2E_EMAIL`/`E2E_PASSWORD` + sembrar user).
+
+Ver detalle completo en `docs/ESTADO_DEUDA_TECNICA_BACKEND_CMS.md` (sección "Estado de cierre al 2026-08-05").

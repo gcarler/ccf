@@ -275,6 +275,11 @@ class ContactFormProps(BaseModel):
     submit_label: str = "Enviar mensaje y conectar"
     success_message: str = "Gracias. Te contactaremos pronto."
     action_url: str = "/public/contact"
+    # Fase 2 (muro de gratitud): cuando es ``true``, el envío del formulario
+    # crea además un testimonio ``CmsPost`` en ``draft`` (pendiente de
+    # moderación) en la categoría canónica ``testimonials`` — alimenta la
+    # sección ``testimonials`` de la página vía ``_build_section_defaults``.
+    testimonial: bool = False
 
 
 class PrayerFormProps(BaseModel):

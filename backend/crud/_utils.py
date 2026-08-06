@@ -1,9 +1,72 @@
 """Shared utilities for crud modules."""
 
 import datetime as dt
+import logging
 import uuid as _uuid
 
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
+
+_logger = logging.getLogger(__name__)
+
+
+def _is_unique_violation(exc: IntegrityError) -> bool:
+    """Detector de violación UNIQUE compartido entre CRUD/API layers.
+
+    Distingue una ``IntegrityError`` de UNIQUE-key (Postgres ``pgcode ==
+    '23505'`` o SQLite ``"UNIQUE constraint failed"``) de otras clases
+    (NOT NULL, FK, check constraint). Esto permite que los commit helpers
+    conviertan conflictos concurrentes de creación en ``409`` en vez de
+    propagarse como ``500``, sin enmascarar bugs genuinos NOT NULL / FK /
+    check como falsos 409.
+
+    Single source of truth para el filtro de unique-violation — antes
+    este patrón vivía triplicado (``crud/cms.py::_commit_or_conflict``,
+    ``api/cms_v2/_shared.py::_commit_or_raise_conflict`` y
+    ``crud/academy.py::_commit_or_raise_conflict``). Los tres callers
+    ahora delegan aquí el filtro y deciden independentemente si
+    retornar ``bool`` o levantar ``HTTPException``/``CmsConflictError``.
+    """
+    orig = getattr(exc, "orig", None)
+    if orig is None:
+        return False
+    pgcode = getattr(orig, "pgcode", None)
+    if pgcode == "23505":
+        return True
+    # SQLite expone unique violations via IntegrityError message.
+    return "UNIQUE constraint failed" in str(orig)
+
+
+def _commit_or_conflict_bool(db) -> bool:
+    """Commit helper que retorna ``True`` on éxito y ``False`` si la
+    ``IntegrityError`` es de UNIQUE-key; cualquier otra ``IntegrityError``
+    se re-raise post-rollback. Origen canónico:
+    ``crud/cms.py::_commit_or_conflict`` (M-12 defensivo) ahora delega aquí.
+    """
+    try:
+        db.commit()
+        return True
+    except IntegrityError as exc:
+        db.rollback()
+        if not _is_unique_violation(exc):
+            raise
+        _logger.debug("Swallowed concurrent create unique-key conflict: %s", exc)
+        return False
+
+
+def _commit_or_raise_409(db, detail: str = "resource already exists") -> None:
+    """Commit helper que levanta ``HTTPException(409)`` si la
+    ``IntegrityError`` es de UNIQUE-key; cualquier otra se re-raise
+    post-rollback. Origen canónico: ``crud/academy.py::_commit_or_raise_conflict``.
+    """
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if not _is_unique_violation(exc):
+            raise
+        _logger.debug("Swallowed concurrent create unique-key conflict: %s", exc)
+        raise HTTPException(status_code=409, detail=detail)
 
 
 def _to_uuid(val) -> _uuid.UUID:
