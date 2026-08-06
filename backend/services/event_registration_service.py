@@ -42,6 +42,20 @@ VERIFY_PREFIX = "CCF-VER-"
 CANCEL_PREFIX = "CCF-CXL-"
 QR_EXPIRY_DAYS = 365
 VERIFY_EXPIRY_HOURS = 24
+CANCEL_EXPIRY_HOURS = 72
+
+# ── Rol contextual por evento (plan_clasificador_contextual) ─────────────────
+DEFAULT_PARTICIPANT_ROLE = "VISITANTE_EVENTO"
+PARTICIPANT_ROLES = frozenset(
+    {
+        "VISITANTE_EVENTO",        # Visitante o participante general
+        "CONTACTO_EVANGELISTICO",  # Contacto captado en contexto evangelístico
+        "MIEMBRO",                 # Miembro participante
+        "SERVIDOR",                # Persona que presta servicio
+        "INVITADO",                # Persona invitada especialmente
+        "VOLUNTARIO",              # Persona que colabora voluntariamente
+    }
+)
 
 REGISTRATION_STATUS = {
     "PENDING": "PENDING",
@@ -115,6 +129,45 @@ def is_qr_token_expired(reg: models.EventRegistration) -> bool:
     return expires_at < _utcnow()
 
 
+def is_cancel_token_expired(reg: models.EventRegistration) -> bool:
+    """El token de cancelación expira a las ``CANCEL_EXPIRY_HOURS`` (72h).
+
+    El token se emite junto al QR en el momento de la confirmación, así que
+    la expiración se ancla a ``qr_generated_at`` (el QR link embebe el token
+    de cancelación; el plan §4.3 fija 72h de validez).
+    """
+    if not (reg.extras or {}).get("_cancel_token_hash"):
+        return True
+    if not reg.qr_generated_at:
+        return True
+    expires_at = reg.qr_generated_at + _dt.timedelta(hours=CANCEL_EXPIRY_HOURS)
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=_dt.timezone.utc)
+    return expires_at < _utcnow()
+
+
+def find_by_qr_token(db: Session, qr_token_plain: str) -> Optional[models.EventRegistration]:
+    """Busca la inscripción activa cuyo ``qr_token_hash`` coincide con el QR plano.
+
+    El token plano nunca se persiste (``qr_token`` queda NULL en DB): la
+    búsqueda deriva el sha256 del secret y compara contra el hash — mismo
+    patrón que ``Persona.scanner_token_hash`` (``models_crm.py:452``).
+    """
+    if not qr_token_plain or not qr_token_plain.startswith(QR_PREFIX):
+        return None
+    token_hash = hash_token(qr_token_plain)
+    if not token_hash:
+        return None
+    return (
+        db.query(models.EventRegistration)
+        .filter(
+            models.EventRegistration.qr_token_hash == token_hash,
+            models.EventRegistration.deleted_at.is_(None),
+        )
+        .first()
+    )
+
+
 # ── Resolución de Persona (upsert) ────────────────────────────────────────────
 
 
@@ -170,6 +223,50 @@ class RegistrationError(Exception):
         self.detail = detail
         self.status_code = status_code
         super().__init__(detail)
+
+
+# ── Rol contextual por evento (plan_clasificador_contextual) ─────────────────
+
+
+def normalize_participant_role(role_code: Optional[str]) -> str:
+    """Normaliza y valida un código de rol contextual.
+
+    - ``None`` / vacío → ``DEFAULT_PARTICIPANT_ROLE`` (VISITANTE_EVENTO).
+    - Trim + upper (``" visitante_evento "`` → ``"VISITANTE_EVENTO"``).
+    - Códigos fuera del catálogo → ``RegistrationError`` 422 (contrato §3).
+    """
+    if not role_code or not role_code.strip():
+        return DEFAULT_PARTICIPANT_ROLE
+    code = role_code.strip().upper()
+    if code not in PARTICIPANT_ROLES:
+        raise RegistrationError(
+            "INVALID_PARTICIPANT_ROLE",
+            f"Rol contextual desconocido: {role_code}",
+            status_code=422,
+        )
+    return code
+
+
+def resolve_participant_role(
+    event: models.CrmEvent,
+    reg: Optional[models.EventRegistration] = None,
+    requested: Optional[str] = None,
+) -> str:
+    """Resuelve el rol contextual efectivo de una participación.
+
+    Prioridad (de mayor a menor):
+        1. ``requested`` — override explícito (solo usuarios autorizados).
+        2. ``reg.participant_role_code`` — rol ya persistido en la inscripción.
+        3. ``event.participant_role_code`` — rol por defecto del evento.
+        4. ``DEFAULT_PARTICIPANT_ROLE`` (``VISITANTE_EVENTO``).
+    """
+    if requested is not None:
+        return normalize_participant_role(requested)
+    if reg is not None and reg.participant_role_code:
+        return reg.participant_role_code
+    if event.participant_role_code:
+        return event.participant_role_code
+    return DEFAULT_PARTICIPANT_ROLE
 
 
 def assert_registration_window_open(event: models.CrmEvent, now=None):
@@ -293,6 +390,9 @@ def register(
             ("PENDING" if event.requires_email_verification else "CONFIRMED")
         )
         existing.waiting_list_position = waitlist_count + 1 if capacity_full else None
+        # plan_clasificador_contextual: hereda el rol por defecto del evento
+        # en la reactivación (la inscripción se trata como nueva).
+        existing.participant_role_code = normalize_participant_role(event.participant_role_code)
         # Limpia tokens internos previos (verify/cancel) para emitir otros nuevos.
         _extras = dict(existing.extras or {})
         for _k in [k for k in _extras if k.startswith("_")]:
@@ -311,6 +411,9 @@ def register(
             waiting_list_position=waitlist_count + 1 if capacity_full else None,
             extras=payload.extras or {},
             source="public_form",
+            # plan_clasificador_contextual: toda inscripción pública hereda el
+            # rol contextual por defecto del evento.
+            participant_role_code=normalize_participant_role(event.participant_role_code),
         )
         db.add(reg)
         db.flush()
@@ -549,6 +652,11 @@ def verify(
         reg.confirmed_at = _utcnow()
         qr_token_plain = _issue_qr(db, reg)
         cancel_token_plain = _issue_cancel_token(db, reg)
+
+    # plan_clasificador_contextual: backfill del rol para inscripciones creadas
+    # antes de la migración (participant_role_code NULL → hereda el del evento).
+    if not reg.participant_role_code:
+        reg.participant_role_code = normalize_participant_role(event.participant_role_code)
 
     # Limpieza de campos de verificación usados.
     extras = dict(reg.extras or {})

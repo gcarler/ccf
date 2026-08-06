@@ -190,8 +190,12 @@ def _upsert_attendance(
     persona_id: UUID,
     *,
     source: str = "qr",
+    role_at_event: Optional[str] = None,
 ) -> tuple[models.EventAttendance, bool]:
     """Crea o actualiza EventAttendance(event_id, session_date, persona_id) attended=True.
+
+    ``role_at_event`` (plan_clasificador_contextual) persiste el rol contextual
+    de la inscripción en la asistencia del día del evento.
 
     Returns (attendance, was_created). Idempotente por la UNIQUE constraint
     ``uq_event_attendance`` (``models_crm.py:143``).
@@ -210,6 +214,8 @@ def _upsert_attendance(
         existing.attended = True
         existing.status = "present"
         existing.source = source
+        if role_at_event:
+            existing.role_at_event = role_at_event
         existing.scanned_at = now
         existing.check_in_at = now or existing.check_in_at
         return existing, False
@@ -220,6 +226,7 @@ def _upsert_attendance(
         attended=True,
         status="present",
         source=source,
+        role_at_event=role_at_event or "attendee",
         scanned_at=now,
         check_in_at=now,
     )
@@ -386,7 +393,8 @@ def unified_checkin(
     )
 
     attendance, _created = _upsert_attendance(
-        db, event.id, session_day, persona.id, source=source
+        db, event.id, session_day, persona.id, source=source,
+        role_at_event=registration.participant_role_code if registration else None,
     )
 
     if registration and registration.registration_status != "CHECKED_IN":
@@ -402,6 +410,105 @@ def unified_checkin(
         "persona_name": persona.nombre_completo,
         "source": source,
         "qr_kind": qr_kind,
+        # plan_clasificador_contextual: rol efectivo + rol persistido en asistencia.
+        "participant_role_code": (registration.participant_role_code if registration else None),
+        "role_at_event": attendance.role_at_event,
+        "checked_in_at": attendance.check_in_at.isoformat() if attendance.check_in_at else None,
+    }
+
+
+@router.post("/events/{event_id}/sessions/{session_date}/ccf-evt-checkin", response_model=dict)
+def ccf_evt_checkin(
+    event_id: UUID,
+    session_date: str,
+    payload: schemas.CheckinPayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_edit),
+):
+    """Check-in por QR de inscripción (``CCF-EVT-``) con rol contextual.
+
+    plan_clasificador_contextual §7: el scanner de eventos escanea el QR de la
+    inscripción y este endpoint registra la asistencia persistiendo el rol
+    contextual de la inscripción en ``role_at_event``. Devuelve
+    ``participant_role_code`` (rol efectivo) y ``role_at_event`` (persistido).
+    Idempotente: repeticiones retornan ``is_duplicate=True`` sin duplicar.
+    """
+    event = require_event_access(db, current_user, event_id)
+
+    if str(event.status or "").upper() in {"CANCELLED", "CANCELED"}:
+        raise HTTPException(status_code=409, detail="No se puede hacer check-in en eventos cancelados")
+
+    try:
+        session_day = datetime.datetime.strptime(session_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato de fecha inválido, esperado YYYY-MM-DD")
+
+    token = (payload.qr_token or "").strip()
+    if not token.startswith("CCF-EVT-"):
+        raise HTTPException(status_code=400, detail="Se requiere un QR de inscripción CCF-EVT-")
+    payload_str = token.removeprefix("CCF-EVT-")
+    parsed = _parse_evt_qr_payload(payload_str)
+    if parsed is None:
+        raise HTTPException(status_code=400, detail="QR malformado")
+    event_uuid, persona_uuid = parsed
+    if event_uuid != event.id:
+        raise HTTPException(status_code=404, detail="El QR no corresponde a este evento")
+
+    reg = (
+        db.query(models.EventRegistration)
+        .filter(
+            models.EventRegistration.event_id == event.id,
+            models.EventRegistration.persona_id == persona_uuid,
+            models.EventRegistration.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not reg:
+        raise HTTPException(status_code=404, detail="Inscripción no encontrada")
+
+    # Validar solo contra el hash persistido (fix seguridad #2 + timing attack #12).
+    token_hash = _qr_token_secret_hash(token)
+    if not token_hash or not secrets.compare_digest(str(reg.qr_token_hash or ""), token_hash):
+        raise HTTPException(status_code=403, detail="QR inválido")
+    if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Inscripción no confirmada (estado: {reg.registration_status})",
+        )
+
+    persona = reg.persona
+    is_duplicate = bool(
+        db.query(models.EventAttendance)
+        .filter(
+            models.EventAttendance.event_id == event.id,
+            models.EventAttendance.session_date == session_day,
+            models.EventAttendance.persona_id == persona.id,
+            models.EventAttendance.attended.is_(True),
+        )
+        .first()
+    )
+
+    attendance, _created = _upsert_attendance(
+        db, event.id, session_day, persona.id,
+        source="qr_event_registration",
+        role_at_event=reg.participant_role_code,
+    )
+
+    if reg.registration_status != "CHECKED_IN":
+        reg.registration_status = "CHECKED_IN"
+        reg.check_in_at = _utcnow()
+        reg.checked_in_by = current_user.id
+
+    db.commit()
+    return {
+        "status": "success",
+        "is_duplicate": is_duplicate,
+        "persona_id": str(persona.id),
+        "persona_name": persona.nombre_completo,
+        "source": "qr_event_registration",
+        # plan_clasificador_contextual: rol efectivo + rol persistido en asistencia.
+        "participant_role_code": reg.participant_role_code,
+        "role_at_event": attendance.role_at_event,
         "checked_in_at": attendance.check_in_at.isoformat() if attendance.check_in_at else None,
     }
 
