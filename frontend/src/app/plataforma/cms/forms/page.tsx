@@ -73,6 +73,7 @@ function SortableField({
   onChange,
   onRemove,
   onMove,
+  onDuplicate,
 }: {
   field: CmsFormField;
   index: number;
@@ -81,6 +82,7 @@ function SortableField({
   onChange: (field: CmsFormField) => void;
   onRemove: (id: string) => void;
   onMove: (index: number, direction: "up" | "down") => void;
+  onDuplicate: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: field.id,
@@ -105,6 +107,7 @@ function SortableField({
         onChange={onChange}
         onRemove={() => onRemove(field.id)}
         onMove={(dir) => onMove(index, dir)}
+        onDuplicate={() => onDuplicate(field.id)}
         dragHandle={
           <button
             type="button"
@@ -314,6 +317,20 @@ export default function CmsFormsManagement() {
     nextFields[index] = nextFields[targetIndex];
     nextFields[targetIndex] = temp;
     setFormFields(nextFields);
+  };
+
+  const handleDuplicateField = (id: string) => {
+    setFormFields((prev) => {
+      const idx = prev.findIndex((f) => f.id === id);
+      if (idx < 0) return prev;
+      const original = prev[idx];
+      const copy: CmsFormField = {
+        ...original,
+        id: `f_${Date.now()}_${idx}`,
+        label: `${original.label} (copia)`,
+      };
+      return [...prev.slice(0, idx + 1), copy, ...prev.slice(idx + 1)];
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -1052,6 +1069,7 @@ export default function CmsFormsManagement() {
                       onChange={(field) => handleUpdateField(field.id, field)}
                       onRemove={handleRemoveField}
                       onMove={handleMoveField}
+                      onDuplicate={handleDuplicateField}
                     />
                   ))}
                 </div>
