@@ -570,6 +570,7 @@ def test_backend_no_hard_deletes_in_transactional_apis():
         "backend/api/auth.py",  # refresh tokens revocados
         "backend/api/auth_v3.py",  # tokens de sesión
         "backend/crud/cms.py",  # media items son archivos estáticos, no datos transaccionales
+        "backend/crud/cms/__init__.py",  # split del monolito cms.py (T1.2) — misma excepción: media items
         "backend/crud/kernel.py",  # relaciones persona-ministerio (tabla de control sin trazabilidad histórica)
     }
     violations = []

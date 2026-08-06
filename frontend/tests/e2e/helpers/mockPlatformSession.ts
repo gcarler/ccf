@@ -5,6 +5,8 @@ type MockPlatformSessionOptions = {
   permissions?: Record<string, 'allow' | 'deny'>;
   accessToken?: string;
   refreshToken?: string;
+  sede_id?: string;
+  auth_user_id?: string;
 };
 
 export async function installMockPlatformSession(
@@ -17,6 +19,8 @@ export async function installMockPlatformSession(
     },
     accessToken = 'mock-e2e-token',
     refreshToken = 'mock-e2e-refresh',
+    sede_id,
+    auth_user_id = 'e2e-user',
   }: MockPlatformSessionOptions = {},
 ) {
   await page.addInitScript(
@@ -33,12 +37,13 @@ export async function installMockPlatformSession(
   );
 
   const authPayload = {
-    auth_user_id: 'e2e-user',
+    auth_user_id,
     username: 'pastor.e2e',
     email: 'pastor.e2e@ccf.local',
     platform_role: role,
     is_verified: true,
     permissions,
+    sede_id,
   };
 
   const fulfillAuthMe = async (route: Route) => {

@@ -22,9 +22,7 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
-from fastapi import HTTPException
 from sqlalchemy import and_, or_
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from backend import models

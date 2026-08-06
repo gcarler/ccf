@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.1.2-cms (2026-08-06)
+
+### CMS v2 — Cobertura E2E completa + Arquitectura documentada
+
+#### Fase 5 — Tests E2E: cierre de huecos
+- **feat(test):** nueva spec `frontend/tests/e2e/cms/menu-navbar-flow.spec.ts` — verifica que la navbar publica refleja los `MenuItem` servidos por `GET /api/cms/v2/public/sites/{key}/menus/{key}` y que el flujo PATCH admin devuelve 200.
+- **feat(test):** nueva spec `frontend/tests/e2e/cms/tenant-isolation.spec.ts` — valida Axioma 3: un actor de Sede A no ve paginas de otra sede, recibe 404 en `GET` y `POST` cross-sede al backend.
+- **feat(test):** `mockPlatformSession` ahora acepta `sede_id` y `auth_user_id` para escenarios multi-tenant en tests.
+
+#### Fase 7 — Documentacion
+- **docs(cms):** crea `docs/cms_architecture.md` con diagrama Mermaid de arquitectura post-refactor, capas (routers / excepciones / frontend), flujo de publicacion, multi-tenant, SEO/a11y y matriz de tests.
+- **docs(cms):** actualiza este `CHANGELOG.md` con las entradas de las Fases 5 y 7.
+
+### Quality
+- **Playwright CMS:** `npm run test:e2e:cms` ampliado a 6 specs (builder-flow, builder-puck-flow, media-management, pages-preview, menu-navbar-flow, tenant-isolation, smoke).
+- **E2E local:** todas las specs nuevas (4 tests) pasan contra `next start` con mocks de sesion y rutas.
+
+---
+
 ## v1.1.1-cms (2026-07-31)
 
 ### CMS v2 — Correcciones de Calidad: ESLint 0-warning
