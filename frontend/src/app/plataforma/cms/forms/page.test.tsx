@@ -96,4 +96,28 @@ describe("CmsFormsManagement Component", () => {
 
     expect(screen.getByText(/Carlos Ruiz/i)).toBeInTheDocument();
   });
+
+  it("abre el constructor, muestra el catálogo de tipos y la vista previa", async () => {
+    vi.mocked(listCmsForms).mockResolvedValue([]);
+    vi.mocked(listCmsFormSubmissions).mockResolvedValue({
+      page: 1, page_size: 20, total: 0, items: [],
+    });
+
+    render(<CmsFormsManagement />);
+    await act(async () => { await Promise.resolve(); });
+
+    // Abrir el drawer "Nuevo Formulario"
+    fireEvent.click(screen.getByRole("button", { name: /Nuevo Formulario/i }));
+    expect(screen.getByText(/Información General/i)).toBeInTheDocument();
+
+    // El catálogo de tipos expone los 19 tipos (incluye Seleccionar múltiple y Saltar página).
+    expect(screen.getByRole("button", { name: /\+ Selección múltiple/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /\+ Salto de página/i })).toBeInTheDocument();
+
+    // Cambiar a la pestaña "Vista previa"
+    fireEvent.click(screen.getByRole("button", { name: /Vista previa/i }));
+    // El renderer preview muestra los 3 campos por defecto (Nombre / Correo / Mensaje).
+    expect(screen.getByText(/Nombre completo/i)).toBeInTheDocument();
+    expect(screen.getByText(/Correo electrónico/i)).toBeInTheDocument();
+  });
 });
