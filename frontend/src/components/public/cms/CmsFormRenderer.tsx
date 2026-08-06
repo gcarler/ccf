@@ -236,6 +236,22 @@ interface CmsFormRendererProps {
 const INPUT_CLASS =
   "w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] outline-none font-medium text-[hsl(var(--text-primary))] transition-all placeholder:text-[hsl(var(--text-secondary))] placeholder:font-normal";
 
+/** Representación legible de un valor para el resumen de revisión. */
+function summarizeValue(field: CmsFormField, value: unknown): string {
+  if (isEmptyValue(value)) return "—";
+  if (field.type === "checkbox") return value === true ? "Sí" : "No";
+  if (field.type === "select_multiple") {
+    if (!Array.isArray(value)) return String(value);
+    return (value as string[]).filter((v) => !String(v).startsWith("__other__")).join(", ");
+  }
+  if (field.type === "file") {
+    const f = value as { name?: string };
+    return f?.name || "Archivo";
+  }
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
 function SectionHeading({ field }: { field: CmsFormField }) {
   return (
     <div className="pt-2">
@@ -255,18 +271,30 @@ function FieldInput({
   field,
   value,
   onChange,
+  onBlur,
   error,
   preview,
 }: {
   field: CmsFormField;
   value: unknown;
   onChange: (value: unknown) => void;
+  onBlur: () => void;
   error?: string;
   preview?: boolean;
 }) {
   const disabled = preview;
-  const inputClass = `${INPUT_CLASS} ${error ? "!border-[hsl(var(--destructive))]" : ""}`;
+  const hasError = !!error;
+  const inputClass = `${INPUT_CLASS} ${hasError ? "!border-[hsl(var(--destructive))]" : ""}`;
   const labelId = `cms-form-${field.id}`;
+  const helperId = `${labelId}-helper`;
+  const errorId = `${labelId}-error`;
+  const describedBy = `${field.helper_text ? helperId : ""} ${hasError ? errorId : ""}`.trim() || undefined;
+
+  const commonA11y = {
+    "aria-invalid": hasError || undefined,
+    "aria-describedby": describedBy,
+    "aria-required": field.required || undefined,
+  };
 
   const renderInput = () => {
     switch (field.type) {
@@ -280,10 +308,12 @@ function FieldInput({
             type={field.type === "phone" ? "tel" : field.type === "url" ? "url" : field.type}
             value={typeof value === "string" ? value : ""}
             onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
             placeholder={field.placeholder || ""}
             disabled={disabled}
             autoComplete={field.type === "email" ? "email" : field.type === "phone" ? "tel" : undefined}
             className={inputClass}
+            {...commonA11y}
           />
         );
       case "textarea":
@@ -292,10 +322,12 @@ function FieldInput({
             id={labelId}
             value={typeof value === "string" ? value : ""}
             onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
             placeholder={field.placeholder || ""}
             disabled={disabled}
             rows={4}
             className={`${inputClass} resize-none`}
+            {...commonA11y}
           />
         );
       case "number":
@@ -316,8 +348,10 @@ function FieldInput({
                   step={step}
                   value={Number.isNaN(num) ? min : num}
                   onChange={(e) => onChange(Number(e.target.value))}
+                  onBlur={onBlur}
                   disabled={disabled}
                   className="w-full accent-[hsl(var(--primary))]"
+                  {...commonA11y}
                 />
                 <span className="ml-3 tabular-nums text-[hsl(var(--text-primary))]">
                   {Number.isNaN(num) ? min : num}
@@ -335,9 +369,11 @@ function FieldInput({
             step={field.step ?? "any"}
             value={typeof value === "number" ? value : (value as string) ?? ""}
             onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}
+            onBlur={onBlur}
             placeholder={field.placeholder || ""}
             disabled={disabled}
             className={inputClass}
+            {...commonA11y}
           />
         );
       case "date":
@@ -348,8 +384,10 @@ function FieldInput({
             type={field.type === "datetime" ? "datetime-local" : "date"}
             value={typeof value === "string" ? value : ""}
             onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
             disabled={disabled}
             className={inputClass}
+            {...commonA11y}
           />
         );
       case "checkbox":
@@ -360,8 +398,10 @@ function FieldInput({
               type="checkbox"
               checked={value === true}
               onChange={(e) => onChange(e.target.checked)}
+              onBlur={onBlur}
               disabled={disabled}
               className="mt-1 w-4 h-4 text-[hsl(var(--primary))] rounded focus:ring-[hsl(var(--primary))]"
+              {...commonA11y}
             />
             <span className="text-sm font-medium text-[hsl(var(--text-secondary))] leading-relaxed">
               {field.label}
@@ -375,8 +415,10 @@ function FieldInput({
             id={labelId}
             value={typeof value === "string" ? value : ""}
             onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
             disabled={disabled}
             className={inputClass}
+            {...commonA11y}
           >
             <option value="">{field.placeholder || "Selecciona una opción…"}</option>
             {(field.options || []).map((opt) => (
@@ -391,7 +433,7 @@ function FieldInput({
         );
       case "radio":
         return (
-          <div className="space-y-2">
+          <div className="space-y-2" role="radiogroup" aria-label={field.label} {...commonA11y}>
             {(field.options || []).map((opt) => (
               <label key={opt} className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -400,6 +442,7 @@ function FieldInput({
                   value={opt}
                   checked={value === opt}
                   onChange={() => onChange(opt)}
+                  onBlur={onBlur}
                   disabled={disabled}
                   className="w-4 h-4 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
                 />
@@ -414,6 +457,7 @@ function FieldInput({
                   value="__other__"
                   checked={typeof value === "string" && value.startsWith("__other__")}
                   onChange={() => onChange("__other__")}
+                  onBlur={onBlur}
                   disabled={disabled}
                   className="w-4 h-4 text-[hsl(var(--primary))]"
                 />
@@ -422,6 +466,7 @@ function FieldInput({
                   placeholder="Otra…"
                   value={typeof value === "string" && value.startsWith("__other__") ? value.replace("__other__:", "") : ""}
                   onChange={(e) => onChange(`__other__:${e.target.value}`)}
+                  onBlur={onBlur}
                   disabled={disabled}
                   className={inputClass}
                 />
@@ -431,7 +476,7 @@ function FieldInput({
         );
       case "select_multiple":
         return (
-          <div className="space-y-2">
+          <div className="space-y-2" role="group" aria-label={field.label} {...commonA11y}>
             {(field.options || []).map((opt) => {
               const selected = Array.isArray(value) && value.includes(opt);
               return (
@@ -443,6 +488,7 @@ function FieldInput({
                       const current = Array.isArray(value) ? [...(value as string[])] : [];
                       onChange(e.target.checked ? [...current, opt] : current.filter((v) => v !== opt));
                     }}
+                    onBlur={onBlur}
                     disabled={disabled}
                     className="w-4 h-4 text-[hsl(var(--primary))] rounded focus:ring-[hsl(var(--primary))]"
                   />
@@ -468,6 +514,7 @@ function FieldInput({
                   const current = Array.isArray(value) ? (value as string[]).filter((v) => !v.startsWith("__other__")) : [];
                   onChange([...current, ...others]);
                 }}
+                onBlur={onBlur}
                 disabled={disabled}
                 className={inputClass}
               />
@@ -478,7 +525,7 @@ function FieldInput({
         const max = field.max_value ?? 5;
         const num = typeof value === "number" ? value : 0;
         return (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" role="radiogroup" aria-label={field.label} {...commonA11y}>
             {Array.from({ length: max }, (_, i) => i + 1).map((n) => (
               <button
                 key={n}
@@ -486,6 +533,8 @@ function FieldInput({
                 disabled={disabled}
                 onClick={() => onChange(n)}
                 aria-label={`${n} de ${max}`}
+                aria-checked={n === num}
+                role="radio"
                 className="focus:outline-none"
               >
                 <Star
@@ -502,7 +551,7 @@ function FieldInput({
         const fileName =
           typeof value === "object" && value !== null ? (value as { name?: string }).name : undefined;
         return (
-          <label className={`flex items-center gap-3 cursor-pointer border border-dashed rounded-lg px-3 py-3 ${error ? "border-[hsl(var(--destructive))]" : "border-[hsl(var(--border))]"}`}>
+          <label className={`flex items-center gap-3 cursor-pointer border border-dashed rounded-lg px-3 py-3 ${hasError ? "border-[hsl(var(--destructive))]" : "border-[hsl(var(--border))]"}`}>
             <input
               id={labelId}
               type="file"
@@ -517,6 +566,7 @@ function FieldInput({
                 onChange({ name: f.name, mime: f.type, size: f.size, url: "" });
               }}
               className="hidden"
+              {...commonA11y}
             />
             <span className="text-sm font-medium text-[hsl(var(--text-secondary))]">
               {fileName || (field.placeholder || "Elige un archivo…")}
@@ -547,10 +597,11 @@ function FieldInput({
         {field.required && <span className="text-[hsl(var(--destructive))]"> *</span>}
       </label>
       {renderInput()}
-      {error && <p className="text-xs font-semibold text-[hsl(var(--destructive))]">{error}</p>}
-      {!error && field.helper_text && (
-        <p className="text-xs font-medium text-[hsl(var(--text-secondary))]">{field.helper_text}</p>
-      )}
+      {hasError ? (
+        <p id={errorId} role="alert" className="text-xs font-semibold text-[hsl(var(--destructive))]">{error}</p>
+      ) : field.helper_text ? (
+        <p id={helperId} className="text-xs font-medium text-[hsl(var(--text-secondary))]">{field.helper_text}</p>
+      ) : null}
     </div>
   );
 }
@@ -648,6 +699,7 @@ export default function CmsFormRenderer({
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState(0);
+  const [reviewMode, setReviewMode] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -667,9 +719,39 @@ export default function CmsFormRenderer({
     });
   }, []);
 
+  // Valida un solo campo al salir de él (feedback inline temprano).
+  const handleBlur = useCallback(
+    (fieldId: string) => {
+      const field = (form.fields || []).find((f) => f.id === fieldId);
+      if (!field || META_TYPES.has(field.type)) return;
+      if (!isFieldVisible(field, values)) return;
+      const value = values[fieldId];
+      let err: string | null = null;
+      if (isEmptyValue(value)) {
+        if (field.required) err = `El campo "${field.label}" es obligatorio`;
+      } else {
+        err = validateFieldValue(field, value);
+      }
+      setErrors((prev) => {
+        if (err) return { ...prev, [fieldId]: err };
+        if (!(fieldId in prev)) return prev;
+        const next = { ...prev };
+        delete next[fieldId];
+        return next;
+      });
+    },
+    [form.fields, values]
+  );
+
   const validateCurrent = useCallback(() => {
     const errs = validateFields(currentFields, values);
-    setErrors((prev) => ({ ...prev, ...errs }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      for (const k of Object.keys(next)) {
+        if (currentFields.some((f) => f.id === k)) delete next[k];
+      }
+      return { ...next, ...errs };
+    });
     return Object.keys(errs).length === 0;
   }, [currentFields, values]);
 
@@ -697,16 +779,62 @@ export default function CmsFormRenderer({
     onReady({ validateAll, getData });
   }, [onReady, validateAll, getData]);
 
+  // Focus al primer campo con error tras validar / cambiar de paso.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const focusFirstError = useCallback(() => {
+    if (typeof document === "undefined") return;
+    requestAnimationFrame(() => {
+      const root = containerRef.current;
+      if (!root) return;
+      const firstInvalid = root.querySelector<HTMLElement>('[aria-invalid="true"]');
+      firstInvalid?.focus();
+    });
+  }, []);
+
+  const goToReview = () => {
+    if (!validateCurrent()) {
+      focusFirstError();
+      return;
+    }
+    setReviewMode(true);
+  };
+
   const handleNext = () => {
-    if (!validateCurrent()) return;
+    if (!validateCurrent()) {
+      focusFirstError();
+      return;
+    }
+    setReviewMode(false);
     setStep((s) => Math.min(s + 1, steps.length - 1));
   };
 
-  const handlePrev = () => setStep((s) => Math.max(s - 1, 0));
+  const handlePrev = () => {
+    setReviewMode(false);
+    setStep((s) => Math.max(s - 1, 0));
+  };
 
-  const handleSubmit = async () => {
+  const goToStep = (target: number) => {
+    if (target === step && !reviewMode) return;
+    // Solo se permite navegar hacia atrás o al paso ya validado actual.
+    if (target > step) return;
+    setReviewMode(false);
+    setStep(target);
+  };
+
+  const submitForm = async () => {
     if (preview) return;
-    if (!validateCurrent()) return;
+    // Re-valida TODO antes de enviar (incluso pasos ya visitados).
+    if (!validateAll()) {
+      setReviewMode(false);
+      // Vuelve al primer paso que tenga error.
+      const firstErrField = form.fields?.find((f) => errors[f.id]);
+      if (firstErrField) {
+        const stepIdx = steps.findIndex((s) => s.some((f) => f.id === firstErrField.id));
+        if (stepIdx >= 0) setStep(stepIdx);
+      }
+      focusFirstError();
+      return;
+    }
     if (form.captcha_enabled && !captchaToken) {
       setErrorMessage("Debes completar el captcha para continuar.");
       return;
@@ -725,6 +853,18 @@ export default function CmsFormRenderer({
           setStatus("success");
           return;
         }
+        // Error específico de un campo: mápalo a inline y vuelve al paso.
+        if (detail?.field_id) {
+          setErrors((prev) => ({ ...prev, [detail.field_id as string]: detail?.detail || "Valor inválido" }));
+          setReviewMode(false);
+          const field = form.fields?.find((f) => f.id === detail.field_id);
+          if (field) {
+            const stepIdx = steps.findIndex((s) => s.some((f) => f.id === field.id));
+            if (stepIdx >= 0) setStep(stepIdx);
+          }
+          focusFirstError();
+          return;
+        }
         setErrorMessage(detail?.detail || extractErrorMessage(err, "Ocurrió un error al enviar el formulario."));
       } else {
         setErrorMessage(extractErrorMessage(err, "Ocurrió un error al enviar el formulario."));
@@ -736,9 +876,16 @@ export default function CmsFormRenderer({
     setValues({});
     setErrors({});
     setStep(0);
+    setReviewMode(false);
     setStatus("idle");
     setCaptchaToken(null);
   };
+
+  const reviewFields = useMemo(() => {
+    return (form.fields || []).filter(
+      (f) => !META_TYPES.has(f.type) && f.type !== "page" && isFieldVisible(f, values),
+    );
+  }, [form.fields, values]);
 
   if (status === "success") {
     return (
@@ -763,7 +910,7 @@ export default function CmsFormRenderer({
   }
 
   return (
-    <div className={className}>
+    <div className={className} ref={containerRef}>
       {form.description && (
         <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mb-4">{form.description}</p>
       )}
@@ -780,49 +927,97 @@ export default function CmsFormRenderer({
         className="hidden"
       />
 
-      <div className="space-y-4">
-        {currentFields.map((field) => {
-          if (!isFieldVisible(field, values)) return null;
-          const error = errors[field.id];
-          return (
-            <FieldInput
-              key={field.id}
-              field={field}
-              value={values[field.id]}
-              onChange={(v) => handleChange(field.id, v)}
-              error={error}
-              preview={preview}
-            />
-          );
-        })}
-
-        {form.captcha_enabled && !preview && (
-          <div className="pt-1">
-            <HcaptchaWidget
-              siteKey={form.captcha_site_key || ""}
-              onToken={setCaptchaToken}
-              onReset={() => setCaptchaToken(null)}
-              disabled={status === "loading"}
-            />
-            {form.captcha_enabled && !captchaToken && errorMessage === "Debes completar el captcha para continuar." && (
-              <p className="text-xs font-semibold text-[hsl(var(--destructive))] mt-1">{errorMessage}</p>
-            )}
+      {reviewMode ? (
+        // ── Vista de revisión final ──────────────────────────────────────────
+        <div className="space-y-4">
+          <div className="text-center pb-2 border-b border-[hsl(var(--border))]">
+            <h3 className="text-base font-bold text-[hsl(var(--text-primary))]">Revisa tus respuestas</h3>
+            <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">
+              {isMultiStep ? `Paso ${steps.length} de ${steps.length} · ` : ""}Confirma antes de enviar.
+            </p>
           </div>
-        )}
-      </div>
+          <dl className="space-y-2.5">
+            {reviewFields.length === 0 ? (
+              <p className="text-sm text-[hsl(var(--text-secondary))]">No hay campos completados.</p>
+            ) : (
+              reviewFields.map((f) => (
+                <div key={f.id} className="flex items-start justify-between gap-3 text-sm">
+                  <dt className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-xs pt-0.5 shrink-0 max-w-[40%]">
+                    {f.label}
+                  </dt>
+                  <dd className="text-[hsl(var(--text-primary))] font-medium text-right break-words min-w-0 flex-1">
+                    {summarizeValue(f, values[f.id])}
+                  </dd>
+                </div>
+              ))
+            )}
+          </dl>
+
+          {form.captcha_enabled && !preview && (
+            <div className="pt-1">
+              <HcaptchaWidget
+                siteKey={form.captcha_site_key || ""}
+                onToken={setCaptchaToken}
+                onReset={() => setCaptchaToken(null)}
+                disabled={status === "loading"}
+              />
+              {form.captcha_enabled && !captchaToken && errorMessage === "Debes completar el captcha para continuar." && (
+                <p role="alert" className="text-xs font-semibold text-[hsl(var(--destructive))] mt-1">{errorMessage}</p>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {isMultiStep && (
+            <div className="text-center text-xs font-semibold text-[hsl(var(--text-secondary))] mb-1">
+              Paso {step + 1} de {steps.length}
+            </div>
+          )}
+          {currentFields.map((field) => {
+            if (!isFieldVisible(field, values)) return null;
+            const error = errors[field.id];
+            return (
+              <FieldInput
+                key={field.id}
+                field={field}
+                value={values[field.id]}
+                onChange={(v) => handleChange(field.id, v)}
+                onBlur={() => handleBlur(field.id)}
+                error={error}
+                preview={preview}
+              />
+            );
+          })}
+
+          {form.captcha_enabled && !preview && !isMultiStep && (
+            <div className="pt-1">
+              <HcaptchaWidget
+                siteKey={form.captcha_site_key || ""}
+                onToken={setCaptchaToken}
+                onReset={() => setCaptchaToken(null)}
+                disabled={status === "loading"}
+              />
+              {form.captcha_enabled && !captchaToken && errorMessage === "Debes completar el captcha para continuar." && (
+                <p role="alert" className="text-xs font-semibold text-[hsl(var(--destructive))] mt-1">{errorMessage}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {status === "error" && errorMessage && errorMessage !== "Debes completar el captcha para continuar." && (
-        <div className="mt-4 p-4 bg-[hsl(var(--destructive)/10%)] text-[hsl(var(--destructive))] rounded-lg text-sm font-semibold flex items-start gap-3">
+        <div className="mt-4 p-4 bg-[hsl(var(--destructive)/10%)] text-[hsl(var(--destructive))] rounded-lg text-sm font-semibold flex items-start gap-3" role="alert" aria-live="assertive">
           <span>⚠</span> {errorMessage}
         </div>
       )}
 
       <div className="mt-5 flex items-center justify-between gap-3">
-        {isMultiStep ? (
+        {isMultiStep || reviewMode ? (
           <button
             type="button"
             onClick={handlePrev}
-            disabled={step === 0 || status === "loading"}
+            disabled={step === 0 && !reviewMode}
             className="inline-flex items-center gap-1 px-4 py-2.5 rounded-lg border border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] transition-colors disabled:opacity-40"
           >
             <ChevronLeft size={16} /> Anterior
@@ -831,16 +1026,16 @@ export default function CmsFormRenderer({
           <span />
         )}
 
-        {showSubmit && (
+        {showSubmit && !reviewMode && (
           <button
             type="button"
-            onClick={isLastStep ? handleSubmit : handleNext}
+            onClick={isLastStep ? (isMultiStep ? goToReview : submitForm) : handleNext}
             disabled={status === "loading" || preview}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-white rounded-lg text-sm font-semibold uppercase tracking-wide shadow-lg shadow-black/10 transition-all disabled:opacity-60 flex-1 sm:flex-none justify-center"
           >
             {status === "loading" && <Loader2 size={16} className="animate-spin" />}
             {isLastStep
-              ? form.submit_button_text || "Enviar"
+              ? (isMultiStep ? (<>Revisar <ChevronRight size={16} /></>) : (form.submit_button_text || "Enviar"))
               : (
                 <>
                   Continuar <ChevronRight size={16} />
@@ -848,14 +1043,32 @@ export default function CmsFormRenderer({
               )}
           </button>
         )}
+
+        {showSubmit && reviewMode && (
+          <button
+            type="button"
+            onClick={submitForm}
+            disabled={status === "loading" || preview}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-white rounded-lg text-sm font-semibold uppercase tracking-wide shadow-lg shadow-black/10 transition-all disabled:opacity-60 flex-1 sm:flex-none justify-center"
+          >
+            {status === "loading" && <Loader2 size={16} className="animate-spin" />}
+            {form.submit_button_text || "Enviar"}
+          </button>
+        )}
       </div>
 
-      {isMultiStep && (
-        <div className="mt-4 flex items-center justify-center gap-1.5">
+      {isMultiStep && !reviewMode && (
+        <div className="mt-4 flex items-center justify-center gap-1.5" role="group" aria-label="Indicador de pasos">
           {steps.map((_, i) => (
-            <span
+            <button
               key={i}
-              className={`h-1.5 rounded-full transition-all ${i === step ? "w-6 bg-[hsl(var(--primary))]" : "w-1.5 bg-[hsl(var(--border))]"}`}
+              type="button"
+              onClick={() => goToStep(i)}
+              disabled={i > step}
+              aria-label={`Ir al paso ${i + 1}`}
+              aria-current={i === step ? "step" : undefined}
+              title={`Paso ${i + 1}`}
+              className={`h-1.5 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] disabled:cursor-not-allowed ${i === step ? "w-6 bg-[hsl(var(--primary))]" : i < step ? "w-1.5 bg-[hsl(var(--primary))]/60 hover:bg-[hsl(var(--primary))]" : "w-1.5 bg-[hsl(var(--border))]"}`}
             />
           ))}
         </div>
