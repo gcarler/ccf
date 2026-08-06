@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ArrowDown, ArrowUp, Copy, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import type { CmsFormConditionOperator, CmsFormField, CmsFormFieldType } from "@/types/cms-v2";
 
 export const FIELD_TYPES: { type: CmsFormFieldType; label: string; description: string }[] = [
@@ -129,7 +129,6 @@ interface FieldEditorProps {
   onChange: (field: CmsFormField) => void;
   onRemove: () => void;
   onMove: (direction: "up" | "down") => void;
-  onDuplicate?: () => void;
   dragHandle?: React.ReactNode;
 }
 
@@ -141,7 +140,6 @@ export function FieldEditor({
   onChange,
   onRemove,
   onMove,
-  onDuplicate,
   dragHandle,
 }: FieldEditorProps) {
   const typeLabel = FIELD_TYPES.find((t) => t.type === field.type)?.label || field.type;
@@ -169,16 +167,6 @@ export function FieldEditor({
 
         <div className="flex items-center gap-1">
           {dragHandle}
-          {onDuplicate && (
-            <button
-              type="button"
-              onClick={onDuplicate}
-              className="p-1 text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              title="Duplicar campo"
-            >
-              <Copy className="w-3.5 h-3.5" />
-            </button>
-          )}
           <button
             type="button"
             onClick={() => onMove("up")}
@@ -254,43 +242,20 @@ export function FieldEditor({
           )}
 
           {OPTION_TYPES.has(field.type) && (
-            <div className="space-y-2 pt-1">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Opciones *</label>
-              <div className="space-y-1.5">
-                {(field.options || []).map((opt, optIdx) => (
-                  <div key={optIdx} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={opt}
-                      onChange={(e) => {
-                        const options = [...(field.options || [])];
-                        options[optIdx] = e.target.value;
-                        update({ options: options.filter((o) => o !== undefined) });
-                      }}
-                      className={inputCls}
-                      aria-label={`Opción ${optIdx + 1}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        update({ options: (field.options || []).filter((_, i) => i !== optIdx) })
-                      }
-                      className="p-1 text-zinc-400 hover:text-red-600 transition-colors shrink-0"
-                      title="Eliminar opción"
-                      aria-label={`Eliminar opción ${optIdx + 1}`}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => update({ options: [...(field.options || []), "Nueva opción"] })}
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" /> Agregar opción
-              </button>
+            <div className="space-y-1.5 pt-1">
+              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                Opciones (separadas por coma) *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Opción 1, Opción 2, Opción 3"
+                value={field.options?.join(", ") || ""}
+                onChange={(e) =>
+                  update({ options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })
+                }
+                className={inputCls}
+              />
               <label className="flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer pt-1">
                 <input
                   type="checkbox"
