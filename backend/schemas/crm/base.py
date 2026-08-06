@@ -91,6 +91,8 @@ class CrmEventBase(BaseModel):
     location: Optional[str] = None
     status: str = "SCHEDULED"
     cancellation_reason: Optional[str] = None
+    # plan_clasificador_contextual: rol contextual por defecto del evento.
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
 
 
 class CrmEventCreate(CrmEventBase):
@@ -110,6 +112,7 @@ class CrmEventUpdate(BaseModel):
     location: Optional[str] = None
     status: Optional[str] = None
     cancellation_reason: Optional[str] = None
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
 
 
 class CrmEvent(CrmEventBase):
@@ -1279,6 +1282,8 @@ class CrmEventPreregistrationConfig(BaseModel):
     settings_json: dict = {}
     # plan_de_form_builder: form dinámico vinculado al evento (NULL = form fijo)
     form_id: Optional[UUID] = None
+    # plan_clasificador_contextual: rol por defecto de nuevas inscripciones.
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
 
 
 # ── Pre-registro público ─────────────────────────────────────────────────────
@@ -1351,6 +1356,8 @@ class PublicEventRead(BaseModel):
     capacity_remaining: Optional[int] = None
     # plan_de_form_builder: form dinámico vinculado (NULL = form fijo)
     form_id: Optional[UUID] = None
+    # plan_clasificador_contextual: rol contextual visible en la landing.
+    participant_role_code: Optional[str] = None
     model_config = orm_config
 
 
@@ -1370,6 +1377,7 @@ class EventRegistrationCreate(BaseModel):
     extras: dict = {}
     registration_status: REGISTRATION_STATUS_LITERAL = "CONFIRMED"
     source: str = "admin"
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
 
 
 class EventRegistrationUpdate(BaseModel):
@@ -1379,6 +1387,7 @@ class EventRegistrationUpdate(BaseModel):
 
     registration_status: Optional[REGISTRATION_STATUS_LITERAL] = None
     extras: Optional[dict] = None
+    participant_role_code: Optional[str] = Field(default=None, max_length=40)
 
 
 class EventRegistrationRead(BaseModel):
@@ -1406,6 +1415,7 @@ class EventRegistrationRead(BaseModel):
     source: str
     extras: dict = {}
     waiting_list_position: Optional[int] = None
+    participant_role_code: Optional[str] = None
     reminder_sent_count: int = 0
     last_reminder_sent_at: Optional[AwareDateTime] = None
     model_config = orm_config
