@@ -173,7 +173,7 @@ export default function PublicHomePage() {
 
     return (
 
-            <main>
+            <main className="relative z-10" style={{ background: "var(--site-background)" }}>
             {/* ─── HERO ─────────────────────────────────────────────── */}
             {hasHero && (
                 <div className="pb-6">
