@@ -71,7 +71,7 @@ export default function PublicHeroWithSlides({
 
   if (home) {
     return (
-      <section className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden" style={{ minHeight: "var(--ccf-hero-min-h)" }}>
+      <section className="sticky top-0 left-1/2 w-screen -translate-x-1/2 overflow-hidden z-0" style={{ minHeight: "var(--ccf-hero-min-h)" }}>
         <AnimatePresence mode="wait">
           {activeSlide && (
             <motion.div
