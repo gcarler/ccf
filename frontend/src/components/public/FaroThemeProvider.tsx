@@ -44,7 +44,7 @@ export function useFaroTheme() {
 }
 
 export function FaroThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setTheme] = useState<FaroTheme>("institutional");
+    const [theme, setTheme] = useState<FaroTheme>("light");
     const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>({});
     const [hasManualOverride, setHasManualOverride] = useState(false);
 

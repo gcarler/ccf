@@ -46,7 +46,7 @@ export const useFaroTheme = useTheme;
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const bootstrapTheme = usePublicBootstrap()?.theme ?? null;
-    const [theme, setTheme] = useState<Theme>("institutional");
+    const [theme, setTheme] = useState<Theme>("light");
     const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>(bootstrapTheme?.tokens_json || {});
     const [hasManualOverride, setHasManualOverride] = useState(false);
 
