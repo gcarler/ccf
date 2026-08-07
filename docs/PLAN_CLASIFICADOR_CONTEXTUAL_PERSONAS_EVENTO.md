@@ -411,8 +411,10 @@ bytecode compilado (`.pyc`).
 
 ### Pendiente
 
-- Merge/cherry-pick de `feat/contextual-roles-recovery` hacia la rama de
-  integración cuando los otros agentes terminen de operar sobre el árbol.
+- ~~Merge/cherry-pick de `feat/contextual-roles-recovery` hacia la rama de
+  integración cuando los otros agentes terminen de operar sobre el árbol.~~
+  ✅ **Completado 2026-08-07** — mergeado en `feature/cms-forms-frontend-polish`
+  (commit `1a55eebc`). 65 tests contextuales + eventos pasan. BD en head.
 - Configuración de `E2E_AUTH_ENABLED`, usuario E2E y `E2E_API_URL`.
 - Backup y migración en staging real.
 - Smoke no destructivo en staging.
