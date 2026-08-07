@@ -97,6 +97,7 @@ class TestBuildTransientCaso:
             origen_grupo_id=None,
             origen_estrategia_id=None,
             origen_sesion_id=None,
+            origen_evento_id=None,
             sla_vencimiento_contacto=datetime.now(timezone.utc) + timedelta(hours=48),
         )
 
