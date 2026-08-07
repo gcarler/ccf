@@ -71,8 +71,7 @@ export default function PublicHeroWithSlides({
 
   if (home) {
     return (
-      <section className="sticky top-0 left-1/2 w-screen -translate-x-1/2 z-0" style={{ minHeight: "var(--ccf-hero-min-h)" }}>
-        <div className="absolute inset-0 overflow-hidden">
+      <section className="sticky top-0 z-0 w-full overflow-hidden" style={{ minHeight: "var(--ccf-hero-min-h)" }}>
         <AnimatePresence mode="wait">
           {activeSlide && (
             <motion.div
@@ -88,8 +87,7 @@ export default function PublicHeroWithSlides({
           )}
         </AnimatePresence>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.14),transparent_24%),linear-gradient(to_top,rgba(0,0,0,0.82)_0%,rgba(0,0,0,0.46)_50%,rgba(0,0,0,0.18)_100%)]" />
-        <div className="absolute inset-0 z-10">
-          <div className="flex h-full w-full items-end px-5 sm:px-8 md:px-12 lg:px-16 pb-16 md:pb-20">
+        <div className="relative z-10 flex h-full min-h-[var(--ccf-hero-min-h)] w-full items-end px-5 sm:px-8 md:px-12 lg:px-16 pb-16 md:pb-20">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
@@ -128,8 +126,6 @@ export default function PublicHeroWithSlides({
                 </div>
               )}
             </motion.div>
-          </div>
-        </div>
         </div>
         <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between p-4 md:p-6 text-white/90">
           <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
