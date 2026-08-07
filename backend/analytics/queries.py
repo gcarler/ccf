@@ -11,8 +11,6 @@ except ImportError:  # pragma: no cover
 
 from backend.analytics import event_sink
 
-WAREHOUSE_PATH = event_sink.WAREHOUSE_PATH
-
 
 def _connect():
     if duckdb is None:  # pragma: no cover
@@ -52,12 +50,13 @@ def get_course_performance(limit: int = 10) -> List[Dict[str, Any]]:
         rows = conn.execute(
             """
             SELECT
-                CAST(payload->>'course_id' AS INTEGER) as course_id,
+                TRY_CAST(payload->>'course_id' AS INTEGER) as course_id,
                 SUM(CASE WHEN event_name = 'EnrollmentCreated' THEN 1 ELSE 0 END) AS enrollments,
                 SUM(CASE WHEN event_name = 'CertificateIssued' THEN 1 ELSE 0 END) AS certificates,
                 SUM(CASE WHEN event_name = 'AssessmentSubmitted' AND (payload->>'passed')::BOOL THEN 1 ELSE 0 END) AS approvals
             FROM domain_events
             WHERE payload->>'course_id' IS NOT NULL
+              AND TRY_CAST(payload->>'course_id' AS INTEGER) IS NOT NULL
             GROUP BY course_id
             ORDER BY enrollments DESC
             LIMIT ?

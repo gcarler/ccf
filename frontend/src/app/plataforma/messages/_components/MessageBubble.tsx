@@ -1,6 +1,7 @@
 "use client";
 
 import { AvatarInitial } from '@/components/ui/AvatarInitial';
+import { apiUrl } from '@/lib/api';
 import { sanitizeText } from '@/lib/text';
 import type { DirectMessageItem } from '@/types/directMessages';
 import clsx from 'clsx';
@@ -11,6 +12,23 @@ interface MessageBubbleProps {
     isOwn: boolean;
     showSender: boolean;
     onReply: (msg: DirectMessageItem) => void;
+}
+
+function resolveAttachmentUrl(rawUrl: string | null | undefined): string | null {
+    if (!rawUrl) return null;
+    // Internal protected route served under /api via the Next rewrite.
+    if (rawUrl.startsWith('/chat/attachments/')) {
+        return apiUrl(rawUrl);
+    }
+    if (rawUrl.startsWith('/api/chat/attachments/')) {
+        return apiUrl(rawUrl.replace(/^\/api/, ''));
+    }
+    // Only allow safe external schemes (http/https). Block javascript:, data:,
+    // blob:, vbscript: etc. that a participant with messaging:edit could post.
+    if (/^https?:\/\//i.test(rawUrl)) {
+        return rawUrl;
+    }
+    return null;
 }
 
 function MentionSpan({ children }: { children: React.ReactNode }) {
@@ -100,30 +118,34 @@ export function MessageBubble({ message, isOwn, showSender, onReply }: MessageBu
                         </div>
                     )}
                     {renderContent(message.content)}
-                    {message.attachment_url && (
-                        <div className="mt-1">
-                            {message.attachment_type === 'image' ? (
-                                <img
-                                    src={message.attachment_url}
-                                    alt={message.attachment_name || 'imagen'}
-                                    className="max-w-[240px] max-h-[240px] rounded-xl object-cover cursor-pointer"
-                                    onClick={() => window.open(message.attachment_url!, '_blank')}
-                                />
-                            ) : (
-                                <a
-                                    href={message.attachment_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10 transition-colors"
-                                >
-                                    <FileText size={16} />
-                                    <span className="text-xs font-medium truncate max-w-[180px]">
-                                        {message.attachment_name || 'archivo'}
-                                    </span>
-                                </a>
-                            )}
-                        </div>
-                    )}
+                    {(() => {
+                        const resolvedUrl = resolveAttachmentUrl(message.attachment_url);
+                        if (!resolvedUrl) return null;
+                        return (
+                            <div className="mt-1">
+                                {message.attachment_type === 'image' ? (
+                                    <img
+                                        src={resolvedUrl}
+                                        alt={message.attachment_name || 'imagen'}
+                                        className="max-w-[240px] max-h-[240px] rounded-xl object-cover cursor-pointer"
+                                        onClick={() => window.open(resolvedUrl, '_blank')}
+                                    />
+                                ) : (
+                                    <a
+                                        href={resolvedUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10 transition-colors"
+                                    >
+                                        <FileText size={16} />
+                                        <span className="text-xs font-medium truncate max-w-[180px]">
+                                            {message.attachment_name || 'archivo'}
+                                        </span>
+                                    </a>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
                 <div className={clsx('flex items-center gap-1', isOwn ? 'justify-end pr-1' : 'pl-1')}>
                     <span className={clsx('text-2xs', isOwn ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))]')}>

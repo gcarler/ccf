@@ -313,3 +313,103 @@ def test_messaging_websocket_accepts_authorized_dm_and_broadcasts_to_same_tenant
 
     assert sede.id == second_sede.id
     assert sede.id == db_session.query(models.Persona).filter(models.Persona.id == user.id).one().sede_id
+
+
+def test_send_notification_rejects_broadcast_to_foreign_dm_room(db_session, client):
+    """C1 hardening: a user with messaging:read cannot inject events into a
+    DM room of a conversation they do not participate in (spoofing realtime).
+    """
+    user_a, _, _ = seed_admin(db_session, email="broadcast-owner-gap@example.com")
+    foreign_user, _, _ = seed_admin(db_session, email="broadcast-foreign-gap@example.com")
+    conversation = models.Conversation(id=uuid.uuid4())
+    db_session.add(conversation)
+    db_session.add(
+        models.ConversationParticipant(
+            conversation_id=conversation.id,
+            user_id=user_a.id,
+        )
+    )
+    db_session.commit()
+
+    foreign_room = f"dm_{conversation.id}"
+    foreign_headers = auth_headers(client, email=foreign_user.email)
+
+    resp = client.post(
+        "/api/messaging/notifications",
+        json={"event": "direct_message", "body": {"spoof": True}, "room": foreign_room},
+        headers=foreign_headers,
+    )
+    # 404 (existence-leak safe) — the foreign caller must not reach the room.
+    assert resp.status_code == 404
+
+
+def test_send_notification_rejects_missing_room(db_session, client):
+    """A broadcast without an explicit room is rejected so it can never fan
+    out to every client of every instance (room=None amplifier)."""
+    admin, _, _ = seed_admin(db_session, email="broadcast-noroom-gap@example.com")
+    headers = auth_headers(client, email=admin.email)
+    resp = client.post(
+        "/api/messaging/notifications",
+        json={"event": "test", "body": {}},
+        headers=headers,
+    )
+    assert resp.status_code == 422
+
+
+def test_send_notification_rejects_room_outside_allowlist(db_session, client):
+    """Arbitrary room names (e.g. 'room1') are rejected by the allowlist."""
+    admin, _, _ = seed_admin(db_session, email="broadcast-allowlist-gap@example.com")
+    headers = auth_headers(client, email=admin.email)
+    resp = client.post(
+        "/api/messaging/notifications",
+        json={"event": "test", "body": {}, "room": "room1"},
+        headers=headers,
+    )
+    assert resp.status_code == 422
+
+
+def test_websocket_rejects_connection_without_rooms(db_session):
+    """C2 hardening: a connection without an explicit room is rejected so a
+    bare client cannot broadcast with room=None to all tenants."""
+    user, _, _ = seed_admin(db_session, email="ws-noroom-gap@example.com")
+    token = create_access_token({"sub": str(user.id)})
+
+    with patch("backend.core.database.SessionLocal", side_effect=TestingSessionLocal):
+        with pytest.raises(WebSocketDisconnect) as exc_info:
+            with _ws_client().websocket_connect(
+                f"/api/messaging/ws/client-noroom?token={token}"
+            ):
+                pass
+    assert exc_info.value.code == 4003
+
+
+def test_websocket_rejects_unauthorized_project_room(db_session):
+    """C3 hardening: an editor cannot subscribe to a project_* room of a
+    project they do not own/are not assigned to (cross-sede realtime leak)."""
+    user, _, _ = seed_admin(db_session, email="project-room-denied-gap@example.com")
+    token = create_access_token({"sub": str(user.id)})
+    foreign_project = uuid.uuid4()
+
+    with patch("backend.core.database.SessionLocal", side_effect=TestingSessionLocal):
+        with pytest.raises(WebSocketDisconnect) as exc_info:
+            with _ws_client().websocket_connect(
+                f"/api/messaging/ws/client-project-denied?token={token}&rooms=project_{foreign_project}"
+            ):
+                pass
+    assert exc_info.value.code == 4003
+
+
+def test_update_notification_rejects_malformed_uuid(db_session, client):
+    """M1: a malformed notification_id returns 404 (never a 500 DataError on
+    PostgreSQL)."""
+    admin, _, _ = seed_admin(db_session, email="notif-uuidd-gap@example.com")
+    headers = auth_headers(client, email=admin.email)
+    resp = client.patch("/api/messaging/notifications/not-a-uuid", headers=headers)
+    assert resp.status_code == 404
+
+
+def test_presence_rejects_room_outside_allowlist(db_session, client):
+    """C4: presence on an arbitrary room name is rejected by the allowlist."""
+    admin, _, _ = seed_admin(db_session, email="presence-allowlist-gap@example.com")
+    headers = auth_headers(client, email=admin.email)
+    assert client.get("/api/messaging/presence/room1", headers=headers).status_code == 404

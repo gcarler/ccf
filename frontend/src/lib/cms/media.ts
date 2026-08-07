@@ -8,7 +8,7 @@
  */
 export function getCmsMediaUrl(url: string | undefined | null): string {
   if (!url) return "";
-  // Defense in depth: earlier seeds once produced a doubled mount prefix
+  // Defense in depth: semillas históricas una vez produjeron un doble mount prefix
   // (/api/static/api/static/...) that 404s on the static mount. Collapse it
   // so corrupt stored rows still render in the media library.
   if (url.startsWith("/api/static/api/static/")) return url.replace("/api/static/api/static/", "/api/static/");

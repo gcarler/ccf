@@ -12,11 +12,11 @@ describe("getCmsMediaUrl", () => {
     expect(getCmsMediaUrl(url)).toBe(url);
   });
 
-  it("normalises the earlier /static/ form to /api/static/", () => {
+  it("normalises the anterior /static/ form to /api/static/", () => {
     expect(getCmsMediaUrl("/static/cms/pastores/abc.webp")).toBe("/api/static/cms/pastores/abc.webp");
   });
 
-  it("collapses a doubled /api/static/api/static/ prefix (defensive normalisation)", () => {
+  it("collapses a doubled /api/static/api/static/ prefix (defense in depth)", () => {
     expect(getCmsMediaUrl("/api/static/api/static/cms/pastores/abc.webp")).toBe(
       "/api/static/cms/pastores/abc.webp",
     );

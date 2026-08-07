@@ -100,7 +100,7 @@ async function installBuilderMocks(page: Page) {
   await page.unrouteAll({ behavior: 'ignoreErrors' });
 
   let pagesState = PAGES_FIXTURE.map((p) => ({ ...p, seo_json: { ...p.seo_json } }));
-  let sectionsState = SECTIONS_FIXTURE.map((s) => ({ ...s, props_json: { ...s.props_json } }));
+  let sectionsState: any[] = SECTIONS_FIXTURE.map((s) => ({ ...s, props_json: { ...s.props_json } }));
   let sectionCounter = 3;
 
   await installMockPlatformSession(page, {
@@ -123,11 +123,11 @@ async function installBuilderMocks(page: Page) {
   await page.route(`**/api/cms/v2/sites/${SITE_KEY}/pages/landing/sections**`, async (route) => {
     const method = route.request().method();
     if (method === 'POST') {
-      const body = route.request().postDataJSON() as any;
+      const body = route.request().postDataJSON() as Record<string, unknown>;
       sectionCounter += 1;
-      const created = {
+      const created: Record<string, unknown> = {
         id: `section-${sectionCounter}`, page_id: 'page-1', section_key: `new-${sectionCounter}`,
-        type: body.type, props_json: body.props_json || {}, sort_order: sectionsState.length + 1,
+        type: body.type as string, props_json: (body.props_json as Record<string, unknown>) || {}, sort_order: sectionsState.length + 1,
         is_visible: true, status: 'active',
         created_at: '2026-07-16T10:00:00Z', updated_at: '2026-07-16T10:00:00Z',
       };

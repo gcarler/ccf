@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import logging
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict
 
 # pyright: reportMissingImports=false
+
+logger = logging.getLogger(__name__)
 
 
 try:  # pragma: no cover - import guard for optional dep
@@ -40,7 +43,10 @@ def _connect():
     target = _RESOLVED_WAREHOUSE_PATH or WAREHOUSE_PATH
     try:
         conn = duckdb.connect(str(target))
-    except Exception:
+    except Exception as exc:  # pragma: no cover - runtime file-system edge cases
+        # Fallback to a throwaway DB so analytics keep working, but log it:
+        # silently degrading to empty data hides real storage problems (C3).
+        logger.warning("duckdb connect failed for %s, using temp fallback: %s", target, exc)
         fallback_dir = Path(tempfile.gettempdir()) / "ccf_analytics"
         fallback_dir.mkdir(parents=True, exist_ok=True)
         target = fallback_dir / WAREHOUSE_PATH.name
