@@ -92,7 +92,7 @@ export interface ScanValidationResult {
 export const PARTICIPANT_ROLES = {
     VISITANTE_EVENTO: 'Visitante del evento',
     CONTACTO_EVANGELISTICO: 'Contacto evangelístico',
-    MIEMBRO: 'Miembro',
+    MIEMBRO: 'Persona de la comunidad',
     SERVIDOR: 'Servidor',
     INVITADO: 'Invitado',
     VOLUNTARIO: 'Voluntario',

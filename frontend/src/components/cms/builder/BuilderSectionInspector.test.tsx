@@ -275,7 +275,7 @@ describe("BuilderSectionInspector", () => {
     const saveSectionProps = vi.fn();
     const section = createMockCmsSection("stats", {
       props_json: {
-        items: [{ value: "10K+", label: "Miembros" }],
+        items: [{ value: "10K+", label: "Personas" }],
       },
     });
     const builder = createMockBuilder({ activeSection: section });
@@ -536,14 +536,14 @@ describe("BuilderSectionInspector", () => {
   it("calls upsertArrayItem when editing stats label", () => {
     const upsertArrayItem = vi.fn(() => ({}));
     const section = createMockCmsSection("stats", {
-      props_json: { items: [{ value: "10K+", label: "Miembros" }] },
+      props_json: { items: [{ value: "10K+", label: "Personas" }] },
     });
     const builder = createMockBuilder({ activeSection: section });
     builder.upsertArrayItem = upsertArrayItem;
 
     render(<BuilderSectionInspector builder={builder} />);
 
-    const input = screen.getByDisplayValue("Miembros");
+    const input = screen.getByDisplayValue("Personas");
     fireEvent.change(input, { target: { value: "Visitantes" } });
     expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { label: "Visitantes" });
   });
@@ -1084,7 +1084,7 @@ describe("BuilderSectionInspector", () => {
     const addArrayItem = vi.fn(() => ({}));
     const section = createMockCmsSection("animated_counter", {
       props_json: {
-        items: [{ label: "Miembros", value: 1200, prefix: "$", suffix: "+", duration_ms: 2000 }],
+        items: [{ label: "Personas", value: 1200, prefix: "$", suffix: "+", duration_ms: 2000 }],
       },
     });
     const builder = createMockBuilder({ activeSection: section });
@@ -1093,10 +1093,10 @@ describe("BuilderSectionInspector", () => {
 
     render(<BuilderSectionInspector builder={builder} />);
 
-    expect(screen.getByDisplayValue("Miembros")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Personas")).toBeInTheDocument();
     expect(screen.getByDisplayValue("1200")).toBeInTheDocument();
 
-    const labelInput = screen.getByDisplayValue("Miembros");
+    const labelInput = screen.getByDisplayValue("Personas");
     fireEvent.change(labelInput, { target: { value: "Usuarios" } });
     expect(upsertArrayItem).toHaveBeenCalledWith("items", 0, { label: "Usuarios" });
 

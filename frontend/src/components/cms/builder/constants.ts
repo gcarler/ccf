@@ -266,7 +266,7 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     props_json: {
       title: "Nuestros Logros",
       items: [
-        { label: "Miembros", value: 1200, prefix: "", suffix: "+", duration_ms: 2000 },
+        { label: "Personas", value: 1200, prefix: "", suffix: "+", duration_ms: 2000 },
         { label: "Sedes", value: 5, prefix: "", suffix: "", duration_ms: 1500 },
         { label: "Proyectos", value: 48, prefix: "", suffix: "", duration_ms: 1800 },
       ],
@@ -311,7 +311,7 @@ export const DEFAULT_SECTION_PROPS: Record<string, Record<string, unknown>> = {
   animated_counter: {
     title: "Nuestros Logros",
     items: [
-      { label: "Miembros", value: 1200, prefix: "", suffix: "+", duration_ms: 2000 },
+      { label: "Personas", value: 1200, prefix: "", suffix: "+", duration_ms: 2000 },
       { label: "Sedes", value: 5, prefix: "", suffix: "", duration_ms: 1500 },
       { label: "Proyectos", value: 48, prefix: "", suffix: "", duration_ms: 1800 },
     ],

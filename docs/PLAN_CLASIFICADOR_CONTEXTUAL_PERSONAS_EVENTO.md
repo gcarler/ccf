@@ -430,3 +430,26 @@ hasta completar el runbook operativo en un entorno staging inequívocamente
 separado. El smoke local (preflight + 85 tests + backend + migración) pasa
 sin fallos. Los pasos restantes requieren un entorno de staging aislado con
 HTTPS, DB externa y archivo de identidad aprobada externo al repo.
+
+### Nota de verificación local (2026-08-07, demostración en staging aislado)
+
+Ejecución local segura del flujo del runbook sobre un staging *aislado de
+prueba* (`ccf_staging_demo` en Postgres 16 local, descartable). No es el
+staging operativo real (sin HTTPS/DB externa), pero valida el contrato de la
+migración end-to-end:
+
+- Backup verificable: `pg_dump -F c` + `pg_restore --list` OK (criterio §4.1).
+- `alembic upgrade head` desde la copia restaurada → revisión
+  `20260808_0002_event_campaign_defaults` (head único).
+- Smoke SQL no destructivo (§4.3) PASS:
+  `crm_events.participant_role_code`, `event_registrations.participant_role_code`,
+  `event_attendances.role_at_event` = `character varying(40)`; índices
+  `ix_crm_events_participant_role_code` y `ix_event_registrations_participant_role_code`.
+- Backend (config `ENVIRONMENT=staging`) conecta a la BD aislada y resuelve
+  `alembic_version` + columnas/índices contextuales sin errores.
+
+El preflight de **staging real** bloquea correctamente ante la falta de
+identidad externa aprobada, backup verificado, host HTTPS y credenciales E2E
+(comportamiento de seguridad esperado, no defecto). Sigue pendiente el
+despliegue en un staging inequívocamente separado (runbook §3-§4) y la
+aprobación operativa de producción (§5-§6).

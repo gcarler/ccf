@@ -145,7 +145,7 @@ describe('DSTabs', () => {
         expect(screen.getByText('Rendered: tab3')).toBeInTheDocument();
     });
 
-    it('falls back to children (legacy) when neither panels nor renderPanel are passed', () => {
+    it('falls back to children (compatibilidad con API anterior) when neither panels nor renderPanel are passed', () => {
         render(
             <DSTabs tabs={sampleTabs}>
                 <div>Shared Content</div>
