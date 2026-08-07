@@ -553,6 +553,7 @@ def lookup_person_for_event(
     Devuelve datos no sensibles para identificacion administrativa.
     No expone PII mas alla de lo necesario.
     """
+    from sqlalchemy import func as _func
     from sqlalchemy import or_ as _or
 
     event = require_event_access(db, current_user, event_id)
@@ -561,11 +562,11 @@ def lookup_person_for_event(
     query = db.query(models.Persona).filter(models.Persona.sede_id == sede_id)
     conditions = []
     if email:
-        conditions.append(func.lower(models.Persona.email) == email.strip().lower())
+        conditions.append(_func.lower(models.Persona.email) == email.strip().lower())
     if phone:
         conditions.append(models.Persona.phone == phone.strip())
     if document_number:
-        conditions.append(func.upper(models.Persona.document_number) == document_number.strip().upper())
+        conditions.append(_func.upper(models.Persona.document_number) == document_number.strip().upper())
 
     if not conditions:
         raise HTTPException(status_code=422, detail="Debe proporcionar email, phone o document_number")

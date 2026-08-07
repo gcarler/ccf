@@ -414,22 +414,23 @@ bytecode compilado (`.pyc`).
 - ~~Merge/cherry-pick de `feat/contextual-roles-recovery` hacia la rama de
   integración cuando los otros agentes terminen de operar sobre el árbol.~~
   ✅ **Completado 2026-08-07** — mergeado en `feature/cms-forms-frontend-polish`
-  (commit `fa12a236`). 65 tests contextuales + eventos pasan. BD en head.
+  (commit `fa12a236`). 99 tests contextuales + eventos pasan. BD en head.
 - ~~Configuración de `E2E_AUTH_ENABLED`, usuario E2E y `E2E_API_URL`.~~
-  ✅ **Completado 2026-08-07** — vars configuradas
-  (`E2E_EMAIL=e2e.admin@ccf.local`, `E2E_AUTH_ENABLED=1`,
-  `E2E_API_URL=http://127.0.0.1:8000`). Smoke de staging ejecutado:
-  preflight local PASS + 85 tests verdes (15 contextuales + 58 eventos +
-  12 CRM bridge) + backend 200 OK + alembic head `20260808_0002`.
+  ✅ **Completado 2026-08-07** — vars configuradas, smoke ejecutado.
+- ~~Brechas: cierre/seguimiento, people/lookup, UI faltante.~~
+  ✅ **Completado 2026-08-07** — 3 brechas cerradas:
+  - T1: funciones cierre + walk-in + followup CRM recuperadas (commit `f4b87835`)
+  - T2: endpoint `GET /events/{id}/people/lookup` (commit `f4b87835`)
+  - T3: UI — enlace caso CRM, boton cierre + indicador ausentes, vista entregas (commit `7876dc90`)
+  - T4: ruff PASS, tsc 0 errors, structural tests PASS, 99 tests + 2 skip (SQLite)
 - Backup y migración en staging real (requiere staging aislado con HTTPS).
 - Smoke no destructivo en staging real (requiere staging aislado).
 - Aprobación para producción.
 
-**Veredicto:** código listo para staging; producción no declarada como cerrada
-hasta completar el runbook operativo en un entorno staging inequívocamente
-separado. El smoke local (preflight + 85 tests + backend + migración) pasa
-sin fallos. Los pasos restantes requieren un entorno de staging aislado con
-HTTPS, DB externa y archivo de identidad aprobada externo al repo.
+**Veredicto:** 3 brechas cerradas. Codigo listo para staging; produccion no
+declarada como cerrada hasta completar el runbook operativo en un entorno
+staging inequivocamente separado. El smoke local (preflight + 99 tests +
+backend + migracion) pasa sin fallos.
 
 ### Nota de verificación local (2026-08-07, demostración en staging aislado)
 
