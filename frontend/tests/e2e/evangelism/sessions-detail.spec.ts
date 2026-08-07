@@ -126,7 +126,7 @@ test.describe('Evangelism — Session report route (/sessions/[grupo_id])', () =
     });
 
     test('submit posts session + attendance and redirects to /groups', async ({ page }) => {
-        const calls: { method: string; path: string; body: any }[] = [];
+        const calls: { method: string; path: string; body: Record<string, unknown> | null }[] = [];
 
         await page.route('**/api/evangelism/sessions', async (route: Route) => {
             const req = route.request();

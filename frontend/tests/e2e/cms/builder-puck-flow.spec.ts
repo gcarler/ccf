@@ -65,7 +65,7 @@ async function setupPuckBuilderMocks(page: Page) {
   await page.route(`**/api/cms/v2/sites/${SITE_KEY}/pages/${PAGE_SLUG}/sections`, async (route) => {
     const method = route.request().method();
     if (method === 'POST') {
-      const body = route.request().postDataJSON() as any;
+      const body = route.request().postDataJSON() as Record<string, unknown>;
       await route.fulfill({
         status: 201,
         contentType: 'application/json',
@@ -90,7 +90,7 @@ async function setupPuckBuilderMocks(page: Page) {
   await page.route(`**/api/cms/v2/sites/${SITE_KEY}/pages/${PAGE_SLUG}/sections/*`, async (route) => {
     const method = route.request().method();
     if (method === 'PATCH' || method === 'PUT') {
-      const body = route.request().postDataJSON() as any;
+      const body = route.request().postDataJSON() as Record<string, unknown>;
       const sectionId = route.request().url().split('/sections/')[1] || 'section-hero-1';
       await route.fulfill({
         status: 200,

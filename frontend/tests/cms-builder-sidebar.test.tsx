@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { vi, describe, it, expect } from "vitest";
 import BuilderSidebar from "../src/components/cms/builder/BuilderSidebar";
+import type { PageBuilderState } from "../src/hooks/usePageBuilder";
 
 describe("BuilderSidebar", () => {
   it("exposes an explicit popup creation action", () => {
@@ -21,7 +22,7 @@ describe("BuilderSidebar", () => {
       setPageTemplateKey: vi.fn(),
       createPageFromTemplate: vi.fn(),
       addTemplateSection,
-    } as any;
+    } as unknown as PageBuilderState;
 
     render(<BuilderSidebar builder={builder} />);
 

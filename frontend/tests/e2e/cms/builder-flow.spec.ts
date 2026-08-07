@@ -100,7 +100,7 @@ async function installBuilderMocks(page: Page) {
   await page.unrouteAll({ behavior: 'ignoreErrors' });
 
   let pagesState = PAGES_FIXTURE.map((p) => ({ ...p, seo_json: { ...p.seo_json } }));
-  let sectionsState: any[] = SECTIONS_FIXTURE.map((s) => ({ ...s, props_json: { ...s.props_json } }));
+  let sectionsState: Record<string, unknown>[] = SECTIONS_FIXTURE.map((s) => ({ ...s, props_json: { ...s.props_json } })) as Record<string, unknown>[];
   let sectionCounter = 3;
 
   await installMockPlatformSession(page, {
