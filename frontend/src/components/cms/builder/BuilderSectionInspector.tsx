@@ -1527,7 +1527,7 @@ export default function BuilderSectionInspector({
                             value={safeString(itemObject.label)}
                             onChange={(e) => upsertArrayItem("items", index, { label: e.target.value })}
                             onBlur={(e) => { const nextProps = upsertArrayItem("items", index, { label: e.target.value }); if (nextProps) saveSectionProps(nextProps); }}
-                            placeholder="Etiqueta (ej: Miembros)"
+                            placeholder="Etiqueta (ej: Personas)"
                             className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
                           />
                           <div className="grid grid-cols-2 gap-2">

@@ -59,7 +59,7 @@ describe("SectionPreview", () => {
     const section = createMockCmsSection("stats", {
       props_json: {
         items: [
-          { value: "100", label: "Miembros" },
+          { value: "100", label: "Personas" },
           { value: "50", label: "Grupos" },
         ],
       },
@@ -67,7 +67,7 @@ describe("SectionPreview", () => {
     render(<SectionPreview section={section} />);
 
     expect(screen.getByText("100")).toBeInTheDocument();
-    expect(screen.getByText("Miembros")).toBeInTheDocument();
+    expect(screen.getByText("Personas")).toBeInTheDocument();
     expect(screen.getByText("50")).toBeInTheDocument();
   });
 
