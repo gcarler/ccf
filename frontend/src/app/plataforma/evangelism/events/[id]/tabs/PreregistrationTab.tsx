@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { apiFetch, ApiError } from "@/lib/http";
 import { toast } from "sonner";
 import {
-  Check, Download, Loader2, Mail, Plus,
+  Check, Download, FolderOpen, Loader2, Mail, Plus,
   QrCode, RefreshCw, Send, Trash2, Users, X, Megaphone, Settings2,
 } from "lucide-react";
 import clsx from "clsx";
@@ -38,6 +38,7 @@ type EventRegistrationRow = {
   waiting_list_position: number | null;
   reminder_sent_count: number;
   last_reminder_sent_at: string | null;
+  crm_case_id?: string | null;
 };
 
 type RegistrationStats = {
@@ -223,6 +224,27 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
         </div>
       )}
 
+      <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))]">
+        <div className="text-sm text-[hsl(var(--text-secondary))]">
+          Al cerrar la asistencia, los confirmados sin check-in se marcan como ausentes y generan seguimiento CRM automaticamente.
+        </div>
+        <button
+          onClick={async () => {
+            if (!window.confirm("¿Cerrar la asistencia? Los confirmados sin check-in se marcaran como ausentes.")) return;
+            try {
+              await apiFetch(`/evangelism/events/${eventId}/attendance/close`, { method: "POST", token });
+              toast.success("Asistencia cerrada");
+              loadAll();
+            } catch {
+              toast.error("No se pudo cerrar la asistencia");
+            }
+          }}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-danger-soft px-3 py-1.5 text-sm font-semibold text-danger-text hover:opacity-80 transition-all"
+        >
+          <Check size={14} /> Cerrar asistencia
+        </button>
+      </div>
+
       {config?.requires_registration === false && (
         <div className="p-4 bg-info-soft text-info-text rounded-lg text-sm font-semibold flex items-center gap-2">
           <InfoIcon /> Este evento no tiene pre-registro activo. Configúralo para habilitar el flujo de inscripción con QR.
@@ -250,6 +272,26 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                   <p className="text-xs font-medium text-[hsl(var(--text-secondary))] mt-1">
                     Enviados: {c.sent_count}{c.last_sent_at ? ` · Último envío: ${new Date(c.last_sent_at).toLocaleString("es-CO")}` : " · Sin envíos"}
                   </p>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await apiFetch(`/evangelism/events/${eventId}/campaigns/${c.id}/deliveries?limit=10`, { token, silent: true });
+                        const items = (res as { items?: Array<{ status: string; channel: string; sent_at: string }> }).items || [];
+                        if (items.length === 0) {
+                          toast.info("Sin entregas registradas para esta campaña");
+                        } else {
+                          const summary = items.map((d) => `${d.status} (${d.channel}) — ${new Date(d.sent_at).toLocaleString("es-CO")}`).join("\n");
+                          toast.info(`${items.length} entregas:\n${summary}`);
+                        }
+                      } catch {
+                        toast.error("No se pudieron cargar las entregas");
+                      }
+                    }}
+                    className="text-xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"
+                    title="Ver entregas"
+                  >
+                    Ver entregas
+                  </button>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
@@ -404,6 +446,15 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                           >
                             <Mail size={14} />
                           </button>
+                        )}
+                        {r.crm_case_id && (
+                          <a
+                            href={`/plataforma/crm/cases/${r.crm_case_id}`}
+                            className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft transition-all"
+                            title="Ver caso CRM"
+                          >
+                            <FolderOpen size={14} />
+                          </a>
                         )}
                         {r.registration_status !== "CANCELLED" && (
                           <button
