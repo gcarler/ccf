@@ -354,7 +354,7 @@ test.describe('Messaging direct messages deep smoke', () => {
     await expect(page.locator('body')).toContainText(/Hola, ¿ya quedó lista la reunión de seguimiento/i);
 
     await page.evaluate(() => {
-      (window as any).__wsDispatch({
+      (window as unknown as { __wsDispatch?: (p: unknown) => void }).__wsDispatch?.({
         event: 'direct_message',
         conversation_id: '101',
         message: {
@@ -379,7 +379,7 @@ test.describe('Messaging direct messages deep smoke', () => {
     await expect(page.locator('body')).toContainText(/Hola, ¿ya quedó lista/i);
 
     await page.evaluate(() => {
-      (window as any).__wsDispatch({
+      (window as unknown as { __wsDispatch?: (p: unknown) => void }).__wsDispatch?.({
         event: 'direct_message',
         conversation_id: '102',
         message: {
