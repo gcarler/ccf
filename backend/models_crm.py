@@ -112,6 +112,9 @@ class CrmEvent(Base):
     # plan_de_form_builder: vinculación con CmsForm para render dinámico de
     # preinscripción. NULL = form fijo (backward-compat con el flujo actual).
     form_id = Column(UUID(as_uuid=True), ForeignKey("cms_forms.id", ondelete="SET NULL"), nullable=True)
+    # plan_clasificador_contextual: rol contextual por defecto del evento
+    # (NULL = el servicio resuelve VISITANTE_EVENTO).
+    participant_role_code = Column(String(40), nullable=True, index=True)
     target_role_id = Column(UUID(as_uuid=True), ForeignKey("role_definitions.id"), nullable=True)
     target_role_ids = Column(JSON, nullable=True)
     target_persona_ids = Column(JSON, nullable=True)
@@ -181,7 +184,7 @@ class EventAttendance(Base):
         index=True,
     )
     status = Column(String(30), default="present", index=True)
-    role_at_event = Column(String(30), default="attendee", index=True)
+    role_at_event = Column(String(40), default="attendee", index=True)
     source = Column(String(30), default="manual", index=True)
     check_in_at = Column(DateTime(timezone=True), nullable=True, index=True)
     check_out_at = Column(DateTime(timezone=True), nullable=True, index=True)
@@ -265,6 +268,9 @@ class EventRegistration(Base):
     )
     source = Column(String(30), nullable=False, default="public_form")
     extras = Column(JSON, default=dict)
+    # plan_clasificador_contextual: rol efectivo en esta inscripción (hereda
+    # del evento en el momento del registro; override admin autorizado).
+    participant_role_code = Column(String(40), nullable=True, index=True)
     waiting_list_position = Column(Integer, nullable=True)
     reminder_sent_count = Column(Integer, nullable=False, default=0)
     last_reminder_sent_at = Column(DateTime(timezone=True), nullable=True)

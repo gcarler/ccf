@@ -18,6 +18,8 @@ from backend.services.event_registration_service import (
     RegistrationError,
     capacity_remaining,
     find_by_email_or_phone,
+    find_by_qr_token,
+    is_cancel_token_expired,
     is_event_open_for_registration,
 )
 from backend.services.event_registration_service import (
@@ -466,6 +468,8 @@ def public_get_event(event_id: uuid.UUID, db: Session = Depends(get_db)):
         is_open=is_event_open_for_registration(event),
         capacity_remaining=remaining,
         form_id=event.form_id,
+        # plan_clasificador_contextual: rol contextual visible en la landing.
+        participant_role_code=event.participant_role_code,
     )
 
 
@@ -646,6 +650,37 @@ def public_verify_event(
 
 
 @router.get(
+    "/events/{event_id}/ticket",
+    response_model=schemas.EventRegistrationRead,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
+)
+def public_event_ticket(
+    event_id: uuid.UUID,
+    token: str = Query(..., min_length=10, max_length=300),
+    db: Session = Depends(get_db),
+):
+    """Ticket público por QR token (hash-bound).
+
+    El QR nunca se busca por el token plano (no se persiste): se deriva el
+    sha256 del secret y se busca por ``qr_token_hash`` (plan §4.3). Devuelve
+    la inscripción con su rol contextual, sin re-exponer tokens internos.
+    """
+    event = _public_event_or_404(db, event_id)
+    reg = find_by_qr_token(db, token)
+    if not reg or reg.event_id != event.id:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Ticket no activo (estado: {reg.registration_status})",
+        )
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
+    )
+    return _serialize_registration(reg, persona, include_qr=False)
+
+
+@router.get(
     "/events/{event_id}/status",
     response_model=schemas.EventRegistrationRead,
     dependencies=[Depends(rate_limiter(limit=PUBLIC_STATUS_RATE_LIMIT, window_seconds=60))],
@@ -719,6 +754,10 @@ def public_cancel_event(
     ):
         raise HTTPException(status_code=403, detail="Token inválido")
 
+    # plan_clasificador_contextual §4.3: el token de cancelación expira a las 72h.
+    if is_cancel_token_expired(reg):
+        raise HTTPException(status_code=410, detail="Token de cancelación expirado")
+
     reg = cancel_registration(db, event, reg)
     persona = (
         db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
@@ -781,6 +820,8 @@ def _serialize_registration(
         checked_in_by=reg.checked_in_by,
         source=reg.source,
         extras=extras_clean,
+        # plan_clasificador_contextual: rol efectivo de la inscripción.
+        participant_role_code=reg.participant_role_code,
         waiting_list_position=reg.waiting_list_position,
         reminder_sent_count=reg.reminder_sent_count,
         last_reminder_sent_at=reg.last_reminder_sent_at,
