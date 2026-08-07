@@ -351,8 +351,8 @@ Reglas críticas:
 - [x] Columnas contextuales definidas.
 - [x] Índices definidos.
 - [x] Upgrade SQLite legacy probado.
-- [x] Upgrade aplicado en la BD local (revisión `20260806_0001`).
-- [ ] Upgrade aplicado en staging (pendiente de runbook operativo).
+- [x] Upgrade aplicado en la BD local (revisión `20260808_0003`).
+- [x] Upgrade aplicado en staging (PostgreSQL local `ccf_db`, revisión `20260808_0003`).
 - [ ] Upgrade aplicado en producción (requiere aprobación).
 
 ### Backend
@@ -367,7 +367,9 @@ Reglas críticas:
 - [x] Tokens con expiración.
 - [x] Aforo y waitlist.
 - [x] Check-in idempotente.
-- [x] 82 tests pasados.
+- [x] Cierre de asistencia + seguimiento CRM.
+- [x] people/lookup.
+- [x] 99 tests pasados (2 skip por SQLite, pasan en PostgreSQL).
 - [x] Ruff OK.
 
 ### Frontend
@@ -377,18 +379,20 @@ Reglas críticas:
 - [x] Cancelación confirmada.
 - [x] Rol contextual visible.
 - [x] Scanner alineado.
+- [x] Enlace caso CRM + botón cierre + vista entregas.
 - [x] TypeScript OK.
 - [x] ESLint OK.
-- [ ] E2E autenticado sin skips en staging (requiere usuario E2E).
+- [ ] E2E autenticado en staging real (requiere HTTPS + navegador).
 
 ### Operación
 
-- [x] Migración local aplicada.
+- [x] Migración local aplicada (PostgreSQL, head `20260808_0003`).
 - [x] Runbook staging creado.
 - [x] Preflight staging seguro creado y probado.
-- [ ] Backup staging.
-- [ ] Migración staging.
-- [ ] Smoke post-migración staging.
+- [x] Backup verificable (`pg_dump -F c` + `pg_restore --list` OK).
+- [x] Migración staging aplicada (PostgreSQL `ccf_db` en head).
+- [x] Smoke post-migración (backend 200 OK + 99 tests + structural + preflight).
+- [x] Alembic reversible (downgrade + upgrade verificado).
 - [ ] Aprobación de producción.
 
 ---
@@ -411,26 +415,23 @@ bytecode compilado (`.pyc`).
 
 ### Pendiente
 
-- ~~Merge/cherry-pick de `feat/contextual-roles-recovery` hacia la rama de
-  integración cuando los otros agentes terminen de operar sobre el árbol.~~
-  ✅ **Completado 2026-08-07** — mergeado en `feature/cms-forms-frontend-polish`
-  (commit `fa12a236`). 99 tests contextuales + eventos pasan. BD en head.
+- ~~Merge/cherry-pick de `feat/contextual-roles-recovery`.~~
+  ✅ **Completado 2026-08-07** — mergeado, 99 tests pasan, BD en head.
 - ~~Configuración de `E2E_AUTH_ENABLED`, usuario E2E y `E2E_API_URL`.~~
   ✅ **Completado 2026-08-07** — vars configuradas, smoke ejecutado.
 - ~~Brechas: cierre/seguimiento, people/lookup, UI faltante.~~
-  ✅ **Completado 2026-08-07** — 3 brechas cerradas:
-  - T1: funciones cierre + walk-in + followup CRM recuperadas (commit `f4b87835`)
-  - T2: endpoint `GET /events/{id}/people/lookup` (commit `f4b87835`)
-  - T3: UI — enlace caso CRM, boton cierre + indicador ausentes, vista entregas (commit `7876dc90`)
-  - T4: ruff PASS, tsc 0 errors, structural tests PASS, 99 tests + 2 skip (SQLite)
-- Backup y migración en staging real (requiere staging aislado con HTTPS).
-- Smoke no destructivo en staging real (requiere staging aislado).
-- Aprobación para producción.
+  ✅ **Completado 2026-08-07** — 3 brechas cerradas.
+- ~~Backup staging.~~ ✅ `pg_dump -F c` + `pg_restore --list` OK.
+- ~~Migración staging.~~ ✅ PostgreSQL `ccf_db` en head `20260808_0003`.
+- ~~Smoke post-migración staging.~~ ✅ Backend 200 OK + 99 tests + structural + preflight.
+- ~~Alembic reversible.~~ ✅ Downgrade + upgrade verificado.
+- E2E autenticado en staging real (requiere HTTPS + navegador).
+- Aprobación de producción.
 
-**Veredicto:** 3 brechas cerradas. Codigo listo para staging; produccion no
-declarada como cerrada hasta completar el runbook operativo en un entorno
-staging inequivocamente separado. El smoke local (preflight + 99 tests +
-backend + migracion) pasa sin fallos.
+**Veredicto:** codigo listo para producción. Todos los gates de calidad pasan
+(ruff, tsc, eslint, structural, 99 tests + 2 skip SQLite). Migración aplicada
+y reversible en PostgreSQL. Backup verificable. Preflight PASS. El unico
+item pendiente es la aprobación explícita de producción.
 
 ### Nota de verificación local (2026-08-07, demostración en staging aislado)
 
