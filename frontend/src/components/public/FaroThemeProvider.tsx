@@ -16,7 +16,7 @@ interface FaroThemeContextType {
 }
 
 const ThemeContext = createContext<FaroThemeContextType>({
-    theme: "institutional",
+    theme: "light",
     setTheme: () => {},
     toggle: () => {},
     themeTokens: {},
@@ -29,7 +29,7 @@ function inferThemeMode(themeName?: string, tokens?: Record<string, unknown>): F
 
     if (raw.includes("dark") || raw.includes("oscur")) return "dark";
     if (raw.includes("light") || raw.includes("claro")) return "light";
-    return "institutional";
+    return "light";
 }
 
 const CMS_TOKEN_ALLOWLIST = new Set([

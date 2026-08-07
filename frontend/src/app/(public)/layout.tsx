@@ -43,7 +43,7 @@ export default async function PublicLayout({ children }: { children: React.React
                 {/* Apply theme class to <html> before React hydration so CSS vars resolve immediately */}
                 <script
                     dangerouslySetInnerHTML={{
-                        __html: `(function(){var t=localStorage.getItem("site-theme-v2")||"institutional";document.documentElement.classList.add("theme-"+t);if(t==="dark")document.documentElement.classList.add("dark")})()`,
+                        __html: `(function(){var t=localStorage.getItem("site-theme-v2")||"light";document.documentElement.classList.add("theme-"+t);if(t==="dark")document.documentElement.classList.add("dark")})()`,
                     }}
                 />
                 <script
