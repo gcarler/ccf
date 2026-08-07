@@ -30,6 +30,7 @@ from sqlalchemy.orm import Session
 from backend import crud, models, schemas
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
+from backend.crud._utils import _coerce_uuid_or_404
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_for_user
 from backend.mesh_websockets import manager
 from backend.models_shared import _utcnow
@@ -647,6 +648,7 @@ def list_direct_messages(
     persona_id = _get_persona_id(db, current_user)
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found")
+    conv_id = _coerce_uuid_or_404(conv_id, detail="Conversation not found")
     conv = db.query(models.Conversation).filter(models.Conversation.id == conv_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -886,6 +888,7 @@ def send_direct_message(
     persona_id = _get_persona_id(db, current_user)
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found")
+    conv_id = _coerce_uuid_or_404(conv_id, detail="Conversation not found")
     conv = db.query(models.Conversation).filter(models.Conversation.id == conv_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -943,11 +946,28 @@ def send_direct_message(
         msg.reply_to_id = payload.reply_to_id
     if payload.mentions:
         msg.mentions_raw = json.dumps([str(m) for m in payload.mentions])
+        # M-05 hardening: only notify participants of THIS conversation, and
+        # only when they belong to the actor's sede. Without this filter a
+        # user with ``messaging:edit`` could mention anyone on the platform
+        # (other sedes included), generating spam/phishing notifications with
+        # arbitrary content.
+        conv_participant_ids = {
+            str(user_id)
+            for (user_id,) in db.query(models.ConversationParticipant.user_id)
+            .filter(models.ConversationParticipant.conversation_id == conv_id)
+            .all()
+            if user_id is not None
+        }
+        filtered_mentions = [
+            mention_id
+            for mention_id in payload.mentions
+            if str(mention_id) in conv_participant_ids and str(mention_id) != str(current_user.id)
+        ]
         # Create in-app notifications for every mentioned user except the sender.
         actor_sede = get_user_sede_id(db, current_user.id)
         notify_mention(
             db,
-            mention_ids=payload.mentions,
+            mention_ids=filtered_mentions,
             author_id=current_user.id,
             title="Te mencionaron en un chat",
             content=f"{sender_name}: {msg.content[:120]}{'...' if len(msg.content) > 120 else ''}",
@@ -1016,6 +1036,7 @@ def mark_conversation_read_endpoint(
     persona_id = _get_persona_id(db, current_user)
     if not persona_id:
         raise HTTPException(status_code=404, detail="Persona not found")
+    conv_id = _coerce_uuid_or_404(conv_id, detail="Conversation not found")
     conv = db.query(models.Conversation).filter(models.Conversation.id == conv_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -1059,6 +1080,7 @@ def delete_chat_message_endpoint(
        al nivel de sede. 404 si mismatch.
     6. Soft-delete + commit.
     """
+    message_id = _coerce_uuid_or_404(message_id, detail="Message not found")
     msg = (
         db.query(models.ChatMessage)
         .filter(
@@ -1205,11 +1227,18 @@ async def upload_chat_attachment(
     if not att_type:
         raise HTTPException(status_code=422, detail=f"Tipo de archivo no permitido: {content_type}")
 
-    # Check file size (max 25MB)
+    # Check file size (max 25MB) WITHOUT buffering the whole stream: read in
+    # chunks until MAX_SIZE+1 is exceeded, so an oversized upload cannot cause
+    # a memory DoS regardless of the client's advertised size.
     MAX_SIZE = 25 * 1024 * 1024
-    contents = await file.read()
-    if len(contents) > MAX_SIZE:
-        raise HTTPException(status_code=413, detail="El archivo supera el límite de 25 MB")
+    contents = bytearray()
+    while True:
+        chunk = await file.read(64 * 1024)
+        if not chunk:
+            break
+        contents.extend(chunk)
+        if len(contents) > MAX_SIZE:
+            raise HTTPException(status_code=413, detail="El archivo supera el límite de 25 MB")
 
     # Magic-byte verification (sólo para tipos spoofeables; skip si no hay sig).
     if content_type in MAGIC_BYTES:
@@ -1219,6 +1248,25 @@ async def upload_chat_attachment(
                 status_code=422,
                 detail="El contenido del archivo no coincide con el tipo declarado",
             )
+
+    # Verify conversation participation BEFORE touching the filesystem so a
+    # non-participant never triggers a write+delete cycle (or orphans a file
+    # if the cleanup fails).
+    if conversation_id is not None:
+        try:
+            parsed_conversation_id = _uuid.UUID(str(conversation_id))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        participant = (
+            db.query(models.ConversationParticipant.id)
+            .filter(
+                models.ConversationParticipant.conversation_id == parsed_conversation_id,
+                models.ConversationParticipant.user_id == current_user.id,
+            )
+            .first()
+        )
+        if participant is None:
+            raise HTTPException(status_code=404, detail="Conversation not found")
 
     # Aislar por sede: el path incluye el sede_id del actor. Superadmin
     # sin atribución (sede_id is None) bucketa en ``_global``.
@@ -1248,18 +1296,7 @@ async def upload_chat_attachment(
         f.write(contents)
 
     if conversation_id is not None:
-        participant = (
-            db.query(models.ConversationParticipant.id)
-            .filter(
-                models.ConversationParticipant.conversation_id == conversation_id,
-                models.ConversationParticipant.user_id == current_user.id,
-            )
-            .first()
-        )
-        if participant is None:
-            os.remove(filepath)
-            raise HTTPException(status_code=404, detail="Conversation not found")
-        url = f"/chat/attachments/{conversation_id}/{sede_bucket}/{filename}"
+        url = f"/chat/attachments/{parsed_conversation_id}/{sede_bucket}/{filename}"
     else:
         # Backward-compatible upload response for callers that upload before
         # selecting a conversation. Without a conversation binding there is

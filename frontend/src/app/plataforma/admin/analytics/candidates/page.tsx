@@ -47,10 +47,12 @@ export default function CandidatesDashboard() {
     const [candidates, setCandidates] = useState<Candidate[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [error, setError] = useState(false);
 
     const fetchCandidates = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
+        setError(false);
         try {
             const data = await apiFetch<CandidateRaw[]>('/academy/analytics/candidates', { token, cache: 'no-store', signal });
             // Transform backend data to frontend model
@@ -66,6 +68,7 @@ export default function CandidatesDashboard() {
             setCandidates(mapped);
         } catch (err) {
             console.error(err);
+            setError(true);
             addToast("Error al sincronizar candidatos", "error");
         } finally {
             setLoading(false);
@@ -142,9 +145,13 @@ export default function CandidatesDashboard() {
         {
             id: 'actions',
             header: '',
-            cell: () => <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all hover:bg-info-soft dark:hover:bg-white/5 rounded-md"><ChevronRight size={18} /></button>
+            cell: ({ row }) => <button
+                onClick={() => addToast(`Detalle de ${row.original.username} próximamente`, 'info')}
+                className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all hover:bg-info-soft dark:hover:bg-white/5 rounded-md"
+                aria-label={`Ver detalle de ${row.original.username}`}
+            ><ChevronRight size={18} /></button>
         }
-    ], []);
+    ], [addToast]);
 
     if (!isAuthenticated) return null;
 
@@ -162,7 +169,7 @@ export default function CandidatesDashboard() {
                 tags={['Automated Screening', 'Real-time', 'Hitos']}
                 watchers={['Coordinación Académica', 'Pastoral']}
                 primaryAction={{ label: 'Aprobar Masivamente', icon: CheckCircle2, onClick: handleApproveReady }}
-                secondaryAction={{ label: 'Refrescar Lista', icon: Clock, onClick: fetchCandidates }}
+                secondaryAction={{ label: 'Refrescar Lista', icon: Clock, onClick: () => fetchCandidates() }}
             />
 
             <div className="space-y-3 pb-4">
@@ -185,6 +192,7 @@ export default function CandidatesDashboard() {
                             <input
                                 value={search} onChange={e => setSearch(e.target.value)}
                                 placeholder="Filtrar por nombre de participante..."
+                                aria-label="Filtrar por nombre de participante"
                                 className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-[hsl(var(--info)/100%)] transition-all shadow-sm"
                             />
                         </div>
@@ -195,6 +203,16 @@ export default function CandidatesDashboard() {
                             <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide animate-pulse">
                                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} /> Procesando Big Data...
                             </div>
+                        ) : error ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-8 flex flex-col items-center gap-3">
+                                <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">No se pudieron cargar los candidatos.</p>
+                                <button
+                                    onClick={() => fetchCandidates()}
+                                    className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-all active:scale-95"
+                                >
+                                    Reintentar
+                                </button>
+                            </motion.div>
                         ) : (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                                 <DataTable data={filteredCandidates} columns={columns} />

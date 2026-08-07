@@ -12,6 +12,7 @@ interface UseConversationsOptions {
 export function useConversations({ token, userPersonaId }: UseConversationsOptions) {
     const [conversations, setConversations] = useState<ConversationRead[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState('');
 
     const loadConversations = useCallback(async () => {
@@ -20,13 +21,16 @@ export function useConversations({ token, userPersonaId }: UseConversationsOptio
             return;
         }
         setLoading(true);
+        setError(null);
         try {
             const data = await apiFetch<ConversationRead[]>('/chat/conversations', { token, silent: true });
             if (Array.isArray(data)) {
                 setConversations(data);
             }
         } catch {
-            // Error handled via silent fail; parent can toast if needed
+            // Surface the failure so the UI can show a retry instead of a
+            // misleading empty "no conversations" state.
+            setError('No se pudieron cargar las conversaciones');
         } finally {
             setLoading(false);
         }
@@ -50,8 +54,8 @@ export function useConversations({ token, userPersonaId }: UseConversationsOptio
 
     const updateConversationFromMessage = useCallback(
         (convId: string, message: DirectMessageItem, isActive: boolean) => {
-            setConversations((prev) =>
-                prev.map((c) => {
+            setConversations((prev) => {
+                const updated = prev.map((c) => {
                     if (c.id !== convId) return c;
                     return {
                         ...c,
@@ -60,8 +64,15 @@ export function useConversations({ token, userPersonaId }: UseConversationsOptio
                         last_sender_id: message.sender_id,
                         unread_count: isActive ? 0 : (c.unread_count ?? 0) + 1,
                     };
-                })
-            );
+                });
+                // Re-sort by last_message_at descending so the thread with the
+                // newest message rises to the top, matching user expectation.
+                return updated.sort((a, b) => {
+                    const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+                    const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+                    return bTime - aTime;
+                });
+            });
         },
         []
     );
@@ -85,6 +96,7 @@ export function useConversations({ token, userPersonaId }: UseConversationsOptio
         conversations,
         filteredConversations,
         loading,
+        error,
         filter,
         setFilter,
         loadConversations,

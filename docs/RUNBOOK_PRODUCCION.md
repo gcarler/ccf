@@ -119,6 +119,80 @@ pm2 restart ccf-backend-staging --update-env
 
 > **Nota:** En esta instancia el frontend se sirve con `pm2`. Si hay cambios frontend, se requiere `cd frontend && npm run build` antes de `pm2 restart ccf-frontend-staging --update-env`. No mezclar `pm2` con `./startccf` o con `npm run start` manual.
 
+### Deploy desde worktree alternativo (cuando `/root/ccf` no está en `main`)
+
+> **⚠ Caso especial registrado el 2026-08-05 (ses_030a420dfffe).**
+> Aplica cuando el worktree principal `/root/ccf` está en una feature branch con trabajo
+> en curso (working tree dirty) y necesitas deployar `main` (u otra rama) **sin perturbar**
+> ese trabajo. Es el patrón correcto cuando se trabaja con `git worktree`.
+
+**Por qué el procedimiento normal no alcanza aquí:** el proceso PM2 `ccf-frontend-staging`
+tiene `exec cwd: /root/ccf/frontend` y sirve Next.js leyendo `.next` de **ese** directorio.
+Si construyes `.next` en un worktree distinto (ej. `/root/ccf-main/frontend/.next`) y solo
+haces `pm2 restart ccf-frontend-staging`, el proceso **sigue sirviendo el viejo `.next`**
+del cwd PM2. El reinicio no recoge builds de otros worktrees.
+
+```bash
+# 1. Crear worktree temporal sobre la rama a deployar (main)
+cd /root/ccf
+git worktree add /root/ccf-main main
+
+# 2. Instalar deps y build dentro del worktree temporal
+cd /root/ccf-main/frontend
+npm install --no-audit --no-fund --legacy-peer-deps   # --legacy-peer-deps requerido por
+                                                       # conflicto vite/@vitejs/plugin-react
+node_modules/.bin/next build                          # exit 0
+
+# 3. Backup del .next que PM2 sirve ahora (punto de rollback)
+mv /root/ccf/frontend/.next /root/ccf/frontend/.next.backup-$(date +%Y%m%d-%H%M%S)
+
+# 4. Swap: copiar el nuevo .next al cwd de PM2
+cp -a /root/ccf-main/frontend/.next /root/ccf/frontend/.next
+#    (paths absolutos embebidos en .next/types/*.ts son dev-only; no afectan runtime)
+
+# 5. Reiniciar frontend (backend NO necesita nada salvo que también haya cambiado)
+pm2 restart ccf-frontend-staging
+#    Si también cambió el backend: pm2 restart ccf-backend-staging
+#    (backend NO tiene el acoplamiento de cwd — reimporta Python al restart, es 1 paso)
+
+# 6. Verificar con fingerprinting de chunk (definitivo)
+curl -s https://elfarocc.tech/plataforma/admin/reports | grep -oE 'app/[^"]+/page-[a-z0-9]+\.js' | head -1
+#   → extrae ej. "app/plataforma/admin/reports/page-340be6eed4ccfc2a.js"
+find /root/ccf/frontend/.next -name "page-340be6eed4ccfc2a.js"   # debe existir
+find /root/ccf/frontend/.next.backup-* -name "page-340be6eed4ccfc2a.js" 2>/dev/null
+#   NO debe existir en el backup = confirms que se sirve el build NUEVO
+
+# 7. Health checks
+curl -f https://elfarocc.tech/healthz
+curl -f https://elfarocc.tech/                      # HTTP 200 home público
+curl -f -o /dev/null https://elfarocc.tech/plataforma # HTTP 307 (login redirect, esperado)
+
+# 8. Limpiar worktree temporal cuando ya no se necesite
+cd /root/ccf
+git worktree remove /root/ccf-main --force
+git worktree prune
+```
+
+> **Rollback** (si el deploy falla o se detecta regresión):
+> ```bash
+> rm -rf /root/ccf/frontend/.next
+> mv /root/ccf/frontend/.next.backup-<TIMESTAMP> /root/ccf/frontend/.next
+> pm2 restart ccf-frontend-staging
+> ```
+
+> **Verificación alterna rápida:** comparar el `BUILD_ID` servido vs el esperado:
+> ```bash
+> cat /root/ccf/frontend/.next/BUILD_ID       # build NUEVO
+> ls /root/ccf/frontend/.next.backup-*        # backups disponibles
+> # El BUILD_ID debe cambiar entre el nuevo y cualquier backup (cada `next build` lo regenera)
+> ```
+
+> **Aclaración de "producción" en este VPS:** nginx (`/etc/nginx/sites-available/elfarocc`)
+> proxiea `elfarocc.tech` directamente a `127.0.0.1:3000` (frontend) y `127.0.0.1:8000` (backend),
+> que son los puertos de `ccf-frontend-staging` y `ccf-backend-staging`. **No existe cluster
+> separado de producción** — lo que reinicies en PM2 staging **es** lo que se publica en
+> elfarocc.tech. El sufijo "-staging" es un misnomer a nivel PM2.
+
 ---
 
 ## 3. Rollback

@@ -16,10 +16,10 @@ def _seed_sede(db_session):
 def test_messaging_presence(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
     headers = _auth_headers(client, email=admin.email, password="testpass123")
-    resp = client.get("/api/messaging/presence/room1", headers=headers)
+    resp = client.get("/api/messaging/presence/general", headers=headers)
     assert resp.status_code == 200
     data = resp.json()
-    assert data["room"] == "room1"
+    assert data["room"] == "general"
 
 
 def test_messaging_send_notification(client, db_session):
@@ -28,7 +28,7 @@ def test_messaging_send_notification(client, db_session):
     payload = {
         "event": "test_event",
         "body": {"message": "hola"},
-        "room": "room1",
+        "room": "general",
     }
     resp = client.post("/api/messaging/notifications", json=payload, headers=headers)
     assert resp.status_code == 200
