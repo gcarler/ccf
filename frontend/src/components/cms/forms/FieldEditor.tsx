@@ -146,6 +146,8 @@ export function FieldEditor({
 }: FieldEditorProps) {
   const typeLabel = FIELD_TYPES.find((t) => t.type === field.type)?.label || field.type;
   const update = (patch: Partial<CmsFormField>) => onChange({ ...field, ...patch });
+  // Prefijo estable para asociar <label htmlFor> <-> <input id> (a11y).
+  const fid = (s: string) => `fe-${field.id}-${s}`;
 
   // Campo condicionable: los "meta" (section/divider/page/captcha) no pueden
   // ser destino de una condición.
@@ -175,6 +177,7 @@ export function FieldEditor({
               onClick={onDuplicate}
               className="p-1 text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
               title="Duplicar campo"
+              aria-label={`Duplicar campo ${index + 1}`}
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
@@ -185,6 +188,7 @@ export function FieldEditor({
             disabled={index === 0}
             className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30"
             title="Mover arriba"
+            aria-label={`Mover campo ${index + 1} arriba`}
           >
             <ArrowUp className="w-3.5 h-3.5" />
           </button>
@@ -194,6 +198,7 @@ export function FieldEditor({
             disabled={index === total - 1}
             className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30"
             title="Mover abajo"
+            aria-label={`Mover campo ${index + 1} abajo`}
           >
             <ArrowDown className="w-3.5 h-3.5" />
           </button>
@@ -202,6 +207,7 @@ export function FieldEditor({
             onClick={onRemove}
             className="p-1 text-zinc-400 hover:text-red-600 transition-colors ml-1"
             title="Eliminar campo"
+            aria-label={`Eliminar campo ${index + 1}`}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -214,10 +220,11 @@ export function FieldEditor({
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <label htmlFor={fid("label")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                 {META_TYPES.has(field.type) ? "Título" : "Etiqueta / Título"} *
               </label>
               <input
+                id={fid("label")}
                 type="text"
                 required
                 value={field.label}
@@ -228,10 +235,11 @@ export function FieldEditor({
 
             {!META_TYPES.has(field.type) && field.type !== "checkbox" && field.type !== "page" && (
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                <label htmlFor={fid("placeholder")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                   Texto de marca de agua (Placeholder)
                 </label>
                 <input
+                  id={fid("placeholder")}
                   type="text"
                   value={field.placeholder || ""}
                   onChange={(e) => update({ placeholder: e.target.value })}
@@ -243,8 +251,9 @@ export function FieldEditor({
 
           {field.type === "checkbox" && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Texto de la casilla</label>
+              <label htmlFor={fid("label")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Texto de la casilla</label>
               <input
+                id={fid("label")}
                 type="text"
                 value={field.label}
                 onChange={(e) => update({ label: e.target.value })}
@@ -255,8 +264,10 @@ export function FieldEditor({
 
           {OPTION_TYPES.has(field.type) && (
             <div className="space-y-2 pt-1">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Opciones *</label>
-              <div className="space-y-1.5">
+              <span id={fid("options-label")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                Opciones *
+              </span>
+              <div className="space-y-1.5" aria-labelledby={fid("options-label")}>
                 {(field.options || []).map((opt, optIdx) => (
                   <div key={optIdx} className="flex items-center gap-2">
                     <input
@@ -306,8 +317,9 @@ export function FieldEditor({
           {TEXT_TYPES.has(field.type) && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Mín. caracteres</label>
+                <label htmlFor={fid("min_length")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Mín. caracteres</label>
                 <input
+                  id={fid("min_length")}
                   type="number"
                   min={0}
                   value={field.min_length ?? ""}
@@ -318,8 +330,9 @@ export function FieldEditor({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Máx. caracteres</label>
+                <label htmlFor={fid("max_length")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Máx. caracteres</label>
                 <input
+                  id={fid("max_length")}
                   type="number"
                   min={0}
                   value={field.max_length ?? ""}
@@ -330,8 +343,9 @@ export function FieldEditor({
                 />
               </div>
               <div className="space-y-1 sm:col-span-1">
-                <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Patrón (regex)</label>
+                <label htmlFor={fid("regex_pattern")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Patrón (regex)</label>
                 <input
+                  id={fid("regex_pattern")}
                   type="text"
                   placeholder="^[A-Za-z]+$"
                   value={field.regex_pattern || ""}
@@ -341,10 +355,11 @@ export function FieldEditor({
               </div>
               {field.regex_pattern && (
                 <div className="space-y-1 sm:col-span-3">
-                  <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  <label htmlFor={fid("regex_message")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                     Mensaje de error del patrón
                   </label>
                   <input
+                    id={fid("regex_message")}
                     type="text"
                     value={field.regex_message || ""}
                     onChange={(e) => update({ regex_message: e.target.value || undefined })}
@@ -358,8 +373,9 @@ export function FieldEditor({
           {NUMERIC_TYPES.has(field.type) && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Valor mín.</label>
+                <label htmlFor={fid("min_value")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Valor mín.</label>
                 <input
+                  id={fid("min_value")}
                   type="number"
                   value={field.min_value ?? ""}
                   onChange={(e) =>
@@ -369,8 +385,9 @@ export function FieldEditor({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Valor máx.</label>
+                <label htmlFor={fid("max_value")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Valor máx.</label>
                 <input
+                  id={fid("max_value")}
                   type="number"
                   value={field.max_value ?? ""}
                   onChange={(e) =>
@@ -381,8 +398,9 @@ export function FieldEditor({
               </div>
               {field.type === "slider" && (
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Paso</label>
+                  <label htmlFor={fid("step")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Paso</label>
                   <input
+                    id={fid("step")}
                     type="number"
                     min={1}
                     value={field.step ?? ""}
@@ -399,10 +417,11 @@ export function FieldEditor({
           {field.type === "file" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                <label htmlFor={fid("max_file_mb")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                   Máx. tamaño (MB)
                 </label>
                 <input
+                  id={fid("max_file_mb")}
                   type="number"
                   min={1}
                   value={field.max_file_mb ?? ""}
@@ -413,10 +432,11 @@ export function FieldEditor({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                <label htmlFor={fid("accept")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                   Tipos permitidos (MIME)
                 </label>
                 <input
+                  id={fid("accept")}
                   type="text"
                   placeholder="image/*, application/pdf"
                   value={field.accept || ""}
@@ -429,8 +449,9 @@ export function FieldEditor({
 
           {field.type === "section" && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Descripción</label>
+              <label htmlFor={fid("helper_text")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Descripción</label>
               <input
+                id={fid("helper_text")}
                 type="text"
                 value={field.helper_text || ""}
                 onChange={(e) => update({ helper_text: e.target.value || undefined })}
@@ -441,8 +462,9 @@ export function FieldEditor({
 
           {!META_TYPES.has(field.type) && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Texto de ayuda</label>
+              <label htmlFor={fid("helper_text")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Texto de ayuda</label>
               <input
+                id={fid("helper_text")}
                 type="text"
                 value={field.helper_text || ""}
                 onChange={(e) => update({ helper_text: e.target.value || undefined })}
@@ -455,9 +477,9 @@ export function FieldEditor({
           {!META_TYPES.has(field.type) && field.type !== "page" && conditionTargets.length > 0 && (
             <div className="space-y-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                   Mostrar solo si…
-                </label>
+                </span>
                 <label className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 cursor-pointer">
                   <input
                     type="checkbox"
@@ -475,6 +497,7 @@ export function FieldEditor({
                     value={field.visible_if.field_id}
                     onChange={(e) => update({ visible_if: { ...field.visible_if!, field_id: e.target.value } })}
                     className={inputCls}
+                    aria-label="Campo de la condición"
                   >
                     {conditionTargets.map((f) => (
                       <option key={f.id} value={f.id}>
@@ -496,6 +519,7 @@ export function FieldEditor({
                       })
                     }
                     className={inputCls}
+                    aria-label="Operador de la condición"
                   >
                     {CONDITION_OPERATORS.map((op) => (
                       <option key={op.value} value={op.value}>
@@ -510,6 +534,7 @@ export function FieldEditor({
                       onChange={(e) => update({ visible_if: { ...field.visible_if!, value: e.target.value } })}
                       className={inputCls}
                       placeholder="Valor"
+                      aria-label="Valor de la condición"
                     />
                   )}
                   {needsConditionList && (
@@ -526,6 +551,7 @@ export function FieldEditor({
                       }
                       className={`${inputCls} sm:col-span-3`}
                       placeholder="Valores separados por coma"
+                      aria-label="Valores de la condición (separados por coma)"
                     />
                   )}
                 </div>
