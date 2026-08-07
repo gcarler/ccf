@@ -514,6 +514,79 @@ def export_event_session_report(
     )
 
 
+@dynamic_router.post("/events/{event_id}/attendance/close", response_model=dict)
+def close_event_attendance_endpoint(
+    event_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_manage),
+):
+    """Cierra la asistencia del evento: marca ausentes y genera seguimiento CRM.
+
+    Idempotente: si el evento ya tiene ``attendance_closed_at``, devuelve 200
+    sin hacer cambios. El rollback atomico garantiza que un fallo en el CRM
+    revierte TODO el lote de ausentes (no deja estado parcial).
+    """
+    from backend.services.event_registration_service import close_event_attendance
+
+    event = require_event_access(db, current_user, event_id)
+    sede_id = getattr(current_user, "sede_id", None)
+    result = close_event_attendance(
+        db,
+        event,
+        closed_by=current_user.id,
+        sede_id=sede_id,
+    )
+    return result
+
+
+@dynamic_router.get("/events/{event_id}/people/lookup", response_model=dict)
+def lookup_person_for_event(
+    event_id: str,
+    email: Optional[str] = Query(None),
+    phone: Optional[str] = Query(None),
+    document_number: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_manage),
+):
+    """Busca una persona por email, telefono o documento dentro del scope de sede del evento.
+
+    Devuelve datos no sensibles para identificacion administrativa.
+    No expone PII mas alla de lo necesario.
+    """
+    from sqlalchemy import or_ as _or
+
+    event = require_event_access(db, current_user, event_id)
+    sede_id = getattr(event, "sede_id", None)
+
+    query = db.query(models.Persona).filter(models.Persona.sede_id == sede_id)
+    conditions = []
+    if email:
+        conditions.append(func.lower(models.Persona.email) == email.strip().lower())
+    if phone:
+        conditions.append(models.Persona.phone == phone.strip())
+    if document_number:
+        conditions.append(func.upper(models.Persona.document_number) == document_number.strip().upper())
+
+    if not conditions:
+        raise HTTPException(status_code=422, detail="Debe proporcionar email, phone o document_number")
+
+    persona = query.filter(_or(*conditions)).first()
+    if not persona:
+        return {"found": False, "persona": None}
+
+    return {
+        "found": True,
+        "persona": {
+            "persona_id": str(persona.id),
+            "nombre_completo": persona.nombre_completo,
+            "email": persona.email,
+            "phone": persona.phone,
+            "church_role": persona.church_role,
+            "origen_evento_id": str(persona.origen_evento_id) if persona.origen_evento_id else None,
+        },
+    }
+
+
 @static_router.get("/events/roles", response_model=List[dict])
 @static_router.get("/roles")
 def get_roles(
