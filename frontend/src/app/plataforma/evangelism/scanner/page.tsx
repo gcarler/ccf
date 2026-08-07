@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
 import AdminHero from '@/components/admin/AdminHero';
 import type { ScanValidationResult } from '@/app/plataforma/evangelism/types';
+import { participantRoleLabel } from '@/app/plataforma/evangelism/types';
 
 // Simulating a QR scanner for this environment since camera access might be restricted in some environments
 // or require specific permissions. We provide a premium manual input + auto-scan simulation.
@@ -24,8 +25,35 @@ export default function ScannerPage() {
  setLoading(true);
  setIsScanning(false);
  try {
+   if (token.startsWith('CCF-EVT-')) {
+     // plan_clasificador_contextual: QR de inscripción a evento — el rol
+     // contextual viaja en el payload del endpoint ccf-evt-checkin.
+     const payload = token.slice('CCF-EVT-'.length);
+     const eventId = payload.slice(0, 36);
+     const today = new Date().toISOString().slice(0, 10);
+     const data = await apiFetch<{
+       persona_id: string;
+       persona_name: string;
+       participant_role_code?: string | null;
+       role_at_event?: string | null;
+     }>(`/evangelism/events/${eventId}/sessions/${today}/ccf-evt-checkin`, {
+       method: 'POST',
+       body: { qr_token: token },
+       token: authToken,
+       silent: true,
+     });
+     setScannedData({
+       valid: true,
+       persona_id: data.persona_id,
+       persona_name: data.persona_name,
+       role: data.participant_role_code ?? undefined,
+       participant_role_code: data.participant_role_code,
+       role_at_event: data.role_at_event,
+     });
+   } else {
       const data = await apiFetch<ScanValidationResult>(`/evangelism/scanner/validate/${token}`, { method: 'POST', token: authToken, silent: true });
- setScannedData(data);
+   setScannedData(data);
+   }
  toast.success('¡Asistencia Confirmada!');
  } catch (error) {
  const message = error instanceof ApiError && typeof error.detail === 'object' && error.detail && 'detail' in error.detail
@@ -139,7 +167,7 @@ export default function ScannerPage() {
  <div className="space-y-2">
  <h2 className="text-lg font-bold text-white">{scannedData?.persona_name}</h2>
  <p className="text-[hsl(var(--success))] font-extrabold uppercase tracking-wide text-xs px-3 py-1 bg-[hsl(var(--success))]/10 rounded-full inline-block">
- {scannedData?.role} - VALIDADO
+ {scannedData?.participant_role_code ? participantRoleLabel(scannedData.participant_role_code) : scannedData?.role} - VALIDADO
  </p>
  </div>
  <p className="text-[hsl(var(--text-secondary))] text-sm max-w-[240px]">

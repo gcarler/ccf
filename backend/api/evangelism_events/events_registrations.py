@@ -33,10 +33,13 @@ from backend.core.permissions import (
     require_evangelism_read,
 )
 from backend.services.event_registration_service import (
+    RegistrationError,
     _issue_cancel_token,
     _issue_qr,
     _utcnow,
     count_active_registrations,
+    normalize_participant_role,
+    resolve_participant_role,
     upsert_persona,
 )
 from backend.services.event_registration_service import (
@@ -85,6 +88,8 @@ def _serialize(reg: models.EventRegistration, persona: Optional[models.Persona])
         checked_in_by=reg.checked_in_by,
         source=reg.source,
         extras=extras_clean,
+        # plan_clasificador_contextual: rol efectivo de la inscripción.
+        participant_role_code=reg.participant_role_code,
         waiting_list_position=reg.waiting_list_position,
         reminder_sent_count=reg.reminder_sent_count,
         last_reminder_sent_at=reg.last_reminder_sent_at,
@@ -309,6 +314,12 @@ def create_registration(
     if capacity_full and target_status == "CONFIRMED" and event.waiting_list_enabled:
         target_status = "WAITLIST"
 
+    # plan_clasificador_contextual: override admin (validado) o rol del evento.
+    try:
+        role_code = resolve_participant_role(event, requested=payload.participant_role_code)
+    except RegistrationError as exc:
+        raise HTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}) from None
+
     reg = models.EventRegistration(
         event_id=event.id,
         persona_id=persona.id,
@@ -316,6 +327,7 @@ def create_registration(
         source=payload.source or "admin",
         extras=payload.extras or {},
         waiting_list_position=(waitlist_count + 1) if target_status == "WAITLIST" else None,
+        participant_role_code=role_code,
     )
     db.add(reg)
     db.flush()
@@ -398,6 +410,17 @@ def update_registration(
         # preservar campos internos
         internal = {k: v for k, v in (reg.extras or {}).items() if k.startswith("_")}
         reg.extras = {**internal, **payload.extras}
+
+    # plan_clasificador_contextual: override del rol por admin autorizado.
+    if payload.participant_role_code is not None:
+        try:
+            reg.participant_role_code = resolve_participant_role(
+                event, requested=payload.participant_role_code
+            )
+        except RegistrationError as exc:
+            raise HTTPException(
+                status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}
+            ) from None
 
     db.commit()
     db.refresh(reg)
@@ -517,6 +540,10 @@ def bulk_import(
                 registration_status=target_status,
                 source=row.source or "admin_import",
                 extras=row.extras or {},
+                # plan_clasificador_contextual: override por fila o rol del evento.
+                participant_role_code=resolve_participant_role(
+                    event, requested=row.participant_role_code
+                ),
             )
             if target_status == "WAITLIST":
                 # Adjuntar al final de la cola: position = (slotsTaken en cola) + 1.
@@ -583,12 +610,21 @@ def update_preregistration_config(
     event.qr_mode = payload.qr_mode
     event.contact_person = payload.contact_person
     event.settings_json = payload.settings_json
+    # plan_clasificador_contextual: rol por defecto del evento (override admin).
+    if payload.participant_role_code is not None:
+        try:
+            event.participant_role_code = normalize_participant_role(payload.participant_role_code)
+        except RegistrationError as exc:
+            raise HTTPException(
+                status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}
+            ) from None
     db.commit()
     return {
         "id": str(event.id),
         "requires_registration": event.requires_registration,
         "qr_mode": event.qr_mode,
         "capacity_max": event.capacity_max,
+        "participant_role_code": event.participant_role_code,
     }
 
 

@@ -81,7 +81,38 @@ export interface ScanValidationResult {
  persona_id: string;
  persona_name: string;
  role?: string;
+ // plan_clasificador_contextual: rol efectivo de la inscripción (CCF-EVT-)
+ // y el rol persistido en la asistencia del día del evento.
+ participant_role_code?: string | null;
+ role_at_event?: string | null;
 }
+
+// ── Rol contextual por evento (plan_clasificador_contextual) ──
+
+export const PARTICIPANT_ROLES = {
+    VISITANTE_EVENTO: 'Visitante del evento',
+    CONTACTO_EVANGELISTICO: 'Contacto evangelístico',
+    MIEMBRO: 'Miembro',
+    SERVIDOR: 'Servidor',
+    INVITADO: 'Invitado',
+    VOLUNTARIO: 'Voluntario',
+} as const;
+
+export type ParticipantRole = keyof typeof PARTICIPANT_ROLES;
+
+export function participantRoleLabel(code: string | null | undefined): string {
+    if (!code) return PARTICIPANT_ROLES.VISITANTE_EVENTO;
+    return PARTICIPANT_ROLES[code as ParticipantRole] ?? code;
+}
+
+export interface ParticipantRoleOption {
+    code: string;
+    label: string;
+}
+
+export const PARTICIPANT_ROLE_OPTIONS: ParticipantRoleOption[] = Object.entries(PARTICIPANT_ROLES).map(
+    ([code, label]) => ({ code, label }),
+);
 
 export interface BulkAttendanceSyncResult {
  recorded: number;
