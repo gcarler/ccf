@@ -5,6 +5,7 @@ import { apiFetch } from '@/lib/http';
 import type { DirectMessageItem } from '@/types/directMessages';
 import { FileText, Loader2, Music, Paperclip, Send, Video, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { SearchedUser } from '../_hooks/useUserSearch';
 
 function escapeRegExp(value: string) {
@@ -50,6 +51,24 @@ export function MessageInput({
     const [attachmentError, setAttachmentError] = useState<string | null>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [mentionDropdownPos, setMentionDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+    // Calculate dropdown position relative to viewport when mention results appear.
+    // The dropdown appears ABOVE the input, so we use the container's top edge
+    // and let the dropdown grow upward via bottom positioning.
+    useEffect(() => {
+        if (mentionResults.length > 0 && mentionState && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            setMentionDropdownPos({
+                top: rect.top,
+                left: rect.left + 8,
+                width: rect.width - 16,
+            });
+        } else {
+            setMentionDropdownPos(null);
+        }
+    }, [mentionResults, mentionState]);
 
     // A-08: revoke any pending object URL on unmount to prevent blob leaks.
     useEffect(() => {
@@ -182,7 +201,7 @@ export function MessageInput({
     const type = attachment ? getAttachmentType(attachment) : null;
 
     return (
-        <div className="border-t border-[hsl(var(--border))] dark:border-white/[0.05] p-2 md:p-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] relative">
+        <div ref={containerRef} className="border-t border-[hsl(var(--border))] dark:border-white/[0.05] p-2 md:p-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] relative">
             {replyTo && (
                 <div className="mx-2 mb-1 flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg border-l-2 border-[hsl(var(--primary))]">
                     <div className="flex-1 min-w-0">
@@ -223,8 +242,17 @@ export function MessageInput({
                 </div>
             )}
 
-            {mentionResults.length > 0 && mentionState && (
-                <div className="absolute bottom-[calc(100%+0.5rem)] left-2 right-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] shadow-2xl overflow-hidden z-50">
+            {mentionResults.length > 0 && mentionState && mentionDropdownPos && createPortal(
+                <div
+                    className="fixed rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] shadow-2xl overflow-hidden z-[9999] max-h-[240px] overflow-y-auto"
+                    style={{
+                        top: mentionDropdownPos.top,
+                        left: mentionDropdownPos.left,
+                        width: mentionDropdownPos.width,
+                        transform: 'translateY(-100%)',
+                        marginBottom: '4px',
+                    }}
+                >
                     {mentionResults.map((u) => (
                         <button key={u.id} onClick={() => selectMention(u)} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                             <AvatarInitial name={u.username} size="sm" />
@@ -234,7 +262,8 @@ export function MessageInput({
                             </div>
                         </button>
                     ))}
-                </div>
+                </div>,
+                document.body
             )}
 
             <div className="flex items-end gap-2">
