@@ -14,6 +14,15 @@ from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.rate_limit import rate_limiter
 from backend.models_academy_core import Course, Lesson
+
+# plan_followup: identidad por desafío single-use (identify/verify + register
+# con verified_identity_token).
+from backend.services.event_followup_service import (
+    consume_verified_identity_token,
+    request_identity_challenge,
+    resolve_verified_identity_token,
+    verify_identity_challenge,
+)
 from backend.services.event_registration_service import (
     RegistrationError,
     capacity_remaining,
@@ -473,6 +482,76 @@ def public_get_event(event_id: uuid.UUID, db: Session = Depends(get_db)):
     )
 
 
+@router.post(
+    "/events/{event_id}/identify",
+    response_model=dict,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
+)
+def public_event_identify(
+    event_id: uuid.UUID,
+    payload: schemas.PublicEventIdentify,
+    db: Session = Depends(get_db),
+):
+    """Solicita un desafío de identidad (código de 6 dígitos por email).
+
+    plan_followup: el público envía SOLO su email; el backend crea un
+    ``EventIdentityChallenge`` con hashes (nunca el valor ni el código en
+    claro) y entrega el código por el canal verificado de la persona. La
+    respuesta es indistinguible exista o no coincidencia (no revela PII).
+    El ``challenge_id`` devuelto correlaciona la verificación posterior.
+    """
+    event = _public_event_or_404(db, event_id)
+    try:
+        result = request_identity_challenge(
+            db,
+            event,
+            identifier_type="email",
+            identifier_value=payload.email,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from None
+    db.commit()
+    return result
+
+
+@router.post(
+    "/events/{event_id}/identify/verify",
+    response_model=dict,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
+)
+def public_event_identity_verify(
+    event_id: uuid.UUID,
+    payload: schemas.PublicEventIdentityVerify,
+    db: Session = Depends(get_db),
+):
+    """Verifica el código del desafío y emite un token de identidad single-use.
+
+    plan_followup: valida que el challenge pertenezca a este evento y a este
+    identificador (rechaza challenges cross-evento con 403), compara el código
+    con ``secrets.compare_digest`` contra el hash, y emite
+    ``verified_identity_token`` (single-use) que ``/register`` consume.
+    """
+    event = _public_event_or_404(db, event_id)
+    identifier_type = next(iter(payload.identifier))
+    identifier_value = payload.identifier[identifier_type]
+    try:
+        result = verify_identity_challenge(
+            db,
+            event,
+            identifier_type=identifier_type,
+            identifier_value=identifier_value,
+            code=payload.code,
+            challenge_id=payload.challenge_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from None
+    db.commit()
+    return {
+        "verified_identity_token": result["verified_identity_token"],
+        "fields": result["fields"],
+    }
+
+
 def _validate_event_form_data(db: Session, event: models.CrmEvent, payload: schemas.PublicEventRegister) -> None:
     """Valida ``payload.form_data`` + ``captcha_token`` contra el ``CmsForm``
     vinculado al evento (``event.form_id``).
@@ -592,8 +671,65 @@ def public_register_for_event(
 
     Rate-limited por IP. Idempotente: si la persona ya está CONFIRMED/WAITLIST,
     retorna la inscripción existente sin crear duplicados.
+
+    plan_followup: si el payload trae ``verified_identity_token`` (emitido por
+    ``/identify/verify``), la persona se resuelve desde el token single-use y
+    NO se re-colecta PII del formulario. El token se consume al registrar:
+    un replay con el mismo token o un uso cross-evento devuelve 403.
     """
     event = _public_event_or_404(db, event_id)
+
+    if payload.verified_identity_token:
+        try:
+            persona, _challenge = resolve_verified_identity_token(
+                db, event, payload.verified_identity_token
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from None
+        # Payload derivado desde la persona verificada: ``upsert_persona`` la
+        # encuentra por email/phone y no crea un duplicado (el test de contrato
+        # verifica exactamente 1 Persona con ese email tras registrar).
+        derived = schemas.PublicEventRegister(
+            first_name=persona.first_name or "",
+            last_name=persona.last_name or "",
+            email=persona.email,
+            phone=persona.phone,
+            accept_contact=payload.accept_contact,
+            extras=payload.extras or {},
+        )
+        try:
+            reg = register_persona(
+                db,
+                event,
+                derived,
+                public_base_url=_settings_public_base_url(),
+            )
+        except RegistrationError as exc:
+            raise _reg_error_to_http(exc) from None
+        # El token es de un solo uso: consumirlo tras materializar la
+        # inscripción (replay con el mismo token → 403 en resolve).
+        # Nota: ``register_persona`` ya hace commit interno; este commit final
+        # es el que persiste ``consumed_at`` del challenge — no eliminarlo.
+        # Capturar los tokens transientes inmediatamente tras register_persona
+        # (que ya hizo commit + refresh internos): el commit extra que persiste
+        # ``consumed_at`` del challenge expira ``reg`` (expire_on_commit=True)
+        # y descarta los atributos Python no mapeados ``_qr_token_transient`` /
+        # ``_cancel_token_transient``, volátiles emitidos una sola vez aquí.
+        qr_token_plain = getattr(reg, "_qr_token_transient", None)
+        cancel_token_plain = getattr(reg, "_cancel_token_transient", None)
+        # El token es de un solo uso: consumirlo tras materializar la
+        # inscripción (replay con el mismo token → 403 en resolve).
+        # Nota: ``register_persona`` ya hace commit interno; este commit final
+        # es el que persiste ``consumed_at`` del challenge — no eliminarlo.
+        consume_verified_identity_token(db, event, payload.verified_identity_token)
+        db.commit()
+        db.refresh(reg)
+        return _serialize_registration(
+            reg,
+            persona,
+            qr_token_override=qr_token_plain,
+            cancel_token_override=cancel_token_plain,
+        )
 
     # plan_de_form_builder: si el evento tiene un CmsForm vinculado, validar
     # form_data + captcha server-side contra el contrato del formulario.

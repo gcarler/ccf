@@ -126,6 +126,8 @@ from backend.models_crm import (  # noqa: F401
     EventAssignment,
     EventAttendance,
     EventCampaign,
+    EventCommunicationDelivery,
+    EventIdentityChallenge,
     EventRegistration,
     Family,
     Fund,
