@@ -833,8 +833,8 @@ class TestEstrategiasHelpers:
 
     def test_hydrate_with_start_end_dates(self, full):
         """Lineas 49, 51: hydrate fecha_inicio / fecha_fin como start_date/end_date."""
-        from backend.models_evangelism import EstrategiaEvangelismo
         from backend.api.evangelism_main.main_estrategias import _hydrate_strategy_synonyms
+        from backend.models_evangelism import EstrategiaEvangelismo
         from backend.schemas.crm.base import EvangelismStrategy
 
         cat = _make_categoria(full["db"])
@@ -861,8 +861,8 @@ class TestEstrategiasHelpers:
 
     def test_hydrate_with_dia_reunion_and_hora(self, full):
         """Cubre lineas 43, 45, 47 — hydrate con dia_reunion y hora_reunion."""
-        from backend.models_evangelism import EstrategiaEvangelismo
         from backend.api.evangelism_main.main_estrategias import _hydrate_strategy_synonyms
+        from backend.models_evangelism import EstrategiaEvangelismo
         from backend.schemas.crm.base import EvangelismStrategy
 
         cat = _make_categoria(full["db"])
@@ -1373,8 +1373,9 @@ class TestGruposRoleHelpers:
 
     def test_validate_roles_no_leader_slug(self, full):
         """Línea 91: leader_id presente pero no hay slug líder → 400."""
-        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
         from fastapi import HTTPException
+
+        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
 
         s = _make_strategy(full["db"], full["sede"].id)
         full["db"].flush()
@@ -1392,8 +1393,9 @@ class TestGruposRoleHelpers:
 
     def test_validate_roles_no_assistant_slug(self, full):
         """Línea 93: assistant_id sin slug colíder/asistente → 400."""
-        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
         from fastapi import HTTPException
+
+        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
 
         s = _make_strategy(full["db"], full["sede"].id)
         full["db"].flush()
@@ -1409,8 +1411,9 @@ class TestGruposRoleHelpers:
 
     def test_validate_roles_no_host_slug(self, full):
         """Línea 95: host_id sin slug anfitrión → 400."""
-        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
         from fastapi import HTTPException
+
+        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
 
         s = _make_strategy(full["db"], full["sede"].id)
         full["db"].flush()
@@ -1426,8 +1429,9 @@ class TestGruposRoleHelpers:
 
     def test_validate_roles_custom_id_invalid_uuid(self, full):
         """Línea 104-105: role.startswith('custom:') con uuid inválido → 400."""
-        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
         from fastapi import HTTPException
+
+        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
 
         s = _make_strategy(full["db"], full["sede"].id)
         full["db"].flush()
@@ -1448,8 +1452,9 @@ class TestGruposRoleHelpers:
 
     def test_validate_roles_custom_id_not_in_catalog(self, full):
         """Línea 109-112: rol_personalizado_id no pertenece → 400."""
-        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
         from fastapi import HTTPException
+
+        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
 
         s = _make_strategy(full["db"], full["sede"].id)
         full["db"].flush()
@@ -1469,8 +1474,9 @@ class TestGruposRoleHelpers:
 
     def test_validate_roles_invalid_base_role(self, full):
         """Línea 120-121: role no en base_roles y no personalizado → 400."""
-        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
         from fastapi import HTTPException
+
+        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
 
         s = _make_strategy(full["db"], full["sede"].id)
         full["db"].flush()
@@ -1528,8 +1534,9 @@ class TestGruposRoleHelpers:
 
     def test_validate_roles_invalid_uuid_string_in_custom_id(self, full):
         """Línea 108-110: rol_personalizado_id como string no-uuid → 400."""
-        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
         from fastapi import HTTPException
+
+        from backend.api.evangelism_grupos.grupos_main import _validate_strategy_group_roles
 
         s = _make_strategy(full["db"], full["sede"].id)
         full["db"].flush()
@@ -1966,7 +1973,8 @@ class TestGruposSeasons:
         assert resp.status_code == 404
 
     def test_update_season_cross_sede(self, client, db_session):
-        from backend.models_evangelism import Sede as SedeModel, CampaignSeason
+        from backend.models_evangelism import CampaignSeason
+        from backend.models_evangelism import Sede as SedeModel
 
         admin, _, sede = _seed_admin(db_session, email="adm_uss@test.com")
         h = _auth_headers(client, email="adm_uss@test.com", password="testpass123")
