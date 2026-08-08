@@ -10,11 +10,12 @@
 #   5. ruff check Evangelism (import organization)
 #   6. ruff check CMS (import organization)
 #   7. tsc --noEmit (Next.js)
-#   8. pytest tests/test_academy_backlog.py (suite estructural)
-#   9. pytest tests/test_academy_api.py + tests/test_academy_domain.py (suite runtime)
-#   10. scripts/test_academy_quality.py (smoke canónico)
-#   11. npm run lint:tests:any (frontend test any regression report)
-#   12. check-frontend-test-any.py sobre el diff del PR
+#   8. audit-cms-orphan-imports.cjs (imports huérfanos hacia lib/cms)
+#   9. pytest tests/test_academy_backlog.py (suite estructural)
+#   10. pytest tests/test_academy_api.py + tests/test_academy_domain.py (suite runtime)
+#   11. scripts/test_academy_quality.py (smoke canónico)
+#   12. npm run lint:tests:any (frontend test any regression report)
+#   13. check-frontend-test-any.py sobre el diff del PR
 #
 # Salida:
 #   - exit 0 si TODO verde
@@ -69,7 +70,7 @@ step "6/12 — ruff lint CMS (import organization)"
 bash scripts/lint-cms.sh || fail "Ruff encontró issues en CMS"
 pass "ruff CMS OK"
 
-step "7/12 — tsc --noEmit"
+step "7/13 — tsc --noEmit"
 if [ -d "frontend" ]; then
   ( cd frontend && npx tsc --noEmit 2>&1 | tail -5 ) || fail "tsc encontró errors"
   pass "tsc OK"
@@ -77,23 +78,35 @@ else
   echo "⚠️  frontend/ no presente; saltando tsc"
 fi
 
-step "8/12 — pytest test_academy_backlog.py (estructural)"
+step "8/13 — audit-cms-orphan-imports.cjs (imports huérfanos hacia lib/cms)"
+# Complementa el tsc global: reporta con detalle los imports hacia lib/cms
+# que no resuelven a un export real (tsc ya detectaría TS2305/TS2306;
+# este paso da el reporte lib/cms-específico como barrera temprana).
+if [ -d "frontend" ] && [ -f frontend/scripts/audit-cms-orphan-imports.cjs ]; then
+  ( cd frontend && node scripts/audit-cms-orphan-imports.cjs ) \
+    || fail "Imports huérfanos hacia lib/cms detectados"
+  pass "Sin imports huérfanos hacia lib/cms"
+else
+  echo "⚠️  frontend o script no presente; saltando audit-cms-orphan-imports"
+fi
+
+step "9/13 — pytest test_academy_backlog.py (estructural)"
 $PY -m pytest -q -o "addopts=" tests/test_academy_backlog.py \
   || fail "Tests estructurales del backlog fallaron"
 pass "Backlog structural tests OK"
 
-step "9/12 — pytest tests/test_academy_api.py + test_academy_domain.py"
+step "10/13 — pytest tests/test_academy_api.py + test_academy_domain.py"
 $PY -m pytest -q -o "addopts=" tests/test_academy_api.py tests/test_academy_domain.py \
   || fail "Tests de Academy API fallaron"
 pass "Academy API tests OK"
 
-step "10/12 — scripts/test_academy_quality.py (smoke canónico)"
+step "11/13 — scripts/test_academy_quality.py (smoke canónico)"
 [ -f scripts/test_academy_quality.py ] \
   && $PY scripts/test_academy_quality.py 2>&1 | tail -10 \
   || echo "️  scripts/test_academy_quality.py no presente; saltando smoke"
 pass "Smoke canónico OK"
 
-step "11/12 — npm run lint:tests:any (frontend test any regression report)"
+step "12/13 — npm run lint:tests:any (frontend test any regression report)"
 # Nota: el script usa --no-inline-config para que los comentarios
 # eslint-disable no oculten usos de `any`; el pre-commit hook es la
 # barrera real contra nuevos `any` en tests.
@@ -104,7 +117,7 @@ else
   echo "⚠️  frontend/ no presente; saltando lint:tests:any"
 fi
 
-step "12/12 — check-frontend-test-any.py sobre el diff del PR"
+step "13/13 — check-frontend-test-any.py sobre el diff del PR"
 if [ -d "frontend" ]; then
   UPSTREAM=$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)
   if [ -n "$UPSTREAM" ]; then
