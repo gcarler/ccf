@@ -26,16 +26,24 @@ async function _refreshSession(): Promise<string | null> {
   _refreshPromise = (async () => {
     if (typeof window === "undefined") return null;
     const refreshToken = sessionStorage.getItem("ccf_refresh_token");
-    if (!refreshToken) return null;
 
     try {
       const nativeFetch: typeof fetch =
         (typeof globalThis !== "undefined" && (globalThis as any).__ccfOriginalFetch) || fetch;
 
+      // If we have a refresh token in sessionStorage, send it in the body.
+      // If not, still try the request — the httpOnly cookie will be sent
+      // automatically by the browser (credentials: "include" ensures this).
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const body = refreshToken
+        ? JSON.stringify({ refresh_token: refreshToken })
+        : JSON.stringify({});
+
       const res = await nativeFetch(apiUrl("/v3/auth/refresh"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: refreshToken }),
+        headers,
+        body,
+        credentials: "include",
       });
 
       if (!res.ok) return null;
