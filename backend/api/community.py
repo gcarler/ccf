@@ -1,8 +1,8 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session, selectinload
 
 from backend import crud, models, schemas
 from backend.core.database import get_db
@@ -65,7 +65,11 @@ def delete_community_card(
 
 
 @router.get("/grupos", response_model=List[dict])
-def list_community_grupos(db: Session = Depends(get_db)):
+def list_community_grupos(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=500),
+    db: Session = Depends(get_db),
+):
     """Lista grupos para la vista comunitaria.
 
     EXCEPCIÓN FIRMA Axioma 3 (Sprint 3 — design intencional):
@@ -89,7 +93,14 @@ def list_community_grupos(db: Session = Depends(get_db)):
     sensibles de las personas. El serializador de respuesta está
     deliberadamente restringido a 4 campos por grupo.
     """
-    grupos = db.query(models.GrupoEvangelismo).filter(models.GrupoEvangelismo.deleted_at.is_(None)).all()
+    grupos = (
+        db.query(models.GrupoEvangelismo)
+        .options(selectinload(models.GrupoEvangelismo.participantes))
+        .filter(models.GrupoEvangelismo.deleted_at.is_(None))
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     leader_ids = [g.lider_persona_id for g in grupos if g.lider_persona_id]
     leaders: dict = {}
     if leader_ids:

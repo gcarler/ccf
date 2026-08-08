@@ -683,7 +683,11 @@ def submit_expense_report(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
-    report = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id).first()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id)
+    if sede_id:
+        q = q.filter(models.ExpenseReport.sede_id == sede_id)
+    report = q.first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     if report.status != "draft":
@@ -703,7 +707,11 @@ def approve_expense_report(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "manage")),
 ):
-    report = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id).first()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id)
+    if sede_id:
+        q = q.filter(models.ExpenseReport.sede_id == sede_id)
+    report = q.first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     if report.status != "submitted":
@@ -724,7 +732,11 @@ def reject_expense_report(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "manage")),
 ):
-    report = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id).first()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id)
+    if sede_id:
+        q = q.filter(models.ExpenseReport.sede_id == sede_id)
+    report = q.first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     if report.status not in ("submitted",):
@@ -743,7 +755,11 @@ def reimburse_expense_report(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "manage")),
 ):
-    report = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id).first()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id)
+    if sede_id:
+        q = q.filter(models.ExpenseReport.sede_id == sede_id)
+    report = q.first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     if report.status != "approved":
@@ -866,7 +882,11 @@ def update_document(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
-    doc = db.query(models.Document).filter(models.Document.id == document_id).first()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.Document).filter(models.Document.id == document_id)
+    if sede_id:
+        q = q.filter(models.Document.sede_id == sede_id)
+    doc = q.first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
