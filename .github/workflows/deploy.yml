@@ -27,5 +27,14 @@ jobs:
             set -e
             cd /root/ccf
             git pull origin main
-            /usr/local/bin/pm2 restart ccf-backend-staging ccf-frontend-staging
-            pm2 status
+            # Frontend: secuencia segura build → swap → pm2 restart, solo si hubo
+            # cambios en frontend/ (evita rebuild en pushes solo-backend).
+            # El restart sin rebuild previo dejaba el sitio sirviendo el build
+            # viejo (o chunks huérfanos si un build ajeno tocaba .next en vivo).
+            if git diff --name-only HEAD@{1} HEAD | grep -q '^frontend/'; then
+              bash /root/ccf/scripts/deploy_frontend.sh
+            else
+              echo "Sin cambios en frontend/ — no se reconstruye el frontend"
+            fi
+            /usr/local/bin/pm2 restart ccf-backend-staging
+            /usr/local/bin/pm2 status

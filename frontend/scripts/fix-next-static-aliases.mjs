@@ -3,8 +3,11 @@ import { join, dirname, basename } from 'node:path';
 import process from 'node:process';
 
 const cwd = process.cwd();
-const serverAppDir = join(cwd, '.next/server/app');
-const nextStaticDir = join(cwd, '.next/static');
+// Respetar NEXT_DIST_DIR: durante el deploy seguro se ejecuta contra .next-build
+// (el build staging) y en operación normal contra .next.
+const distDir = process.env.NEXT_DIST_DIR || '.next';
+const serverAppDir = join(cwd, distDir, 'server/app');
+const nextStaticDir = join(cwd, distDir, 'static');
 
 async function exists(filePath) {
     try {
@@ -89,7 +92,7 @@ async function main() {
 
     let created = 0;
     for (const assetUrl of assetUrls) {
-        const assetPath = join(cwd, assetUrl.replace(/^\/_next\//, '.next/'));
+        const assetPath = join(cwd, assetUrl.replace(/^\/_next\//, `${distDir}/`));
         if (await exists(assetPath)) continue;
 
         const candidate = candidateForAsset(assetPath, cssFallback);
