@@ -84,7 +84,7 @@ export function MessageList({ messages, loading, currentUserId, onLoadOlder, onR
         <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto scrollbar-thin p-3 md:p-4 space-y-3 bg-[hsl(var(--surface-1))]/30 dark:bg-[#111213]"
+            className="flex-1 overflow-y-auto scrollbar-thin p-3 md:p-4 space-y-3 bg-[hsl(var(--surface-1))]/30 dark:bg-[hsl(var(--bg-primary))]"
         >
             {loading && messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-[hsl(var(--text-secondary))]">
