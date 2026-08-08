@@ -228,10 +228,7 @@ def list_courses(
     # F-02 (2026-08-02): students_count real vía count bulk por página (sin N+1).
     user_sede = get_user_sede_id(db, current_user.id)
     counts = _students_count_map(db, [c.id for c in courses], user_sede)
-    return [
-        _serialize_course(course, students_count=counts.get(course.id, 0))
-        for course in courses
-    ]
+    return [_serialize_course(course, students_count=counts.get(course.id, 0)) for course in courses]
 
 
 @router.get("/courses/{course_id_or_slug}")
@@ -506,13 +503,14 @@ def update_lesson_progress(
             import secrets
             import string
             import uuid
+
             code = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
             cert = models.Certificate(
                 id=uuid.uuid4(),
                 enrollment_id=enrollment.id,
                 certificate_type=lesson.course.certificate_type or "Formación Básica",
                 certificate_code=code,
-                issued_at=_utcnow()
+                issued_at=_utcnow(),
             )
             db.add(cert)
     db.commit()
@@ -860,7 +858,7 @@ def validate_certificate(code: str, request: Request, db: Session = Depends(get_
 
 @router.post("/lessons/{lesson_id}/submit-assignment", response_model=schemas.AssignmentSubmission)
 @academy_limiter.limit("10/minute")
-async def submit_assignment(
+def submit_assignment(
     lesson_id: UUID,
     request: Request,
     current_user: AcademyStudent,
@@ -905,7 +903,7 @@ async def submit_assignment(
     if file.content_type and file.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=422, detail="Tipo de archivo no permitido")
     MAX_SIZE = 10 * 1024 * 1024
-    contents = await file.read()
+    contents = file.file.read()
     if len(contents) > MAX_SIZE:
         raise HTTPException(status_code=422, detail="El archivo excede el límite de 10 MB")
     url = storage_service.save_file_original(
@@ -1252,9 +1250,7 @@ def academy_personas(
     # (models_crm.py:362) — no filtrar por soft-delete aquí (causaba
     # AttributeError → 500). El M-06 outerjoin contra auth_users para
     # ``is_active`` se conserva.
-    query = db.query(models.Persona, models.Usuario).outerjoin(
-        models.Usuario, models.Usuario.id == models.Persona.id
-    )
+    query = db.query(models.Persona, models.Usuario).outerjoin(models.Usuario, models.Usuario.id == models.Persona.id)
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
         query = query.filter(models.Persona.sede_id == sede_id)
