@@ -22,6 +22,38 @@ def _to_uuid(val: Any) -> uuid.UUID | None:
         return None
 
 
+def create_notification(
+    db: "Session",
+    *,
+    user_id: uuid.UUID | str | Any,
+    title: str,
+    content: str,
+    sede_id: uuid.UUID | str | Any | None = None,
+) -> None:
+    """Helper canónico para crear una NotificacionUsuario.
+
+    Usar este helper en todo el backend (comment_notifications,
+    task_notifications, evangelism_notifications) para mantener
+    consistencia en la instanciación y evitar duplicación.
+    """
+    from backend import models
+
+    user_uuid = _to_uuid(user_id)
+    sede_uuid = _to_uuid(sede_id)
+    if not user_uuid:
+        return
+    db.add(
+        models.NotificacionUsuario(
+            user_id=user_uuid,
+            sede_id=sede_uuid,
+            title=title,
+            content=content,
+            is_read=False,
+            created_at=_utcnow(),
+        )
+    )
+
+
 def notify_mention(
     db: "Session",
     mention_ids: List[Any],
@@ -55,13 +87,10 @@ def notify_mention(
         if user_uuid == author_uuid:
             continue
         seen.add(user_uuid)
-        db.add(
-            models.NotificacionUsuario(
-                user_id=user_uuid,
-                sede_id=sede_uuid,
-                title=title,
-                content=content,
-                is_read=False,
-                created_at=_utcnow(),
-            )
+        create_notification(
+            db,
+            user_id=user_uuid,
+            sede_id=sede_uuid,
+            title=title,
+            content=content,
         )

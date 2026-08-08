@@ -2,10 +2,11 @@
 
 Arquitectura:
   - MessagingGateway: clase base con lógica real (SMTP para email).
-  - StubMessagingGateway: reemplazo para testing/testing — registra en
-    CommunicationLog pero NUNCA envía al exterior, excepto si el destinatario
-    coincide con TEST_EMAIL_OVERRIDE (para pruebas controladas).
-  - get_messaging_gateway(): factory FastAPI Depends que retorna una ú otra
+  - StubMessagingGateway: reemplazo para testing/staging — registra en
+    CommunicationLog pero NUNCA envía al exterior (WhatsApp y SMS son
+    stubs puros sin API real de Meta/Twilio — pendiente de integración).
+    Excepción: TEST_EMAIL_OVERRIDE para pruebas controladas de email.
+  - get_messaging_gateway(): factory FastAPI Depends que retorna una u otra
     según settings.stub_comms.
 """
 

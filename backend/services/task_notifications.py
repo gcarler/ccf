@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud.crm import resolve_persona_id_for_user
+from backend.services.comment_notifications import create_notification
 from backend.services.messaging_outcomes import CommunicationOutcome
 
 # Import the email MODULE (not the function name) so test suites can
@@ -185,13 +186,11 @@ def notify_task_assigned(
                 .first()
             )
             if not existing:
-                db.add(
-                    models.NotificacionUsuario(
-                        user_id=recipient_id,
-                        title=notification_title,
-                        content=notification_content,
-                        is_read=False,
-                    )
+                create_notification(
+                    db,
+                    user_id=recipient_id,
+                    title=notification_title,
+                    content=notification_content,
                 )
 
         # Single atomic commit for activity log + audit row (+ optional
