@@ -346,18 +346,25 @@ def _check_first_time_lead_trigger(db: Session, session_id: UUID):
         .all()
     )
 
+    if not first_timers:
+        return
+
+    # Batch-fetch all personas in one query instead of N queries in a loop
+    persona_ids = [att.persona_id for att in first_timers if att.persona_id]
+    personas_map = {p.id: p for p in db.query(Persona).filter(Persona.id.in_(persona_ids)).all()}
+
     for att in first_timers:
-        p = db.query(Persona).filter(Persona.id == att.persona_id).first()
+        p = personas_map.get(att.persona_id)
         if p and str(getattr(p, "church_role", "")).lower() not in ("lead", "lead_nuevo"):
             try:
                 p.church_role = "lead_nuevo"
-                db.commit()
             except Exception as exc:
                 logger.warning(
                     "Failed to update church_role to lead_nuevo for persona %s: %s",
                     att.persona_id,
                     exc,
                 )
+    db.commit()
 
 
 def utc_now() -> datetime.datetime:

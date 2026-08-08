@@ -13,7 +13,7 @@ import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Any, Dict, Optional
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -58,7 +58,7 @@ def _as_aware(value: datetime | None) -> datetime | None:
 
 
 def _create_access_token(user_id: str, platform_role: str, sede_id: str = "") -> str:
-    to_encode = {
+    to_encode: Dict[str, Any] = {
         "sub": user_id,
         "role": platform_role,
         "platform_role": platform_role,
@@ -574,8 +574,17 @@ def initialize_password(
 # ═══════════════════════════════════════════════════════════════════════
 
 
-def require_auth_dep(request: Request, db: Session = Depends(get_db)):
-    return _require_auth(request, db)
+def require_auth_dep(request: Request, db: Session = Depends(get_db)) -> Usuario:
+    """Return the authenticated Usuario object, not just the id.
+
+    Avoids a redundant db.query(Usuario) in every endpoint that needs
+    the full user row after authentication.
+    """
+    user_id = _require_auth(request, db)
+    user = db.query(Usuario).filter(Usuario.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return user
 
 
 @router.post("/change-password", response_model=dict)
@@ -583,12 +592,10 @@ def change_password(
     payload: ChangePasswordRequest,
     request: Request,
     db: Session = Depends(get_db),
-    current_user_id: str = Depends(require_auth_dep),
+    current_user: Usuario = Depends(require_auth_dep),
 ):
     """Cambio de contraseña para usuarios autenticados."""
-    user = db.query(Usuario).filter(Usuario.id == current_user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    user = current_user
 
     if not user.password_hash:
         raise HTTPException(status_code=400, detail="Debes inicializar tu contraseña primero")
@@ -1140,15 +1147,13 @@ def send_verification_email(
     payload: SendVerificationEmailRequest | None = None,
     request: Request = None,
     db: Session = Depends(get_db),
-    current_user_id: str = Depends(require_auth_dep),
+    current_user: Usuario = Depends(require_auth_dep),
 ):
     """Reenvía un correo de verificación al usuario autenticado."""
     from backend.models_auth import TokenVerificacionEmail
     from backend.services.email import render_verify_email, send_email
 
-    user = db.query(Usuario).filter(Usuario.id == current_user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    user = current_user
 
     requested_email = (payload.email if payload and payload.email else user.email or "").strip().lower()
     user_email = (user.email or "").strip().lower()
