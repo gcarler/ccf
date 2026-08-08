@@ -12,6 +12,11 @@ const __dirname = path.dirname(__filename);
 
 const nextConfig = {
     allowedDevOrigins: ['elfarocc.tech', 'www.elfarocc.tech'],
+    // distDir dinámico: el deploy seguro (build-safe.mjs) compila a .next-build
+    // y hace swap atómico al final, para que el proceso en servicio nunca vea
+    // un .next a medias (chunks huérfanos → 400 en /_next/static/*).
+    // next start usa el default '.next'.
+    distDir: process.env.NEXT_DIST_DIR || '.next',
     images: {
         // CMS media is already served by the backend as immutable WebP assets.
         // Avoid Next's image proxy for /api/static media to prevent noisy 400s
