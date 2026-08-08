@@ -47,10 +47,9 @@ Notas operativas:
     CommunicationLog", **no** "entregado al destinatario externo".
 """
 
+import asyncio
 import re
-import time
 import uuid as _uuid
-from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Set
 
@@ -72,6 +71,7 @@ from backend.core.permissions import (
 )
 from backend.crud._utils import _coerce_uuid_or_404
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_for_user
+from backend.core.cache import get_redis
 from backend.mesh_websockets import manager
 from backend.schemas.notifications import MessagingChannel
 from backend.services.messaging import CommunicationOutcome
@@ -88,10 +88,36 @@ _VALID_ROOM_RE = re.compile(
 # Límite de tamaño por frame de texto enviado por el cliente WS (bytes).
 _WS_MAX_TEXT_BYTES = 64 * 1024
 
-# M-05: Rate limit en memoria por usuario (broadcast notifications).
-_broadcast_rate: dict[str, list[float]] = defaultdict(list)
+# M-05: Rate limit constants for broadcast notifications (Redis-backed).
 _BROADCAST_RATE_LIMIT = 10  # max events por ventana
-_BROADCAST_RATE_WINDOW = 60.0  # segundos
+_BROADCAST_RATE_WINDOW = 60  # segundos
+
+
+async def _check_broadcast_rate_limit(user_id: str) -> None:
+    """Rate-limit broadcast notifications per user via Redis sliding window.
+
+    Uses ``INCR`` + ``EXPIRE`` on key ``rl:broadcast:{user_id}``. If Redis
+    is unavailable the guard degrades to a no-op (fail-open) with a warning
+    log so the platform keeps serving broadcasts even during cache outages.
+    """
+    import logging
+    try:
+        r = get_redis()
+        key = f"rl:broadcast:{user_id}"
+        count = await asyncio.to_thread(r.incr, key)
+        if count == 1:
+            await asyncio.to_thread(r.expire, key, _BROADCAST_RATE_WINDOW)
+        if count > _BROADCAST_RATE_LIMIT:
+            raise HTTPException(
+                status_code=429,
+                detail="Rate limit exceeded for broadcast notifications",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        logging.getLogger(__name__).warning(
+            "Redis rate-limit unavailable for user %s — falling back to allow", user_id
+        )
 
 
 class NotificationPayload(BaseModel):
@@ -393,17 +419,9 @@ async def send_notification(
     if room not in authorized:
         raise HTTPException(status_code=404, detail="Room not found")
 
-    # M-05: Rate limit por usuario para broadcast.
+    # M-05: Rate limit por usuario para broadcast (Redis-backed).
     user_id = str(getattr(current_user, "id", ""))
-    now = time.time()
-    window_start = now - _BROADCAST_RATE_WINDOW
-    _broadcast_rate[user_id] = [t for t in _broadcast_rate[user_id] if t > window_start]
-    if len(_broadcast_rate[user_id]) >= _BROADCAST_RATE_LIMIT:
-        raise HTTPException(
-            status_code=429,
-            detail="Rate limit exceeded for broadcast notifications",
-        )
-    _broadcast_rate[user_id].append(now)
+    await _check_broadcast_rate_limit(user_id)
     await manager.broadcast_event({"event": payload.event, "body": payload.body}, room=room)
     return {"status": "queued"}
 
