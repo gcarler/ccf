@@ -331,6 +331,8 @@ from backend.schemas.crm.base import (
     PrayerRequestPublicCreate,
     PrayerRequestUpdate,
     PublicEventCancel,
+    PublicEventIdentify,
+    PublicEventIdentityVerify,
     PublicEventRead,
     PublicEventRegister,
     PublicEventStatusQuery,

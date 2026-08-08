@@ -1298,8 +1298,10 @@ class PublicEventRegister(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    first_name: str = Field(..., min_length=1, max_length=100)
-    last_name: str = Field(..., min_length=1, max_length=100)
+    # Con ``verified_identity_token`` (flujo identify/verify) los datos de
+    # identidad pueden omitirse — el backend los resuelve desde el token.
+    first_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    last_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     extras: dict = {}
@@ -1307,6 +1309,48 @@ class PublicEventRegister(BaseModel):
     # plan_de_form_builder: datos del CmsForm vinculado al evento (opcional)
     form_data: Optional[dict] = None
     captcha_token: Optional[str] = None
+    # plan_followup: token single-use emitido por /identify/verify — si viene,
+    # la persona se resuelve desde él (sin re-recolectar PII del formulario).
+    verified_identity_token: Optional[str] = Field(default=None, min_length=32, max_length=200)
+
+    @model_validator(mode="after")
+    def _require_names_or_identity_token(self) -> "PublicEventRegister":
+        if self.verified_identity_token:
+            return self
+        if not self.first_name or not self.last_name:
+            raise ValueError("first_name y last_name son requeridos (o verified_identity_token)")
+        return self
+
+
+class PublicEventIdentify(BaseModel):
+    """Solicitud de desafío de identidad (verificación de posesión).
+
+    El público envía SOLO el identificador (email) — el backend resuelve
+    la persona y entrega el código por canal verificado sin revelar si hay
+    coincidencia (respuesta indistinguible MATCH/NO_MATCH).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    email: EmailStr
+
+
+class PublicEventIdentityVerify(BaseModel):
+    """Verificación de un desafío de identidad con código de 6 dígitos.
+
+    ``identifier``: ``{"email": "..."}`` (o ``{"CC": "..."}``) en el mismo
+    formato canónico del flujo ``identify``. ``challenge_id`` vincula la
+    verificación a un desafío concreto (evita que un código valga para
+    cualquier solicitud). ``code`` es el código recibido por email.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    # min_length=1: evita que un dict vacío llegue al endpoint y explote con
+    # StopIteration en ``next(iter(payload.identifier))`` (500 en vez de 422).
+    identifier: dict[str, str] = Field(..., min_length=1)
+    challenge_id: UUID
+    code: str = Field(..., min_length=4, max_length=10)
 
 
 class PublicEventVerify(BaseModel):

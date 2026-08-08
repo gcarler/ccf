@@ -140,6 +140,9 @@ class CrmEvent(Base):
     campaigns = relationship(
         "EventCampaign", back_populates="event", cascade="all, delete-orphan"
     )
+    identity_challenges = relationship(
+        "EventIdentityChallenge", back_populates="event", cascade="all, delete-orphan"
+    )
 
 
 class EventAssignment(Base):
@@ -268,6 +271,16 @@ class EventRegistration(Base):
     )
     source = Column(String(30), nullable=False, default="public_form")
     extras = Column(JSON, default=dict)
+    # ── Preferencias de comunicación (plan followup, migración 20260807_0001) ──
+    # Snapshot del consentimiento al momento del registro (se preserva la
+    # decisión que se usó para cada evento, no la preferencia actual del perfil).
+    communication_consent = Column(Boolean, nullable=False, default=True, server_default=text("TRUE"))
+    consent_source = Column(String(40), nullable=True)
+    consent_at = Column(DateTime(timezone=True), nullable=True)
+    consent_policy_version = Column(String(40), nullable=True)
+    preferred_channels = Column(JSON, nullable=False, default=list, server_default=text("'[]'"))
+    transactional_notifications_enabled = Column(Boolean, nullable=False, default=True, server_default=text("TRUE"))
+    marketing_opt_out_at = Column(DateTime(timezone=True), nullable=True)
     # plan_clasificador_contextual: rol efectivo en esta inscripción (hereda
     # del evento en el momento del registro; override admin autorizado).
     participant_role_code = Column(String(40), nullable=True, index=True)
@@ -303,6 +316,15 @@ class EventCampaign(Base):
         Index("ix_campaign_event", "event_id"),
         Index("ix_campaign_active", "is_active"),
         Index("ix_campaign_deleted_at", "deleted_at"),
+        Index("ix_event_campaign_default_key", "default_key"),
+        Index(
+            "uq_event_campaign_default_key",
+            "event_id",
+            "default_key",
+            unique=True,
+            postgresql_where=text("default_key IS NOT NULL AND deleted_at IS NULL"),
+            sqlite_where=text("default_key IS NOT NULL AND deleted_at IS NULL"),
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
@@ -310,6 +332,12 @@ class EventCampaign(Base):
         UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False
     )
     name = Column(String(200), nullable=False)
+    # plan_followup: clave estable del catálogo default (migración 20260808_0002)
+    # para reutilizar/recrear campañas estándar sin duplicar.
+    default_key = Column(String(60), nullable=True)
+    # plan_followup: tipo de comunicación que clasifica el consentimiento
+    # (OPERATIONAL / ROUTINE / PASTORAL) — migración 20260807_0001.
+    communication_type = Column(String(20), nullable=False, default="ROUTINE", server_default="ROUTINE")
     plantilla_id = Column(
         UUID(as_uuid=True),
         ForeignKey("crm_plantillas_mensaje.id", ondelete="SET NULL"),
@@ -1157,3 +1185,92 @@ class CommunityBoardCard(Base):
     position = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class EventCommunicationDelivery(Base):
+    """Entrega planificada de una campaña para una inscripción concreta.
+
+    Tabla ``event_communication_deliveries`` (migración 20260807_0001). La
+    unicidad ``(registration_id, campaign_id, communication_key)`` garantiza
+    idempotencia ante materialización concurrente (el servicio absorbe el
+    IntegrityError con un savepoint). ``recipient_masked`` conserva solo el
+    contacto enmascarado (defensa de datos, nunca PII completa).
+    """
+
+    __tablename__ = "event_communication_deliveries"
+    __table_args__ = (
+        UniqueConstraint(
+            "registration_id", "campaign_id", "communication_key",
+            name="uq_event_communication_delivery_key",
+        ),
+        Index("ix_event_delivery_registration", "registration_id"),
+        Index("ix_event_delivery_campaign", "campaign_id"),
+        Index("ix_event_delivery_status_next_attempt", "status", "next_attempt_at"),
+        Index("ix_event_delivery_event_update", "event_update_id"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    registration_id = Column(
+        UUID(as_uuid=True), ForeignKey("event_registrations.id", ondelete="CASCADE"), nullable=False
+    )
+    campaign_id = Column(
+        UUID(as_uuid=True), ForeignKey("event_campaigns.id", ondelete="CASCADE"), nullable=False
+    )
+    event_update_id = Column(String(100), nullable=True)
+    communication_key = Column(String(180), nullable=False)
+    channel = Column(String(20), nullable=False)
+    recipient_masked = Column(String(255), nullable=True)
+    status = Column(String(20), nullable=False, default="QUEUED", server_default="QUEUED")
+    skip_reason = Column(String(80), nullable=True)
+    consent_rule_applied = Column(String(40), nullable=True)
+    attempt_count = Column(Integer, nullable=False, default=0, server_default="0")
+    next_attempt_at = Column(DateTime(timezone=True), nullable=True)
+    provider_message_id = Column(String(180), nullable=True)
+    last_error = Column(Text, nullable=True)
+    payload_version = Column(String(40), nullable=True)
+    queued_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    sent_at = Column(DateTime(timezone=True), nullable=True)
+    delivered_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow)
+
+    registration = relationship("EventRegistration", foreign_keys=[registration_id])
+    campaign = relationship("EventCampaign", foreign_keys=[campaign_id])
+
+
+class EventIdentityChallenge(Base):
+    """Desafío de identidad de un solo uso para el pre-registro público.
+
+    Tabla ``event_identity_challenges`` (migración 20260807_0001). Guarda
+    SOLO hashes (identificador y código en claro nunca se persisten) y el
+    token verificado (``verified_identity_token_hash``) single-use: al
+    consumirse, ``consumed_at`` bloquea el replay y el vínculo al evento
+    (``event_id``) impide el uso cross-evento.
+    """
+
+    __tablename__ = "event_identity_challenges"
+    __table_args__ = (
+        Index("ix_event_identity_challenge_lookup", "event_id", "identifier_hash"),
+        Index("ix_event_identity_challenge_token", "verified_identity_token_hash"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    event_id = Column(
+        UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    identifier_type = Column(String(20), nullable=False)
+    identifier_hash = Column(String(128), nullable=False)
+    challenge_hash = Column(String(128), nullable=False)
+    verified_identity_token_hash = Column(String(128), nullable=True)
+    persona_id = Column(
+        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    attempt_count = Column(Integer, nullable=False, default=0, server_default="0")
+    max_attempts = Column(Integer, nullable=False, default=5, server_default="5")
+    verified_at = Column(DateTime(timezone=True), nullable=True)
+    consumed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
+
+    event = relationship("CrmEvent", foreign_keys=[event_id], back_populates="identity_challenges")
+    persona = relationship("Persona", foreign_keys=[persona_id])
