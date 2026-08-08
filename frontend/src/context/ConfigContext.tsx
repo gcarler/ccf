@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 
 interface ConfigContextType {
@@ -32,13 +32,17 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => { refreshConfig(); }, [refreshConfig]);
 
-    const isFeatureEnabled = (featureId: string) => {
+    const isFeatureEnabled = useCallback((featureId: string) => {
         if (!config) return true;
         return !!config.features_enabled?.[featureId];
-    };
+    }, [config]);
+
+    const value = useMemo(() => ({
+        config, isFeatureEnabled, refreshConfig, loading
+    }), [config, isFeatureEnabled, refreshConfig, loading]);
 
     return (
-        <ConfigContext.Provider value={{ config, isFeatureEnabled, refreshConfig, loading }}>
+        <ConfigContext.Provider value={value}>
             {children}
         </ConfigContext.Provider>
     );

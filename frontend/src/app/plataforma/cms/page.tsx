@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
+import { formatDate } from "@/lib/format";
 import { SITE_BLOCKS } from "@/lib/cms/blocks";
 import { canEditCms, canManageSites } from "@/lib/cms/permissions";
 import { listCmsPostsByCategory, postToTestimonial } from "@/lib/cms/v2";
@@ -163,13 +164,6 @@ const EMPTY_STATS: CmsStats = {
   categoriesTotal: 0,
   tagsTotal: 0,
 };
-
-function formatDate(value?: string) {
-  if (!value) return "Sin fecha";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Sin fecha";
-  return date.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
-}
 
 function _metricValue(value: number | undefined, loading: boolean) {
   if (loading) return "...";
@@ -550,7 +544,7 @@ export default function CmsHomePage() {
                 return (
                   <Link
                     key={check.label}
-                    href={canEdit ? check.href : "/cms"}
+                    href={canEdit ? check.href : "/plataforma/cms"}
                     className="group rounded-lg border border-[hsl(var(--border))] p-4 transition-colors hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:hover:border-[hsl(var(--info)/100%)]/50"
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -756,7 +750,7 @@ export default function CmsHomePage() {
                       </span>
                     </div>
                     <p className="mt-2 line-clamp-2 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{testimony.content}</p>
-                    <p className="mt-3 text-xs text-[hsl(var(--text-secondary))]">{formatDate(testimony.created_at)}</p>
+                    <p className="mt-3 text-xs text-[hsl(var(--text-secondary))]">{formatDate(testimony.created_at, { fallback: "Sin fecha" })}</p>
                   </div>
                 ))
               )}

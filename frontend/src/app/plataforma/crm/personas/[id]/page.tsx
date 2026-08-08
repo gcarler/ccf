@@ -40,6 +40,7 @@ import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { apiFetch } from '@/lib/http';
+import { formatDate } from '@/lib/format';
 import { toast } from 'sonner';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -248,12 +249,6 @@ interface PersonaMentorCandidate {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatDate(val?: string | null): string {
-    if (!val) return '—';
-    const d = new Date(val);
-    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
-}
 
 function formatCurrency(val?: number | null): string {
     if (val == null) return '$0';
@@ -706,8 +701,8 @@ export default function PersonaDetailPage() {
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Perfil de Consolidación</h3>
                                 <InfoGrid items={[
-                                    { label: 'Fecha de Ingreso', value: formatDate(persona.joinedAt), icon: Calendar },
-                                    { label: 'Fecha de Nacimiento', value: formatDate(persona.birthday), icon: Calendar },
+                                    { label: 'Fecha de Ingreso', value: formatDate(persona.joinedAt, { month: 'long', day: 'numeric' }), icon: Calendar },
+                                    { label: 'Fecha de Nacimiento', value: formatDate(persona.birthday, { month: 'long', day: 'numeric' }), icon: Calendar },
                                     { label: 'Grupo', value: persona.house, icon: Heart },
                                     { label: 'Rol en Ministerio', value: persona.church_role, icon: ShieldCheck },
                                 ]} />
@@ -892,7 +887,7 @@ export default function PersonaDetailPage() {
                             <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-3 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
                                 <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Datos Espirituales</h3>
                                 <InfoGrid items={[
-                                    { label: 'Fecha de Bautismo', value: formatDate(persona.baptism_date), icon: CheckCircle2 },
+                                    { label: 'Fecha de Bautismo', value: formatDate(persona.baptism_date, { month: 'long', day: 'numeric' }), icon: CheckCircle2 },
                                     { label: 'Grupo', value: persona.house, icon: Heart },
                                     { label: 'Estado Espiritual', value: persona.status, icon: ShieldCheck },
                                     { label: 'Rol en la Iglesia', value: persona.church_role, icon: Star },
@@ -1003,7 +998,7 @@ export default function PersonaDetailPage() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white capitalize">{d.donation_type}</p>
-                                                        <p className="text-2xs text-[hsl(var(--text-secondary))]">{formatDate(d.created_at)}</p>
+                                                        <p className="text-2xs text-[hsl(var(--text-secondary))]">{formatDate(d.created_at, { month: 'long', day: 'numeric' })}</p>
                                                     </div>
                                                 </div>
                                                 <p className="text-sm font-bold text-success-text">{formatCurrency(d.amount)}</p>
@@ -1039,7 +1034,7 @@ export default function PersonaDetailPage() {
                                                 <div className="flex-1 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg p-3">
                                                     <div className="flex items-center justify-between mb-2">
                                                         <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{event.event_type ?? event.type ?? 'Evento'}</p>
-                                                        <p className="text-2xs text-[hsl(var(--text-secondary))]">{formatDate(event.created_at)}</p>
+                                                        <p className="text-2xs text-[hsl(var(--text-secondary))]">{formatDate(event.created_at, { month: 'long', day: 'numeric' })}</p>
                                                     </div>
                                                     {event.notes && <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed">{event.notes}</p>}
                                                 </div>

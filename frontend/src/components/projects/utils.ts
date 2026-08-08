@@ -1,13 +1,6 @@
 /**
- * Format a date string to a localized Peruvian date format.
+ * Re-export formatDate from the shared format module for backward compatibility.
+ * Existing importers use `es-PE` locale, which is preserved via the options
+ * parameter at the call site in ProjectsTableView.tsx.
  */
-export function formatDate(dateStr: string): string {
-    if (!dateStr) return '—';
-    try {
-        return new Date(dateStr).toLocaleDateString('es-PE', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        });
-    } catch { return dateStr; }
-}
+export { formatDate } from "@/lib/format";

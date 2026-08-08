@@ -24,13 +24,7 @@ import { apiFetch } from '@/lib/http';
 import { DSCard } from '@/design';
 import { DSBadge } from '@/design';
 import { toast } from 'sonner';
-
-function formatBytes(bytes?: number): string {
-    if (!bytes) return '0 KB';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+import { formatBytes } from "@/lib/format";
 
 interface MediaItemData {
   id: string;

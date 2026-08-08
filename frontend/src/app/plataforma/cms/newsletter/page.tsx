@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { SITE_KEY } from "@/lib/site-config";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,7 +27,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
-import RichEditor from "@/components/cms/RichEditor";
 import clsx from "clsx";
 import {
   createCmsNewsletter,
@@ -43,6 +43,8 @@ import {
 } from "@/lib/cms/v2";
 import { CmsNewsletter, CmsSite, CmsSubscriber } from "@/types/cms-v2";
 import { canEditCms } from "@/lib/cms/permissions";
+
+const RichEditor = dynamic(() => import("@/components/cms/RichEditor"), { ssr: false });
 
 type ActiveTab = "campaigns" | "subscribers";
 

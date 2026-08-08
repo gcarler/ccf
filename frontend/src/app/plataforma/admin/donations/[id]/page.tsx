@@ -57,12 +57,12 @@ export default function DonationDetailPage() {
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Administracion", icon: LayoutDashboard, href: "/plataforma/admin" },
-                    { label: "Donaciones", icon: Heart, href: "/admin/donations" },
+                    { label: "Donaciones", icon: Heart, href: "/plataforma/admin/donations" },
                     { label: `#${donationId}`, icon: ReceiptText },
                 ]}
                 leftActions={
                     <button
-                        onClick={() => router.push("/admin/donations")}
+                        onClick={() => router.push("/plataforma/admin/donations")}
                         className="rounded-md border border-[hsl(var(--border))] p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] dark:border-white/10"
                     >
                         <ArrowLeft size={16} />

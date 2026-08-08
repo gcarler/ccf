@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { listPublicPopups } from "@/lib/cms/v2";
 import { CmsPublicPopup } from "@/types/cms-v2";
 import { SITE_KEY } from "@/lib/site-config";
+import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
 
 function matchesPath(pattern: string, pathname: string | null | undefined): boolean {
   if (!pattern || pattern === "*") return true;
@@ -144,7 +145,7 @@ export function PopupManager() {
             {/* Rich HTML Content */}
             <div
               className="prose dark:prose-invert max-w-none text-sm sm:text-base"
-              dangerouslySetInnerHTML={{ __html: activePopup.content_html }}
+              dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(activePopup.content_html) }}
             />
           </motion.div>
         </div>

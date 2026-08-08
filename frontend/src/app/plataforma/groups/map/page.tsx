@@ -65,7 +65,7 @@ export default function GroupsMapPage() {
                 ]}
                 rightActions={
                     <Link
-                        href="/groups"
+                        href="/plataforma/groups"
                         className="rounded-md border border-[hsl(var(--border))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
                     >
                         Ver dashboard

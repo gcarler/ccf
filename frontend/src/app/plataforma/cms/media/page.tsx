@@ -54,12 +54,7 @@ const FILTER_OPTIONS: { id: FilterType; label: string }[] = [
   { id: "document", label: "Documentos" },
 ];
 
-function formatBytes(bytes?: number): string {
-  if (!bytes) return "—";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+import { formatBytes } from "@/lib/format";
 
 function getFileTypeIcon(mime?: string) {
   if (!mime) return FileText;

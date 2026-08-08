@@ -18,6 +18,7 @@ import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
+import { formatDate } from '@/lib/format';
 
 interface SupportTicket {
     id: number;
@@ -277,10 +278,4 @@ function normalizeStatus(status: string | null | undefined) {
     return status;
 }
 
-function formatDate(value: string) {
-    return new Date(value).toLocaleDateString('es-CO', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    });
-}
+

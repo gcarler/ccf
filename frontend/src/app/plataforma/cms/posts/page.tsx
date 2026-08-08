@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { SITE_KEY } from "@/lib/site-config";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,7 +26,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
-import RichEditor from "@/components/cms/RichEditor";
 import clsx from "clsx";
 import {
   createCmsPost,
@@ -39,6 +39,8 @@ import { CmsCategory, CmsPostWithTaxonomies, CmsSite, CmsTag } from "@/types/cms
 import { canEditCms } from "@/lib/cms/permissions";
 import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
 
+const RichEditor = dynamic(() => import("@/components/cms/RichEditor"), { ssr: false });
+
 const CMS_POST_VIEWS: ViewType[] = ["grid", "list", "table", "board", "kanban"];
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -49,9 +51,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   archived: { label: "Archivado", color: "bg-[hsl(var(--danger-muted))] text-danger-text dark:bg-[hsl(var(--danger))]/10 dark:text-[hsl(var(--danger))]" },
 };
 
-function slugify(value: string) {
-  return value.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9\-/]/g, "").replace(/-+/g, "-");
-}
+import { slugify } from "@/lib/format";
 
 export default function CmsPostsManagement() {
   const { token, user } = useAuth();

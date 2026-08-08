@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
@@ -22,7 +23,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import TestimonialForm from "@/components/TestimonialForm";
-import RichEditor from "@/components/cms/RichEditor";
 import clsx from "clsx";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
@@ -36,6 +36,8 @@ import {
   normalizeTestimonialMediaType,
   TestimonialMediaType,
 } from "@/lib/cms/testimonialMedia";
+
+const RichEditor = dynamic(() => import("@/components/cms/RichEditor"), { ssr: false });
 
 type Testimonial = V1TestimonialShape;
 
