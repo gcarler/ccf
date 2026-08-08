@@ -50,17 +50,16 @@ Notas operativas:
 import asyncio
 import re
 import uuid as _uuid
-from datetime import datetime, timedelta, timezone
-from typing import List, Optional, Set
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from jose import jwt as _jwt
 from pydantic import BaseModel
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import _get_scoped_persona
+from backend.core.cache import get_redis
 from backend.core.database import get_db
 from backend.core.permissions import (
     ALGORITHM,
@@ -71,7 +70,6 @@ from backend.core.permissions import (
 )
 from backend.crud._utils import _coerce_uuid_or_404
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_for_user
-from backend.core.cache import get_redis
 from backend.mesh_websockets import manager
 from backend.schemas.notifications import MessagingChannel
 from backend.services.messaging import CommunicationOutcome
@@ -130,18 +128,6 @@ class MessageSendPayload(BaseModel):
     persona_id: str
     channel: MessagingChannel
     content: str
-
-
-class CampaignSendPayload(BaseModel):
-    campaign_name: str
-    channel: str
-    content: str
-    target_segments: list[str]
-
-
-# Segmentos que el frontend Campaign Composer emite — allowlist para
-# evitar inyección de segment names arbitrarios.
-_VALID_SEGMENTS: frozenset[str] = frozenset({"active", "new", "staff", "groups", "low", "vip"})
 
 
 router = APIRouter()
@@ -552,255 +538,3 @@ def messaging_send(
         actor_user_id=str(actor_user_id),
     )
     return entry
-
-
-# ── Campaign broadcast ────────────────────────────────────────────────────────
-
-_SEGMENT_WARN_THRESHOLD = 500
-
-
-def _resolve_segment_persona_ids(db: Session, segment: str, sede_id: object | None) -> Set[str]:
-    """Map a segment label to a set of ``persona_id`` strings for the given sede.
-
-    Only segments in ``_VALID_SEGMENTS`` are resolved; unknown labels return
-    an empty set. Returns ``str`` for consistent comparison with
-    ``CommunicationLog.persona_id``.
-    """
-    from backend.models_evangelism import GrupoEvangelismo as _Grupo
-
-    now_utc = datetime.now(timezone.utc)
-    base = db.query(models.Persona.id).filter(models.Persona.deleted_at.is_(None))
-    if sede_id is not None:
-        base = base.filter(models.Persona.sede_id == str(sede_id))
-
-    if segment == "active":
-        return {str(row[0]) for row in base.all()}
-    if segment == "new":
-        cutoff = now_utc - timedelta(days=30)
-        return {str(row[0]) for row in base.filter(models.Persona.created_at >= cutoff).all()}
-    if segment == "staff":
-        rows = (
-            db.query(models.Persona.id)
-            .filter(models.Persona.deleted_at.is_(None))
-            .join(models.User, models.User.id == models.Persona.id)
-            .filter(models.User.is_active.is_(True))
-        )
-        if sede_id is not None:
-            rows = rows.filter(models.Persona.sede_id == str(sede_id))
-        return {str(row[0]) for row in rows.all()}
-    if segment == "groups":
-        rows = (
-            db.query(_Grupo.lider_persona_id)
-            .filter(
-                _Grupo.activo.is_(True),
-                _Grupo.deleted_at.is_(None),
-                _Grupo.lider_persona_id.isnot(None),
-            )
-        )
-        if sede_id is not None:
-            rows = rows.filter(_Grupo.sede_id == sede_id)
-        return {str(row[0]) for row in rows.distinct().all()}
-    if segment == "low":
-        # Últimos 60 días sin registro de asistencia a eventos CRM.
-        sixty_days_ago = now_utc - timedelta(days=60)
-        attended = (
-            db.query(models.EventAttendance.persona_id)
-            .join(models.CrmEvent, models.CrmEvent.id == models.EventAttendance.event_id)
-            .filter(
-                models.CrmEvent.deleted_at.is_(None),
-                models.CrmEvent.event_date >= sixty_days_ago,
-            )
-            .distinct()
-            .subquery()
-        )
-        base_ids = base.filter(~models.Persona.id.in_(db.query(attended.c.persona_id)))
-        return {str(row[0]) for row in base_ids.all()}
-    if segment == "vip":
-        # Personas con donaciones registradas (finanzas).
-        donors = (
-            db.query(models.Donation.persona_id)
-            .distinct()
-            .subquery()
-        )
-        return {str(row[0]) for row in base.filter(models.Persona.id.in_(db.query(donors.c.persona_id))).all()}
-    return set()
-
-
-@router.post("/crm/messaging/send")
-def campaign_send(
-    payload: CampaignSendPayload,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
-):
-    """Envía una campaña masiva de mensajería a segmentos de personas.
-
-    Resuelve cada segment label contra la BD (acotado por ``sede_id`` del
-    actor), deduplica los ``persona_id`` resultantes y crea un
-    ``CommunicationLog`` por persona. El outcome es ``INTERNAL_LOG``
-    (sentinel — campaña registrada, no implica entrega outbound real).
-
-    Retorna ``{campaign_id, target_count, segments_resolved}``.
-
-    Seguridad:
-      - Requiere ``require_staff_or_admin`` con scope de sede.
-      - ``target_segments`` validado contra allowlist ``_VALID_SEGMENTS``.
-      - Si la unión de segmentos supera ``_SEGMENT_WARN_THRESHOLD``
-        personas se rechaza (422) para evitar amplificación accidental.
-    """
-    if not payload.target_segments:
-        raise HTTPException(status_code=422, detail="target_segments is required")
-    unknown = [s for s in payload.target_segments if s not in _VALID_SEGMENTS]
-    if unknown:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Unknown segments: {', '.join(sorted(unknown))}",
-        )
-    if not payload.campaign_name.strip():
-        raise HTTPException(status_code=422, detail="campaign_name is required")
-    if not payload.content.strip():
-        raise HTTPException(status_code=422, detail="content is required")
-
-    user_sede = get_user_sede_id(db, current_user.id)
-    leader_id = resolve_persona_id_for_user(db, current_user.id) or current_user.id
-
-    all_persona_ids: set[str] = set()
-    for segment in payload.target_segments:
-        all_persona_ids.update(_resolve_segment_persona_ids(db, segment, user_sede))
-
-    if len(all_persona_ids) > _SEGMENT_WARN_THRESHOLD:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Campaign would target {len(all_persona_ids)} personas (max {_SEGMENT_WARN_THRESHOLD})",
-        )
-
-    campaign_id = str(_uuid.uuid4())
-    created = 0
-    for persona_id in all_persona_ids:
-        crud.create_communication_log(
-            db,
-            schemas.CommunicationLogCreate(
-                persona_id=persona_id,
-                channel=payload.channel,
-                content=payload.content,
-                leader_id=leader_id,
-                outcome=CommunicationOutcome.INTERNAL_LOG.value,
-            ),
-            actor_user_id=str(current_user.id),
-        )
-        created += 1
-
-    return {
-        "campaign_id": campaign_id,
-        "target_count": created,
-        "segments_resolved": payload.target_segments,
-    }
-
-
-@router.get("/crm/messaging/history")
-def campaign_history(
-    limit: int = Query(50, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
-):
-    """Historial de campañas masivas agrupadas por ``campaign_name`` dentro de
-    la sede del actor."""
-    user_sede = get_user_sede_id(db, current_user.id)
-
-    # Group by campaign_name + channel, aggregate counts
-    rows = (
-        db.query(
-            models.CommunicationLog.campaign_name,
-            models.CommunicationLog.channel,
-            func.min(models.CommunicationLog.created_at).label("sent_at"),
-            func.count(models.CommunicationLog.id).label("target_count"),
-            func.count(models.CommunicationLog.external_id).label("delivered_count"),
-            func.sum(
-                func.case(
-                    (models.CommunicationLog.outcome == "failed", 1),
-                    else_=0,
-                )
-            ).label("failed_count"),
-        )
-        .filter(
-            models.CommunicationLog.deleted_at.is_(None),
-            models.CommunicationLog.campaign_name.isnot(None),
-            models.CommunicationLog.campaign_name != "",
-        )
-        .group_by(
-            models.CommunicationLog.campaign_name,
-            models.CommunicationLog.channel,
-        )
-        .order_by(func.min(models.CommunicationLog.created_at).desc())
-        .offset(offset)
-        .limit(limit)
-    )
-    if user_sede is not None:
-        rows = rows.join(
-            models.Persona,
-            models.CommunicationLog.persona_id == models.Persona.id,
-        ).filter(models.Persona.sede_id == str(user_sede))
-    rows = rows.all()
-
-    return [
-        {
-            "id": row.campaign_name,
-            "name": row.campaign_name,
-            "campaign_name": row.campaign_name,
-            "channel": row.channel,
-            "status": "sent",
-            "sent_at": row.sent_at.isoformat() if row.sent_at else None,
-            "target_count": row.target_count,
-            "delivered_count": row.delivered_count or 0,
-            "failed_count": row.failed_count or 0,
-            "date": row.sent_at.isoformat() if row.sent_at else None,
-            "count": row.target_count,
-        }
-        for row in rows
-    ]
-
-
-@router.get("/crm/messaging/history/{campaign_name:path}")
-def campaign_history_detail(
-    campaign_name: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_staff_or_admin),
-):
-    """Detalle de una campaña masiva por nombre."""
-    user_sede = get_user_sede_id(db, current_user.id)
-
-    base = (
-        db.query(models.CommunicationLog)
-        .filter(
-            models.CommunicationLog.deleted_at.is_(None),
-            models.CommunicationLog.campaign_name == campaign_name,
-        )
-    )
-    if user_sede is not None:
-        base = base.join(
-            models.Persona,
-            models.CommunicationLog.persona_id == models.Persona.id,
-        ).filter(models.Persona.sede_id == str(user_sede))
-
-    first = base.order_by(models.CommunicationLog.created_at.asc()).first()
-    if not first:
-        raise HTTPException(status_code=404, detail="Campaign not found")
-
-    target_count = base.count()
-    delivered = base.filter(models.CommunicationLog.external_id.isnot(None)).count()
-    failed = base.filter(models.CommunicationLog.outcome == "failed").count()
-
-    return {
-        "id": campaign_name,
-        "name": campaign_name,
-        "campaign_name": campaign_name,
-        "channel": first.channel,
-        "status": "sent",
-        "sent_at": first.created_at.isoformat() if first.created_at else None,
-        "target_count": target_count,
-        "delivered_count": delivered,
-        "failed_count": failed,
-        "content": first.content,
-        "recipient_phone": first.recipient_phone,
-        "external_id": first.external_id,
-    }

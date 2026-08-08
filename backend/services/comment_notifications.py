@@ -74,8 +74,6 @@ def notify_mention(
         url: deep link to the commented entity.
         sede_id: optional sede scope for the notification row.
     """
-    from backend import models
-
     author_uuid = _to_uuid(author_id)
     sede_uuid = _to_uuid(sede_id)
     seen: set[uuid.UUID] = set()

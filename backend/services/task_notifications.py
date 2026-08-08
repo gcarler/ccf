@@ -8,8 +8,6 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud.crm import resolve_persona_id_for_user
-from backend.services.comment_notifications import create_notification
-from backend.services.messaging_outcomes import CommunicationOutcome
 
 # Import the email MODULE (not the function name) so test suites can
 # `monkeypatch.setattr(backend.services.email, "send_email", _stub)`
@@ -20,7 +18,9 @@ from backend.services.messaging_outcomes import CommunicationOutcome
 # mock-pitfall. Keep the function name on this side via module
 # attribute access (``email_svc.send_email``).
 from backend.services import email as email_svc
+from backend.services.comment_notifications import create_notification
 from backend.services.email import render_task_assignment_email
+from backend.services.messaging_outcomes import CommunicationOutcome
 
 logger = logging.getLogger(__name__)
 
