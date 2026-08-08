@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import smtplib
+import threading
 import uuid
 from typing import TYPE_CHECKING
 
@@ -358,10 +359,11 @@ class StubMessagingGateway(MessagingGateway):
 
 _gateway_instance: MessagingGateway | None = None
 """Singleton cache — recrear sólo si settings cambian (no debería en runtime)."""
+_gateway_lock = threading.Lock()
 
 
 def get_messaging_gateway() -> MessagingGateway:
-    """FastAPI Depends factory.
+    """FastAPI Depends factory (thread-safe).
 
     Retorna:
       - ``StubMessagingGateway`` si ``settings.stub_comms`` es ``True``
@@ -381,16 +383,32 @@ def get_messaging_gateway() -> MessagingGateway:
     """
     global _gateway_instance
     settings = get_settings()
-    if settings.stub_comms:
-        if not isinstance(_gateway_instance, StubMessagingGateway):
-            _gateway_instance = StubMessagingGateway(settings)
+    need_stub = settings.stub_comms
+    is_stub = isinstance(_gateway_instance, StubMessagingGateway)
+    is_real = type(_gateway_instance) is MessagingGateway
+
+    if need_stub and is_stub:
         return _gateway_instance
-    if type(_gateway_instance) is not MessagingGateway:
-        _gateway_instance = MessagingGateway(settings)
-    return _gateway_instance
+    if not need_stub and is_real:
+        return _gateway_instance
+
+    with _gateway_lock:
+        # Double-check inside lock
+        is_stub = isinstance(_gateway_instance, StubMessagingGateway)
+        is_real = type(_gateway_instance) is MessagingGateway
+        if need_stub and is_stub:
+            return _gateway_instance
+        if not need_stub and is_real:
+            return _gateway_instance
+        if need_stub:
+            _gateway_instance = StubMessagingGateway(settings)
+        else:
+            _gateway_instance = MessagingGateway(settings)
+        return _gateway_instance
 
 
 def reset_gateway_singleton() -> None:
     """Útil en tests para forzar recreación entre pruebas."""
     global _gateway_instance
-    _gateway_instance = None
+    with _gateway_lock:
+        _gateway_instance = None
