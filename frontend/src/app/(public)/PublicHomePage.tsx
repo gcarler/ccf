@@ -11,10 +11,15 @@ import { useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 import PublicHeroWithSlides, { type PublicSlide } from "@/components/public/PublicHeroWithSlides";
+import type { CmsPublicPage } from "@/types/cms-v2";
 
-
-export default function PublicHomePage() {
-    const homePage = useCmsV2Page('home');
+/**
+ * La home es un client component, pero el hero sticky se renderiza en SSR
+ * desde ``initialHomePage`` (fetched en page.tsx) para que el árbol servidor
+ * y cliente coincidan y no haya hydration mismatch. El hook refresca luego.
+ */
+export default function PublicHomePage({ initialHomePage }: { initialHomePage?: CmsPublicPage | null }) {
+    const homePage = useCmsV2Page('home') ?? initialHomePage;
     const heroContent = homePage?.blocks?.hero;
     const homeFeedContent = homePage?.blocks?.feed;
     const eventsPage = useCmsV2Page('events');
@@ -172,31 +177,30 @@ export default function PublicHomePage() {
     const hasHero = homeSlides.length > 0 || heroTitleLead || heroTitleAccent || heroTitleTail || heroDescription;
 
     return (
-
-            <main className="relative z-10" style={{ background: "var(--site-background)" }}>
-            {/* ─── HERO ─────────────────────────────────────────────── */}
+        <>
+            {/* ─── HERO sticky — hijo directo del <main> del layout ─────────────
+                El sticky se limita a su contenedor: sin wrapper, el hero recorre
+                toda la página y el contenido (z-10) pasa por encima al hacer scroll. */}
             {hasHero && (
-                <div className="pb-6">
-                    <PublicHeroWithSlides
-                        home
-                        eyebrow={heroEyebrow}
-                        titleLead={heroTitleLead}
-                        titleAccent={heroTitleAccent}
-                        titleTail={heroTitleTail}
-                        description={heroDescription}
-                        primaryCta={heroPrimaryCta ? { label: heroPrimaryCta, href: (heroContent?.primary_cta_href as string) || "/conocer-a-jesus" } : undefined}
-                        secondaryCta={heroSecondaryCta ? { label: heroSecondaryCta, href: (heroContent?.secondary_cta_href as string) || "/predicas" } : undefined}
-                        slides={homeSlides}
-                    />
-                    {scrollIndicator && (
-                        <div className="ccf-container -mt-10 flex justify-center">
-                            <span className="text-2xs uppercase tracking-[0.35em]" style={{ color: "var(--site-on-surface-variant)" }}>
-                                {scrollIndicator}
-                            </span>
-                        </div>
-                    )}
-                </div>
+                <PublicHeroWithSlides
+                    home
+                    eyebrow={heroEyebrow}
+                    titleLead={heroTitleLead}
+                    titleAccent={heroTitleAccent}
+                    titleTail={heroTitleTail}
+                    description={heroDescription}
+                    primaryCta={heroPrimaryCta ? { label: heroPrimaryCta, href: (heroContent?.primary_cta_href as string) || "/conocer-a-jesus" } : undefined}
+                    secondaryCta={heroSecondaryCta ? { label: heroSecondaryCta, href: (heroContent?.secondary_cta_href as string) || "/predicas" } : undefined}
+                    slides={homeSlides}
+                    scrollIndicator={scrollIndicator}
+                />
             )}
+
+            {/* ─── CONTENIDO (pasa por encima del hero) ──────────────
+                bg-site-background vía clase: React SSR descarta el inline
+                `background: var(--site-background)` (shorthand con var),
+                dejando el contenedor transparente. */}
+            <div className="relative z-10 bg-site-background">
 
             {/* ─── BENTO: Bienvenidos a Casa ────────────────────────── */}
             {hasBento && (
@@ -508,7 +512,7 @@ export default function PublicHomePage() {
                     </motion.div>
                 </section>
             )}
-        </main>
-
+        </div>
+        </>
     );
 }

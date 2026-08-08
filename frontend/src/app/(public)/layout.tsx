@@ -52,9 +52,13 @@ export default async function PublicLayout({ children }: { children: React.React
                     }}
                 />
                 <PublicSeoManager />
-                <div className="min-h-screen overflow-x-hidden bg-site-background text-site-on-background font-body antialiased selection:bg-site-primary/30">
+                {/* overflow-x: clip (no hidden): clip NO crea scroll container, así que el hero
+                    sticky de la home sigue anclado al viewport, pero el overflow horizontal de
+                    cualquier página pública sigue clipeado (hidden rompía position:sticky). */}
+                <div className="min-h-screen overflow-x-clip bg-site-background text-site-on-background font-body antialiased selection:bg-site-primary/30">
                     <Navbar />
-                    <main className="relative min-h-screen">
+                    {/* <main> relativo = contenedor sticky del hero reveal de la home */}
+                    <main className="relative">
                         {children}
                     </main>
                     <Footer />
