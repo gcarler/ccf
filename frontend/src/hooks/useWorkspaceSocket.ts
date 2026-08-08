@@ -1,5 +1,10 @@
 "use client";
 
+// KNOWN DEBT: sin WebSocket ping/heartbeat desde el cliente. Las
+// conexiones zombie (half-open TCP) solo se detectan cuando el backend
+// intenta enviar un mensaje y falla. Un setInterval con ws.send('ping')
+// cada 30s cerraria esta brecha y mejoraria la fidelidad de presence.
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildWsUrl, resolveClientId } from '@/lib/websocket';
 import type { WsEvent } from '@/types/directMessages';

@@ -13,6 +13,12 @@ from backend.core.config import get_settings
 settings = get_settings()
 
 
+# KNOWN DEBT: sin ping/pong ni heartbeat en las conexiones WebSocket.
+# Conexiones zombie (half-open TCP) no se detectan hasta que falla un
+# send_text en _send_local. Un ping_interval configurado en el handshake
+# del WebSocket mitigaría esto y reduciría el drift en presence tracking.
+
+
 class RedisPubSubManager:
     def __init__(self) -> None:
         self.active_connections: Dict[str, WebSocket] = {}
