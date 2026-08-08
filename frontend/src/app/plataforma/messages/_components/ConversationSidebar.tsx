@@ -34,8 +34,8 @@ export function ConversationSidebar({
     getOtherParticipant,
 }: ConversationSidebarProps) {
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/30 dark:bg-[#1a1b1d] border-r border-[hsl(var(--border))] dark:border-white/[0.05]">
-            <div className="h-10 px-3 flex items-center justify-between shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]/30 dark:bg-[hsl(var(--bg-primary))] border-r border-[hsl(var(--border))] dark:border-white/[0.05]">
+            <div className="h-10 px-3 flex items-center justify-between shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]">
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
                         <MessageCircle size={12} />
