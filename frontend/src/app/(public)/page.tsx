@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import PublicHomePage from "./PublicHomePage";
 import { getCmsPublicPage } from "@/lib/cms/v2";
+import { buildCmsPageBlocks } from "@/lib/cms/pageBlocks";
 import { SITE_KEY } from "@/lib/site-config";
+import type { CmsPublicPage } from "@/types/cms-v2";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ccf.org";
 
@@ -51,6 +53,17 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function Page() {
-  return <PublicHomePage />;
+export default async function Page() {
+  // SSR inicial de la home: al pasar la página como prop, el servidor renderiza
+  // el hero sticky con el mismo árbol que el cliente (sin hydration mismatch).
+  let initialHomePage: CmsPublicPage | null = null;
+  try {
+    const page = await getCmsPublicPage(SITE_KEY, "home");
+    if (page) {
+      initialHomePage = { ...page, blocks: buildCmsPageBlocks(page.sections) };
+    }
+  } catch {
+    initialHomePage = null;
+  }
+  return <PublicHomePage initialHomePage={initialHomePage} />;
 }
