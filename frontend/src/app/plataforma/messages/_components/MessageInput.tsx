@@ -182,7 +182,7 @@ export function MessageInput({
     const type = attachment ? getAttachmentType(attachment) : null;
 
     return (
-        <div className="border-t border-[hsl(var(--border))] dark:border-white/[0.05] p-2 md:p-3 bg-[hsl(var(--bg-primary))] dark:bg-[#141517] relative">
+        <div className="border-t border-[hsl(var(--border))] dark:border-white/[0.05] p-2 md:p-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] relative">
             {replyTo && (
                 <div className="mx-2 mb-1 flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg border-l-2 border-[hsl(var(--primary))]">
                     <div className="flex-1 min-w-0">
@@ -224,7 +224,7 @@ export function MessageInput({
             )}
 
             {mentionResults.length > 0 && mentionState && (
-                <div className="absolute bottom-[calc(100%+0.5rem)] left-2 right-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1d] shadow-2xl overflow-hidden z-50">
+                <div className="absolute bottom-[calc(100%+0.5rem)] left-2 right-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] shadow-2xl overflow-hidden z-50">
                     {mentionResults.map((u) => (
                         <button key={u.id} onClick={() => selectMention(u)} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
                             <AvatarInitial name={u.username} size="sm" />

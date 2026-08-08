@@ -143,7 +143,7 @@ function MessagesPage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Mensajes" customSidebar={conversationSidebar} sidebarSections={[]}>
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]">
                 {!activeConv ? (
                     <EmptyState onNewConversation={handleNewConversation} />
                 ) : (
@@ -219,11 +219,11 @@ function ThreadHeader({
         wsStatus === "open"
             ? { color: "fill-[hsl(var(--success))] text-[hsl(var(--success))]", label: "Activo" }
             : wsStatus === "error"
-            ? { color: "fill-red-400 text-red-400", label: "Desconectado" }
+            ? { color: "fill-[hsl(var(--danger))] text-[hsl(var(--danger))]", label: "Desconectado" }
             : { color: "fill-[hsl(var(--warning))] text-[hsl(var(--warning))]", label: "Conectando..." };
 
     return (
-        <div className="h-10 px-3 md:px-4 flex items-center gap-3 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+        <div className="h-10 px-3 md:px-4 flex items-center gap-3 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]">
             <button
                 className="p-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-all"
                 aria-label="Volver a conversaciones"
