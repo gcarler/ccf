@@ -40,6 +40,9 @@ class CommunicationOutcome(str, Enum):
     SMTP_FAILED = "smtp_failed"
     STUB = "stub"
     FAILED = "failed"
+    NO_EMAIL = "no_email"
+    EMAIL_SENT = "email_sent"
+    EMAIL_FAILED = "email_failed"
 
 
 # Conjunto de outcomes que sí son entrega outbound real (vs log interno).
@@ -50,6 +53,8 @@ OUTBOUND_OUTCOMES: frozenset[CommunicationOutcome] = frozenset(
         CommunicationOutcome.PENDING_SMTP_CONFIG,
         CommunicationOutcome.SMTP_FAILED,
         CommunicationOutcome.STUB,
+        CommunicationOutcome.EMAIL_SENT,
+        CommunicationOutcome.NO_EMAIL,
     }
 )
 
@@ -58,6 +63,7 @@ OUTBOUND_OUTCOMES: frozenset[CommunicationOutcome] = frozenset(
 DELIVERED_OUTCOMES: frozenset[str] = frozenset(
     {
         CommunicationOutcome.SENT_REAL.value,
+        CommunicationOutcome.EMAIL_SENT.value,
     }
 )
 

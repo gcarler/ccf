@@ -18,7 +18,9 @@ from backend.crud.crm import resolve_persona_id_for_user
 # mock-pitfall. Keep the function name on this side via module
 # attribute access (``email_svc.send_email``).
 from backend.services import email as email_svc
+from backend.services.comment_notifications import create_notification
 from backend.services.email import render_task_assignment_email
+from backend.services.messaging_outcomes import CommunicationOutcome
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +135,7 @@ def notify_task_assigned(
                     campaign_name="Asignación de tarea",
                     content=notification_content,
                     leader_id=assigned_by_persona_id,
-                    outcome="no_email",
+                    outcome=CommunicationOutcome.NO_EMAIL.value,
                 )
             )
             # No inbox notification when there's no email channel — the
@@ -156,7 +158,7 @@ def notify_task_assigned(
             description=description,
         )
         sent = email_svc.send_email(to=assignee.email, subject=subject, html=html, text=text)
-        outcome = "email_sent" if sent else "email_failed"
+        outcome = CommunicationOutcome.EMAIL_SENT.value if sent else CommunicationOutcome.EMAIL_FAILED.value
         db.add(
             models.CommunicationLog(
                 persona_id=assignee.id,
@@ -184,13 +186,11 @@ def notify_task_assigned(
                 .first()
             )
             if not existing:
-                db.add(
-                    models.NotificacionUsuario(
-                        user_id=recipient_id,
-                        title=notification_title,
-                        content=notification_content,
-                        is_read=False,
-                    )
+                create_notification(
+                    db,
+                    user_id=recipient_id,
+                    title=notification_title,
+                    content=notification_content,
                 )
 
         # Single atomic commit for activity log + audit row (+ optional
