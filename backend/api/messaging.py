@@ -47,10 +47,9 @@ Notas operativas:
     CommunicationLog", **no** "entregado al destinatario externo".
 """
 
+import asyncio
 import re
-import time
 import uuid as _uuid
-from collections import defaultdict
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
@@ -60,6 +59,7 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.crm._shared import _get_scoped_persona
+from backend.core.cache import get_redis
 from backend.core.database import get_db
 from backend.core.permissions import (
     ALGORITHM,
@@ -86,10 +86,36 @@ _VALID_ROOM_RE = re.compile(
 # Límite de tamaño por frame de texto enviado por el cliente WS (bytes).
 _WS_MAX_TEXT_BYTES = 64 * 1024
 
-# M-05: Rate limit en memoria por usuario (broadcast notifications).
-_broadcast_rate: dict[str, list[float]] = defaultdict(list)
+# M-05: Rate limit constants for broadcast notifications (Redis-backed).
 _BROADCAST_RATE_LIMIT = 10  # max events por ventana
-_BROADCAST_RATE_WINDOW = 60.0  # segundos
+_BROADCAST_RATE_WINDOW = 60  # segundos
+
+
+async def _check_broadcast_rate_limit(user_id: str) -> None:
+    """Rate-limit broadcast notifications per user via Redis sliding window.
+
+    Uses ``INCR`` + ``EXPIRE`` on key ``rl:broadcast:{user_id}``. If Redis
+    is unavailable the guard degrades to a no-op (fail-open) with a warning
+    log so the platform keeps serving broadcasts even during cache outages.
+    """
+    import logging
+    try:
+        r = get_redis()
+        key = f"rl:broadcast:{user_id}"
+        count = await asyncio.to_thread(r.incr, key)
+        if count == 1:
+            await asyncio.to_thread(r.expire, key, _BROADCAST_RATE_WINDOW)
+        if count > _BROADCAST_RATE_LIMIT:
+            raise HTTPException(
+                status_code=429,
+                detail="Rate limit exceeded for broadcast notifications",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        logging.getLogger(__name__).warning(
+            "Redis rate-limit unavailable for user %s — falling back to allow", user_id
+        )
 
 
 class NotificationPayload(BaseModel):
@@ -221,7 +247,11 @@ def _authorize_requested_rooms(db: Session, current_user: models.User, raw_rooms
 
 
 @router.websocket("/messaging/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: str):
+async def websocket_endpoint(
+    websocket: WebSocket,
+    client_id: str,
+    db: Session = Depends(get_db),
+):
     """WebSocket endpoint para comunicación en tiempo real.
 
     Autenticación: requiere ``token`` JWT en query params. Valida:
@@ -249,36 +279,30 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     except Exception:
         await websocket.close(code=4001, reason="Invalid token")
         return
-    # C-03: Validar permiso messaging:read del módulo.
-    from sqlalchemy.orm import Session as _Session
 
-    from backend.core.database import SessionLocal
+    # C-03: Validar permiso messaging:read del módulo vía Depends(get_db).
+    _user = db.query(models.User).filter(models.User.id == subject).first()
+    if not _user or not _user.is_active:
+        await websocket.close(code=4003, reason="User not found or inactive")
+        return
+    if not check_ws_module_access(db, _user, "messaging", "read"):
+        await websocket.close(code=4003, reason="Insufficient permissions")
+        return
 
-    _db: _Session = SessionLocal()
-    try:
-        _user = _db.query(models.User).filter(models.User.id == subject).first()
-        if not _user or not _user.is_active:
-            await websocket.close(code=4003, reason="User not found or inactive")
-            return
-        if not check_ws_module_access(_db, _user, "messaging", "read"):
-            await websocket.close(code=4003, reason="Insufficient permissions")
-            return
+    rooms_param = websocket.query_params.get("rooms")
+    raw_rooms = rooms_param.split(",") if rooms_param is not None else None
+    # M-04 + BOLA defense: validate names and authorize every private DM
+    # and project room. A connection without an explicit room is rejected:
+    # broadcasting with ``room=None`` would fan out to EVERY client of ALL
+    # instances (mesh_websockets._send_local), a cross-tenant amplifier.
+    if not raw_rooms:
+        await websocket.close(code=4003, reason="No rooms requested")
+        return
+    rooms = _authorize_requested_rooms(db, _user, raw_rooms)
+    if not rooms:
+        await websocket.close(code=4003, reason="No authorized rooms")
+        return
 
-        rooms_param = websocket.query_params.get("rooms")
-        raw_rooms = rooms_param.split(",") if rooms_param is not None else None
-        # M-04 + BOLA defense: validate names and authorize every private DM
-        # and project room. A connection without an explicit room is rejected:
-        # broadcasting with ``room=None`` would fan out to EVERY client of ALL
-        # instances (mesh_websockets._send_local), a cross-tenant amplifier.
-        if not raw_rooms:
-            await websocket.close(code=4003, reason="No rooms requested")
-            return
-        rooms = _authorize_requested_rooms(_db, _user, raw_rooms)
-        if not rooms:
-            await websocket.close(code=4003, reason="No authorized rooms")
-            return
-    finally:
-        _db.close()
     await manager.connect(client_id, websocket, rooms=rooms)
     try:
         while True:
@@ -379,17 +403,9 @@ async def send_notification(
     if room not in authorized:
         raise HTTPException(status_code=404, detail="Room not found")
 
-    # M-05: Rate limit por usuario para broadcast.
+    # M-05: Rate limit por usuario para broadcast (Redis-backed).
     user_id = str(getattr(current_user, "id", ""))
-    now = time.time()
-    window_start = now - _BROADCAST_RATE_WINDOW
-    _broadcast_rate[user_id] = [t for t in _broadcast_rate[user_id] if t > window_start]
-    if len(_broadcast_rate[user_id]) >= _BROADCAST_RATE_LIMIT:
-        raise HTTPException(
-            status_code=429,
-            detail="Rate limit exceeded for broadcast notifications",
-        )
-    _broadcast_rate[user_id].append(now)
+    await _check_broadcast_rate_limit(user_id)
     await manager.broadcast_event({"event": payload.event, "body": payload.body}, room=room)
     return {"status": "queued"}
 

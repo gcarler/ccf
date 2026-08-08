@@ -7,6 +7,7 @@ import ThemeToggle from '@/components/ui/ThemeToggle';
 import { DSTooltip } from '@/design';
 import UniversalCreationDrawer from '@/components/ui/UniversalCreationDrawer';
 import WorkspaceInbox from '@/components/WorkspaceInbox';
+import NotificationBell from '@/components/ui/NotificationBell';
 import type { NavSection } from '@/components/WorkspaceMainSidebar';
 import WorkspaceMainSidebar from '@/components/WorkspaceMainSidebar';
 import WorkspaceMiniSidebar from '@/components/WorkspaceMiniSidebar';
@@ -18,7 +19,7 @@ import clsx from 'clsx';
 import { filterWorkspaceSectionsByAccess } from '@/lib/workspaceAccess';
 import { SITE_NAME } from '@/lib/site-config';
 import { AnimatePresence,motion } from 'framer-motion';
-import { Bell,Bot,ChevronLeft,ChevronRight,LayoutPanelLeft,LogOut,Maximize2,Menu,Minimize2,Settings,User } from 'lucide-react';
+import { Bot,ChevronLeft,ChevronRight,LayoutPanelLeft,LogOut,Maximize2,Menu,Minimize2,Settings,User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import React,{ useCallback,useEffect,useMemo,useRef,useState } from 'react';
 
@@ -363,14 +364,7 @@ function WorkspaceLayoutInner({
                 {isFocusMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </button>
 
-            <button
-                onClick={() => setShowInbox(!showInbox)}
-                className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] relative rounded-md hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
-                aria-label="Notificaciones"
-            >
-                <Bell size={14} />
-                <span className="absolute top-1 right-1 size-1 bg-[hsl(var(--danger))] rounded-full ring-1 ring-white dark:ring-[#141517]" />
-            </button>
+            <NotificationBell onClick={() => setShowInbox(!showInbox)} />
 
             <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
 
