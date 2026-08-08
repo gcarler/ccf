@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, ChevronDown, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 
@@ -25,6 +25,8 @@ type Props = {
   secondaryCta?: { label: string; href: string };
   slides: PublicSlide[];
   home?: boolean;
+  /** Texto de la guía "desliza hacia abajo" (solo variante home). */
+  scrollIndicator?: string;
 };
 
 export default function PublicHeroWithSlides({
@@ -38,6 +40,7 @@ export default function PublicHeroWithSlides({
   secondaryCta,
   slides,
   home = false,
+  scrollIndicator,
 }: Props) {
   const safeSlides = useMemo(() => slides.filter((slide) => slide.src), [slides]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -150,6 +153,15 @@ export default function PublicHeroWithSlides({
             ))}
           </div>
         )}
+          {scrollIndicator && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center">
+              <div className="flex flex-col items-center gap-1.5 text-white/85">
+                {/* Etiqueta solo en sm+ para no chocar con los CTAs en móvil */}
+                <span className="ccf-kicker hidden max-w-[60vw] truncate text-2xs uppercase tracking-[0.35em] sm:inline">{scrollIndicator}</span>
+                <ChevronDown size={16} strokeWidth={2.25} className="motion-safe:animate-bounce" aria-hidden="true" />
+              </div>
+            </div>
+          )}
       </section>
     );
   }
