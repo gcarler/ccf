@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from backend import models
 from backend.crud.crm import resolve_persona_id_for_user
+from backend.services.messaging_outcomes import CommunicationOutcome
 
 # Import the email MODULE (not the function name) so test suites can
 # `monkeypatch.setattr(backend.services.email, "send_email", _stub)`
@@ -133,7 +134,7 @@ def notify_task_assigned(
                     campaign_name="Asignación de tarea",
                     content=notification_content,
                     leader_id=assigned_by_persona_id,
-                    outcome="no_email",
+                    outcome=CommunicationOutcome.NO_EMAIL.value,
                 )
             )
             # No inbox notification when there's no email channel — the
@@ -156,7 +157,7 @@ def notify_task_assigned(
             description=description,
         )
         sent = email_svc.send_email(to=assignee.email, subject=subject, html=html, text=text)
-        outcome = "email_sent" if sent else "email_failed"
+        outcome = CommunicationOutcome.EMAIL_SENT.value if sent else CommunicationOutcome.EMAIL_FAILED.value
         db.add(
             models.CommunicationLog(
                 persona_id=assignee.id,
