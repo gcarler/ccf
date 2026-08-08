@@ -154,9 +154,10 @@ export default function PublicHeroWithSlides({
           </div>
         )}
           {scrollIndicator && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center">
+            /* Oculto en móvil (<md): la MobileNav fija (z-50) ocupa el borde inferior
+               y taparía el indicador. Visible en md+ donde no hay nav y hay espacio. */
+            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 hidden justify-center md:flex">
               <div className="flex flex-col items-center gap-1.5 text-white/85">
-                {/* Etiqueta solo en sm+ para no chocar con los CTAs en móvil */}
                 <span className="ccf-kicker hidden max-w-[60vw] truncate text-2xs uppercase tracking-[0.35em] sm:inline">{scrollIndicator}</span>
                 <ChevronDown size={16} strokeWidth={2.25} className="motion-safe:animate-bounce" aria-hidden="true" />
               </div>

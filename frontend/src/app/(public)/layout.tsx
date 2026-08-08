@@ -10,15 +10,37 @@ import Footer from "../../components/public/Footer";
 import MobileNav from "../../components/public/MobileNav";
 import PublicSeoManager from "../../components/public/cms/PublicSeoManager";
 
+/** Slugs de páginas públicas consumidas por useCmsV2Page. Se incluyen en el
+ *  bootstrap SSR para que servidor y cliente rendericen el mismo árbol
+ *  (evita hydration mismatch y SSR vacío en páginas CMS). */
+const PUBLIC_PAGE_SLUGS = [
+    "home",
+    "about",
+    "locations",
+    "sermons",
+    "courses",
+    "newsletter",
+    "testimonials",
+    "pastors",
+    "blog",
+    "events",
+    "footer",
+] as const;
+
 async function loadPublicBootstrap(): Promise<PublicBootstrapState> {
-    const [theme, mainMenu, mobileMenu, homePage, eventsPage, footerPage] = await Promise.all([
+    const [theme, mainMenu, mobileMenu, ...pages] = await Promise.all([
         serverApiFetch<CmsTheme>(`/cms/v2/public/sites/${SITE_KEY}/theme`).catch(() => null),
         serverApiFetch<CmsPublicMenu>(`/cms/v2/public/sites/${SITE_KEY}/menus/main`).catch(() => null),
         serverApiFetch<CmsPublicMenu>(`/cms/v2/public/sites/${SITE_KEY}/menus/mobile`).catch(() => null),
-        serverApiFetch<CmsPublicPage>(`/cms/v2/public/sites/${SITE_KEY}/pages/home`).catch(() => null),
-        serverApiFetch<CmsPublicPage>(`/cms/v2/public/sites/${SITE_KEY}/pages/events`).catch(() => null),
-        serverApiFetch<CmsPublicPage>(`/cms/v2/public/sites/${SITE_KEY}/pages/footer`).catch(() => null),
+        ...PUBLIC_PAGE_SLUGS.map((slug) =>
+            serverApiFetch<CmsPublicPage>(`/cms/v2/public/sites/${SITE_KEY}/pages/${slug}`).catch(() => null)
+        ),
     ]);
+
+    // Promise.all mantiene el orden: pages[index] corresponde a PUBLIC_PAGE_SLUGS[index]
+    const pagesMap: Record<string, CmsPublicPage | null> = Object.fromEntries(
+        PUBLIC_PAGE_SLUGS.map((slug, index) => [slug, pages[index] ?? null])
+    );
 
     return {
         theme: theme ? { name: theme.name, tokens_json: theme.tokens_json || {} } : null,
@@ -26,12 +48,8 @@ async function loadPublicBootstrap(): Promise<PublicBootstrapState> {
             main: mainMenu,
             mobile: mobileMenu,
         },
-        pages: {
-            home: homePage,
-            events: eventsPage,
-            footer: footerPage,
-        },
-        footerPage,
+        pages: pagesMap,
+        footerPage: pagesMap.footer ?? null,
     };
 }
 
