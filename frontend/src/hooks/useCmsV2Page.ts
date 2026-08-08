@@ -28,7 +28,7 @@
 //    and at runtime they silently fall back to sentinel defaults.
 //    Indexing by `section_key` exposes the raw `props_json` of each
 //    section, matching the call-site access pattern.
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getCmsPublicPage } from "@/lib/cms/v2";
 import { buildCmsPageBlocks } from "@/lib/cms/pageBlocks";
 import { SITE_KEY } from "@/lib/site-config";
@@ -36,7 +36,11 @@ import type { CmsPublicPage } from "@/types/cms-v2";
 import { readBootstrappedPage } from "@/lib/publicBootstrap";
 
 export function useCmsV2Page(slug: string): CmsPublicPage | null {
-  const bootstrappedPage = readBootstrappedPage(slug);
+  // useMemo: readBootstrappedPage() devuelve un objeto NUEVO en cada llamada
+  // ({...page, blocks}); sin memoización, el efecto de abajo dependía de esa
+  // referencia → setPage(bootstrappedPage) → re-render → nuevo objeto → loop
+  // infinito ("Maximum update depth exceeded") cuando el bootstrap está vivo.
+  const bootstrappedPage = useMemo(() => readBootstrappedPage(slug), [slug]);
   const [page, setPage] = useState<CmsPublicPage | null>(bootstrappedPage);
 
   useEffect(() => {
