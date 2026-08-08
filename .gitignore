@@ -60,6 +60,10 @@ frontend/.eslintcache
 frontend/.lighthouseci/
 frontend/.next/
 frontend/.next.backup-*/
+# Directorios de build del deploy seguro (nunca servidos directamente)
+frontend/.next-build/
+frontend/.next-verify/
+frontend/.next-old/
 frontend/coverage/
 frontend/coverage-cms/
 frontend/crm-lh.json

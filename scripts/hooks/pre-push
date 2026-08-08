@@ -26,23 +26,6 @@ case "$MODE" in
         ;;
 esac
 
-restart_via_startccf() {
-    echo "  [deploy] Reiniciando stack con ./stopccf + ./startccf..."
-    cd /root/ccf
-    if ./stopccf > /tmp/ccf-stopccf.log 2>&1 && ./startccf > /tmp/ccf-startccf.log 2>&1; then
-        sleep 3
-        FRONT_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/plataforma/evangelism 2>/dev/null || echo "000")
-        BACK_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/system/health 2>/dev/null || echo "000")
-        echo -e "  ${GREEN}✓ Stack reiniciado — frontend: HTTP $FRONT_HTTP, backend: HTTP $BACK_HTTP${NC}"
-        return 0
-    fi
-
-    echo -e "  ${YELLOW}⚠ No se pudo reiniciar el stack — revisa /tmp/ccf-stopccf.log y /tmp/ccf-startccf.log${NC}"
-    tail -n 20 /tmp/ccf-stopccf.log 2>/dev/null || true
-    tail -n 20 /tmp/ccf-startccf.log 2>/dev/null || true
-    return 1
-}
-
 echo ""
 echo "🔍 Pre-push: validando cambios antes de enviar a producción..."
 echo -e "  ${BLUE}Modo:${NC} $MODE"
@@ -210,10 +193,20 @@ else
                 run_quality_check "$check_id" "Agenda quality" "$VENV/python /root/ccf/scripts/test_agenda_quality.py"
                 ;;
             frontend_build)
-                run_quality_check \
-                    "$check_id" \
-                    "Frontend production build" \
-                    "cd /root/ccf/frontend && npm run build"
+                # verify-build.mjs compila a un directorio desechable (.next-verify)
+                # y lo elimina al terminar: valida el build SIN tocar el .next que
+                # está sirviendo el proceso en producción (el build in-place rompía
+                # el sitio durante el gate). Con deploy solicitado se omite para no
+                # hacer doble build por push (el deploy hace build + smoke y falla
+                # fuerte si algo se rompe).
+                if [ "$DEPLOY_AFTER_VALIDATION" = "1" ]; then
+                    echo -e "      ${YELLOW}⚠ frontend_build omitido — el deploy hará build + smoke (falla fuerte)${NC}"
+                else
+                    run_quality_check \
+                        "$check_id" \
+                        "Frontend production build" \
+                        "cd /root/ccf/frontend && node scripts/verify-build.mjs"
+                fi
                 ;;
             platform_quality)
                 run_quality_check "$check_id" "Platform quality" "$VENV/python /root/ccf/scripts/test_platform_quality.py"
@@ -368,24 +361,18 @@ if [ -n "$PY_FILES" ]; then
     fi
 fi
 
-# Frontend: reiniciar si el BUILD_ID en disco difiere del que sirve PM2
+# Frontend: secuencia segura build → swap → pm2 restart (evita chunks huérfanos).
+# deploy_frontend.sh compila a .next-build (el .next en producción queda intacto
+# durante el build), hace swap atómico al terminar y reinicia PM2 para que el
+# proceso sirva el build nuevo. La comparación antigua de BUILD_ID con un grep
+# del HTML de /login era frágil y podía omitir el restart.
 if [ -n "$FRONTEND_FILES" ]; then
-    DISK_BUILD=$(cat /root/ccf/frontend/.next/BUILD_ID 2>/dev/null || echo "none")
-    # Obtener el buildId que PM2 está sirviendo actualmente
-    SERVING_BUILD=$(curl -s "http://127.0.0.1:3000/login" 2>/dev/null | grep -o '[A-Za-z0-9_-]\{20,\}' | head -1 || echo "unknown")
-
-    if [ "$DISK_BUILD" = "$SERVING_BUILD" ]; then
-        echo -e "  [deploy] Frontend: build en disco == build activo ($DISK_BUILD) — sin reinicio necesario"
+    echo "  [deploy] Frontend: build + restart seguros (scripts/deploy_frontend.sh)..."
+    if bash /root/ccf/scripts/deploy_frontend.sh; then
+        echo -e "  ${GREEN}✓ Frontend desplegado — build nuevo en servicio${NC}"
     else
-        echo "  [deploy] Reiniciando frontend (build en disco: $DISK_BUILD)..."
-        if pm2 restart ccf-frontend-staging > /dev/null 2>&1; then
-            sleep 3
-            FRONT_HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000 2>/dev/null || echo "000")
-            echo -e "  ${GREEN}✓ Frontend reiniciado — HTTP $FRONT_HTTP${NC}"
-        else
-            echo -e "  ${YELLOW}⚠ PM2 no está manejando el frontend; usando ./stopccf + ./startccf${NC}"
-            restart_via_startccf
-        fi
+        echo -e "  ${RED}✗ Deploy del frontend falló — revisa los logs${NC}"
+        exit 1
     fi
 fi
 
