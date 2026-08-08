@@ -76,6 +76,7 @@ class PersonaMinistry(Base):
     recognized_by_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     persona = relationship("Persona", foreign_keys=[persona_id], back_populates="ministerios_kernel")
     recognized_by_persona = relationship("Persona", foreign_keys=[recognized_by_persona_id])

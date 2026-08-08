@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import logging
 from datetime import datetime
@@ -11,6 +13,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
+from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import require_admin, require_module_access
 from backend.core.rate_limit import rate_limiter
@@ -18,6 +21,7 @@ from backend.core.tenant import get_user_sede_id
 from backend.schemas.finance_suite import CreatePreferenceRequest
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 router = APIRouter(prefix="/donations", tags=["donations"])
 
@@ -173,9 +177,58 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
     Configurar en el panel de MercadoPago → Webhooks → URL de notificación.
 
     Cuando un pago es aprobado, registra la donación en la base de datos.
+
+    Seguridad: verifica la firma HMAC del header x-signature si el
+    webhook_secret está configurado. Defense-in-depth: reconsulta el
+    pago via API de MP antes de registrar la donación.
     """
+    # ── Verificación de firma HMAC (MercadoPago x-signature) ──
+    webhook_secret = settings.mercadopago_webhook_secret
+    if webhook_secret:
+        signature_header = request.headers.get("x-signature", "")
+        if not signature_header:
+            logger.warning("Webhook MP rechazado: falta header x-signature")
+            raise HTTPException(status_code=401, detail="Missing signature")
+
+        # Formato: ts=<timestamp>,v1=<hmac>
+        parts = dict(p.split("=", 1) for p in signature_header.split(",") if "=" in p)
+        ts = parts.get("ts", "")
+        v1 = parts.get("v1", "")
+        if not ts or not v1:
+            logger.warning("Webhook MP rechazado: formato de firma inválido")
+            raise HTTPException(status_code=401, detail="Invalid signature format")
+
+        # Leer body raw para validar firma
+        body = await request.body()
+        data_id = ""
+        try:
+            parsed = json.loads(body)
+            data_id = str(parsed.get("data", {}).get("id", ""))
+        except Exception:
+            pass
+
+        # HMAC-SHA256 sobre "<data.id><ts>"
+        manifest = f"{data_id}{ts}"
+        expected = hmac.new(
+            key=webhook_secret.encode(),
+            msg=manifest.encode(),
+            digestmod=hashlib.sha256,
+        ).hexdigest()
+
+        if not hmac.compare_digest(expected, v1):
+            logger.warning("Webhook MP rechazado: firma no coincide")
+            raise HTTPException(status_code=401, detail="Invalid signature")
+
+        logger.info("Webhook MP: firma verificada correctamente")
+    else:
+        logger.warning(
+            "Webhook MP procesado sin verificación de firma "
+            "(MERCADOPAGO_WEBHOOK_SECRET no configurado) — "
+            "configúralo en producción"
+        )
+
     try:
-        data = await request.json()
+        data = json.loads(body) if webhook_secret else await request.json()
     except Exception as exc:
         logger.debug("Failed to parse MercadoPago webhook JSON: %s", exc)
         data = {}

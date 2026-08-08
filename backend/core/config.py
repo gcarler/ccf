@@ -78,6 +78,7 @@ class Settings(BaseSettings):
     # MercadoPago
     mercadopago_access_token: str = Field(default="")
     mercadopago_public_key: str = Field(default="")
+    mercadopago_webhook_secret: str = Field(default="", description="MercadoPago webhook signature secret")
 
     google_redirect_uri: str = Field(default="http://localhost:8000/api/v3/auth/google/callback")
 

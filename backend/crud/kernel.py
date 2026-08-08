@@ -9,6 +9,7 @@ Estado Vital: ACTIVO / INACTIVO
 """
 
 import uuid
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -156,12 +157,13 @@ def remove_persona_ministry(db: Session, persona_id: str, ministry: str) -> bool
         .filter(
             PersonaMinistry.persona_id == uuid.UUID(str(persona_id)),
             PersonaMinistry.ministry == ministry,
+            PersonaMinistry.deleted_at.is_(None),
         )
         .first()
     )
     if not row:
         return False
-    db.delete(row)
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 
