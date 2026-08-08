@@ -321,7 +321,7 @@ describe("cms/v2 — forms (form-builder)", () => {
   it("listCmsFormSubmissions uses default page=1 + page_size=20", async () => {
     mockApi.mockResolvedValueOnce({ items: [], total: 0, page: 1, page_size: 20, total_pages: 0 });
     await listCmsFormSubmissions("faro", "f1");
-    const [, opts] = mockApi.mock.calls[0] as CmsV2Call[];
+    const [, opts] = mockApi.mock.calls[0] as unknown as CmsV2Call;
     expect(opts.query).toEqual({ page: "1", page_size: "20" });
   });
 });
