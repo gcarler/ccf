@@ -30,7 +30,7 @@ export default function AgendaEventDetailPage() {
             setInitialEvent(data);
         } catch {
             toast.error("No se pudo cargar el evento de agenda");
-            router.push("/agenda/events");
+            router.push("/plataforma/agenda/events");
         } finally {
             setLoading(false);
         }
@@ -69,7 +69,7 @@ export default function AgendaEventDetailPage() {
                 token,
             });
             toast.success("Evento de agenda eliminado");
-            router.push("/agenda/events");
+            router.push("/plataforma/agenda/events");
         } catch {
             toast.error("No se pudo eliminar el evento");
         } finally {
@@ -96,7 +96,7 @@ export default function AgendaEventDetailPage() {
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <button
-                                    onClick={() => router.push("/agenda/events")}
+                                    onClick={() => router.push("/plataforma/agenda/events")}
                                     className="mb-3 inline-flex items-center gap-2 text-sm font-bold text-[hsl(var(--primary))]"
                                 >
                                     <ArrowLeft size={16} />

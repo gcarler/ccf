@@ -1,11 +1,13 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { LayoutDashboard, Sparkles } from "lucide-react";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
-import WhiteboardEditor from "@/components/whiteboard/WhiteboardEditor";
 import { useAuth } from "@/context/AuthContext";
+
+const WhiteboardEditor = dynamic(() => import("@/components/whiteboard/WhiteboardEditor"), { ssr: false });
 
 export default function WhiteboardSessionPage() {
     const params = useParams();

@@ -13,6 +13,7 @@ import { useProjectInbox } from "@/hooks/useProjectInbox";
 import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
 import type { WsEvent } from "@/types/directMessages";
 import type { ProjectTaskRecord } from "@/types/projects";
+import { formatDate } from "@/lib/format";
 
 type ContextTab = "chat" | "activity" | "details" | "inbox";
 
@@ -173,7 +174,7 @@ export default function ProjectContextPanel({ className, defaultTab = "chat", on
             <section className="mt-5 space-y-3">
               <DetailRow label="Estado" value={formatStatus(project?.status)} />
               <DetailRow label="Responsable" value={project?.owner_id ? "Asignado" : "Sin asignar"} />
-              <DetailRow label="Creado" value={formatDate(project?.created_at)} />
+              <DetailRow label="Creado" value={formatDate(project?.created_at, { fallback: "Sin fecha" })} />
             </section>
 
             {project?.description ? (
@@ -328,11 +329,4 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 function formatStatus(status?: string | null) {
   if (!status) return "Sin estado";
   return status.replaceAll("_", " ").replace(/^./, (value) => value.toUpperCase());
-}
-
-function formatDate(date?: string | null) {
-  if (!date) return "Sin fecha";
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return "Sin fecha";
-  return new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", year: "numeric" }).format(parsed);
 }

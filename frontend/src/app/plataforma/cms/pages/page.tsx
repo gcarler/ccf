@@ -27,9 +27,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   archived:  { label: "Archivado",   color: "bg-[hsl(var(--danger-muted))] text-danger-text dark:bg-[hsl(var(--danger))]/10 dark:text-[hsl(var(--danger))]" },
 };
 
-function slugify(value: string) {
-  return value.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9\-/]/g, "").replace(/-+/g, "-");
-}
+import { slugify } from "@/lib/format";
 
 export default function CmsPagesManagement() {
   const router = useRouter();

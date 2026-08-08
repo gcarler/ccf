@@ -239,6 +239,9 @@ export default function WhiteboardEditor({
     const [showShapePicker, setShowShapePicker] = useState(false);
     const snapEnabledRef = useRef(true);
     const smartGuidesRef = useRef<Guide[]>([]);
+    // Number of objects the user has inserted; used to cascade new objects so
+    // they don't stack exactly on top of each other at the viewport center.
+    const insertCounterRef = useRef(0);
 
     const [title, setTitle] = useState(initialTitle);
     const [tool, setTool] = useState<WhiteboardTool>("select");
@@ -385,6 +388,29 @@ export default function WhiteboardEditor({
             window.removeEventListener("click", handler);
         };
     }, [showWidgetsMenu]);
+
+    // Keep the toolbar popovers (Formas / Post-it / Widgets / Grilla) mutually
+    // exclusive so they never overlap each other over the canvas.
+    const closeAllMenus = () => {
+        setShowShapePicker(false);
+        setShowStickyMenu(false);
+        setShowWidgetsMenu(false);
+        setShowGridMenu(false);
+    };
+
+    const toggleMenu = (menu: "shape" | "sticky" | "widgets" | "grid") => {
+        const wasOpen =
+            (menu === "shape" && showShapePicker) ||
+            (menu === "sticky" && showStickyMenu) ||
+            (menu === "widgets" && showWidgetsMenu) ||
+            (menu === "grid" && showGridMenu);
+        closeAllMenus();
+        if (wasOpen) return;
+        if (menu === "shape") setShowShapePicker(true);
+        else if (menu === "sticky") setShowStickyMenu(true);
+        else if (menu === "widgets") setShowWidgetsMenu(true);
+        else setShowGridMenu(true);
+    };
 
     const syncLayers = useCallback(() => {
         const canvas = fabricCanvas.current;
@@ -1068,7 +1094,7 @@ export default function WhiteboardEditor({
     };
 
     /** Return the center of the currently visible canvas viewport. */
-    const getViewportCenter = () => {
+    const getViewportCenter = (): { cx: number; cy: number } => {
         const canvas = fabricCanvas.current;
         if (!canvas) return { cx: 200, cy: 200 };
         const vpt = canvas.viewportTransform || [1, 0, 0, 1, 0, 0];
@@ -1078,10 +1104,27 @@ export default function WhiteboardEditor({
         return { cx, cy };
     };
 
+    /**
+     * Return a cascade position near the viewport center so consecutive
+     * insertions don't overlap each other exactly. Each new object is placed on
+     * a small ring around the center (8 slots), growing outward as more objects
+     * are added.
+     */
+    const getInsertPosition = (): { cx: number; cy: number } => {
+        const { cx, cy } = getViewportCenter();
+        const i = insertCounterRef.current++;
+        const step = 28;
+        const slot = i % 8;
+        const ring = Math.floor(i / 8);
+        const angle = (slot * Math.PI) / 4;
+        const r = step * (ring + 1);
+        return { cx: cx + Math.cos(angle) * r, cy: cy + Math.sin(angle) * r };
+    };
+
     const addRect = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const rect = new fabric.Rect({
             left: cx - 90,
             top: cy - 55,
@@ -1103,7 +1146,7 @@ export default function WhiteboardEditor({
     const addCircle = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const circle = new fabric.Circle({
             left: cx - 54,
             top: cy - 54,
@@ -1122,7 +1165,7 @@ export default function WhiteboardEditor({
     const addText = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const text = new fabric.IText("Nuevo texto", {
             left: cx - 60,
             top: cy - 14,
@@ -1142,7 +1185,7 @@ export default function WhiteboardEditor({
     const addDiamondShape = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const group = createDiamond({ left: cx - 55, top: cy - 55 });
         canvas.add(group);
         canvas.setActiveObject(group);
@@ -1153,7 +1196,7 @@ export default function WhiteboardEditor({
     const addPillShape = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const group = createPill({ left: cx - 75, top: cy - 26 });
         canvas.add(group);
         canvas.setActiveObject(group);
@@ -1164,7 +1207,7 @@ export default function WhiteboardEditor({
     const addDataShape = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const group = createData({ left: cx - 85, top: cy - 34 });
         canvas.add(group);
         canvas.setActiveObject(group);
@@ -1175,7 +1218,7 @@ export default function WhiteboardEditor({
     const addStickyNote = (color?: string) => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         // Use the chosen preset (default: currently selected sticky color)
         const fill = color ?? stickyColor;
         const preset = STICKY_PRESETS.find((p) => p.fill === fill) ?? STICKY_PRESETS[0];
@@ -1219,7 +1262,7 @@ export default function WhiteboardEditor({
     const addSubprocessShape = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const group = createSubprocess({ left: cx - 90, top: cy - 40 });
         canvas.add(group);
         canvas.setActiveObject(group);
@@ -1249,7 +1292,7 @@ export default function WhiteboardEditor({
             width = bounds.maxX - bounds.minX + pad * 2 - headerH;
             height = Math.max(bounds.maxY - bounds.minY + pad * 2, 180);
         } else {
-            const { cx, cy } = getViewportCenter();
+            const { cx, cy } = getInsertPosition();
             left = cx - 220;
             top = cy - 130;
             width = 440;
@@ -1314,7 +1357,7 @@ export default function WhiteboardEditor({
     const addDatabaseShape = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const group = createDatabase({ left: cx - 55, top: cy - 40 });
         canvas.add(group);
         canvas.setActiveObject(group);
@@ -1325,7 +1368,7 @@ export default function WhiteboardEditor({
     const addDocumentShape = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const group = createDocument({ left: cx - 80, top: cy - 40 });
         canvas.add(group);
         canvas.setActiveObject(group);
@@ -1336,7 +1379,7 @@ export default function WhiteboardEditor({
     const addHexagonShape = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const group = createHexagon({ left: cx - 80, top: cy - 40 });
         canvas.add(group);
         canvas.setActiveObject(group);
@@ -1347,7 +1390,7 @@ export default function WhiteboardEditor({
     const addNoteShape = () => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const group = createNote({ left: cx - 80, top: cy - 50 });
         canvas.add(group);
         canvas.setActiveObject(group);
@@ -1358,7 +1401,7 @@ export default function WhiteboardEditor({
     const addWidget = (kind: "vote" | "timer" | "reaction") => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         let group: fabric.FabricObject;
         if (kind === "vote") group = createVoteWidget({ left: cx - 75, top: cy - 28 });
         else if (kind === "timer") group = createTimerWidget({ left: cx - 75, top: cy - 31 });
@@ -1377,7 +1420,7 @@ export default function WhiteboardEditor({
     const addSticker = (emoji: string) => {
         const canvas = fabricCanvas.current;
         if (!canvas) return;
-        const { cx, cy } = getViewportCenter();
+        const { cx, cy } = getInsertPosition();
         const sticker = new fabric.Text(emoji, {
             left: cx - 30,
             top: cy - 30,
@@ -1766,11 +1809,6 @@ export default function WhiteboardEditor({
                 </div>
             )}
 
-            <div className="pointer-events-none absolute top-4 right-4 z-30 flex items-center gap-1.5 rounded-full border border-[hsl(var(--border))] bg-white/90 px-3 py-1 text-[11px] font-semibold text-[hsl(var(--text-secondary))] shadow-sm backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
-                <span className={clsx("h-2 w-2 rounded-full", connected ? "bg-emerald-500" : "bg-amber-400 animate-pulse")} />
-                {connected ? "Conectado" : "Reconectando…"}
-            </div>
-
             {duplicateTabOpen && (
                 <div
                     data-testid="whiteboard-duplicate-tab"
@@ -1876,8 +1914,14 @@ export default function WhiteboardEditor({
                     />
                 </div>
 
+                {/* ── Connection status (below export bar, avoids overlap) ── */}
+                <div className="pointer-events-none absolute top-16 right-4 z-30 flex items-center gap-1.5 rounded-full border border-[hsl(var(--border))] bg-white/90 px-3 py-1 text-[11px] font-semibold text-[hsl(var(--text-secondary))] shadow-sm backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
+                    <span className={clsx("h-2 w-2 rounded-full", connected ? "bg-emerald-500" : "bg-amber-400 animate-pulse")} />
+                    {connected ? "Conectado" : "Reconectando…"}
+                </div>
+
                 {/* ── Left toolbar ── */}
-                <div className="absolute left-6 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-2 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
+                <div className="absolute left-6 top-1/2 z-10 flex max-h-[calc(100%-2rem)] -translate-y-1/2 flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-[hsl(var(--border))] bg-white/90 p-2 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
                     <ToolbarButton icon={MousePointer2} active={tool === "select"} onClick={() => activateTool("select")} label="Seleccionar (V)" />
                     <ToolbarButton icon={Pencil} active={tool === "draw"} onClick={() => activateTool("draw")} label="Dibujo libre (P)" />
                     <ToolbarButton icon={ArrowUpRight} active={tool === "connector"} onClick={() => activateTool("connector")} label="Conector (A)" />
@@ -1888,12 +1932,12 @@ export default function WhiteboardEditor({
                         <ToolbarButton
                             icon={LayoutGrid}
                             active={showShapePicker}
-                            onClick={() => setShowShapePicker(p => !p)}
+                            onClick={() => toggleMenu("shape")}
                             label="Formas"
                             data-testid="whiteboard-open-shapes"
                         />
                         {showShapePicker && (
-                            <div className="absolute left-full ml-3 top-0 z-30 grid grid-cols-3 gap-1.5 rounded-xl border border-[hsl(var(--border))] bg-white/95 p-3 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95" style={{ minWidth: '220px' }}>
+                            <div className="absolute left-full ml-3 top-0 z-30 grid max-h-[60vh] grid-cols-3 gap-1.5 overflow-y-auto overscroll-contain rounded-xl border border-[hsl(var(--border))] bg-white/95 p-3 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95" style={{ minWidth: '220px' }}>
                                 <ShapePickerItem icon={Square} label="Rect" shortcut="R" onClick={() => { addRect(); setShowShapePicker(false); }} data-testid="whiteboard-add-rect" />
                                 <ShapePickerItem icon={Circle} label="Círculo" shortcut="C" onClick={() => { addCircle(); setShowShapePicker(false); }} data-testid="whiteboard-add-circle" />
                                 <ShapePickerItem icon={Diamond} label="Decisión" shortcut="D" onClick={() => { addDiamondShape(); setShowShapePicker(false); }} />
@@ -1908,7 +1952,7 @@ export default function WhiteboardEditor({
                     </div>
                     <ToolbarButton icon={Type} active={false} onClick={addText} label="Texto (T)" data-testid="whiteboard-add-text" />
                     <div className="relative">
-                        <ToolbarButton icon={StickyNote} active={showStickyMenu} onClick={() => setShowStickyMenu((prev) => !prev)} label="Post-it (N)" data-testid="whiteboard-add-sticky" />
+                        <ToolbarButton icon={StickyNote} active={showStickyMenu} onClick={() => toggleMenu("sticky")} label="Post-it (N)" data-testid="whiteboard-add-sticky" />
                         {showStickyMenu && (
                             <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))] min-w-[120px]">
                                 <p className="px-2 pb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Color</p>
@@ -1937,7 +1981,7 @@ export default function WhiteboardEditor({
                     </div>
                     <ToolbarButton icon={LayoutGrid} active={false} onClick={addFrame} label="Marco (agrupa selección)" data-testid="whiteboard-add-frame" />
                     <div className="relative">
-                        <ToolbarButton icon={Smile} active={showWidgetsMenu} onClick={() => setShowWidgetsMenu((prev) => !prev)} label="Widgets de taller" data-testid="whiteboard-widgets" />
+                        <ToolbarButton icon={Smile} active={showWidgetsMenu} onClick={() => toggleMenu("widgets")} label="Widgets de taller" data-testid="whiteboard-widgets" />
                         {showWidgetsMenu && (
                             <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))] min-w-[180px]">
                                 <p className="px-2 pb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Widgets</p>
@@ -2007,7 +2051,7 @@ export default function WhiteboardEditor({
                         <ToolbarButton
                             icon={gridStyle === "none" ? EyeOff : Grid3x3}
                             active={showGridMenu}
-                            onClick={() => setShowGridMenu((prev) => !prev)}
+                            onClick={() => toggleMenu("grid")}
                             label={`Grilla: ${GRID_OPTIONS.find((g) => g.value === gridStyle)?.label}`}
                         />
                         {showGridMenu && (
@@ -2134,7 +2178,7 @@ export default function WhiteboardEditor({
                 {/* ── Canvas area ── */}
                 <main
                     className="flex-1 overflow-auto p-4 pl-24"
-                    onClick={() => setShowShapePicker(false)}
+                    onClick={closeAllMenus}
                     style={{
                         backgroundColor: "hsl(var(--bg-primary))",
                     }}
@@ -2577,7 +2621,7 @@ function Minimap({
     };
 
     return (
-        <div className="pointer-events-auto absolute left-4 bottom-4 z-30 overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95"
+        <div className="pointer-events-auto absolute left-4 bottom-4 z-30 hidden overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95 lg:block"
             onMouseEnter={() => setHovering(true)}
             onMouseLeave={() => setHovering(false)}
             onClick={handleClick}

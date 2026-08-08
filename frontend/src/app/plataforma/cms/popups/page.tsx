@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { SITE_KEY } from "@/lib/site-config";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,7 +21,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
-import RichEditor from "@/components/cms/RichEditor";
 import clsx from "clsx";
 import {
   createCmsPopup,
@@ -31,6 +31,8 @@ import {
 } from "@/lib/cms/v2";
 import { CmsPopup, CmsSite, PopupTriggerType } from "@/types/cms-v2";
 import { canEditCms } from "@/lib/cms/permissions";
+
+const RichEditor = dynamic(() => import("@/components/cms/RichEditor"), { ssr: false });
 
 const TRIGGER_TYPES: { id: PopupTriggerType; label: string; icon: React.ComponentType<{ className?: string }>; description: string }[] = [
   { id: "time_delay", label: "Tiempo", icon: Clock, description: "Se dispara tras X segundos" },

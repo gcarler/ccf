@@ -49,7 +49,7 @@ export default function TestimoniesWall() {
                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium mt-1">Lo que Dios ha hecho, lo volverá a hacer.</p>
                 </div>
 
-                <Link href="/community/testimonies/publish" className="h-8 px-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-primary/30 hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95 flex items-center gap-3">
+                <Link href="/plataforma/community/testimonies/publish" className="h-8 px-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-primary/30 hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95 flex items-center gap-3">
                     <Plus size={20} strokeWidth={2.5} />
                     Publicar Milagro
                 </Link>

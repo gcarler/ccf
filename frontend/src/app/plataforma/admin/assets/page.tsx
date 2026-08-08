@@ -10,6 +10,7 @@ import { apiFetch } from "@/lib/http";
 import AdminHero from "@/components/admin/AdminHero";
 import AdminShell from "@/components/admin/AdminShell";
 import type { StorageStatProps } from '@/types/admin';
+import { formatBytes } from "@/lib/format";
 
 type Asset = {
     id: number;
@@ -218,9 +219,3 @@ function normalizeAsset(asset: Record<string, unknown>): Asset {
     };
 }
 
-function formatBytes(bytes: number) {
-    if (!bytes) return "0 B";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}

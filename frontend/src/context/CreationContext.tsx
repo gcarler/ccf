@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 interface CreationContextType {
     isModalOpen: boolean;
@@ -17,19 +17,23 @@ export function CreationProvider({ children }: { children: React.ReactNode }) {
     const [defaultType, setDefaultType] = useState<'task' | 'event' | 'project' | 'doc' | 'reminder' | 'whiteboard' | 'panel'>('task');
     const [initialData, setInitialData] = useState<any>(undefined);
 
-    const openModal = (type: 'task' | 'event' | 'project' | 'doc' | 'reminder' | 'whiteboard' | 'panel' = 'task', data?: any) => {
+    const openModal = useCallback((type: 'task' | 'event' | 'project' | 'doc' | 'reminder' | 'whiteboard' | 'panel' = 'task', data?: any) => {
         setDefaultType(type);
         setInitialData(data);
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const closeModal = () => {
+    const closeModal = useCallback(() => {
         setIsModalOpen(false);
         setInitialData(undefined);
-    };
+    }, []);
+
+    const value = useMemo(() => ({
+        isModalOpen, openModal, closeModal, defaultType, initialData
+    }), [isModalOpen, openModal, closeModal, defaultType, initialData]);
 
     return (
-        <CreationContext.Provider value={{ isModalOpen, openModal, closeModal, defaultType, initialData }}>
+        <CreationContext.Provider value={value}>
             {children}
         </CreationContext.Provider>
     );

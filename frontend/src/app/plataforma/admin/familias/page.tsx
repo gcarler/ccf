@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
 import { apiFetch } from '@/lib/http';
+import { formatDate } from '@/lib/format';
 import {
     LayoutDashboard, Home, Plus, Pencil, Trash2, X, Save, Loader2,
     Phone, MapPin, Calendar, Users,
@@ -26,11 +27,6 @@ interface Family {
 }
 
 const EMPTY_FORM = { name: '', address: '', phone: '', first_contact_date: '' };
-
-function formatDate(date?: string) {
-    if (!date) return '—';
-    return new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-}
 
 export default function FamiliasPage() {
     const { token } = useAuth();
@@ -245,7 +241,7 @@ export default function FamiliasPage() {
                                                 ) : <span className="text-2xs text-[hsl(var(--text-secondary))] dark:text-white/20 font-bold">—</span>}
                                             </td>
                                             <td className="py-3 px-4">
-                                                <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{formatDate(fam.first_contact_date)}</span>
+                                                <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{formatDate(fam.first_contact_date, { locale: 'es-ES', day: 'numeric' })}</span>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <span className="text-xs font-semibold text-[hsl(var(--text-secondary))]">{fam.personas_count ?? 0}</span>
@@ -299,7 +295,7 @@ export default function FamiliasPage() {
                                     )}
                                     {fam.first_contact_date && (
                                         <div className="flex items-center gap-2 text-xs text-[hsl(var(--text-secondary))]">
-                                            <Calendar size={12} /> {formatDate(fam.first_contact_date)}
+                                            <Calendar size={12} /> {formatDate(fam.first_contact_date, { locale: 'es-ES', day: 'numeric' })}
                                         </div>
                                     )}
                                 </div>

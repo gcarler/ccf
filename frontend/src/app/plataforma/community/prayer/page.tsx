@@ -112,7 +112,7 @@ export default function PrayerWall() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 >
-                    <Link href="/community/prayer/request" className="h-8 px-3 bg-primary text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-2xl shadow-primary/40 hover:shadow-primary/50 transition-all flex items-center gap-4 group">
+                    <Link href="/plataforma/community/prayer/request" className="h-8 px-3 bg-primary text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-2xl shadow-primary/40 hover:shadow-primary/50 transition-all flex items-center gap-4 group">
                         <PlusCircle size={24} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-500" />
                         Levantar Petición
                     </Link>

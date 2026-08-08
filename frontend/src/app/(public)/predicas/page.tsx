@@ -9,6 +9,7 @@ import {
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 
 import { apiFetch } from "@/lib/http";
+import { formatDate } from "@/lib/format";
 import { safeJsonParse } from "@/lib/safeJson";
 
 /* ── Tipos ── */
@@ -31,10 +32,6 @@ interface YTResponse {
 }
 
 /* ── Helpers ── */
-function formatDate(iso: string) {
-    if (!iso) return "";
-    return new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
-}
 function timeAgo(iso: string) {
     if (!iso) return "";
     const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
@@ -171,7 +168,7 @@ function VideoCard({
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 text-xs text-site-outline font-medium">
                         <span className="flex items-center gap-1">
-                            <Calendar size={10} /> {formatDate(video.published_at)}
+                            <Calendar size={10} /> {formatDate(video.published_at, { month: "long", day: "numeric", fallback: "" })}
                         </span>
                         {video.view_count > 0 && (
                             <span className="flex items-center gap-1">
@@ -244,7 +241,7 @@ function PlayerModal({
                         <h2 className="font-bold text-white text-base md:text-xl leading-snug line-clamp-2">
                             {video.title}
                         </h2>
-                        <p className="text-white/40 text-xs mt-0.5">{formatDate(video.published_at)}</p>
+                        <p className="text-white/40 text-xs mt-0.5">{formatDate(video.published_at, { month: "long", day: "numeric", fallback: "" })}</p>
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">

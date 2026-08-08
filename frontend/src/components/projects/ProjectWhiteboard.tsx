@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import { createPortal } from "react-dom";
 import {
     Cloud,
@@ -10,7 +11,8 @@ import {
     Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import WhiteboardEditor from "@/components/whiteboard/WhiteboardEditor";
+
+const WhiteboardEditor = dynamic(() => import("@/components/whiteboard/WhiteboardEditor"), { ssr: false });
 
 interface Props {
     project_id: string;

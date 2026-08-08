@@ -9,6 +9,7 @@ import OptimizedImage from "@/components/ui/OptimizedImage";
 import { getCmsPublicPost } from "@/lib/cms/v2";
 import { CmsPublicPost } from "@/types/cms-v2";
 import { SITE_KEY } from "@/lib/site-config";
+import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
 
 export default function BlogPostPage() {
   const params = useParams();
@@ -134,7 +135,7 @@ export default function BlogPostPage() {
             <div
               className="prose prose-lg max-w-none dark:prose-invert"
               style={{ color: "var(--site-on-surface)" }}
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(post.content) }}
             />
           )}
 

@@ -16,6 +16,7 @@ import AdminHero from "@/components/admin/AdminHero";
 import SidePanel from "@/components/ui/SidePanel";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/lib/http";
+import { formatDate } from "@/lib/format";
 import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
 import {
   createCmsSectionType,
@@ -34,17 +35,6 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = { name: "", description: "", is_active: true };
-
-function formatDate(value?: string | null) {
-  if (!value) return "Sin fecha";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Sin fecha";
-  return date.toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function statusBadge(isActive: boolean) {
   return isActive
@@ -409,7 +399,7 @@ export default function SectionTypesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))] align-top">
-                      {formatDate(row.created_at)}
+                      {formatDate(row.created_at, { fallback: "Sin fecha" })}
                     </td>
                     <td className="px-4 py-3 align-top">
                       <div className="flex items-center justify-end gap-1">

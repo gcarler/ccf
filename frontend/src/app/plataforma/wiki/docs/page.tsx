@@ -13,7 +13,7 @@ export default function WikiDocsIndexPage() {
 
     // Redirect to wiki home on mount
     React.useEffect(() => {
-        router.replace('/wiki');
+        router.replace('/plataforma/wiki');
     }, [router]);
 
     return (

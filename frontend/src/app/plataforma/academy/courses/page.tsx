@@ -9,7 +9,7 @@ export default function AcademyCoursesPage() {
     const router = useRouter();
 
     useEffect(() => {
-        router.replace('/academy');
+        router.replace('/plataforma/academy');
     }, [router]);
 
     return (

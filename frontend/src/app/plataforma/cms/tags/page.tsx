@@ -26,14 +26,7 @@ import {
 import { CmsSite, CmsTag } from "@/types/cms-v2";
 import { canEditCms } from "@/lib/cms/permissions";
 
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9\-_]/g, "")
-    .replace(/-+/g, "-");
-}
+import { slugify } from "@/lib/format";
 
 export default function CmsTagsManagement() {
   const { token, user } = useAuth();

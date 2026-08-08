@@ -74,7 +74,7 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
                 header: 'Creado',
                 cell: ({ getValue }) => (
                     <span className="text-sm text-[hsl(var(--text-secondary))]">
-                        {formatDate(getValue() as string)}
+                        {formatDate(getValue() as string, { locale: 'es-PE' })}
                     </span>
                 ),
             },

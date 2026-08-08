@@ -2,7 +2,7 @@
 
 import { apiFetch } from '@/lib/http';
 import { useRouter } from 'next/navigation';
-import React,{ createContext,useCallback,useContext,useEffect,useState } from 'react';
+import React,{ createContext,useCallback,useContext,useEffect,useMemo,useState } from 'react';
 
 export interface AuthContextType {
     user: any;
@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const refresh = useCallback(async () => { await fetchUser(); }, [fetchUser]);
 
-    const hasModuleAccess = (module: string, minLevel = 'read') => {
+    const hasModuleAccess = useCallback((module: string, minLevel = 'read') => {
         if (!user?.permissions) return false;
         const role = String(user.role || '').toLowerCase();
         if (role === 'admin' || role === 'administrador') return true;
@@ -150,17 +150,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             user.permissions[`${module}:manage`] === 'allow'
         )) return true;
         return false;
-    };
+    }, [user]);
 
-    const hasPermission = (perm: string) => {
+    const hasPermission = useCallback((perm: string) => {
         if (!user?.permissions) return false;
         if (user.role === 'admin' || user.role === 'administrador') return true;
         const val = user.permissions[perm];
         return val === 'allow';
-    };
+    }, [user]);
+
+    const value = useMemo(() => ({
+        user, token, login, logout, refresh, isAuthenticated: !!token, loading, hasModuleAccess, hasPermission
+    }), [user, token, login, logout, refresh, loading, hasModuleAccess, hasPermission]);
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, refresh, isAuthenticated: !!token, loading, hasModuleAccess, hasPermission }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
