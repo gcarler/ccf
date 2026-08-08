@@ -23,6 +23,7 @@ _pool_kwargs = {}
 if not settings.database_url.startswith("sqlite"):
     _pool_kwargs["pool_size"] = 10
     _pool_kwargs["max_overflow"] = 20
+    _pool_kwargs["pool_recycle"] = 3600  # recycle idle conns before PG kills them
 
 engine = create_engine(
     settings.database_url,

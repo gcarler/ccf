@@ -11,9 +11,12 @@ Ahora soporta:
 from __future__ import annotations
 
 import json
+import logging
 import os
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+
+logger = logging.getLogger(__name__)
 
 # Optional dependency
 try:  # pragma: no cover
@@ -253,6 +256,6 @@ def bootstrap_diagnostic_task(
                 ),
             )
         else:
-            print(f"Skipping task: content not relevant ({len(content)} chars)")
+            logger.debug("Skipping task: content not relevant (%d chars)", len(content))
     finally:
         db.close()

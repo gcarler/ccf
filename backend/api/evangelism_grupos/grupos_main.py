@@ -7,7 +7,7 @@ from datetime import timezone as _timezone
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
@@ -125,6 +125,8 @@ def _validate_strategy_group_roles(db: Session, strategy_id: UUID | None, body: 
 @static_router.get("/groups", response_model=List[dict])
 def list_grupos(
     evangelism_strategy_id: Optional[UUID] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=500),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
@@ -142,7 +144,7 @@ def list_grupos(
     )
     if evangelism_strategy_id:
         q = q.filter(GrupoEvangelismo.estrategia_id == evangelism_strategy_id)
-    groups = q.order_by(GrupoEvangelismo.nombre.asc()).all()
+    groups = q.order_by(GrupoEvangelismo.nombre.asc()).offset(skip).limit(limit).all()
     return [_serialize_grupo(g) for g in groups]
 
 
@@ -864,7 +866,7 @@ def get_groups_analytics(
 # ``macro`` y ``despliegue``). Mantener el path original ``/macro/despliegue``
 # para compatibilidad con consumidores existentes.
 @dynamic_router.get("/macro-despliegue", response_model=dict)
-@dynamic_router.get("/macro/despliegue", response_model=dict)
+@dynamic_router.get("/macro/despliegue", response_model=dict, operation_id="get_macro_despliegue_alias")
 def get_macro_despliegue(
     season_id: Optional[UUID] = None,
     db: Session = Depends(get_db),
