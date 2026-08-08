@@ -261,7 +261,11 @@ def _authorize_requested_rooms(db: Session, current_user: models.User, raw_rooms
 
 
 @router.websocket("/messaging/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: str):
+async def websocket_endpoint(
+    websocket: WebSocket,
+    client_id: str,
+    db: Session = Depends(get_db),
+):
     """WebSocket endpoint para comunicación en tiempo real.
 
     Autenticación: requiere ``token`` JWT en query params. Valida:
@@ -289,36 +293,30 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     except Exception:
         await websocket.close(code=4001, reason="Invalid token")
         return
-    # C-03: Validar permiso messaging:read del módulo.
-    from sqlalchemy.orm import Session as _Session
 
-    from backend.core.database import SessionLocal
+    # C-03: Validar permiso messaging:read del módulo vía Depends(get_db).
+    _user = db.query(models.User).filter(models.User.id == subject).first()
+    if not _user or not _user.is_active:
+        await websocket.close(code=4003, reason="User not found or inactive")
+        return
+    if not check_ws_module_access(db, _user, "messaging", "read"):
+        await websocket.close(code=4003, reason="Insufficient permissions")
+        return
 
-    _db: _Session = SessionLocal()
-    try:
-        _user = _db.query(models.User).filter(models.User.id == subject).first()
-        if not _user or not _user.is_active:
-            await websocket.close(code=4003, reason="User not found or inactive")
-            return
-        if not check_ws_module_access(_db, _user, "messaging", "read"):
-            await websocket.close(code=4003, reason="Insufficient permissions")
-            return
+    rooms_param = websocket.query_params.get("rooms")
+    raw_rooms = rooms_param.split(",") if rooms_param is not None else None
+    # M-04 + BOLA defense: validate names and authorize every private DM
+    # and project room. A connection without an explicit room is rejected:
+    # broadcasting with ``room=None`` would fan out to EVERY client of ALL
+    # instances (mesh_websockets._send_local), a cross-tenant amplifier.
+    if not raw_rooms:
+        await websocket.close(code=4003, reason="No rooms requested")
+        return
+    rooms = _authorize_requested_rooms(db, _user, raw_rooms)
+    if not rooms:
+        await websocket.close(code=4003, reason="No authorized rooms")
+        return
 
-        rooms_param = websocket.query_params.get("rooms")
-        raw_rooms = rooms_param.split(",") if rooms_param is not None else None
-        # M-04 + BOLA defense: validate names and authorize every private DM
-        # and project room. A connection without an explicit room is rejected:
-        # broadcasting with ``room=None`` would fan out to EVERY client of ALL
-        # instances (mesh_websockets._send_local), a cross-tenant amplifier.
-        if not raw_rooms:
-            await websocket.close(code=4003, reason="No rooms requested")
-            return
-        rooms = _authorize_requested_rooms(_db, _user, raw_rooms)
-        if not rooms:
-            await websocket.close(code=4003, reason="No authorized rooms")
-            return
-    finally:
-        _db.close()
     await manager.connect(client_id, websocket, rooms=rooms)
     try:
         while True:
