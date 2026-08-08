@@ -200,6 +200,14 @@ export function evaluateFormula(
     processed = processed.replace(/TODAY\(\)/g, () => `"${new Date().toISOString().split("T")[0]}"`);
     processed = processed.replace(/NOW\(\)/g, () => `"${new Date().toISOString()}"`);
 
+    // If the result is a quoted string (e.g. from CONCAT/UPPER/IF/TODAY/NOW),
+    // return the unquoted value as-is — do NOT treat as a math expression.
+    // This prevents "YYYY-MM-DD" (from TODAY()) from being evaluated as
+    // 2024 - 1 - 1 = 2022 by the safe math parser.
+    if (processed.startsWith('"') && processed.endsWith('"') && processed.length >= 2) {
+      return processed.slice(1, -1);
+    }
+
     // Clean up quotes for math evaluation
     const clean = processed.replace(/"/g, "");
 

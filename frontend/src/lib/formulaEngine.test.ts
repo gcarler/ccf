@@ -79,17 +79,13 @@ describe("formulaEngine — funciones de texto", () => {
 });
 
 describe("formulaEngine — funciones de fecha", () => {
-  it("TODAY aplica los reemplazos por ISO date (YYYY-MM-DD)", () => {
+  it("TODAY devuelve ISO date (YYYY-MM-DD)", () => {
     const out = evaluateFormula("=TODAY()", {});
-    // Observación: el motor sanitiza comillas y luego parsea
-    // "YYYY-MM-DD" como expresión matemática (p.ej. 2024-01-01 → 2022).
-    // Documentamos el comportamiento aquí (deuda, no ideal).
-    expect(out).toBeDefined();
-    expect([typeof out]).toContain(typeof out as "string" | "number");
+    expect(out).toBe(new Date().toISOString().split("T")[0]);
   });
-  it("NOW aplica ISO datetime completo (sin aserción estricta)", () => {
-    const out = evaluateFormula("=NOW()", {});
-    expect(out).toBeDefined();
+  it("NOW devuelve ISO datetime completo", () => {
+    const out = evaluateFormula("=NOW()", {}) as string;
+    expect(out).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
   });
 });
 
