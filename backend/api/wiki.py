@@ -22,15 +22,9 @@ from backend.crud import wiki as crud_wiki
 from backend.crud.crm import get_user_sede_id
 from backend.schemas.wiki import WikiPageCreate, WikiPageRead, WikiPageUpdate, WikiPageVersionRead
 
+from backend.crud._utils import _slugify
+
 router = APIRouter(prefix="/wiki", tags=["wiki"])
-
-
-def _slugify(value: str) -> str:
-    """Duplicate of api.cms_v2._slugify — TODO: extract to shared util."""
-    value = value.strip().lower()
-    value = re.sub(r"\s+", "-", value)
-    value = re.sub(r"[^a-z0-9_-]", "", value)
-    return value.strip("-")
 
 
 def _normalize_page_key(value: str) -> str:

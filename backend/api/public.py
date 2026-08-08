@@ -372,7 +372,10 @@ async def upload_public_document(
     db: Session = Depends(get_db),
 ):
     """Sube un documento publico (PDF, imagen, documento)."""
-    ext = os.path.splitext(file.filename or "")[1].lower()
+    from backend.core.uploads import sanitize_filename
+
+    safe_name = sanitize_filename(file.filename or "")
+    ext = os.path.splitext(safe_name)[1].lower()
     if ext not in ALLOWED_DOC_TYPES:
         raise HTTPException(status_code=400, detail=f"Tipo no permitido: {ext}")
 
@@ -384,8 +387,13 @@ async def upload_public_document(
     uploads_dir = settings.uploads_dir
     os.makedirs(uploads_dir, exist_ok=True)
 
-    unique_name = f"doc_{uuid.uuid4().hex[:8]}_{file.filename}"
+    unique_name = f"doc_{uuid.uuid4().hex[:8]}_{safe_name}"
     file_path = os.path.join(uploads_dir, unique_name)
+
+    # Path traversal guard — ensure resolved path stays inside uploads_dir
+    if not os.path.abspath(file_path).startswith(os.path.abspath(uploads_dir) + os.sep):
+        raise HTTPException(status_code=400, detail="Nombre de archivo inválido")
+
     with open(file_path, "wb") as f:
         f.write(contents)
 
@@ -681,9 +689,7 @@ def public_register_for_event(
 
     if payload.verified_identity_token:
         try:
-            persona, _challenge = resolve_verified_identity_token(
-                db, event, payload.verified_identity_token
-            )
+            persona, _challenge = resolve_verified_identity_token(db, event, payload.verified_identity_token)
         except ValueError as exc:
             raise HTTPException(status_code=403, detail=str(exc)) from None
         # Payload derivado desde la persona verificada: ``upsert_persona`` la
@@ -746,15 +752,14 @@ def public_register_for_event(
     except RegistrationError as exc:
         raise _reg_error_to_http(exc) from None
 
-    persona = (
-        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
-    )
+    persona = db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
     # Tras register/verify, exponer el QR al usuario en la respuesta (runtime)
     # — el token NO está persistido en DB, se emite una sola vez acá y por email.
     qr_token_plain = getattr(reg, "_qr_token_transient", None)
     cancel_token_plain = getattr(reg, "_cancel_token_transient", None)
     return _serialize_registration(
-        reg, persona,
+        reg,
+        persona,
         qr_token_override=qr_token_plain,
         cancel_token_override=cancel_token_plain,
     )
@@ -773,13 +778,12 @@ def public_verify_event(
     except RegistrationError as exc:
         raise _reg_error_to_http(exc) from None
 
-    persona = (
-        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
-    )
+    persona = db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
     qr_token_plain = getattr(reg, "_qr_token_transient", None)
     cancel_token_plain = getattr(reg, "_cancel_token_transient", None)
     return _serialize_registration(
-        reg, persona,
+        reg,
+        persona,
         qr_token_override=qr_token_plain,
         cancel_token_override=cancel_token_plain,
     )
@@ -810,9 +814,7 @@ def public_event_ticket(
             status_code=409,
             detail=f"Ticket no activo (estado: {reg.registration_status})",
         )
-    persona = (
-        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
-    )
+    persona = db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
     return _serialize_registration(reg, persona, include_qr=False)
 
 
@@ -840,9 +842,7 @@ def public_status_event(
     reg = find_by_email_or_phone(db, event.id, email=email, phone=phone)
     if not reg:
         raise HTTPException(status_code=404, detail="No se encontró inscripción con esos datos")
-    persona = (
-        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
-    )
+    persona = db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
     return _serialize_registration(reg, persona, include_pii=False, include_qr=False)
 
 
@@ -872,11 +872,15 @@ def public_cancel_event(
     except (ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail="Token malformado") from exc
 
-    reg = db.query(models.EventRegistration).filter(
-        models.EventRegistration.id == reg_id,
-        models.EventRegistration.event_id == event.id,
-        models.EventRegistration.deleted_at.is_(None),
-    ).first()
+    reg = (
+        db.query(models.EventRegistration)
+        .filter(
+            models.EventRegistration.id == reg_id,
+            models.EventRegistration.event_id == event.id,
+            models.EventRegistration.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not reg:
         raise HTTPException(status_code=404, detail="Inscripción no encontrada")
     if reg.registration_status == "CANCELLED":
@@ -884,10 +888,9 @@ def public_cancel_event(
 
     import hashlib
     import secrets
+
     stored_hash = (reg.extras or {}).get("_cancel_token_hash")
-    if not stored_hash or not secrets.compare_digest(
-        hashlib.sha256(_secret.encode()).hexdigest(), stored_hash
-    ):
+    if not stored_hash or not secrets.compare_digest(hashlib.sha256(_secret.encode()).hexdigest(), stored_hash):
         raise HTTPException(status_code=403, detail="Token inválido")
 
     # plan_clasificador_contextual §4.3: el token de cancelación expira a las 72h.
@@ -895,9 +898,7 @@ def public_cancel_event(
         raise HTTPException(status_code=410, detail="Token de cancelación expirado")
 
     reg = cancel_registration(db, event, reg)
-    persona = (
-        db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
-    )
+    persona = db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
     return _serialize_registration(reg, persona)
 
 
@@ -905,8 +906,11 @@ def public_cancel_event(
 
 
 def _serialize_registration(
-    reg: models.EventRegistration, persona: Optional[models.Persona],
-    *, include_pii: bool = True, include_qr: bool = True,
+    reg: models.EventRegistration,
+    persona: Optional[models.Persona],
+    *,
+    include_pii: bool = True,
+    include_qr: bool = True,
     qr_token_override: str | None = None,
     cancel_token_override: str | None = None,
 ) -> schemas.EventRegistrationRead:
@@ -962,4 +966,3 @@ def _serialize_registration(
         reminder_sent_count=reg.reminder_sent_count,
         last_reminder_sent_at=reg.last_reminder_sent_at,
     )
-

@@ -992,7 +992,11 @@ def get_sign_request(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "read")),
 ):
-    req = db.query(models.SignRequest).filter(models.SignRequest.id == request_id).first()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.SignRequest).filter(models.SignRequest.id == request_id)
+    if sede_id:
+        q = q.filter(models.SignRequest.sede_id == sede_id)
+    req = q.first()
     if not req:
         raise HTTPException(status_code=404, detail="Sign request not found")
     return req
@@ -1004,7 +1008,11 @@ def send_sign_request(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
-    req = db.query(models.SignRequest).filter(models.SignRequest.id == request_id).first()
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.SignRequest).filter(models.SignRequest.id == request_id)
+    if sede_id:
+        q = q.filter(models.SignRequest.sede_id == sede_id)
+    req = q.first()
     if not req:
         raise HTTPException(status_code=404, detail="Sign request not found")
     if req.status != "draft":
@@ -1028,6 +1036,15 @@ def sign_document(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
+    # Scope by sede to prevent cross-tenant signing
+    sede_id = _finance_sede_scope(db, current_user)
+    sign_req = db.query(models.SignRequest).filter(models.SignRequest.id == request_id)
+    if sede_id:
+        sign_req = sign_req.filter(models.SignRequest.sede_id == sede_id)
+    sign_req = sign_req.first()
+    if not sign_req:
+        raise HTTPException(status_code=404, detail="Sign request not found")
+
     signer = (
         db.query(models.SignSigner)
         .filter(
@@ -1038,6 +1055,15 @@ def sign_document(
     )
     if not signer:
         raise HTTPException(status_code=404, detail="Signer not found")
+
+    # Verify signer identity — the signer's email must match the current user's email
+    signer_email = getattr(signer, "email", None) or ""
+    user_email = getattr(current_user, "email", None) or ""
+    if signer_email and user_email and signer_email.lower() != user_email.lower():
+        raise HTTPException(
+            status_code=403,
+            detail="No autorizado: el firmante no corresponde al usuario actual",
+        )
     if signer.status != "sent":
         raise HTTPException(status_code=400, detail=f"Signer is in '{signer.status}' status, cannot sign")
 

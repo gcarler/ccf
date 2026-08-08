@@ -30,33 +30,66 @@ log = logging.getLogger(__name__)
 
 FIELD_TYPES = (
     # básicos existentes
-    "text", "email", "phone", "textarea", "select", "checkbox",
+    "text",
+    "email",
+    "phone",
+    "textarea",
+    "select",
+    "checkbox",
     # nuevos básicos
-    "number", "date", "datetime", "url",
+    "number",
+    "date",
+    "datetime",
+    "url",
     # nuevas opciones
-    "select_multiple", "radio",
+    "select_multiple",
+    "radio",
     # nuevas escalas
-    "rating", "slider",
+    "rating",
+    "slider",
     # nuevo adjunto
     "file",
     # nuevos agrupadores / utilitarios (no sumiten datos reales)
-    "section", "page", "divider", "captcha",
+    "section",
+    "page",
+    "divider",
+    "captcha",
 )
 
 # Tipos que producen un valor a validar contra ``data``.
 _VALUE_TYPES = {
-    "text", "email", "phone", "textarea", "select", "checkbox",
-    "number", "date", "datetime", "url",
-    "select_multiple", "radio",
-    "rating", "slider",
+    "text",
+    "email",
+    "phone",
+    "textarea",
+    "select",
+    "checkbox",
+    "number",
+    "date",
+    "datetime",
+    "url",
+    "select_multiple",
+    "radio",
+    "rating",
+    "slider",
     "file",
 }
 # Tipos que NO producen valor (metadata/layout) — ignorados en la validación de submit.
 _META_TYPES = {"section", "page", "divider", "captcha"}
 
 OPERATORS = (
-    "eq", "neq", "in", "not_in", "contains", "gt", "lt", "gte", "lte",
-    "checked", "empty", "not_empty",
+    "eq",
+    "neq",
+    "in",
+    "not_in",
+    "contains",
+    "gt",
+    "lt",
+    "gte",
+    "lte",
+    "checked",
+    "empty",
+    "not_empty",
 )
 
 
@@ -140,11 +173,14 @@ def validate_submission(
     # Detectar claves extra que no corresponden a ningún campo del formulario.
     unknown = data_keys - set(by_id.keys())
     if unknown:
-        # En modo tolerante (back-compat con schema viejo sin id), las claves
-        # pueden corresponder a labels legacy. Aceptamos las que matcheen un
+        # En modo tolerante (back-compat con schema anterior sin id), las claves
+        # pueden corresponder a labels previos. Aceptamos las que matcheen un
         # label. Si no matchean, se rechazan.
-        label_to_id = {(_un_((f.get("label") or ""))): (f.get("id") or f.get("label") or "")
-                       for f in fields if f.get("type") in _VALUE_TYPES}
+        label_to_id = {
+            (_un_((f.get("label") or ""))): (f.get("id") or f.get("label") or "")
+            for f in fields
+            if f.get("type") in _VALUE_TYPES
+        }
         for k in list(unknown):
             if _un_(k) in label_to_id:
                 # mapear al id real

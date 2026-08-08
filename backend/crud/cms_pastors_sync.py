@@ -8,34 +8,16 @@ re-publish the ``pastors`` page to reflect the changes on the public site.
 
 from __future__ import annotations
 
-import re
-import unicodedata
 import uuid as _uuid
 
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.crud._utils import _slugify
 
 SITE_KEY = "ccf"
 PAGE_SLUG = "pastors"
 SECTION_KEY = "pastors"
-
-
-def _slugify(value: str) -> str:
-    """Normalize a full name into a URL-safe slug (NFKD handles diacritics).
-
-    Mirrors the canonical rule used by ``scripts/fix_pastor_photos.py`` and
-    ``tests/test_pastor_photo_regression.py``: NFKD decomposition drops
-    the combining mark for accented characters (``í`` → ``i`` + U+0301 → ``i``),
-    keeping the alphabetic base character so ``Nehemías`` slugifies to
-    ``nehemias`` (not ``nehemas`` like a naive ``[^a-z0-9]`` strip would do).
-    """
-    value = (value or "").strip().lower()
-    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
-    value = re.sub(r"[\s_]+", "-", value)
-    value = re.sub(r"[^a-z0-9\-]", "", value)
-    value = re.sub(r"-+", "-", value)
-    return value.strip("-")
 
 
 def _split_name(full_name: str) -> tuple[str, str]:

@@ -354,12 +354,12 @@ def google_callback(
             name_parts = full_name.split(" ", 1)
             first_name = name_parts[0]
             last_name = name_parts[1] if len(name_parts) > 1 else ""
-            
+
             persona = models.Persona(
                 first_name=first_name,
                 last_name=last_name,
                 email=google_email,
-                sede_id=fallback_sede.id if fallback_sede else None
+                sede_id=fallback_sede.id if fallback_sede else None,
             )
             db.add(persona)
             db.commit()
@@ -1040,7 +1040,10 @@ def verify_email(
 # ═══════════════════════════════════════════════════════════════════════
 
 
-@router.post("/forgot-password")
+@router.post(
+    "/forgot-password",
+    dependencies=[Depends(rate_limiter(limit=5, window_seconds=300))],
+)
 def forgot_password(
     payload: ForgotPasswordRequest | None = None,
     email: Optional[str] = None,
@@ -1082,7 +1085,10 @@ def forgot_password(
 # ═══════════════════════════════════════════════════════════════════════
 
 
-@router.post("/reset-password")
+@router.post(
+    "/reset-password",
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=300))],
+)
 def reset_password(
     payload: ResetPasswordRequest | None = None,
     token: Optional[str] = None,
@@ -1125,7 +1131,11 @@ def reset_password(
     return {"status": "success", "message": "Contraseña restablecida exitosamente"}
 
 
-@router.post("/send-verification-email", response_model=dict)
+@router.post(
+    "/send-verification-email",
+    response_model=dict,
+    dependencies=[Depends(rate_limiter(limit=5, window_seconds=300))],
+)
 def send_verification_email(
     payload: SendVerificationEmailRequest | None = None,
     request: Request = None,
