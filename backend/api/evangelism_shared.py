@@ -9,7 +9,14 @@ from sqlalchemy import inspect, or_
 from sqlalchemy.orm import Session, load_only
 
 from backend import models
-from backend.schemas.evangelism import StatusAsistenciaCanonico
+from backend.schemas.evangelism import (
+    ABSENT_STATES,
+    ATTENDED_STATES,
+    EXCUSED_STATES,
+    FIRST_TIME_STATES,
+    StatusAsistenciaCanonico,
+    normalize_attendance_status,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,22 +30,22 @@ ABSENCE_REASON_LABELS = {
 }
 
 # ── Estados canónicos de asistencia ──
-# Centralizados desde StatusAsistenciaCanonico (schemas/evangelism.py).
-# Los sets históricos (ATTENDED_STATES, ABSENT_STATES, EXCUSED_STATES,
-# FIRST_TIME_STATES) se derivan del enum para que cualquier extensión
-# solo requiera tocar el enum, no 4 sets paralelos.
+# Re-exportados desde schemas/evangelism.py (fuente de verdad única,
+# junto al enum StatusAsistenciaCanonico). Esto rompe el ciclo
+# schemas → api → schemas que existía cuando la normalización vivía
+# en la capa API. Los callers existentes que importan desde aquí
+# continúan funcionando sin cambios.
 
-ATTENDED_STATES = {
-    StatusAsistenciaCanonico.PRESENT.value,
-    StatusAsistenciaCanonico.FIRST_TIME.value,
-    "ASISTIO",
-    "Presente",
-    "presente",
-    "first_time",
-}
-ABSENT_STATES = {StatusAsistenciaCanonico.ABSENT.value, "FALTO", "Ausente", "ausente"}
-EXCUSED_STATES = {StatusAsistenciaCanonico.EXCUSED.value, "EXCUSA", "Excusa", "excusa"}
-FIRST_TIME_STATES = {StatusAsistenciaCanonico.FIRST_TIME.value, "primera_vez", "first_time"}
+__all__ = [
+    "ATTENDED_STATES",
+    "ABSENT_STATES",
+    "EXCUSED_STATES",
+    "FIRST_TIME_STATES",
+    "normalize_attendance_status",
+    "is_attended_status",
+    "is_absent_status",
+    "is_excused_status",
+]
 
 
 def sessions_grupo_has_estado_habilitacion(db: Session) -> bool:
@@ -108,31 +115,6 @@ def session_read_only_options(db: Session):
     if not columns:
         columns = [SesionGrupo.id, SesionGrupo.grupo_id, SesionGrupo.fecha_sesion]
     return load_only(*columns)
-
-
-def normalize_attendance_status(value) -> str:
-    """Normaliza un estado de asistencia a un valor canónico.
-
-    Esta es la fuente de verdad única para la normalización de estados.
-    Todos los valores de entrada se mapean a uno de los 4 miembros de
-    ``StatusAsistenciaCanonico`` (present/absent/excused/first_time).
-
-    NOTA: ``primera_vez`` y ``first_time`` se normalizan a ``present``
-    porque la semántica operativa es "asistió" (el flag de primera vez
-    se maneja por separado en el modelo vía ``es_primera_vez``). Los
-    valores desconocidos se retornan tal cual para que la capa Pydantic
-    los rechace con 422.
-    """
-    normalized = str(value or "").strip().lower()
-    if normalized in {state.lower() for state in FIRST_TIME_STATES}:
-        return StatusAsistenciaCanonico.PRESENT.value
-    if normalized in {state.lower() for state in ATTENDED_STATES}:
-        return StatusAsistenciaCanonico.PRESENT.value
-    if normalized in {state.lower() for state in ABSENT_STATES}:
-        return StatusAsistenciaCanonico.ABSENT.value
-    if normalized in {state.lower() for state in EXCUSED_STATES}:
-        return StatusAsistenciaCanonico.EXCUSED.value
-    return normalized
 
 
 def is_attended_status(value) -> bool:
