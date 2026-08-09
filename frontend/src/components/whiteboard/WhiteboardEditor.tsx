@@ -1864,7 +1864,7 @@ export default function WhiteboardEditor({
                 );
             })}
                 {/* ── Export / share floating bar ── */}
-                <div className="absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
+                <div className="absolute right-[336px] top-4 z-20 flex items-center gap-1.5 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
                     <ExportButton
                         icon={ImageIcon}
                         label="PNG"
@@ -1915,7 +1915,7 @@ export default function WhiteboardEditor({
                 </div>
 
                 {/* ── Connection status (below export bar, avoids overlap) ── */}
-                <div className="pointer-events-none absolute top-16 right-4 z-30 flex items-center gap-1.5 rounded-full border border-[hsl(var(--border))] bg-white/90 px-3 py-1 text-[11px] font-semibold text-[hsl(var(--text-secondary))] shadow-sm backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
+                <div className="pointer-events-none absolute top-16 right-[336px] z-30 flex items-center gap-1.5 rounded-full border border-[hsl(var(--border))] bg-white/90 px-3 py-1 text-[11px] font-semibold text-[hsl(var(--text-secondary))] shadow-sm backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
                     <span className={clsx("h-2 w-2 rounded-full", connected ? "bg-emerald-500" : "bg-amber-400 animate-pulse")} />
                     {connected ? "Conectado" : "Reconectando…"}
                 </div>
@@ -2094,7 +2094,7 @@ export default function WhiteboardEditor({
                 </div>
 
                 {/* ── Zoom controls (bottom-right) ── */}
-                <div className="absolute right-[340px] bottom-6 z-20 flex items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-white/90 p-1 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
+                <div className="absolute right-[336px] bottom-6 z-20 flex items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-white/90 p-1 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
                     {/* Fit to screen */}
                     <button
                         className="rounded-md px-2 py-1 text-xs font-medium hover:bg-[hsl(var(--surface-1))] transition-colors"
@@ -2184,7 +2184,7 @@ export default function WhiteboardEditor({
                     }}
                 >
                     <div
-                        className="inline-block overflow-hidden rounded-xl border-8 border-white shadow-[0_48px_96px_-32px_rgba(15,23,42,0.4)] dark:border-[hsl(var(--surface-1))]"
+                        className="inline-block overflow-hidden rounded-xl border border-[hsl(var(--border))] shadow-sm dark:border-white/10"
                         style={{
                             background: gridStyle === "none"
                                 ? (isDark ? WHITEBOARD_COLORS.gridDark : "#ffffff")
@@ -2621,7 +2621,7 @@ function Minimap({
     };
 
     return (
-        <div className="pointer-events-auto absolute left-4 bottom-4 z-30 hidden overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95 lg:block"
+        <div className="pointer-events-auto absolute left-20 bottom-4 z-30 hidden overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95 lg:block"
             onMouseEnter={() => setHovering(true)}
             onMouseLeave={() => setHovering(false)}
             onClick={handleClick}

@@ -68,13 +68,8 @@ export default function RootLayout({
         <html lang="es" suppressHydrationWarning className={`${roboto.variable} ${openSans.variable} ${inter.variable} ${outfit.variable}`}>
             <head>
                 <link
-                    rel="preload"
-                    as="style"
+                    rel="stylesheet"
                     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-                    onLoad={(e) => {
-                        const link = e.currentTarget as HTMLLinkElement;
-                        link.rel = "stylesheet";
-                    }}
                 />
                 <script
                     dangerouslySetInnerHTML={{
