@@ -76,8 +76,19 @@ export default function RootLayout({
                         __html: `
                             (function() {
                                 try {
+                                    var isPublicRoute = window.location.pathname.startsWith('/public');
                                     var theme = localStorage.getItem('theme-mode');
-                                    if (theme === 'night') {
+                                    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                                    
+                                    if (isPublicRoute) {
+                                        // Páginas públicas: usar tema del sistema o localStorage si fue explícitamente 'day'
+                                        var effectiveTheme = theme === 'day' ? 'day' : (prefersDark ? 'night' : 'day');
+                                    } else {
+                                        // Rutas autenticadas: respetar localStorage con fallback a sistema
+                                        var effectiveTheme = theme === 'night' ? 'night' : (theme === 'day' ? 'day' : (prefersDark ? 'night' : 'day'));
+                                    }
+                                    
+                                    if (effectiveTheme === 'night') {
                                         document.documentElement.classList.add('dark');
                                         document.documentElement.setAttribute('data-theme', 'night');
                                     } else {
