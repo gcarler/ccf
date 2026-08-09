@@ -360,6 +360,7 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (status === 'loading') return;
         setStatus('loading');
         setErrorDetail(null);
 
@@ -372,6 +373,7 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
             }
         }
 
+        const controller = new AbortController();
         try {
             const dynamic = publicForm && formApi ? formApi.getData() : null;
             const data = await apiFetch<RegistrationResult>(`/public/events/${event.id}/register`, {
@@ -387,10 +389,12 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
                     extras: {},
                 },
                 silent: true,
+                signal: controller.signal,
             });
             setResult(data);
             setStatus('success');
         } catch (err) {
+            if (err instanceof DOMException && err.name === 'AbortError') return;
             setStatus('error');
             if (err instanceof ApiError) {
                 const detail = err.detail as { code?: string; detail?: string } | undefined;
@@ -577,14 +581,21 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
 
     const handleCheck = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!checkEmail && !checkPhone) return;
+        if (checking) return;
+        const trimmedEmail = checkEmail.trim();
+        const trimmedPhone = checkPhone.trim();
+        if (!trimmedEmail && !trimmedPhone) return;
+        if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+            setCheckError('Ingresa un correo válido.');
+            return;
+        }
         setChecking(true);
         setCheckError(null);
         setCheckResult(null);
         try {
             const qs = new URLSearchParams();
-            if (checkEmail) qs.set('email', checkEmail);
-            if (checkPhone) qs.set('phone', checkPhone);
+            if (trimmedEmail) qs.set('email', trimmedEmail);
+            if (trimmedPhone) qs.set('phone', trimmedPhone);
             const data = await apiFetch<RegistrationResult>(`/public/events/${event.id}/status?${qs.toString()}`, {
                 silent: true,
             });
@@ -705,6 +716,11 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
                     {event.requires_email_verification && (
                         <p className="text-xs font-medium text-[hsl(var(--text-secondary))] pl-2 flex items-center gap-1.5">
                             <ShieldCheck size={13} /> Recibirás un correo para confirmar tu inscripción.
+                        </p>
+                    )}
+                    {!event.requires_email_verification && (
+                        <p className="text-xs font-medium text-[hsl(var(--text-secondary))] pl-2">
+                            Te lo enviaremos para que recibas tu código QR de asistencia.
                         </p>
                     )}
                 </div>
