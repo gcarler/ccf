@@ -505,7 +505,7 @@ def _find_existing_dm(db: Session, user_id1: _uuid.UUID, user_id2: _uuid.UUID):
 
 @router.get("/chat/users/search")
 def search_chat_users(
-    q: str = Query(..., min_length=2, max_length=100),
+    q: str = Query(..., min_length=1, max_length=100),
     limit: int = Query(10, le=50),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("messaging", "read")),

@@ -86,9 +86,9 @@ export function MessageInput({
             return;
         }
         const { query } = mentionState;
-        // Backend requires q with min_length=2; searching on 1 char would
-        // produce silent 422s, so only start once a real query exists.
-        if (query.trim().length < 2) {
+        // Backend requires q with min_length=1; searching starts as soon as
+        // the user types one character after @ for instant feedback.
+        if (query.trim().length < 1) {
             setMentionResults([]);
             return;
         }
@@ -100,7 +100,7 @@ export function MessageInput({
             })
                 .then((r) => setMentionResults(Array.isArray(r) ? r.slice(0, 6) : []))
                 .catch(() => {});
-        }, 150);
+        }, 100);
         return () => {
             clearTimeout(timer);
             controller.abort();
