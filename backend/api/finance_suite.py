@@ -59,7 +59,7 @@ def _finance_sede_scope(db: Session, user: models.User) -> str | None:
 def _finance_platform_admin(db: Session, user: models.User) -> bool:
     """Return whether the actor has explicit platform-admin authority.
 
-    A NULL ``sede_id`` is only a legacy/global record escape hatch for a
+    A NULL ``sede_id`` is only a historical/global record escape hatch for a
     platform administrator; it is never treated as global merely because a
     lookup failed to resolve the actor's sede.
     """
@@ -71,16 +71,16 @@ def _finance_platform_admin(db: Session, user: models.User) -> bool:
     return "system:config" in get_user_effective_permissions(db, user)
 
 
-def _finance_scope_filter(column, sede_id: str | None, *, allow_legacy_unscoped: bool):
+def _finance_scope_filter(column, sede_id: str | None, *, allow_unscoped: bool):
     if sede_id is None:
         return None
-    if allow_legacy_unscoped:
+    if allow_unscoped:
         return or_(column == sede_id, column.is_(None))
     return column == sede_id
 
 
 def _scoped_bank_account(
-    db: Session, account_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+    db: Session, account_id: Any, sede_id: str | None, *, allow_unscoped: bool = False
 ) -> models.BankAccount:
     """Load a bank account visible to the actor's sede.
 
@@ -89,7 +89,7 @@ def _scoped_bank_account(
     """
     query = db.query(models.BankAccount).filter(models.BankAccount.id == account_id)
     scope_filter = _finance_scope_filter(
-        models.BankAccount.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+        models.BankAccount.sede_id, sede_id, allow_unscoped=allow_unscoped
     )
     if scope_filter is not None:
         query = query.filter(scope_filter)
@@ -100,11 +100,11 @@ def _scoped_bank_account(
 
 
 def _scoped_chart_account(
-    db: Session, account_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+    db: Session, account_id: Any, sede_id: str | None, *, allow_unscoped: bool = False
 ) -> models.ChartOfAccount:
     query = db.query(models.ChartOfAccount).filter(models.ChartOfAccount.id == account_id)
     scope_filter = _finance_scope_filter(
-        models.ChartOfAccount.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+        models.ChartOfAccount.sede_id, sede_id, allow_unscoped=allow_unscoped
     )
     if scope_filter is not None:
         query = query.filter(scope_filter)
@@ -117,11 +117,11 @@ def _scoped_chart_account(
 
 
 def _scoped_sales_order(
-    db: Session, order_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+    db: Session, order_id: Any, sede_id: str | None, *, allow_unscoped: bool = False
 ) -> models.SalesOrder:
     query = db.query(models.SalesOrder).filter(models.SalesOrder.id == order_id)
     scope_filter = _finance_scope_filter(
-        models.SalesOrder.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+        models.SalesOrder.sede_id, sede_id, allow_unscoped=allow_unscoped
     )
     if scope_filter is not None:
         query = query.filter(scope_filter)
@@ -132,10 +132,10 @@ def _scoped_sales_order(
 
 
 def _scoped_invoice(
-    db: Session, invoice_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+    db: Session, invoice_id: Any, sede_id: str | None, *, allow_unscoped: bool = False
 ) -> models.Invoice:
     query = db.query(models.Invoice).filter(models.Invoice.id == invoice_id)
-    scope_filter = _finance_scope_filter(models.Invoice.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped)
+    scope_filter = _finance_scope_filter(models.Invoice.sede_id, sede_id, allow_unscoped=allow_unscoped)
     if scope_filter is not None:
         query = query.filter(scope_filter)
     invoice = query.first()
@@ -145,7 +145,7 @@ def _scoped_invoice(
 
 
 def _scoped_expense_item(
-    db: Session, item_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+    db: Session, item_id: Any, sede_id: str | None, *, allow_unscoped: bool = False
 ) -> models.ExpenseItem:
     query = (
         db.query(models.ExpenseItem)
@@ -153,7 +153,7 @@ def _scoped_expense_item(
         .filter(models.ExpenseItem.id == item_id)
     )
     scope_filter = _finance_scope_filter(
-        models.ExpenseReport.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+        models.ExpenseReport.sede_id, sede_id, allow_unscoped=allow_unscoped
     )
     if scope_filter is not None:
         query = query.filter(scope_filter)
@@ -164,11 +164,11 @@ def _scoped_expense_item(
 
 
 def _scoped_document_tag(
-    db: Session, tag_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+    db: Session, tag_id: Any, sede_id: str | None, *, allow_unscoped: bool = False
 ) -> models.DocumentTag:
     query = db.query(models.DocumentTag).filter(models.DocumentTag.id == tag_id)
     scope_filter = _finance_scope_filter(
-        models.DocumentTag.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+        models.DocumentTag.sede_id, sede_id, allow_unscoped=allow_unscoped
     )
     if scope_filter is not None:
         query = query.filter(scope_filter)
@@ -179,11 +179,11 @@ def _scoped_document_tag(
 
 
 def _scoped_persona(
-    db: Session, persona_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+    db: Session, persona_id: Any, sede_id: str | None, *, allow_unscoped: bool = False
 ) -> models.Persona:
     query = db.query(models.Persona).filter(models.Persona.id == persona_id)
     scope_filter = _finance_scope_filter(
-        models.Persona.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+        models.Persona.sede_id, sede_id, allow_unscoped=allow_unscoped
     )
     if scope_filter is not None:
         query = query.filter(scope_filter)
@@ -194,11 +194,11 @@ def _scoped_persona(
 
 
 def _scoped_document(
-    db: Session, document_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+    db: Session, document_id: Any, sede_id: str | None, *, allow_unscoped: bool = False
 ) -> models.Document:
     query = db.query(models.Document).filter(models.Document.id == document_id)
     scope_filter = _finance_scope_filter(
-        models.Document.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+        models.Document.sede_id, sede_id, allow_unscoped=allow_unscoped
     )
     if scope_filter is not None:
         query = query.filter(scope_filter)
@@ -209,7 +209,7 @@ def _scoped_document(
 
 
 def _scoped_receipt(
-    db: Session, receipt_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+    db: Session, receipt_id: Any, sede_id: str | None, *, allow_unscoped: bool = False
 ) -> models.ExpenseReceipt:
     query = (
         db.query(models.ExpenseReceipt)
@@ -218,7 +218,7 @@ def _scoped_receipt(
         .filter(models.ExpenseReceipt.id == receipt_id)
     )
     scope_filter = _finance_scope_filter(
-        models.ExpenseReport.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+        models.ExpenseReport.sede_id, sede_id, allow_unscoped=allow_unscoped
     )
     if scope_filter is not None:
         query = query.filter(scope_filter)
@@ -295,7 +295,7 @@ def create_bank_transaction(
         db,
         payload.bank_account_id,
         sede_id,
-        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+        allow_unscoped=_finance_platform_admin(db, current_user),
     )
     tx = models.BankTransaction(**payload.model_dump())
     db.add(tx)
@@ -351,7 +351,7 @@ def create_reconciliation(
         db,
         payload.bank_account_id,
         sede_id,
-        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+        allow_unscoped=_finance_platform_admin(db, current_user),
     )
     rec = models.BankReconciliation(**payload.model_dump(), created_by_id=current_user.id)
     db.add(rec)
@@ -432,7 +432,7 @@ def create_accounting_entry(
             db,
             line.account_id,
             sede_id,
-            allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+            allow_unscoped=_finance_platform_admin(db, current_user),
         )
 
     total_debit = sum(line.debit for line in payload.lines)
@@ -501,14 +501,14 @@ def post_accounting_entry(
         raise HTTPException(status_code=404, detail="Entry not found")
 
     # Revalidate every referenced ledger account at the state transition too;
-    # an old/legacy draft must not become posted with cross-sede lines.
-    allow_legacy_unscoped = _finance_platform_admin(db, current_user)
+    # an old/historical draft must not become posted with cross-sede lines.
+    allow_unscoped = _finance_platform_admin(db, current_user)
     for line in entry.lines:
         _scoped_chart_account(
             db,
             line.account_id,
             sede_id,
-            allow_legacy_unscoped=allow_legacy_unscoped,
+            allow_unscoped=allow_unscoped,
         )
 
     if entry.status != "draft":
@@ -694,7 +694,7 @@ def create_invoice(
             db,
             payload.sales_order_id,
             sede_id,
-            allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+            allow_unscoped=_finance_platform_admin(db, current_user),
         )
     subtotal = sum(item.quantity * item.unit_price for item in payload.items)
     user_sede_id = sede_id
@@ -827,7 +827,7 @@ def send_electronic_invoice(
         db,
         invoice_id,
         sede_id,
-        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+        allow_unscoped=_finance_platform_admin(db, current_user),
     )
 
     raise HTTPException(
@@ -1018,7 +1018,7 @@ def upload_expense_receipt(
         db,
         payload.expense_item_id,
         sede_id,
-        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+        allow_unscoped=_finance_platform_admin(db, current_user),
     )
     receipt = models.ExpenseReceipt(
         expense_item_id=payload.expense_item_id,
@@ -1046,7 +1046,7 @@ def update_receipt_ocr(
         db,
         receipt_id,
         sede_id,
-        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+        allow_unscoped=_finance_platform_admin(db, current_user),
     )
     receipt.ocr_text = ocr_text
     receipt.ocr_confidence = ocr_confidence
@@ -1070,13 +1070,13 @@ def create_document(
     sede_id = _finance_sede_scope(db, current_user)
     # Validate all nested references before creating the document, so a bad
     # tag cannot leave a partially flushed row in the current transaction.
-    allow_legacy_unscoped = _finance_platform_admin(db, current_user)
+    allow_unscoped = _finance_platform_admin(db, current_user)
     document_tags = [
         _scoped_document_tag(
             db,
             tag_id,
             sede_id,
-            allow_legacy_unscoped=allow_legacy_unscoped,
+            allow_unscoped=allow_unscoped,
         )
         for tag_id in payload.tag_ids
     ]
@@ -1137,7 +1137,7 @@ def update_document(
         db,
         document_id,
         sede_id,
-        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+        allow_unscoped=_finance_platform_admin(db, current_user),
     )
 
     update_data = payload.model_dump(exclude_unset=True)
@@ -1149,7 +1149,7 @@ def update_document(
                 db,
                 tid,
                 sede_id,
-                allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+                allow_unscoped=_finance_platform_admin(db, current_user),
             )
             for tid in update_data["tag_ids"]
         ]
@@ -1179,7 +1179,7 @@ def delete_document(
         raise HTTPException(status_code=404, detail="Document not found")
     if sede_id is not None and (doc.sede_id is None or str(doc.sede_id) != sede_id):
         # Preserve the documented contract for this mutator: cross-sede
-        # access is forbidden, while NULL-sede legacy rows remain blocked.
+        # access is forbidden, while NULL-sede historical rows remain blocked.
         raise HTTPException(status_code=403, detail="Document does not belong to your sede")
     doc.status = "archived"
     db.commit()
@@ -1225,14 +1225,14 @@ def create_sign_request(
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
     sede_id = _finance_sede_scope(db, current_user)
-    allow_legacy_unscoped = _finance_platform_admin(db, current_user)
+    allow_unscoped = _finance_platform_admin(db, current_user)
     for signer in payload.signers:
         if signer.persona_id is not None:
             _scoped_persona(
                 db,
                 signer.persona_id,
                 sede_id,
-                allow_legacy_unscoped=allow_legacy_unscoped,
+                allow_unscoped=allow_unscoped,
             )
 
     req = models.SignRequest(
