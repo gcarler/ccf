@@ -11,20 +11,10 @@ pasar por el helper API `_get_scoped_*` correspondiente.
 
 import datetime as dt
 import logging
-import math
-import os
-import uuid
 
-from sqlalchemy import func, or_
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, lazyload
+from sqlalchemy.orm import Session
 
-from backend import models, schemas
-from backend.crud._utils import _utcnow
-from backend.crud.crm import (
-
-    resolve_persona_id_for_user as resolve_persona_uuid_for_user,
-)
+from backend import models
 
 _logger = logging.getLogger(__name__)
 
@@ -37,7 +27,9 @@ _logger = logging.getLogger(__name__)
 
 
 
-from backend.crud.cms._shared import (_now_utc)
+from backend.crud.cms._shared import _now_utc
+
+
 def cleanup_old_publish_logs(
     db: Session,
     *,

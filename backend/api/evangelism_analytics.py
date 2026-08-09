@@ -31,6 +31,7 @@ from backend.api.evangelism_shared import (
     get_visible_strategy,
     normalize_attendance_status,
     session_read_only_options,
+    ttl_cache,
 )
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_read
@@ -44,6 +45,15 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────
 
 _PERIOD_DAYS = {"7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365}
+
+
+def _analytics_cache_scope(db: Session | None, current_user: models.User | None) -> str:
+    """Return a tenant-specific cache suffix without querying during keying."""
+    sede_id = getattr(current_user, "sede_id", None) if current_user is not None else None
+    if sede_id:
+        return str(sede_id)
+    user_id = getattr(current_user, "id", None) if current_user is not None else None
+    return f"user:{user_id or 'anonymous'}"
 
 
 def _normalize_rol(name: str) -> str:
@@ -180,6 +190,9 @@ def _sessions_total_count(db: Session, group_ids: list[_uuid.UUID], start, end) 
 
 
 @router.get("/analytics/strategy/{strategy_id}")
+@ttl_cache(
+    lambda strategy_id, period="30d", db=None, current_user=None: f"kpis:{strategy_id}:{period}:{_analytics_cache_scope(db, current_user)}"
+)
 def strategy_kpis(
     strategy_id: UUID,
     period: str = Query("30d"),
@@ -319,6 +332,9 @@ def strategy_kpis(
 
 
 @router.get("/analytics/strategy/{strategy_id}/trend")
+@ttl_cache(
+    lambda strategy_id, period="90d", db=None, current_user=None: f"trend:{strategy_id}:{period}:{_analytics_cache_scope(db, current_user)}"
+)
 def strategy_trend(
     strategy_id: UUID,
     period: str = Query("90d"),
@@ -418,6 +434,9 @@ def _bucket_label(key: str, use_weeks: bool) -> str:
 
 
 @router.get("/analytics/strategy/{strategy_id}/funnel")
+@ttl_cache(
+    lambda strategy_id, db=None, current_user=None: f"funnel:{strategy_id}:{_analytics_cache_scope(db, current_user)}"
+)
 def strategy_funnel(
     strategy_id: UUID,
     db: Session = Depends(get_db),
@@ -1145,6 +1164,9 @@ def _is_primera_vez(a) -> bool:
 
 
 @router.get("/analytics/strategy/{strategy_id}/full", response_model=dict)
+@ttl_cache(
+    lambda strategy_id, weeks=12, db=None, current_user=None: f"full:{strategy_id}:{weeks}:{_analytics_cache_scope(db, current_user)}"
+)
 def get_strategy_full_analytics(
     strategy_id: UUID,
     weeks: int = Query(default=12, ge=1, le=104),

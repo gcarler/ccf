@@ -607,6 +607,8 @@ def require_auth_dep(request: Request, db: Session = Depends(get_db)) -> Usuario
     user = db.query(Usuario).filter(Usuario.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="Cuenta desactivada")
     return user
 
 
@@ -945,13 +947,10 @@ def logout(
 @router.get("/sessions", response_model=list[AuthSessionResponse])
 def list_sessions(
     db: Session = Depends(get_db),
-    current_user_id: str = Depends(require_auth_dep),
+    current_user: Usuario = Depends(require_auth_dep),
 ):
     """Lista las refresh sessions activas y no expiradas del usuario actual."""
-    try:
-        auth_user_id = uuid.UUID(current_user_id)
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Identidad de sesión inválida")
+    auth_user_id = current_user.id
 
     rows = (
         db.query(TokenSesion)
@@ -984,11 +983,11 @@ def list_sessions(
 def revoke_session(
     session_id: str,
     db: Session = Depends(get_db),
-    current_user_id: str = Depends(require_auth_dep),
+    current_user: Usuario = Depends(require_auth_dep),
 ):
     """Revoca una refresh session propia."""
+    auth_user_id = current_user.id
     try:
-        auth_user_id = uuid.UUID(current_user_id)
         target_session_id = uuid.UUID(session_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Identificador de sesión inválido")
@@ -1013,13 +1012,10 @@ def revoke_session(
 @router.post("/sessions/revoke-all", response_model=dict)
 def revoke_all_sessions(
     db: Session = Depends(get_db),
-    current_user_id: str = Depends(require_auth_dep),
+    current_user: Usuario = Depends(require_auth_dep),
 ):
     """Revoca todas las refresh sessions activas del usuario actual."""
-    try:
-        auth_user_id = uuid.UUID(current_user_id)
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Identidad de sesión inválida")
+    auth_user_id = current_user.id
 
     revoked_count = (
         db.query(TokenSesion)

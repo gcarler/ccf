@@ -69,6 +69,17 @@ class TestSessions:
     def test_list(self, full):
         assert full["c"].get("/api/v3/auth/sessions", headers=full["h"]).status_code in (200, 201)
 
+    def test_inactive_user_cannot_manage_sessions(self, db_session, full):
+        from backend.models_auth import Usuario
+
+        user = db_session.query(Usuario).first()
+        user.is_active = False
+        db_session.commit()
+        response = full["c"].get("/api/v3/auth/sessions", headers=full["h"])
+        assert response.status_code == 401
+        user.is_active = True
+        db_session.commit()
+
     def test_refresh_bad(self, full):
         assert full["c"].post("/api/v3/auth/refresh", json={"refresh_token": "bad-token"}).status_code == 401
 
