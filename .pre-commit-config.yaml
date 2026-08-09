@@ -30,7 +30,7 @@ repos:
     rev: 1.7.7
     hooks:
       - id: bandit
-        args: ["-r", "backend/", "-ll", "-s", "B314,B324,B608"]
+        args: ["-r", "backend/", "-c", ".bandit"]
         exclude: tests/
         pass_filenames: false
 

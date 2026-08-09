@@ -129,6 +129,23 @@ def _update_case_field(case, key: str, value) -> None:
     case.payload_web = payload
 
 
+def _actor_sede_uuid(db: Session, current_user: models.User) -> uuid.UUID | None:
+    """Resolve sede_id of the actor as UUID (for ORM ``sede_id`` filters).
+
+    ``get_user_sede_id`` returns ``str | None`` (canonical); UUID coercion
+    here keeps comparisons aligned with model columns declared as
+    ``UUID(as_uuid=True)`` (PostgreSQL UUID-vs-str mismatches otherwise).
+    ``None`` only for a superadmin without sede.
+    """
+    raw = get_user_sede_id(db, current_user.id)
+    if raw is None:
+        return None
+    try:
+        return uuid.UUID(str(raw))
+    except (TypeError, ValueError):
+        return None
+
+
 def _get_persona_or_404(db: Session, persona_ref: str, user_sede: Optional[uuid.UUID] = None):
     """Resolve a canonical UUID persona reference within the user's sede."""
     try:
@@ -410,8 +427,16 @@ def create_caso_task(
     user_sede = get_user_sede_id(db, current_user.id)
     _get_case_or_404(db, case_id, user_sede)
     case_uuid = uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+    # Axioma 3: estampar sede_id del caso en la tarea (backfill directo,
+    # evita JOIN futuro para scope).
+    case_sede = (
+        db.query(models.CasoCRM.sede_id)
+        .filter(models.CasoCRM.id == case_uuid, models.CasoCRM.deleted_at.is_(None))
+        .scalar()
+    )
     row = models.TareaCRM(
         caso_id=case_uuid,
+        sede_id=case_sede,
         asignado_a_id=_resolve_actor_persona_uuid(db, current_user),
         titulo=payload.title,
         descripcion=payload.description,
@@ -2092,6 +2117,7 @@ def create_volunteer(
 
     shift = models.VolunteerShift(
         persona_id=persona_id,
+        sede_id=_actor_sede_uuid(db, current_user),
         team_name=data.get("team_name"),
         role_name=data.get("role_name"),
         shift_start=shift_start,
@@ -2129,7 +2155,11 @@ def list_volunteers(
         return {"items": [], "total": total}
 
     persona_ids = [p.id for p in personas]
-    all_shifts = db.query(models.VolunteerShift).filter(models.VolunteerShift.persona_id.in_(persona_ids)).all()
+    sede_filter = _actor_sede_uuid(db, current_user)
+    shifts_q = db.query(models.VolunteerShift).filter(models.VolunteerShift.persona_id.in_(persona_ids))
+    if sede_filter is not None:
+        shifts_q = shifts_q.filter(models.VolunteerShift.sede_id == sede_filter)
+    all_shifts = shifts_q.all()
     shifts_by_persona: dict = defaultdict(list)
     for s in all_shifts:
         shifts_by_persona[s.persona_id].append(s)
@@ -2162,12 +2192,14 @@ def get_volunteer_detail(
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     persona = _get_persona_or_404(db, persona_id, user_sede)
-    shifts = (
+    sede_filter = _actor_sede_uuid(db, current_user)
+    shifts_q = (
         db.query(models.VolunteerShift)
         .filter(models.VolunteerShift.persona_id == persona.id)
-        .order_by(models.VolunteerShift.shift_start.desc())
-        .all()
     )
+    if sede_filter is not None:
+        shifts_q = shifts_q.filter(models.VolunteerShift.sede_id == sede_filter)
+    shifts = shifts_q.order_by(models.VolunteerShift.shift_start.desc()).all()
     latest_shift = shifts[0] if shifts else None
     total_hours = 0
     for shift in shifts:
@@ -2230,8 +2262,13 @@ def delete_volunteer(
     """Soft-delete: desactiva turnos de voluntario y marca persona como INACTIVA."""
     user_sede = get_user_sede_id(db, current_user.id)
     persona = _get_persona_or_404(db, persona_id, user_sede)
-    # Cancelar turnos futuros del voluntario (datos satélite, no Persona)
-    db.query(models.VolunteerShift).filter(models.VolunteerShift.persona_id == persona.id).update(
+    sede_filter = _actor_sede_uuid(db, current_user)
+    # Cancelar turnos futuros del voluntario (datos satélite, no Persona).
+    # Defense-in-depth: sólo shifts de la sede del actor (Axioma 3).
+    shifts_q = db.query(models.VolunteerShift).filter(models.VolunteerShift.persona_id == persona.id)
+    if sede_filter is not None:
+        shifts_q = shifts_q.filter(models.VolunteerShift.sede_id == sede_filter)
+    shifts_q.update(
         {models.VolunteerShift.deleted_at: utc_now()}, synchronize_session=False
     )
     # Soft-delete de la Persona

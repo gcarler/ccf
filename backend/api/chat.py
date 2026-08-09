@@ -18,6 +18,7 @@ Sprint 3 — Axioma 3 defense-in-depth
 from __future__ import annotations
 
 import json
+import logging
 import uuid as _uuid
 from datetime import datetime
 from typing import List, Optional
@@ -36,6 +37,7 @@ from backend.mesh_websockets import manager
 from backend.models_shared import _utcnow
 from backend.services.comment_notifications import notify_mention
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -820,7 +822,8 @@ def list_my_chat_mentions(
         if msg.mentions_raw:
             try:
                 mentions = json.loads(msg.mentions_raw)
-            except Exception:
+            except Exception as exc:  # pragma: no cover - skip msg with bad mentions payload
+                logger.debug("chat: skip msg %s, malformed mentions_raw: %s", msg.id, exc)
                 continue
         if my_id not in mentions:
             continue
@@ -1161,9 +1164,7 @@ def download_chat_attachment(
     if message is None:
         raise HTTPException(status_code=404, detail="Attachment not found")
 
-    uploads_root = os.path.normpath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "static", "chat_attachments")
-    )
+    uploads_root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "static", "chat_attachments"))
     filepath = os.path.normpath(os.path.join(uploads_root, sede_bucket, filename))
     if not filepath.startswith(uploads_root + os.sep) or not os.path.isfile(filepath):
         raise HTTPException(status_code=404, detail="Attachment not found")

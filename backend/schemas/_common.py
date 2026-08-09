@@ -49,3 +49,31 @@ class PaginatedResponse(BaseModel, Generic[T]):
     total: int
     skip: int = 0
     limit: int = 20
+
+
+class StatusResponse(BaseModel):
+    """Canonical response for simple success ack endpoints.
+
+    Used to replace ``response_model=dict`` with a strong contract so the
+    OpenAPI schema documents a single ``{"status": "success"[, "message": ...]}``
+    shape instead of an opaque ``dict``.
+
+    Endpoints that need to report counts (e.g. revoke-all sessions, bulk
+    delete) should use ``CountedStatusResponse`` below.
+    """
+
+    status: str = "success"
+    message: str | None = None
+
+
+class CountedStatusResponse(BaseModel):
+    """Canonical response for bulk-action success ack with an extra ``count``.
+
+    Use for endpoints that mutate N rows and need to report how many were
+    affected (e.g. ``POST /sessions/revoke-all`` revoking all active
+    refresh tokens).
+    """
+
+    status: str = "success"
+    count: int = 0
+    message: str | None = None

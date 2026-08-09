@@ -318,6 +318,7 @@ def _check_absence_trigger(db: Session, session_id: UUID, sede_id):
 
             ticket = SupportTicket(
                 user_id=persona_id,
+                sede_id=p.sede_id,
                 subject=f"Inasistencia recurrente: {p.nombre_completo}",
                 description=(
                     f"{p.nombre_completo} ha faltado 3 sesiones consecutivas en {house.name}. "

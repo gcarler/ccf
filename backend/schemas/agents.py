@@ -169,6 +169,9 @@ class AgentInsightCreate(BaseModel):
     confidence: float = 0.5
     source_agent: Optional[str] = None
     payload: Optional[dict] = None
+    # Persisted on the ORM column ``agent_insights.metadata`` (insight_data)
+    # and read back by callers (e.g. bootstrap_diagnostic_task).
+    metadata: Optional[dict] = None
 
 
 class AgentInsight(AgentInsightCreate):

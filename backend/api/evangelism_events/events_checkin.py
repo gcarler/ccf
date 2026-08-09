@@ -328,11 +328,7 @@ def unified_checkin(
             raise HTTPException(status_code=400, detail="Prefijo de QR desconocido")
 
     elif payload.persona_id:
-        persona = (
-            db.query(models.Persona)
-            .filter(models.Persona.id == payload.persona_id)
-            .first()
-        )
+        persona = db.query(models.Persona).filter(models.Persona.id == payload.persona_id).first()
         if not persona:
             raise HTTPException(status_code=404, detail="Persona no encontrada")
         # Si el evento requiere pre-registro, validar inscripción CONFIRMED.
@@ -393,7 +389,11 @@ def unified_checkin(
     )
 
     attendance, _created = _upsert_attendance(
-        db, event.id, session_day, persona.id, source=source,
+        db,
+        event.id,
+        session_day,
+        persona.id,
+        source=source,
         role_at_event=registration.participant_role_code if registration else None,
     )
 
@@ -489,7 +489,10 @@ def ccf_evt_checkin(
     )
 
     attendance, _created = _upsert_attendance(
-        db, event.id, session_day, persona.id,
+        db,
+        event.id,
+        session_day,
+        persona.id,
         source="qr_event_registration",
         role_at_event=reg.participant_role_code,
     )

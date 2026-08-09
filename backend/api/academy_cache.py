@@ -17,6 +17,7 @@ inestables entre sesiones).
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -25,6 +26,8 @@ from sqlalchemy.orm import DeclarativeBase, Session, selectinload
 
 from backend import models
 from backend.core.cache import cached
+
+logger = logging.getLogger(__name__)
 
 # ----------------- dashboard_metrics -----------------
 
@@ -56,9 +59,9 @@ def invalidate_dashboard_metrics(sede_id_str: str) -> None:
     key = f"academy:dashboard:metrics:v1:sede={sede_id_str}"
     try:
         get_redis().delete(key)
-    except Exception:
+    except Exception as exc:  # pragma: no cover - redis best-effort
         # Best-effort: si Redis está caído no rompemos el flujo de mutación.
-        pass
+        logger.debug("academy_cache: redis delete failed for %s: %s", key, exc)
 
 
 @cached(ttl=300, key_fn=_dashboard_metrics_key)

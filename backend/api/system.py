@@ -28,33 +28,51 @@ def global_search(
 ):
     """Búsqueda global inteligente."""
     results = []
-    projects = db.execute(
-        text("SELECT id, title, description FROM projects WHERE title LIKE :q OR description LIKE :q LIMIT 10"),
-        {"q": f"%{q}%"},
-    ).fetchall()
-    for p in projects:
+    sede_id = get_user_sede_id(db, current_user.id)
+    search_pattern = f"%{q}%"
+
+    # Search uses the same strict tenant boundary as the Projects module:
+    # active projects in the actor's sede only. A NULL ``sede_id`` is not
+    # visible to seated users, and soft-deleted projects are never searchable.
+    project_query = db.query(models.Project).filter(
+        models.Project.deleted_at.is_(None),
+        or_(
+            models.Project.title.ilike(search_pattern),
+            models.Project.description.ilike(search_pattern),
+        ),
+    )
+    if sede_id is not None:
+        project_query = project_query.filter(models.Project.sede_id == sede_id)
+    for project in project_query.limit(10).all():
         results.append(
             {
-                "id": p.id,
-                "title": p.title,
-                "detail": p.description,
+                "id": project.id,
+                "title": project.title,
+                "detail": project.description,
                 "type": "project",
-                "href": f"/projects/{p.id}",
+                "href": f"/projects/{project.id}",
             }
         )
 
-    tasks = db.execute(
-        text("SELECT id, project_id, title FROM project_tasks WHERE title LIKE :q LIMIT 10"),
-        {"q": f"%{q}%"},
-    ).fetchall()
-    for t in tasks:
+    task_query = (
+        db.query(models.ProjectTask)
+        .join(models.Project, models.Project.id == models.ProjectTask.project_id)
+        .filter(
+            models.ProjectTask.deleted_at.is_(None),
+            models.Project.deleted_at.is_(None),
+            models.ProjectTask.title.ilike(search_pattern),
+        )
+    )
+    if sede_id is not None:
+        task_query = task_query.filter(models.Project.sede_id == sede_id)
+    for task in task_query.limit(10).all():
         results.append(
             {
-                "id": t.id,
-                "title": t.title,
-                "detail": f"Tarea en proyecto #{t.project_id}",
+                "id": task.id,
+                "title": task.title,
+                "detail": f"Tarea en proyecto #{task.project_id}",
                 "type": "task",
-                "href": f"/projects/{t.project_id}",
+                "href": f"/projects/{task.project_id}",
             }
         )
 

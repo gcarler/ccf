@@ -5,7 +5,7 @@ This module is framework-agnostic and works with the CCF CMS models.
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # nosec B405  # build-only: this module never parses untrusted XML, only emits sitemaps
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 

@@ -48,12 +48,12 @@ CANCEL_EXPIRY_HOURS = 72
 DEFAULT_PARTICIPANT_ROLE = "VISITANTE_EVENTO"
 PARTICIPANT_ROLES = frozenset(
     {
-        "VISITANTE_EVENTO",        # Visitante o participante general
+        "VISITANTE_EVENTO",  # Visitante o participante general
         "CONTACTO_EVANGELISTICO",  # Contacto captado en contexto evangelístico
-        "MIEMBRO",                 # Miembro participante
-        "SERVIDOR",                # Persona que presta servicio
-        "INVITADO",                # Persona invitada especialmente
-        "VOLUNTARIO",              # Persona que colabora voluntariamente
+        "MIEMBRO",  # Miembro participante
+        "SERVIDOR",  # Persona que presta servicio
+        "INVITADO",  # Persona invitada especialmente
+        "VOLUNTARIO",  # Persona que colabora voluntariamente
     }
 )
 
@@ -386,8 +386,7 @@ def register(
         existing.check_in_at = None
         existing.check_out_at = None
         existing.registration_status = (
-            "WAITLIST" if capacity_full else
-            ("PENDING" if event.requires_email_verification else "CONFIRMED")
+            "WAITLIST" if capacity_full else ("PENDING" if event.requires_email_verification else "CONFIRMED")
         )
         existing.waiting_list_position = waitlist_count + 1 if capacity_full else None
         # plan_clasificador_contextual: hereda el rol por defecto del evento
@@ -405,8 +404,7 @@ def register(
             event_id=event.id,
             persona_id=persona.id,
             registration_status=(
-                "WAITLIST" if capacity_full else
-                ("PENDING" if event.requires_email_verification else "CONFIRMED")
+                "WAITLIST" if capacity_full else ("PENDING" if event.requires_email_verification else "CONFIRMED")
             ),
             waiting_list_position=waitlist_count + 1 if capacity_full else None,
             extras=payload.extras or {},
@@ -432,7 +430,11 @@ def register(
     # Email de confirmación (siempre).
     if reg.registration_status == "CONFIRMED":
         _send_confirmation_email(
-            db, event, reg, persona, public_base_url,
+            db,
+            event,
+            reg,
+            persona,
+            public_base_url,
             qr_token_plain=qr_token_plain,
             cancel_token_plain=cancel_token_plain,
         )
@@ -440,9 +442,7 @@ def register(
         verify_token, _ = generate_verify_token(reg.id)
         extras = dict(reg.extras or {})
         extras["_verify_token_hash"] = hash_token(verify_token)
-        extras["_verify_expires_at"] = (
-            _utcnow() + _dt.timedelta(hours=VERIFY_EXPIRY_HOURS)
-        ).isoformat()
+        extras["_verify_expires_at"] = (_utcnow() + _dt.timedelta(hours=VERIFY_EXPIRY_HOURS)).isoformat()
         reg.extras = extras
         # Persiste el hash ANTES del envío: un flush sin commit se pierde al
         # cerrar la sesión del request y la verificación nunca podría resolverse.
@@ -538,8 +538,8 @@ def _send_confirmation_email(
             <li><strong>Fecha:</strong> {escape(event_date_str)}</li>
             <li><strong>Lugar:</strong> {escape(location_str)}</li>
         </ul>
-        {f'<p>Tu QR: <a href="{escape(qr_link)}">descargar</a></p>' if qr_link else ''}
-        {f'<p style="font-size:12px;color:#9ca3af;">¿No podrás asistir? <a href="{escape(cancel_link)}">Cancela tu inscripción</a>.</p>' if cancel_link else ''}
+        {f'<p>Tu QR: <a href="{escape(qr_link)}">descargar</a></p>' if qr_link else ""}
+        {f'<p style="font-size:12px;color:#9ca3af;">¿No podrás asistir? <a href="{escape(cancel_link)}">Cancela tu inscripción</a>.</p>' if cancel_link else ""}
         <p>¡Te esperamos!</p>
         """
         send_email(to=persona.email, subject=f"Confirmación: {event.name}", html=html)
@@ -646,7 +646,7 @@ def verify(
     cancel_token_plain = None
     if capacity_full and event.waiting_list_enabled:
         reg.registration_status = "WAITLIST"
-        reg.waiting_list_position = (reg.waiting_list_position or 0)
+        reg.waiting_list_position = reg.waiting_list_position or 0
     else:
         reg.registration_status = "CONFIRMED"
         reg.confirmed_at = _utcnow()
@@ -670,7 +670,11 @@ def verify(
     # Email con el QR tras verificar (best-effort), igual que el path auto-confirmado.
     if reg.registration_status == "CONFIRMED":
         _send_confirmation_email(
-            db, event, reg, reg.persona, public_base_url,
+            db,
+            event,
+            reg,
+            reg.persona,
+            public_base_url,
             qr_token_plain=qr_token_plain,
             cancel_token_plain=cancel_token_plain,
         )
@@ -756,13 +760,14 @@ def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
             from html import escape
 
             from backend.services.email import send_email
+
             public_base_url = os.environ.get("CCF_PUBLIC_BASE_URL", "https://ccf.co")
             qr_link = f"{public_base_url}/public/events/{event.id}/qr?token={qr_token_plain}"
             if cancel_token_plain:
                 qr_link += f"&cancel={cancel_token_plain}"
             html = f"""
             <h2>¡Tu inscripción a {escape(event.name)} fue confirmada!</h2>
-            <p>Hola <strong>{escape(next_in_line.persona.first_name or '')}</strong>,</p>
+            <p>Hola <strong>{escape(next_in_line.persona.first_name or "")}</strong>,</p>
             <p>Se liberó un cupo. Ya estás confirmado para el evento.</p>
             <p>Tu QR: <a href="{escape(qr_link)}">ver ticket</a></p>
             """
@@ -789,6 +794,7 @@ def find_by_email_or_phone(
         )
     )
     from sqlalchemy import or_
+
     conditions = []
     if email:
         conditions.append(models.Persona.email == email)
@@ -815,14 +821,9 @@ def is_event_open_for_registration(event: models.CrmEvent, now=None) -> bool:
 
 # ── Funciones recuperadas de e0ddb8b0 (cierre, walk-in, followup CRM) ──
 
-def _event_row_lock(db: Session, event: models.CrmEvent):
-    return (
-        db.query(models.CrmEvent)
-        .with_for_update()
-        .filter(models.CrmEvent.id == event.id)
-        .first()
-    )
 
+def _event_row_lock(db: Session, event: models.CrmEvent):
+    return db.query(models.CrmEvent).with_for_update().filter(models.CrmEvent.id == event.id).first()
 
 
 def _set_event_persona_origin(persona: models.Persona, event: models.CrmEvent) -> None:
@@ -837,7 +838,6 @@ def _set_event_persona_origin(persona: models.Persona, event: models.CrmEvent) -
     if "nuevo_evento" not in tags and persona.origen_evento_id == event.id:
         tags.append("nuevo_evento")
     persona.tags = tags
-
 
 
 def _followup_task(db: Session, case, persona: models.Persona, *, attended: bool):
@@ -862,6 +862,7 @@ def _followup_task(db: Session, case, persona: models.Persona, *, attended: bool
         return existing
     task = TareaCRM(
         caso_id=case.id,
+        sede_id=case.sede_id,
         persona_id=persona.id,
         titulo=title,
         descripcion=(
@@ -876,7 +877,6 @@ def _followup_task(db: Session, case, persona: models.Persona, *, attended: bool
     )
     db.add(task)
     return task
-
 
 
 def ensure_event_crm_followup(
@@ -932,7 +932,6 @@ def ensure_event_crm_followup(
     return case
 
 
-
 def admit_walk_in(
     db: Session,
     event: models.CrmEvent,
@@ -980,7 +979,6 @@ def admit_walk_in(
     db.add(registration)
     db.flush()
     return registration
-
 
 
 def close_event_attendance(
@@ -1031,5 +1029,10 @@ def close_event_attendance(
     event.attendance_closed_by = closed_by
     db.flush()
     db.commit()
-    return {"closed": True, "idempotent": False, "absent": absent, "event_id": str(event.id), "session_date": session_date.isoformat()}
-
+    return {
+        "closed": True,
+        "idempotent": False,
+        "absent": absent,
+        "event_id": str(event.id),
+        "session_date": session_date.isoformat(),
+    }

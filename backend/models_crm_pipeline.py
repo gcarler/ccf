@@ -361,7 +361,9 @@ class CasoCRM(Base):
     pipeline = relationship("PipelineCRM", back_populates="casos")
     etapa_actual = relationship("EtapaPipeline", back_populates="casos")
     origen_evento = relationship("CrmEvent", foreign_keys=[origen_evento_id])
-    event_registrations = relationship("EventRegistration", back_populates="crm_case", foreign_keys="EventRegistration.crm_case_id")
+    event_registrations = relationship(
+        "EventRegistration", back_populates="crm_case", foreign_keys="EventRegistration.crm_case_id"
+    )
     interacciones = relationship("InteraccionCRM", back_populates="caso", cascade="all, delete-orphan")
     tareas = relationship("TareaCRM", back_populates="caso", cascade="all, delete-orphan")
 
@@ -398,6 +400,7 @@ class TareaCRM(Base):
     __tablename__ = "crm_tareas"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     caso_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="CASCADE"), nullable=True, index=True)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)
     asignado_a_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True, index=True)

@@ -31,7 +31,7 @@ export function WhiteboardComments({ object, onClose, onAddComment }: Whiteboard
     };
 
     return (
-        <div className="absolute right-4 top-20 z-50 w-80 rounded-xl border border-slate-200 bg-white shadow-2xl flex flex-col max-h-[60vh]">
+        <div className="absolute right-4 top-28 z-50 w-80 rounded-xl border border-slate-200 bg-white shadow-2xl flex flex-col max-h-[60vh]">
             <div className="flex items-center justify-between p-4 border-b border-slate-100">
                 <div className="flex items-center space-x-2">
                     <MessageSquare className="w-5 h-5 text-slate-500" />

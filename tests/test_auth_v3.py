@@ -7,6 +7,9 @@ from __future__ import annotations
 
 import uuid
 
+import httpx
+import pytest
+from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -208,6 +211,108 @@ class TestAuthV3Flow:
         assert response.status_code == 200
         data = response.json()
         assert data["google_oauth_enabled"] is True
+
+    def test_google_callback_redirects_without_exposing_tokens(
+        self, db_session: Session, monkeypatch
+    ):
+        """El callback Google entrega sesión por cookies, nunca por Location."""
+        from backend.api import auth_v3
+
+        user = _create_v3_user(db_session, email="oauth@ccf.com", password="SecurePass99!")
+        monkeypatch.setattr(auth_v3.settings, "google_client_id", "client-id")
+        monkeypatch.setattr(auth_v3.settings, "google_client_secret", "client-secret")
+        monkeypatch.setattr(auth_v3.settings, "frontend_url", "https://app.example.test")
+
+        class _GoogleResponse:
+            def __init__(self, payload):
+                self._payload = payload
+
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return self._payload
+
+        def fake_post(url, **kwargs):
+            assert url == "https://oauth2.googleapis.com/token"
+            assert kwargs["data"]["code"] == "oauth-code"
+            return _GoogleResponse({"access_token": "google-access-token"})
+
+        def fake_get(url, **kwargs):
+            assert url == "https://www.googleapis.com/oauth2/v2/userinfo"
+            assert kwargs["headers"]["Authorization"] == "Bearer google-access-token"
+            return _GoogleResponse({"email": user.email, "name": "OAuth User"})
+
+        monkeypatch.setattr(httpx, "post", fake_post)
+        monkeypatch.setattr(httpx, "get", fake_get)
+        request = Request(
+            {
+                "type": "http",
+                "method": "GET",
+                "path": "/api/v3/auth/google/callback",
+                "headers": [
+                    (b"user-agent", b"pytest"),
+                    (b"cookie", b"ccf_google_oauth_state=oauth-state"),
+                ],
+                "query_string": b"code=oauth-code&state=oauth-state",
+                "scheme": "https",
+                "server": ("api.example.test", 443),
+                "client": ("127.0.0.1", 1234),
+            }
+        )
+
+        response = auth_v3.google_callback(
+            code="oauth-code", state="oauth-state", request=request, db=db_session
+        )
+
+        assert response.status_code == 307
+        assert response.headers["location"] == "https://app.example.test/auth/callback"
+        assert "token" not in response.headers["location"].lower()
+        assert "access_token" not in response.headers["location"].lower()
+        assert "refresh" not in response.headers["location"].lower()
+        from backend.core.config import get_settings
+
+        settings = get_settings()
+        set_cookies = [value.decode("latin-1") for key, value in response.raw_headers if key == b"set-cookie"]
+        assert any(
+            f"{settings.access_token_cookie_name}=" in cookie and "HttpOnly" in cookie
+            for cookie in set_cookies
+        )
+        assert any(
+            f"{settings.refresh_token_cookie_name}=" in cookie and "HttpOnly" in cookie
+            for cookie in set_cookies
+        )
+        assert any(
+            "ccf_google_oauth_state=\"\";" in cookie and "Max-Age=0" in cookie
+            for cookie in set_cookies
+        )
+        assert all("SameSite=lax" in cookie for cookie in set_cookies)
+
+    def test_google_callback_rejects_invalid_state(self, db_session: Session):
+        from backend.api import auth_v3
+
+        request = Request(
+            {
+                "type": "http",
+                "method": "GET",
+                "path": "/api/v3/auth/google/callback",
+                "headers": [(b"cookie", b"ccf_google_oauth_state=expected")],
+                "query_string": b"code=oauth-code&state=wrong",
+                "client": ("127.0.0.1", 1234),
+            }
+        )
+        with pytest.raises(HTTPException) as exc_info:
+            auth_v3.google_callback(code="oauth-code", state="wrong", request=request, db=db_session)
+        assert exc_info.value.status_code == 400
+        assert "Estado OAuth" in str(exc_info.value.detail)
+
+    def test_google_callback_rejects_provider_error_without_code(self, client: TestClient):
+        response = client.get(
+            "/api/v3/auth/google/callback",
+            params={"error": "access_denied"},
+        )
+        assert response.status_code == 400
+        assert "Google OAuth error" in response.json()["detail"]
 
     def test_google_login_returns_service_error_when_not_configured(self, client: TestClient, monkeypatch):
         """El login Google debe fallar de forma explícita si no está habilitado."""

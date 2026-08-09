@@ -1,6 +1,7 @@
 """Persona CRUD and search helpers."""
 
 import datetime as dt
+import logging
 from typing import List, Optional
 from uuid import UUID
 
@@ -10,6 +11,8 @@ from sqlalchemy.orm import Session, load_only, selectinload
 from backend import models, schemas
 from backend.crud._utils import _to_uuid, _utcnow
 from backend.crud.crm_.shared import _audit_log
+
+logger = logging.getLogger(__name__)
 
 
 def _persona_live_column_names(db: Session) -> set[str]:
@@ -91,8 +94,8 @@ def create_persona(db: Session, payload: schemas.PersonaCreate, *, sede_id: UUID
                 "email": row.email,
             },
         )
-    except Exception:
-        pass
+    except Exception as exc:  # pragma: no cover - persona_registered is best-effort
+        logger.warning("crm.personas: persona_registered dispatch failed for %s: %s", row.id, exc)
 
     return row
 
@@ -455,8 +458,8 @@ def update_persona(db: Session, persona_id: str, payload: schemas.PersonaUpdate)
                     "agent_id": str(row.id),
                 },
             )
-    except Exception:
-        pass  # eventos son best-effort, nunca bloquean la transacción
+    except Exception as exc:  # pragma: no cover - best-effort, never blocks tx
+        logger.warning("crm.personas: spiritual_stage_transition dispatch failed for %s: %s", row.id, exc)
 
     return row
 

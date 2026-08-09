@@ -10,12 +10,17 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from backend import models
 from backend.core.database import get_db
-from backend.core.permissions import require_admin, require_module_access
+from backend.core.permissions import (
+    get_user_effective_permissions,
+    normalize_role,
+    require_admin,
+    require_module_access,
+)
 from backend.core.rate_limit import rate_limiter
 from backend.core.tenant import get_user_sede_id
 from backend.models_shared import _utcnow
@@ -39,8 +44,188 @@ def _generate_number(prefix: str, db: Session) -> str:
 
 
 def _finance_sede_scope(db: Session, user: models.User) -> str | None:
-    """Resolve the user's sede_id for multi-tenant scoping."""
-    return get_user_sede_id(db, user.id)
+    """Resolve and authorize the actor's finance scope.
+
+    ``None`` is a global scope only for an explicitly privileged platform
+    administrator. A missing sede on any other actor is rejected rather than
+    silently becoming a cross-tenant bypass.
+    """
+    sede_id = get_user_sede_id(db, user.id)
+    if sede_id is None and not _finance_platform_admin(db, user):
+        raise HTTPException(status_code=403, detail="Usuario sin sede asignada")
+    return sede_id
+
+
+def _finance_platform_admin(db: Session, user: models.User) -> bool:
+    """Return whether the actor has explicit platform-admin authority.
+
+    A NULL ``sede_id`` is only a legacy/global record escape hatch for a
+    platform administrator; it is never treated as global merely because a
+    lookup failed to resolve the actor's sede.
+    """
+    role = normalize_role(str(getattr(user, "role", "")))
+    if not role and getattr(user, "rol_plataforma", None):
+        role = normalize_role(user.rol_plataforma.nombre)
+    if role in {"admin", "super administrador", "superadmin"}:
+        return True
+    return "system:config" in get_user_effective_permissions(db, user)
+
+
+def _finance_scope_filter(column, sede_id: str | None, *, allow_legacy_unscoped: bool):
+    if sede_id is None:
+        return None
+    if allow_legacy_unscoped:
+        return or_(column == sede_id, column.is_(None))
+    return column == sede_id
+
+
+def _scoped_bank_account(
+    db: Session, account_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+) -> models.BankAccount:
+    """Load a bank account visible to the actor's sede.
+
+    ``None`` is the explicit superadmin/unscoped path. A seated actor must
+    never be able to operate on a NULL-sede or cross-sede account.
+    """
+    query = db.query(models.BankAccount).filter(models.BankAccount.id == account_id)
+    scope_filter = _finance_scope_filter(
+        models.BankAccount.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+    )
+    if scope_filter is not None:
+        query = query.filter(scope_filter)
+    account = query.with_for_update().first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Bank account not found")
+    return account
+
+
+def _scoped_chart_account(
+    db: Session, account_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+) -> models.ChartOfAccount:
+    query = db.query(models.ChartOfAccount).filter(models.ChartOfAccount.id == account_id)
+    scope_filter = _finance_scope_filter(
+        models.ChartOfAccount.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+    )
+    if scope_filter is not None:
+        query = query.filter(scope_filter)
+    account = query.first()
+    if not account:
+        # Keep the existing validation contract for journal lines while
+        # avoiding any cross-sede existence disclosure.
+        raise HTTPException(status_code=400, detail="Account not found in chart of accounts")
+    return account
+
+
+def _scoped_sales_order(
+    db: Session, order_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+) -> models.SalesOrder:
+    query = db.query(models.SalesOrder).filter(models.SalesOrder.id == order_id)
+    scope_filter = _finance_scope_filter(
+        models.SalesOrder.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+    )
+    if scope_filter is not None:
+        query = query.filter(scope_filter)
+    order = query.first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Sales order not found")
+    return order
+
+
+def _scoped_invoice(
+    db: Session, invoice_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+) -> models.Invoice:
+    query = db.query(models.Invoice).filter(models.Invoice.id == invoice_id)
+    scope_filter = _finance_scope_filter(models.Invoice.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped)
+    if scope_filter is not None:
+        query = query.filter(scope_filter)
+    invoice = query.first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    return invoice
+
+
+def _scoped_expense_item(
+    db: Session, item_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+) -> models.ExpenseItem:
+    query = (
+        db.query(models.ExpenseItem)
+        .join(models.ExpenseReport, models.ExpenseItem.expense_report_id == models.ExpenseReport.id)
+        .filter(models.ExpenseItem.id == item_id)
+    )
+    scope_filter = _finance_scope_filter(
+        models.ExpenseReport.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+    )
+    if scope_filter is not None:
+        query = query.filter(scope_filter)
+    item = query.first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Expense item not found")
+    return item
+
+
+def _scoped_document_tag(
+    db: Session, tag_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+) -> models.DocumentTag:
+    query = db.query(models.DocumentTag).filter(models.DocumentTag.id == tag_id)
+    scope_filter = _finance_scope_filter(
+        models.DocumentTag.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+    )
+    if scope_filter is not None:
+        query = query.filter(scope_filter)
+    tag = query.first()
+    if not tag:
+        raise HTTPException(status_code=404, detail="Document tag not found")
+    return tag
+
+
+def _scoped_persona(
+    db: Session, persona_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+) -> models.Persona:
+    query = db.query(models.Persona).filter(models.Persona.id == persona_id)
+    scope_filter = _finance_scope_filter(
+        models.Persona.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+    )
+    if scope_filter is not None:
+        query = query.filter(scope_filter)
+    persona = query.first()
+    if not persona:
+        raise HTTPException(status_code=404, detail="Signer persona not found")
+    return persona
+
+
+def _scoped_document(
+    db: Session, document_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+) -> models.Document:
+    query = db.query(models.Document).filter(models.Document.id == document_id)
+    scope_filter = _finance_scope_filter(
+        models.Document.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+    )
+    if scope_filter is not None:
+        query = query.filter(scope_filter)
+    document = query.first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return document
+
+
+def _scoped_receipt(
+    db: Session, receipt_id: Any, sede_id: str | None, *, allow_legacy_unscoped: bool = False
+) -> models.ExpenseReceipt:
+    query = (
+        db.query(models.ExpenseReceipt)
+        .join(models.ExpenseItem, models.ExpenseReceipt.expense_item_id == models.ExpenseItem.id)
+        .join(models.ExpenseReport, models.ExpenseItem.expense_report_id == models.ExpenseReport.id)
+        .filter(models.ExpenseReceipt.id == receipt_id)
+    )
+    scope_filter = _finance_scope_filter(
+        models.ExpenseReport.sede_id, sede_id, allow_legacy_unscoped=allow_legacy_unscoped
+    )
+    if scope_filter is not None:
+        query = query.filter(scope_filter)
+    receipt = query.first()
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+    return receipt
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -105,16 +290,21 @@ def create_bank_transaction(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
+    account = _scoped_bank_account(
+        db,
+        payload.bank_account_id,
+        sede_id,
+        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+    )
     tx = models.BankTransaction(**payload.model_dump())
     db.add(tx)
     db.flush()
 
-    account = db.query(models.BankAccount).filter_by(id=payload.bank_account_id).with_for_update().first()
-    if account:
-        if payload.transaction_type == "credit":
-            account.current_balance = (account.current_balance or 0) + payload.amount
-        elif payload.transaction_type == "debit":
-            account.current_balance = (account.current_balance or 0) - payload.amount
+    if payload.transaction_type == "credit":
+        account.current_balance = (account.current_balance or 0) + payload.amount
+    elif payload.transaction_type == "debit":
+        account.current_balance = (account.current_balance or 0) - payload.amount
 
     db.commit()
     db.refresh(tx)
@@ -156,6 +346,13 @@ def create_reconciliation(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
+    _scoped_bank_account(
+        db,
+        payload.bank_account_id,
+        sede_id,
+        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+    )
     rec = models.BankReconciliation(**payload.model_dump(), created_by_id=current_user.id)
     db.add(rec)
     db.commit()
@@ -227,19 +424,22 @@ def create_accounting_entry(
     if not payload.lines or len(payload.lines) < 2:
         raise HTTPException(status_code=400, detail="At least 2 lines are required")
 
+    sede_id = _finance_sede_scope(db, current_user)
     for line in payload.lines:
         if line.debit > 0 and line.credit > 0:
             raise HTTPException(status_code=400, detail="A line cannot have both debit and credit greater than 0")
-        account = db.query(models.ChartOfAccount).filter(models.ChartOfAccount.id == line.account_id).first()
-        if not account:
-            raise HTTPException(status_code=400, detail=f"Account {line.account_id} not found in chart of accounts")
+        _scoped_chart_account(
+            db,
+            line.account_id,
+            sede_id,
+            allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+        )
 
     total_debit = sum(line.debit for line in payload.lines)
     total_credit = sum(line.credit for line in payload.lines)
     if total_debit != total_credit:
         raise HTTPException(status_code=400, detail="Total debit must equal total credit")
 
-    sede_id = _finance_sede_scope(db, current_user)
     entry = models.AccountingEntry(
         entry_date=payload.entry_date,
         reference=payload.reference,
@@ -292,9 +492,25 @@ def post_accounting_entry(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "manage")),
 ):
-    entry = db.query(models.AccountingEntry).filter(models.AccountingEntry.id == entry_id).first()
+    sede_id = _finance_sede_scope(db, current_user)
+    query = db.query(models.AccountingEntry).filter(models.AccountingEntry.id == entry_id)
+    if sede_id is not None:
+        query = query.filter(models.AccountingEntry.sede_id == sede_id)
+    entry = query.first()
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
+
+    # Revalidate every referenced ledger account at the state transition too;
+    # an old/legacy draft must not become posted with cross-sede lines.
+    allow_legacy_unscoped = _finance_platform_admin(db, current_user)
+    for line in entry.lines:
+        _scoped_chart_account(
+            db,
+            line.account_id,
+            sede_id,
+            allow_legacy_unscoped=allow_legacy_unscoped,
+        )
+
     if entry.status != "draft":
         raise HTTPException(status_code=400, detail="Only draft entries can be posted")
     entry.status = "posted"
@@ -473,8 +689,15 @@ def create_invoice(
     if not payload.items:
         raise HTTPException(status_code=400, detail="At least one item is required")
     sede_id = _finance_sede_scope(db, current_user)
+    if payload.sales_order_id is not None:
+        _scoped_sales_order(
+            db,
+            payload.sales_order_id,
+            sede_id,
+            allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+        )
     subtotal = sum(item.quantity * item.unit_price for item in payload.items)
-    user_sede_id = getattr(current_user, "sede_id", None) or _finance_sede_scope(db, current_user)
+    user_sede_id = sede_id
     tax_config = None
     if user_sede_id:
         tax_config = (
@@ -486,7 +709,10 @@ def create_invoice(
             .first()
         )
     sede_country = tax_config.country_code if tax_config else "CO"
-    if not tax_config:
+    # A seated actor must not inherit a tax configuration from another
+    # tenant merely because it shares a country code. Only the unscoped
+    # superadmin path may use the global country fallback.
+    if not tax_config and sede_id is None:
         tax_config = (
             db.query(models.TaxConfiguration)
             .filter(
@@ -558,9 +784,8 @@ def record_invoice_payment(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
-    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
-    if not invoice:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+    sede_id = _finance_sede_scope(db, current_user)
+    invoice = _scoped_invoice(db, invoice_id, sede_id)
 
     payment = models.InvoicePayment(
         invoice_id=invoice.id,
@@ -597,9 +822,13 @@ def send_electronic_invoice(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "manage")),
 ):
-    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
-    if not invoice:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+    sede_id = _finance_sede_scope(db, current_user)
+    _scoped_invoice(
+        db,
+        invoice_id,
+        sede_id,
+        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+    )
 
     raise HTTPException(
         status_code=422,
@@ -784,6 +1013,13 @@ def upload_expense_receipt(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
+    sede_id = _finance_sede_scope(db, current_user)
+    _scoped_expense_item(
+        db,
+        payload.expense_item_id,
+        sede_id,
+        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+    )
     receipt = models.ExpenseReceipt(
         expense_item_id=payload.expense_item_id,
         image_url=payload.image_url,
@@ -805,9 +1041,13 @@ def update_receipt_ocr(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
-    receipt = db.query(models.ExpenseReceipt).filter(models.ExpenseReceipt.id == receipt_id).first()
-    if not receipt:
-        raise HTTPException(status_code=404, detail="Receipt not found")
+    sede_id = _finance_sede_scope(db, current_user)
+    receipt = _scoped_receipt(
+        db,
+        receipt_id,
+        sede_id,
+        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+    )
     receipt.ocr_text = ocr_text
     receipt.ocr_confidence = ocr_confidence
     if ai_metadata:
@@ -828,6 +1068,18 @@ def create_document(
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
     sede_id = _finance_sede_scope(db, current_user)
+    # Validate all nested references before creating the document, so a bad
+    # tag cannot leave a partially flushed row in the current transaction.
+    allow_legacy_unscoped = _finance_platform_admin(db, current_user)
+    document_tags = [
+        _scoped_document_tag(
+            db,
+            tag_id,
+            sede_id,
+            allow_legacy_unscoped=allow_legacy_unscoped,
+        )
+        for tag_id in payload.tag_ids
+    ]
     doc = models.Document(
         title=payload.title,
         description=payload.description,
@@ -842,10 +1094,8 @@ def create_document(
     db.add(doc)
     db.flush()
 
-    for tag_id in payload.tag_ids:
-        tag = db.query(models.DocumentTag).filter(models.DocumentTag.id == tag_id).first()
-        if tag:
-            db.add(models.DocumentTagLink(document_id=doc.id, tag_id=tag.id))
+    for tag in document_tags:
+        db.add(models.DocumentTagLink(document_id=doc.id, tag_id=tag.id))
 
     db.commit()
     db.refresh(doc)
@@ -883,18 +1133,32 @@ def update_document(
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
     sede_id = _finance_sede_scope(db, current_user)
-    q = db.query(models.Document).filter(models.Document.id == document_id)
-    if sede_id:
-        q = q.filter(models.Document.sede_id == sede_id)
-    doc = q.first()
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
+    doc = _scoped_document(
+        db,
+        document_id,
+        sede_id,
+        allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+    )
 
-    for k, v in payload.model_dump(exclude_unset=True).items():
+    update_data = payload.model_dump(exclude_unset=True)
+    replacement_tags = None
+    if "tag_ids" in update_data and update_data["tag_ids"] is not None:
+        # Resolve the complete replacement set before deleting existing links.
+        replacement_tags = [
+            _scoped_document_tag(
+                db,
+                tid,
+                sede_id,
+                allow_legacy_unscoped=_finance_platform_admin(db, current_user),
+            )
+            for tid in update_data["tag_ids"]
+        ]
+
+    for k, v in update_data.items():
         if k == "tag_ids" and v is not None:
             db.query(models.DocumentTagLink).filter(models.DocumentTagLink.document_id == doc.id).delete()
-            for tid in v:
-                db.add(models.DocumentTagLink(document_id=doc.id, tag_id=tid))
+            for tag in replacement_tags or []:
+                db.add(models.DocumentTagLink(document_id=doc.id, tag_id=tag.id))
         elif k != "tag_ids":
             setattr(doc, k, v)
 
@@ -913,7 +1177,9 @@ def delete_document(
     doc = db.query(models.Document).filter(models.Document.id == document_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-    if sede_id and doc.sede_id and str(doc.sede_id) != sede_id:
+    if sede_id is not None and (doc.sede_id is None or str(doc.sede_id) != sede_id):
+        # Preserve the documented contract for this mutator: cross-sede
+        # access is forbidden, while NULL-sede legacy rows remain blocked.
         raise HTTPException(status_code=403, detail="Document does not belong to your sede")
     doc.status = "archived"
     db.commit()
@@ -959,6 +1225,16 @@ def create_sign_request(
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
     sede_id = _finance_sede_scope(db, current_user)
+    allow_legacy_unscoped = _finance_platform_admin(db, current_user)
+    for signer in payload.signers:
+        if signer.persona_id is not None:
+            _scoped_persona(
+                db,
+                signer.persona_id,
+                sede_id,
+                allow_legacy_unscoped=allow_legacy_unscoped,
+            )
+
     req = models.SignRequest(
         title=payload.title,
         description=payload.description,

@@ -1,5 +1,6 @@
 """CRM task CRUD."""
 
+import logging
 import uuid
 from typing import List, Optional
 
@@ -13,13 +14,19 @@ from backend.crud.crm_.shared import (
     resolve_persona_id_from_identity,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def get_crm_tasks(
     db: Session,
     assignee_persona_id: Optional[uuid.UUID] = None,
     persona_id: Optional[uuid.UUID] = None,
+    *,
+    sede_id: Optional[uuid.UUID] = None,
 ) -> List[models.TareaCRM]:
     query = db.query(models.TareaCRM).filter(models.TareaCRM.deleted_at.is_(None))
+    if sede_id is not None:
+        query = query.filter(models.TareaCRM.sede_id == sede_id)
     if assignee_persona_id:
         query = query.filter(models.TareaCRM.assignee_id == assignee_persona_id)
     if persona_id:
@@ -66,6 +73,15 @@ def create_crm_task(
     )
 
     row = models.TareaCRM(**data)
+    # Axioma 3 — Multi-Tenant: estampar sede_id del actor en el row. El
+    # ``_crud_scope_re_check_task`` ya validó que las FK entrantes están
+    # en la misma sede; aquí persistimos el atributo directo para que
+    # futuras lecturas puedan filtrar por ``sede_id`` sin JOIN.
+    from backend.crud.crm_.shared import _actor_sede_or_none
+
+    actor_sede = _actor_sede_or_none(db, actor_user_id)
+    if actor_sede is not None:
+        row.sede_id = actor_sede
     db.add(row)
     db.flush()  # poblar row.id antes del audit log
     _audit_log(
@@ -94,6 +110,7 @@ def update_crm_task(
     payload: schemas.CrmTaskUpdate,
     *,
     actor_user_id: str | uuid.UUID,
+    sede_id: Optional[uuid.UUID] = None,
 ) -> models.TareaCRM:
     """Actualiza una tarea CRM y registra audit log sólo si hay cambios reales.
 
@@ -121,8 +138,10 @@ def update_crm_task(
             models.TareaCRM.id == task_id,
             models.TareaCRM.deleted_at.is_(None),
         )
-        .first()
     )
+    if sede_id is not None:
+        row = row.filter(models.TareaCRM.sede_id == sede_id)
+    row = row.first()
     if not row:
         return None
 
@@ -217,15 +236,22 @@ def _value_for_audit(value):
     return value
 
 
-def delete_crm_task(db: Session, task_id: uuid.UUID) -> bool:
-    row = (
+def delete_crm_task(
+    db: Session,
+    task_id: uuid.UUID,
+    *,
+    sede_id: Optional[uuid.UUID] = None,
+) -> bool:
+    q = (
         db.query(models.TareaCRM)
         .filter(
             models.TareaCRM.id == task_id,
             models.TareaCRM.deleted_at.is_(None),
         )
-        .first()
     )
+    if sede_id is not None:
+        q = q.filter(models.TareaCRM.sede_id == sede_id)
+    row = q.first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -259,5 +285,5 @@ def _emit_mesh_event(event_type: str, case_id: str, persona_id: str | None = Non
             **(extra or {}),
         }
         redis_client.publish(channel, json.dumps(payload, default=str))
-    except Exception:
-        pass  # Fire-and-forget: no bloquear el request si Redis no está disponible
+    except Exception as exc:  # pragma: no cover - fire-and-forget, never blocks request
+        logger.warning("crm.tasks: ws publish failed for case %s: %s", case_id, exc)

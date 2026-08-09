@@ -1,0 +1,18 @@
+# Bandit configuration for the CCF backend.
+#
+# Used by pre-commit and CI to detect security anti-patterns.
+# See `.pre-commit-config.yaml` (bandit hook) for invocation flags.
+
+skips:
+  - B314   # blacklist: pickle — used for cache payloads (signed envelope)
+  - B324   # hashlib: weak hash function — MD5 used for non-crypto checksums only
+  - B608   # hardcoded SQL expressions — SQLAlchemy ORM is used, false positives
+
+exclude_dirs:
+  - backend/scratch
+  - backend/management
+  - .venv
+  - __pycache__
+
+targets:
+  - backend

@@ -4,7 +4,7 @@ import argparse
 import datetime as dt
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404  # CLI: subprocess is required to invoke pg_dump; args are not shell-interpolated
 from pathlib import Path
 
 from sqlalchemy.engine.url import make_url
@@ -46,7 +46,7 @@ def backup_database(target_dir: str) -> Path:
             "-f",
             str(destination),
         ]
-        subprocess.run(command, check=True, env=env)
+        subprocess.run(command, check=True, env=env)  # nosec B603  # admin CLI: pg_dump with explicit argv + scoped env (no shell=True)
         return destination
 
     raise RuntimeError("Unsupported database for backup")

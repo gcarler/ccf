@@ -92,8 +92,8 @@ class ImageOptimizer:
                 img = img.rotate(270, expand=True)
             elif orientation == 8:
                 img = img.rotate(90, expand=True)
-        except Exception:
-            pass  # best-effort orientation fix
+        except Exception as exc:  # pragma: no cover - best-effort orientation fix
+            log.debug("image_optimizer: EXIF orientation fix failed: %s", exc)
 
         # --- RGBA → RGB  (WebP supports alpha, but JPEG doesn't — we output
         # WebP so alpha is fine; still strip alpha for truly opaque images)

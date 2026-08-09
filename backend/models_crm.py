@@ -120,9 +120,7 @@ class CrmEvent(Base):
     target_persona_ids = Column(JSON, nullable=True)
     fixed_date = Column(DateTime(timezone=True), nullable=True)
     attendance_closed_at = Column(DateTime(timezone=True), nullable=True, index=True)
-    attendance_closed_by = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
-    )
+    attendance_closed_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
@@ -134,15 +132,9 @@ class CrmEvent(Base):
 
     attendances = relationship("EventAttendance", back_populates="event")
     assignments = relationship("EventAssignment", back_populates="event")
-    registrations = relationship(
-        "EventRegistration", back_populates="event", cascade="all, delete-orphan"
-    )
-    campaigns = relationship(
-        "EventCampaign", back_populates="event", cascade="all, delete-orphan"
-    )
-    identity_challenges = relationship(
-        "EventIdentityChallenge", back_populates="event", cascade="all, delete-orphan"
-    )
+    registrations = relationship("EventRegistration", back_populates="event", cascade="all, delete-orphan")
+    campaigns = relationship("EventCampaign", back_populates="event", cascade="all, delete-orphan")
+    identity_challenges = relationship("EventIdentityChallenge", back_populates="event", cascade="all, delete-orphan")
 
 
 class EventAssignment(Base):
@@ -241,7 +233,8 @@ class EventRegistration(Base):
         # pero el ORm/test suite con SQLite puede ser más estricto).
         Index(
             "uq_event_reg_waitlist_position",
-            "event_id", "waiting_list_position",
+            "event_id",
+            "waiting_list_position",
             postgresql_where=text("waiting_list_position IS NOT NULL"),
             sqlite_where=text("waiting_list_position IS NOT NULL"),
         ),
@@ -251,12 +244,8 @@ class EventRegistration(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    event_id = Column(
-        UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False
-    )
-    persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False
-    )
+    event_id = Column(UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
     registration_status = Column(String(20), nullable=False, default="PENDING")
     qr_token = Column(String(128), nullable=True, unique=True, index=True)
     qr_token_hash = Column(String(128), nullable=True, index=True)
@@ -266,9 +255,7 @@ class EventRegistration(Base):
     cancelled_at = Column(DateTime(timezone=True), nullable=True)
     check_in_at = Column(DateTime(timezone=True), nullable=True)
     check_out_at = Column(DateTime(timezone=True), nullable=True)
-    checked_in_by = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
-    )
+    checked_in_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     source = Column(String(30), nullable=False, default="public_form")
     extras = Column(JSON, default=dict)
     # ── Preferencias de comunicación (plan followup, migración 20260807_0001) ──
@@ -289,12 +276,8 @@ class EventRegistration(Base):
     last_reminder_sent_at = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
-    updated_at = Column(
-        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
-    )
-    crm_case_id = Column(
-        UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="SET NULL"), nullable=True, index=True
-    )
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    crm_case_id = Column(UUID(as_uuid=True), ForeignKey("crm_casos.id", ondelete="SET NULL"), nullable=True, index=True)
 
     event = relationship("CrmEvent", back_populates="registrations")
     persona = relationship("Persona", foreign_keys=[persona_id])
@@ -328,9 +311,7 @@ class EventCampaign(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    event_id = Column(
-        UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False
-    )
+    event_id = Column(UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False)
     name = Column(String(200), nullable=False)
     # plan_followup: clave estable del catálogo default (migración 20260808_0002)
     # para reutilizar/recrear campañas estándar sin duplicar.
@@ -349,14 +330,10 @@ class EventCampaign(Base):
     target_status = Column(JSON, default=list)
     sent_count = Column(Integer, nullable=False, default=0)
     last_sent_at = Column(DateTime(timezone=True), nullable=True)
-    created_by_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True
-    )
+    created_by_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
-    updated_at = Column(
-        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False
-    )
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     event = relationship("CrmEvent", back_populates="campaigns")
@@ -809,6 +786,7 @@ class DonationCategory(Base):
 class VolunteerShift(Base):
     __tablename__ = "volunteer_shifts"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     persona_id = Column(
         UUID(as_uuid=True),
         ForeignKey("personas.id"),
@@ -1158,6 +1136,7 @@ class Fund(Base):
 class SupportTicket(Base):
     __tablename__ = "support_tickets"
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     subject = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
@@ -1200,7 +1179,9 @@ class EventCommunicationDelivery(Base):
     __tablename__ = "event_communication_deliveries"
     __table_args__ = (
         UniqueConstraint(
-            "registration_id", "campaign_id", "communication_key",
+            "registration_id",
+            "campaign_id",
+            "communication_key",
             name="uq_event_communication_delivery_key",
         ),
         Index("ix_event_delivery_registration", "registration_id"),
@@ -1213,9 +1194,7 @@ class EventCommunicationDelivery(Base):
     registration_id = Column(
         UUID(as_uuid=True), ForeignKey("event_registrations.id", ondelete="CASCADE"), nullable=False
     )
-    campaign_id = Column(
-        UUID(as_uuid=True), ForeignKey("event_campaigns.id", ondelete="CASCADE"), nullable=False
-    )
+    campaign_id = Column(UUID(as_uuid=True), ForeignKey("event_campaigns.id", ondelete="CASCADE"), nullable=False)
     event_update_id = Column(String(100), nullable=True)
     communication_key = Column(String(180), nullable=False)
     channel = Column(String(20), nullable=False)
@@ -1255,16 +1234,12 @@ class EventIdentityChallenge(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    event_id = Column(
-        UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False, index=True
-    )
+    event_id = Column(UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False, index=True)
     identifier_type = Column(String(20), nullable=False)
     identifier_hash = Column(String(128), nullable=False)
     challenge_hash = Column(String(128), nullable=False)
     verified_identity_token_hash = Column(String(128), nullable=True)
-    persona_id = Column(
-        UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True
-    )
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     attempt_count = Column(Integer, nullable=False, default=0, server_default="0")
     max_attempts = Column(Integer, nullable=False, default=5, server_default="5")

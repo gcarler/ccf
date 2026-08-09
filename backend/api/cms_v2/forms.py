@@ -202,12 +202,14 @@ def _run_hcaptcha_sync(token: str, *, remote_ip: str | None = None) -> bool:
             import threading
 
             result: list[bool] = []
+
             def _runner():
                 new = asyncio.new_event_loop()
                 try:
                     result.append(new.run_until_complete(verify_hcaptcha(token, remote_ip=remote_ip)))
                 finally:
                     new.close()
+
             t = threading.Thread(target=_runner, daemon=True)
             t.start()
             t.join(timeout=15)

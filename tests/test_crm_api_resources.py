@@ -9,6 +9,7 @@ import pytest
 from backend import models
 from tests.conftest import auth_headers as _auth_headers
 from tests.conftest import seed_admin as _seed_admin
+from tests.conftest import seed_user_with_role as _seed_user_with_role
 
 
 def _ok(status):
@@ -536,3 +537,97 @@ class TestAutomations:
         assert _ok(resp.status_code)
         data = resp.json()
         assert len(data) > 0
+
+
+class TestCampaignEnvio:
+    """Regresión: send_plantilla_campaign crea la bitácora de envíos.
+
+    El bug: ``create_envio`` exige el kwarg ``caso_id`` y las dos llamadas
+    de la campaña no lo pasaban → TypeError al enviar plantillas.
+    """
+
+    def _make_plantilla(self, full, db_session):
+        cat = models.CategoriaRecurso(id=uuid.uuid4(), nombre=f"Cat-{uuid.uuid4().hex[:6]}")
+        db_session.add(cat)
+        db_session.commit()
+        resp = full["c"].post(
+            "/api/crm/resources/plantillas",
+            json={
+                "categoria_id": str(cat.id),
+                "titulo": "Camp Plantilla",
+                "canal": "WHATSAPP",
+                "contenido_texto": "Hola {{nombre}}",
+            },
+            headers=full["h"],
+        )
+        assert resp.status_code == 201, resp.text
+        return resp.json()["id"]
+
+    def _seed_target(self, db_session, sede_id, email, with_phone):
+        # Neutraliza a TODAS las personas existentes: el admin (y cualquier
+        # otro seed) tiene church_role por defecto "Miembro", que también
+        # matchearía el segmento "active" (sin teléfono → FALLIDO) y
+        # volvería indeterminado el conteo del test. Solo la target queda
+        # con church_role="miembro".
+        for existing in db_session.query(models.Persona).filter(models.Persona.sede_id == sede_id).all():
+            existing.church_role = "Visitante"
+        db_session.flush()
+        user, persona, _ = _seed_user_with_role(db_session, "persona", email)
+        persona.sede_id = sede_id
+        persona.church_role = "miembro"  # segmento "active"
+        if with_phone:
+            persona.phone = "3001234567"
+        db_session.add(persona)
+        db_session.commit()
+        return persona
+
+    def test_campaign_delivered_creates_envio(self, full, db_session):
+        """Ruta entregada: persona con teléfono → bitácora ENVIADO."""
+        self._seed_target(db_session, full["sede"].id, "targetok@camp.com", with_phone=True)
+        pid = self._make_plantilla(full, db_session)
+
+        resp = full["c"].post(
+            f"/api/crm/resources/plantillas/{pid}/campaign",
+            json={
+                "campaign_name": "Campaña regresión OK",
+                "target_segments": ["active"],
+                "default_variables": {"nombre": "Juan"},
+            },
+            headers=full["h"],
+        )
+        assert resp.status_code == 201, f"{resp.status_code}: {resp.text[:300]}"
+        data = resp.json()
+        assert data["status"] == "success"
+        assert data["delivered_count"] == 1
+        assert len(data["envio_ids"]) == 1
+
+        envio = db_session.query(models.BitacoraEnvioPlantilla).filter(
+            models.BitacoraEnvioPlantilla.id == uuid.UUID(data["envio_ids"][0])
+        ).first()
+        assert envio is not None
+        assert envio.estado == models.EstadoEnvioPlantilla.ENVIADO
+
+    def test_campaign_failed_without_phone_creates_envio(self, full, db_session):
+        """Ruta fallida: persona sin teléfono → bitácora FALLIDO sin crashear."""
+        self._seed_target(db_session, full["sede"].id, "targetnophone@camp.com", with_phone=False)
+        pid = self._make_plantilla(full, db_session)
+
+        resp = full["c"].post(
+            f"/api/crm/resources/plantillas/{pid}/campaign",
+            json={
+                "campaign_name": "Campaña regresión fail",
+                "target_segments": ["active"],
+            },
+            headers=full["h"],
+        )
+        assert resp.status_code == 201, f"{resp.status_code}: {resp.text[:300]}"
+        data = resp.json()
+        assert data["status"] == "partial"
+        assert data["failed_count"] == 1
+        assert len(data["envio_ids"]) == 1
+
+        envio = db_session.query(models.BitacoraEnvioPlantilla).filter(
+            models.BitacoraEnvioPlantilla.id == uuid.UUID(data["envio_ids"][0])
+        ).first()
+        assert envio is not None
+        assert envio.estado == models.EstadoEnvioPlantilla.FALLIDO

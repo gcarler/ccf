@@ -54,6 +54,7 @@ class SupportTicketCreate(BaseModel):
 class SupportTicket(BaseModel):
     id: UUID
     user_id: UUID
+    sede_id: Optional[UUID] = None
     subject: str
     description: str
     status: str = "open"

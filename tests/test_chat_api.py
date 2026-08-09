@@ -357,6 +357,53 @@ def test_send_message_with_mention_creates_notification(client, db_session):
     assert notifications[0].title == "Te mencionaron en un chat"
 
 
+def test_send_message_with_reply_preview(client, db_session):
+    """Regresión: responder a un mensaje serializa ``reply_preview``
+    (ReplyPreview no se exportaba en schemas/__init__.py → AttributeError)."""
+    admin, persona, sede = _seed_admin(db_session)
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "replyuser@example.com")
+    user2.sede_id = sede.id
+    persona2.sede_id = sede.id
+    db_session.add_all([user2, persona2])
+    db_session.commit()
+    headers = _auth_headers(client)
+
+    resp = client.post(
+        "/api/chat/conversations",
+        json={"participant_ids": [str(user2.id)]},
+        headers=headers,
+    )
+    assert resp.status_code == 201
+    conv_id = resp.json()["id"]
+
+    resp1 = client.post(
+        f"/api/chat/conversations/{conv_id}/messages",
+        json={"content": "Mensaje original"},
+        headers=headers,
+    )
+    assert resp1.status_code == 201
+    msg1 = resp1.json()
+
+    resp2 = client.post(
+        f"/api/chat/conversations/{conv_id}/messages",
+        json={"content": "Respuesta con reply", "reply_to_id": msg1["id"]},
+        headers=headers,
+    )
+    assert resp2.status_code == 201, f"Reply falló: {resp2.status_code} {resp2.text[:300]}"
+    data = resp2.json()
+    assert data["reply_preview"] is not None
+    assert data["reply_preview"]["id"] == msg1["id"]
+    assert data["reply_preview"]["content"] == "Mensaje original"
+    assert data["reply_preview"]["sender_name"]
+
+    # La lista de mensajes también serializa el reply_preview.
+    resp3 = client.get(f"/api/chat/conversations/{conv_id}/messages", headers=headers)
+    assert resp3.status_code == 200
+    msgs = resp3.json()
+    reply_msg = next(m for m in msgs if m["id"] == data["id"])
+    assert reply_msg["reply_preview"]["content"] == "Mensaje original"
+
+
 def test_list_my_messages_and_mentions(client, db_session):
     """CHAT-MED: /chat/my-messages and /chat/mentions return scoped data."""
     admin, persona, sede = _seed_admin(db_session)

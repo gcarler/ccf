@@ -987,11 +987,7 @@ def list_cms_sections(
     # que inflaba cada query de secciones a ~10 JOINs. El consumidor
     # (public_page) solo serializa columnas planas de ``CmsSection`` (type,
     # props_json, sort_order, is_visible, status) — no toca relaciones.
-    query = (
-        db.query(models.CmsSection)
-        .options(lazyload("*"))
-        .filter(models.CmsSection.page_id == page_id)
-    )
+    query = db.query(models.CmsSection).options(lazyload("*")).filter(models.CmsSection.page_id == page_id)
     if section_type:
         query = query.filter(models.CmsSection.type == section_type)
     total = query.count()

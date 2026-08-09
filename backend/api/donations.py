@@ -204,8 +204,8 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
         try:
             parsed = json.loads(body)
             data_id = str(parsed.get("data", {}).get("id", ""))
-        except Exception:
-            pass
+        except Exception as exc:  # pragma: no cover - malformed body
+            logger.warning("donations: webhook body parse failed: %s", exc)
 
         # HMAC-SHA256 sobre "<data.id><ts>"
         manifest = f"{data_id}{ts}"

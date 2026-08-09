@@ -44,8 +44,8 @@ class ConnectionManager:
             for connection in connections:
                 try:
                     await connection.send_text(payload)
-                except Exception:
-                    pass
+                except Exception as exc:  # pragma: no cover - dead/stale socket
+                    log.debug("ws_manager: send_text failed (stale connection): %s", exc)
 
 
 ws_manager = ConnectionManager()

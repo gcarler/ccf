@@ -222,8 +222,8 @@ class AgentOrchestrator:
                 content,
                 tools_used=tools_used,
             )
-        except Exception:
-            pass  # Non-critical
+        except Exception as exc:  # pragma: no cover - save_conversation_turn is non-critical
+            logger.warning("agents: failed to save conversation turn for %s: %s", conversation_id, exc)
 
 
 def bootstrap_diagnostic_task(
