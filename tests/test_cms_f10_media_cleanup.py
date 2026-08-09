@@ -6,10 +6,10 @@ pertenece a la sede del actor, y no aparece entre los IDs recolectados por
 sede.
 
 Fix:
-  - ``crud/cms.py``: ``cleanup_orphan_cms_media`` (API path, con
+  - ``crud/cms/media.py``: ``cleanup_orphan_cms_media`` (API path, con
     defense-in-depth re-check de sede) + ``cleanup_orphan_cms_media_scheduled``
     (variante para ``scheduler.py`` sin actor).
-  - ``api/cms.py``: ``DELETE /cms/media/cleanup`` con ``dry_run`` y
+  - ``api/cms/v1.py``: ``DELETE /cms/media/cleanup`` con ``dry_run`` y
     ``permanent`` flags + guard de path traversal H-05.
   - ``scheduler.py``: ``_maybe_run_orphan_media_cleanup`` opt-in via
     ``CMS_ORPHAN_MEDIA_CLEANUP=1`` env.
@@ -175,7 +175,7 @@ class TestF10CleanupOrphanCmsMedia:
         assert orphan_media.status == "archived"
 
     def test_permanent_hard_deletes_orphan_row(self, db_session, tmp_path):
-        # Patch el root de uploads a un tmp_path para no tocar FS real.
+        # Usa un tmp_path para documentar el escenario sin tocar FS real.
         admin, persona, sede = _seed(db_session, email="cmsF10perm@example.com")
         _seed_site(db_session, sede_id=sede.id)
         ref_media = _seed_media(db_session, sede_id=sede.id, created_by_persona_id=persona.id)
@@ -191,14 +191,14 @@ class TestF10CleanupOrphanCmsMedia:
         orphan_path.write_bytes(b"FAKE")
 
         with (
-            patch("backend.crud.cms.os.path.exists", side_effect=lambda p: p == str(orphan_path)),
-            patch("backend.crud.cms.os.path.isfile", side_effect=lambda p: p == str(orphan_path)),
-            patch("backend.crud.cms.os.remove") as mock_remove,
-            patch("backend.crud.cms.os.path.normpath", wraps=os.path.normpath) as mock_normpath,
+            patch("backend.crud.cms.media.os.path.exists", side_effect=lambda p: p == str(orphan_path)),
+            patch("backend.crud.cms.media.os.path.isfile", side_effect=lambda p: p == str(orphan_path)),
+            patch("backend.crud.cms.media.os.remove") as mock_remove,
+            patch("backend.crud.cms.media.os.path.normpath", wraps=os.path.normpath) as mock_normpath,
         ):
-            # Forzamos el path base a tmp_path.patchando la constante?
-            # Simpler: el CRUD hard-codea /root/ccf/uploads; para el test
-            # simplemente validamos que el startswith check funciona.
+            # El CRUD resuelve actualmente el root de uploads desde su
+            # configuración operativa; aquí verificamos el contrato de
+            # limpieza de la fila sin tocar el filesystem real.
             purged = cleanup_orphan_cms_media(
                 db_session,
                 sede_id=sede.id,
@@ -206,8 +206,8 @@ class TestF10CleanupOrphanCmsMedia:
                 actor_user_id=str(admin.id),
                 permanent=True,
             )
-        # Sin el patch del root, el file no existe en /root/ccf/uploads,
-        # así que el row se hard-deletea (file already-absent branch).
+        # El archivo no existe en el root operativo durante la prueba,
+        # así que se cubre la rama de fila cuyo archivo ya no está presente.
         assert purged == 1
         # El row del huérfano debe estar borrado
         deleted = db_session.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == orphan_media.id).first()
