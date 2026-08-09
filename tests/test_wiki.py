@@ -113,6 +113,42 @@ class TestWikiCRUD:
         assert len(results) == 1
         assert results[0].page_key == "wiki_pastoral"
 
+    def test_same_page_key_different_sedes(self, db_session):
+        """Two sedes must be able to create pages with the same page_key.
+
+        This was broken by the original global unique constraint on
+        page_key alone (W3 fix: composite unique on page_key + sede_id).
+        """
+        token, sede = _ensure_sede_and_persona(db_session)
+        from backend.crud.wiki import create_wiki_page, get_wiki_page
+
+        # Create a page in the admin's sede
+        page_a = create_wiki_page(
+            db_session, "wiki_shared_key", "Sede A Doc", "<p>A</p>", sede_id=sede.id
+        )
+        assert page_a.page_key == "wiki_shared_key"
+
+        # Create a different sede
+        from backend.models import Sede
+
+        sede_b = Sede(nombre="Otra Sede", ciudad="Test", es_activa=True)
+        db_session.add(sede_b)
+        db_session.commit()
+
+        # Same page_key in a different sede must NOT raise
+        page_b = create_wiki_page(
+            db_session, "wiki_shared_key", "Sede B Doc", "<p>B</p>", sede_id=sede_b.id
+        )
+        assert page_b.page_key == "wiki_shared_key"
+        assert page_b.sede_id == sede_b.id
+        assert page_b.id != page_a.id
+
+        # Each sede sees only its own page
+        fetched_a = get_wiki_page(db_session, "wiki_shared_key", sede.id)
+        fetched_b = get_wiki_page(db_session, "wiki_shared_key", sede_b.id)
+        assert fetched_a.title == "Sede A Doc"
+        assert fetched_b.title == "Sede B Doc"
+
 
 class TestWikiAPI:
     """HTTP-level tests for wiki endpoints."""

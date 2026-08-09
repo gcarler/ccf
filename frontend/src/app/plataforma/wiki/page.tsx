@@ -91,7 +91,7 @@ export default function WikiHomePage() {
             fetchDocs();
         } catch (error) {
             console.error("Error creating doc:", error);
-            setError("No se pudo crear el documento. Intenta de nuevo.");
+            addToast('No se pudo crear el documento. Intenta de nuevo.', 'error');
         }
     };
 
@@ -104,9 +104,7 @@ export default function WikiHomePage() {
         }
     ];
 
-    const filteredDocs = search.trim()
-        ? docs.filter((doc) => doc.title.toLowerCase().includes(search.trim().toLowerCase()))
-        : docs;
+    const filteredDocs = docs;
 
     return (
         <WorkspaceLayout sidebarTitle="Wiki" sidebarSections={sidebarSections}>
