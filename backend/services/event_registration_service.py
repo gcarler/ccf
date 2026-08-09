@@ -770,7 +770,7 @@ def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
             <p>Tu QR: <a href="{escape(qr_link)}">ver ticket</a></p>
             """
             send_email(to=next_in_line.persona.email, subject=f"Cupo confirmado: {event.name}", html=html)
-    except Exception as exc:
+    except (OSError, ConnectionError, RuntimeError) as exc:
         log.warning("Failed to send promotion email for reg %s: %s", next_in_line.id, exc)
 
 
@@ -780,10 +780,14 @@ def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
 def find_by_email_or_phone(
     db: Session, event_id, email: Optional[str] = None, phone: Optional[str] = None
 ) -> Optional[models.EventRegistration]:
-    """Encuentra la inscripción activa más reciente por email o phone."""
+    """Encuentra la inscripción activa más reciente por email o phone.
+
+    Prioridad email > phone (mismo patrón que ``upsert_persona``): si el email
+    coincide con una persona y el phone con otra, la búsqueda por email gana.
+    """
     if not email and not phone:
         return None
-    q = (
+    base_query = (
         db.query(models.EventRegistration)
         .join(models.Persona, models.EventRegistration.persona_id == models.Persona.id)
         .filter(
@@ -791,14 +795,23 @@ def find_by_email_or_phone(
             models.EventRegistration.deleted_at.is_(None),
         )
     )
-    from sqlalchemy import or_
-
-    conditions = []
     if email:
-        conditions.append(models.Persona.email == email)
+        reg = (
+            base_query.filter(models.Persona.email == email)
+            .order_by(models.EventRegistration.created_at.desc())
+            .first()
+        )
+        if reg:
+            return reg
     if phone:
-        conditions.append(models.Persona.phone == phone)
-    return q.filter(or_(*conditions)).order_by(models.EventRegistration.created_at.desc()).first()
+        reg = (
+            base_query.filter(models.Persona.phone == phone)
+            .order_by(models.EventRegistration.created_at.desc())
+            .first()
+        )
+        if reg:
+            return reg
+    return None
 
 
 def is_event_open_for_registration(event: models.CrmEvent, now=None) -> bool:
