@@ -229,6 +229,7 @@ class TestAccountingPost:
             status="draft",
             total_debit=100,
             total_credit=100,
+            sede_id=sede.id,
         )
         db_session.add(entry)
         db_session.flush()
@@ -240,3 +241,23 @@ class TestAccountingPost:
         )
         db_session.commit()
         assert _ok(c.patch(f"/api/finance-suite/accounting-entries/{entry.id}/post", headers=h).status_code)
+
+    def test_historical_null_sede_is_not_publishable(self, full, db_session):
+        """A seated actor cannot publish an unscoped historical entry."""
+        c, h = full["c"], full["h"]
+        entry = models.AccountingEntry(
+            id=uuid.uuid4(),
+            entry_date=datetime.now(timezone.utc).date(),
+            description="Historical unscoped entry",
+            status="draft",
+            total_debit=0,
+            total_credit=0,
+            sede_id=None,
+        )
+        db_session.add(entry)
+        db_session.commit()
+
+        response = c.patch(f"/api/finance-suite/accounting-entries/{entry.id}/post", headers=h)
+        assert response.status_code == 404
+        db_session.refresh(entry)
+        assert entry.status == "draft"

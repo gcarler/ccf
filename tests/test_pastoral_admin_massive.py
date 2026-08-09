@@ -235,15 +235,15 @@ class TestAdminOtherFull:
         resp = client.get("/api/admin/variables", headers=headers)
         assert resp.status_code == 200
 
-    def test_list_testimonials(self, client_auth):
+    def test_legacy_testimonials_route_is_removed(self, client_auth):
         client, headers, _ = client_auth
         resp = client.get("/api/admin/testimonials", headers=headers)
-        assert resp.status_code == 200
+        assert resp.status_code == 404
 
-    def test_list_announcements(self, client_auth):
+    def test_legacy_announcements_route_is_removed(self, client_auth):
         client, headers, _ = client_auth
         resp = client.get("/api/admin/announcements", headers=headers)
-        assert resp.status_code == 200
+        assert resp.status_code == 404
 
     def test_list_donation_categories(self, client_auth):
         client, headers, _ = client_auth
@@ -307,7 +307,7 @@ class TestAdminOtherFull:
         )
         assert resp.status_code in (200, 201, 400, 422)
 
-    def test_create_testimonial(self, client_auth):
+    def test_legacy_testimonial_creation_route_is_removed(self, client_auth):
         client, headers, _ = client_auth
         resp = client.post(
             "/api/admin/testimonials",
@@ -317,9 +317,9 @@ class TestAdminOtherFull:
             },
             headers=headers,
         )
-        assert resp.status_code in (200, 201, 400, 405, 422)
+        assert resp.status_code == 404
 
-    def test_create_announcement(self, client_auth):
+    def test_legacy_announcement_creation_route_is_removed(self, client_auth):
         client, headers, _ = client_auth
         resp = client.post(
             "/api/admin/announcements",
@@ -329,7 +329,7 @@ class TestAdminOtherFull:
             },
             headers=headers,
         )
-        assert resp.status_code in (200, 201, 400, 405, 422)
+        assert resp.status_code == 404
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

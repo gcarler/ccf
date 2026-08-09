@@ -26,11 +26,58 @@ router = APIRouter(prefix="/wiki", tags=["wiki"])
 
 
 def _normalize_page_key(value: str) -> str:
-    """Ensure wiki page keys always start with the ``wiki_`` prefix."""
-    key = _slugify(value)
-    if not key.startswith("wiki_"):
-        key = f"wiki_{key}"
+    """Ensure wiki keys have one prefix while preserving canonical underscores.
+
+    ``_slugify`` is shared with URL-like CMS values and intentionally turns
+    underscores into dashes. Wiki ``page_key`` is a stable identifier,
+    however, so keys such as ``wiki_my_doc`` must remain unchanged and an
+    already-prefixed key must not become ``wiki_wiki-*``.
+    """
+    raw = str(value or "").strip().lower()
+    while raw.startswith(("wiki_", "wiki-")):
+        raw = raw[5:]
+    body = "_".join(_slugify(part) for part in raw.split("_"))
+    body = body.strip("_")
+    key = f"wiki_{body}" if body else "wiki_page"
     return key
+
+
+def _page_key_candidates(value: str) -> list[str]:
+    """Return canonical and legacy keys without broadening the lookup scope.
+
+    Older deployments generated keys such as ``wiki-my-doc`` while the
+    current contract stores ``wiki_my_doc``. Keep the canonical key first so
+    a newly-created page always wins, then try only the exact legacy alias.
+    The caller still supplies the user's ``sede_id`` to every database lookup.
+    """
+    raw = str(value or "").strip().lower()
+    canonical = _normalize_page_key(raw)
+    candidates = [canonical]
+    if raw.startswith("wiki-") and raw not in candidates:
+        candidates.append(raw)
+    if canonical.startswith("wiki_"):
+        legacy = "wiki-" + canonical[5:].replace("_", "-")
+        if legacy not in candidates:
+            candidates.append(legacy)
+    return candidates
+
+
+def _get_compatible_page(db: Session, page_key: str, sede_id: UUID | None):
+    """Find a current or legacy page key, always constrained to one sede."""
+    for candidate in _page_key_candidates(page_key):
+        row = crud_wiki.get_wiki_page(db, candidate, sede_id)
+        if row:
+            return row
+    return None
+
+
+def _get_compatible_page_including_deleted(db: Session, page_key: str, sede_id: UUID | None):
+    """Find a current or legacy page including soft-deleted rows."""
+    for candidate in _page_key_candidates(page_key):
+        row = crud_wiki.get_wiki_page_including_deleted(db, candidate, sede_id)
+        if row:
+            return row
+    return None
 
 
 def _resolve_sede(db: Session, current_user) -> UUID | None:
@@ -119,10 +166,10 @@ def get_wiki_page(
     """
     key = _normalize_page_key(page_key)
     sede_id = _resolve_sede(db, current_user)
-    row = crud_wiki.get_wiki_page(db, key, sede_id)
+    row = _get_compatible_page(db, page_key, sede_id)
     if not row:
         # Si la página existe pero está soft-deleted, retornar 404
-        deleted = crud_wiki.get_wiki_page_including_deleted(db, key, sede_id)
+        deleted = _get_compatible_page_including_deleted(db, page_key, sede_id)
         if deleted:
             raise HTTPException(status_code=404, detail="wiki page not found (deleted)")
         return _build_virtual_wiki_page(key, sede_id)
@@ -137,9 +184,8 @@ def list_wiki_page_versions(
     _: models.User = Depends(require_module_access("wiki", "read")),
 ):
     """List all versions of a wiki page."""
-    key = _normalize_page_key(page_key)
     sede_id = _resolve_sede(db, current_user)
-    row = crud_wiki.get_wiki_page(db, key, sede_id)
+    row = _get_compatible_page(db, page_key, sede_id)
     if not row:
         raise HTTPException(status_code=404, detail="wiki page not found")
     return crud_wiki.list_wiki_page_versions(db, row.id)
@@ -157,7 +203,7 @@ def create_wiki_page(
     key = _normalize_page_key(page_key)
     sede_id = _resolve_sede(db, current_user)
 
-    existing = crud_wiki.get_wiki_page(db, key, sede_id)
+    existing = _get_compatible_page(db, page_key, sede_id)
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -190,9 +236,8 @@ def patch_wiki_page(
     _: models.User = Depends(require_module_access("wiki", "edit")),
 ):
     """Partially update a wiki page (title and/or content). Snapshots previous version."""
-    key = _normalize_page_key(page_key)
     sede_id = _resolve_sede(db, current_user)
-    row = crud_wiki.get_wiki_page(db, key, sede_id)
+    row = _get_compatible_page(db, page_key, sede_id)
     if not row:
         raise HTTPException(status_code=404, detail="wiki page not found")
     persona_id = _resolve_persona(db, current_user)
@@ -220,9 +265,8 @@ def delete_wiki_page(
     _: models.User = Depends(require_module_access("wiki", "edit")),
 ):
     """Soft-delete a wiki page."""
-    key = _normalize_page_key(page_key)
     sede_id = _resolve_sede(db, current_user)
-    row = crud_wiki.get_wiki_page(db, key, sede_id)
+    row = _get_compatible_page(db, page_key, sede_id)
     if not row:
         raise HTTPException(status_code=404, detail="wiki page not found")
     crud_wiki.soft_delete_wiki_page(db, row)

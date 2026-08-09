@@ -243,6 +243,39 @@ class TestWikiAPI:
         get_resp = client.get(f"{self.BASE}/wiki_my_doc", headers=headers)
         assert get_resp.status_code == 200
 
+    def test_legacy_dash_key_is_read_and_mutated_in_place(self, client, db_session):
+        """Historical ``wiki-...`` keys remain accessible without renaming rows."""
+        _, sede = _ensure_sede_and_persona(db_session)
+        page = WikiPage(
+            id=_uuid.uuid4(),
+            page_key="wiki-legacy-doc",
+            title="Legacy document",
+            content="old content",
+            version=1,
+            sede_id=sede.id,
+        )
+        db_session.add(page)
+        db_session.commit()
+        headers = auth_headers(client)
+
+        get_resp = client.get(f"{self.BASE}/wiki_legacy_doc", headers=headers)
+        assert get_resp.status_code == 200
+        assert get_resp.json()["page_key"] == "wiki-legacy-doc"
+        assert get_resp.json()["content"] == "old content"
+
+        patch_resp = client.patch(
+            f"{self.BASE}/wiki_legacy_doc",
+            json={"content": "updated legacy content"},
+            headers=headers,
+        )
+        assert patch_resp.status_code == 200
+        assert patch_resp.json()["page_key"] == "wiki-legacy-doc"
+        assert patch_resp.json()["content"] == "updated legacy content"
+
+        delete_resp = client.delete(f"{self.BASE}/wiki_legacy_doc", headers=headers)
+        assert delete_resp.status_code == 204
+        assert client.get(f"{self.BASE}/wiki_legacy_doc", headers=headers).status_code == 404
+
     def test_patch_increments_version(self, client, db_session):
         """PATCH must increment version and snapshot previous content."""
         token, sede = _ensure_sede_and_persona(db_session)

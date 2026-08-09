@@ -4,7 +4,7 @@ from uuid import UUID
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class AgentBase(BaseModel):
@@ -175,6 +175,10 @@ class AgentInsightCreate(BaseModel):
 
 
 class AgentInsight(AgentInsightCreate):
+    # SQLAlchemy exposes the column ``metadata`` as ``insight_data`` because
+    # ``metadata`` is reserved by the declarative base. Read the ORM alias
+    # explicitly so Pydantic does not resolve ``Base.metadata`` (MetaData).
+    metadata: Optional[dict] = Field(default=None, validation_alias="insight_data")
     id: UUID
     acknowledged: bool = False
     acknowledged_at: Optional[datetime] = None
