@@ -13,13 +13,13 @@ El CMS está dividido en tres capas backend con responsabilidades distintas:
 
 | Capa | Archivo | Responsabilidad |
 |---|---|---|
-| **CMS v1** | `backend/api/cms.py` | Testimonios, announcements, media, métricas — flujos administrativos simples |
+| **CMS v1** | `backend/api/cms/v1.py` | Compatibilidad de media y métricas — superficie reducida; testimonios/anuncios migrados a v2 |
 | **CMS v2** | `backend/api/cms_v2/` (paquete) | Sites, themes, menus, pages, sections, preview, workflow, categories, tags, posts, analytics, forms, newsletter, popups, A/B testing — el editor |
 | **Enterprise CMS** | `backend/api/enterprise_cms.py` | Audit logs, content permissions, notifications, webhooks, custom types, search, redirects, sessions, media folders |
 
 ### 1.1 Estructura del paquete CMS v2 (post-refactor Fase 4)
 
-> **Nota:** `backend/api/cms_v2.py` fue refactorizado en el paquete `backend/api/cms_v2/` con 14 submódulos especializados (2026-07-31).
+> **Nota:** `backend/api/cms_v2/` es el paquete modular vigente (refactorizado el 2026-07-31); no existe un router monolítico `backend/api/cms_v2.py`.
 
 ```
 backend/api/cms_v2/

@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 # ── Role constants ──────────────────────────────────────────────────────────
 
-CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "pastor"}
+CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "editor", "gestor", "pastor"}
 CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
 
 # ── Rate limiting ──────────────────────────────────────────────────────────────
