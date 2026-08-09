@@ -8,6 +8,8 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from sqlalchemy.exc import IntegrityError
+
 from backend import models
 
 
@@ -93,7 +95,7 @@ def create_wiki_page(
     db.add(row)
     try:
         db.commit()
-    except Exception:
+    except IntegrityError:
         db.rollback()
         raise ValueError(f"page_key '{page_key}' already exists for this sede")
     db.refresh(row)
