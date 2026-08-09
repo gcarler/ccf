@@ -134,15 +134,15 @@ class TestAdminOther:
         resp = client.get("/api/admin/variables", headers=headers)
         assert resp.status_code < 500 or resp.status_code in (200, 201, 204, 422, 405, 404, 403, 401)
 
-    def test_list_testimonials(self, client_auth):
+    def test_legacy_testimonials_route_is_removed(self, client_auth):
         client, headers, _ = client_auth
         resp = client.get("/api/admin/testimonials", headers=headers)
-        assert resp.status_code < 500 or resp.status_code in (200, 201, 204, 422, 405, 404, 403, 401)
+        assert resp.status_code == 404
 
-    def test_list_announcements(self, client_auth):
+    def test_legacy_announcements_route_is_removed(self, client_auth):
         client, headers, _ = client_auth
         resp = client.get("/api/admin/announcements", headers=headers)
-        assert resp.status_code < 500 or resp.status_code in (200, 201, 204, 422, 405, 404, 403, 401)
+        assert resp.status_code == 404
 
     def test_list_donation_categories(self, client_auth):
         client, headers, _ = client_auth
@@ -318,12 +318,12 @@ class TestCMS:
         resp = client.get("/api/cms/pages", headers=headers)
         assert resp.status_code < 500 or resp.status_code in (200, 201, 204, 422, 405, 404, 403, 401)
 
-    def test_list_announcements(self, client_auth):
+    def test_list_announcements_v1_compatibility_feed(self, client_auth):
         client, headers, _ = client_auth
         resp = client.get("/api/cms/announcements", headers=headers)
         assert resp.status_code < 500 or resp.status_code in (200, 201, 204, 422, 405, 404, 403, 401)
 
-    def test_list_testimonials(self, client_auth):
+    def test_list_testimonials_v1_compatibility_feed(self, client_auth):
         client, headers, _ = client_auth
         resp = client.get("/api/cms/testimonials", headers=headers)
         assert resp.status_code < 500 or resp.status_code in (200, 201, 204, 422, 405, 404, 403, 401)
