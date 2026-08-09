@@ -10,34 +10,16 @@ pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
 import datetime as dt
-import logging
-import math
-import os
 import uuid
 
-from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, lazyload
+from sqlalchemy.orm import Session
 
-from backend import models, schemas
-from backend.crud._utils import _utcnow
-from backend.crud.crm import (
-
-    resolve_persona_id_for_user as resolve_persona_uuid_for_user,
-)
-
-_logger = logging.getLogger(__name__)
+from backend import models
+from backend.crud.cms._shared import _now_utc
+from backend.crud.cms.pages import transition_cms_page_status
 
 
-# ``resolve_persona_id_for_user`` (imported as ``resolve_persona_uuid_for_user``
-# above) comes from ``backend.crud.crm`` which re-exports the canonical
-# implementation in ``backend.crud.crm_.shared``. We call that directly
-# throughout this module — the previous local wrapper added only
-# indirection (M-10 in ``errorescms.md``).
-
-
-
-from backend.crud.cms._shared import (_now_utc)
 def find_pages_due_for_publish(
     db: Session,
     *,

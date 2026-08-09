@@ -275,21 +275,29 @@ def _check_absence_trigger(db: Session, session_id: UUID, sede_id):
         )
         .all()
     )
-    for (persona_id,) in expected_personas:
-        absent_count = 0
-        for s in recent_sessions:
-            att = (
-                db.query(Asistencia)
-                .filter(
-                    Asistencia.sesion_id == s.id,
-                    Asistencia.persona_id == persona_id,
-                    Asistencia.deleted_at.is_(None),
-                    Asistencia.estado == EstadoAsistenciaEnum.FALTO.value,
-                )
-                .first()
+    # Batch: count absences per persona in one query (N+1 fix — was
+    # personas × sesiones individual queries).
+    session_ids = [s.id for s in recent_sessions]
+    persona_ids = [pid for (pid,) in expected_personas]
+    absent_counts: dict = {}
+    if persona_ids and session_ids:
+        from sqlalchemy import func as _func
+
+        rows = (
+            db.query(Asistencia.persona_id, _func.count(Asistencia.id))
+            .filter(
+                Asistencia.sesion_id.in_(session_ids),
+                Asistencia.persona_id.in_(persona_ids),
+                Asistencia.deleted_at.is_(None),
+                Asistencia.estado == EstadoAsistenciaEnum.FALTO.value,
             )
-            if att:
-                absent_count += 1
+            .group_by(Asistencia.persona_id)
+            .all()
+        )
+        absent_counts = {pid: cnt for pid, cnt in rows}
+
+    for (persona_id,) in expected_personas:
+        absent_count = absent_counts.get(persona_id, 0)
 
         if absent_count >= 3:
             # Create N2 task in Consolidation

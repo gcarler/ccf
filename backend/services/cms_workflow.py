@@ -13,13 +13,14 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from backend import crud, models
+from backend import models
 from backend.crud.cms import (
     create_cms_page_version,
     get_cms_page_version,
     restore_cms_page_version,
     transition_cms_page_status,
 )
+from backend.crud.crm import resolve_persona_id_for_user
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ class PageWorkflowService:
         """
         if publish_at is not None and page.status in NON_TERMINAL_STATUSES:
             page.status = "scheduled"
-            page.updated_by_persona_id = crud.cms.resolve_persona_uuid_for_user(self.db, user_id)
+            page.updated_by_persona_id = resolve_persona_id_for_user(self.db, user_id)
             self.db.commit()
             self.db.refresh(page)
         return page

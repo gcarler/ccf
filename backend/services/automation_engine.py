@@ -263,8 +263,15 @@ class AutomationEngine:
 
             return False
 
+        # Batch: preload all automations in one query (N+1 fix).
+        automation_ids = {a.automation_id for a in pending_actions if a.automation_id}
+        automations_map = {}
+        if automation_ids:
+            automations = db.query(CrmAutomation).filter(CrmAutomation.id.in_(automation_ids)).all()
+            automations_map = {a.id: a for a in automations}
+
         for action in pending_actions:
-            automation = db.query(CrmAutomation).filter(CrmAutomation.id == action.automation_id).first()
+            automation = automations_map.get(action.automation_id)
             if not automation:
                 action.status = "failed"
                 continue

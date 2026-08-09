@@ -9,35 +9,18 @@ seeding, llamada directa al CRUD) podría crear/mutar registros sin
 pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
-import datetime as dt
-import logging
-import math
-import os
 import uuid
 
-from sqlalchemy import func, or_
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, lazyload
+from sqlalchemy import or_
+from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.crud._utils import _utcnow
-from backend.crud.crm import (
-
-    resolve_persona_id_for_user as resolve_persona_uuid_for_user,
+from backend.crud.cms._shared import (
+    _actor_sede_or_none_cms,
+    _crud_scope_re_check_pastoral_profile,
 )
 
-_logger = logging.getLogger(__name__)
 
-
-# ``resolve_persona_id_for_user`` (imported as ``resolve_persona_uuid_for_user``
-# above) comes from ``backend.crud.crm`` which re-exports the canonical
-# implementation in ``backend.crud.crm_.shared``. We call that directly
-# throughout this module — the previous local wrapper added only
-# indirection (M-10 in ``errorescms.md``).
-
-
-
-from backend.crud.cms._shared import (_actor_sede_or_none_cms, _crud_scope_re_check_pastoral_profile)
 def update_pastoral_profile(
     db: Session,
     persona: models.Persona,
@@ -97,6 +80,4 @@ def list_pastoral_team(
         models.Persona.last_name.asc(),
         models.Persona.first_name.asc(),
     ).all()
-
-
 

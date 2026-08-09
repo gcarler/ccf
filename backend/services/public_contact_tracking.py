@@ -13,6 +13,7 @@ from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -132,7 +133,21 @@ class PublicContactTracker:
                 activo=True,
             )
             db.add(pipeline)
-            db.flush()
+            try:
+                db.flush()
+            except IntegrityError:
+                # Race condition: concurrent request created the pipeline
+                # (sede_id, tipo) first. Re-fetch it (TOCTOU fix).
+                db.rollback()
+                pipeline = (
+                    db.query(models.PipelineCRM)
+                    .filter(
+                        models.PipelineCRM.sede_id == sede.id,
+                        models.PipelineCRM.tipo == TipoPipelineEnum.NUEVOS_VISITANTES,
+                        models.PipelineCRM.deleted_at.is_(None),
+                    )
+                    .first()
+                )
 
         stage = (
             db.query(models.EtapaPipeline)
