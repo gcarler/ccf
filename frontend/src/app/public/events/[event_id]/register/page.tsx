@@ -134,13 +134,14 @@ function RegisterSuccess({ result, event, baseUrl }: { result: RegistrationResul
 
             {showQr && result.qr_token && (
                 <>
-                    <div className="p-4 bg-white rounded-md shadow-xl border border-[hsl(var(--border-primary))] flex items-center justify-center">
+                    <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white rounded-md shadow-xl border border-[hsl(var(--border-primary))] flex items-center justify-center">
                         <QRCodeSVG
                             id="registration-qr-code"
                             value={`${baseUrl}/public/events/${event.id}/qr?token=${result.qr_token}`}
-                            size={224}
+                            size={200}
                             level="H"
                             includeMargin
+                            className="w-full h-auto max-w-[200px] sm:max-w-[224px]"
                         />
                     </div>
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -909,7 +910,7 @@ export default function PublicEventRegistrationPage() {
                         <Calendar size={28} className="drop-shadow-md" />
                     </div>
                     <div>
-                        <p className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] mb-1">Pre-registro CCF</p>
+                        <p className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] mb-1">Inscripción CCF</p>
                         <h1 className="text-lg sm:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">{event.name}</h1>
                         {event.description && (
                             <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-2 max-w-md mx-auto">{event.description}</p>
