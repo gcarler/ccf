@@ -42,7 +42,7 @@ describe("AuthCallbackPage", () => {
   });
 
   it("obtiene la sesión desde cookies sin leer credenciales de la URL", async () => {
-    window.history.replaceState({}, "", "/auth/callback?token=legacy-token");
+    window.history.replaceState({}, "", "/auth/callback?token=old-token");
 
     render(<AuthCallbackPage />);
 

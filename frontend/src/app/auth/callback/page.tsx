@@ -15,7 +15,7 @@ function AuthCallbackContent() {
         async function handleAuth() {
             // Google OAuth is cookie-based. Never consume access/refresh
             // credentials from query strings or URL fragments. Remove any
-            // legacy parameters before making the refresh request so they
+            // historical parameters before making the refresh request so they
             // cannot be sent as a Referer to the API.
             if (typeof window !== 'undefined') {
                 window.history.replaceState({}, document.title, window.location.pathname);
