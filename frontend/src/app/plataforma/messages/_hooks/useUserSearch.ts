@@ -17,7 +17,7 @@ interface UseUserSearchOptions {
     minLength?: number;
 }
 
-export function useUserSearch({ token, debounceMs = 300, minLength = 2 }: UseUserSearchOptions) {
+export function useUserSearch({ token, debounceMs = 200, minLength = 1 }: UseUserSearchOptions) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchedUser[]>([]);
     const [loading, setLoading] = useState(false);
