@@ -100,6 +100,7 @@ frontend/tsconfig.tsbuildinfo
 
 # Runtime feature flags snapshot (regenerated on demand)
 backend/data/feature_flags*.ndjson
+backend/data/feature_flags*.json
 static/chat_attachments/
 
 # CCF: scratch QA/ops scripts — contain hardcoded production credentials
