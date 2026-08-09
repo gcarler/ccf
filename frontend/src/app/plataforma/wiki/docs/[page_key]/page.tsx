@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
-import { BookOpen, ChevronLeft, History, MoreHorizontal, Share2, AlertCircle, Eye, Download } from 'lucide-react';
+import { BookOpen, ChevronLeft, History, Share2, AlertCircle, Eye, Download } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import sanitize from 'sanitize-html';
@@ -200,14 +200,6 @@ export default function WikiDocEditPage() {
                             <BookOpen size={18} />
                         </button>
                     )}
-                    <button
-                        title="Más opciones"
-                        aria-label="Más opciones"
-                        className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))]"
-                        onClick={() => {/* future: dropdown menu */}}
-                    >
-                        <MoreHorizontal size={18} />
-                    </button>
                 </div>
             </header>
 
