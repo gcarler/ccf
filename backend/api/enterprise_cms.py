@@ -952,6 +952,8 @@ def list_glossary_terms(
     site_key: str,
     search: str | None = None,
     category: str | None = None,
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db),
     user: User = Depends(require_cms_read),
 ):
@@ -968,7 +970,7 @@ def list_glossary_terms(
         )
     if category:
         q = q.filter(CmsGlossaryTerm.category == category)
-    terms = q.order_by(CmsGlossaryTerm.term).all()
+    terms = q.order_by(CmsGlossaryTerm.term).offset(skip).limit(min(limit, 500)).all()
     return [
         {
             "id": str(t.id),
@@ -1400,7 +1402,7 @@ def list_media_folders(
         q = q.filter(MediaFolder.parent_id == parent_id)
     else:
         q = q.filter(MediaFolder.parent_id.is_(None))
-    folders = q.order_by(MediaFolder.sort_order, MediaFolder.name).all()
+    folders = q.order_by(MediaFolder.sort_order, MediaFolder.name).limit(500).all()
     return [
         {
             "id": str(f.id),
@@ -1485,6 +1487,7 @@ def list_redirects(
             CmsRedirect.is_active == True,
         )
         .order_by(CmsRedirect.from_path)
+        .limit(500)
         .all()
     )
     return [

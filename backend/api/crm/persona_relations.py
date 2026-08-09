@@ -2,6 +2,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
@@ -75,8 +76,14 @@ def get_persona_ministries(
         .all()
     )
     result = []
+    # Batch: fetch all ministries in one query (N+1 fix).
+    ministry_ids = {mm.ministry_id for mm in rows if mm.ministry_id}
+    ministries_map = {}
+    if ministry_ids:
+        ministries = db.query(models.Ministry).filter(models.Ministry.id.in_(ministry_ids)).all()
+        ministries_map = {m.id: m for m in ministries}
     for mm in rows:
-        ministry = db.query(models.Ministry).filter(models.Ministry.id == mm.ministry_id).first()
+        ministry = ministries_map.get(mm.ministry_id)
         result.append(
             {
                 "id": mm.id,
@@ -242,7 +249,13 @@ def create_position(
         raise HTTPException(status_code=409, detail="Position already exists")
     row = models.Position(**payload.model_dump())
     db.add(row)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Race condition: concurrent request created the same name first
+        # (TOCTOU fix — name has a UNIQUE constraint).
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Position already exists")
     db.refresh(row)
     return row
 

@@ -513,10 +513,11 @@ def get_session_detail(
     # Build persona name lookup for this session's grupo
     persona_map: dict[str, str] = {}
     house_personas = db.query(ParticipanteGrupo).filter(models.ParticipanteGrupo.grupo_id == session.grupo_id).all()
-    for hm in house_personas:
-        p = db.query(Persona).filter(Persona.id == hm.persona_id).first()
-        if p:
-            persona_map[hm.persona_id] = p.nombre_completo
+    # Batch: fetch all personas in one query (N+1 fix).
+    persona_ids = [hm.persona_id for hm in house_personas if hm.persona_id]
+    if persona_ids:
+        personas = db.query(Persona).filter(Persona.id.in_(persona_ids)).all()
+        persona_map = {p.id: p.nombre_completo for p in personas}
 
     attendance_list = []
     for a in attendance_rows:

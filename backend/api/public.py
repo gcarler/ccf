@@ -6,7 +6,8 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import or_
+from sqlalchemy import or_, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
@@ -112,8 +113,14 @@ def public_register_event(payload: schemas.PublicRegistrationCreate, db: Session
             attended=True,
         )
         db.add(attendance)
-        db.commit()
-        logger.info(f"Asistencia registrada para {persona.first_name} al evento {event.name} (ID {event.id})")
+        try:
+            db.commit()
+            logger.info(f"Asistencia registrada para {persona.first_name} al evento {event.name} (ID {event.id})")
+        except IntegrityError:
+            # Race condition: concurrent request inserted the same
+            # (event_id, session_date, persona_id) first. Rollback and
+            # treat as idempotent success (TOCTOU fix).
+            db.rollback()
 
     return persona
 
@@ -176,9 +183,23 @@ def public_list_courses(db: Session = Depends(get_db)):
         .order_by(Course.id)
         .all()
     )
+    # Batch: count lessons per course in one query (N+1 fix).
+    course_ids = [c.id for c in cursos]
+    lesson_counts = {}
+    if course_ids:
+        rows = (
+            db.query(Lesson.course_id, func.count(Lesson.id))
+            .filter(
+                Lesson.course_id.in_(course_ids),
+                Lesson.deleted_at.is_(None),
+            )
+            .group_by(Lesson.course_id)
+            .all()
+        )
+        lesson_counts = {cid: cnt for cid, cnt in rows}
     result = []
     for c in cursos:
-        lecciones = db.query(Lesson).filter(Lesson.course_id == c.id, Lesson.deleted_at.is_(None)).count()
+        lecciones = lesson_counts.get(c.id, 0)
         result.append(_curso_to_public(c, lecciones))
     return result
 
