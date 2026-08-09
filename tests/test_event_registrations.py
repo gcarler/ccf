@@ -173,6 +173,35 @@ class TestPublicRegister:
         )
         assert count == 1
 
+    def test_upsert_persona_email_priority_over_phone(self, client, db_session, sede):
+        """E6: upsert_persona busca por email primero, luego phone.
+
+        Si el email coincide con una persona y el phone con otra distinta,
+        la búsqueda debe resolver la del email (orden determinístico), no
+        la primera que encuenta un OR query.
+        """
+        from backend.services.event_registration_service import upsert_persona
+
+        # Dos personas existentes: una con email, otra con el mismo phone
+        p_email = models.Persona(
+            first_name="ConEmail", last_name="Test", email="a@test.com",
+            phone="3000000000", sede_id=sede.id,
+        )
+        p_phone = models.Persona(
+            first_name="ConPhone", last_name="Test", email="b@test.com",
+            phone="3000000000", sede_id=sede.id,
+        )
+        db_session.add_all([p_email, p_phone])
+        db_session.flush()
+
+        result = upsert_persona(
+            db_session,
+            first_name="Nuevo", last_name="Usuario",
+            email="a@test.com", phone="3000000000",
+        )
+        assert result.id == p_email.id
+        assert result.first_name == "ConEmail"
+
     def test_waitlist_when_full(self, client, db_session, sede):
         """Caso 3: aforo lleno + waitlist → WAITLIST con posición."""
         evt = _make_event(
