@@ -79,7 +79,7 @@ function MessagesPage() {
         },
     });
 
-    const userSearch = useUserSearch({ token, debounceMs: 300, minLength: 2 });
+    const userSearch = useUserSearch({ token, debounceMs: 300, minLength: 1 });
 
     const handleSelectConversation = useCallback((conv: ConversationRead) => {
         setActiveConv(conv);

@@ -15,11 +15,16 @@ describe('useUserSearch', () => {
         vi.clearAllMocks();
     });
 
-    it('does not search while query is below minLength', async () => {
+    it('searches with one character by default', async () => {
+        (apiFetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
         const { result } = renderHook(() => useUserSearch({ token: 'token' }));
         act(() => result.current.setQuery('a'));
         act(() => vi.advanceTimersByTime(500));
-        expect(apiFetch).not.toHaveBeenCalled();
+        await act(async () => { await Promise.resolve(); });
+        expect(apiFetch).toHaveBeenCalledWith(
+            '/chat/users/search?q=a',
+            expect.objectContaining({ token: 'token' })
+        );
     });
 
     it('debounces search and returns results', async () => {
