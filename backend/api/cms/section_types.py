@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend.api.cms.section_catalog import FALLBACK_SECTION_TYPES
 from backend.api.cms_v2._shared import (
     CMS_PUBLISHER_ROLES,
     _assert_role,
@@ -136,45 +137,4 @@ def get_allowed_section_types(db: Session) -> set[str]:
             return types
     except Exception as exc:
         logger.debug("Section type catalog query failed, using hardcoded fallback: %s", exc)
-    return {
-        "hero",
-        "video_hero",
-        "rich_text",
-        "rich_text_columns",
-        "cards",
-        "cta_banner",
-        "gallery",
-        "faq",
-        "embed",
-        "testimonials",
-        "stats",
-        "team",
-        "countdown",
-        "pricing",
-        "image_text",
-        "timeline",
-        "icon_grid",
-        "newsletter",
-        "popup_banner",
-        "button",
-        "toc",
-        "divider",
-        "collapsible",
-        "social_links",
-        "spacer",
-        "calendar",
-        "map",
-        "document_upload",
-        "content_blocks",
-        "accordion",
-        "civic_hero_search",
-        "civic_convocatoria_cards",
-        "civic_quick_links",
-        "civic_file_downloads",
-        "civic_data_table",
-        "civic_alert_banner",
-        "animated_counter",
-        "video_embed",
-        "gallery_masonry",
-        "map_embed",
-    }
+    return set(FALLBACK_SECTION_TYPES)
