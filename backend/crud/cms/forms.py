@@ -9,21 +9,13 @@ seeding, llamada directa al CRUD) podría crear/mutar registros sin
 pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
-import datetime as dt
 import logging
-import math
-import os
 import uuid
 
-from sqlalchemy import func, or_
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, lazyload
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.crud._utils import _utcnow
-from backend.crud.crm import (
-    resolve_persona_id_for_user as resolve_persona_uuid_for_user,
-)
 
 _logger = logging.getLogger(__name__)
 

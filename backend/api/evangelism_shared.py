@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import datetime
+import functools
 import logging
-from typing import Optional
+import time
+from typing import Any, Callable, Optional, TypeVar
 from uuid import UUID
 
 from sqlalchemy import inspect, or_
@@ -14,7 +16,6 @@ from backend.schemas.evangelism import (
     ATTENDED_STATES,
     EXCUSED_STATES,
     FIRST_TIME_STATES,
-    StatusAsistenciaCanonico,
     normalize_attendance_status,
 )
 
@@ -45,7 +46,77 @@ __all__ = [
     "is_attended_status",
     "is_absent_status",
     "is_excused_status",
+    "ttl_cache",
+    "invalidate_ttl_cache",
 ]
+
+
+# ── In-memory TTL cache shared by evangelismo endpoints ──
+# Sigue la misma heurística del helper que vivía en evangelism_rankings.py,
+# pero ahora en un solo lugar para que analytics, reports y rankings lo
+# reutilicen. Cada worker de proceso mantiene su propia cache; si los
+# analytics mutan vía asistencia/estrategia/grupos, el TTL corto (60 s
+# por defecto) garantiza convergencia sin invalidación manual explícita.
+
+_TTL_CACHE: dict = {}
+TTL_DEFAULT_SECONDS = 60
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def ttl_cache(key_fn: Callable[..., str], ttl: int = TTL_DEFAULT_SECONDS) -> Callable[[F], F]:
+    """Decorador de cache in-memory con TTL.
+
+    ``key_fn`` recibe los mismos ``*args, **kwargs`` del endpoint decorado
+    y debe retornar un string determinista (ej: ``f"alerts:{strategy_id}"``).
+    Los valores no serializables (Session, User) se ignoran dentro de la
+    función que construye la key — la responsabilidad recae en ``key_fn``.
+
+    El tamaño máximo es 200 entradas; cuando se excede, se podan las 100
+    entradas más stale para evitar crecimiento ilimitado en workers de
+    larga duración.
+    """
+
+    def decorator(fn: F) -> F:
+        @functools.wraps(fn)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            cache_key = key_fn(*args, **kwargs)
+            now = time.monotonic()
+            cached = _TTL_CACHE.get(cache_key)
+            if cached is not None:
+                result, ts = cached
+                if now - ts < ttl:
+                    return result
+            result = fn(*args, **kwargs)
+            _TTL_CACHE[cache_key] = (result, now)
+            if len(_TTL_CACHE) > 200:
+                stale = [k for k, (_, ts) in _TTL_CACHE.items() if now - ts >= ttl]
+                for k in stale[:100]:
+                    _TTL_CACHE.pop(k, None)
+            return result
+
+        return wrapper  # type: ignore[return-value]
+
+    return decorator
+
+
+def invalidate_ttl_cache(prefix: str | None = None) -> None:
+    """Invalida entradas de la cache TTL.
+
+    Si ``prefix`` es ``None``, vacía toda la cache. De lo contrario, elimina
+    solo las claves que empiecen con ese prefijo (ej: ``invalidate_ttl_cache(f"full:{sid}")``).
+    """
+    if prefix is None:
+        _TTL_CACHE.clear()
+        return
+    keys = [k for k in _TTL_CACHE if k.startswith(prefix)]
+    for k in keys:
+        _TTL_CACHE.pop(k, None)
+
+
+# Backwards-compatible aliases for internal callers/tests from the previous
+# rankings module. The canonical implementation lives in this shared module.
+_ttl_cache = ttl_cache
+_invalidate_cache = invalidate_ttl_cache
 
 
 def sessions_grupo_has_estado_habilitacion(db: Session) -> bool:

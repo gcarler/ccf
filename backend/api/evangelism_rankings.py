@@ -13,8 +13,6 @@ SesionGrupo, Asistencia, ParticipanteGrupo) and Persona from CRM.
 from __future__ import annotations
 
 import datetime as _dt
-import functools
-import time
 from typing import Optional
 from uuid import UUID
 
@@ -23,42 +21,18 @@ from sqlalchemy import func as _func
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.api import evangelism_shared as _shared
 from backend.api.evangelism_shared import ATTENDED_STATES
+
+# Compatibility exports retained while the implementation is shared.
+_TTL_CACHE = _shared._TTL_CACHE
+_ttl_cache = _shared.ttl_cache
+_invalidate_cache = _shared.invalidate_ttl_cache
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_read
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
-
-# ── Simple TTL cache for analytics/rankings (60s default) ──────────────────
-_TTL_CACHE: dict = {}
-_TTL_SECONDS = 60
-
-
-def _ttl_cache(key_fn, ttl: int = _TTL_SECONDS):
-    """Decorator that caches function results by *key_fn(args, kwargs)* for *ttl* seconds."""
-
-    def decorator(fn):
-        @functools.wraps(fn)
-        def wrapper(*args, **kwargs):
-            cache_key = key_fn(*args, **kwargs)
-            now = time.monotonic()
-            if cache_key in _TTL_CACHE:
-                result, ts = _TTL_CACHE[cache_key]
-                if now - ts < ttl:
-                    return result
-            result = fn(*args, **kwargs)
-            _TTL_CACHE[cache_key] = (result, now)
-            # Prune stale entries (max 200)
-            if len(_TTL_CACHE) > 200:
-                stale = [k for k, (_, ts) in _TTL_CACHE.items() if now - ts >= ttl]
-                for k in stale[:100]:
-                    _TTL_CACHE.pop(k, None)
-            return result
-
-        return wrapper
-
-    return decorator
 
 
 # ────────────────────────────────────────────────────────────────────
