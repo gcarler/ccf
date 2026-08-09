@@ -463,13 +463,14 @@ class TestImagesResizeArchivedDefenseInDepth:
 
 # (E) delete_cms_media — path traversal hardening on permanent delete
 #
-# Regression: H-05 (errorescms.md).  Before the fix, a malicious admin
-# with ``cms:edit`` could store a media item whose ``url`` pointed
-# outside ``/root/ccf/uploads`` (e.g. ``../../etc/passwd``) and then
-# trigger ``DELETE /cms/v2/media/{id}?permanent=true`` to delete an
-# arbitrary local file.  The endpoint must normalise the resolved path
-# and reject anything outside the uploads root with a 400 before any
-# ``os.remove`` runs.
+# Regression: H-05 (errorescms.md). Before the fix, a malicious publisher
+# with ``cms:edit`` could store a media item whose ``url`` pointed outside
+# ``/root/ccf/uploads`` (e.g. ``../../etc/passwd``) and then trigger
+# ``DELETE /cms/media/{id}?permanent=true`` to delete an arbitrary local
+# file. The endpoint must normalise the resolved path and reject anything
+# outside the uploads root with a 400 before any ``os.remove`` runs.
+# The hard-delete itself is restricted to CMS publishers; ordinary
+# editors retain the soft-delete path.
 
 
 class TestDeleteCmsMediaPathTraversalHardening:

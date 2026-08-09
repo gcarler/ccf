@@ -74,7 +74,7 @@ Content (Testimonial / Announcement / CmsMediaItem) son tenant-isolated.
 ## Defensa del Upload CMS
 
 Pipeline endurecido — Axioma 3 + Defense-in-Depth (orden de validacion en
-`backend/api/cms.py::upload_cms_media`):
+`backend/api/cms/v1.py::upload_cms_media`):
 
 1. **Size guardrail** — `MAX_UPLOAD_SIZE` (10 MiB).
 2. **Extension allow-list** — `ensure_allowed_extension` (png/jpg/jpeg/gif/webp/pdf/mp4/mp3/wav/zip).

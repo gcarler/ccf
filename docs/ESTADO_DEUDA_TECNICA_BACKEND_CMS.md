@@ -17,7 +17,7 @@ El backend CMS presenta una **alta concentración de deuda estructural**: archiv
 | `backend/schemas/cms.py` | 820 | Esquemas extensos; validaciones potencialmente duplicadas con `cms_v2_sections`. |
 | `backend/schemas/cms_v2_sections.py` | 744 | Esquemas de secciones v2; solapamiento con el anterior. |
 | `backend/models_cms.py` | 637 | Modelos base del CMS; el resto vive en `models_enterprise.py`. |
-| `backend/api/cms.py` | 689 | API v1 para testimonios, anuncios y media. |
+| `backend/api/cms/v1.py` | superficie modular de compatibilidad | API v1 vigente para media y métricas; testimonios/anuncios migrados a v2. |
 | `backend/services/public_contact_tracking.py` | 206 | Servicio acoplado a publicaciones y contactos. |
 | `backend/crud/cms_pastors_sync.py` | 303 | Sincronización pastoral; depende de CmsSite/CmsPage. |
 
@@ -36,7 +36,7 @@ El backend CMS presenta una **alta concentración de deuda estructural**: archiv
 - Manejo de **concurrent create unique-key conflict** aparece en:
   - `backend/crud/cms.py`
   - `backend/api/cms_v2/_shared.py`
-- Existe `backend/api/cms.py` (v1) y `backend/api/cms_v2/__init__.py` (nueva). Ambos gestionan conceptos similares (testimoniales, anuncios, media) con contratos distintos.
+- La superficie vigente separa `backend/api/cms/v1.py` (media/métricas) y el paquete `backend/api/cms_v2/` (contenido editorial). Las referencias a `backend/api/cms.py` o a shims de testimonios/anuncios son históricas y no representan routers montados.
 - **Riesgo:** parches en un lado no se aplican en el otro; inconsistencias de contrato.
 - **Recomendación:** consolidar helpers en `crud/cms_helpers.py` y deprecar endpoints v1 con un plan de migración documentado.
 
