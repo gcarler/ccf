@@ -43,11 +43,11 @@ def _normalize_page_key(value: str) -> str:
 
 
 def _page_key_candidates(value: str) -> list[str]:
-    """Return canonical and legacy keys without broadening the lookup scope.
+    """Return canonical and backward-compatible keys without broadening the lookup scope.
 
     Older deployments generated keys such as ``wiki-my-doc`` while the
     current contract stores ``wiki_my_doc``. Keep the canonical key first so
-    a newly-created page always wins, then try only the exact legacy alias.
+    a newly-created page always wins, then try only the exact compat alias.
     The caller still supplies the user's ``sede_id`` to every database lookup.
     """
     raw = str(value or "").strip().lower()
@@ -56,14 +56,14 @@ def _page_key_candidates(value: str) -> list[str]:
     if raw.startswith("wiki-") and raw not in candidates:
         candidates.append(raw)
     if canonical.startswith("wiki_"):
-        legacy = "wiki-" + canonical[5:].replace("_", "-")
-        if legacy not in candidates:
-            candidates.append(legacy)
+        compat_key = "wiki-" + canonical[5:].replace("_", "-")
+        if compat_key not in candidates:
+            candidates.append(compat_key)
     return candidates
 
 
 def _get_compatible_page(db: Session, page_key: str, sede_id: UUID | None):
-    """Find a current or legacy page key, always constrained to one sede."""
+    """Find a current or backward-compatible page key, always constrained to one sede."""
     for candidate in _page_key_candidates(page_key):
         row = crud_wiki.get_wiki_page(db, candidate, sede_id)
         if row:
@@ -72,7 +72,7 @@ def _get_compatible_page(db: Session, page_key: str, sede_id: UUID | None):
 
 
 def _get_compatible_page_including_deleted(db: Session, page_key: str, sede_id: UUID | None):
-    """Find a current or legacy page including soft-deleted rows."""
+    """Find a current or backward-compatible page including soft-deleted rows."""
     for candidate in _page_key_candidates(page_key):
         row = crud_wiki.get_wiki_page_including_deleted(db, candidate, sede_id)
         if row:
