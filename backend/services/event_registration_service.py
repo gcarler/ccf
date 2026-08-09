@@ -184,17 +184,17 @@ def upsert_persona(
 
     Busca primero por email; si no, por phone. Si no existe, crea una nueva
     Persona con ``church_role='Visitante'`` y ``spiritual_status='Nuevo'``.
+
+    Prioridad email > phone para evitar ambigüedad cuando dos personas
+    distintas comparten el mismo email/phone (orden determinístico).
     """
     from sqlalchemy import or_
 
     persona = None
-    conditions = []
     if email:
-        conditions.append(models.Persona.email == email)
-    if phone:
-        conditions.append(models.Persona.phone == phone)
-    if conditions:
-        persona = db.query(models.Persona).filter(or_(*conditions)).first()
+        persona = db.query(models.Persona).filter(models.Persona.email == email).first()
+    if persona is None and phone:
+        persona = db.query(models.Persona).filter(models.Persona.phone == phone).first()
 
     if persona is None:
         persona = models.Persona(
@@ -543,7 +543,7 @@ def _send_confirmation_email(
         <p>¡Te esperamos!</p>
         """
         send_email(to=persona.email, subject=f"Confirmación: {event.name}", html=html)
-    except Exception as exc:
+    except (OSError, ConnectionError, RuntimeError) as exc:
         log.warning("Failed to send confirmation email for registration %s: %s", reg.id, exc)
 
 
@@ -573,7 +573,7 @@ def _send_verification_email(
         <p><a href="{escape(verify_url)}">{escape(verify_url)}</a></p>
         """
         send_email(to=persona.email, subject=f"Verifica tu inscripción: {event.name}", html=html)
-    except Exception as exc:
+    except (OSError, ConnectionError, RuntimeError) as exc:
         log.warning("Failed to send verification email for registration %s: %s", reg.id, exc)
 
 
