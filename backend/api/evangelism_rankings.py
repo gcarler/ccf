@@ -21,13 +21,7 @@ from sqlalchemy import func as _func
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.api import evangelism_shared as _shared
-from backend.api.evangelism_shared import ATTENDED_STATES
-
-# Compatibility exports retained while the implementation is shared.
-_TTL_CACHE = _shared._TTL_CACHE
-_ttl_cache = _shared.ttl_cache
-_invalidate_cache = _shared.invalidate_ttl_cache
+from backend.api.evangelism_shared import ATTENDED_STATES, analytics_cache_scope, ttl_cache
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_read
 from backend.core.tenant import require_user_sede_id
@@ -77,6 +71,11 @@ def _active_groups_query(db: Session, strategy_id: Optional[UUID] = None, sede_i
 
 
 @router.get("/rankings/groups")
+@ttl_cache(
+    lambda by="attendance", strategy_id=None, db=None, current_user=None: (
+        f"rkg:groups:{by}:{strategy_id}:{analytics_cache_scope(current_user)}"
+    )
+)
 def rankings_groups(
     by: str = Query("attendance", description="attendance | growth | visitors"),
     strategy_id: Optional[UUID] = Query(None),
@@ -218,6 +217,11 @@ def _rank_by_visitors(db: Session, groups, start, end):
 
 
 @router.get("/rankings/monthly-comparison")
+@ttl_cache(
+    lambda strategy_id=None, db=None, current_user=None: (
+        f"rkg:monthly:{strategy_id}:{analytics_cache_scope(current_user)}"
+    )
+)
 def monthly_comparison(
     strategy_id: Optional[UUID] = Query(None),
     db: Session = Depends(get_db),
@@ -329,6 +333,11 @@ def monthly_comparison(
 
 
 @router.get("/rankings/leaders")
+@ttl_cache(
+    lambda strategy_id=None, db=None, current_user=None: (
+        f"rkg:leaders:{strategy_id}:{analytics_cache_scope(current_user)}"
+    )
+)
 def rankings_leaders(
     strategy_id: Optional[UUID] = Query(None),
     db: Session = Depends(get_db),
