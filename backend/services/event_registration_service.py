@@ -188,8 +188,6 @@ def upsert_persona(
     Prioridad email > phone para evitar ambigüedad cuando dos personas
     distintas comparten el mismo email/phone (orden determinístico).
     """
-    from sqlalchemy import or_
-
     persona = None
     if email:
         persona = db.query(models.Persona).filter(models.Persona.email == email).first()
