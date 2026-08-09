@@ -15,6 +15,7 @@ from backend.api._cms_helpers import (
     _scope_cms_media_by_user_sede,
     collect_section_media_ids,
 )
+from backend.api.cms_v2._shared import CMS_EDITOR_ROLES, CMS_PUBLISHER_ROLES, _assert_role
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
@@ -86,7 +87,9 @@ def create_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     return crud.create_cms_media_item(
+
         db,
         url=payload.url,
         alt_text=payload.alt_text,
@@ -120,6 +123,7 @@ def patch_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     row = _get_scoped_cms_media(db, current_user, item_id)
     return crud.update_cms_media_item(
         db,
@@ -146,6 +150,7 @@ def delete_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
+    _assert_role(current_user, CMS_PUBLISHER_ROLES if permanent else CMS_EDITOR_ROLES)
     row = _get_scoped_cms_media(db, current_user, item_id)
     try:
         _delete_cms_media(db, row, permanent=permanent, actor_user_id=str(current_user.id))
@@ -159,6 +164,7 @@ def optimize_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     row = _get_scoped_cms_media(db, current_user, item_id)
     try:
         return _optimize_cms_media(db, row, actor_user_id=str(current_user.id))
@@ -176,6 +182,7 @@ async def upload_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     content = await file.read()
     parsed_tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
     try:
@@ -204,6 +211,7 @@ async def edit_cms_media(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     row = _get_scoped_cms_media(db, current_user, item_id)
     content = await file.read()
 
@@ -291,6 +299,8 @@ def cleanup_orphan_cms_media_endpoint(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
+    # Orphan cleanup is an operational/destructive action, not ordinary editorial mutation.
+    _assert_role(current_user, CMS_PUBLISHER_ROLES)
     actor_sede = _actor_sede_or_none(db, current_user)
     if actor_sede is None:
         if dry_run:

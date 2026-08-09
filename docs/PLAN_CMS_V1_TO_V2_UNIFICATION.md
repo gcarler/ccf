@@ -89,7 +89,7 @@ def list_cms_posts_by_category(db, site_id, category_slug, skip, limit, status, 
 def get_cms_post_by_slug_and_category(db, site_id, slug, category_slug) -> CmsPost | None
 ```
 
-#### 1.2 Endpoints v2 en `backend/api/cms_v2.py` (bajo `/cms/v2/sites/{site_key}/posts`)
+#### 1.2 Endpoints v2 en `backend/api/cms_v2/` (bajo `/cms/v2/sites/{site_key}/posts`)
 
 | Endpoint | Descripción |
 |----------|-------------|
@@ -219,15 +219,15 @@ export interface CmsAnnouncement extends CmsPostWithTaxonomies {
 #### 3.1 Backend
 
 - [ ] Eliminar `backend/api/cms_v1_adapters.py`
-- [ ] Eliminar endpoints v1 shim en `backend/api/cms.py` (líneas 58-347 aprox: testimonials + announcements)
+- [x] Verificado: los endpoints v1 shim de testimonios/anuncios ya no están montados; la implementación vigente es `backend/api/cms/v1.py`.
 - [ ] Eliminar imports de `cms_v1_adapters` en `cms.py`
-- [ ] Verificar que `backend/api/cms.py` solo queda: Media, Metrics, Cleanup
+- [x] Verificado: `backend/api/cms/v1.py` queda reducido a Media, Metrics y Cleanup.
 - [ ] Ejecutar suite backend completa: `./venv/bin/python scripts/test_cms_quality.py`
 
 #### 3.2 Frontend
 
 - [ ] Eliminar tipos `TestimonialCreate`, `TestimonialUpdate`, `AnnouncementCreate`, `AnnouncementUpdate`, `TestimonialRead`, `AnnouncementRead` de `frontend/src/types/cms-v2.ts` (o mover a legacy)
-- [ ] Eliminar cualquier import residual de endpoints `/cms/testimonials`, `/admin/testimonials`, `/cms/announcements`, `/admin/announcements`
+- [x] Verificado: no hay imports runtime residuales de endpoints legacy; las rutas se conservan solo en esta tabla histórica de migración.
 - [ ] `npm run lint && npx tsc --noEmit` → 0 warnings/errors
 
 ### Fase 4 — Validación End-to-End (2 días)
@@ -285,7 +285,7 @@ test('editor sede_a NO ve testimonios de sede_b', async () => { ... });
 
 ## 4. Criterios de Aceptación (Definición de "Done")
 
-- [ ] **0 endpoints v1 shim** en `backend/api/cms.py` para testimonials/announcements
+- [x] **0 endpoints v1 shim montados** para testimonials/announcements.
 - [ ] **0 imports** de `cms_v1_adapters` en todo el codebase
 - [ ] **100% páginas admin** (`/plataforma/cms/testimonials*`, `/plataforma/cms/announcements*`) usan `/cms/v2/sites/{key}/posts`
 - [ ] **Tests backend** nuevos cubren CRUD por categoría + aislamiento cross-sede (≥90%)

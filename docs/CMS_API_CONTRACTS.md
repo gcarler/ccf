@@ -13,35 +13,33 @@ Referencia RBAC:
 
 - `docs/CMS_RBAC_MATRIX.md`
 
-## 2. CMS v1 — `backend/api/cms.py`
+## 2. CMS v1 — `backend/api/cms/v1.py` (compatibilidad de media)
 
-Áreas:
+La superficie v1 actualmente montada conserva únicamente media y métricas. Los
+feeds administrativos legacy de testimonios/anuncios no son rutas activas; el
+contenido editorial nuevo usa CMS v2 con categorías `testimonials` y
+`announcements`.
 
-- testimonials
-- announcements
-- media
-- metrics
+Rutas efectivamente montadas:
 
-Rutas clave:
-
-| Metodo | Ruta |
+| Método | Ruta |
 |---|---|
-| `GET/POST` | `/cms/testimonials` |
-| `GET/PATCH/DELETE` | `/admin/testimonials/{testimonial_id}` |
-| `GET/POST` | `/cms/announcements` |
-| `GET/PATCH/DELETE` | `/admin/announcements/{announcement_id}` |
-| `GET/POST` | `/cms/media`, `/cms/media/upload` |
+| `GET/POST` | `/cms/media` |
 | `GET/PATCH/DELETE` | `/cms/media/{item_id}` |
+| `POST` | `/cms/media/upload` |
+| `POST` | `/cms/media/{item_id}/edit` |
 | `POST` | `/cms/media/{item_id}/optimize` |
+| `POST` | `/cms/media/cleanup` |
 | `GET` | `/cms/metrics` |
 
 Reglas:
 
-- feeds públicos siguen reglas de publicación/aprobación
-- admin se filtra por sede donde aplica
+- lecturas requieren `cms:read` y respetan el scope por sede
+- mutaciones de media requieren `cms:edit` y un rol de `CMS_EDITOR_ROLES`
+- soft-delete de media requiere un rol editorial; hard-delete (`permanent=true`) y cleanup de media huérfana requieren `CMS_PUBLISHER_ROLES`
 - uploads deben pasar por allow-list y alineación MIME/extension
 
-## 3. CMS v2 — `backend/api/cms_v2.py`
+## 3. CMS v2 — `backend/api/cms_v2/` (paquete modular)
 
 Áreas:
 
@@ -124,8 +122,8 @@ Reglas:
 
 - tratar estas superficies como CMS enterprise, no como parte menor del editor
 - no asumir que autenticación simple equivale a autorización CMS correcta
-- en CMS v1, las mutaciones administrativas de `backend/api/cms.py` ya exigen `cms:edit`; las lecturas administrativas siguen en `cms:read`
-- mientras no cierre `PEND-RBAC-ENTERPRISE-CMS-001`, validar enterprise como superficie separada y con sospecha explícita de drift RBAC
+- en CMS v1, las mutaciones de media exigen `cms:edit` más rol editorial; cleanup exige rol publisher
+- Enterprise CMS se valida como superficie separada, con `cms:read` para lectura y `cms:manage` para mutación
 
 ## 5. Modelos y scope
 
@@ -186,8 +184,8 @@ npm run test:e2e:cms:public
 
 ## 10. Notas RBAC actuales
 
-- `cms.py` v1 ya separa lectura administrativa (`cms:read`) de mutación administrativa (`cms:edit`).
-- `cms_v2.py` sí separa mejor lectura (`cms:read`) y mutación (`cms:edit`).
+- `cms/v1.py` conserva media/métricas y separa lectura (`cms:read`) de mutación (`cms:edit` + rol editorial).
+- `cms_v2/` separa lectura (`cms:read`) de mutación (`cms:edit`) y reserva las operaciones publisher para roles autorizados.
 - `enterprise_cms.py` ahora expresa lectura con `cms:read` y mutación con `cms:manage` en la firma.
 - ver `CMS_RBAC_MATRIX.md` para la matriz completa y el contrato RBAC vigente.
 

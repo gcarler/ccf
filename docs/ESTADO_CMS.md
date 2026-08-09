@@ -39,7 +39,7 @@ Versiones verificadas en este host el **2026-07-16**:
 ## 3. Recontar superficie vigente (por si drift)
 
 ```bash
-wc -l /root/ccf/backend/api/cms.py /root/ccf/backend/api/cms_v2.py /root/ccf/backend/api/enterprise_cms.py /root/ccf/backend/crud/cms.py /root/ccf/backend/crud/cms_pastors_sync.py /root/ccf/backend/models_cms.py /root/ccf/backend/schemas/cms.py /root/ccf/backend/schemas/cms_v2_sections.py 2>/dev/null | tail -1
+wc -l /root/ccf/backend/api/cms/v1.py /root/ccf/backend/api/cms_v2/*.py /root/ccf/backend/api/enterprise_cms.py /root/ccf/backend/crud/cms /root/ccf/backend/crud/cms_pastors_sync.py /root/ccf/backend/models_cms.py /root/ccf/backend/schemas/cms.py /root/ccf/backend/schemas/cms_v2_sections.py 2>/dev/null | tail -1
 wc -l /root/ccf/frontend/src/app/plataforma/cms/**/*.tsx /root/ccf/frontend/src/app/plataforma/cms/*.tsx 2>/dev/null | tail -1
 ```
 
@@ -93,8 +93,8 @@ Plan operativo vigente:
 
 | Capa | Ubicacion | Tamano |
 |---|---|---:|
-| CMS v1 | `backend/api/cms.py` | testimonios, announcements, media, métricas |
-| CMS v2 | `backend/api/cms_v2.py` | sites, themes, menus, pages, sections, preview, workflow, categories, tags, posts, analytics |
+| CMS v1 | `backend/api/cms/v1.py` | compatibilidad de media y métricas; testimonios/anuncios migrados a v2 |
+| CMS v2 | `backend/api/cms_v2/` | sites, themes, menus, pages, sections, preview, workflow, categories, tags, posts, analytics |
 | Enterprise CMS | `backend/api/enterprise_cms.py` | audit logs, content permissions, notifications, webhooks, custom types, search, redirects, sessions, folders |
 | Helpers | `backend/api/_cms_helpers/` | scope helpers y auditorías compartidas |
 | CRUD | `backend/crud/cms.py`, `backend/crud/cms_pastors_sync.py` | escritura/lectura real del dominio |
@@ -155,14 +155,15 @@ Puntos sensibles:
 
 ## 9. Backend — API surface
 
-### CMS v1 — `backend/api/cms.py`
+### CMS v1 — `backend/api/cms/v1.py`
 
-- `/cms/testimonials`, `/admin/testimonials`
-- `/cms/announcements`, `/admin/announcements`
-- `/cms/media`, `/cms/media/upload`, `/cms/media/{id}/optimize`
+- `/cms/media`, `/cms/media/upload`, `/cms/media/{id}`
+- `/cms/media/{id}/edit`, `/cms/media/{id}/optimize`
+- `/cms/media/cleanup`
 - `/cms/metrics`
+- No están montadas las rutas legacy `/cms|admin/testimonials` ni `/cms|admin/announcements`.
 
-### CMS v2 — `backend/api/cms_v2.py`
+### CMS v2 — `backend/api/cms_v2/`
 
 - `/cms/v2/section-types`
 - `/cms/v2/sites`
@@ -278,7 +279,7 @@ Frontend test existente:
 2. **Matriz RBAC CMS** `[DONE-RBAC-CMS-001]` — cerrada el 2026-07-16 en `CMS_RBAC_MATRIX.md`; documenta v1, v2 y enterprise por separado, incluyendo la subprotección actual de CMS v1.
 3. **Smoke frontend CMS** `[DONE-FRONTEND-E2E-CMS-001]` — cerrado el 2026-07-16 con `frontend/tests/e2e/cms/smoke.spec.ts`; cubre dashboard, pages y media con guard de consola/API/assets.
 4. **Smoke profundo CMS pages/preview** `[DONE-FRONTEND-DEEP-CMS-001]` — cerrado el 2026-07-16 con `frontend/tests/e2e/cms/pages-preview.spec.ts`; valida gestión de páginas, archivado, schedule views y preview draft con runner administrado.
-5. **Hardening RBAC CMS v1** `[DONE-RBAC-V1-HARDENING-CMS-001]` — cerrado el 2026-07-16; las mutaciones administrativas de `backend/api/cms.py` ahora exigen `cms:edit`, mientras las lecturas administrativas permanecen en `cms:read`. Cobertura focal agregada para bloquear creación de testimonials, announcements y uploads de media por `LECTOR`.
+5. **Hardening RBAC CMS v1** `[DONE-RBAC-V1-HARDENING-CMS-001]` — cerrado el 2026-07-16; las mutaciones administrativas de `backend/api/cms/v1.py` ahora exige `cms:edit` más rol editorial para mutaciones de media; el hard-delete y cleanup exigen rol publisher, mientras las lecturas permanecen en `cms:read`. La cobertura focal bloquea mutaciones de media por `LECTOR`.
 6. **Builder/editor CMS** `[DONE-BUILDER-CMS-001]` — cerrado el 2026-07-16; el constructor quedó cubierto por smoke y deep suite sin regresiones de consola.
 7. **Dashboard CMS** `[DONE-DASHBOARD-CMS-001]` — cerrado el 2026-07-16; el panel principal quedó validado con el smoke autenticado.
 8. **Preview vs publicado vs público** `[DONE-PREVIEW-PUBLIC-CMS-001]` — cerrado el 2026-07-16; `pages-preview.spec.ts` y `cms-public-contract.spec.ts` cierran la validación reproducible.
@@ -302,8 +303,8 @@ Frontend test existente:
 5. `docs/PLAN_CMS_CALIDAD.md`
 6. `docs/PLAN_CMS_100.md`
 7. `docs/AUDITORIA_FORENSE_CMS.md`
-8. `backend/api/cms.py`
-9. `backend/api/cms_v2.py`
+8. `backend/api/cms/v1.py`
+9. `backend/api/cms_v2/`
 10. `backend/api/enterprise_cms.py`
 11. `backend/api/_cms_helpers/_shared.py`
 12. `backend/crud/cms.py`
@@ -331,7 +332,7 @@ Frontend test existente:
 |---|---|---|
 | `DONE-PLAN-CMS-LINK-001` | ✅ **Hecho 2026-07-16** — `PLAN_CMS_CALIDAD.md` queda alineado como subplan oficial del módulo dentro del esquema modular; `PLAN_CMS_100.md` queda como referencia complementaria profunda. | `docs/PLAN_CMS_CALIDAD.md` |
 | `DONE-RBAC-CMS-001` | ✅ **Hecho 2026-07-16** — matriz RBAC CMS documentada separando v1, v2 y enterprise; deja explícita la subprotección actual de CMS v1 y la autorización difusa de enterprise. | `docs/CMS_RBAC_MATRIX.md` |
-| `DONE-RBAC-V1-HARDENING-CMS-001` | ✅ **Hecho 2026-07-16** — mutaciones administrativas de CMS v1 endurecidas a `cms:edit`; lecturas administrativas preservadas en `cms:read`; pruebas focalizadas cubren `LECTOR` en testimonials, announcements y media upload. | `backend/api/cms.py`, `tests/test_cms_sede_isolation.py`, `tests/test_cms_upload_and_image_hardening.py` |
+| `DONE-RBAC-V1-HARDENING-CMS-001` | ✅ **Hecho 2026-07-16** — mutaciones de media CMS v1 endurecidas a `cms:edit` + rol editorial; hard-delete y cleanup requieren publisher; lecturas preservadas en `cms:read`; pruebas cubren `LECTOR` en media. | `backend/api/cms/v1.py`, `tests/test_cms_rbac_v1_v2_contract.py`, `tests/test_cms_upload_and_image_hardening.py` |
 | `DONE-FRONTEND-E2E-CMS-001` | ✅ **Hecho 2026-07-16** — smoke frontend CMS base para dashboard, pages y media. | `frontend/tests/e2e/cms/smoke.spec.ts` |
 | `DONE-FRONTEND-DEEP-CMS-001` | ✅ **Hecho 2026-07-16** — coverage profunda mockeada para pages + preview con workflow editorial y render draft. | `frontend/tests/e2e/cms/pages-preview.spec.ts` |
 | `DONE-BUILDER-CMS-001` | ✅ **Hecho 2026-07-16** — builder cubierto por smoke y deep suite sin regresiones de consola. | `frontend/src/app/plataforma/cms/builder/page.tsx` |
