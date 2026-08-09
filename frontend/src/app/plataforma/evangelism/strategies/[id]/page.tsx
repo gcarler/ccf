@@ -74,7 +74,7 @@ X
 } from 'lucide-react';
 import { ChevronDown } from 'lucide-react';
 import { useParams,useRouter } from 'next/navigation';
-import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
+import { useCallback,useEffect,useId,useMemo,useRef,useState } from 'react';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { toast } from 'sonner';
 
@@ -85,7 +85,11 @@ function RoleSelect({ value, options, colorClass, onChange }: {
  onChange: (v: string) => void;
 }) {
  const [open, setOpen] = useState(false);
+ const [activeIndex, setActiveIndex] = useState(() => Math.max(0, options.findIndex(o => o.value === value)));
+ const instanceId = useId();
+ const listboxId = `role-listbox-${instanceId}`;
  const ref = useRef<HTMLDivElement>(null);
+ const triggerRef = useRef<HTMLButtonElement>(null);
  const current = options.find(o => o.value === value);
 
  useEffect(() => {
@@ -95,32 +99,82 @@ function RoleSelect({ value, options, colorClass, onChange }: {
  return () => document.removeEventListener('mousedown', handler);
  }, [open]);
 
+ useEffect(() => {
+ if (!open) return;
+ setActiveIndex(Math.max(0, options.findIndex(o => o.value === value)));
+ }, [open, value, options]);
+
  const handleKeyDown = (e: React.KeyboardEvent) => {
-   if (e.key === 'Escape') setOpen(false);
+ if (e.key === 'Escape') {
+ setOpen(false);
+ e.preventDefault();
+ return;
+ }
+ if (e.key === 'ArrowDown') {
+ e.preventDefault();
+ setOpen(true);
+ setActiveIndex(i => Math.min(options.length - 1, i + 1));
+ return;
+ }
+ if (e.key === 'ArrowUp') {
+ e.preventDefault();
+ setOpen(true);
+ setActiveIndex(i => Math.max(0, i - 1));
+ return;
+ }
+ if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+ if (!open) {
+ e.preventDefault();
+ setOpen(true);
+ return;
+ }
+ const opt = options[activeIndex];
+ if (opt) {
+ e.preventDefault();
+ onChange(opt.value);
+ setOpen(false);
+ }
+ return;
+ }
+ if (e.key === 'Home') {
+ e.preventDefault();
+ setActiveIndex(0);
+ return;
+ }
+ if (e.key === 'End') {
+ e.preventDefault();
+ setActiveIndex(options.length - 1);
+ return;
+ }
  };
 
  return (
  <div ref={ref} className="relative" onKeyDown={handleKeyDown}>
  <button
+ ref={triggerRef}
  type="button"
  onClick={() => setOpen(o => !o)}
+ role="combobox"
  aria-expanded={open}
  aria-haspopup="listbox"
+ aria-controls={listboxId}
+ aria-activedescendant={open && options[activeIndex] ? `${listboxId}-option-${activeIndex}` : undefined}
  className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded cursor-pointer ${colorClass}`}
  >
  {current?.label ?? value}
  <ChevronDown size={10} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
  </button>
  {open && (
- <div role="listbox" className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 overflow-hidden">
- {options.map(opt => (
+ <div id={listboxId} role="listbox" className="absolute right-0 top-full mt-1 z-50 min-w-[140px] bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 overflow-hidden">
+ {options.map((opt, i) => (
  <button
  key={opt.value}
+ id={`${listboxId}-option-${i}`}
  type="button"
  role="option"
  aria-selected={value === opt.value}
- onClick={() => { onChange(opt.value); setOpen(false); }}
- className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--bg-muted))] transition-colors ${value === opt.value ? 'opacity-60' : ''}`}
+ onClick={() => { onChange(opt.value); setOpen(false); triggerRef.current?.focus(); }}
+ className={`w-full text-left px-3 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--bg-muted))] transition-colors ${value === opt.value ? 'opacity-60' : ''} ${i === activeIndex ? 'bg-[hsl(var(--bg-muted))] outline-none' : ''}`}
  >
  {opt.label}
  </button>
