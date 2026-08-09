@@ -25,12 +25,14 @@ from sqlalchemy.orm import Session
 from backend import models
 from backend.api.evangelism_shared import (
     ATTENDED_STATES,
+    analytics_cache_scope,
     get_visible_strategy,
     is_absent_status,
     is_attended_status,
     is_excused_status,
     session_read_only_options,
     session_read_value,
+    ttl_cache,
 )
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_read
@@ -377,6 +379,9 @@ async def attendance_excel(
 
 
 @router.get("/reports/strategy/{strategy_id}/summary")
+@ttl_cache(
+    lambda strategy_id, db=None, current_user=None: f"summary:{strategy_id}:{analytics_cache_scope(current_user)}"
+)
 def strategy_summary(
     strategy_id: UUID,
     db: Session = Depends(get_db),

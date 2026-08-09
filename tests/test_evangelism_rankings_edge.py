@@ -9,11 +9,15 @@ import pytest
 
 from backend import models
 from backend.api.evangelism_rankings import (
-    _TTL_CACHE,
     _active_groups_query,
     _last_month_range,
     _month_range,
-    _ttl_cache,
+)
+from backend.api.evangelism_shared import (
+    _TTL_CACHE,
+)
+from backend.api.evangelism_shared import (
+    ttl_cache as _ttl_cache,
 )
 from backend.models_evangelism import Sede
 from tests.conftest import auth_headers as _auth_headers

@@ -80,7 +80,8 @@ class TestFinalCoverage:
 
         # PDF report — should hit line 112 (pct calc)
         resp = c.get(f"/api/evangelism/reports/group/{g.id}/attendance-pdf", headers=h)
-        assert resp.status_code in (200, 500), f"pdf: {resp.status_code}"
+        assert resp.status_code == 200, f"pdf: {resp.status_code}"
+        assert resp.headers["content-type"] == "application/pdf"
 
         # Strategy summary — should hit lines 439-443 (avg pct)
         resp = c.get(f"/api/evangelism/reports/strategy/{sid}/summary", headers=h)

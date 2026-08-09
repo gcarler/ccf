@@ -65,16 +65,16 @@ class TestReportsWithData:
         c, h = full["c"], full["h"]
         _, g = _setup_data(db_session, full["s"])
         resp = c.get(f"/api/evangelism/reports/group/{g.id}/attendance-pdf", headers=h)
-        # May fail if reportlab not installed, but endpoint logic should work
-        assert resp.status_code in (200, 500), f"pdf: {resp.status_code} {resp.text[:100]}"
+        assert resp.status_code == 200, f"pdf: {resp.status_code} {resp.text[:100]}"
+        assert resp.headers["content-type"] == "application/pdf"
 
     def test_excel_report(self, full, db_session):
         """Generate Excel attendance report."""
         c, h = full["c"], full["h"]
         _, g = _setup_data(db_session, full["s"])
         resp = c.get(f"/api/evangelism/reports/group/{g.id}/attendance-excel", headers=h)
-        # May fail if openpyxl not installed
-        assert resp.status_code in (200, 500), f"excel: {resp.status_code} {resp.text[:100]}"
+        assert resp.status_code == 200, f"excel: {resp.status_code} {resp.text[:100]}"
+        assert resp.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
     def test_strategy_summary(self, full, db_session):
         """Generate strategy summary."""
