@@ -152,6 +152,7 @@ def send_campaign(
     now = _utcnow()
 
     from backend.services.messaging import get_messaging_gateway
+
     gateway = get_messaging_gateway()
 
     for reg in regs_q:
@@ -179,6 +180,7 @@ def send_campaign(
 
             # gateway methods are async; run synchronously in own loop to keep API simple.
             import asyncio
+
             try:
                 loop = asyncio.get_running_loop()
             except RuntimeError:

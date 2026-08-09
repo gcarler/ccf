@@ -183,6 +183,29 @@ function RegisterSuccess({ result, event, baseUrl }: { result: RegistrationResul
     );
 }
 
+// plan_followup: flujo de identidad (identify/verify) para personas ya parte de CCF.
+type IdentifyResult = {
+    result: string;
+    masked_contact: string | null;
+    challenge_id: string;
+};
+
+type IdentityFields = {
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+    phone: string | null;
+    id_type: string | null;
+    id_number: string | null;
+};
+
+type IdentityVerifyResult = {
+    verified_identity_token: string;
+    fields: IdentityFields;
+};
+
+type IdentityStep = 'email' | 'code' | 'verified';
+
 function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: string }) {
     const [form, setForm] = useState({
         first_name: '',
@@ -200,6 +223,17 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
     const [checking, setChecking] = useState(false);
     const [checkResult, setCheckResult] = useState<RegistrationResult | null>(null);
     const [checkError, setCheckError] = useState<string | null>(null);
+
+    // ── plan_followup: flujo identify/verify (toggle 'Ya soy parte de CCF') ──
+    const [identityMode, setIdentityMode] = useState(false);
+    const [identityStep, setIdentityStep] = useState<IdentityStep>('email');
+    const [identityEmail, setIdentityEmail] = useState('');
+    const [identityCode, setIdentityCode] = useState('');
+    const [challengeId, setChallengeId] = useState<string | null>(null);
+    const [verifiedToken, setVerifiedToken] = useState<string | null>(null);
+    const [verifiedFields, setVerifiedFields] = useState<IdentityFields | null>(null);
+    const [identityLoading, setIdentityLoading] = useState(false);
+    const [identityError, setIdentityError] = useState<string | null>(null);
 
     // plan_de_form_builder: formulario dinámico vinculado al evento (si existe).
     const [publicForm, setPublicForm] = useState<CmsFormPublicRead | null>(null);
@@ -226,6 +260,103 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
             });
         return () => { cancelled = true; };
     }, [event.form_id]);
+
+    // ── plan_followup: identify → verify → register con token single-use ──
+    const handleIdentify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!identityEmail.trim()) return;
+        setIdentityLoading(true);
+        setIdentityError(null);
+        try {
+            const data = await apiFetch<IdentifyResult>(`/public/events/${event.id}/identify`, {
+                method: 'POST',
+                body: { email: identityEmail.trim().toLowerCase() },
+                silent: true,
+            });
+            setChallengeId(data.challenge_id);
+            setIdentityStep('code');
+            setIdentityCode('');
+        } catch (err) {
+            if (err instanceof ApiError && err.status === 403) {
+                setIdentityError('No pudimos iniciar la verificación. Inténtalo de nuevo más tarde.');
+            } else {
+                setIdentityError('Ocurrió un error al enviar el código. Inténtalo de nuevo.');
+            }
+        } finally {
+            setIdentityLoading(false);
+        }
+    };
+
+    const handleVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!challengeId || identityCode.trim().length < 4) return;
+        setIdentityLoading(true);
+        setIdentityError(null);
+        try {
+            const data = await apiFetch<IdentityVerifyResult>(`/public/events/${event.id}/identify/verify`, {
+                method: 'POST',
+                body: {
+                    identifier: { email: identityEmail.trim().toLowerCase() },
+                    challenge_id: challengeId,
+                    code: identityCode.trim(),
+                },
+                silent: true,
+            });
+            setVerifiedToken(data.verified_identity_token);
+            setVerifiedFields(data.fields);
+            setIdentityStep('verified');
+        } catch (err) {
+            if (err instanceof ApiError && err.status === 403) {
+                setIdentityError('El código no es válido o ya expiró. Solicita uno nuevo.');
+            } else if (err instanceof ApiError && err.status === 422) {
+                setIdentityError('Revisa el código ingresado.');
+            } else {
+                setIdentityError('Ocurrió un error al verificar el código. Inténtalo de nuevo.');
+            }
+        } finally {
+            setIdentityLoading(false);
+        }
+    };
+
+    const handleIdentityRegister = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!verifiedToken) return;
+        setStatus('loading');
+        setErrorDetail(null);
+        try {
+            const data = await apiFetch<RegistrationResult>(`/public/events/${event.id}/register`, {
+                method: 'POST',
+                body: {
+                    verified_identity_token: verifiedToken,
+                    accept_contact: form.accept_contact,
+                    extras: {},
+                },
+                silent: true,
+            });
+            setResult(data);
+            setStatus('success');
+        } catch (err) {
+            setStatus('error');
+            if (err instanceof ApiError) {
+                const detail = err.detail as { code?: string; detail?: string } | undefined;
+                if (err.status === 403) {
+                    setErrorDetail('Tu verificación ya fue usada o expiró. Vuelve a solicitar un código.');
+                    setIdentityStep('email');
+                    setVerifiedToken(null);
+                } else if (detail?.code === 'EVENT_FULL') {
+                    setErrorDetail('El evento está lleno' + (event.waiting_list_enabled ? '. Fuiste agregado a la lista de espera.' : '.'));
+                } else if (detail?.code === 'REGISTRATION_CLOSED') {
+                    setErrorDetail('El periodo de registro para este evento ya cerró.');
+                } else if (detail?.code === 'REGISTRATION_NOT_OPEN') {
+                    setErrorDetail('El registro para este evento aún no está abierto.');
+                } else {
+                    setErrorDetail(detail?.detail || 'Ocurrió un error al registrarte. Inténtalo de nuevo.');
+                }
+            } else {
+                setErrorDetail('Ocurrió un error al registrarte. Inténtalo de nuevo.');
+            }
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -276,6 +407,172 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
                 setErrorDetail('Ocurrió un error al registrarte. Inténtalo de nuevo.');
             }
         }
+    };
+
+    const renderIdentityFlow = () => {
+        if (identityStep === 'verified' && verifiedFields) {
+            return (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="p-4 rounded-lg border border-[hsl(var(--info))]/30 bg-[hsl(var(--info-muted))] text-left">
+                        <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--info-text))]">
+                            <ShieldCheck size={14} /> Identidad verificada
+                        </div>
+                        <div className="mt-2 text-sm font-bold text-[hsl(var(--text-primary))]">
+                            {[verifiedFields.first_name, verifiedFields.last_name].filter(Boolean).join(' ') || 'Persona verificada'}
+                        </div>
+                        {verifiedFields.email && (
+                            <div className="text-xs font-medium text-[hsl(var(--text-secondary))] mt-1">{verifiedFields.email}</div>
+                        )}
+                    </div>
+
+                    <div className="pt-1">
+                        <label className="flex items-start gap-4 cursor-pointer group">
+                            <div className={`mt-1 shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${form.accept_contact ? 'bg-[hsl(var(--primary))] border-[hsl(var(--info)/100%)] text-white shadow-md shadow-[hsl(var(--info)/30%)]' : 'bg-[hsl(var(--surface-1))] border-[hsl(var(--border))]'}`}>
+                                {form.accept_contact && <Check size={14} strokeWidth={4} />}
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={form.accept_contact}
+                                onChange={e => setForm({ ...form, accept_contact: e.target.checked })}
+                                className="hidden"
+                            />
+                            <span className="text-sm font-medium text-[hsl(var(--text-secondary))] leading-relaxed group-hover:text-[hsl(var(--text-primary))] transition-colors">
+                                Acepto ser contactado para recibir información, material pastoral y noticias de la comunidad.
+                            </span>
+                        </label>
+                    </div>
+
+                    {status === 'error' && errorDetail && (
+                        <div className="p-4 bg-danger-soft text-danger-text rounded-lg text-sm font-bold flex items-start gap-3">
+                            <X size={18} className="shrink-0 mt-0.5" /> {errorDetail}
+                        </div>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={handleIdentityRegister}
+                        disabled={status === 'loading'}
+                        className="w-full py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-white rounded-lg text-sm font-semibold uppercase tracking-wide shadow-xl shadow-black/10 hover:shadow-[hsl(var(--info)/30%)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-60"
+                    >
+                        {status === 'loading'
+                            ? <><Loader2 size={18} className="animate-spin" /> Registrando...</>
+                            : <><ShieldCheck size={18} /> Confirmar inscripción <ArrowRight size={18} /></>}
+                    </button>
+                </div>
+            );
+        }
+
+        if (identityStep === 'code') {
+            return (
+                <form onSubmit={handleVerify} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="p-4 rounded-lg border border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--text-secondary))] flex items-start gap-3">
+                        <Mail size={16} className="shrink-0 mt-0.5" />
+                        <span>
+                            Enviamos un código de verificación a <strong className="text-[hsl(var(--text-primary))]">{identityEmail}</strong>.
+                            {!verifiedToken && <span className="block mt-1 text-xs font-medium">Revisa tu bandeja de entrada (o spam).</span>}
+                        </span>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-2">Código de 6 dígitos</label>
+                        <input
+                            required
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            value={identityCode}
+                            onChange={e => setIdentityCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] outline-none font-mono font-bold text-center text-xl tracking-[0.5em] text-[hsl(var(--text-primary))] transition-all placeholder:text-[hsl(var(--text-secondary))] placeholder:font-medium placeholder:tracking-normal"
+                            placeholder="••••••"
+                        />
+                    </div>
+
+                    {identityError && (
+                        <div className="p-4 bg-danger-soft text-danger-text rounded-lg text-sm font-bold flex items-start gap-3">
+                            <X size={18} className="shrink-0 mt-0.5" /> {identityError}
+                        </div>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={identityLoading || identityCode.trim().length < 4}
+                        className="w-full py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-white rounded-lg text-sm font-semibold uppercase tracking-wide shadow-xl shadow-black/10 hover:shadow-[hsl(var(--info)/30%)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-60"
+                    >
+                        {identityLoading
+                            ? <><Loader2 size={18} className="animate-spin" /> Verificando...</>
+                            : <><ShieldCheck size={18} /> Verificar código <ArrowRight size={18} /></>}
+                    </button>
+
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                        <button
+                            type="button"
+                            onClick={() => { setIdentityStep('email'); setIdentityError(null); }}
+                            className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors underline underline-offset-2"
+                        >
+                            Usar otro correo
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleIdentify}
+                            disabled={identityLoading}
+                            className="text-[hsl(var(--primary))] hover:underline underline-offset-2 transition-colors disabled:opacity-50"
+                        >
+                            {identityLoading ? 'Enviando...' : 'Reenviar código'}
+                        </button>
+                    </div>
+                </form>
+            );
+        }
+
+        // identityStep === 'email'
+        return (
+            <form onSubmit={handleIdentify} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="p-4 rounded-lg border border-[hsl(var(--border))] text-sm font-medium text-[hsl(var(--text-secondary))] flex items-start gap-3">
+                    <ShieldCheck size={16} className="shrink-0 mt-0.5 text-[hsl(var(--primary))]" />
+                    <span>
+                        Te enviaremos un código de verificación a tu correo. Si ya haces parte de CCF,
+                        completaremos tu inscripción con los datos que ya tenemos de ti.
+                    </span>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-2">Correo Electrónico</label>
+                    <input
+                        required
+                        type="email"
+                        value={identityEmail}
+                        onChange={e => setIdentityEmail(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] outline-none font-bold text-[hsl(var(--text-primary))] transition-all placeholder:text-[hsl(var(--text-secondary))] placeholder:font-medium"
+                        placeholder="ejemplo@correo.com"
+                    />
+                </div>
+
+                {identityError && (
+                    <div className="p-4 bg-danger-soft text-danger-text rounded-lg text-sm font-bold flex items-start gap-3">
+                        <X size={18} className="shrink-0 mt-0.5" /> {identityError}
+                    </div>
+                )}
+
+                <button
+                    type="submit"
+                    disabled={identityLoading || !identityEmail.trim()}
+                    className="w-full py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-white rounded-lg text-sm font-semibold uppercase tracking-wide shadow-xl shadow-black/10 hover:shadow-[hsl(var(--info)/30%)] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-60"
+                >
+                    {identityLoading
+                        ? <><Loader2 size={18} className="animate-spin" /> Enviando código...</>
+                        : <><Mail size={18} /> Enviar código de verificación</>}
+                </button>
+
+                <div className="flex items-center justify-center text-xs font-semibold">
+                    <button
+                        type="button"
+                        onClick={() => { setIdentityMode(false); setIdentityStep('email'); setIdentityError(null); }}
+                        className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors underline underline-offset-2"
+                    >
+                        Soy nuevo — registrarme con mis datos
+                    </button>
+                </div>
+            </form>
+        );
     };
 
     const handleCheck = async (e: React.FormEvent) => {
@@ -345,6 +642,29 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
 
     return (
         <div className="space-y-6">
+            {/* ── plan_followup: toggle nuevo visitante / ya soy parte de CCF ── */}
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
+                <button
+                    type="button"
+                    onClick={() => { setIdentityMode(false); setIdentityStep('email'); setIdentityError(null); setErrorDetail(null); }}
+                    className={`py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all ${!identityMode
+                        ? 'bg-[hsl(var(--primary))] text-white shadow-md shadow-[hsl(var(--info)/30%)]'
+                        : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'}`}
+                >
+                    Soy nuevo
+                </button>
+                <button
+                    type="button"
+                    onClick={() => { setIdentityMode(true); setIdentityStep('email'); setIdentityError(null); setErrorDetail(null); }}
+                    className={`py-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all ${identityMode
+                        ? 'bg-[hsl(var(--primary))] text-white shadow-md shadow-[hsl(var(--info)/30%)]'
+                        : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'}`}
+                >
+                    Ya soy parte de CCF
+                </button>
+            </div>
+
+            {identityMode ? renderIdentityFlow() : (
             <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-2">
@@ -449,6 +769,7 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
                         : <>{event.capacity_max ? `Reservar cupo (${event.capacity_remaining ?? event.capacity_max} disponibles)` : 'Confirmar Registro'} <ArrowRight size={18} /></>}
                 </button>
             </form>
+            )}
 
             <div className="border-t border-[hsl(var(--border))] pt-5">
                 <h2 className="text-sm font-bold text-[hsl(var(--text-primary))] mb-3 flex items-center gap-2">

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import logging
 import secrets
 from html import escape
 
@@ -11,6 +12,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend import models
+
+logger = logging.getLogger(__name__)
 
 ACTIVE_STATUSES = {"PENDING", "CONFIRMED", "WAITLIST", "CHECKED_IN", "ABSENT"}
 
@@ -170,14 +173,21 @@ def materialize_campaign_for_registration(
         }.get(communication_type, "ROUTINE_TRANSACTIONAL")
         channel_available = bool(
             persona
-            and ((channel == "EMAIL" and persona.email) or (channel in {"WHATSAPP", "SMS"} and (persona.phone or persona.mobile_phone)))
+            and (
+                (channel == "EMAIL" and persona.email)
+                or (channel in {"WHATSAPP", "SMS"} and (persona.phone or persona.mobile_phone))
+            )
         )
         preferred = {str(value).upper() for value in (registration.preferred_channels or [])}
         channel_allowed = not preferred or channel in preferred
-        consent_allowed = communication_type == "OPERATIONAL" or (
-            communication_type == "ROUTINE" and registration.transactional_notifications_enabled
-        ) or (
-            communication_type == "PASTORAL" and registration.communication_consent and not registration.marketing_opt_out_at
+        consent_allowed = (
+            communication_type == "OPERATIONAL"
+            or (communication_type == "ROUTINE" and registration.transactional_notifications_enabled)
+            or (
+                communication_type == "PASTORAL"
+                and registration.communication_consent
+                and not registration.marketing_opt_out_at
+            )
         )
         if not consent_allowed:
             status, skip_reason = "SKIPPED", "OPT_OUT"
@@ -329,12 +339,7 @@ def ensure_default_event_campaigns(
     """
     if not event.requires_registration or event.sede_id is None:
         return []
-    locked_event = (
-        db.query(models.CrmEvent)
-        .with_for_update()
-        .filter(models.CrmEvent.id == event.id)
-        .first()
-    )
+    locked_event = db.query(models.CrmEvent).with_for_update().filter(models.CrmEvent.id == event.id).first()
     if locked_event is None:
         return []
     event = locked_event
@@ -465,9 +470,9 @@ def request_identity_challenge(
                     "<p>Válido durante 10 minutos. Si no lo solicitaste, ignora este mensaje.</p>"
                 ),
             )
-        except Exception:
+        except Exception as exc:  # pragma: no cover - challenge dispatch is silent on purpose
             # El desafío existe, pero no se filtra el fallo al usuario.
-            pass
+            logger.warning("event_followup: failed to dispatch challenge for event %s: %s", event.id, exc)
     # Deliberadamente no se diferencia MATCH/NO_MATCH en la respuesta pública:
     # el desafío se entrega solo al canal verificable de una persona encontrada.
     return {

@@ -42,6 +42,8 @@ router = APIRouter(prefix="/v3/auth", tags=["Auth v3"])
 logger = logging.getLogger(__name__)
 
 SECRET_KEY = settings.secret_key
+GOOGLE_OAUTH_STATE_COOKIE = "ccf_google_oauth_state"
+GOOGLE_OAUTH_STATE_MAX_AGE = 600
 ALGORITHM = "HS256"
 
 
@@ -275,6 +277,7 @@ def google_login(request: Request):
     redirect_uri = _resolve_google_redirect_uri(request)
     from urllib.parse import urlencode
 
+    state = secrets.token_urlsafe(32)
     params = {
         "client_id": settings.google_client_id,
         "redirect_uri": redirect_uri,
@@ -282,21 +285,38 @@ def google_login(request: Request):
         "scope": "openid email profile",
         "access_type": "offline",
         "prompt": "consent",
+        "state": state,
     }
-    return RedirectResponse(url=f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}")
+    response = RedirectResponse(url=f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}")
+    response.set_cookie(
+        key=GOOGLE_OAUTH_STATE_COOKIE,
+        value=state,
+        httponly=True,
+        secure=settings.access_token_cookie_secure,
+        samesite="lax",
+        max_age=GOOGLE_OAUTH_STATE_MAX_AGE,
+    )
+    return response
 
 
 @router.get("/google/callback")
 def google_callback(
-    code: str,
+    code: Optional[str] = None,
+    state: Optional[str] = None,
     error: Optional[str] = None,
     request: Request = None,
     db: Session = Depends(get_db),
 ):
     import httpx
 
-    if error or not code:
+    if error:
         raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
+    if not code:
+        raise HTTPException(status_code=400, detail="Google OAuth code requerido")
+
+    expected_state = request.cookies.get(GOOGLE_OAUTH_STATE_COOKIE) if request else None
+    if not state or not expected_state or not secrets.compare_digest(state, expected_state):
+        raise HTTPException(status_code=400, detail="Estado OAuth inválido o expirado")
 
     redirect_uri = _resolve_google_redirect_uri(request)
 
@@ -430,10 +450,13 @@ def google_callback(
         ua=request.headers.get("user-agent") if request else None,
     )
 
-    # Redirect to frontend with token in hash
+    # Redirect without credentials. The HttpOnly cookies established above
+    # are the only token transport for the OAuth callback; putting the JWT in
+    # the URL would expose it through browser history, referrers and logs.
     frontend_url = getattr(settings, "frontend_url", "http://localhost:3000")
-    redirect_response = RedirectResponse(url=f"{frontend_url}/auth/callback?token={access_token}")
+    redirect_response = RedirectResponse(url=f"{frontend_url}/auth/callback")
     _set_cookies(redirect_response, access_token, refresh_token)
+    redirect_response.delete_cookie(GOOGLE_OAUTH_STATE_COOKIE, path="/")
     return redirect_response
 
 
@@ -749,7 +772,10 @@ def update_profile(
 # ═══════════════════════════════════════════════════════════════════════
 
 
-@router.get("/check-email")
+@router.get(
+    "/check-email",
+    dependencies=[Depends(rate_limiter(limit=20, window_seconds=300))],
+)
 def check_email(email: str, db: Session = Depends(get_db)):
     """Verifica si un email existe y cómo debe iniciar sesión."""
     user = _resolve_user(db, email)
@@ -872,7 +898,7 @@ def refresh_token(
 
     return {
         "access_token": new_access,
-        "token_type": "bearer",
+        "token_type": "bearer",  # nosec B105  # RFC 6749 §7.1: token_type is fixed vocabulary, not a credential
         "refresh_token": new_refresh,
     }
 

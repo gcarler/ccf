@@ -547,6 +547,7 @@ async def send_plantilla_campaign(
                 db,
                 sede_id=sede_id,
                 plantilla_id=plantilla_id,
+                caso_id=None,
                 enviado_por_id=str(sender_persona_id) if sender_persona_id else None,
                 destinatario_id=str(persona.id),
                 payload_hidratado={
@@ -573,6 +574,7 @@ async def send_plantilla_campaign(
             db,
             sede_id=sede_id,
             plantilla_id=plantilla_id,
+            caso_id=None,
             enviado_por_id=str(sender_persona_id) if sender_persona_id else None,
             destinatario_id=str(persona.id),
             payload_hidratado=payload_log,

@@ -177,7 +177,7 @@ class CRMSearchPersona(AgentTool):
             ),
         ]
 
-    def execute(self, query: str, **kwargs) -> Dict[str, Any]:
+    def execute(self, query: str, **kwargs) -> Dict[str, Any]:  # type: ignore[override]
         from backend import models
         from backend.core.database import SessionLocal
 
@@ -237,7 +237,7 @@ class CRMGetPersonaProfile(AgentTool):
             ),
         ]
 
-    def execute(self, persona_id: str, **kwargs) -> Dict[str, Any]:
+    def execute(self, persona_id: str, **kwargs) -> Dict[str, Any]:  # type: ignore[override]
         from backend import models
         from backend.core.database import SessionLocal
 
@@ -301,7 +301,7 @@ class AcademySearchCourse(AgentTool):
             ),
         ]
 
-    def execute(self, query: str, **kwargs) -> Dict[str, Any]:
+    def execute(self, query: str, **kwargs) -> Dict[str, Any]:  # type: ignore[override]
         from sqlalchemy import func
 
         from backend import models
@@ -413,7 +413,7 @@ class ProjectsSearchTask(AgentTool):
             ),
         ]
 
-    def execute(self, query: str, status: str = None, **kwargs) -> Dict[str, Any]:
+    def execute(self, query: str, status: str = None, **kwargs) -> Dict[str, Any]:  # type: ignore[override]
         from backend import models
         from backend.core.database import SessionLocal
 

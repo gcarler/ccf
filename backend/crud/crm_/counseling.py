@@ -1,5 +1,6 @@
 """Counseling ticket CRUD."""
 
+import logging
 from typing import List, Optional
 from uuid import UUID
 
@@ -9,6 +10,8 @@ from backend import models, schemas
 from backend.core.security import decrypt_data, encrypt_data
 from backend.crud._utils import _utcnow
 from backend.crud.crm_.shared import resolve_persona_id_from_identity
+
+logger = logging.getLogger(__name__)
 
 
 def get_counseling_tickets(
@@ -34,8 +37,8 @@ def get_counseling_tickets(
         if t.notes:
             try:
                 t.notes = decrypt_data(t.notes)
-            except Exception:
-                pass
+            except Exception as exc:  # pragma: no cover - decrypt best-effort
+                logger.warning("counseling: failed to decrypt notes for ticket %s: %s", t.id, exc)
 
     return tickets
 
@@ -64,8 +67,8 @@ def create_counseling_ticket(db: Session, payload: schemas.CounselingTicketCreat
 
         try:
             row.notes = decrypt_data(row.notes)
-        except Exception:
-            pass
+        except Exception as exc:  # pragma: no cover - decrypt best-effort
+            logger.warning("counseling: failed to decrypt notes for ticket %s: %s", row.id, exc)
         return row
     except Exception as e:
         db.rollback()
@@ -84,8 +87,8 @@ def get_counseling_ticket(db: Session, ticket_id: UUID) -> Optional[models.Couns
     if row and row.notes:
         try:
             row.notes = decrypt_data(row.notes)
-        except Exception:
-            pass
+        except Exception as exc:  # pragma: no cover - decrypt best-effort
+            logger.warning("counseling: failed to decrypt notes for ticket %s: %s", row.id, exc)
     return row
 
 
@@ -116,8 +119,8 @@ def update_counseling_ticket(
     if row.notes:
         try:
             row.notes = decrypt_data(row.notes)
-        except Exception:
-            pass
+        except Exception as exc:  # pragma: no cover - decrypt best-effort
+            logger.warning("counseling: failed to decrypt notes for ticket %s: %s", row.id, exc)
     return row
 
 

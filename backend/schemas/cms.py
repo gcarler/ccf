@@ -1071,4 +1071,3 @@ class CmsFormSubmissionCreateV2(BaseModel):
     data: Dict[str, Any] = Field(default_factory=dict)
     captcha_token: Optional[str] = None
     hp: Optional[str] = None
-

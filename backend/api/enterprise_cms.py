@@ -12,6 +12,7 @@ import fnmatch
 import re
 import uuid
 from datetime import datetime, timezone
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
@@ -775,7 +776,7 @@ def update_custom_entry(
     entry = db.query(CmsCustomEntry).filter(CmsCustomEntry.id == entry_id).first()
     if not entry:
         raise HTTPException(404, "Entry not found")
-    changes = {}
+    changes: Dict[str, Any] = {}
     if title is not None:
         changes["title"] = {"old": entry.title, "new": title}
         entry.title = title

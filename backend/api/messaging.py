@@ -48,6 +48,7 @@ Notas operativas:
 """
 
 import asyncio
+import logging
 import re
 import uuid as _uuid
 from typing import List, Optional
@@ -74,6 +75,8 @@ from backend.mesh_websockets import manager
 from backend.schemas.notifications import MessagingChannel
 from backend.services.messaging import CommunicationOutcome
 
+logger = logging.getLogger(__name__)
+
 # M-04: Allowlist de patrones de room name válidos.
 # ``room_*`` fue removido de la allowlist (fail-closed): ningún endpoint lo
 # emite hoy y no tiene un guard de participación, por lo que hubiera sido un
@@ -99,6 +102,7 @@ async def _check_broadcast_rate_limit(user_id: str) -> None:
     log so the platform keeps serving broadcasts even during cache outages.
     """
     import logging
+
     try:
         r = get_redis()
         key = f"rl:broadcast:{user_id}"
@@ -113,9 +117,7 @@ async def _check_broadcast_rate_limit(user_id: str) -> None:
     except HTTPException:
         raise
     except Exception:
-        logging.getLogger(__name__).warning(
-            "Redis rate-limit unavailable for user %s — falling back to allow", user_id
-        )
+        logging.getLogger(__name__).warning("Redis rate-limit unavailable for user %s — falling back to allow", user_id)
 
 
 class NotificationPayload(BaseModel):
@@ -133,7 +135,9 @@ class MessageSendPayload(BaseModel):
 router = APIRouter()
 
 
-def _resolve_project_access(db: Session, current_user: models.User, actor_sede: object | None, project_id: _uuid.UUID) -> bool:
+def _resolve_project_access(
+    db: Session, current_user: models.User, actor_sede: object | None, project_id: _uuid.UUID
+) -> bool:
     """Return True if the actor may access the project room (Axioma 3).
 
     Mirrors ``projects._ensure_project`` + ``_is_assigned_to_project`` so the
@@ -143,9 +147,7 @@ def _resolve_project_access(db: Session, current_user: models.User, actor_sede: 
     actor's sede (superadmin with no sede bypasses scope).
     """
     project = (
-        db.query(models.Project)
-        .filter(models.Project.id == project_id, models.Project.deleted_at.is_(None))
-        .first()
+        db.query(models.Project).filter(models.Project.id == project_id, models.Project.deleted_at.is_(None)).first()
     )
     if project is None:
         return False
@@ -316,8 +318,8 @@ async def websocket_endpoint(
             )
     except WebSocketDisconnect:
         pass
-    except Exception:  # pragma: no cover - defensive cleanup for any receive error
-        pass
+    except Exception as exc:  # pragma: no cover - defensive cleanup for any receive error
+        logger.debug("messaging: WS receive error for client %s: %s", client_id, exc)
     finally:
         # Single cleanup path: also covers timeouts/protocol errors so stale
         # connections never linger in active_connections/rooms (presence).

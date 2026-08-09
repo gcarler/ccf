@@ -529,12 +529,10 @@ def close_event_attendance_endpoint(
     from backend.services.event_registration_service import close_event_attendance
 
     event = require_event_access(db, current_user, event_id)
-    sede_id = getattr(current_user, "sede_id", None)
     result = close_event_attendance(
         db,
         event,
         closed_by=current_user.id,
-        sede_id=sede_id,
     )
     return result
 

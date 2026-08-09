@@ -342,6 +342,7 @@ class CrmTaskUpdate(BaseModel):
 
 class CrmTask(CrmTaskBase):
     id: UUID
+    sede_id: Optional[UUID] = None
     created_at: AwareDateTime
     model_config = orm_config
 
@@ -374,6 +375,7 @@ class VolunteerShiftUpdate(BaseModel):
 
 class VolunteerShift(VolunteerShiftBase):
     id: UUID
+    sede_id: Optional[UUID] = None
     created_at: AwareDateTime
     model_config = orm_config
 
@@ -1256,15 +1258,14 @@ class VolunteerUpdate(BaseModel):
 # PRE-REGISTRO A EVENTOS MASIVOS (plan_de_preregistro, Fase 2)
 # =============================================================================
 
-REGISTRATION_STATUS_LITERAL = Literal[
-    "PENDING", "CONFIRMED", "CHECKED_IN", "ABSENT", "WAITLIST", "CANCELLED"
-]
+REGISTRATION_STATUS_LITERAL = Literal["PENDING", "CONFIRMED", "CHECKED_IN", "ABSENT", "WAITLIST", "CANCELLED"]
 QR_MODE_LITERAL = Literal["PER_REGISTRANT", "PER_EVENT"]
 CANAL_LITERAL = Literal["WHATSAPP", "EMAIL", "SMS"]
 TRIGGER_TYPE_LITERAL = Literal["MANUAL", "RELATIVE_TO_EVENT", "RELATIVE_TO_REGISTRATION"]
 
 
 # ── Extensión de CrmEvent (campos de pre-registro) ─────────────────────────
+
 
 class CrmEventPreregistrationConfig(BaseModel):
     """Config de pre-registro de un evento (campos añadidos por plan_de_preregistro)."""
@@ -1575,9 +1576,7 @@ class CheckinPayload(BaseModel):
         has_persona = self.persona_id is not None
         has_walkin = bool(self.first_name and self.last_name)
         if not (has_qr or has_persona or has_walkin):
-            raise ValueError(
-                "Se requiere qr_token, persona_id, o (first_name + last_name)"
-            )
+            raise ValueError("Se requiere qr_token, persona_id, o (first_name + last_name)")
         return self
 
 

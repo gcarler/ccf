@@ -153,10 +153,7 @@ def list_registrations(
         )
 
     rows = (
-        q.order_by(models.EventRegistration.registered_at.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-        .all()
+        q.order_by(models.EventRegistration.registered_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
     )
     return [_serialize(r, r.persona) for r in rows]
 
@@ -237,14 +234,16 @@ def export_registrations_csv(
     writer.writerow(["Nombre", "Email", "Teléfono", "Estado", "Registrado el", "Check-in"])
     for r in rows:
         p = r.persona
-        writer.writerow([
-            (p.nombre_completo if p else ""),
-            (p.email if p else ""),
-            (p.phone if p else ""),
-            r.registration_status,
-            r.registered_at.isoformat() if r.registered_at else "",
-            r.check_in_at.isoformat() if r.check_in_at else "",
-        ])
+        writer.writerow(
+            [
+                (p.nombre_completo if p else ""),
+                (p.email if p else ""),
+                (p.phone if p else ""),
+                r.registration_status,
+                r.registered_at.isoformat() if r.registered_at else "",
+                r.check_in_at.isoformat() if r.check_in_at else "",
+            ]
+        )
 
     # Fix #10: sanitizar el filename del CSV — event.name puede contener
     # caracteres peligrosos para Content-Disposition (/, \, ", ;, \r, \n).
@@ -360,14 +359,14 @@ def update_registration(
     if payload.registration_status is not None:
         new_status = payload.registration_status
         legal = {
-            "PENDING":     {"CONFIRMED", "CANCELLED"},
-            "CONFIRMED":   {"CHECKED_IN", "ABSENT", "CANCELLED"},
-            "WAITLIST":    {"CONFIRMED", "CANCELLED"},
+            "PENDING": {"CONFIRMED", "CANCELLED"},
+            "CONFIRMED": {"CHECKED_IN", "ABSENT", "CANCELLED"},
+            "WAITLIST": {"CONFIRMED", "CANCELLED"},
             # Fix #9: un CHECKED_IN puede revertirse a ABSENT (check-in erróneo)
             # o CANCELLED (anular inscripción), pero no a CONFIRMED (ya pasó).
-            "CHECKED_IN":  {"CHECKED_IN", "ABSENT", "CANCELLED"},
-            "ABSENT":      {"ABSENT", "CONFIRMED", "CANCELLED"},
-            "CANCELLED":   {"CANCELLED"},
+            "CHECKED_IN": {"CHECKED_IN", "ABSENT", "CANCELLED"},
+            "ABSENT": {"ABSENT", "CONFIRMED", "CANCELLED"},
+            "CANCELLED": {"CANCELLED"},
         }
         allowed = legal.get(reg.registration_status, set())
         if new_status not in allowed:
@@ -414,13 +413,9 @@ def update_registration(
     # plan_clasificador_contextual: override del rol por admin autorizado.
     if payload.participant_role_code is not None:
         try:
-            reg.participant_role_code = resolve_participant_role(
-                event, requested=payload.participant_role_code
-            )
+            reg.participant_role_code = resolve_participant_role(event, requested=payload.participant_role_code)
         except RegistrationError as exc:
-            raise HTTPException(
-                status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}
-            ) from None
+            raise HTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}) from None
 
     db.commit()
     db.refresh(reg)
@@ -453,8 +448,13 @@ def resend_confirmation(
     db.flush()
 
     from backend.services.event_registration_service import _send_confirmation_email
+
     _send_confirmation_email(
-        db, event, reg, reg.persona, public_base_url="",
+        db,
+        event,
+        reg,
+        reg.persona,
+        public_base_url="",
         qr_token_plain=qr_token_plain,
         cancel_token_plain=cancel_token_plain,
     )
@@ -512,26 +512,18 @@ def bulk_import(
                 )
                 .first()
             )
-            if existing and existing.registration_status in {
-                "CONFIRMED", "CHECKED_IN", "WAITLIST", "PENDING"
-            }:
+            if existing and existing.registration_status in {"CONFIRMED", "CHECKED_IN", "WAITLIST", "PENDING"}:
                 skipped += 1
                 continue
 
             # Si el admin pidió CONFIRMED pero el aforo está lleno, derivar a
             # WAITLIST (siempre que el evento lo permita) o rechazar la fila.
             target_status = row.registration_status
-            if (
-                target_status == "CONFIRMED"
-                and capacity_max is not None
-                and slots_taken >= capacity_max
-            ):
+            if target_status == "CONFIRMED" and capacity_max is not None and slots_taken >= capacity_max:
                 if waiting_list_enabled:
                     target_status = "WAITLIST"
                 else:
-                    errors.append(
-                        {"row": idx, "error": "Aforo lleno y evento sin lista de espera"}
-                    )
+                    errors.append({"row": idx, "error": "Aforo lleno y evento sin lista de espera"})
                     continue
 
             reg = models.EventRegistration(
@@ -541,9 +533,7 @@ def bulk_import(
                 source=row.source or "admin_import",
                 extras=row.extras or {},
                 # plan_clasificador_contextual: override por fila o rol del evento.
-                participant_role_code=resolve_participant_role(
-                    event, requested=row.participant_role_code
-                ),
+                participant_role_code=resolve_participant_role(event, requested=row.participant_role_code),
             )
             if target_status == "WAITLIST":
                 # Adjuntar al final de la cola: position = (slotsTaken en cola) + 1.
@@ -615,9 +605,7 @@ def update_preregistration_config(
         try:
             event.participant_role_code = normalize_participant_role(payload.participant_role_code)
         except RegistrationError as exc:
-            raise HTTPException(
-                status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}
-            ) from None
+            raise HTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail}) from None
     db.commit()
     return {
         "id": str(event.id),
@@ -792,6 +780,7 @@ def send_campaign_now(
         raise HTTPException(status_code=404, detail="Campaña no encontrada")
 
     from backend.services.event_campaign_service import send_campaign
+
     return send_campaign(db, campaign, public_base_url=_settings_public_base_url(), dry_run=dry_run, limit=limit)
 
 
@@ -825,4 +814,5 @@ def broadcast_campaign(
         db.flush()
 
     from backend.services.event_campaign_service import send_campaign
+
     return send_campaign(db, campaign, public_base_url=_settings_public_base_url())

@@ -7,7 +7,6 @@ previous version for history.
 
 from __future__ import annotations
 
-import re
 from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import NAMESPACE_URL, UUID, uuid5
@@ -19,10 +18,9 @@ from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import get_current_active_user, require_module_access
 from backend.crud import wiki as crud_wiki
+from backend.crud._utils import _slugify
 from backend.crud.crm import get_user_sede_id
 from backend.schemas.wiki import WikiPageCreate, WikiPageRead, WikiPageUpdate, WikiPageVersionRead
-
-from backend.crud._utils import _slugify
 
 router = APIRouter(prefix="/wiki", tags=["wiki"])
 

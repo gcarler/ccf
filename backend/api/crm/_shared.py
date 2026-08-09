@@ -257,9 +257,10 @@ def _get_scoped_task(db: Session, user: models.User, task_id) -> models.TareaCRM
     una tarea legítimamente "tropical" (caso de sede_a asignado temporalmente
     a un pastor de sede_b) quede falsamente fuera de scope.
 
-    TareaCRM NO tiene columna sede_id propia (backend/models_crm_pipeline.py);
-    el scope se aplica indirectamente por la unión de FKs. Patrón DRY para
-    retrieval usado por `get_crm_task_detail` y `update_crm_task`.
+    TareaCRM ahora tiene columna ``sede_id`` (migración 20260809_0001); el
+    scope se resuelve O(1) comparando directo cuando la columna está
+    seteada (path canónico post-migración). Los JOINs vía FK son fallback
+    para tareas huérfanas con ``sede_id IS NULL`` (históricas pre-migración).
 
     Retorna 404 (no 403) para evitar existence-leaks cross-sede.
 
@@ -293,7 +294,18 @@ def _get_scoped_task(db: Session, user: models.User, task_id) -> models.TareaCRM
         # Superadmin sin sede: ve todo lo no borrado.
         return task
 
-    # 1. Scope via caso_id → CasoCRM.sede_id
+    # 0. Atajo directo: si la tarea tiene sede_id propia (backfill de la
+    # migración 20260809_0001), comparar directo — O(1), sin JOIN. Este es
+    # el path canónico post-migración; los JOINs siguientes son fallback
+    # para tareas huérfanas con sede_id NULL (históricas pre-migración).
+    if task.sede_id is not None:
+        if str(task.sede_id) == str(user_sede):
+            return task
+        # sede_id seteado pero NO matchea → 404 inmediato. No seguir
+        # buscando en FKs: la sede persistida es autoritativa.
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    # 1. Scope via caso_id → CasoCRM.sede_id (fallback para sede_id NULL)
     if task.caso_id is not None:
         from backend.models_crm_pipeline import CasoCRM
 

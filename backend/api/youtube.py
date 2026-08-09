@@ -9,9 +9,9 @@ import logging
 import os
 import re
 import time
-import xml.etree.ElementTree as ET
 from typing import Optional
 
+import defusedxml.ElementTree as DefusedET  # security: hardened against XML attacks
 import httpx
 from fastapi import APIRouter
 
@@ -83,7 +83,7 @@ async def _fetch_rss(channel_id: str) -> list[dict]:
         resp = await client.get(rss_url, headers={"User-Agent": "Mozilla/5.0"})
         resp.raise_for_status()
 
-    root = ET.fromstring(resp.content)
+    root = DefusedET.fromstring(resp.content)
     videos: list[dict] = []
 
     for entry in root.findall("atom:entry", _NS):

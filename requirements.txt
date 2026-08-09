@@ -37,6 +37,8 @@ Pillow>=10.0.0
 # Report generation
 reportlab>=4.0
 openpyxl>=3.1
+# XML parsing of untrusted feeds (security hardening — see bandit B405)
+defusedxml>=0.7.1
 # Optional agent orchestrator
 openai
 opentelemetry-sdk

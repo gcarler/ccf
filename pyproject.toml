@@ -1,5 +1,9 @@
 [tool.ruff]
 line-length = 120
+# Scratch dir is for throw-away debugging scripts and is not part of
+# the production package; exclude it from the lint gate so noisy
+# experimental files don't gate CI.
+extend-exclude = ["backend/scratch"]
 
 [tool.ruff.lint]
 # Align with existing .flake8 conventions: these rules are intentionally

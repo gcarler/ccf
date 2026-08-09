@@ -44,6 +44,12 @@ Contrato vigente:
 - `GET /api/v3/auth/google`
 - `GET /api/v3/auth/google/callback`
 - `GET /api/v3/auth/check-email`
+
+### Google OAuth seguro
+
+El callback de Google redirige a `/auth/callback` sin incluir `token`, `access_token`, `refresh` ni ningún JWT en la URL. El backend protege el intercambio con un `state` aleatorio, ligado a una cookie `HttpOnly` de corta duración, y establece las cookies `HttpOnly` de sesión antes de redirigir. La página callback obtiene una sesión efímera mediante `POST /api/v3/auth/refresh` con `credentials: include` y después conserva el access token únicamente en memoria/sessionStorage para compatibilidad con el runtime actual.
+
+El frontend no consume credenciales desde query strings ni fragmentos. Cualquier cambio del transporte OAuth debe mantener el redirect limpio y validar `state`, cookies, refresh y navegación en pruebas.
 - `POST /api/v3/auth/initialize-password`
 - `POST /api/v3/auth/change-password`
 - `POST /api/v3/auth/verify-email`

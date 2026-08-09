@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backend.schemas._common import PaginatedResponse, orm_config
+from backend.schemas._common import CountedStatusResponse, PaginatedResponse, StatusResponse, orm_config
 
 # ── Academy / LMS ────────────────────────────────────────────────────────────
 from backend.schemas.academy import (
@@ -140,6 +140,7 @@ from backend.schemas.chat import (
     ConversationRead,
     DirectMessageCreate,
     DirectMessageItem,
+    ReplyPreview,
 )
 
 # ── CMS ──────────────────────────────────────────────────────────────────────

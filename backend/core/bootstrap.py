@@ -88,7 +88,9 @@ def load_settings(start: Path | str | None = None) -> "Settings":
     env_path = root / ".env"
     if env_path.is_file():
         try:
-            return Settings(_env_file=str(env_path))
+            # pydantic-settings BaseSettings accepts _env_file; mypy's
+            # pydantic stubs don't model the BaseSettings.__init__ kwargs.
+            return Settings(_env_file=str(env_path))  # type: ignore[call-arg]
         except ValueError as exc:
             # Settings.validate_security_defaults raises ValueError for weak
             # production secrets — surface it with the .env path so the user

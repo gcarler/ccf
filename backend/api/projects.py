@@ -2071,8 +2071,7 @@ async def whiteboard_collab_ws(websocket: WebSocket, project_id: str):
         if not _has_role_based_project_access(_db, _user, "read"):
             persona_id = _get_persona_id_for_user(_db, _user.id)
             if not persona_id or not (
-                _is_project_owner(_db, project_id, persona_id)
-                or _is_assigned_to_project(_db, project_id, persona_id)
+                _is_project_owner(_db, project_id, persona_id) or _is_assigned_to_project(_db, project_id, persona_id)
             ):
                 await websocket.close(code=4003, reason="Insufficient permissions")
                 return

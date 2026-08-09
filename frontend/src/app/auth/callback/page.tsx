@@ -1,45 +1,54 @@
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
 import { Loader2 } from 'lucide-react';
 
 function AuthCallbackContent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const { login } = useAuth();
     const [status, setStatus] = useState('Procesando autenticación...');
 
     useEffect(() => {
         async function handleAuth() {
-            // Support both hash params (#token=...) and query params (?token=...)
-            // Google SSO redirects with ?token=, v3 login may use #token=
-            const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
-            const hashParams = new URLSearchParams(hash);
+            // Google OAuth is cookie-based. Never consume access/refresh
+            // credentials from query strings or URL fragments. Remove any
+            // legacy parameters before making the refresh request so they
+            // cannot be sent as a Referer to the API.
+            if (typeof window !== 'undefined') {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
 
-            const token = hashParams.get('token') || searchParams?.get('token') || searchParams?.get('access_token');
-            const refresh = hashParams.get('refresh') || searchParams?.get('refresh') || searchParams?.get('refresh_token');
+            let token: string | null = null;
+            let refresh: string | null = null;
+
+            setStatus('Validando sesión segura...');
+            try {
+                const refreshed = await apiFetch<{ access_token?: string; refresh_token?: string }>(
+                    '/v3/auth/refresh',
+                    { method: 'POST', silent: true },
+                );
+                token = refreshed.access_token || null;
+                refresh = refreshed.refresh_token || null;
+            } catch {
+                token = null;
+            }
 
             if (!token) {
-                setStatus('Error: No se recibió token de autenticación');
+                setStatus('Error: No se pudo validar la sesión');
                 setTimeout(() => router.push('/login'), 3000);
                 return;
             }
 
             setStatus('Autenticación exitosa. Redirigiendo...');
-
-            // Clean URL params after extracting token
-            if (typeof window !== 'undefined') {
-                window.history.replaceState({}, document.title, '/auth/callback');
-            }
-
             await login(token, refresh ?? undefined);
             router.push('/plataforma/messages');
         }
 
         handleAuth();
-    }, [login, router, searchParams]); // login/router/searchParams are stable
+    }, [login, router]); // login/router are stable
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--bg-muted))]">

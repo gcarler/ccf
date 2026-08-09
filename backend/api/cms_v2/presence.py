@@ -112,8 +112,8 @@ def _parse_user_from_token(token: str | None) -> dict:
                 "initials": initials,
                 "color": color,
             }
-    except Exception:
-        pass
+    except Exception as exc:  # pragma: no cover - token decode best-effort
+        logger.debug("presence: token decode failed (will fall back to plain): %s", exc)
 
     # 3. Plain text string fallback (e.g. user ID or plain token)
     user_id = str(token)
@@ -224,8 +224,8 @@ async def websocket_presence(
                 msg = json.loads(data)
                 if msg.get("type") == "ping":
                     await websocket.send_text(json.dumps({"type": "pong"}))
-            except Exception:
-                pass
+            except Exception as exc:  # pragma: no cover - non-JSON heartbeat payload
+                logger.debug("presence: non-JSON WS payload ignored: %s", exc)
     except WebSocketDisconnect:
         await presence_manager.disconnect(websocket, site_key, slug)
     except Exception as exc:
