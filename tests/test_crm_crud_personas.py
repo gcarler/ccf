@@ -825,7 +825,7 @@ def test_compute_days_in_state_with_history(db_session):
     sede = _seed_sede(db_session)
     p = _persona_in(db_session, sede_id=sede.id, first_name="StateHist")
     _commit(db_session)
-    past = dt.datetime.utcnow() - dt.timedelta(days=10)
+    past = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=10)
     db_session.add(
         HistorialEmbudo(
             persona_id=p.id,
