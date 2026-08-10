@@ -35,7 +35,7 @@ NIGHTLY_LOG  := $(LOG_DIR)/nightly.log
 
 # `.PHONY` keeps `make` from confusing targets with real files in the
 # directory (e.g. an accidental `Makefile` file vs the target).
-.PHONY: help check-academy precommit run-ci-academy test-fase-a test-nightly-regression \
+.PHONY: help check-academy precommit run-ci-academy test-fase-a coverage-gate test-nightly-regression \
 	audit-log install-cron preview-cron clean
 
 ## help: list available targets with their purpose.
@@ -78,6 +78,15 @@ run-ci-academy:
 ##              extra="forbid" siguen activas.
 test-fase-a:
 	@$(PYTHON) -m pytest -v -o "addopts=" $(FASE_A_TESTS)
+
+## coverage-gate: strict backend coverage gate (same as CI: COV_THRESHOLD=38)
+##                against the full non-CRM suite. Slow (~10-15 min) — only
+##                needed before merge/release. The default `pytest` command
+##                intentionally does NOT enforce the threshold so subsets run
+##                fine; this target is where the strict check lives locally.
+coverage-gate:
+	@$(PYTHON) -m pytest tests/ -q --cov=backend --cov-report=term-missing \
+		--cov-fail-under=38 --ignore-glob='tests/test_crm_*.py'
 
 ## audit-log: ACAD-TKT-134 stub target — corre los tests que persisten audit logs
 ##            (AcademyActivityLog.payload_json, etc.). Marcado como nightly-only
