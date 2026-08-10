@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/http';
 import { getErrorMessage } from '../../utils';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import { downloadGroupAttendanceExcel, downloadGroupAttendancePdf } from '@/lib/evangelism-downloads';
 import {
@@ -652,9 +653,10 @@ if (!cancelled) setLoading(false);
  onSearch={setSearchQuery}
  >
  <div className="flex h-full p-4 lg:p-4 bg-[hsl(var(--bg-muted))]/50 dark:bg-surface-card/50">
- {/* Detail/Edit Panel */}
- {showPanel ? (
- <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-surface-card rounded-lg border border-[hsl(var(--border-primary))] shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
+  {/* Detail/Edit Panel */}
+  {showPanel ? (
+  <ErrorBoundary moduleName="Grupos - Detalle" compact>
+  <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-surface-card rounded-lg border border-[hsl(var(--border-primary))] shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
  <div className="px-3 py-2 border-b border-[hsl(var(--border-primary))]/80 flex items-center justify-between shrink-0 bg-[hsl(var(--bg-secondary))]">
  <h2 className="text-base font-bold text-[hsl(var(--text-primary))]">
  {isCreating ? 'Nuevo Grupo' : MODE_CONFIG[mode].title}
@@ -1179,18 +1181,21 @@ if (!cancelled) setLoading(false);
  </p>
  </div>
  </div>
- )}
- </div>
- )}
- </div>
- ) : (
- <>
- {viewType === 'list' && <ListView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
- {viewType === 'grid' && <GridView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
- {viewType === 'kanban' && <KanbanView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
- {viewType === 'table' && <TableView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
- </>
- )}
+  )}
+  </div>
+  )}
+  </div>
+  </ErrorBoundary>
+  ) : (
+  <ErrorBoundary moduleName="Grupos - Listado" compact>
+  <>
+  {viewType === 'list' && <ListView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
+  {viewType === 'grid' && <GridView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
+  {viewType === 'kanban' && <KanbanView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
+  {viewType === 'table' && <TableView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
+  </>
+  </ErrorBoundary>
+  )}
  </div>
  <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
  </EvangelismShell>
