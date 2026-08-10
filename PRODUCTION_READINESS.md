@@ -101,7 +101,7 @@ Se verificaron los gates locales de backend y se identificó que el readiness we
 | Backend health + import | OK | `/api/system/health` HTTP 200, `compileall backend` OK e `import backend.app` OK. |
 | Quality gate directo | **OK** | Smoke/Auth 9 passed; Academy/CRM 21 passed; structural/rules 53 passed + 1 skip documentado; índices, vistas y Automation Engine OK. |
 | ACAD-TKT-021 | **OK** | `submit_assignment` lee async en chunks de 64 KiB y rechaza >10 MB; pruebas focalizadas verdes. |
-| Academy Forum soft-delete | **OK local** | `ForumThread.deleted_at`, índice, migración canónica y regresión de listado/detalle/comentarios implementados. |
+| Academy Forum soft-delete | **OK — migración aplicada 2026-08-10** | `ForumThread.deleted_at` + índice aplicados via `alembic upgrade head` (`20260810_0001`); columna verificada en DB, query del modelo OK, backend reiniciado y foro responde 401-auth sin 500. |
 | Bandit backend | **OK local** | 0 hallazgos con `.bandit`. |
 | datetime.utcnow | **OK local** | 0 llamadas directas detectadas por el gate actualizado. |
 | Suite backend completa | **Pendiente** | Los smoke/gates focalizados pasan; la suite completa requiere ejecución separada con timeout controlado. |
@@ -115,7 +115,7 @@ Se verificaron los gates locales de backend y se identificó que el readiness we
 1. ejecutar el gate oficial contra `http://127.0.0.1:3000` con el backend API en `8000`;
 2. resolver cualquier asset/ruta web que falle realmente;
 3. ejecutar la suite backend completa con timeout y reporte controlado;
-4. validar/aplicar la migración canónica `20260810_0001_academy_forum_threads_deleted_at` en la base objetivo;
+4. ✅ **aplicada** la migración canónica `20260810_0001_academy_forum_threads_deleted_at` (2026-08-10): `alembic upgrade head` ejecutado, `alembic current` = head, columna `deleted_at` + índice verificados, query del modelo con filtro soft-delete OK, backend reiniciado sin errores y `GET /api/academy/forum/threads` responde 401-auth (sin 500);
 5. separar cambios ajenos y dejar un worktree limpio según el proceso de revisión;
 6. volver a ejecutar el gate estricto y comunicar `status=OK`/`score=100%` solo si todos los checks pasan.
 

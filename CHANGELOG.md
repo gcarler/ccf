@@ -4,6 +4,45 @@ Documentación de cambios recientes en la plataforma CCF. Formato basado en [Kee
 
 ---
 
+## [2026-08-10] — Gate de cobertura pytest arreglado (subconjuntos ya no fallan)
+
+### Problema
+- El `.coverage` local estaba corrupto/incompatible (coverage.py 7.x: `no such table: tracer`) → reportes de 0% y errores de coverage en ciertas corridas.
+- `pytest.ini` tenía `--cov-fail-under=38` en `addopts`: correr cualquier **subconjunto** de tests fallaba siempre (la cobertura medida es parcial y no alcanza el umbral global, p.ej. smoke = 37.62%).
+
+### Cambios
+- **`.coverage` corrupto eliminado** (ya está en `.gitignore`; se regenera sano en cada corrida — verificado: `coverage report` lee el archivo nuevo sin errores).
+- **`pytest.ini`**: el umbral estricto salió de `addopts`; se mantiene `--cov=backend --cov-report=term-missing` (reporte informativo en cada corrida). Subconjuntos ahora pasan (`49 passed` con smoke+structural).
+- **`.github/workflows/ci.yml`**: fuente única del umbral movida a `COV_THRESHOLD: "38"` (env de los jobs `backend-quality` y `crm-tests`); ambos runs de pytest usan `--cov-fail-under=$COV_THRESHOLD` y el paso "Check coverage threshold" lee la env var (antes parseaba `pytest.ini`). Comportamiento de CI idéntico al previo.
+- **`Makefile`**: nuevo target `make coverage-gate` — gate estricto local (misma suite/umbral que CI: `pytest tests/ --cov-fail-under=38 --ignore-glob='tests/test_crm_*.py'`).
+
+### Validación
+- Subset por defecto: `pytest tests/test_smoke.py tests/test_structural_contracts.py -q` → **49 passed, 1 skipped** (antes FAIL).
+- Gate explícito: `pytest tests/test_smoke.py -q --cov-fail-under=38` → sigue **FAIL** (37.62% < 38%) — el gate opera donde se invoca.
+- `make -n coverage-gate` imprime el comando correcto; YAML del workflow válido.
+
+---
+
+## [2026-08-10] — Drift de `alembic check` investigado + fix Dimensión B (Rol en la Iglesia)
+
+### Investigación del drift masivo de `alembic check`
+
+Se comparó `Base.metadata` contra el esquema real de la DB (1.002 operaciones de drift). Veredicto con evidencia:
+
+- **~90% es ruido del comparador/divergencia benigna** (`compare_type=True` + índices legacy `idx_*` vs `ix_*` + JSONB↔JSON + enums + `modify_nullable`), sin impacto en runtime — la plataforma corre con 1.777 tests frontend y suites backend verdes.
+- **Drift real benigno:** `auth_users.username/email` VARCHAR vs CITEXT (desde auth v2), `persona_ministries.recognition_date` DATE vs DateTime, ~177 índices que el modelo declara y la DB no tiene (solo rendimiento).
+- **BUG funcional confirmado:** `persona_church_roles.id`, `persona_role_history.id` y `.changed_by` eran INTEGER (serial legacy) mientras los modelos generan UUID. `PUT /api/kernel/church-role/{persona_id}` fallaba con `ProgrammingError (DatatypeMismatch): column "id" is of type integer but expression is of type uuid`. La tabla tenía 0 filas — la Dimensión B nunca pudo escribirse en esta DB.
+- CI no ejecuta `alembic check` (solo `upgrade/downgrade/upgrade` en Postgres fresco); el drift solo se manifestaba localmente.
+
+### Fix — Migración `20260810_0002_kernel_roles_uuid_pk`
+
+- Convierte `persona_church_roles.id`, `persona_role_history.id` y `persona_role_history.changed_by` a UUID (`gen_random_uuid()`, PG13+ builtin).
+- Tablas vacías → sin data migration; guardas: si una tabla tiene filas se salta con warning documentado (no reescribe identificadores a ciegas).
+- Reversible: downgrade restaura INTEGER + `nextval(...)` solo cuando las tablas están vacías.
+- Validación: probe de escritura `set_persona_church_role` OK (id UUID), round-trip `downgrade -1` → `upgrade head` OK, tests kernel 12/12 passed, limpieza de filas de prueba verificada (0 filas restantes).
+
+---
+
 ## [2026-08-09] — Auditoría forense Eventos + Wiki + documentación
 
 ### Eventos — Auditoría forense del pre-registro público
