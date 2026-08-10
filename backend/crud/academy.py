@@ -474,15 +474,14 @@ def list_forum_threads(
     None = sin tope, para callers internos que quieren todo — raro). El
     filtro sede (A-02) ya estaba aplicado vía ``outerjoin`` + filter.
 
-    Nota M-07: ``ForumThread`` NO tiene ``deleted_at`` en el modelo (ver
-    ``models_academy_core.py:317``) — el soft-delete de hilos queda como
-    debt pendiente (requiere migración DDL añadiendo la columna). Mientras
-    tanto no hay rows para filtrar por ``deleted_at``. El endpoint API
+    ``ForumThread.deleted_at`` aplica el mismo contrato de soft-delete que
+    el resto del dominio Academy; los hilos archivados se excluyen de las
+    lecturas aunque permanezcan en la base para auditoría. El endpoint API
     ``forum_threads`` ya tiene paginación (``skip``/``limit`` Query), por
     lo que la paginación real sucede allí; el CRUD expone el kwarg para
     callers directos (tests/seeds) que quieran acotar.
     """
-    query = db.query(models.ForumThread)
+    query = db.query(models.ForumThread).filter(models.ForumThread.deleted_at.is_(None))
     if sede_id is not None:
         # M-07: filtra hilos globales (course_id IS NULL) o de Course no
         # archivado de la sede del actor.

@@ -196,7 +196,7 @@ producto.
   - **files:** `backend/api/academy.py:112`, `:1243-1260`
   - **gate:** `pytest tests/test_academy_backlog.py::test_high_pending_tickets_have_negative_evidence -q` ✅
 
-- **ACAD-TKT-021** [HIGH] — `submit_assignment` sin límite de tamaño de archivo (OOM risk)
+- **ACAD-TKT-021** [HIGH] — ✅ CERRADO 2026-08-10: `submit_assignment` valida uploads con lectura async en chunks de 64 KiB y límite máximo de 10 MB; archivos sobredimensionados se rechazan antes de persistirlos.
   - **state:** ✅ Hecho 2026-07-19
   - **source:** `PLAN P1 ACAD-H02`
   - **files:** `backend/api/academy.py::submit_assignment` (líneas 699-733)
@@ -559,7 +559,7 @@ producto.
   - **source:** Gap analysis 2026-07-19 (thinker session)
   - **files:** `backend/core/rate_limit.py` (academy_limiter con slowapi), `backend/core/permissions.py` (`_check` side-effect a `request.state`), `backend/app.py` (registro `app.state.limiter` + handler RateLimitExceeded), `requirements.txt` (`slowapi==0.1.10`), `backend/api/academy.py` (decoradores en submit_assessment 10/min, create_forum_thread 5/min, create_enrollment 30/min)
   - **gate:** `pytest tests/test_academy_fase_7_transversal.py -k tkt_200 -q` ✅ (12 tests)
-  - **notes:** ``academy_limiter`` con ``key_func`` per-user + bypass manager via ``request.state.is_unlimited_user`` (poblado por ``require_permission._check`` cuando permission termina en ``:manage`` o rol admin). pytest global bypass via ``PYTEST_CURRENT_TEST``; opt-in tests con ``FORCE_RATE_LIMIT=1``. Headers ``Retry-After`` + ``X-RateLimit-*`` habilitados. Storage ``memory://`` (swap a redis en prod multi-worker sin cambiar call-sites). ACAD-TKT-021 sigue siendo válido para size limit de archivos.
+  - **notes:** ``academy_limiter`` con ``key_func`` per-user + bypass manager via ``request.state.is_unlimited_user`` (poblado por ``require_permission._check`` cuando permission termina en ``:manage`` o rol admin). pytest global bypass via ``PYTEST_CURRENT_TEST``; opt-in tests con ``FORCE_RATE_LIMIT=1``. Headers ``Retry-After`` + ``X-RateLimit-*`` habilitados. Storage ``memory://`` (swap a redis en prod multi-worker sin cambiar call-sites). ACAD-TKT-021 cerrado: lectura async acotada a chunks de 64 KiB + máximo 10 MB, con test funcional de oversize.
 
 - **ACAD-TKT-201** [HIGH] — Tracing distribuido + logs JSON estructurados con correlation-id
   - **state:** ✅ Hecho 2026-07-19

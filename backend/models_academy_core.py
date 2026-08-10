@@ -326,6 +326,9 @@ class ForumThread(Base):
     is_resolved = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    # Soft-delete contract: archived threads remain available for audit while
+    # excluded from all learner-facing reads.
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
 
 class ForumComment(Base):

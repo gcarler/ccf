@@ -414,6 +414,49 @@ def test_forum_detail_and_comments_are_scoped(client, db_session):
     assert client.get(f"/api/academy/forum/threads/{thread.id}", headers=headers_b).status_code == 404
 
 
+def test_archived_forum_thread_is_hidden_from_list_detail_and_comments(client, db_session):
+    """Soft-deleted forum threads remain auditable but are never exposed to clients."""
+    import uuid as _uuid
+
+    admin, persona, sede = seed_admin(db_session, email="archived-forum@example.com", password="testpass123")
+    course = models.Course(
+        code=f"ARCH-FORUM-{_uuid.uuid4().hex[:6]}",
+        title="Curso foro archivado",
+        modality="online",
+        sede_id=sede.id,
+        is_published=True,
+    )
+    db_session.add(course)
+    db_session.flush()
+    thread = models.ForumThread(
+        course_id=course.id,
+        author_persona_id=persona.id,
+        title="Hilo archivado",
+        content="No debe reaparecer",
+        deleted_at=_utcnow(),
+    )
+    db_session.add(thread)
+    db_session.flush()
+    db_session.add(
+        models.ForumComment(
+            thread_id=thread.id,
+            author_persona_id=persona.id,
+            content="Comentario archivado",
+        )
+    )
+    db_session.commit()
+
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    listed = client.get("/api/academy/forum/threads", headers=headers)
+    assert listed.status_code == 200, listed.text
+    assert all(item["id"] != str(thread.id) for item in listed.json())
+
+    detail = client.get(f"/api/academy/forum/threads/{thread.id}", headers=headers)
+    comments = client.get(f"/api/academy/forum/threads/{thread.id}/comments", headers=headers)
+    assert detail.status_code == 404
+    assert comments.status_code == 404
+
+
 def test_forum_category_filter_and_resource_lifecycle_are_scoped(client, db_session):
     """La operación del aula se gobierna por Course→sede, incluso para materiales."""
     import uuid as _uuid
