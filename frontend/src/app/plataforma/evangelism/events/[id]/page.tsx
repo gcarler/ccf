@@ -69,7 +69,7 @@ export default function EventDetailPage() {
 
   if (notFound) {
     return (
-      <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/plataforma/evangelism/events" }, { label: "Eventos", href: "/plataforma/evangelism/events" }, { label: "No encontrado" }]}>
+      <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/plataforma/evangelism" }, { label: "Eventos", href: "/plataforma/evangelism/events" }, { label: "No encontrado" }]}>
         <div className="p-6">
           <div className="max-w-xl mx-auto rounded-xl border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-6 text-center shadow-sm">
             <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Evento no encontrado</h2>
@@ -90,7 +90,7 @@ export default function EventDetailPage() {
 
   if (loadError) {
     return (
-      <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/plataforma/evangelism/events" }, { label: "Eventos", href: "/plataforma/evangelism/events" }, { label: "Error" }]}>
+      <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/plataforma/evangelism" }, { label: "Eventos", href: "/plataforma/evangelism/events" }, { label: "Error" }]}>
         <div className="p-6">
           <div className="max-w-xl mx-auto rounded-xl border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-6 text-center shadow-sm">
             <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">No se pudo cargar el evento</h2>
@@ -114,7 +114,7 @@ export default function EventDetailPage() {
   }
 
   return (
-    <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/plataforma/evangelism/events" }, { label: "Eventos", href: "/plataforma/evangelism/events" }, { label: event.name }]}>
+    <EvangelismShell breadcrumbs={[{ label: "Evangelismo", href: "/plataforma/evangelism" }, { label: "Eventos", href: "/plataforma/evangelism/events" }, { label: event.name }]}>
       <main className="flex-1 overflow-y-auto p-4 lg:p-4">
         <div className="w-full space-y-3">
           {/* Header */}

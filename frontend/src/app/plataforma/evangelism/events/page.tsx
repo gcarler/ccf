@@ -107,7 +107,7 @@ function EventsPage() {
 
  if (loading) {
  return (
- <EvangelismShell breadcrumbs={[{ label: 'Evangelismo' }, { label: 'Eventos' }]}>
+ <EvangelismShell breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Eventos' }]}>
  <div className="p-4 space-y-3">
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
  {[1, 2, 3, 4, 5, 6].map(i => <DSSkeleton key={i} className="h-48 rounded-lg" />)}
@@ -131,7 +131,7 @@ function EventsPage() {
  submitLabel="Guardar plantilla"
  />
  <EvangelismShell
- breadcrumbs={[{ label: 'Evangelismo' }, { label: 'Eventos' }]}
+ breadcrumbs={[{ label: 'Evangelismo', href: '/plataforma/evangelism' }, { label: 'Eventos' }]}
  viewOptions={ALL_VIEWS}
  viewType={viewType}
  onViewChange={(view) => setViewType(view as ViewType)}
