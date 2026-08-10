@@ -86,6 +86,12 @@ export function useEventsPage() {
  const [editingEvent, setEditingEvent] = useState<MinistryEvent | null>(null);
  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+ useEffect(() => {
+ if (menuOpenId === null) return;
+ const close = () => setMenuOpenId(null);
+ document.addEventListener('click', close);
+ return () => document.removeEventListener('click', close);
+ }, [menuOpenId]);
  const [savingCreateEvent, setSavingCreateEvent] = useState(false);
  const [savingAttendance, setSavingAttendance] = useState(false);
  const [updatingEventId, setUpdatingEventId] = useState<string | null>(null);
