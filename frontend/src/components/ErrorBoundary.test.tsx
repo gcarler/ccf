@@ -46,4 +46,19 @@ describe('ErrorBoundary component', () => {
 
     consoleSpy.mockRestore();
   });
+
+  it('renders compact fallback UI when compact prop is set', () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(
+      <ErrorBoundary moduleName="Grupos" compact>
+        <ProblemChild />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText(/Grupos/i)).toBeInTheDocument();
+    expect(screen.getByText('Reintentar')).toBeInTheDocument();
+
+    consoleSpy.mockRestore();
+  });
 });

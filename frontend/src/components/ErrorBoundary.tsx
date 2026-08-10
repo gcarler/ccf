@@ -12,6 +12,8 @@ interface ErrorBoundaryProps {
   children?: React.ReactNode;
   fallback?: React.ReactNode;
   moduleName?: string;
+  /** Render a smaller inline fallback suited for wrapping individual sections. */
+  compact?: boolean;
 }
 
 export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -35,6 +37,30 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
+
+      if (this.props.compact) {
+        return (
+          <div className="flex items-center gap-3 p-3 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))]">
+            <AlertTriangle size={20} className="text-[hsl(var(--danger))] shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-[hsl(var(--text-primary))]">
+                Algo sali&oacute; mal{this.props.moduleName ? ` en &quot;${this.props.moduleName}&quot;` : ''}
+              </p>
+              <p className="text-2xs text-[hsl(var(--text-secondary))]">Esta secci&oacute;n no pudo renderizarse.</p>
+            </div>
+            <button
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                window.location.reload();
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] rounded-md text-2xs font-bold hover:opacity-90 active:scale-95 transition-all shrink-0"
+            >
+              <RefreshCw size={12} />
+              Reintentar
+            </button>
+          </div>
+        );
+      }
 
       return (
         <div className="flex items-center justify-center min-h-[400px] p-4">
