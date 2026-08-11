@@ -66,12 +66,14 @@ jobs:
         run: bash scripts/lint-cms.sh
 
       - name: Security scan with Bandit
-        run: bandit -r backend/ -f json -o bandit-report.json || true
+        # Security findings must fail CI; the JSON report remains available
+        # for diagnosis when the scan rejects a change.
+        run: bandit -r backend/ -c .bandit -f json -o bandit-report.json
 
       - name: Type check (mypy)
         run: |
           pip install mypy
-          mypy backend/ --ignore-missing-imports || true
+          mypy backend/ --config-file mypy.ini --ignore-missing-imports
 
       - name: Run non-CRM tests with coverage (SQLite + xdist)
         # CRM tests have their own dedicated job to surface regressions quickly.

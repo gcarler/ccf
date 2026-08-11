@@ -31,7 +31,8 @@ _logger = logging.getLogger(__name__)
 
 
 
-from backend.crud.cms._shared import _commit_or_conflict
+from backend.core.cache_v2 import invalidate_cached_public, invalidate_cached_public_pattern
+from backend.crud.cms._shared import _commit_or_conflict, resolve_site_key
 
 
 def list_cms_sites(db: Session, *, only_active: bool = False, sede_id: uuid.UUID | None = None):
@@ -76,6 +77,7 @@ def create_cms_site(
 
 def update_cms_site(db: Session, row: models.CmsSite, payload: schemas.CmsSiteUpdate):
     data = payload.model_dump(exclude_unset=True)
+    was_active = row.is_active
     if "name" in data and data["name"] is not None:
         row.name = str(data["name"]).strip()
     if "base_path" in data and data["base_path"] is not None:
@@ -86,6 +88,10 @@ def update_cms_site(db: Session, row: models.CmsSite, payload: schemas.CmsSiteUp
         row.sede_id = data["sede_id"]
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: desactivar un site vía PATCH deja de servir
+    # sus menús, theme, páginas y posts públicos de inmediato (404).
+    if was_active and not row.is_active:
+        _invalidate_site_public_cache(db, row.id)
     return row
 
 
@@ -94,6 +100,9 @@ def archive_cms_site(db: Session, row: models.CmsSite) -> models.CmsSite:
     row.is_active = False
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: el contenido público del site archivado debe
+    # dejar de servirse de inmediato (404), no esperar el TTL de 300s.
+    _invalidate_site_public_cache(db, row.id)
     return row
 
 
@@ -133,6 +142,9 @@ def create_cms_theme(
         ).update({"is_active": False})
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: un theme nuevo (o activo) cambia la respuesta
+    # cacheada del endpoint público ``public_theme``.
+    _invalidate_public_theme_cache(db, site_id)
     return row
 
 
@@ -162,6 +174,9 @@ def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThem
             ).update({"is_active": False})
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: name/tokens/is_active/status alteran la
+    # respuesta pública cacheada del theme activo.
+    _invalidate_public_theme_cache(db, row.site_id)
     return row
 
 
@@ -175,6 +190,8 @@ def activate_cms_theme(db: Session, site_id: uuid.UUID, theme_id: uuid.UUID):
     row.status = "active"
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: el theme activo cambió — refresca la caché pública.
+    _invalidate_public_theme_cache(db, site_id)
     return row
 
 
@@ -184,6 +201,9 @@ def archive_cms_theme(db: Session, row: models.CmsTheme) -> models.CmsTheme:
     row.status = "archived"
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: archivar el theme activo deja de servirlo en
+    # el endpoint público de inmediato (404 si no queda otro activo).
+    _invalidate_public_theme_cache(db, row.site_id)
     return row
 
 
@@ -247,6 +267,9 @@ def update_cms_menu(db: Session, row: models.CmsMenu, payload: schemas.CmsMenuUp
         row.is_active = bool(data["is_active"])
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: desactivar/renombrar un menú altera la
+    # respuesta pública cacheada.
+    _invalidate_public_menu_cache(db, row)
     return row
 
 
@@ -254,7 +277,129 @@ def update_cms_menu(db: Session, row: models.CmsMenu, payload: schemas.CmsMenuUp
 def delete_cms_menu(db: Session, row: models.CmsMenu) -> bool:
     row.is_active = False
     db.commit()
+    # Invalidación de caché pública: un menú soft-deleteado debe dejar de
+    # servirse de inmediato (404) en el endpoint público en lugar de
+    # esperar el TTL de 300s de ``cached_public``.
+    _invalidate_public_menu_cache(db, row)
     return True
+
+
+
+def _invalidate_public_menu_key(db: Session, site_id: uuid.UUID, menu_key: str) -> None:
+    """Borra la entrada cacheada del endpoint público de menús para un
+    site + menu_key dados.
+
+    Reconstruye la cache key con el ``site_key`` canónico del site y el
+    ``menu_key`` del menú — los mismos argumentos serializables que
+    ``public_menu`` recibe por kwargs desde FastAPI.
+    """
+    try:
+        site_key = resolve_site_key(db, site_id)
+        if not site_key:
+            return
+        invalidate_cached_public("public_menu", site_key=site_key, menu_key=menu_key)
+    except Exception:  # la invalidación nunca debe romper la mutación
+        _logger.debug("public menu cache invalidation skipped", exc_info=True)
+
+
+
+def _invalidate_public_menu_cache(db: Session, row: models.CmsMenu) -> None:
+    """Invalida la caché pública de un menú (cambios de name/is_active)."""
+    _invalidate_public_menu_key(db, row.site_id, row.menu_key)
+
+
+
+def _invalidate_public_menu_by_id_cache(db: Session, menu_id: uuid.UUID) -> None:
+    """Invalida la caché pública del menú identificado por ``menu_id``.
+
+    Cubre mutaciones que solo conocen el ``menu_id`` (crear item,
+    reordenar items) y necesitan resolver el menú padre.
+    """
+    try:
+        menu = (
+            db.query(models.CmsMenu)
+            .filter(models.CmsMenu.id == menu_id)
+            .first()
+        )
+        if menu is not None:
+            _invalidate_public_menu_key(db, menu.site_id, menu.menu_key)
+    except Exception:  # la invalidación nunca debe romper la mutación
+        _logger.debug("public menu cache invalidation skipped", exc_info=True)
+
+
+
+def _invalidate_public_menu_item_cache(db: Session, row: models.CmsMenuItem) -> None:
+    """Invalida la caché pública del menú padre de un item.
+
+    El endpoint público filtra items por ``visibility == "public"``, así
+    que editar/ocultar un item cambia la respuesta cacheada del menú al
+    que pertenece.
+    """
+    _invalidate_public_menu_by_id_cache(db, row.menu_id)
+
+
+
+def _invalidate_public_theme_cache(db: Session, site_id: uuid.UUID) -> None:
+    """Invalida la caché pública del theme activo de un site.
+
+    El endpoint ``public_theme`` cachea la respuesta con la key
+    ``public_theme(site_key=...)``; crear/actualizar/activar/archivar un
+    theme cambia qué theme (o ninguno) se sirve en público.
+    """
+    try:
+        site_key = resolve_site_key(db, site_id)
+        if not site_key:
+            return
+        invalidate_cached_public("public_theme", site_key=site_key)
+    except Exception:  # la invalidación nunca debe romper la mutación
+        _logger.debug("public theme cache invalidation skipped", exc_info=True)
+
+
+
+def _invalidate_site_public_cache(db: Session, site_id: uuid.UUID) -> None:
+    """Invalida TODO el contenido público cacheado de un site.
+
+    Usado por ``archive_cms_site``/``update_cms_site`` (al desactivar el
+    site): menús, theme, páginas (detail + listado) y posts (detail +
+    listado) dejan de servirse en el endpoint público. Las keys de
+    listado incluyen query params (skip/limit/category/tag), así que se
+    borran por patrón; las keys de detalle se reconstruyen por slug.
+    Resuelve ``site_key`` una sola vez (evita N+1).
+    """
+    try:
+        site_key = resolve_site_key(db, site_id)
+        if not site_key:
+            return
+        # Menús
+        menu_keys = (
+            db.query(models.CmsMenu.menu_key)
+            .filter(models.CmsMenu.site_id == site_id)
+            .all()
+        )
+        for (menu_key,) in menu_keys:
+            invalidate_cached_public("public_menu", site_key=site_key, menu_key=menu_key)
+        # Theme
+        invalidate_cached_public("public_theme", site_key=site_key)
+        # Páginas (detail por slug + listado por patrón)
+        page_slugs = (
+            db.query(models.CmsPage.slug)
+            .filter(models.CmsPage.site_id == site_id)
+            .all()
+        )
+        for (slug,) in page_slugs:
+            invalidate_cached_public("public_page", site_key=site_key, slug=slug)
+        invalidate_cached_public_pattern("public_pages_list")
+        # Posts (detail por slug + listado por patrón)
+        post_slugs = (
+            db.query(models.CmsPost.slug)
+            .filter(models.CmsPost.site_id == site_id)
+            .all()
+        )
+        for (slug,) in post_slugs:
+            invalidate_cached_public("public_post", site_key=site_key, slug=slug)
+        invalidate_cached_public_pattern("public_posts_list")
+    except Exception:  # la invalidación nunca debe romper la mutación
+        _logger.debug("site public cache invalidation skipped", exc_info=True)
 
 
 
@@ -292,6 +437,9 @@ def create_cms_menu_item(
     elif not commit_with_conflict_check:
         db.commit()
     db.refresh(row)
+    # Cierre de staleness: un item público nuevo cambia la respuesta
+    # cacheada del menú padre de inmediato.
+    _invalidate_public_menu_by_id_cache(db, row.menu_id)
     return row
 
 
@@ -335,6 +483,9 @@ def update_cms_menu_item(db: Session, row: models.CmsMenuItem, payload: schemas.
         row.meta_json = data["meta_json"]
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: label/href/visibility/sort_order alteran la
+    # respuesta pública del menú padre.
+    _invalidate_public_menu_item_cache(db, row)
     return row
 
 
@@ -342,6 +493,9 @@ def update_cms_menu_item(db: Session, row: models.CmsMenuItem, payload: schemas.
 def delete_cms_menu_item(db: Session, row: models.CmsMenuItem) -> bool:
     row.visibility = "hidden"
     db.commit()
+    # Cierre de staleness: ocultar un item cambia la respuesta pública
+    # del menú padre de inmediato.
+    _invalidate_public_menu_item_cache(db, row)
     return True
 
 
@@ -357,6 +511,9 @@ def reorder_cms_menu_items(db: Session, menu_id: uuid.UUID, items: list[schemas.
         row.parent_id = item.parent_id
         row.sort_order = item.sort_order
     db.commit()
+    # Cierre de staleness: el orden de items es parte de la respuesta
+    # pública (order_by sort_order) — la caché debe refrescarse ya.
+    _invalidate_public_menu_by_id_cache(db, menu_id)
     return list_cms_menu_items(db, menu_id)
 
 
