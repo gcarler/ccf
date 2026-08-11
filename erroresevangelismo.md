@@ -16,13 +16,13 @@
 | Seguridad | 9/10 | 1 (S-09 parcial) |
 | Rendimiento | 9/10 | 1 (P-04 ya cerrado en esta revisión) |
 | Testing | 9/10 | 0 críticos |
-| Frontend/A11y | 10/10 | 0 críticos abiertos + 0 frontend restantes (F-05 y F-06 cerrados) |
+| Frontend/A11y | 10/10 | 0 críticos abiertos + 0 frontend restantes (F-05, F-06 y F-09 cerrados) |
 
 **Hallazgos totales originalmente reportados:** 37 (12 critical, 14 high, 11 medium)
-**Estado real a 2026-08-10 (actualizado tras cierre F-05 + F-06):**
-- **36 de 37 cerrados** (incluyendo todos los críticos de seguridad, rendimiento y frontend — F-01, F-02, F-03, F-05 y F-06).
+**Estado real a 2026-08-10 (actualizado tras cierre F-05 + F-06 + F-09):**
+- **32 de 37 cerrados** (incluyendo todos los críticos de seguridad, rendimiento y frontend — F-01, F-02, F-03, F-04, F-05, F-06, F-07, F-08, F-09).
 - **1 nuevo hallazgo P0 encontrado y fixeado en esta revisión:** `IndentationError` en `evangelism_shared.py:301` que rompía `import backend.app` y todo el módulo evangelism (código muerto de un refactor N+1 incompleto).
-- **10 nuevos hallazgos cerrados en esta iteración (8 + F-05 + F-06):**
+- **11 nuevos hallazgos cerrados en esta iteración (8 + F-05 + F-06 + F-09):**
   - **P-04 (caching)**: sistema TTL cache implementado en `evangelism_shared.py` y aplicado a 11 endpoints.
   - **T-04 (tests aceptan 500)**: tests de reportes ahora asumen `== 200` con validación de `content-type`.
   - **F-01 (labels)**: verificado cerrado — verificación línea por línea confirma 61 labels con `htmlFor` + 2 con wrapping implicito (asociación válida según HTML5). La cifra original "90+" era incorrecta.
@@ -33,15 +33,16 @@
   - **F-03 (monolito events/page.tsx)**: refactor container/presenter — 261 líneas (de 1766 → −85%), estado + handlers movidos a `useEventsPage.ts` y 5 paneles en `panels/`.
   - **F-06 (monolito groups/[id]/page.tsx)**: refactor container/presenter — 205 líneas (de 1017 → −80%), estado + handlers movidos a `useGroupDetailPage.tsx` y 4 paneles en `panels/`.
   - **F-05 (monolito groups/groups/page.tsx)**: refactor container/presenter — 257 líneas (de 1215 → −79%), estado + handlers movidos a `useGroupsPage.tsx` y 4 paneles en `panels/`.
+  - **F-09 (duplicate utilities)**: eliminado el re-export puente de `formatLocalDate` en `strategyDetailShared.ts`; los 3 consumidores ahora importan directamente de `utils.ts` (fuente canónica única).
 
 **Hallazgos verificados adicionalmente cerrados (no reportados como tales originalmente):**
 - `F-08` (dead code en `useStrategyDetail.ts`): `useGroupActions` y `useAttendanceDrawer` ya no existen en el archivo (309 líneas vs 476 reportados).
 
-**Hallazgos que permanecen ABIERTOS (todos frontend menores / backend out-of-scope):**
+**Hallazgos que permanecen ABIERTOS (todos backend out-of-scope o testing E2E):**
 - S-09 (MEDIUM, parcial): `list_campaign_seasons` retorna seasons globales a cualquier sede — comportamiento documentado, no corregido.
 - P-08, P-09, P-10 (MEDIUM, out-of-scope backend): no afectan performance crítico.
 - T-02 (CRÍTICO, parcial): RBAC non-admin coverage limitado.
-- T-07, T-08, T-09, F-09-parcial (MEDIUM): gaps E2E, `_ok()` broad matchers, xfail de PDF.
+- T-07, T-08, T-09 (MEDIUM): gaps E2E, `_ok()` broad matchers, xfail de PDF.
 
 
 ---
@@ -264,12 +265,14 @@
 ### F-08 — MEDIUM → ✅ CERRADO
 - **Archivo:** `frontend/src/app/plataforma/evangelism/strategies/[id]/useStrategyDetail.ts` — 309 líneas (reducido de 476). `useGroupActions` y `useAttendanceDrawer` ya no existen en el archivo (verificado con grep — 0 ocurrencias).
 
-### F-09 — MEDIUM → ⚠️ PARCIALMENTE CERRADO
-- **Estado:** `getErrorMessage` y `toAttendanceStatus` están centralizados en `frontend/src/app/plataforma/evangelism/utils.ts` (ya no duplicados). `formatLocalDate` sigue duplicado en 2 lugares:
-  - `events/page.tsx:56` (local)
-  - `strategies/[id]/strategyDetailShared.ts:111`
-  
-  Falta consolidar `formatLocalDate` en `utils.ts`.
+### F-09 — MEDIUM → ✅ CERRADO (2026-08-10)
+- **Estado:** `getErrorMessage`, `toAttendanceStatus` y `formatLocalDate` están centralizados en `frontend/src/app/plataforma/evangelism/utils.ts` (fuente única canónica).
+- **Limpieza final (este commit):** eliminado el re-export `export { formatLocalDate } from '../../utils'` de `strategyDetailShared.ts` (línea 111). Los 3 consumidores que importaban vía `strategyDetailShared` ahora importan directamente de `utils.ts`:
+  - `strategies/[id]/panels/StrategyViews.tsx` → `import { formatLocalDate } from '../../../utils'`
+  - `strategies/[id]/useStrategyDetailPage.ts` → `import { formatLocalDate, getErrorMessage, toAttendanceStatus } from '../../utils'` (quitado del return del hook — era función pura, no estado)
+  - `strategies/[id]/page.tsx` → `import { formatLocalDate } from '../../utils'` (quitado del destructuring del hook)
+- **Verificación:** `tsc --noEmit` ✓, `eslint` ✓, `vitest run` 188/188 archivos (1824 tests) ✓.
+- **Nota:** el tracker decía "duplicado en 2 lugares" pero la implementación ya estaba consolidada en `utils.ts` desde un ciclo previo — solo quedaba el re-export puente. Este commit elimina el puente y deja a todos los consumidores importando de la fuente canónica.
 
 ---
 
@@ -279,8 +282,8 @@
 |-----------|----------------|----------|-----------------------|
 | 🔴 Crítica | 12 | 12 | 0 |
 | 🟠 Alta | 14 | 14 | 0 (F-05 y F-06 cerrados) |
-| 🟡 Media | 11 | 5 | 6 (S-09 parcial, P-08, P-09, P-10, T-07, F-09 parcial) |
-| **Total** | **37** | **31** | **6** (0 frontend HIGH / 6 backend/E2E menores) |
+| 🟡 Media | 11 | 6 | 5 (S-09 parcial, P-08, P-09, P-10, T-07) |
+| **Total** | **37** | **32** | **5** (0 frontend / 5 backend/E2E menores) |
 
 **Plus 1 hallazgo P0 nuevo encontrado y fixeado en iteración 2026-08-09:** `IndentationError` que rompía el backend.
 
@@ -441,4 +444,4 @@
 ---
 
 *Documento revisado y actualizado a 2026-08-10 a partir de inspección línea por línea del código fuente (no solo re-lectura de la auditoría 2026-07-26).*
-*31 de 37 hallazgos cerrados + 1 hallazgo P0 encontrado y fixeado; 0 HIGH frontend pendientes (F-05 + F-06 cerrados); 6 Medios restantes (S-09 parcial, P-08/P-09/P-10 out-of-scope backend, T-07 E2E, F-09 parcial).*
+*32 de 37 hallazgos cerrados + 1 hallazgo P0 encontrado y fixeado; 0 frontend pendientes (F-05 + F-06 + F-09 cerrados); 5 Medios restantes (S-09 parcial, P-08/P-09/P-10 out-of-scope backend, T-07 E2E).*
