@@ -1,1215 +1,257 @@
 'use client';
 
-import React, { useState, Suspense, useEffect, useMemo, useCallback } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/http';
-import { getErrorMessage } from '../../utils';
-import { useSidebarLayers } from '@/context/SidebarLayerContext';
-import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import { Suspense, useEffect } from 'react';
+import ConfirmActionDrawer from '@/components/evangelism/ConfirmActionDrawer';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
-import { downloadGroupAttendanceExcel, downloadGroupAttendancePdf } from '@/lib/evangelism-downloads';
-import {
- Home,
- Plus,
- Search,
- MapPin,
- Users,
- Activity,
- X,
- CheckCircle2,
- Clock,
- Calendar,
- UserPlus,
- ShieldCheck,
- BarChart3,
- Trash2,
- FileSpreadsheet,
- FileText,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { toast } from 'sonner';
-import { parseAndValidateTime } from '@/lib/time';
-import type { ViewType } from '@/components/ViewSwitcher';
-import { ListView, GridView, KanbanView, TableView } from './GroupViews';
-
-
-
-export interface Grupo {
- id: string;
- code?: string;
- name: string;
- zone?: string;
- address?: string;
- leader_id?: string;
- assistant_id?: string;
- host_id?: string;
- base_attendee_ids?: string[];
- base_attendees?: Array<{
- persona_id: string;
- name: string;
- role?: string;
- church_role?: string;
- }>;
- capacity: number;
- day_of_week?: string;
- start_time?: string;
- end_time?: string;
- status: string;
-}
-
-interface Persona {
- id: string;
- nombre_completo: string;
- church_role?: string;
-}
-
-interface AssignmentSummary {
- houses_total: number;
- houses_with_leader: number;
- houses_without_leader: number;
- houses_with_assistant: number;
- houses_without_assistant: number;
- houses_with_host: number;
- houses_without_host: number;
- houses_with_personas: number;
- houses_without_personas: number;
- personas_total: number;
- personas_unassigned: number;
- houses_needing_leader: Array<{
- id: string;
- name: string;
- code?: string;
- zone?: string;
- address?: string;
- }>;
- houses_needing_assistant: Array<{
- id: string;
- name: string;
- code?: string;
- zone?: string;
- address?: string;
- }>;
- houses_needing_host: Array<{
- id: string;
- name: string;
- code?: string;
- zone?: string;
- address?: string;
- }>;
- unassigned_personas: Array<{ id: string; name: string; church_role?: string }>;
-}
-
-type Mode = 'create' | 'leader' | 'assistant' | 'host' | 'personas' | 'monitor';
-
-const MODE_CONFIG: Record<
- Mode,
- { title: string; description: string; icon: LucideIcon }
-> = {
- create: {
- title: 'Crear Grupo',
- description: 'Alta rápida con datos mínimos',
- icon: Plus,
- },
- leader: {
- title: 'Asignar líder',
- description: 'Casas sin líder o con líder actual',
- icon: Users,
- },
- assistant: {
- title: 'Asignar colíder',
- description: 'Casas sin colíder o con colíder actual',
- icon: ShieldCheck,
- },
- host: {
- title: 'Asignar anfitrión',
- description: 'Cambios de casa, dirección y anfitrión',
- icon: Home,
- },
- personas: {
- title: 'Asignar personas',
- description: 'Personas sin casa y personas por casa',
- icon: UserPlus,
- },
- monitor: {
- title: 'Monitoreo',
- description: 'Tendencia, alertas y actividad por casa',
- icon: BarChart3,
- },
-};
+import EvangelismShell from '@/components/evangelism/EvangelismShell';
+import { Activity, Calendar, CheckCircle2, Home, Trash2, X } from 'lucide-react';
+import GroupForm from './panels/GroupForm';
+import GroupPersonasSection from './panels/GroupPersonasSection';
+import GroupQuickAssign from './panels/GroupQuickAssign';
+import GroupSidebarList from './panels/GroupSidebarList';
+import { GridView, KanbanView, ListView, TableView } from './GroupViews';
+import { MODE_CONFIG, useGroupsPage } from './useGroupsPage';
 
 function GroupsContent() {
- const { token } = useAuth();
- const searchParams = useSearchParams();
- const router = useRouter();
- const { pushSidebarPanel, resetSidebarStack } = useSidebarLayers();
- const [houses, setHouses] = useState<Grupo[]>([]);
- const [personas, setPersonas] = useState<Persona[]>([]);
- const [summary, setSummary] = useState<AssignmentSummary | null>(null);
- const [loading, setLoading] = useState(true);
- const [searchQuery, setSearchQuery] = useState('');
- const [viewType, setViewType] = useState<ViewType>('list');
- const [mode, setMode] = useState<Mode>('create');
+  const {
+    // State - data
+    houses,
+    personas,
+    summary,
+    loading,
+    // State - UI
+    searchQuery, setSearchQuery,
+    viewType, setViewType,
+    mode,
+    // State - selection/form
+    selectedHouse,
+    setSelectedHouse,
+    isCreating, setIsCreating,
+    isAddingPersonas, setIsAddingPersonas,
+    formData, setFormData,
+    selectedPersonaIds, setSelectedPersonaIds,
+    personaSearchQuery, setPersonaSearchQuery,
+    personaRoleFilter, setPersonaRoleLinkFilter,
+    personaAssignmentFilter, setPersonaAssignmentFilter,
+    confirmAction, setConfirmAction,
+    quickAssignmentTargets, setQuickAssignmentTargets,
+    saving,
+    // Derived
+    filteredHouses,
+    filteredPersonasList,
+    uniqueRoles,
+    showPanel,
+    getPersonaName,
+    // Handlers
+    handleSave,
+    handleSelectHouse,
+    requestDeleteHouse,
+    handleQuickAssignPersona,
+    // Sidebar context passthrough
+    pushSidebarPanel, resetSidebarStack,
+    router,
+    token,
+  } = useGroupsPage();
 
- const [selectedHouse, setSelectedHouse] = useState<Grupo | null>(null);
- const [isCreating, setIsCreating] = useState(false);
- const [isAddingPersonas, setIsAddingPersonas] = useState(false);
- const [formData, setFormData] = useState<Partial<Grupo>>({
- capacity: 15,
- status: 'Activo',
- });
- const [selectedPersonaIds, setSelectedPersonaIds] = useState<Set<string>>(
- new Set()
- );
- const [personaSearchQuery, setPersonaSearchQuery] = useState('');
- const [personaRoleFilter, setPersonaRoleLinkFilter] = useState('');
- const [personaAssignmentFilter, setPersonaAssignmentFilter] = useState('all');
- const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
- const [quickAssignmentTargets, setQuickAssignmentTargets] = useState<
- Record<string, string>
- >({});
- const [saving, setSaving] = useState(false);
+  // Clean up sidebar when unmounting
+  useEffect(() => {
+    return () => resetSidebarStack();
+  }, [resetSidebarStack]);
 
- useEffect(() => {
- const raw = (searchParams?.get('mode') || 'create').toLowerCase();
- if (
- raw === 'leader' ||
- raw === 'assistant' ||
- raw === 'host' ||
- raw === 'personas' ||
- raw === 'monitor' ||
- raw === 'create'
- ) {
- setMode(raw);
- } else {
- setMode('create');
- }
- }, [searchParams]);
+  return (
+    <>
+      <GroupSidebarList
+        pushSidebarPanel={pushSidebarPanel}
+        filteredHouses={filteredHouses}
+        loading={loading}
+        selectedHouse={selectedHouse}
+        isCreating={isCreating}
+        mode={mode}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        getPersonaName={getPersonaName}
+        requestDeleteHouse={requestDeleteHouse}
+        setIsCreating={setIsCreating}
+        setSelectedHouse={setSelectedHouse}
+        setFormData={setFormData}
+        setSelectedPersonaIds={setSelectedPersonaIds}
+        token={token}
+      />
 
- useEffect(() => {
- if (!token) return;
- setLoading(true);
+      <EvangelismShell
+        breadcrumbs={[
+          { label: 'Grupos en Casa', href: '/plataforma/evangelism/groups', icon: Home },
+          { label: 'Grupos', icon: Home },
+        ]}
+        viewType={viewType}
+        onViewChange={setViewType}
+        viewOptions={['list', 'kanban', 'grid', 'table']}
+        onSearch={setSearchQuery}
+      >
+        <div className="flex h-full p-4 lg:p-4 bg-[hsl(var(--bg-muted))]/50 dark:bg-surface-card/50">
+          {/* Detail/Edit Panel */}
+          {showPanel ? (
+            <ErrorBoundary moduleName="Grupos - Detalle" compact>
+              <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-surface-card rounded-lg border border-[hsl(var(--border-primary))] shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="px-3 py-2 border-b border-[hsl(var(--border-primary))]/80 flex items-center justify-between shrink-0 bg-[hsl(var(--bg-secondary))]">
+                  <h2 className="text-base font-bold text-[hsl(var(--text-primary))]">
+                    {isCreating ? 'Nuevo Grupo' : MODE_CONFIG[mode].title}
+                  </h2>
+                  <div className="flex items-center gap-1">
+                    {!isCreating && selectedHouse && (
+                      <button
+                        onClick={() => router.push(`/plataforma/evangelism/groups/sessions/${selectedHouse.id}`)}
+                        className="size-8 rounded-lg bg-success-soft flex items-center justify-center text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))] dark:hover:bg-[hsl(var(--success)/0.15)] transition-colors"
+                        title="Reportar sesión"
+                      >
+                        <Calendar size={15} />
+                      </button>
+                    )}
+                    {!isCreating && selectedHouse && (
+                      <button
+                        onClick={() => requestDeleteHouse(selectedHouse)}
+                        className="size-8 rounded-lg bg-danger-soft flex items-center justify-center text-[hsl(var(--destructive))] dark:hover:bg-[hsl(var(--danger)/0.15)] transition-colors"
+                        title="Eliminar grupo"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setIsCreating(false);
+                        setSelectedHouse(null);
+                        setSelectedPersonaIds(new Set());
+                        setFormData({ capacity: 15, status: 'Activo' });
+                      }}
+                      className="size-8 rounded-lg bg-[hsl(var(--bg-muted))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                </div>
 
- let cancelled = false;
+                {selectedHouse || isCreating ? (
+                  <>
+                    <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin">
+                      {!isCreating && (
+                        <div className="mb-5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5 flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                              {MODE_CONFIG[mode].title}
+                            </p>
+                            <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-1">
+                              {MODE_CONFIG[mode].description}
+                            </p>
+                          </div>
+                          <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            Edición
+                          </span>
+                        </div>
+                      )}
+                      <GroupForm
+                        formData={formData}
+                        setFormData={setFormData}
+                        personas={personas}
+                        onSubmit={handleSave}
+                        formId="groups-form"
+                      />
+                      {selectedHouse && (
+                        <GroupPersonasSection
+                          selectedHouse={selectedHouse}
+                          selectedPersonaIds={selectedPersonaIds}
+                          setSelectedPersonaIds={setSelectedPersonaIds}
+                          personas={personas}
+                          isAddingPersonas={isAddingPersonas}
+                          setIsAddingPersonas={setIsAddingPersonas}
+                          personaSearchQuery={personaSearchQuery}
+                          setPersonaSearchQuery={setPersonaSearchQuery}
+                          personaRoleFilter={personaRoleFilter}
+                          setPersonaRoleLinkFilter={setPersonaRoleLinkFilter}
+                          personaAssignmentFilter={personaAssignmentFilter}
+                          setPersonaAssignmentFilter={setPersonaAssignmentFilter}
+                          filteredPersonasList={filteredPersonasList}
+                          uniqueRoles={uniqueRoles as Array<string | undefined>}
+                        />
+                      )}
+                    </div>
 
- const loadPersonas = async () => {
- const pageSize = 250;
- let skip = 0;
- const allPersonas: Persona[] = [];
-
- while (true) {
- const data = await apiFetch<unknown>('/crm/personas', {
- token,
- silent: true,
- query: {
-  skip,
-  limit: pageSize,
- sort_by: 'nombre_completo',
- sort_dir: 'asc',
- },
- });
-
- const page = Array.isArray(data)
- ? data
- : Array.isArray((data as { items?: Persona[] })?.items)
- ? (data as { items: Persona[] }).items
- : [];
-
- allPersonas.push(...page);
-
- if (page.length < pageSize) break;
- skip += pageSize;
- }
-
- return allPersonas;
- };
-
-Promise.all([
-apiFetch<Grupo[]>('/evangelism/grupos', { token, silent: true }),
-loadPersonas(),
-apiFetch<AssignmentSummary>('/evangelism/groups/assignment-summary', {
- token,
- silent: true,
-}).catch(() => null),
-])
-.then(([housesData, personasData, summaryData]) => {
-if (cancelled) return;
-setHouses(housesData);
-setPersonas(personasData);
-setSummary(summaryData);
-})
-.catch(() => {
-if (!cancelled) {
- setHouses([]);
- setPersonas([]);
- setSummary(null);
-}
-})
-.finally(() => {
-if (!cancelled) setLoading(false);
-});
-
- return () => {
- cancelled = true;
- };
- }, [token]);
-
- const handleSave = async (e: React.FormEvent) => {
- e.preventDefault();
- setSaving(true);
- try {
- let start_time = formData.start_time || '';
- let end_time = formData.end_time || '';
-
- if (start_time) {
- const startParsed = parseAndValidateTime(start_time);
- if (!startParsed.valid) {
- toast.error("Formato de hora de inicio inválido (use HH:MM o AM/PM)");
- setSaving(false);
- return;
- }
- start_time = startParsed.normalized;
- }
- if (end_time) {
- const endParsed = parseAndValidateTime(end_time);
- if (!endParsed.valid) {
- toast.error("Formato de hora de finalización inválido (use HH:MM o AM/PM)");
- setSaving(false);
- return;
- }
- end_time = endParsed.normalized;
- }
-
- if (start_time && end_time) {
- const startParsed = parseAndValidateTime(start_time);
- const endParsed = parseAndValidateTime(end_time);
- if (startParsed.valid && endParsed.valid && endParsed.minutes <= startParsed.minutes) {
- toast.error("La hora de finalización debe ser posterior a la hora de inicio");
- setSaving(false);
- return;
- }
- }
-
- const payload = {
- ...formData,
- start_time: start_time || null,
- end_time: end_time || null,
- base_attendee_ids: Array.from(selectedPersonaIds),
- };
- if (isCreating) {
- const res = await apiFetch<Grupo>('/evangelism/grupos', {
-  method: 'POST',
-  body: payload,
-  token,
-  silent: true,
- });
- setHouses([res, ...houses]);
- const detail = await apiFetch<Grupo>(
-  `/evangelism/grupos/${res.id}`,
-   { token, silent: true }
- );
- setSelectedHouse(detail);
- setFormData(detail);
- setSelectedPersonaIds(
- new Set(
- detail.base_attendee_ids ||
- detail.base_attendees?.map(m => m.persona_id) ||
- []
- )
- );
- toast.success('Grupo creado');
- setIsCreating(false);
- } else if (selectedHouse) {
- const res = await apiFetch<Grupo>(
-  `/evangelism/grupos/${selectedHouse.id}`,
-  {
-   method: 'PUT',
-   body: payload,
-   token,
-   silent: true,
-  }
- );
- setHouses(houses.map(h => (h.id === res.id ? res : h)));
- const detail = await apiFetch<Grupo>(
-  `/evangelism/grupos/${res.id}`,
-   { token, silent: true }
- );
- setSelectedHouse(detail);
- setFormData(detail);
- setSelectedPersonaIds(
- new Set(
- detail.base_attendee_ids ||
- detail.base_attendees?.map(m => m.persona_id) ||
- []
- )
- );
- toast.success('Grupo actualizado');
- }
- } catch (error: unknown) {
- toast.error(getErrorMessage(error, 'Error al guardar grupo'));
- } finally {
- setSaving(false);
- }
- };
-
- const handleSelectHouse = useCallback(async (h: Grupo) => {
-   setIsCreating(false);
-   try {
-     const detail = await apiFetch<Grupo>(`/evangelism/grupos/${h.id}`, { token, silent: true });
-     setSelectedHouse(detail);
-     setFormData(detail);
-     setSelectedPersonaIds(new Set(detail.base_attendee_ids || detail.base_attendees?.map(m => m.persona_id) || []));
-   } catch {
-     setSelectedHouse(h);
-     setFormData(h);
-     setSelectedPersonaIds(new Set());
-   }
- }, [token]);
-
- const handleDeleteHouse = useCallback(async (house: Grupo) => {
- try {
- await apiFetch(`/evangelism/grupos/${house.id}`, {
- method: 'DELETE',
- token,
- silent: true,
-});
- setHouses(houses.filter(h => h.id !== house.id));
- if (selectedHouse?.id === house.id) {
- setSelectedHouse(null);
- setIsCreating(false);
- }
- toast.success(`Grupo "${house.name}" eliminado`);
- } catch (error: unknown) {
- toast.error(getErrorMessage(error, 'Error al eliminar grupo'));
- }
- }, [token, houses, selectedHouse]);
-
- const requestDeleteHouse = useCallback((house: Grupo) => {
- setConfirmAction({
- title: 'Eliminar grupo',
- description: `Se eliminará "${house.name}" y dejará de estar disponible para reportes nuevos.`,
- confirmLabel: 'Eliminar',
- destructive: true,
- onConfirm: () => handleDeleteHouse(house),
- });
- }, [handleDeleteHouse]);
-
- const handleQuickAssignPersona = async (personaId: string) => {
-  const grupoId = quickAssignmentTargets[personaId];
-  if (!grupoId) {
- toast.error('Selecciona una casa');
- return;
- }
- setSaving(true);
- try {
- const detail = await apiFetch<Grupo>(  `/evangelism/grupos/${grupoId}`,
-
- { token, silent: true }
- );
- const current = new Set(
- detail.base_attendee_ids ||
- detail.base_attendees?.map(m => m.persona_id) ||
- []
- );
- current.add(personaId);
- const updated = await apiFetch<Grupo>(  `/evangelism/grupos/${grupoId}`,
-
- {
-  method: 'PUT',
- body: {
- code: detail.code,
- name: detail.name,
- zone: detail.zone,
- address: detail.address,
- leader_id: detail.leader_id,
- assistant_id: detail.assistant_id,
- host_id: detail.host_id,
- capacity: detail.capacity,
- day_of_week: detail.day_of_week,
- start_time: detail.start_time,
- end_time: detail.end_time,
- status: detail.status,
- base_attendee_ids: Array.from(current),
- },
-  token,
-  silent: true,
- }
- );
- setHouses(prev => prev.map(h => (h.id === updated.id ? updated : h)));
- const refreshed = await apiFetch<AssignmentSummary>(
- '/evangelism/groups/assignment-summary',
- { token }
- );
- setSummary(refreshed);
- toast.success('Persona asignado');
- } catch {
- toast.error('Error al asignar persona');
- } finally {
- setSaving(false);
- }
- };
-
- const filteredHouses = useMemo(() => {
- const q = searchQuery.toLowerCase();
- let items = houses.filter(
- h =>
- h.name.toLowerCase().includes(q) ||
- h.zone?.toLowerCase().includes(q) ||
- h.code?.toLowerCase().includes(q)
- );
- if (mode === 'leader') items = items.filter(h => !h.leader_id);
- if (mode === 'assistant') items = items.filter(h => !h.assistant_id);
- if (mode === 'host') items = items.filter(h => !h.host_id);
- if (mode === 'personas')
- items = items.filter(h => (h.capacity ?? 0) > 0 || h.status === 'Activo');
- return items;
- }, [houses, mode, searchQuery]);
-
- const getPersonaName = useCallback((id?: string) => {
- if (!id) return 'No asignado';
- const m = personas.find(m => m.id === id);
- return m ? m.nombre_completo : 'Desconocido';
- }, [personas]);
-
- const uniqueRoles = useMemo(() => {
- return Array.from(new Set(personas.map(m => m.church_role).filter(Boolean))).sort();
- }, [personas]);
-
- const filteredPersonasList = useMemo(() => {
- const base = [...personas].sort((a, b) =>
- (a.nombre_completo || '').localeCompare(b.nombre_completo || '', 'es')
- );
-
- return base.filter(m => {
- if (personaSearchQuery && !(m.nombre_completo || '').toLowerCase().includes(personaSearchQuery.toLowerCase())) {
- return false;
- }
- if (personaRoleFilter && m.church_role !== personaRoleFilter) {
- return false;
- }
- if (personaAssignmentFilter !== 'all') {
- const isAssignedToThis = selectedPersonaIds.has(m.id);
- const isUnassigned = summary?.unassigned_personas.some(u => u.id === m.id);
-
- if (personaAssignmentFilter === 'this_house' && !isAssignedToThis) return false;
- if (personaAssignmentFilter === 'unassigned' && !isUnassigned) return false;
- if (personaAssignmentFilter === 'other_house' && (isAssignedToThis || isUnassigned)) return false;
- }
- return true;
- });
- }, [personas, personaSearchQuery, personaRoleFilter, personaAssignmentFilter, selectedPersonaIds, summary]);
-
- const inputCls =
- 'w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-4 py-1.5 text-sm font-medium focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none transition-all placeholder:text-[hsl(var(--text-secondary))]';
-
- const showPanel = selectedHouse !== null || isCreating || mode === 'personas';
- // PUSH LIST TO SIDEBAR 2
- useEffect(() => {
- pushSidebarPanel({
- id: 'groups-list',
- title: 'Grupos',
- replaceAll: true,
- content: (
- <div className="flex flex-col h-full">
- <div className="px-3 pt-3 pb-4">
- <div className="flex items-center justify-between mb-3">
- <span className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
- Buscar Grupo
- </span>
- <button
- onClick={() => {
- setIsCreating(true);
- setSelectedHouse(null);
- setSelectedPersonaIds(new Set());
- setFormData({ capacity: 15, status: 'Activo' });
- }}
- className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg size-7 flex items-center justify-center transition-all shadow-sm active:scale-95"
- >
- <Plus size={14} />
- </button>
- </div>
- <div className="relative">
- <Search
- className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]"
- size={14}
- />
- <input
- value={searchQuery}
- onChange={e => setSearchQuery(e.target.value)}
- placeholder="Buscar por nombre o zona..."
- className="w-full bg-[hsl(var(--bg-muted))] border border-transparent rounded-md py-2 pl-9 pr-3 text-xs font-medium focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none transition-all"
- />
- </div>
- </div>
-
- <div className="flex-1 overflow-y-auto px-3 pb-4 scrollbar-thin flex flex-col gap-1">
- {loading ? (
- <div className="py-1.5 text-center text-[hsl(var(--text-secondary))]">
- <Activity className="animate-spin mx-auto opacity-50" />
- </div>
- ) : filteredHouses.length === 0 ? (
- <div className="py-1.5 px-4 text-center">
- <Search size={24} className="mx-auto text-[hsl(var(--text-secondary))] mb-3" />
- <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin resultados</p>
- <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">No hay grupos que coincidan.</p>
- </div>
- ) : (
- filteredHouses.map(h => {
- const isActive = selectedHouse?.id === h.id;
- return (
- <div
- key={h.id}
- className={`flex items-start gap-1 px-2 py-1.5 rounded-md border transition-all duration-200 ${
- isActive
- ? 'bg-info-soft border-info-muted shadow-sm'
- : 'bg-transparent border-transparent hover:bg-[hsl(var(--bg-muted))]'
- }`}
- >
- <button
- onClick={async () => {
- setIsCreating(false);
- try {
- const detail = await apiFetch<Grupo>(
- `/evangelism/grupos/${h.id}`,
- { token }
- );
- setSelectedHouse(detail);
- setFormData(detail);
- setSelectedPersonaIds(
- new Set(
- detail.base_attendee_ids ||
- detail.base_attendees?.map(m => m.persona_id) ||
- []
- )
- );
- } catch {
- setSelectedHouse(h);
- setFormData(h);
- setSelectedPersonaIds(new Set());
- }
- }}
- className="flex-1 text-left min-w-0"
- >
- <p
- className={`text-xs font-bold truncate leading-tight ${isActive ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-primary))]'}`}
- >
- {h.name}
- </p>
- <div className="mt-1 flex items-center justify-between">
- <p className="text-2xs font-medium text-[hsl(var(--text-secondary))] truncate">
- {h.zone || 'Sin zona'}
- </p>
- {h.leader_id && (
- <span className="text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-info-soft text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] shrink-0">
- {getPersonaName(h.leader_id).split(' ')[0]}
- </span>
- )}
- </div>
- </button>
- <button
- onClick={(e) => { e.stopPropagation(); requestDeleteHouse(h); }}
- className="shrink-0 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] dark:hover:text-[hsl(var(--destructive))] hover:bg-danger-soft transition-colors"
- title="Eliminar grupo"
- >
- <Trash2 size={13} />
- </button>
- </div>
- );
- })
- )}
- </div>
- </div>
- ),
- });
- }, [
- pushSidebarPanel,
- filteredHouses,
- searchQuery,
- loading,
- selectedHouse,
- isCreating,
- mode,
- token,
- getPersonaName,
-  requestDeleteHouse,
-])
-;
-
- // Clean up sidebar when unmounting
- useEffect(() => {
- return () => resetSidebarStack();
- }, [resetSidebarStack]);
-
- return (
- <EvangelismShell
- breadcrumbs={[
- { label: 'Grupos en Casa', href: '/plataforma/evangelism/groups', icon: Home },
- { label: 'Grupos', icon: Home },
- ]}
- viewType={viewType}
- onViewChange={setViewType}
- viewOptions={['list', 'kanban', 'grid', 'table']}
- onSearch={setSearchQuery}
- >
- <div className="flex h-full p-4 lg:p-4 bg-[hsl(var(--bg-muted))]/50 dark:bg-surface-card/50">
-  {/* Detail/Edit Panel */}
-  {showPanel ? (
-  <ErrorBoundary moduleName="Grupos - Detalle" compact>
-  <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-surface-card rounded-lg border border-[hsl(var(--border-primary))] shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
- <div className="px-3 py-2 border-b border-[hsl(var(--border-primary))]/80 flex items-center justify-between shrink-0 bg-[hsl(var(--bg-secondary))]">
- <h2 className="text-base font-bold text-[hsl(var(--text-primary))]">
- {isCreating ? 'Nuevo Grupo' : MODE_CONFIG[mode].title}
- </h2>
- <div className="flex items-center gap-1">
- {!isCreating && selectedHouse && (
- <button
- onClick={() => router.push(`/plataforma/evangelism/groups/sessions/${selectedHouse.id}`)}
- className="size-8 rounded-lg bg-success-soft flex items-center justify-center text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))] dark:hover:bg-[hsl(var(--success)/0.15)] transition-colors"
- title="Reportar sesión"
- >
- <Calendar size={15} />
- </button>
- )}
- {!isCreating && selectedHouse && (
- <button
- onClick={() => requestDeleteHouse(selectedHouse)}
- className="size-8 rounded-lg bg-danger-soft flex items-center justify-center text-[hsl(var(--destructive))] dark:hover:bg-[hsl(var(--danger)/0.15)] transition-colors"
- title="Eliminar grupo"
- >
- <Trash2 size={15} />
- </button>
- )}
- <button
- onClick={() => {
- setIsCreating(false);
- setSelectedHouse(null);
- }}
- className="size-8 rounded-lg bg-[hsl(var(--bg-muted))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors"
- >
- <X size={15} />
- </button>
- </div>
- </div>
-
- {selectedHouse || isCreating ? (
- <>
- <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin">
- {!isCreating && (
- <div className="mb-5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5 flex items-start justify-between gap-4">
- <div>
- <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
- {MODE_CONFIG[mode].title}
- </p>
- <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-1">
- {MODE_CONFIG[mode].description}
- </p>
- </div>
- <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
- Edición
- </span>
- </div>
- )}
- <form
- id="groups-form"
- onSubmit={handleSave}
- className="space-y-4 w-full"
- >
- {/* Identidad */}
- <div className="space-y-4">
- <div>
- <label htmlFor="group-code" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
- Código del Grupo
- </label>
- <input
- id="group-code"
- value={formData.code || ''}
- onChange={e =>
- setFormData({
- ...formData,
- code: e.target.value,
- } as Partial<Grupo>)
- }
- className={inputCls}
- placeholder="CCF-001 o dejar vacío"
- />
- </div>
- <div>
- <label htmlFor="group-name" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
- Nombre o Número del Grupo
- </label>
- <input
- id="group-name"
- value={formData.name || ''}
- onChange={e =>
- setFormData({ ...formData, name: e.target.value })
- }
- className={inputCls}
- placeholder="Ej. Casa Bethel, Grupo 12 o dejar pendiente"
- />
- </div>
- <div className="grid grid-cols-2 gap-4">
- <div>
- <label htmlFor="group-zone" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
- <MapPin size={11} /> Zona/Barrio
- </label>
- <input
- id="group-zone"
- value={formData.zone || ''}
- onChange={e =>
- setFormData({ ...formData, zone: e.target.value })
- }
- className={inputCls}
- placeholder="Norte, Centro..."
- />
- </div>
- <div>
- <label htmlFor="group-address" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
- <MapPin size={11} /> Dirección
- </label>
- <input
- id="group-address"
- value={formData.address || ''}
- onChange={e =>
- setFormData({ ...formData, address: e.target.value })
- }
- className={inputCls}
- placeholder="Calle, número..."
- />
- </div>
- </div>
- </div>
-
- {/* Roles */}
- <div>
- <h3 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-4 flex items-center gap-2">
- <Users size={12} className="text-[hsl(var(--primary))]" /> Roles del
- Grupo
- </h3>
- <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
- {[
- { key: 'leader_id', label: 'Líder' },
- { key: 'assistant_id', label: 'Asistente de Líder' },
- { key: 'host_id', label: 'Anfitrión' },
- ].map(({ key, label }) => (
- <div key={key}>
- <label htmlFor={`group-role-${key}`} className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
- {label}
- </label>
- <select
- id={`group-role-${key}`}
- value={
- formData[
- key as 'leader_id' | 'assistant_id' | 'host_id'
- ] ?? ''
- }
- onChange={e =>
- setFormData({
- ...formData,
- [key]: e.target.value || undefined,
- })
- }
- className={inputCls}
- >
- <option value="">Seleccionar...</option>
- {personas.map(m => (
- <option key={m.id} value={m.id}>
- {m.nombre_completo}
- </option>
- ))}
- </select>
- </div>
- ))}
- </div>
- </div>
-
- {/* Logística */}
- <div>
- <h3 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-4 flex items-center gap-2">
- <Calendar size={12} className="text-[hsl(var(--primary))]" /> Logística
- </h3>
- <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
- <div className="col-span-2">
- <label htmlFor="group-day" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1">
- <Clock size={11} /> Día de Reunión
- </label>
- <select
- id="group-day"
- value={formData.day_of_week || ''}
- onChange={e =>
- setFormData({
- ...formData,
- day_of_week: e.target.value,
- })
- }
- className={inputCls}
- >
- <option value="">Seleccionar...</option>
- {[
- 'Lunes',
- 'Martes',
- 'Miércoles',
- 'Jueves',
- 'Viernes',
- 'Sábado',
- 'Domingo',
- ].map(d => (
- <option key={d} value={d}>
- {d}
- </option>
- ))}
- </select>
- </div>
- <div>
- <label htmlFor="group-start-time" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
- Hora Inicio
- </label>
- <input
- id="group-start-time"
- type="time"
- value={formData.start_time || ''}
- onChange={e =>
- setFormData({
- ...formData,
- start_time: e.target.value,
- })
- }
- className={inputCls}
- />
- </div>
- <div>
- <label htmlFor="group-end-time" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
- Hora Fin
- </label>
- <input
- id="group-end-time"
- type="time"
- value={formData.end_time || ''}
- onChange={e =>
- setFormData({ ...formData, end_time: e.target.value })
- }
- className={inputCls}
- />
- </div>
- <div>
- <label htmlFor="group-capacity" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">
- Capacidad
- </label>
- <input
- id="group-capacity"
- type="number"
- value={formData.capacity || ''}
- onChange={e =>
- setFormData({
- ...formData,
- capacity: Number(e.target.value),
- })
- }
- className={inputCls}
- />
- </div>
- </div>
- </div>
-
- {selectedHouse && (
- <div className="space-y-4">
- <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 border-t border-[hsl(var(--border-primary))] pt-8 mt-4">
- <div>
- <h3 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1 flex items-center gap-2">
- <Users size={12} className="text-[hsl(var(--primary))]" /> Personas actuales ({selectedPersonaIds.size})
- </h3>
- <p className="text-xs text-[hsl(var(--text-secondary))]">
- Estos son los personas actualmente asignados al grupo.
- </p>
- </div>
- <button
- type="button"
- onClick={() => setIsAddingPersonas(!isAddingPersonas)}
- className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg transition-colors flex items-center gap-2 ${
- isAddingPersonas
- ? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/20'
- : 'bg-info-soft text-[hsl(var(--primary))] hover:bg-info-muted dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--primary))]'
- }`}
- >
- <UserPlus size={14} /> {isAddingPersonas ? 'Ocultar catálogo' : 'Añadir personas'}
- </button>
- </div>                            {/* CURRENT PERSONAS LIST */}
- {selectedPersonaIds.size > 0 ? (
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
- {personas.filter(m => selectedPersonaIds.has(m.id)).map(persona => (
- <div key={persona.id} className="flex items-center justify-between gap-3 rounded-lg border border-info-muted dark:border-[hsl(var(--info)/0.3)] bg-info-soft px-4 py-1.5">
- <div className="min-w-0">
- <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
- {persona.nombre_completo}
- </p>
- <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 truncate">
- {persona.church_role || 'Sin rol'}
- </p>
- </div>
- <button
- type="button"
- onClick={() => setSelectedPersonaIds(prev => {
- const next = new Set(prev);
- next.delete(persona.id);
- return next;
- })}
- className="text-[hsl(var(--text-secondary))] hover:text-danger transition-colors shrink-0"
- title="Remover del Grupo"
- >
- <X size={16} />
- </button>
- </div>
- ))}
- </div>
- ) : (
- <div className="py-2 text-center border-2 border-dashed border-[hsl(var(--border-primary))] rounded-lg">
- <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">No hay personas asignados a este grupo.</p>
- </div>
- )}
-
- {/* QUICK ACTION TO ATTENDANCE PANEL */}
- <div className="mt-3 pt-6 border-t border-[hsl(var(--border-primary))] flex items-center justify-between bg-info-soft rounded-lg px-4 py-2">
- <div>
- <h3 className="text-sm font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] mb-1">Registrar Asistencia Semanal</h3>
- <p className="text-xs font-medium text-info-text/70 dark:text-info/70">
- Ir al panel dedicado para registrar la asistencia, ofrendas y novedades de las reuniones semanales de este grupo.
- </p>
- </div>                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
-                                  <a
-                                    href={`/plataforma/evangelism/groups/${selectedHouse.id}`}
-                                    className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-primary flex items-center gap-2"
-                                  >
-                                    <Calendar size={14} /> Registrar Asistencia
-                                  </a>
-                                  <div className="flex items-center gap-1.5">
-                                    <button
-                                      type="button"
-                                      onClick={() => downloadGroupAttendancePdf(selectedHouse.id)}
-                                      title="Descargar reporte de asistencia (PDF)"
-                                      className="px-2.5 py-2.5 bg-danger-soft text-[hsl(var(--destructive))] dark:text-danger border border-danger-muted dark:border-[hsl(var(--danger)/0.3)] hover:bg-danger-muted dark:hover:bg-[hsl(var(--danger)/0.15)] rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
-                                    >
-                                      <FileText size={13} /> PDF
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => downloadGroupAttendanceExcel(selectedHouse.id)}
-                                      title="Descargar reporte de asistencia (Excel)"
-                                      className="px-2.5 py-2.5 bg-success-soft text-[hsl(var(--secondary))] dark:text-success border border-success-muted dark:border-[hsl(var(--success)/0.3)] hover:bg-success-soft dark:hover:bg-[hsl(var(--success)/0.15)] rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
-                                    >
-                                      <FileSpreadsheet size={13} /> XLSX
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>                            {/* ADD PERSONAS CATALOG */}
- {isAddingPersonas && (
- <div className="mt-3 pt-6 border-t border-[hsl(var(--border-primary))] space-y-4">
- <div className="flex flex-col md:flex-row items-center gap-2 w-full">
- <div className="relative w-full md:flex-1">
- <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={14} />
- <input
- value={personaSearchQuery}
- onChange={e => setPersonaSearchQuery(e.target.value)}
- placeholder="Buscar persona..."
- className={inputCls + " pl-9 py-2"}
- />
- </div>
- <select
- value={personaRoleFilter}
- onChange={e => setPersonaRoleLinkFilter(e.target.value)}
- className={inputCls + " py-2 w-full md:w-36 text-xs"}
- >
- <option value="">Todos los roles</option>
- {uniqueRoles.map(r => (
- <option key={r as string} value={r as string}>{r}</option>
- ))}
- </select>
- <select
- value={personaAssignmentFilter}
- onChange={e => setPersonaAssignmentFilter(e.target.value)}
- className={inputCls + " py-2 w-full md:w-48 text-xs"}
- >
- <option value="all">Cualquier estado</option>
- <option value="unassigned">Sin grupo asignado</option>
- <option value="other_house">En otra casa</option>
- </select>
- </div>
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[24rem] overflow-y-auto pr-1 scrollbar-thin">
- {filteredPersonasList.map(persona => {
- const checked = selectedPersonaIds.has(persona.id);
- // Hide already selected personas from the add list to prevent confusion
- if (checked) return null;
-
- return (
- <label
- key={persona.id}
- className="flex items-start gap-3 rounded-lg border px-4 py-1.5 cursor-pointer transition-all bg-[hsl(var(--bg-primary))] border-[hsl(var(--border-primary))] hover:border-[hsl(var(--primary)/0.3)]"
- >
- <input
- type="checkbox"
- checked={checked}
- onChange={() =>
- setSelectedPersonaIds(prev => {
- const next = new Set(prev);
- if (next.has(persona.id))
- next.delete(persona.id);
- else next.add(persona.id);
- return next;
- })
- }
- className="mt-1 size-4 accent-[hsl(var(--primary))] shrink-0"
- />
- <div className="min-w-0">
- <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
- {persona.nombre_completo}
- </p>
- <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 truncate">
- {persona.church_role || 'Sin rol'}
- </p>
- </div>
- </label>
- );
- })}
- {filteredPersonasList.filter(m => !selectedPersonaIds.has(m.id)).length === 0 && (
- <div className="col-span-full py-1.5 text-center text-[hsl(var(--text-secondary))] text-sm">
- No se encontraron personas disponibles con estos filtros.
- </div>
- )}
- </div>
- </div>
- )}
- </div>
- )}
- </form>
- </div>
-
- <div className="px-3 py-2 border-t border-[hsl(var(--border-primary))] shrink-0 flex justify-end gap-2">
- <button
- onClick={() => {
- setIsCreating(false);
- setSelectedHouse(null);
- }}
- className="px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] transition-colors"
- >
- Cancelar
- </button>
- <button
- type="submit"
- form="groups-form"
- disabled={saving}
- className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-primary active:scale-95 disabled:opacity-50 flex items-center gap-2"
- >
- {saving ? (
- <Activity className="animate-spin" size={13} />
- ) : (
- <CheckCircle2 size={13} />
- )}
- Guardar Grupo
- </button>
- </div>
- </>
- ) : (
- <div className="flex-1 overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-surface-card">
- {mode === 'personas' && summary ? (
- <div className="p-4 space-y-3">
- <div className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5">
- <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
- Asignación rápida
- </p>
- <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-1">
- Asigna personas sin grupo a una casa específica sin salir de
- esta vista.
- </p>
- </div>
-
- <div className="space-y-3">
- {summary.unassigned_personas.length === 0 ? (
- <div className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-1.5 text-center text-[hsl(var(--text-secondary))]">
- No hay personas sin grupo asignado.
- </div>
- ) : (
- summary.unassigned_personas.map(persona => (
- <div
- key={persona.id}
- className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4"
- >
- <div className="flex flex-col md:flex-row md:items-center gap-3">
- <div className="min-w-0 flex-1">
- <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
- {persona.name}
- </p>
- <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1">
- {persona.church_role || 'Sin rol'} · Sin grupo
- asignado
- </p>
- </div>
- <select
- value={quickAssignmentTargets[persona.id] || ''}
- onChange={e =>
- setQuickAssignmentTargets(prev => ({
- ...prev,
-   [persona.id]: e.target.value,
-   }))
- }
- className="w-full md:w-72 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
- >
- <option value="">Selecciona una casa</option>
- {houses.map(h => (
- <option key={h.id} value={h.id}>
- {h.name} {h.code ? `· ${h.code}` : ''}
- </option>
- ))}
- </select>
- <button
- onClick={() => handleQuickAssignPersona(persona.id)}
- disabled={saving}
- className="px-4 py-2.5 rounded-md bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-xs font-semibold uppercase tracking-wide disabled:opacity-50"
- >
- Asignar
- </button>
- </div>
- </div>
- ))
- )}
- </div>
- </div>
- ) : (
- <div className="flex-1 flex items-center justify-center text-[hsl(var(--text-secondary))] /20 h-full">
- <div className="text-center">
- <Home size={40} className="mx-auto mb-3 opacity-40" />
- <p className="text-sm font-bold">
- Selecciona un grupo o crea uno nuevo
- </p>
- </div>
- </div>
-  )}
-  </div>
-  )}
-  </div>
-  </ErrorBoundary>
-  ) : (
-  <ErrorBoundary moduleName="Grupos - Listado" compact>
-  <>
-  {viewType === 'list' && <ListView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
-  {viewType === 'grid' && <GridView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
-  {viewType === 'kanban' && <KanbanView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
-  {viewType === 'table' && <TableView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
-  </>
-  </ErrorBoundary>
-  )}
- </div>
- <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
- </EvangelismShell>
- );
+                    <div className="px-3 py-2 border-t border-[hsl(var(--border-primary))] shrink-0 flex justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          setIsCreating(false);
+                          setSelectedHouse(null);
+                          setSelectedPersonaIds(new Set());
+                          setFormData({ capacity: 15, status: 'Activo' });
+                        }}
+                        className="px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        form="groups-form"
+                        disabled={saving}
+                        className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-primary active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {saving ? (
+                          <Activity className="animate-spin" size={13} />
+                        ) : (
+                          <CheckCircle2 size={13} />
+                        )}
+                        Guardar Grupo
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-surface-card">
+                    {mode === 'personas' && summary ? (
+                      <GroupQuickAssign
+                        summary={summary}
+                        houses={houses}
+                        quickAssignmentTargets={quickAssignmentTargets}
+                        setQuickAssignmentTargets={setQuickAssignmentTargets}
+                        onAssign={handleQuickAssignPersona}
+                        saving={saving}
+                      />
+                    ) : (
+                      <div className="flex-1 flex items-center justify-center text-[hsl(var(--text-secondary))]/20 h-full">
+                        <div className="text-center">
+                          <Home size={40} className="mx-auto mb-3 opacity-40" />
+                          <p className="text-sm font-bold">
+                            Selecciona un grupo o crea uno nuevo
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </ErrorBoundary>
+          ) : (
+            <ErrorBoundary moduleName="Grupos - Listado" compact>
+              <>
+                {viewType === 'list' && <ListView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
+                {viewType === 'grid' && <GridView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
+                {viewType === 'kanban' && <KanbanView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
+                {viewType === 'table' && <TableView houses={filteredHouses} onSelectHouse={handleSelectHouse} getPersonaName={getPersonaName} onDeleteHouse={requestDeleteHouse} />}
+              </>
+            </ErrorBoundary>
+          )}
+        </div>
+        <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
+      </EvangelismShell>
+    </>
+  );
 }
 
 export default function GroupsPage() {
- return (
- <Suspense
- fallback={
- <div className="p-4 text-center text-[hsl(var(--text-secondary))]">Cargando grupos...</div>
- }
- >
- <GroupsContent />
- </Suspense>
- );
+  return (
+    <Suspense
+      fallback={
+        <div className="p-4 text-center text-[hsl(var(--text-secondary))]">Cargando grupos...</div>
+      }
+    >
+      <GroupsContent />
+    </Suspense>
+  );
 }
