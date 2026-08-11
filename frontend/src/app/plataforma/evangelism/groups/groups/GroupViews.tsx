@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { MapPin, Users, Search, ChevronRight, Trash2 } from 'lucide-react';
-import type { Grupo } from './page';
+import type { Grupo } from './useGroupsPage';
 
 interface BaseViewProps {
   houses: Grupo[];
