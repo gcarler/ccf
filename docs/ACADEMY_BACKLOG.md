@@ -517,7 +517,7 @@ producto.
   - **state:** ⬜ Pendiente
   - **source:** `PLAN P4 B ACAD-T02..T33`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_130_happy_path_coverage -q --tb=short`
-  - **notes:** Cubre `GET /courses/{id}`, `/lessons`, `/assessments`, `/assessments/{id}/submit`, `/me/{enrollments,progress,certificates}`, `/admin/courses*`, `/admin/lessons*`, `/admin/assessments*`.
+  - **notes:** Cubre `GET /courses/{id}`, `/lessons`, `/assessments`, `/assessments/{id}/submit`, `/me/{enrollments,progress,certificates}`, `/admin/courses*`, `/admin/lessons*`, `/admin/assessments*`. **Subconjunto T-12/T-14 cerrado (2026-08-11):** `GET /me/progress` (batch queries por curso — `total_lessons`/`lessons_completed` solo publicadas no eliminadas, paginación `skip/limit`, aislamiento por persona, soft-deleted excluida) y `POST /enrollments/{id}/request-certificate` (creación + marcado `certificate_issued`/`certificate_code`, formato `CCF-ACA-{12 hex}`, idempotencia, 400 no aprobado, 404 inscripción ajena/inexistente) — en `tests/test_academy_comprehensive.py`.
 - **ACAD-TKT-131** [TEST] — Validación `extra='forbid'` (10 modelos)
   - **state:** ⬜ Pendiente
   - **source:** `PLAN P4 C ACAD-T34..T43`

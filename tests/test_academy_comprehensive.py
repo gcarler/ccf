@@ -379,6 +379,107 @@ def test_my_progress(client, db_session):
     assert "lessons_completed" in data[0]
 
 
+def test_t12_me_progress_batch_queries_accurate(client, db_session):
+    """ACAD-T12 — resumen de progreso con batch queries correctas.
+
+    El endpoint agrega en 2 queries por lote (total y completadas, agrupadas
+    por course). Verifica que ``total_lessons`` cuente solo lecciones
+    publicadas no eliminadas y ``lessons_completed`` solo las completadas.
+    """
+    admin, _, sede = seed_admin(db_session)
+    student, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="t12.batch@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    course = _create_course(db_session, sede_id=sede.id)
+    lesson_done = _create_lesson(db_session, course.id, order_index=1)
+    _create_lesson(db_session, course.id, order_index=2)
+    _create_lesson(db_session, course.id, order_index=3, is_published=False)
+    deleted = _create_lesson(db_session, course.id, order_index=4)
+    deleted.deleted_at = _utcnow()
+    db_session.commit()
+    _create_enrollment(db_session, persona_st.id, course.id)
+    db_session.add(
+        models.LessonProgress(
+            persona_id=persona_st.id,
+            lesson_id=lesson_done.id,
+            progress_percent=100,
+            is_completed=True,
+        )
+    )
+    db_session.commit()
+
+    headers = auth_headers(client, email=student.email)
+    resp = client.get("/api/academy/me/progress", headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    row = data[0]
+    assert row["id"] == str(course.id)
+    assert row["title"] == course.title
+    assert row["total_lessons"] == 2  # solo publicadas no eliminadas
+    assert row["lessons_completed"] == 1
+    assert row["status"] == "active"
+    assert row["average_grade"] == 0  # final_grade None -> 0
+    assert row["certificate_issued"] is False
+    assert row["last_activity"] is not None
+
+
+def test_t12_me_progress_pagination_and_persona_scope(client, db_session):
+    """ACAD-T12 — skip/limit funcional y aislamiento por persona."""
+    admin, _, sede = seed_admin(db_session)
+    student, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="t12.pag@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    _, persona_other, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="t12.other@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    course_ids = []
+    for _ in range(3):
+        course = _create_course(db_session, sede_id=sede.id)
+        _create_enrollment(db_session, persona_st.id, course.id)
+        course_ids.append(str(course.id))
+    # Inscripción de OTRO estudiante no debe filtrarse.
+    other_course = _create_course(db_session, sede_id=sede.id)
+    _create_enrollment(db_session, persona_other.id, other_course.id)
+
+    headers = auth_headers(client, email=student.email)
+    full = client.get("/api/academy/me/progress", headers=headers).json()
+    assert len(full) == 3
+    assert all(row["id"] in course_ids for row in full)
+    page = client.get(
+        "/api/academy/me/progress", headers=headers, params={"skip": 1, "limit": 2}
+    ).json()
+    assert len(page) == 2
+
+
+def test_t12_me_progress_empty_and_soft_deleted_excluded(client, db_session):
+    """ACAD-T12 — sin inscripciones devuelve [] y las soft-deleted se ocultan."""
+    admin, _, sede = seed_admin(db_session)
+    student, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="t12.empty@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    headers = auth_headers(client, email=student.email)
+    assert client.get("/api/academy/me/progress", headers=headers).json() == []
+
+    course = _create_course(db_session, sede_id=sede.id)
+    enrollment = _create_enrollment(db_session, persona_st.id, course.id)
+    enrollment.deleted_at = _utcnow()
+    db_session.commit()
+    assert client.get("/api/academy/me/progress", headers=headers).json() == []
+
+
 def test_my_certificates(client, db_session):
     admin, _, sede = seed_admin(db_session)
     student, persona_st, _ = seed_user_with_role(
@@ -427,6 +528,124 @@ def test_request_certificate(client, db_session):
     data = resp.json()
     assert "certificate_code" in data
     assert data["enrollment_id"] == str(enrollment.id)
+
+
+def test_t14_request_certificate_creates_and_marks_enrollment(client, db_session):
+    """ACAD-T14 — solicitud crea certificado y marca la inscripción."""
+    admin, _, sede = seed_admin(db_session)
+    student, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="t14.create@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    course = _create_course(db_session, sede_id=sede.id)
+    course.certificate_type = "diploma"
+    db_session.commit()
+    enrollment = _create_enrollment(db_session, persona_st.id, course.id)
+    enrollment.status = "completed"
+    enrollment.approved = True
+    enrollment.final_grade = 95.0
+    db_session.commit()
+
+    headers = auth_headers(client, email=student.email)
+    resp = client.post(
+        f"/api/academy/enrollments/{enrollment.id}/request-certificate",
+        headers=headers,
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["enrollment_id"] == str(enrollment.id)
+    assert data["certificate_code"].startswith("CCF-ACA-")
+    assert len(data["certificate_code"]) == len("CCF-ACA-") + 12
+    assert data["certificate_code"].isupper()
+    assert data["certificate_type"] == "diploma"
+
+    db_session.refresh(enrollment)
+    assert enrollment.certificate_issued is True
+    assert enrollment.certificate_code == data["certificate_code"]
+
+
+def test_t14_request_certificate_idempotent(client, db_session):
+    """ACAD-T14 — segunda solicitud reusa el certificado, no duplica."""
+    admin, _, sede = seed_admin(db_session)
+    student, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="t14.idem@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    course = _create_course(db_session, sede_id=sede.id)
+    enrollment = _create_enrollment(db_session, persona_st.id, course.id)
+    enrollment.status = "completed"
+    enrollment.approved = True
+    db_session.commit()
+
+    headers = auth_headers(client, email=student.email)
+    url = f"/api/academy/enrollments/{enrollment.id}/request-certificate"
+    first = client.post(url, headers=headers)
+    second = client.post(url, headers=headers)
+    assert first.status_code == second.status_code == 200
+    assert first.json()["id"] == second.json()["id"]
+    count = (
+        db_session.query(models.Certificate)
+        .filter(models.Certificate.enrollment_id == enrollment.id)
+        .count()
+    )
+    assert count == 1
+
+
+def test_t14_request_certificate_rejects_unapproved(client, db_session):
+    """ACAD-T14 — curso no aprobado/no completado -> 400."""
+    admin, _, sede = seed_admin(db_session)
+    student, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="t14.deny@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    course = _create_course(db_session, sede_id=sede.id)
+    enrollment = _create_enrollment(db_session, persona_st.id, course.id)
+
+    headers = auth_headers(client, email=student.email)
+    resp = client.post(
+        f"/api/academy/enrollments/{enrollment.id}/request-certificate",
+        headers=headers,
+    )
+    assert resp.status_code == 400
+
+
+def test_t14_request_certificate_404_not_own_enrollment(client, db_session):
+    """ACAD-T14 — inscripción de otro usuario o inexistente -> 404."""
+    admin, _, sede = seed_admin(db_session)
+    student, persona_st, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="t14.404@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    _, persona_other, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="t14.404b@example.com",
+        permisos={"academy:study": "allow"},
+    )
+    course = _create_course(db_session, sede_id=sede.id)
+    enrollment = _create_enrollment(db_session, persona_other.id, course.id)
+    enrollment.status = "completed"
+    db_session.commit()
+
+    headers = auth_headers(client, email=student.email)
+    not_own = client.post(
+        f"/api/academy/enrollments/{enrollment.id}/request-certificate",
+        headers=headers,
+    )
+    assert not_own.status_code == 404
+    missing = client.post(
+        f"/api/academy/enrollments/{_uuid.uuid4()}/request-certificate",
+        headers=headers,
+    )
+    assert missing.status_code == 404
 
 
 def test_validate_certificate(client, db_session):
