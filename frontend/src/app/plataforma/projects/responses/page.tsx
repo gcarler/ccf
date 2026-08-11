@@ -36,7 +36,7 @@ export default function ProjectsResponsesPage() {
             }
             try {
                 setError(null);
-                const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox?unread_only=true', { token, cache: 'no-store' });
+                const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox', { token, cache: 'no-store' });
                 setItems(Array.isArray(data) ? data : []);
             } catch (error) {
                 setItems([]);
@@ -52,11 +52,11 @@ export default function ProjectsResponsesPage() {
 
     const unread = useMemo(() => items.filter((item) => !item.is_read), [items]);
     const grouped = [
-        { id: 'mentions', label: 'Menciones', rows: unread.filter((item) => item.type === 'mention') },
-        { id: 'updates', label: 'Actualizaciones', rows: unread.filter((item) => item.type !== 'mention') },
+        { id: 'comments', label: 'Comentarios', rows: unread.filter((item) => item.type === 'comment') },
+        { id: 'tasks', label: 'Tareas Asignadas', rows: unread.filter((item) => item.type === 'task_assigned') },
     ];
-    const calendarEvents = unread.map((item) => ({ id: item.id, title: item.task_title || item.project, date: item.created_at.split('T')[0], color: item.type === 'mention' ? 'amber' as const : 'blue' as const, location: item.project }));
-    const ganttItems = unread.map((item) => ({ id: item.id, title: item.task_title || item.project, subtitle: item.project, start_date: item.created_at, end_date: item.created_at, color: item.type === 'mention' ? 'amber' as const : 'blue' as const, progress: 50 }));
+    const calendarEvents = unread.map((item) => ({ id: item.id, title: item.task_title || item.project, date: item.created_at.split('T')[0], color: item.type === 'comment' ? 'amber' as const : 'blue' as const, location: item.project }));
+    const ganttItems = unread.map((item) => ({ id: item.id, title: item.task_title || item.project, subtitle: item.project, start_date: item.created_at, end_date: item.created_at, color: item.type === 'comment' ? 'amber' as const : 'blue' as const, progress: 50 }));
 
     const resolveItem = async (item: ProjectInboxItem) => {
         if (!token) return;
