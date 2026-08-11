@@ -108,8 +108,6 @@ export const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'metrics', label: 'Métricas', icon: BarChart3 },
 ];
 
-export { formatLocalDate } from '../../utils';
-
 export const normalizeRoleText = (value: string) =>
   value
     .normalize('NFD')

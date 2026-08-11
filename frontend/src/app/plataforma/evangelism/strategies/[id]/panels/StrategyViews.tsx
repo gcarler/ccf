@@ -3,7 +3,7 @@ import { Calendar, Share2, Trash2, Users } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import type { SessionRow, Strategy, StrategyGroup } from '../../../types';
-import { formatLocalDate } from '../strategyDetailShared';
+import { formatLocalDate } from '../../../utils';
 
 const UniversalCalendarView = dynamic(() => import('@/components/ui/UniversalCalendarView'), { ssr: false });
 const UniversalGanttView = dynamic(() => import('@/components/ui/UniversalGanttView'), { ssr: false });
