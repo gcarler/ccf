@@ -1394,6 +1394,8 @@ def create_media_folder(
 def list_media_folders(
     site_key: str,
     parent_id: str | None = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
     user: User = Depends(require_cms_read),
 ):
@@ -1402,7 +1404,7 @@ def list_media_folders(
         q = q.filter(MediaFolder.parent_id == parent_id)
     else:
         q = q.filter(MediaFolder.parent_id.is_(None))
-    folders = q.order_by(MediaFolder.sort_order, MediaFolder.name).limit(500).all()
+    folders = q.order_by(MediaFolder.sort_order, MediaFolder.name).offset(skip).limit(limit).all()
     return [
         {
             "id": str(f.id),
@@ -1477,6 +1479,8 @@ def create_redirect(
 @router.get("/redirects")
 def list_redirects(
     site_key: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
     user: User = Depends(require_cms_read),
 ):
@@ -1487,7 +1491,8 @@ def list_redirects(
             CmsRedirect.is_active == True,
         )
         .order_by(CmsRedirect.from_path)
-        .limit(500)
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     return [
