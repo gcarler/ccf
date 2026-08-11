@@ -26,7 +26,7 @@
   - **P-04 (caching)**: sistema TTL cache implementado en `evangelism_shared.py` y aplicado a 11 endpoints.
   - **T-04 (tests aceptan 500)**: tests de reportes ahora asumen `== 200` con validación de `content-type`.
   - **F-01 (labels)**: verificado cerrado — verificación línea por línea confirma 61 labels con `htmlFor` + 2 con wrapping implicito (asociación válida según HTML5). La cifra original "90+" era incorrecta.
-  - **F-09 (duplicate utilities)**: `formatLocalDate` consolidado en `utils.ts`, `strategyDetailShared.ts` reexporta, `events/page.tsx` ahora importa desde `utils.ts`.
+  - **F-09 (duplicate utilities)**: `formatLocalDate` consolidado en `utils.ts` (única fuente), sin re-export en `strategyDetailShared.ts`, consumidores importan directo desde `utils.ts` (`events/page.tsx`, `useStrategyDetailPage.ts`, `page.tsx`, `StrategyViews.tsx`, `useEventsPage.ts`).
   - **F-04 (keyboard navigation)**: clickable divs auditados, `RoleSelect` con patrón combobox/listbox completo, tabs con ArrowLeft/Right + Home/End + roving tabindex.
   - **F-07 (error boundaries granulares)**: prop `compact` en `ErrorBoundary`, boundaries por sección en las 4 páginas principales (17 en total, balanceados).
   - **F-02 (monolito strategies/[id]/page.tsx)**: refactor container/presenter — 458 líneas (de 2105 → −78%), estado + handlers movidos a `useStrategyDetailPage.ts` y 8 paneles en `panels/`.
