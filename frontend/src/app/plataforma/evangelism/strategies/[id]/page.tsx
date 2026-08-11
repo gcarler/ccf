@@ -14,6 +14,7 @@ import SessionsSection from './panels/SessionsSection';
 import StrategyViews from './panels/StrategyViews';
 import StrategyDashboard from './panels/StrategyDashboard';
 import { TABS } from './strategyDetailShared';
+import { formatLocalDate } from '../../utils';
 import { AlertCircle, Flame } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -112,7 +113,6 @@ export default function StrategyDetailPage() {
   handleCreateRole,
   requestDeleteRole,
   formatDate,
-  formatLocalDate,
   groupName,
   shareGroupLink,
   sessionMonths,

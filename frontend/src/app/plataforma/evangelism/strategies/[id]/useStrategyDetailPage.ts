@@ -7,7 +7,7 @@ import type {
   SessionRow,
   StrategyGroup,
 } from '../../types';
-import { getErrorMessage, toAttendanceStatus } from '../../utils';
+import { formatLocalDate, getErrorMessage, toAttendanceStatus } from '../../utils';
 import { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
 import {
   AttendancePersona,
@@ -15,7 +15,6 @@ import {
   CustomRole,
   customRoleValue,
   FALLBACK_MEMBER_ROLES,
-  formatLocalDate,
   isAssistantLeaderRole,
   isPrimaryLeaderRole,
   ROLE_COLORS,
@@ -795,7 +794,6 @@ export function useStrategyDetailPage() {
     handleCreateRole,
     requestDeleteRole,
     formatDate,
-    formatLocalDate,
     groupName,
     shareGroupLink,
     sessionMonths,
