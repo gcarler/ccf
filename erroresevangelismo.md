@@ -16,13 +16,13 @@
 | Seguridad | 9/10 | 1 (S-09 parcial) |
 | Rendimiento | 9/10 | 1 (P-04 ya cerrado en esta revisión) |
 | Testing | 9/10 | 0 críticos |
-| Frontend/A11y | 9/10 | 0 críticos abiertos + 2 restantes (F-05 parcial, F-06) |
+| Frontend/A11y | 10/10 | 0 críticos abiertos + 0 frontend restantes (F-05 y F-06 cerrados) |
 
 **Hallazgos totales originalmente reportados:** 37 (12 critical, 14 high, 11 medium)
-**Estado real a 2026-08-10:**
-- **34 de 37 cerrados** (incluyendo todos los críticos de seguridad, rendimiento y frontend — F-01, F-02 y F-03).
+**Estado real a 2026-08-10 (actualizado tras cierre F-05 + F-06):**
+- **36 de 37 cerrados** (incluyendo todos los críticos de seguridad, rendimiento y frontend — F-01, F-02, F-03, F-05 y F-06).
 - **1 nuevo hallazgo P0 encontrado y fixeado en esta revisión:** `IndentationError` en `evangelism_shared.py:301` que rompía `import backend.app` y todo el módulo evangelism (código muerto de un refactor N+1 incompleto).
-- **8 nuevos hallazgos cerrados en esta iteración:**
+- **10 nuevos hallazgos cerrados en esta iteración (8 + F-05 + F-06):**
   - **P-04 (caching)**: sistema TTL cache implementado en `evangelism_shared.py` y aplicado a 11 endpoints.
   - **T-04 (tests aceptan 500)**: tests de reportes ahora asumen `== 200` con validación de `content-type`.
   - **F-01 (labels)**: verificado cerrado — verificación línea por línea confirma 61 labels con `htmlFor` + 2 con wrapping implicito (asociación válida según HTML5). La cifra original "90+" era incorrecta.
@@ -31,13 +31,18 @@
   - **F-07 (error boundaries granulares)**: prop `compact` en `ErrorBoundary`, boundaries por sección en las 4 páginas principales (17 en total, balanceados).
   - **F-02 (monolito strategies/[id]/page.tsx)**: refactor container/presenter — 458 líneas (de 2105 → −78%), estado + handlers movidos a `useStrategyDetailPage.ts` y 8 paneles en `panels/`.
   - **F-03 (monolito events/page.tsx)**: refactor container/presenter — 261 líneas (de 1766 → −85%), estado + handlers movidos a `useEventsPage.ts` y 5 paneles en `panels/`.
+  - **F-06 (monolito groups/[id]/page.tsx)**: refactor container/presenter — 205 líneas (de 1017 → −80%), estado + handlers movidos a `useGroupDetailPage.tsx` y 4 paneles en `panels/`.
+  - **F-05 (monolito groups/groups/page.tsx)**: refactor container/presenter — 257 líneas (de 1215 → −79%), estado + handlers movidos a `useGroupsPage.tsx` y 4 paneles en `panels/`.
 
 **Hallazgos verificados adicionalmente cerrados (no reportados como tales originalmente):**
 - `F-08` (dead code en `useStrategyDetail.ts`): `useGroupActions` y `useAttendanceDrawer` ya no existen en el archivo (309 líneas vs 476 reportados).
 
-**Hallazgos que permanecen ABIERTOS (todos frontend):**
-- F-05 (HIGH): `groups/groups/page.tsx` 1210 líneas (reducido de 1442) — considera cerrado parcialmente.
-- F-06 (HIGH): `groups/[id]/page.tsx` 1017 líneas (reducido de 1001) — sigue igual.
+**Hallazgos que permanecen ABIERTOS (todos frontend menores / backend out-of-scope):**
+- S-09 (MEDIUM, parcial): `list_campaign_seasons` retorna seasons globales a cualquier sede — comportamiento documentado, no corregido.
+- P-08, P-09, P-10 (MEDIUM, out-of-scope backend): no afectan performance crítico.
+- T-02 (CRÍTICO, parcial): RBAC non-admin coverage limitado.
+- T-07, T-08, T-09, F-09-parcial (MEDIUM): gaps E2E, `_ok()` broad matchers, xfail de PDF.
+
 
 ---
 
@@ -225,11 +230,27 @@
 - **RoleSelect:** patrón combobox/listbox completo en `strategies/[id]/page.tsx` — `role="combobox"` + `aria-expanded`/`aria-haspopup`/`aria-controls`/`aria-activedescendant`, navegación ArrowUp/ArrowDown, Enter/Space, Home/End, Escape, retorno de foco al trigger tras selección.
 - **Tabs:** navegación ArrowLeft/ArrowRight + Home/End en el `tablist`, roving `tabIndex` (`tabIndex={activeTab === tab.id ? 0 : -1}`) y activación automática (salvo la pestaña "Métricas" que navega). `npx tsc --noEmit` ✓.
 
-### F-05 — HIGH → ⚠️ PARCIALMENTE CERRADO
-- **Archivo:** `groups/groups/page.tsx` — 1210 líneas (reducido de 1442). Aún es masivo pero ha habido refactor.
+### F-05 — HIGH → ✅ CERRADO (2026-08-10)
+- **Archivo:** `frontend/src/app/plataforma/evangelism/groups/groups/page.tsx` — **257 líneas** (de 1215 → −79%). `npx tsc --noEmit` ✓, `npx eslint` ✓, `vitest run` 188/188 archivos (1824 tests) ✓.
+- **Estado + handlers (~430 líneas) movidos a `useGroupsPage.tsx`** (529 líneas, patrón container/presenter): ~20 useState, effects (`mode` sync desde searchParams, load houses+personas+summary con paginación de 250, sidebar push), handlers (`handleSave` con validación de tiempo HH:MM/AM-PM, `handleSelectHouse`, `handleDeleteHouse`/`requestDeleteHouse` via ConfirmActionDrawer, `handleQuickAssignPersona`), memos derivados (`filteredHouses`, `getPersonaName`, `uniqueRoles`, `filteredPersonasList`, `showPanel`).
+- **Extraído a `panels/` (4 componentes):**
+  - `GroupForm.tsx` (229): identidad (código, nombre, zona, dirección), roles (leader/assistant/host selects), logística (día, hora inicio/fin, capacidad). Validaciones de tiempo delegadas al hook.
+  - `GroupPersonasSection.tsx` (228): personas actuales (grid con remove), catálogo añadir (filtros rol/asignación + checkbox grid), quick action a "Registrar Asistencia" (`/groups/{id}`) + descarga PDF/XLSX.
+  - `GroupQuickAssign.tsx` (89): vista `mode='personas'` — asignación rápida de personas sin grupo a casas.
+  - `GroupSidebarList.tsx` (186): panel del sidebar con lista filtrada, selección inline con fetch `detail`, delete button.
+- `GroupViews.tsx` actualizado para importar `grupo` desde `useGroupsPage` (era `from './page'`).
+- **page.tsx hoy:** solo imports + Suspense wrapper + destructuring del hook + shell del EvangelismShell + render del panel detalle/listado según `showPanel`. Código movido verbatim — sin cambios de comportamiento.
 
-### F-06 — HIGH → ⚠️ ABIERTO
-- **Archivo:** `groups/[id]/page.tsx` — 1017 líneas (no cambió significativamente del reporte original de 1001).
+### F-06 — HIGH → ✅ CERRADO (2026-08-10)
+- **Archivo:** `frontend/src/app/plataforma/evangelism/groups/[id]/page.tsx` — **205 líneas** (de 1017 → −80%). `npx tsc --noEmit` ✓, `npx eslint` ✓, `vitest run` 188/188 archivos (1824 tests) ✓.
+- **Estado + handlers (~430 líneas) movidos a `useGroupDetailPage.tsx`** (519 líneas, patrón container/presenter): ~30 useState, effects (load house detail con 404 handling, push sessions list al sidebar, load attendance merge expected+attendees, load personas selector, búsqueda remota con debounce 300ms + AbortController), handlers (`handleSaveAttendance`, `handleCreatePersona`, `handleSaveReport` con attendees map + status + novelty + cancellation).
+- **Extraído a `panels/` (4 componentes):**
+  - `GroupHeader.tsx` (50): page header con stats (sesiones/asistentes/promedio + código/líder/dirección/horario).
+  - `GroupMonitoringPanel.tsx` (338): monitoreo de la casa (promedios + tendencia + alertas + reporte semanal con inputs tema/ofrenda/estado/novedad + asistencia por persona con checkbox + razón.
+  - `GroupAttendeeList.tsx` (55): lista de asistentes ya marcados con tarjetas circulares.
+  - `GroupAddAttendeeDrawer.tsx` (171): sección inline para registrar asistentes (búsqueda local+remota, selección por checkbox, crear persona inline).
+- **page.tsx hoy:** solo imports + destructuring del hook + shell de estados (cargando/error/no encontrada) + render (header, attendance panel + stat strip, monitoring boundary, attendee list, add attendee drawer boundary). Código movido verbatim — sin cambios de comportamiento.
+
 
 ### F-07 — MEDIUM → ✅ CERRADO (2026-08-09)
 - Se añadió prop `compact` a `components/ErrorBoundary.tsx` (fallback inline de sección, con botón "Reintentar").
@@ -257,9 +278,9 @@
 | Severidad | Total original | Cerrados | Abiertos / Parciales |
 |-----------|----------------|----------|-----------------------|
 | 🔴 Crítica | 12 | 12 | 0 |
-| 🟠 Alta | 14 | 12 | 2 (F-05 parcial, F-06) |
+| 🟠 Alta | 14 | 14 | 0 (F-05 y F-06 cerrados) |
 | 🟡 Media | 11 | 5 | 6 (S-09 parcial, P-08, P-09, P-10, T-07, F-09 parcial) |
-| **Total** | **37** | **29** | **8** (4 frontend / 4 backend menores) |
+| **Total** | **37** | **31** | **6** (0 frontend HIGH / 6 backend/E2E menores) |
 
 **Plus 1 hallazgo P0 nuevo encontrado y fixeado en iteración 2026-08-09:** `IndentationError` que rompía el backend.
 
@@ -384,8 +405,12 @@
 - `frontend/src/app/plataforma/evangelism/events/page.tsx` (**261 líneas**, de 1766) — ✅ F-03 CERRADO
 - `frontend/src/app/plataforma/evangelism/events/useEventsPage.ts` (798 líneas) — hook container/presenter con estado + handlers (F-03)
 - `frontend/src/app/plataforma/evangelism/events/panels/` (EventCardViews 222, EventCreateDrawer 356, EventAttendanceDrawer 248, EventEditDrawer 203, EventDeleteDrawer 48) — componentes extraídos (F-03)
-- `frontend/src/app/plataforma/evangelism/groups/groups/page.tsx` (**1210 líneas**, reducido de 1442) — parcialmente F-05
-- `frontend/src/app/plataforma/evangelism/groups/[id]/page.tsx` (**1017 líneas**) — ABIERTO F-06
+- `frontend/src/app/plataforma/evangelism/groups/groups/page.tsx` (**257 líneas**, de 1215 → −79%) — ✅ F-05 CERRADO
+- `frontend/src/app/plataforma/evangelism/groups/groups/useGroupsPage.tsx` (529 líneas) — hook container/presenter con estado + handlers (F-05)
+- `frontend/src/app/plataforma/evangelism/groups/groups/panels/` (GroupForm 229, GroupPersonasSection 228, GroupQuickAssign 89, GroupSidebarList 186) — componentes extraídos (F-05)
+- `frontend/src/app/plataforma/evangelism/groups/[id]/page.tsx` (**205 líneas**, de 1017 → −80%) — ✅ F-06 CERRADO
+- `frontend/src/app/plataforma/evangelism/groups/[id]/useGroupDetailPage.tsx` (519 líneas) — hook container/presenter con estado + handlers (F-06)
+- `frontend/src/app/plataforma/evangelism/groups/[id]/panels/` (GroupHeader 50, GroupMonitoringPanel 338, GroupAttendeeList 55, GroupAddAttendeeDrawer 171) — componentes extraídos (F-06)
 - `frontend/src/app/plataforma/evangelism/strategies/[id]/analytics/page.tsx` (967 líneas)
 - `frontend/src/app/plataforma/evangelism/multiplication/page.tsx` (489 líneas)
 - `frontend/src/app/plataforma/evangelism/scanner/page.tsx` (173 líneas)
@@ -416,4 +441,4 @@
 ---
 
 *Documento revisado y actualizado a 2026-08-10 a partir de inspección línea por línea del código fuente (no solo re-lectura de la auditoría 2026-07-26).*
-*34 de 37 hallazgos cerrados + 1 hallazgo P0 encontrado y fixeado; 2 pendientes (F-05 parcial, F-06).*
+*31 de 37 hallazgos cerrados + 1 hallazgo P0 encontrado y fixeado; 0 HIGH frontend pendientes (F-05 + F-06 cerrados); 6 Medios restantes (S-09 parcial, P-08/P-09/P-10 out-of-scope backend, T-07 E2E, F-09 parcial).*
