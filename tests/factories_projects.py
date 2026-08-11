@@ -24,19 +24,27 @@ def _short_id() -> str:
 # ── Persona & Sede helpers (thin wrappers so factories are self-contained) ──
 
 
-def _ensure_persona(db, persona_id: Optional[_uuid.UUID] = None):
-    """Create a bare Persona (no auth) if persona_id is not given."""
+def _ensure_persona(
+    db,
+    persona_id: Optional[_uuid.UUID] = None,
+    sede_id: Optional[_uuid.UUID] = None,
+):
+    """Create a bare Persona (no auth), optionally scoped to a sede."""
     from backend.models_crm import Persona
 
     if persona_id:
         p = db.query(Persona).filter(Persona.id == persona_id).first()
         if p:
+            if sede_id is not None and p.sede_id is None:
+                p.sede_id = sede_id
+                db.flush()
             return p
     p = Persona(
         id=persona_id or _uuid.uuid4(),
         first_name="Factory",
         last_name=f"User_{_short_id()}",
         email=f"factory_{_short_id()}@example.com",
+        sede_id=sede_id,
     )
     db.add(p)
     db.flush()
@@ -129,11 +137,14 @@ def create_task_factory(db, project_id: _uuid.UUID, **overrides) -> "ProjectTask
 
     If assignee_id is omitted a bare Persona is created.
     """
-    from backend.models_projects import ProjectTask
+    from backend.models_projects import Project, ProjectTask
+
+    project = db.query(Project).filter(Project.id == project_id).first()
+    project_sede_id = project.sede_id if project is not None else None
 
     assignee_id = overrides.pop("assignee_id", None)
     if assignee_id is not None:
-        _ensure_persona(db, assignee_id)
+        _ensure_persona(db, assignee_id, sede_id=project_sede_id)
 
     title = overrides.pop("title", None) or f"Tarea Test {_short_id()}"
     defaults = dict(
@@ -144,7 +155,7 @@ def create_task_factory(db, project_id: _uuid.UUID, **overrides) -> "ProjectTask
         status="todo",
         priority="medium",
         order_index=0,
-        assignee_id=assignee_id or _ensure_persona(db).id,
+        assignee_id=assignee_id or _ensure_persona(db, sede_id=project_sede_id).id,
         labels=[],
         created_at=_utcnow(),
         updated_at=_utcnow(),

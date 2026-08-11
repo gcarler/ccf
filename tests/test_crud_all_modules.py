@@ -545,7 +545,12 @@ class TestProjects:
             owner_persona_id=str(persona.id),
             sede_id=str(sede.id),
         )
-        updated = update_project(db_session, project.id, ProjectUpdate(title="Updated"))
+        updated = update_project(
+            db_session,
+            project.id,
+            ProjectUpdate(title="Updated"),
+            sede_id=str(sede.id),
+        )
         assert updated.title == "Updated"
 
     def test_delete_project(self, db_session, admin_data):
@@ -559,7 +564,7 @@ class TestProjects:
             owner_persona_id=str(persona.id),
             sede_id=str(sede.id),
         )
-        result = delete_project(db_session, project.id)
+        result = delete_project(db_session, project.id, sede_id=str(sede.id))
         assert result is True
 
     def test_project_tasks(self, db_session, admin_data):

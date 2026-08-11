@@ -2515,9 +2515,16 @@ def create_project_comment(
     project_id: str,
     payload: schemas.ProjectCommentCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("projects", "edit")),
+    current_user: models.User = Depends(require_project_access("edit")),
 ):
-    """Crea un comentario en un proyecto."""
+    """Crea un comentario en un proyecto.
+
+    Usa ``require_project_access("edit")`` (no ``require_module_access``) para
+    que un miembro asignado al proyecto (owner o assignee de una tarea) pueda
+    comentar sin necesidad de un rol de plataforma con ``projects:edit``.
+    Consistente con ``create_project_task`` que también usa assignment-based.
+    El scope Axioma 3 se valida dentro de ``_ensure_project``.
+    """
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     author_persona_id = get_user_persona_id(db, current_user.id)

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { DataTable } from '@/components/ui/DataTable';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
@@ -12,6 +13,8 @@ import type { BaseProjectViewProps } from './types';
 interface ProjectsTableViewProps extends BaseProjectViewProps {}
 
 export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableViewProps) {
+    const router = useRouter();
+
     const columns = useMemo<ColumnDef<ProjectRecord>[]>(
         () => [
             {
@@ -84,7 +87,11 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
 
     return (
         <div className="pb-4">
-            <DataTable columns={columns} data={projects} />
+            <DataTable
+                columns={columns}
+                data={projects}
+                onRowClick={(row) => router.push(`/plataforma/projects/${row.id}?view=list`)}
+            />
         </div>
     );
 }
