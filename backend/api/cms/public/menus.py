@@ -39,6 +39,7 @@ def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
             models.CmsSite.site_key == site_key.strip().lower(),
             models.CmsSite.is_active.is_(True),
             models.CmsMenu.menu_key == menu_key.strip().lower(),
+            models.CmsMenu.is_active.is_(True),
         )
         .first()
     )

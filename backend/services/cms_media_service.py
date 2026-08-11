@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from backend import crud, models
@@ -59,8 +60,10 @@ def _guard_path(url: str) -> str:
         raise ValueError("Invalid file path")
     rel_path = url.lstrip("/").replace("uploads/", "", 1)
     full_path = os.path.normpath(os.path.join(uploads_root, rel_path))
-    if not full_path.startswith(uploads_root):
-        raise ValueError("Invalid file path")
+    try:
+        Path(full_path).resolve(strict=False).relative_to(Path(uploads_root).resolve(strict=False))
+    except ValueError as exc:
+        raise ValueError("Invalid file path") from exc
     return full_path
 
 

@@ -9,16 +9,21 @@ seeding, llamada directa al CRUD) podría crear/mutar registros sin
 pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
+import logging
 import uuid
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend.core.cache_v2 import invalidate_cached_public_pattern
 from backend.crud.cms._shared import (
     _actor_sede_or_none_cms,
     _crud_scope_re_check_pastoral_profile,
 )
+
+_logger = logging.getLogger(__name__)
+
 
 
 def update_pastoral_profile(
@@ -54,6 +59,14 @@ def update_pastoral_profile(
         setattr(persona, key, value)
     db.commit()
     db.refresh(persona)
+    # Cierre de staleness: el perfil pastoral (bio/photo/rol/is_pastoral_*
+    # /sort_order) alimenta el endpoint público cacheado
+    # ``public_pastoral_team``; un PATCH admin debe reflejarse en público
+    # sin esperar el TTL de 300s.
+    try:
+        invalidate_cached_public_pattern("public_pastoral_team")
+    except Exception:  # la invalidación nunca debe romper la mutación
+        _logger.debug("public pastoral team cache invalidation skipped", exc_info=True)
     return persona
 
 

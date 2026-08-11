@@ -2,7 +2,7 @@
 
 > **TL;DR:** El CMS de CCF es un sistema editorial multi-tenant para gestionar sites, páginas, secciones, menús, temas, media y contenido público. Este documento es la guía canónica de arquitectura y reglas de negocio. Cualquier agente que vaya a tocar el CMS debe leer este documento primero.
 
-**Última actualización:** 2026-07-31
+**Última actualización:** 2026-08-10
 **Estado del módulo:** ✅ Plan de calidad Fases 0-7 completado — arquitectura modular, tests E2E, a11y/SEO, runbook de operaciones.
 
 ---
@@ -187,6 +187,72 @@ Draft → Preview → Publish → (Unpublish / Archive)
 
 - `datetime.utcnow()` está **deprecado** en toda la plataforma. Usar `datetime.now(timezone.utc)`.
 - En SQLite (tests), `DateTime(timezone=True)` persiste como naive — usar helper `_as_aware_utc(value)` para comparaciones tz-aware.
+
+### 3.9 Caché pública e invalidación
+
+Los endpoints públicos de solo lectura (`backend/api/cms/public/*`) usan `@cached_public(ttl=300)` para servir contenido sin tocar DB en cada request. La caché es **por key determinista** en Redis (`backend/core/cache_v2.py`) con fallback `MemoryRedis` en tests/CI (`backend/core/cache.py`).
+
+**Regla de oro (innegociable):** toda mutación que altere la salida de un endpoint público cacheado DEBE invalidar su caché tras `commit()`. La invalidación vive en la capa CRUD (`backend/crud/cms/*`), no en la API, para cubrir también callers no-API (scheduler, seeding, tests directos), y **nunca debe romper la mutación** — los helpers llevan try/except defensivo.
+
+#### Endpoints cacheados y su key
+
+La key se construye con `_build_cache_key(func_name, args, kwargs)`: solo los args/kwargs **serializables** (str/int/bool/…) — el `Session` de SQLAlchemy y otros objetos no-JSON se excluyen, así `Depends(get_db)` no rompe la caché — hasheados con `sha256(json.dumps({...}, sort_keys=True))`.
+
+| Endpoint público | Función | Key `cache:v2:{func}:{digest}` (\(site_key\) + params) |
+|---|---|---|
+| `GET /cms/v2/public/sites/{key}/menus/{menu_key}` | `public_menu` | `public_menu` — site_key, menu_key |
+| `GET /cms/v2/public/sites/{key}/theme` | `public_theme` | `public_theme` — site_key |
+| `GET /cms/v2/public/sites/{key}/pages` | `public_pages_list` | `public_pages_list` — site_key, skip, limit |
+| `GET /cms/v2/public/sites/{key}/pages/{slug}` | `public_page` | `public_page` — site_key, slug |
+| `GET /cms/v2/public/sites/{key}/posts` | `public_posts_list` | `public_posts_list` — site_key, skip, limit, category_slug, tag_slug |
+| `GET /cms/v2/public/sites/{key}/posts/{slug}` | `public_post` | `public_post` — site_key, slug |
+| `GET /cms/v2/public/sites/{key}/pastoral-team` | `public_pastoral_team` | `public_pastoral_team` — site_key |
+
+**Los 404 no se cachean:** `cached_public` solo almacena respuestas exitosas; si la función levanta una excepción (→ 404), no se escribe caché. Implicación de diseño: reactivar un site/menú/página no deja 404 stale — por eso `update_cms_site` solo invalida al **desactivar** (`was_active and not is_active`).
+
+#### Helpers de invalidación
+
+| Helper (en `backend/core/cache_v2.py`) | Uso |
+|---|---|
+| `invalidate_cached_public(func_name, *args, **kwargs)` | Reconstruye la **key exacta** (mismo filtrado de args serializables) y hace `redis.delete(key)`. Para keys deterministas (menú, theme, page, post). |
+| `invalidate_cached_public_pattern(func_name)` | Borra **todas** las keys `cache:v2:{func}:*` vía `scan_iter` (Redis real) / `scan_keys` (MemoryRedis, wildcard `*` añadido en `backend/core/cache.py`). Necesario para los **listados** (`public_pages_list`, `public_posts_list`) cuyo key incluye query params variables que no se reconstruyen desde la mutación. |
+
+Las mutaciones CRUD tienen `site_id`, pero el endpoint público recibe `site_key` (string). `resolve_site_key(db, site_id)` en `backend/crud/cms/_shared.py` resuelve el key canónico (minúsculas) para reconstruir la key de caché.
+
+#### Matriz mutación → invalidación (backend/crud/cms/)
+
+| Mutación | Endpoints invalidados | Cuándo |
+|---|---|---|
+| `delete_cms_menu` | `public_menu` | siempre |
+| `update_cms_menu` | `public_menu` | siempre |
+| `create_cms_menu_item` / `update_cms_menu_item` / `delete_cms_menu_item` / `reorder_cms_menu_items` | `public_menu` (del menú padre) | siempre |
+| `create_cms_theme` / `update_cms_theme` / `activate_cms_theme` / `archive_cms_theme` | `public_theme` | siempre |
+| `update_cms_site` | site-wide (menús + theme + pages + posts) | solo al desactivar |
+| `archive_cms_site` | site-wide | siempre |
+| `update_cms_page` / `delete_cms_page` | `public_page` + `public_pages_list` | siempre |
+| `transition_cms_page_status` (workflow publish/archive/revert) | `public_page` + `public_pages_list` | siempre |
+| `restore_cms_page_version` (rollback → draft) | `public_page` + `public_pages_list` | siempre |
+| `create_cms_section` / `update_cms_section` / `archive_cms_section` / `delete_cms_section` / `reorder_cms_sections` | `public_page` (de la página padre) + `public_pages_list` | siempre |
+| `create_cms_post` / `update_cms_post` / `delete_cms_post` | `public_post` + `public_posts_list` | siempre |
+| `_archive_post_with_audit` (scheduler auto-archive) | `public_post` + `public_posts_list` | siempre |
+| `update_pastoral_profile` (PATCH admin pastoral-team) | `public_pastoral_team` | siempre |
+| `sync_pastoral_profiles_from_cms_section` (seed/sync) | `public_pastoral_team` | siempre |
+| `update_pastors_section_from_profiles` (publish página pastors) | `public_pastoral_team` | siempre |
+
+Implementación: helpers `_invalidate_public_menu_key` / `_invalidate_public_menu_cache` / `_invalidate_public_menu_by_id_cache` / `_invalidate_public_menu_item_cache` / `_invalidate_public_theme_cache` / `_invalidate_site_public_cache` en `sites.py`, `_invalidate_public_page_cache` / `_invalidate_public_page_sections_cache` en `pages.py`, `_invalidate_public_post_cache` en `posts.py`. El pastoral team se invalida por patrón (`invalidate_cached_public_pattern("public_pastoral_team")`) desde `crud/cms/pastoral.py` y `crud/cms_pastors_sync.py` (el endpoint consulta perfiles de forma global por site, así que borrar todas las variantes es la forma correcta). La invalidación por patrón purga las listas de **todos** los sites (la key es un sha256 sin site_key legible) — tradeoff aceptado por simplicidad.
+
+#### Tests de regresión
+
+18 regresiones en `tests/test_cms_v2_gap_coverage.py`, todas validadas **bidireccionalmente** (fallan sin la invalidación — la caché sirve stale — y pasan con ella):
+
+| Clase | # | Qué valida |
+|---|---|---|
+| `TestPublicMenuInactive` | 9 | delete menú → 404; PATCH desactiva → 404; DELETE item → desaparece; PATCH item → label nuevo; create item → aparece; reorder → nuevo orden; archive site → 404; PATCH site desactiva → 404 |
+| `TestPublicThemeCacheInvalidation` | 2 | archive theme → 404; activate switch → id nuevo |
+| `TestPublicPageCacheInvalidation` | 4 | delete page → 404 (detail + list); rollback → 404; archive section → render sin sección |
+| `TestPublicPostCacheInvalidation` | 3 | delete post → 404 (detail + list); update → contenido nuevo |
+
+Suite completa `test_cms_v2_gap_coverage.py`: **187 passed**.
 
 ---
 

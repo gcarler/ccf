@@ -206,8 +206,10 @@ Rutas principales en `frontend/src/app/plataforma/cms/`:
 |---|---|---|
 | `/plataforma/cms` | `page.tsx` | Hecho — dashboard validado |
 | `/plataforma/cms/builder` | `builder/page.tsx` | Hecho — editor validado con smoke y deep suite |
+| `/plataforma/cms/builder-puck` | `builder-puck/page.tsx` | Hecho — editor Puck cubierto por `builder-puck-flow.spec.ts` |
 | `/plataforma/cms/pages` | `pages/page.tsx`, `pages/[slug]/page.tsx`, `versions/page.tsx` | Hecho funcional |
 | `/plataforma/cms/media` | `media/page.tsx`, `media/[id]/page.tsx`, `media-folders/page.tsx` | Hecho funcional |
+| `/plataforma/cms/forms` | `forms/page.tsx`, `components/cms/forms/FieldEditor.tsx`, `components/public/cms/CmsFormRenderer.tsx` | Hecho — builder de formularios + respuestas + anti-spam (hCaptcha/honeypot) |
 | `/plataforma/cms/themes`, `/menus`, `/sites` | varias | Hecho funcional |
 | `/plataforma/cms/preview` | `preview/page.tsx` | Hecho — validado contra publicado |
 | `/plataforma/cms/readiness`, `/seo-audit`, `/broken-links`, `/redirects`, `/search-admin` | varias | Hecho funcional |
@@ -220,6 +222,9 @@ Frontend test existente:
 - `frontend/tests/e2e/cms-public-contract.spec.ts`
 - `frontend/tests/e2e/cms/smoke.spec.ts`
 - `frontend/tests/e2e/cms/pages-preview.spec.ts`
+- `frontend/tests/e2e/cms/builder-flow.spec.ts`, `builder-puck-flow.spec.ts`, `media-management.spec.ts`
+- tests unitarios por página admin: `forms`, `glossary`, `newsletter`, `sessions`, `broken-links`, `search-admin`, `ab-testing`, `media-folders`, `popups`, `comments` (`page.test.tsx`) + `FieldEditor.test.tsx` + `CmsFormRenderer` suites
+- cobertura: `npm run test:cms:coverage` → reporte en `docs/ESTADO_COBERTURA_CMS_FRONTEND.md`
 
 ---
 
@@ -227,6 +232,9 @@ Frontend test existente:
 
 ### Hecho
 
+- invalidación de caché pública por mutación CRUD (menús, theme, pages, posts, sites) — `DONE-CMS-CACHE-INVALIDATION-001`
+- módulo de formularios de contacto completo (admin + público + anti-spam) — `DONE-CMS-FORMS-001`
+- cobertura frontend CMS regenerada y documentada (48.7% stmts, áreas clave >70%)
 - CMS v1, v2 y enterprise separados
 - pruebas de isolation, upload hardening, metrics y dominio
 - cobertura frontend pública básica
@@ -254,6 +262,10 @@ Frontend test existente:
 - ✅ 10 funcionalidades (F-01..10) — cerradas (incluye F-08 publish log retention, F-10 orphan media cleanup)
 
 ### Cerrado recientemente
+
+36. **Caché pública: invalidación por mutación** `[DONE-CMS-CACHE-INVALIDATION-001]` — cerrado el 2026-08-11; toda mutación CRUD que altere la salida de un endpoint público cacheado (`public_menu`, `public_theme`, `public_page`, `public_posts_list`, etc.) invalida su caché tras `commit()` vía helpers en `backend/crud/cms/*` (`invalidate_cached_public` / `invalidate_cached_public_pattern` en `backend/core/cache_v2.py` + `scan_keys` en `MemoryRedis`). 18 regresiones bidireccionales en `tests/test_cms_v2_gap_coverage.py` (187 tests) + `tests/test_cache_v2_invalidation.py`. Documentado en `docs/ARQUITECTURA_CMS.md` §3.9.
+37. **Módulo de formularios de contacto (forms)** `[DONE-CMS-FORMS-001]` — cerrado el 2026-08-11; builder de formularios en `/plataforma/cms/forms` (FieldEditor con 19 tipos de campo, condiciones `visible_if`, DnD, vista previa en vivo, notificaciones por email, anti-spam hCaptcha/honeypot), endpoints admin `sites/{site_key}/forms` + públicos `public/forms/{id}` en `backend/api/cms_v2/forms.py`, y renderer público `CmsFormRenderer.tsx`. 27 tests backend (`test_cms_forms_dynamic.py` + `test_cms_v2_forms.py`) y 50 tests frontend.
+38. **Reporte de cobertura frontend CMS actualizado** `[DONE-CMS-COVERAGE-REPORT-001]` — cerrado el 2026-08-11; `docs/ESTADO_COBERTURA_CMS_FRONTEND.md` refleja la medición real: statements 48.7% (antes 19.1%), lib/cms 72.1%, components/cms 74.1%, forms 82.2%.
 
 17. **Forense C-01 (ondelete RESTRICT)** `[DONE-CMS-FORENSE-C-01]` — cerrado el 2026-07-22 (commit `e8912c54`) antes del inicio de la sesión actual; ver `errorescms.md` § Seguimiento.
 18. **Forense C-02 (falso positivo TOCTOU verificado)** `[DONE-CMS-FORENSE-C-02]` — cerrado el 2026-07-22 (commit `bd28cfe4`); verificado que el vector TOCTOU mismo está cubierto por el defense-in-depth check #1 (current_row_sede == actor_sede) en `_crud_scope_re_check_cms_content_update`.  3 tests de regresion en `TestC02TOCTOUFalsePositive`.
@@ -344,6 +356,9 @@ Frontend test existente:
 | `DONE-VISUAL-CMS-001` | ✅ **Hecho 2026-07-16** — checklist visual preview/publicado institucionalizado con suites reproducibles. | `frontend/tests/e2e/cms/pages-preview.spec.ts`, `frontend/tests/e2e/cms-public-contract.spec.ts` |
 | `DONE-GATE-CMS-001` | ✅ **Hecho 2026-07-16** — gate canónico y exhaustivo pasan sin skips silenciosos. | `scripts/test_cms_quality.py`, `frontend/tests/e2e/cms/smoke.spec.ts`, `frontend/tests/e2e/cms/pages-preview.spec.ts`, `frontend/tests/e2e/cms-public-contract.spec.ts` |
 | `DONE-BUILDER-CMS-002` | ✅ **Hecho 2026-08-01** — cierra el residual `PEND-CMS-BUILDER-001`: el builder quedó validado con suites E2E mockeadas reproducibles (`builder-flow.spec.ts` 6 tests, `builder-puck-flow.spec.ts` 3 tests, `pages-preview.spec.ts` 3 tests) sin regresiones. | `frontend/tests/e2e/cms/builder-flow.spec.ts`, `frontend/tests/e2e/cms/builder-puck-flow.spec.ts`, `frontend/tests/e2e/cms/pages-preview.spec.ts` |
+| `DONE-CMS-CACHE-INVALIDATION-001` | ✅ **Hecho 2026-08-11** — invalidación de caché pública por mutación CRUD: helpers `invalidate_cached_public` / `invalidate_cached_public_pattern` (cache_v2) + `scan_keys` (MemoryRedis), y `_invalidate_*` en `crud/cms/{pages,posts,sites}.py`; 18 regresiones bidireccionales en `test_cms_v2_gap_coverage.py` (187 tests) + `test_cache_v2_invalidation.py`. Documentado en `ARQUITECTURA_CMS.md` §3.9. | `backend/core/cache_v2.py`, `backend/core/cache.py`, `backend/crud/cms/*.py`, `tests/test_cms_v2_gap_coverage.py`, `tests/test_cache_v2_invalidation.py` |
+| `DONE-CMS-FORMS-001` | ✅ **Hecho 2026-08-11** — módulo de formularios de contacto: builder admin (`/plataforma/cms/forms`) con FieldEditor (19 tipos de campo, condiciones, DnD, preview en vivo, notificaciones, anti-spam hCaptcha/honeypot), API admin + pública (`backend/api/cms_v2/forms.py`), renderer público `CmsFormRenderer.tsx`. 27 tests backend + 50 tests frontend. | `frontend/src/app/plataforma/cms/forms/page.tsx`, `frontend/src/components/cms/forms/FieldEditor.tsx`, `frontend/src/components/public/cms/CmsFormRenderer.tsx`, `backend/api/cms_v2/forms.py`, `tests/test_cms_forms_dynamic.py` |
+| `DONE-CMS-COVERAGE-REPORT-001` | ✅ **Hecho 2026-08-11** — reporte de cobertura frontend CMS regenerado y sincronizado con la medición real (48.7% stmts global; áreas clave >70%). | `docs/ESTADO_COBERTURA_CMS_FRONTEND.md`, `frontend/vitest.cms.config.ts` |
 | `DONE-BUILDER-CMS-POPUP-001` | ✅ **Hecho 2026-07-16** — el builder expone una acción explícita de creación de pop-up y mantiene `popup_banner` en catálogo y renderer. | `frontend/src/components/cms/builder/BuilderSidebar.tsx`, `frontend/src/components/cms/builder/constants.ts`, `frontend/src/components/public/cms/PublicSectionRenderer.tsx` |
 | `DONE-BRANDING-CMS-001` | ✅ **Hecho 2026-07-16** — branding ahora respeta `canEditCms`, deshabilita edición para roles solo lectura y evita el `PATCH` fallido al guardar logo o nombre. | `frontend/src/app/plataforma/cms/branding/page.tsx`, `frontend/tests/cms-branding-permissions.test.tsx` |
 | `DONE-CMS-PUBLIC-CONTENT-001` | ✅ **Hecho 2026-07-17** — bootstrap público canónico para `ccf` ejecutado y verificado; publica las páginas núcleo, navegación, footer y contratos públicos desde CMS v2. **Nota 2026-07-31:** `seed_cms.py` fue eliminado (commit `0a1b3d22`) y `scripts/seed_public_cms_v2_sections.py` es el único entry point de seeding CMS v2. | `docs/PLAN_CONTENIDO_PUBLICO_CMS.md`, `scripts/bootstrap_public_cms_content.py`, `scripts/seed_public_cms_v2_sections.py`, `scripts/seed_public_menus_and_footer.py`, `scripts/ensure_public_cms_pages.py` |
