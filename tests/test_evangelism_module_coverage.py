@@ -3137,6 +3137,120 @@ class TestEvangelismPermissionMatrix:
         assert attendance.status_code == 404, attendance.text
 
 
+class TestEvangelismRBACNonAdminPositive:
+    """F4-2 — Cobertura RBAC no-admin: coordinador y pastor en misma sede.
+
+    La auditoría 2026-07-25 flagueó "cobertura RBAC no-admin extremadamente
+    baja (1 test positivo con coordinador)". Estos tests validan que los
+    roles no-admin (coordinador = read+edit, pastor = manage) pueden
+    acceder a los endpoints de evangelismo en su propia sede, y que
+    coordinador es bloqueado en operaciones de gestión (manage).
+    """
+
+    @staticmethod
+    def _grant(db_session, user, permissions):
+        user.rol_plataforma.permisos = permissions
+        db_session.commit()
+
+    def test_coordinator_can_read_all_read_endpoints(self, full, db_session):
+        """Coordinador en misma sede: todos los endpoints GET read pasan 200."""
+        coord, _, _ = _seed_user_with_role(
+            db_session,
+            role_name="coordinador",
+            email="coord.read@example.com",
+            sede_id=full["sede"].id,
+        )
+        headers = _auth_headers(full["c"], email=coord.email)
+        group = full["grupos"][0]
+        session = full["sesiones"][0]
+
+        read_paths = [
+            "/api/evangelism/strategies",
+            "/api/evangelism/groups",
+            "/api/evangelism/groups/sessions",
+            f"/api/evangelism/grupos/{group.id}",
+            f"/api/evangelism/grupos/sessions/{session.id}/attendance",
+            "/api/evangelism/multiplication/check",
+            "/api/evangelism/multiplication/history",
+            "/api/evangelism/events/dashboard-stats",
+            "/api/evangelism/events/analytics/global",
+            "/api/evangelism/excuses",
+        ]
+        for path in read_paths:
+            resp = full["c"].get(path, headers=headers)
+            assert resp.status_code == 200, f"GET {path} -> {resp.status_code}: {resp.text[:200]}"
+
+    def test_coordinator_denied_manage_endpoints(self, full, db_session):
+        """Coordinador en misma sede: POST strategies/groups y DELETE groups -> 403."""
+        coord, _, _ = _seed_user_with_role(
+            db_session,
+            role_name="coordinador",
+            email="coord.deny@example.com",
+            sede_id=full["sede"].id,
+        )
+        headers = _auth_headers(full["c"], email=coord.email)
+        group = full["grupos"][0]
+
+        post_strategy = full["c"].post(
+            "/api/evangelism/strategies",
+            json={"name": "No autorizado", "typology": "relacional"},
+            headers=headers,
+        )
+        assert post_strategy.status_code == 403, post_strategy.text
+
+        post_group = full["c"].post(
+            "/api/evangelism/groups",
+            json={"name": "Grupo no autorizado"},
+            headers=headers,
+        )
+        assert post_group.status_code == 403, post_group.text
+
+        delete_group = full["c"].delete(
+            f"/api/evangelism/groups/{group.id}",
+            headers=headers,
+        )
+        assert delete_group.status_code == 403, delete_group.text
+
+    def test_coordinator_can_edit_group(self, full, db_session):
+        """Coordinador en misma sede: PUT grupo (require_evangelism_edit) -> 200."""
+        coord, _, _ = _seed_user_with_role(
+            db_session,
+            role_name="coordinador",
+            email="coord.edit@example.com",
+            sede_id=full["sede"].id,
+        )
+        headers = _auth_headers(full["c"], email=coord.email)
+        group = full["grupos"][0]
+
+        resp = full["c"].put(
+            f"/api/evangelism/groups/{group.id}",
+            json={"name": "Grupo Editado por Coord"},
+            headers=headers,
+        )
+        assert resp.status_code == 200, f"PUT grupo -> {resp.status_code}: {resp.text[:200]}"
+
+    def test_pastor_can_manage_groups(self, full, db_session):
+        """Pastor en misma sede: POST groups (require_evangelism_manage) -> 201/200."""
+        pastor, _, _ = _seed_user_with_role(
+            db_session,
+            role_name="pastor",
+            email="pastor.manage@example.com",
+            sede_id=full["sede"].id,
+        )
+        headers = _auth_headers(full["c"], email=pastor.email)
+
+        resp = full["c"].post(
+            "/api/evangelism/groups",
+            json={
+                "name": "Grupo Pastoral",
+                "evangelism_strategy_id": str(full["estrategia"].id),
+                "leader_id": str(full["personas"][0].id),
+            },
+            headers=headers,
+        )
+        assert resp.status_code in (200, 201), f"POST groups -> {resp.status_code}: {resp.text[:200]}"
+
+
 # ════════════════════════════════════════════════════════════════════
 # 16. CALCULO_SESIONES — funciones puras + endpoint integration
 # ════════════════════════════════════════════════════════════════════
