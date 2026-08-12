@@ -27,7 +27,6 @@ from backend.api.evangelism_shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import (
-    get_current_user,
     require_evangelism_edit,
     require_evangelism_manage,
     require_evangelism_read,
@@ -55,7 +54,7 @@ def _session_live_columns(db: Session) -> set[str]:
 def get_groups_session_attendance(
     session_id: UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
     session = get_visible_session(db, session_id, user_sede)
@@ -139,7 +138,7 @@ def add_groups_attendance(
     session_id: UUID,
     payload: dict,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_evangelism_edit),
 ):
     persona_ids = payload.get("persona_ids") or payload.get("persona_ids", [])
     attendees = payload.get("attendees")

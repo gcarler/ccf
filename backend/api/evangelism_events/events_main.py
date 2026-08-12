@@ -544,7 +544,7 @@ def lookup_person_for_event(
     phone: Optional[str] = Query(None),
     document_number: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_evangelism_manage),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     """Busca una persona por email, telefono o documento dentro del scope de sede del evento.
 
