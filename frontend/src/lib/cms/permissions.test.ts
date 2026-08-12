@@ -9,6 +9,9 @@ import {
 
 const ADMINS: CmsRole[] = ["admin", "administrador", "gestor", "editor", "coordinador", "docente", "pastor"];
 const PUBLISHERS: CmsRole[] = ["admin", "administrador", "gestor", "coordinador", "pastor"];
+// Gestionar sitios es acción administrativa: GESTOR queda fuera aunque
+// publique contenido (el backend lo rechaza con 403 server-side).
+const SITE_MANAGERS: CmsRole[] = ["admin", "administrador", "coordinador", "pastor"];
 const ALL_ROLES: CmsRole[] = [
   "admin",
   "administrador",
@@ -58,11 +61,12 @@ describe("cms/permissions", () => {
       expect(canManageSites("ADMINISTRADOR")).toBe(true);
     });
 
-    // Política: GESTOR edita y publica; EDITOR solo edita.
-    it("mapea GESTOR como editor+publicador y EDITOR como solo editor", () => {
+    // Política: GESTOR edita y publica contenido, pero NO gestiona sitios;
+    // EDITOR solo edita.
+    it("mapea GESTOR como editor+publicador sin gestión de sitios", () => {
       expect(canEditCms("gestor")).toBe(true);
       expect(canPublishCms("gestor")).toBe(true);
-      expect(canManageSites("gestor")).toBe(true);
+      expect(canManageSites("gestor")).toBe(false);
       expect(canEditCms("editor")).toBe(true);
       expect(canPublishCms("editor")).toBe(false);
       expect(canManageSites("editor")).toBe(false);
@@ -89,16 +93,23 @@ describe("cms/permissions", () => {
   });
 
   describe("canManageSites", () => {
-    it.each(PUBLISHERS)("admite rol gestor de sitios: %s", (role) => {
+    it.each(SITE_MANAGERS)("admite rol gestor de sitios: %s", (role) => {
       expect(canManageSites(role)).toBe(true);
     });
 
-    it.each(["editor", "docente", "estudiante", "aspirante"])(
+    it.each(["gestor", "editor", "docente", "estudiante", "aspirante"])(
       "rechaza rol sin gestión de sitios: %s",
       (role) => {
         expect(canManageSites(role)).toBe(false);
       }
     );
+
+    it("GESTOR publica contenido pero no gestiona sitios [regresión]", () => {
+      expect(canPublishCms("gestor")).toBe(true);
+      expect(canManageSites("gestor")).toBe(false);
+      // case-insensitive
+      expect(canManageSites("GESTOR")).toBe(false);
+    });
   });
 
   describe("normalización (case + whitespace)", () => {

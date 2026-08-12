@@ -3,7 +3,7 @@
 > ⚠️ **Nota:** este reporte se genera automáticamente a partir de `frontend/coverage-cms/coverage-summary.json`.
 > Regenerarlo con: `cd /root/ccf/frontend && npm run test:cms:coverage`
 
-**Fecha:** 2026-08-11 (medición local)
+**Fecha:** 2026-08-12 (medición local)
 **Configuración:** `frontend/vitest.cms.config.ts`
 **Comando para reproducir:**
 
@@ -16,24 +16,24 @@ npm run test:cms:coverage
 
 | Métrica     | Porcentaje |
 |-------------|------------|
-| Statements  | 59.98%     |
-| Branches    | 67.89%     |
-| Functions   | 38.94%     |
-| Lines       | 59.98%     |
+| Statements  | 65.75%     |
+| Branches    | 69.73%     |
+| Functions   | 44.10%     |
+| Lines       | 65.75%     |
 
-> **Nota metodológica:** El reporte no aplica umbrales (thresholds) porque es informativo. La cobertura subió de ~19% → ~49% → **~60%** en statements desde el reporte de 2026-07-29 gracias a los tests agregados para forms, las páginas admin (glossary, newsletter, sessions, broken-links, search-admin, ab-testing, media-folders, popups, comments, sites, categories, tags, pages, posts y themes), el builder y las librerías `lib/cms`. La medición del 2026-08-11 suma **55 tests unitarios nuevos** en las 6 páginas administrativas que estaban al 0% (sites, categories, tags, pages, posts y themes).
+> **Nota metodológica:** El reporte no aplica umbrales (thresholds) porque es informativo. La cobertura subió de ~19% → ~49% → ~60% → **~65.8%** en statements desde el reporte de 2026-07-29 gracias a los tests agregados para forms, las páginas admin (glossary, newsletter, sessions, broken-links, search-admin, ab-testing, media-folders, popups, comments, sites, categories, tags, pages, posts y themes), el builder y las librerías `lib/cms`. La medición del 2026-08-11 sumó **55 tests** en las 6 páginas administrativas que estaban al 0% (sites, categories, tags, pages, posts y themes). La medición del 2026-08-12 suma **104 tests nuevos** (6 test files): los wrappers de `lib/cms/v2.ts` (40 tests, 44% → 77.4%), la página detalle `pages/[slug]/page.tsx` (0% → 100%), el diff de versiones `FieldDiff.tsx` (0% → 97.6%) y `VersionsDiffView.tsx` (0% → 95.5%), la página de auditoría `audit/page.tsx` (0% → 100%) y `SectionPreview.tsx` del builder (42.5% → 88.6%).
 
 ## Cobertura por área
 
 | Área                              | Stmts  | Branch | Funcs  | Lines  | Estado        |
 |-----------------------------------|--------|--------|--------|--------|---------------|
 | `components/cms/forms`            | 82.2%  | 59.5%  | 41.9%  | 82.2%  | ✅ Casi cubierto |
-| `components/cms/builder`          | 73.1%  | 68.7%  | 40.4%  | 73.1%  | ✅ Casi cubierto |
+| `components/cms/builder`          | 78.8%  | 69.9%  | 41.3%  | 78.8%  | ✅ Casi cubierto |
 | `components/cms/themes`           | 99.0%  | 100.0% | 60.0%  | 99.0%  | ✅ Casi cubierto |
 | `components/cms` (resto)          | 87.4%  | 72.0%  | 28.8%  | 87.4%  | ✅ Casi cubierto |
-| `lib/cms`                         | 72.3%  | 77.9%  | 49.1%  | 72.3%  | ✅ Casi cubierto |
+| `lib/cms`                         | 87.8%  | 78.5%  | 75.9%  | 87.8%  | ✅ Casi cubierto |
 | `app/plataforma/cms/builder`      | 73.5%  | 88.2%  | 43.9%  | 73.5%  | ✅ Casi cubierto |
-| `app/plataforma/cms` (resto)      | 46.7%  | 62.5%  | 37.8%  | 46.7%  | ⚠️ Parcial    |
+| `app/plataforma/cms` (resto)      | 54.1%  | 65.1%  | 38.7%  | 54.1%  | ⚠️ Parcial    |
 
 ## Páginas administrativas cubiertas (tests unitarios)
 
@@ -52,9 +52,11 @@ Flujos cubiertos: render y estados vacíos, búsqueda/filtros, creación vía qu
 
 ## Archivos con cobertura 100%
 
+- `app/plataforma/cms/audit/page.tsx`
 - `app/plataforma/cms/broken-links/page.tsx`
 - `app/plataforma/cms/builder-puck/page.tsx`
 - `app/plataforma/cms/glossary/page.tsx`
+- `app/plataforma/cms/pages/[slug]/page.tsx`
 - `app/plataforma/cms/sites/page.tsx`
 - `components/cms/builder/BuilderSidebar.tsx`
 - `components/cms/builder/MediaPicker.tsx`
@@ -65,6 +67,8 @@ Flujos cubiertos: render y estados vacíos, búsqueda/filtros, creación vía qu
 - `lib/cms/pageBlocks.ts`
 - `lib/cms/permissions.ts`
 - `lib/cms/preview-sync.ts`
+- `lib/cms/sanitize.ts`
+- `lib/cms/testimonialMedia.ts`
 
 ## Archivos con 0% de cobertura (prioritarios)
 
@@ -73,11 +77,10 @@ Flujos cubiertos: render y estados vacíos, búsqueda/filtros, creación vía qu
 ### Páginas administrativas (`app/plataforma/cms`)
 - `layout.tsx`
 - `announcements/new/page.tsx`
-- `audit/page.tsx`
 - `custom-types/page.tsx`
 - `media/page.tsx`, `media/[id]/page.tsx`
 - `notifications/page.tsx`
-- `pages/[slug]/page.tsx`, `pages/[slug]/versions/*`
+- `pages/[slug]/versions/page.tsx`
 - `pastoral-team/page.tsx`
 - `preview/page.tsx`
 - `readiness/page.tsx`
@@ -99,20 +102,21 @@ Cobertura general buena (~73% stmts) pero con oportunidades:
 - **BuilderCanvas.tsx**: cubrir drag-and-drop, reordenamiento de secciones y toggles de modo esquema/render y dispositivo.
 - **BuilderRightPanel.tsx**: cubrir flujo de analytics con `getPageAnalytics` y preview links (`window.open`).
 
-### 2. Librerías (`lib/cms`) — 72.3% stmts
-- **v2.ts** (44.08% stmts): los wrappers de API siguen siendo el archivo con más funciones sin cubrir dentro de `lib/cms`; los mocks por página cubren los endpoints usados, pero quedan muchos wrappers sin ejercitar.
-- **versionDiff.ts** (92.81% stmts): casi cubierto; faltan ramas menores.
+### 2. Librerías (`lib/cms`) — 87.8% stmts
+- **v2.ts** (77.4% stmts): los wrappers de API ya están cubiertos con `v2.test.ts` (40 tests) tras la medición del 2026-08-12.
+- **versionDiff.ts** (92.8% stmts): casi cubierto; faltan ramas menores.
 
-### 3. Páginas administrativas (`app/plataforma/cms`) — 46.7% stmts
-- Las 6 páginas principales (`sites`, `categories`, `tags`, `pages`, `posts`, `themes`) ya tienen tests unitarios (68–100% stmts).
-- Quedan al 0%: `pages/[slug]/*` (detalle/versiones), `pastoral-team`, `media`, `resources`, `section-types`, `seo-audit`, `custom-types`, `audit`, `readiness`, `notifications`, `preview`, `ui-kit`, `testimonials/[slug]`, `announcements/new` y `layout.tsx`. Próximo paso natural: `pastoral-team` (798 stmts) y `pages/[slug]` (detalle + versions, ~1394 stmts).
+### 3. Páginas administrativas (`app/plataforma/cms`) — 54.1% stmts
+- Las 6 páginas principales (`sites`, `categories`, `tags`, `pages`, `posts`, `themes`) tienen tests unitarios (68–100% stmts).
+- Desde 2026-08-12 también están cubiertas: `pages/[slug]/page.tsx` (100%), `pages/[slug]/versions/*` (FieldDiff 97.6%, VersionsDiffView 95.5%) y `audit/page.tsx` (100%).
+- Quedan al 0%: `pastoral-team`, `media`, `resources`, `section-types`, `seo-audit`, `custom-types`, `readiness`, `notifications`, `preview`, `ui-kit`, `testimonials/[slug]`, `announcements/new`, `pages/[slug]/versions/page.tsx` y `layout.tsx`. Próximo paso natural: `pastoral-team` (798 líneas) y `media` (684 líneas).
 
 ## Recomendaciones
 
 1. **No alterar `vitest.config.ts`:** la configuración principal mantiene sus umbrales para el design system. El reporte de CMS usa `vitest.cms.config.ts` y no afecta el gate global.
-2. **Priorizar `pages/[slug]/*` y `pastoral-team`:** son las páginas administrativas más grandes que quedan sin cobertura unitaria.
-3. **Mantener el patrón de mocks de las 6 páginas nuevas:** mock de `@/context/AuthContext` + `@/lib/cms/v2` (con `importOriginal` para helpers reales) + `sonner`, y stubs para `SidePanel`/`ViewSwitcher`/componentes pesados.
-4. **La cobertura de `lib/cms` ya no es un bloqueador:** con 72% de statements y `permissions.ts`/`sanitize.ts`/`media.ts`/`blocks.ts` al 100%, el área de utilidades está en buen estado.
+2. **Priorizar `pastoral-team`, `media` y `section-types`:** son las páginas administrativas más grandes que quedan sin cobertura unitaria.
+3. **Mantener el patrón de mocks de los tests nuevos:** mock de `@/context/AuthContext` + `@/lib/http`/`@/lib/cms/v2` (con `importOriginal` para helpers reales) + `sonner`, y stubs para `SidePanel`/`ViewSwitcher`/componentes pesados.
+4. **La cobertura de `lib/cms` ya no es un bloqueador:** con 87.8% de statements y `permissions.ts`/`sanitize.ts`/`media.ts`/`blocks.ts`/`v2.ts` ≥ 77%, el área de utilidades está en muy buen estado.
 
 ## Cómo regenerar este reporte
 
